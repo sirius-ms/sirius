@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="src" path="src/test/java" output="target/test-classes" including="**/*.java"/>
+  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
+  <classpathentry kind="output" path="target/classes"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+  <classpathentry kind="var" path="M2_REPO/de/unijena/bioinf/MassDecomposer/1.21-SNAPSHOT/MassDecomposer-1.21-SNAPSHOT.jar" sourcepath="M2_REPO/de/unijena/bioinf/MassDecomposer/1.21-SNAPSHOT/MassDecomposer-1.21-SNAPSHOT-sources.jar"/>
+  <classpathentry kind="src" path="/ChemistryBase"/>
+  <classpathentry kind="var" path="M2_REPO/org/json/json/1.0/json-1.0.jar" sourcepath="M2_REPO/org/json/json/1.0/json-1.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-primitives/commons-primitives/1.1-generics/commons-primitives-1.1-generics.jar" sourcepath="M2_REPO/commons-primitives/commons-primitives/1.1-generics/commons-primitives-1.1-generics-sources.jar">
+    <attributes>
+      <attribute value="jar:file:/home/kai/.m2/repository/commons-primitives/commons-primitives/1.1-generics/commons-primitives-1.1-generics-javadoc.jar!/" name="javadoc_location"/>
+    </attributes>
+  </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-math3/3.0/commons-math3-3.0.jar" sourcepath="M2_REPO/org/apache/commons/commons-math3/3.0/commons-math3-3.0-sources.jar">
+    <attributes>
+      <attribute value="jar:file:/home/kai/.m2/repository/org/apache/commons/commons-math3/3.0/commons-math3-3.0-javadoc.jar!/" name="javadoc_location"/>
+    </attributes>
+  </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/junit/junit/4.8/junit-4.8.jar" sourcepath="M2_REPO/junit/junit/4.8/junit-4.8-sources.jar">
+    <attributes>
+      <attribute value="jar:file:/home/kai/.m2/repository/junit/junit/4.8/junit-4.8-javadoc.jar!/" name="javadoc_location"/>
+    </attributes>
+  </classpathentry>
+</classpath>
