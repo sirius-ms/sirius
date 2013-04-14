@@ -64,7 +64,11 @@ class MyScorer {
 
  */
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import static java.lang.annotation.ElementType.*;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -73,10 +77,10 @@ import static java.lang.annotation.ElementType.*;
 public @interface Parameter {
     public String version() default "";
     public boolean inline() default false;
-    public Class<? extends Formatter<Object>> formatter() default Default.class;
+    public Class<? extends ParameterFormatter> formatter() default Default.class;
     public String format() default "";
 
-    public static final class Default extends ParameterFormatter {
+    public static final class Default extends ObjectFormatter {
 
     }
 }

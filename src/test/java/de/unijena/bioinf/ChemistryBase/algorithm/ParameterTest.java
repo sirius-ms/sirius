@@ -4,14 +4,13 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-
 public class ParameterTest {
 
     @Parameter class Algo {
         @Parameter public double alpha;
         @Parameter public int beta;
         @Parameter @Called("γ") public Complex gamma;
+        @Parameter public Special f;
         public String noParam = "foo";
         public int noParam2 = 1;
     }
@@ -25,6 +24,21 @@ public class ParameterTest {
         public int c = 3;
     }
 
+    @Parameter(formatter = SpecialFormatter.class) class Special {
+
+        @Parameter int a;
+        @Parameter int b;
+    }
+
+    static class SpecialFormatter implements ParameterFormatter {
+
+        @Override
+        public <G, D, L> G format(DataDocument<G, D, L> document, Object val) {
+            final Special value = (Special)val;
+            return document.wrap("f(x) = " + value.a + "*x + " + value.b );
+        }
+    }
+
     @Test
     public void testParameter() {
         final Algo myAlgo = new Algo();
@@ -33,8 +47,11 @@ public class ParameterTest {
         myAlgo.gamma = new Complex();
         myAlgo.gamma.a = 12;
         myAlgo.gamma.b = 8;
+        myAlgo.f = new Special();
+        myAlgo.f.a = 3;
+        myAlgo.f.b = 2;
 
-        System.out.println(new ParameterFormatter().format(new JDKDocument(), myAlgo));
+        System.out.println(new ObjectFormatter().format(new JDKDocument(), myAlgo));
 
     }
 

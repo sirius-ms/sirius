@@ -45,6 +45,10 @@ public class ScoredMolecularFormula implements Comparable<ScoredMolecularFormula
         this.formula = formula;
     }
 
+    public ScoredMolecularFormula(MolecularFormula formula, MolecularFormulaScorer scorer) {
+        this(formula, scorer.score(formula));
+    }
+
     public double getScore() {
         return score;
     }
