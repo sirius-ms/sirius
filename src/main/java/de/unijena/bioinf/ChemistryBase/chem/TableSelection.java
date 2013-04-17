@@ -1,8 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
+
 import java.util.*;
 import java.util.regex.Matcher;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 
 /**
  * A table selection maps a subset of the periodic table to array indizes. It allows
@@ -19,7 +20,7 @@ public class TableSelection implements Cloneable {
     BitSet bitmask;
     private short[] element2Index;
     private PeriodicTable pt;
-    private int carbonIndex=-1, hydrogenIndex=-1; // fast access to most important elements
+    private int carbonIndex=-1, oxygenIndex=-1, hydrogenIndex=-1; // fast access to most important elements
 
     public static TableSelection fromString(PeriodicTable pt, String s) {
         final Matcher matcher = pt.getPattern().matcher(s);
@@ -53,6 +54,7 @@ public class TableSelection implements Cloneable {
     	this.pt = other.pt;
         this.hydrogenIndex = other.hydrogenIndex;
         this.carbonIndex = other.carbonIndex;
+        this.oxygenIndex = other.oxygenIndex;
     }
 
     public TableSelection(PeriodicTable pt, Collection<Element> elements) {
@@ -70,8 +72,10 @@ public class TableSelection implements Cloneable {
         }
         final Element carbon = pt.getByName("C");
         final Element hydrogen = pt.getByName("H");
+        final Element oxygen = pt.getByName("O");
         if (carbon != null && elements.contains(carbon)) carbonIndex = element2Index[carbon.getId()];
         if (hydrogen != null && elements.contains(hydrogen)) hydrogenIndex = element2Index[hydrogen.getId()];
+        if (oxygen != null && elements.contains(oxygen)) oxygenIndex = element2Index[oxygen.getId()];
 
     }
     
@@ -109,6 +113,10 @@ public class TableSelection implements Cloneable {
         if (hydrogenIndex < 0) {
             final Element hydrogen = pt.getByName("H");
             if (hydrogen != null && Arrays.asList(elems).contains(hydrogen)) hydrogenIndex = element2Index[hydrogen.getId()];
+        }
+        if (oxygenIndex < 0) {
+            final Element oxygen = pt.getByName("O");
+            if (oxygen != null && Arrays.asList(elems).contains(oxygen)) oxygenIndex = element2Index[oxygen.getId()];
         }
         return true;
     }
@@ -161,6 +169,10 @@ public class TableSelection implements Cloneable {
 
     public int carbonIndex() {
         return carbonIndex;
+    }
+
+    public int oxygenIndex() {
+        return oxygenIndex;
     }
 
     public int valenceOf(int i) {

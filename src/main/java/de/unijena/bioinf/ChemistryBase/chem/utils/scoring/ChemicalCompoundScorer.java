@@ -12,7 +12,7 @@ public class ChemicalCompoundScorer implements MolecularFormulaScorer{
     private Hetero2CarbonScorer h2c;
     private Hydrogen2CarbonScorer hy2c;
     private RDBEMassScorer rdbem;
-    private boolean allowSpecial;
+    private SpecialMoleculeScorer special;
 
     public ChemicalCompoundScorer() {
         this(true);
@@ -20,20 +20,21 @@ public class ChemicalCompoundScorer implements MolecularFormulaScorer{
 
     public ChemicalCompoundScorer(boolean allowSpecial) {
         this(new Hetero2CarbonScorer(), new Hydrogen2CarbonScorer(),
-                new RDBEMassScorer(), allowSpecial);
+                new RDBEMassScorer(), allowSpecial ? new SpecialMoleculeScorer() : null);
     }
 
     /**
-       Allows to define the distributions for the scorer. A value of null means: do not score this property
+       Allows to define the distributions for the scorer. A value of null means: do not score this pro
      * @param h2c
      * @param hy2c
      * @param rdbem
-     * @param allowSpecial
+     * @param special
      */
-    public ChemicalCompoundScorer(Hetero2CarbonScorer h2c, Hydrogen2CarbonScorer hy2c, RDBEMassScorer rdbem, boolean allowSpecial) {
+    public ChemicalCompoundScorer(Hetero2CarbonScorer h2c, Hydrogen2CarbonScorer hy2c, RDBEMassScorer rdbem, SpecialMoleculeScorer special) {
         this.h2c = h2c;
         this.hy2c = hy2c;
         this.rdbem = rdbem;
+        this.special = special;
     }
 
     public Hetero2CarbonScorer getH2c() {
@@ -61,19 +62,36 @@ public class ChemicalCompoundScorer implements MolecularFormulaScorer{
     }
 
     public boolean isAllowSpecial() {
-        return allowSpecial;
+        return special != null;
     }
 
-    public void setAllowSpecial(boolean allowSpecial) {
-        this.allowSpecial = allowSpecial;
+    public SpecialMoleculeScorer getSpecial() {
+        return special;
+    }
+
+    public void setSpecial(SpecialMoleculeScorer special) {
+        this.special = special;
     }
 
     @Override
     public double score(MolecularFormula formula) {
         double score = 0d;
-        if (h2c != null) score += h2c.score(formula.hetero2CarbonRatio());
-        if (hy2c != null) score += hy2c.score(formula.hydrogen2CarbonRatio());
-        if (rdbem != null) score += rdbem.score(formula.rdbe(), formula.getMass());
+        double xh2c = formula.hetero2CarbonRatio(),xhy2c= formula.hydrogen2CarbonRatio(),xrdbe=formula.rdbe();
+        if (h2c != null) {
+            score += h2c.score(xh2c);
+        }
+        if (hy2c != null) {
+            score += hy2c.score(xhy2c);
+        }
+        if (rdbem != null) {
+            score += rdbem.score(xrdbe, formula.getMass());
+        }
+        if (special != null) score = Math.max(score, specialScoring(formula, xh2c, xhy2c, xrdbe));
         return score;
+    }
+
+    private double specialScoring(MolecularFormula f, double h2c, double hy2c, double rdbe) {
+        return special.score(f.hetero2OxygenRatio(), rdbe);
+
     }
 }

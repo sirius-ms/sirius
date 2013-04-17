@@ -242,10 +242,27 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     }
 
     /**
+     * @return the ratio of the non-hydrogen and non-oxygen to the number of oxygens
+     */
+    public float hetero2OxygenRatio() {
+        final int oxygen = numberOfOxygens();
+        final int hetero = atomCount() - oxygen - numberOfHydrogens();
+        return (float)hetero / (oxygen == 0 ? 0.8f : (float)oxygen);
+    }
+
+    /**
      * @return number of hydrogen atoms
      */
     public int numberOfHydrogens() {
         final int hi = getTableSelection().hydrogenIndex();
+        return buffer().length > hi ? buffer()[hi] : 0;
+    }
+
+    /**
+     * @return number of oxygen atoms
+     */
+    public int numberOfOxygens() {
+        final int hi = getTableSelection().oxygenIndex();
         return buffer().length > hi ? buffer()[hi] : 0;
     }
 
