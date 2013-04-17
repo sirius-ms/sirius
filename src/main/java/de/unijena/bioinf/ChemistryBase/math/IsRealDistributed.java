@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
-public interface IsRealDistributed {
+public interface IsRealDistributed extends DensityFunction {
 
     public double getDensity(double x);
 
