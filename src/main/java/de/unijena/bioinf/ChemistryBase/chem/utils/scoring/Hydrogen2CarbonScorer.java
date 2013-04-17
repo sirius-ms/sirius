@@ -38,7 +38,7 @@ public class Hydrogen2CarbonScorer implements MolecularFormulaScorer{
 
     @Override
     public double score(MolecularFormula formula) {
-        return Math.log(distribution.getDensity(formula.rdbe()));
+        return Math.log(distribution.getDensity(formula.hydrogen2CarbonRatio()));
     }
 
     public double score(double hy2c) {
