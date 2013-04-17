@@ -19,6 +19,7 @@ public class Hydrogen2CarbonScorer implements MolecularFormulaScorer{
     private final static NormalDistribution keggDistribution = new NormalDistribution(1.435877, Math.pow(0.4960778, 2));
     private final static NormalDistribution stretchedKeggDistribution = new NormalDistribution(1.435877, Math.pow(0.75, 2));
 
+
     public static NormalDistribution getHydrogenToCarbonDistributionFromKEGG() {
         return keggDistribution;
     }

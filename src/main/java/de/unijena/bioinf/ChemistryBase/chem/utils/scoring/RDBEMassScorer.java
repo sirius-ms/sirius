@@ -50,6 +50,6 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
     }
 
     public double score(double rdbe, double mass) {
-        return Math.log(distribution.getDensity(rdbe/mass));
+        return Math.log(distribution.getDensity(rdbe/sqrt(mass)));
     }
 }
