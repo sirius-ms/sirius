@@ -38,6 +38,6 @@ public class SpecialMoleculeScorer implements MolecularFormulaScorer {
     }
 
     public double score(double hetero2oxygen, double rdbe) {
-        return Math.log(oxygenToHeteroDistribution.getDensity(hetero2oxygen)) + Math.log(rdbe);
+        return Math.log(oxygenToHeteroDistribution.getDensity(hetero2oxygen)) + Math.log(rdbeDistribution.getDensity(rdbe));
     }
 }
