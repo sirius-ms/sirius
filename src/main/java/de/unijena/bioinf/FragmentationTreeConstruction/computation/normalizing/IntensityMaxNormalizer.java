@@ -3,11 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MSExperimentInformation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MSInput;
-import org.apache.commons.math3.stat.descriptive.rank.Max;
-import org.apache.commons.math3.stat.descriptive.summary.Sum;
-import org.apache.commons.math3.util.MathArrays;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**

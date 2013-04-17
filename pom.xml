@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FragmentationTreeConstruction</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.21-SNAPSHOT</version>
 
     <!--                                                               -->
     <developers>
@@ -57,7 +57,7 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>ChemistryBase</artifactId>
-            <version>3.1-SNAPSHOT</version>
+            <version>4-SNAPSHOT</version>
         </dependency>
 
         <!-- TODO: REMOVE FOLLOWING DEPENDENCIES BEFORE DEPLOY -->

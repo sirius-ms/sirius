@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.functional.Function;
 
 import java.util.ArrayList;
 import java.util.Arrays;

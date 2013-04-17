@@ -7,7 +7,6 @@ import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 import de.unijena.bioinf.graphUtils.tree.TreeAdapter;
 import de.unijena.bioinf.graphUtils.tree.TreeCursor;
 
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
