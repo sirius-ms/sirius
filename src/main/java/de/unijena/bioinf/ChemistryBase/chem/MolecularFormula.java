@@ -241,6 +241,12 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
         return (float)hetero / (carbon == 0 ? 0.8f : (float)carbon);
     }
 
+    public float heteroWithoutOxygenToCarbonRatio() {
+        final int carbon = numberOfCarbons();
+        final int hetero = atomCount() - (carbon + numberOfHydrogens() + numberOfOxygens());
+        return (float)hetero / (carbon == 0 ? 0.8f : (float)carbon);
+    }
+
     /**
      * @return the ratio of the non-hydrogen and non-oxygen to the number of oxygens
      */
