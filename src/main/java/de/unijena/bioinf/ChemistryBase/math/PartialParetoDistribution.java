@@ -20,16 +20,16 @@ public class PartialParetoDistribution implements DensityFunction {
         this.k = k;
         final ParetoDistribution pareto = new ParetoDistribution(k, b);
         final double opt = pareto.getDensity(b);
-        final double square = (b-a)*opt;
-        this.norm = 1d/(square+1d);
-        this.opt = opt*this.norm;
-        this.kdivbnorm = (k/b)*norm;
+        final double square = (b - a) * opt;
+        this.norm = 1d / (square + 1d);
+        this.opt = opt * this.norm;
+        this.kdivbnorm = (k / b) * norm;
     }
 
     @Override
     public double getDensity(double x) {
         if (x < b) {
-            if (x > a) return opt;
+            if (x >= a) return opt;
             else return 0d;
         } else {
             return kdivbnorm * pow(b / x, k + 1);

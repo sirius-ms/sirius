@@ -5,93 +5,58 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 
 /**
- * scores a molecular formula by its chemical reasonably. This scorer is only for compounds, not for fragments!
+ * Factory for chemical scorers
  */
-public class ChemicalCompoundScorer implements MolecularFormulaScorer{
+public final class ChemicalCompoundScorer {
 
-    private Hetero2CarbonScorer h2c;
-    private Hydrogen2CarbonScorer hy2c;
-    private RDBEMassScorer rdbem;
-    private SpecialMoleculeScorer special;
-
-    public ChemicalCompoundScorer() {
-        this(true);
-    }
-
-    public ChemicalCompoundScorer(boolean allowSpecial) {
-        this(new Hetero2CarbonScorer(), new Hydrogen2CarbonScorer(),
-                new RDBEMassScorer(), allowSpecial ? new SpecialMoleculeScorer() : null);
+    private ChemicalCompoundScorer() {
     }
 
     /**
-       Allows to define the distributions for the scorer. A value of null means: do not score this pro
-     * @param h2c
-     * @param hy2c
-     * @param rdbem
-     * @param special
+     * creates a scorer for molecular formulas of the compound. This scorer should not be used
+     * for fragments! Currently, the following scorings are used:
+     * 1. Hetero-to-Carbon ratio: Heteroatoms are all atoms which are not carbon, hydrogen or oxygen(!)
+     * 2. Some compounds have an oxygen+hetero backbone. For this compound, the SpecialMoleculeScorer is used:
+     * It scores the Oxygen-to-hetero ratio as well as the RDBE value
+     * <p/>
+     * From both scorings the maximum is used
+     * Parameters: All distributions are Uniform+Pareto-Distributions. For all x0<x<xmin the probability is uniform and
+     * maximal. For all x>xmin the probability decreases according to a pareto distribution by parameter k
+     * Hetero-to-carbon: x0=0, xmin=1, k=3
+     * Oxygen-to-hetero: x0=0, xmin=0.75, k=5
+     * RDBE: x0=0, xmin=2, k=2
+     *
+     * @param special if true, then oxygen/hetero backbones are considered in the scoring
+     * @return A MolecularFormulaScorer with default parameters
      */
-    public ChemicalCompoundScorer(Hetero2CarbonScorer h2c, Hydrogen2CarbonScorer hy2c, RDBEMassScorer rdbem, SpecialMoleculeScorer special) {
-        this.h2c = h2c;
-        this.hy2c = hy2c;
-        this.rdbem = rdbem;
-        this.special = special;
+    public MolecularFormulaScorer createDefaultCompoundScorer(boolean special) {
+        return special ? new DefaultScorer() : new ImprovedHetero2CarbonScorer();
     }
 
-    public Hetero2CarbonScorer getH2c() {
-        return h2c;
+    /**
+     * @see #createDefaultCompoundScorer(boolean)
+     */
+    public MolecularFormulaScorer createDefaultCompoundScorer() {
+        return createDefaultCompoundScorer(true);
     }
 
-    public void setH2c(Hetero2CarbonScorer h2c) {
-        this.h2c = h2c;
-    }
+    private static class DefaultScorer implements MolecularFormulaScorer {
+        private final static ImprovedHetero2CarbonScorer scorer = new ImprovedHetero2CarbonScorer();
+        private final static SpecialMoleculeScorer special = new SpecialMoleculeScorer();
 
-    public Hydrogen2CarbonScorer getHy2c() {
-        return hy2c;
-    }
-
-    public void setHy2c(Hydrogen2CarbonScorer hy2c) {
-        this.hy2c = hy2c;
-    }
-
-    public RDBEMassScorer getRdbem() {
-        return rdbem;
-    }
-
-    public void setRdbem(RDBEMassScorer rdbem) {
-        this.rdbem = rdbem;
-    }
-
-    public boolean isAllowSpecial() {
-        return special != null;
-    }
-
-    public SpecialMoleculeScorer getSpecial() {
-        return special;
-    }
-
-    public void setSpecial(SpecialMoleculeScorer special) {
-        this.special = special;
-    }
-
-    @Override
-    public double score(MolecularFormula formula) {
-        double score = 0d;
-        double xh2c = formula.hetero2CarbonRatio(),xhy2c= formula.hydrogen2CarbonRatio(),xrdbe=formula.rdbe();
-        if (h2c != null) {
-            score += h2c.score(xh2c);
+        @Override
+        public double score(MolecularFormula formula) {
+            return Math.max(scorer.score(formula), special.score(formula));
         }
-        if (hy2c != null) {
-            score += hy2c.score(xhy2c);
+
+        public static ImprovedHetero2CarbonScorer getScorer() {
+            return scorer;
         }
-        if (rdbem != null) {
-            score += rdbem.score(xrdbe, formula.getMass());
+
+        public static SpecialMoleculeScorer getSpecial() {
+            return special;
         }
-        if (special != null) score = Math.max(score, specialScoring(formula, xh2c, xhy2c, xrdbe));
-        return score;
     }
 
-    private double specialScoring(MolecularFormula f, double h2c, double hy2c, double rdbe) {
-        return special.score(f.hetero2OxygenRatio(), rdbe);
 
-    }
 }
