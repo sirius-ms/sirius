@@ -29,14 +29,14 @@ public final class ChemicalCompoundScorer {
      * @param special if true, then oxygen/hetero backbones are considered in the scoring
      * @return A MolecularFormulaScorer with default parameters
      */
-    public MolecularFormulaScorer createDefaultCompoundScorer(boolean special) {
+    public static MolecularFormulaScorer createDefaultCompoundScorer(boolean special) {
         return special ? new DefaultScorer() : new ImprovedHetero2CarbonScorer();
     }
 
     /**
      * @see #createDefaultCompoundScorer(boolean)
      */
-    public MolecularFormulaScorer createDefaultCompoundScorer() {
+    public static MolecularFormulaScorer createDefaultCompoundScorer() {
         return createDefaultCompoundScorer(true);
     }
 
