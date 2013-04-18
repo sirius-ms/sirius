@@ -2,77 +2,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
-    <artifactId>FragmentationTreeConstruction</artifactId>
+    <artifactId>FragmentationTree</artifactId>
     <version>1.21-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>FragmentationTreeConstruction</module>
+    </modules>
 
     <!--                                                               -->
     <developers>
     </developers>
 
     <dependencies>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>MassDecomposer</artifactId>
-            <version>1.21-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-primitives</groupId>
-            <artifactId>commons-primitives</artifactId>
-            <version>1.1-generics</version>
-        </dependency>
-        <dependency><groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>3.0</version></dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>FunctionalProgramming</artifactId>
-            <version>1.0</version>
-
-        </dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>GraphUtils</artifactId>
-            <version>1.0</version>
-
-        </dependency>
-        
-        <dependency>
-            <groupId>net.sf</groupId>
-            <artifactId>javailp</artifactId>
-            <version>1.2a</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>gurobi</groupId>
-            <artifactId>gurobi-linux64</artifactId>
-            <version>5.1.0</version>
-        </dependency>
-        <!--
-        <dependency>
-            <groupId>org.gnu.glpk</groupId>
-            <artifactId>glpk-java</artifactId>
-            <version>1.0.22</version>
-        </dependency>
-        -->
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>ChemistryBase</artifactId>
-            <version>4-SNAPSHOT</version>
-        </dependency>
-
-        <!-- TODO: REMOVE FOLLOWING DEPENDENCIES BEFORE DEPLOY -->
-        <dependency>
-            <groupId>org.rosuda</groupId>
-            <artifactId>Rserve</artifactId>
-            <version>0.68</version>
-        </dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>babelms</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
-
     </dependencies>
 
     <!--                                                               -->
@@ -83,13 +25,6 @@
             <url>http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html</url>
         </license>
     </licenses>
-
-    <!-- Defines the svn url of this software -->
-    <scm>
-        <url>https://bio.informatik.uni-jena.de/svnrep/trunk/software/FragmentationTreeConstruction</url>
-        <connection>scm:svn:https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/FragmentationTreeConstruction</connection>
-        <tag>HEAD</tag>
-    </scm>
 
     <!-- Where you can find the other libraries -->
     <repositories>
