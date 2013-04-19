@@ -2,7 +2,6 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ public interface Ms2Experiment {
     /**
      * @return a list of MS2 spectra belonging to this compound
      */
-    public List<MS2Spectrum> getMS2Spectra();
+    public List<Ms2Spectrum> getMs2Spectra();
 
     /**
      * Notes:
@@ -23,7 +22,7 @@ public interface Ms2Experiment {
      * ion in each ms1 spectrum. Further peaks are not allowed!
      * @return a list of MS1 spectra with the isotope pattern of this compound
      */
-    public List<Spectrum<Peak>> getMS1Spectra();
+    public List<Spectrum<Peak>> getMs1Spectra();
 
     /**
      * In practice it seems more accurate to merge all MS1 spectra into a single one and only use this for further
@@ -31,7 +30,7 @@ public interface Ms2Experiment {
      * should not be done in SIRIUS itself.
      * @return merge all ms1 spectra to single one
      */
-    public Spectrum<Peak> getMergedMS1Spectrum();
+    public Spectrum<Peak> getMergedMs1Spectrum();
 
     /**
      * @return the mass-to-charge ratio of the ion to analyze

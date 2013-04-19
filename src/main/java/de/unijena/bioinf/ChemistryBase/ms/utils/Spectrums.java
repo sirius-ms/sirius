@@ -149,6 +149,32 @@ public class Spectrums {
 		return max;
 	}
 
+    public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMinimalIntensity(S spectrum) {
+        final int n = spectrum.size();
+        double min = Double.POSITIVE_INFINITY;
+        int minIndex = 0;
+        for (int i=0; i < n; ++i) {
+            if (spectrum.getIntensityAt(i) < min) {
+                minIndex = i;
+                min = spectrum.getIntensityAt(i);
+            }
+        }
+        return minIndex;
+    }
+
+    public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMaximalIntensity(S spectrum) {
+        final int n = spectrum.size();
+        double max = Double.NEGATIVE_INFINITY;
+        int maxIndex = 0;
+        for (int i=0; i < n; ++i) {
+            if (spectrum.getIntensityAt(i) > max) {
+                maxIndex = i;
+                max = spectrum.getIntensityAt(i);
+            }
+        }
+        return maxIndex;
+    }
+
 	public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMinimalMass(S spectrum) {
 		if (spectrum instanceof OrderedSpectrum) return 0;
 		final int n = spectrum.size();
@@ -162,6 +188,19 @@ public class Spectrums {
 		}
 		return minIndex;
 	}
+    public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMaximalMass(S spectrum) {
+        if (spectrum instanceof OrderedSpectrum) return spectrum.size();
+        final int n = spectrum.size();
+        double max = Double.NEGATIVE_INFINITY;
+        int maxIndex = 0;
+        for (int i=0; i < n; ++i) {
+            if (spectrum.getMzAt(i) > max) {
+                maxIndex = i;
+                max = spectrum.getMzAt(i);
+            }
+        }
+        return maxIndex;
+    }
 	
 	public static <P extends Peak, S extends Spectrum<? extends P>> List<Peak> copyPeakList(S spectrum) {
 		final int n = spectrum.size();

@@ -50,13 +50,6 @@
       <url>http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html</url>
     </license>
   </licenses>
-  
-  <!-- Defines the svn url of this software -->
-  <scm>
-    <url>https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/ChemistryBase</url>
-    <connection>scm:svn:https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/ChemistryBase</connection>
-    <tag>HEAD</tag>
-  </scm>
 
   <!-- Where you can find the other libraries -->
   <repositories>
