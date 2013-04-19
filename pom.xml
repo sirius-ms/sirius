@@ -84,13 +84,6 @@
         </license>
     </licenses>
 
-    <!-- Defines the svn url of this software -->
-    <scm>
-        <url>https://bio.informatik.uni-jena.de/svnrep/trunk/software/FragmentationTreeConstruction</url>
-        <connection>scm:svn:https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/FragmentationTreeConstruction</connection>
-        <tag>HEAD</tag>
-    </scm>
-
     <!-- Where you can find the other libraries -->
     <repositories>
         <repository>
