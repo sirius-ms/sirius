@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.parentPeakDetection;
 
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 /**
@@ -7,20 +8,20 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  */
 public class Detection {
 
-    private final ProcessedPeak parentPeak;
+    private final Peak parentPeak;
     private final boolean synthetic;
 
-    public Detection(ProcessedPeak parentPeak, boolean synthetic) {
+    public Detection(Peak parentPeak, boolean synthetic) {
         this.parentPeak = parentPeak;
         this.synthetic = synthetic;
     }
 
-    public Detection(ProcessedPeak parentPeak) {
+    public Detection(Peak parentPeak) {
         this.parentPeak = parentPeak;
         this.synthetic = true;
     }
 
-    public ProcessedPeak getParentPeak() {
+    public Peak getParentPeak() {
         return parentPeak;
     }
 
