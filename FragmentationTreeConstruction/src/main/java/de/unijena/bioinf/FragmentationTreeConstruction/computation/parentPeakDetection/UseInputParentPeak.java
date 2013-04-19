@@ -2,6 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.parentPeakDe
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Spectrum;
@@ -95,4 +96,11 @@ public class UseInputParentPeak implements ParentPeakDetector {
             return new Detection(ppp);
         }
     }
+
+    @Override
+    public Detection detectParentPeak(Ms2Experiment experiment) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public Detection
 }

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.parentPeakDetection;
 
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -10,6 +11,6 @@ import java.util.List;
  */
 public interface ParentPeakDetector {
 
-    public Detection detectParentPeak(ProcessedInput input, List<ProcessedPeak> peaks);
+    public Detection detectParentPeak(Ms2Experiment experiment);
 
 }
