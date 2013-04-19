@@ -7,7 +7,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import java.util.List;
 
 /**
- * @author Kai Dührkop
+ * An algorithm which detects a parent peak in the given MS2 experiment.
  */
 public interface ParentPeakDetector {
 

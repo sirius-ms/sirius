@@ -48,7 +48,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         final int[] minEnergy = new int[n], maxEnergy = new int[n];
         for (int i=0; i < input.getMergedPeaks().size(); ++i) assert input.getMergedPeaks().get(i).getIndex() == i;
         Arrays.fill(minEnergy, -1); Arrays.fill(maxEnergy, -1);
-        final MS2Spectrum[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new MS2Spectrum[0]);
+        final Ms2Spectrum[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new Ms2Spectrum[0]);
         final List<ProcessedPeak>[] peaksPerSpectra = new List[spectra.length];
         for (int i=0; i < peaksPerSpectra.length; ++i) {
             final int k = i;
@@ -62,11 +62,11 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
                }
            });
         }
-        Arrays.sort(spectra, MS2Spectrum.getEnergyComparator());
+        Arrays.sort(spectra, Ms2Spectrum.getEnergyComparator());
         final double [] energies = new double[spectra.length];
         int energySize = 0;
         for (int i=0; i < spectra.length; ++i) {
-            final MS2Spectrum s = spectra[i];
+            final Ms2Spectrum s = spectra[i];
             final double energy = Math.abs(s.getCollisionEnergy());
             if (energySize==0 || energies[energySize-1] < energy) energies[energySize++] = energy;
             for (ProcessedPeak peak : peaksPerSpectra[i]) {
@@ -204,7 +204,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         for (int i = 0; i < input.getMergedPeaks().size(); ++i) assert input.getMergedPeaks().get(i).getIndex() == i;
         Arrays.fill(minEnergy, -1);
         Arrays.fill(maxEnergy, -1);
-        final MS2Spectrum[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new MS2Spectrum[0]);
+        final Ms2Spectrum[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new Ms2Spectrum[0]);
         final List<ProcessedPeak>[] peaksPerSpectra = new List[spectra.length];
         for (int i = 0; i < peaksPerSpectra.length; ++i) {
             final int k = i;
@@ -218,11 +218,11 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
                 }
             });
         }
-        Arrays.sort(spectra, MS2Spectrum.getEnergyComparator());
+        Arrays.sort(spectra, Ms2Spectrum.getEnergyComparator());
         final double[] energies = new double[spectra.length];
         int energySize = 0;
         for (int i = 0; i < spectra.length; ++i) {
-            final MS2Spectrum s = spectra[i];
+            final Ms2Spectrum s = spectra[i];
             final CollisionEnergy energy = s.getCollisionEnergy();
             if (energySize == 0 || energies[energySize - 1] < energy) energies[energySize++] = energy;
             for (ProcessedPeak peak : peaksPerSpectra[i]) {
