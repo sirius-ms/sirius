@@ -3,7 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 /**
  * Minimal interface for MS2 data
  */
-public interface MS2Spectrum extends Spectrum<Peak> {
+public interface Ms2Spectrum extends Spectrum<Peak> {
 
     /**
      * @return the mass-to-charge ratio of the precursor ion

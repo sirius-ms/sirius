@@ -78,6 +78,14 @@ public class ChemicalAlphabet {
         this(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S"));
     }
 
+    public ChemicalAlphabet(ChemicalAlphabet alpha) {
+        this.allowedElements = alpha.allowedElements;
+        this.upperBoundOfElements = alpha.upperBoundOfElements.clone();
+        this.selection = alpha.selection;
+        this.orderOfElements = alpha.orderOfElements;
+        this.maxLen = alpha.maxLen;
+    }
+
     /**
      * Construct a chemical alphabet with the given selection and elements.
      * Remark: The selection is not important for the function of this class. But you can improve the performance
@@ -169,29 +177,30 @@ public class ChemicalAlphabet {
 		return allowedElements[i].getValence();
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Arrays.hashCode(allowedElements);
-		return result;
-	}
+    @Override
+    public ChemicalAlphabet clone() {
+        return new ChemicalAlphabet(this);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ChemicalAlphabet other = (ChemicalAlphabet) obj;
-		if (!Arrays.equals(allowedElements, other.allowedElements))
-			return false;
-		if (!(selection == other.selection)) return false;
-		return true;
-	}
-	
-	
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        ChemicalAlphabet that = (ChemicalAlphabet) o;
+
+        if (!Arrays.equals(allowedElements, that.allowedElements)) return false;
+        if (!selection.equals(that.selection)) return false;
+        if (!Arrays.equals(upperBoundOfElements, that.upperBoundOfElements)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = selection.hashCode();
+        result = 31 * result + Arrays.hashCode(allowedElements);
+        result = 31 * result + Arrays.hashCode(upperBoundOfElements);
+        return result;
+    }
 }
