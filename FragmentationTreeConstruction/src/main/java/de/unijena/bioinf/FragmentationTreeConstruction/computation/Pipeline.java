@@ -248,10 +248,10 @@ public class Pipeline {
         // remove noise
         final List<ArrayList<MS2Peak>> peaksPerSpectrum;
         {
-            final List<MS2Spectrum> spectra = input.getMs2Spectra();
-            peaksPerSpectrum = ListOperations.singleton().map(spectra, new Function<MS2Spectrum, ArrayList<MS2Peak>>() {
+            final List<Ms2SpectrumImpl> spectra = input.getMs2Spectra();
+            peaksPerSpectrum = ListOperations.singleton().map(spectra, new Function<Ms2SpectrumImpl, ArrayList<MS2Peak>>() {
                 @Override
-                public ArrayList<MS2Peak> apply(MS2Spectrum arg) {
+                public ArrayList<MS2Peak> apply(Ms2SpectrumImpl arg) {
                     return new ArrayList<MS2Peak>(arg.getPeaks());
                 }
             });

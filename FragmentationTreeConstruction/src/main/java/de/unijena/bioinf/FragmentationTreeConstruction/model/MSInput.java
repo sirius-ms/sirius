@@ -15,7 +15,7 @@ import java.util.List;
 public class MSInput {
 
     private Spectrum<Peak> ms1Spectrum;
-    private final List<MS2Spectrum> ms2Spectra;
+    private final List<Ms2SpectrumImpl> ms2Spectra;
     private String name;
     private MolecularFormula formula;
     private double formulaChargedMass;
@@ -27,7 +27,7 @@ public class MSInput {
     public MSInput(String name) {
         this.name = name;
         this.optionalProperties = new HashMap<String, String>();
-        this.ms2Spectra = new ArrayList<MS2Spectrum>();
+        this.ms2Spectra = new ArrayList<Ms2SpectrumImpl>();
     }
 
     public double getModificationMass() {
@@ -54,7 +54,7 @@ public class MSInput {
         this.ms1Spectrum = ms1Spectrum;
     }
 
-    public List<MS2Spectrum> getMs2Spectra() {
+    public List<Ms2SpectrumImpl> getMs2Spectra() {
         return ms2Spectra;
     }
 

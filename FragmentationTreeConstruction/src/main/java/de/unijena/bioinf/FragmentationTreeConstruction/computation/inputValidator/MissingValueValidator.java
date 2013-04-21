@@ -5,8 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MSInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2InputImpl;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProfileImpl;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ public class MissingValueValidator implements InputValidator {
 
     @Override
     public Ms2Experiment validate(Ms2Experiment originalInput,Warning warn, boolean repair) throws InvalidException {
-        final Ms2InputImpl input = new Ms2InputImpl(originalInput);
+        final Ms2ExperimentImpl input = new Ms2ExperimentImpl(originalInput);
         if (input.getMs2Spectra() == null || input.getMs2Spectra().isEmpty()) throw new InvalidException("Miss MS2 spectra");
         if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
         removeEmptySpectra(warn, input);
@@ -40,7 +39,7 @@ public class MissingValueValidator implements InputValidator {
         return input;
     }
 
-    protected void checkMeasurementProfile(Warning warn, boolean repair, Ms2InputImpl input) {
+    protected void checkMeasurementProfile(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getMeasurementProfile() == null) throw new InvalidException("Measurement profile is missing");
         final ProfileImpl profile = new ProfileImpl(input.getMeasurementProfile());
         if (profile.getChemicalAlphabet() == null) {
@@ -61,7 +60,7 @@ public class MissingValueValidator implements InputValidator {
         input.setMeasurementProfile(profile);
     }
 
-    protected void checkNeutralMass(Warning warn, boolean repair, Ms2InputImpl input) {
+    protected void checkNeutralMass(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getMoleculeNeutralMass() == 0 || !validDouble(input.getMoleculeNeutralMass(), false)) {
             throwOrWarn(warn, repair, "Neutral mass is missing");
             if (input.getMolecularFormula() != null) {
@@ -72,7 +71,7 @@ public class MissingValueValidator implements InputValidator {
         }
     }
 
-    protected void removeEmptySpectra(Warning warn, Ms2InputImpl input) {
+    protected void removeEmptySpectra(Warning warn, Ms2ExperimentImpl input) {
         final Iterator<Ms2Spectrum> iter = input.getMs2Spectra().iterator();
         while (iter.hasNext()) {
             final Ms2Spectrum spec = iter.next();
@@ -83,7 +82,7 @@ public class MissingValueValidator implements InputValidator {
         }
     }
 
-    protected void checkIonization(Warning warn, boolean repair, Ms2InputImpl input) {
+    protected void checkIonization(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getIonization() == null) {
             throwOrWarn(warn, repair, "No ionization is given");
             if (validDouble(input.getIonMass(), false) && validDouble(input.getMoleculeNeutralMass(), false) ) {
@@ -95,7 +94,7 @@ public class MissingValueValidator implements InputValidator {
         }
     }
 
-    protected void checkMergedMs1(Warning warn, boolean repair, Ms2InputImpl input) {
+    protected void checkMergedMs1(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getMergedMs1Spectrum() == null && !input.getMs1Spectra().isEmpty()) {
             warn.warn("No merged spectrum is given");
             if (repair) {
@@ -105,7 +104,7 @@ public class MissingValueValidator implements InputValidator {
         }
     }
 
-    protected void checkIonMass(Warning warn, boolean repair, Ms2InputImpl input) {
+    protected void checkIonMass(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (!validDouble(input.getIonMass(), false)) {
             throwOrWarn(warn, repair, "No ion mass is given");
             if (input.getMolecularFormula() != null) {

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakPairScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.graph.format.ScoreName;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.functional.Predicate;
@@ -108,7 +107,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores) {
-        final MS2Spectrum[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new MS2Spectrum[0]);
+        final Ms2SpectrumImpl[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new Ms2SpectrumImpl[0]);
         // map the different collision energies to indizes
         // for example: you have the energies [10, 20, 30, 40, 60] and you map each
         // energy to an index: 10 -> 0, 20 -> 1, 30 -> 2, 40 -> 3, 60 -> 4.
@@ -117,7 +116,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
             final ArrayDoubleList energyList = new ArrayDoubleList(spectra.length);
             final double[] points = new double[spectra.length*2];
             int k=0;
-            for (MS2Spectrum ms : spectra) {
+            for (Ms2SpectrumImpl ms : spectra) {
                 final CollisionEnergy e = ms.getCollisionEnergy();
                 points[k++] = e.getMinEnergy();
                 points[k++] = e.getMaxEnergy();

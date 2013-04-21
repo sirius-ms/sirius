@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
 import java.util.Comparator;
@@ -9,9 +10,9 @@ import java.util.Comparator;
  */
 public class MS2Peak extends Peak {
 
-    private final MS2Spectrum spectrum;
+    private final Ms2Spectrum spectrum;
 
-    public MS2Peak(MS2Spectrum spectrum, double mz, double intensity) {
+    public MS2Peak(Ms2Spectrum spectrum, double mz, double intensity) {
         super(mz, intensity);
         this.spectrum = spectrum;
     }
@@ -20,7 +21,7 @@ public class MS2Peak extends Peak {
         this(p.spectrum, p.mass, p.intensity);
     }
 
-    public MS2Spectrum getSpectrum() {
+    public Ms2Spectrum getSpectrum() {
         return spectrum;
     }
 

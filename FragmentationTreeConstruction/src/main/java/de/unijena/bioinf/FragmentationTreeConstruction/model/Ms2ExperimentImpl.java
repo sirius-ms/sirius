@@ -3,8 +3,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.ArrayWrapperSpectrum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +10,7 @@ import java.util.List;
 /**
  * Simple mutable implementation of Ms2Experiment
  */
-public class Ms2InputImpl implements Ms2Experiment {
+public class Ms2ExperimentImpl implements Ms2Experiment {
 
     private List<Ms2Spectrum> ms2Spectra;
     private List<Spectrum<Peak>> ms1Spectra;
@@ -23,7 +21,7 @@ public class Ms2InputImpl implements Ms2Experiment {
     private Ionization ionization;
     private boolean preprocessed;
 
-    public Ms2InputImpl(Ms2Experiment exp) {
+    public Ms2ExperimentImpl(Ms2Experiment exp) {
         this.ms2Spectra = new ArrayList<Ms2Spectrum>(safeArrayListCreation(exp.getMs2Spectra()));
         this.ms1Spectra = new ArrayList<Spectrum<Peak>>(safeArrayListCreation(exp.getMs1Spectra()));
         this.mergedMs1Spectrum = exp.getMergedMs1Spectrum();
@@ -35,7 +33,7 @@ public class Ms2InputImpl implements Ms2Experiment {
         this.preprocessed = exp.isPreprocessed();
     }
 
-    public Ms2InputImpl() {
+    public Ms2ExperimentImpl() {
 
     }
 

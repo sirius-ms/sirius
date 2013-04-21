@@ -7,8 +7,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Spectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MSInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -44,7 +44,7 @@ public class MSXReader {
         private final MSInput input;
         private ParserState state;
         private final PeriodicTable table;
-        private MS2Spectrum currentSpectrum;
+        private Ms2SpectrumImpl currentSpectrum;
 
         private MSXHandler(String name, PeriodicTable table) {
             this.input = new MSInput(name);
@@ -127,7 +127,7 @@ public class MSXReader {
             final int level =(cE != null && collisionEnergy == 0d && !cE.equals("?")) ? 1 : Integer.parseInt(expectAttribute(attributes, "MSLevel"));
             final String pM = getAttribute(attributes, "ParentMass");
             final double parentMass = (pM == null) ? 0d : Double.parseDouble(pM);
-            currentSpectrum = new MS2Spectrum(new CollisionEnergy(collisionEnergy, collisionEnergy), level, parentMass);
+            currentSpectrum = new Ms2SpectrumImpl(new CollisionEnergy(collisionEnergy, collisionEnergy), level, parentMass);
             this.state = SPECTRUM;
         }
 
