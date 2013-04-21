@@ -17,17 +17,17 @@ public class Spectrums {
 	
 	public final static double DELTA = 1e-8;
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> 
+	public static <P extends Peak, S extends Spectrum<P>>
 	SimpleSpectrum neutralMassSpectrum(final S spectrum, final Ionization ionization) {
-		return map(spectrum, new Transformation<Peak>() {
+		return map(spectrum, new Transformation<P,Peak>() {
 			@Override
-			public Peak transform(Peak input) {
+			public Peak transform(P input) {
 				return new Peak(ionization.subtractFromMass(input.getMass()), input.getIntensity());
 			}
 		});
 	}
 
-    public static <P extends Peak, S extends Spectrum<? extends P>>
+    public static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum mergeSpectra(final S... spectra) {
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
         for (S s : spectra) {
@@ -38,7 +38,7 @@ public class Spectrums {
         return new SimpleSpectrum(ms);
     }
 
-    public static <P extends Peak, S extends MutableSpectrum<? extends P>, P2 extends Peak, S2 extends Spectrum<? extends P2>>
+    public static <P extends Peak, S extends MutableSpectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     void addOffset(S s, double mzOffset, double intensityOffset) {
         for (int i=0; i < s.size(); ++i) {
             s.setMzAt(i, s.getMzAt(i)+mzOffset);
@@ -46,7 +46,15 @@ public class Spectrums {
         }
     }
 
-	public static <P extends Peak, S extends Spectrum<? extends P>, P2 extends Peak, S2 extends Spectrum<? extends P2>> 
+    public static <P extends Peak, S extends MutableSpectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
+    void scale(S s, double mzScale, double intensityScale) {
+        for (int i=0; i < s.size(); ++i) {
+            s.setMzAt(i, s.getMzAt(i)*mzScale);
+            s.setIntensityAt(i, s.getIntensityAt(i)*intensityScale);
+        }
+    }
+
+	public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
 	boolean haveEqualPeaks(S a, S2 b) {
 		if (a == b) return true;
 		final int n = a.size();
@@ -59,7 +67,7 @@ public class Spectrums {
 		return true;
 	}
 	
-	public static <P extends Peak, S extends MutableSpectrum<? extends P>> 
+	public static <P extends Peak, S extends MutableSpectrum<P>>
 	S subtractAdductsFromSpectrum(S spectrum, Ionization ionization) {
 		final int n = spectrum.size();
 		for (int i=0; i < n; ++i) {
@@ -68,8 +76,8 @@ public class Spectrums {
 		return spectrum;
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> 
-	SimpleSpectrum map(S spectrum, Transformation<P> t) {
+	public static <P1 extends Peak, S extends Spectrum<P1>>
+	SimpleSpectrum map(S spectrum, Transformation<P1,Peak> t) {
 		final int n = spectrum.size();
 		final double[] mzs = new double[n];
 		final double[] intensities = new double[n];
@@ -82,7 +90,7 @@ public class Spectrums {
 	}
 	
 	public static <P extends Peak, S extends MutableSpectrum<P>> 
-	S transform(S spectrum, Transformation<P> t) {
+	S transform(S spectrum, Transformation<P,P> t) {
 		final int n = spectrum.size();
 		for (int i=0; i < n; ++i) {
 			spectrum.setPeakAt(i, t.transform(spectrum.getPeakAt(i)));
@@ -90,8 +98,8 @@ public class Spectrums {
 		return spectrum;
 	}
 	
-	public static interface Transformation<P extends Peak> {
-		public P transform(P input);
+	public static interface Transformation<P1 extends Peak, P2 extends Peak> {
+		public P2 transform(P1 input);
 	}
 	
 	public static SimpleSpectrum from(Collection<Peak> peaks) {
@@ -123,7 +131,7 @@ public class Spectrums {
 		return new SimpleSpectrum(mzsL.toArray(), intensitiesL.toArray());
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> List<P> extractPeakList(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> List<P> extractPeakList(S spectrum) {
 		final int n = spectrum.size();
 		final ArrayList<P> peaks = new ArrayList<P>(n);
 		for (int i=0; i < n; ++i) {
@@ -132,7 +140,7 @@ public class Spectrums {
 		return peaks;
 	}
 
-	public static <P extends Peak, S extends Spectrum<? extends P>> double getMinimalIntensity(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> double getMinimalIntensity(S spectrum) {
 		final int n = spectrum.size();
 		double min = Double.MAX_VALUE;
 		for (int i=0; i < n; ++i) {
@@ -140,7 +148,7 @@ public class Spectrums {
 		}
 		return min;
 	}
-	public static <P extends Peak, S extends Spectrum<? extends P>> double getMaximalIntensity(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> double getMaximalIntensity(S spectrum) {
 		final int n = spectrum.size();
 		double max = 0d;
 		for (int i=0; i < n; ++i) {
@@ -149,7 +157,7 @@ public class Spectrums {
 		return max;
 	}
 
-    public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMinimalIntensity(S spectrum) {
+    public static <P extends Peak, S extends Spectrum<P>> int getIndexOfPeakWithMinimalIntensity(S spectrum) {
         final int n = spectrum.size();
         double min = Double.POSITIVE_INFINITY;
         int minIndex = 0;
@@ -162,7 +170,7 @@ public class Spectrums {
         return minIndex;
     }
 
-    public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMaximalIntensity(S spectrum) {
+    public static <P extends Peak, S extends Spectrum<P>> int getIndexOfPeakWithMaximalIntensity(S spectrum) {
         final int n = spectrum.size();
         double max = Double.NEGATIVE_INFINITY;
         int maxIndex = 0;
@@ -175,7 +183,7 @@ public class Spectrums {
         return maxIndex;
     }
 
-	public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMinimalMass(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> int getIndexOfPeakWithMinimalMass(S spectrum) {
 		if (spectrum instanceof OrderedSpectrum) return 0;
 		final int n = spectrum.size();
 		double min = Double.POSITIVE_INFINITY;
@@ -188,7 +196,7 @@ public class Spectrums {
 		}
 		return minIndex;
 	}
-    public static <P extends Peak, S extends Spectrum<? extends P>> int getIndexOfPeakWithMaximalMass(S spectrum) {
+    public static <P extends Peak, S extends Spectrum<P>> int getIndexOfPeakWithMaximalMass(S spectrum) {
         if (spectrum instanceof OrderedSpectrum) return spectrum.size();
         final int n = spectrum.size();
         double max = Double.NEGATIVE_INFINITY;
@@ -202,7 +210,7 @@ public class Spectrums {
         return maxIndex;
     }
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> List<Peak> copyPeakList(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> List<Peak> copyPeakList(S spectrum) {
 		final int n = spectrum.size();
 		final ArrayList<Peak> peaks = new ArrayList<Peak>(n);
 		for (int i=0; i < n; ++i) {
@@ -211,7 +219,7 @@ public class Spectrums {
 		return peaks;
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> double[] copyIntensities(S spectrum, double[] buffer, int offset) {
+	public static <P extends Peak, S extends Spectrum<P>> double[] copyIntensities(S spectrum, double[] buffer, int offset) {
 		final int n = spectrum.size();
         if (spectrum instanceof BasicSpectrum) {
             System.arraycopy(((BasicSpectrum) spectrum).intensities, 0, buffer, offset, n);
@@ -223,15 +231,15 @@ public class Spectrums {
 		return buffer;
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> double[] copyIntensities(S spectrum, double[] buffer) {
+	public static <P extends Peak, S extends Spectrum<P>> double[] copyIntensities(S spectrum, double[] buffer) {
 		return copyIntensities(spectrum, buffer, 0);
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> double[] copyIntensities(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> double[] copyIntensities(S spectrum) {
 		return copyIntensities(spectrum, new double[spectrum.size()], 0);
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> double[] copyMasses(S spectrum, double[] buffer, int offset) {
+	public static <P extends Peak, S extends Spectrum<P>> double[] copyMasses(S spectrum, double[] buffer, int offset) {
         final int n = spectrum.size();
         if (spectrum instanceof BasicSpectrum) {
             System.arraycopy(((BasicSpectrum) spectrum).masses, 0, buffer, offset, n);
@@ -243,29 +251,29 @@ public class Spectrums {
 		return buffer;
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> double[] copyMasses(S spectrum, double[] buffer) {
+	public static <P extends Peak, S extends Spectrum<P>> double[] copyMasses(S spectrum, double[] buffer) {
 		return copyMasses(spectrum, buffer, 0);
 	}
 	
-	public static <P extends Peak, S extends Spectrum<? extends P>> double[] copyMasses(S spectrum) {
+	public static <P extends Peak, S extends Spectrum<P>> double[] copyMasses(S spectrum) {
 		return copyMasses(spectrum, new double[spectrum.size()], 0);
 	}
 	
 	
-	public static <P extends Peak, S extends MutableSpectrum<? extends P>> void normalize(S spectrum, Normalization norm) {
+	public static <P extends Peak, S extends MutableSpectrum<P>> void normalize(S spectrum, Normalization norm) {
 		switch (norm.getMode()) {
 		case MAX: normalizeToMax(spectrum, norm.getBase()); return;
 		case SUM: normalizeToSum(spectrum, norm.getBase()); return;
 		}
 	}
 
-    public static <P extends Peak, S extends Spectrum<? extends P>> SimpleSpectrum getNormalizedSpectrum(S spectrum, Normalization norm) {
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum getNormalizedSpectrum(S spectrum, Normalization norm) {
         final SimpleMutableSpectrum s = new SimpleMutableSpectrum(spectrum);
         normalize(s, norm);
         return new SimpleSpectrum(s);
     }
 	
-	public static <P extends Peak, S extends MutableSpectrum<? extends P>> void normalizeToMax(S spectrum, double norm) {
+	public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeToMax(S spectrum, double norm) {
 		final int n = spectrum.size();
 		double maxIntensity = 0d;
 		for (int i=0; i < n; ++i) {
@@ -280,7 +288,7 @@ public class Spectrums {
 		}
 	}
 	
-	public static <P extends Peak, S extends MutableSpectrum<? extends P>> void normalizeToSum(S spectrum, double norm) {
+	public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeToSum(S spectrum, double norm) {
 		final int n = spectrum.size();
 		double sumIntensity = 0d;
 		for (int i=0; i < n; ++i) {
@@ -302,7 +310,7 @@ public class Spectrums {
 	 * @return negative number if peak is not contained in the spectrum, otherwise index of the peak in
 	 * 			the spectrum.
 	 */
-	public static <S extends Spectrum<? extends P>, P extends Peak> int indexOfPeak(S spectrum, P peak) {
+	public static <S extends Spectrum<P>, P extends Peak> int indexOfPeak(S spectrum, P peak) {
 		final int pos = (spectrum instanceof OrderedSpectrum) 	? binarySearch(spectrum, peak.getMass())
 																: linearSearch(spectrum, peak.getMass());
 		if (pos < 0) return -1;
@@ -320,12 +328,12 @@ public class Spectrums {
 	 * @return negative number if peak is not contained in the spectrum, otherwise index of the peak in
 	 * 			the spectrum.
 	 */
-	public static <S extends Spectrum<? extends P>, P extends Peak> int search(S spectrum, double mz, Deviation d) {
+	public static <S extends Spectrum<P>, P extends Peak> int search(S spectrum, double mz, Deviation d) {
 		return (spectrum instanceof OrderedSpectrum) 	? binarySearch(spectrum, mz, d)
 														: linearSearch(spectrum, mz, d);
 	}
 	
-	private static <S extends Spectrum<? extends P>, P extends Peak> int linearSearch(S spectrum, double mz) {
+	private static <S extends Spectrum<P>, P extends Peak> int linearSearch(S spectrum, double mz) {
 		double minDiff = Double.POSITIVE_INFINITY;
 		int bestPos = -1;
 		for (int i=0; i < spectrum.size(); ++i) {
@@ -339,7 +347,7 @@ public class Spectrums {
 	}
 	
 	
-	private static <S extends Spectrum<? extends P>, P extends Peak> int linearSearch(S spectrum, double mz, Deviation d) {
+	private static <S extends Spectrum<P>, P extends Peak> int linearSearch(S spectrum, double mz, Deviation d) {
 		final int bestPos = linearSearch(spectrum, mz);
 		if (bestPos >= 0 && d.inErrorWindow(mz, spectrum.getMzAt(bestPos))) return bestPos;
 		else return -1;
@@ -357,7 +365,7 @@ public class Spectrums {
 	 * 	than the key, or toIndex if all elements in the range are less than the specified key. 
 	 * 	Note that this guarantees that the return value will be >= 0 if and only if the key is found.
 	 */
-	public static <S extends Spectrum<? extends P>, P extends Peak> int binarySearch(S spectrum, double mz, Deviation d) {
+	public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz, Deviation d) {
 		int pos = binarySearch(spectrum, mz);
 		if (pos >= 0) return pos;
 		final int realPos = -pos;
@@ -373,7 +381,7 @@ public class Spectrums {
 	 * Search for an exact mz value.
 	 * @see Spectrums#binarySearch(Spectrum, double, Deviation)
 	 */
-	public static <S extends Spectrum<? extends P>, P extends Peak> int binarySearch(S spectrum, double mz) {
+	public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz) {
 		if (spectrum.size() > 0) {
 			int low = 0;
 			int high = spectrum.size()-1;
@@ -396,7 +404,7 @@ public class Spectrums {
 	 * Use quicksort to sort a spectrum by its masses in ascending order
 	 * @param spectrum
 	 */
-	public static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	public static <T extends Peak, S extends MutableSpectrum<T>>
 	void sortSpectrumByMass(S spectrum) {
 		__sortSpectrum__(spectrum, new PeakComparator<T, S>() {
 			@Override
@@ -410,7 +418,7 @@ public class Spectrums {
 	 * Use quicksort to sort a spectrum by its masses in descending order
 	 * @param spectrum
 	 */
-	public static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	public static <T extends Peak, S extends MutableSpectrum<T>>
 	void sortSpectrumByDescendingMass(S spectrum) {
 		__sortSpectrum__(spectrum, new PeakComparator<T, S>() {
 			@Override
@@ -424,7 +432,7 @@ public class Spectrums {
 	 * Use quicksort to sort a spectrum by its intensities in ascending order
 	 * @param spectrum
 	 */
-	public static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	public static <T extends Peak, S extends MutableSpectrum<T>>
 	void sortSpectrumByIntensity(S spectrum) {
 		__sortSpectrum__(spectrum, new PeakComparator<T, S>() {
 			@Override
@@ -438,7 +446,7 @@ public class Spectrums {
 	 * Use quicksort to sort a spectrum by its intensities in descending order
 	 * @param spectrum
 	 */
-	public static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	public static <T extends Peak, S extends MutableSpectrum<T>>
 	void sortSpectrumByDescendingIntensity(S spectrum) {
 		__sortSpectrum__(spectrum, new PeakComparator<T, S>() {
 			@Override
@@ -454,11 +462,11 @@ public class Spectrums {
 	 * 
 	 * ******************************************************************************************* */
 	
-	private static interface PeakComparator<P extends Peak, S extends Spectrum<? extends P>> {
+	private static interface PeakComparator<P extends Peak, S extends Spectrum<P>> {
 		int compare(S left, S right, int i, int j);
 	}
 	
-	private static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	private static <T extends Peak, S extends MutableSpectrum<T>>
 	void __sortSpectrum__(S spectrum, PeakComparator<T,S> comp) {
 		final int n = spectrum.size();
 		// Insertion sort on smallest arrays
@@ -476,7 +484,7 @@ public class Spectrums {
 		}
 	}
 	
-	private static <T extends Peak> void __swap__(MutableSpectrum<? extends T> spectrum, int index1, int index2) {
+	private static <T extends Peak> void __swap__(MutableSpectrum<T> spectrum, int index1, int index2) {
 		final double mz = spectrum.getMzAt(index1);
 		final double in = spectrum.getIntensityAt(index1);
 		spectrum.setMzAt(index1, spectrum.getMzAt(index2));
@@ -491,7 +499,7 @@ public class Spectrums {
 	 * @param low
 	 * @param high
 	 */
-	private static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	private static <T extends Peak, S extends MutableSpectrum<T>>
 	void __quickSort__(S s, PeakComparator<T, S> comp, int low, int high) {
 		if (low < high) {
 			int pivot = low+(high-low)/2;
@@ -509,7 +517,7 @@ public class Spectrums {
 	 * @param pivot
 	 * @return
 	 */
-	private static <T extends Peak, S extends MutableSpectrum<? extends T>> 
+	private static <T extends Peak, S extends MutableSpectrum<T>>
     int __partition__(S s, PeakComparator<T, S> comp, int low, int high, int pivot) {
         __swap__(s, high, pivot);
         int store = low;
