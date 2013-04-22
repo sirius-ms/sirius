@@ -4,12 +4,10 @@ import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.Cli;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.MassDecomposer.*;
+import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
 import java.io.PrintStream;
 import java.text.DecimalFormat;
@@ -18,7 +16,7 @@ import java.util.*;
 
 public class Main {
 
-    public static String VERSION = "DECOMP 1.1";
+    public static String VERSION = "DECOMP 1.2";
 
     public static void main(String[] args) {
         final Cli<Options> cli = CliFactory.createCli(Options.class);
@@ -84,8 +82,7 @@ public class Main {
         }
         final Deviation dev = new Deviation(options.getPPM(), options.getAbsoluteDeviation(), Math.pow(10, -options.getPrecision()));
         final ChemicalAlphabet alphabet = options.getAlphabet().getAlphabet();
-        final MassDecomposer<Element> decomposer = new MassDecomposer<Element>(dev.getPrecision(), dev.getPpm(),
-                dev.getAbsolute(),alphabet);
+        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(dev.getPrecision(), alphabet);
 
         Map<Element, Interval> boundary = options.getAlphabet().getBoundary();
         final String parentFormula = options.getParentFormula();
@@ -107,9 +104,8 @@ public class Main {
                     dev.absoluteFor(mass), options.getAlphabet().getBoundary());
         }
         */
-        decomposer.setValidator(validator);
 
-        final List<int[]> compomers = decomposer.decompose(mass, boundary);
+        final List<int[]> compomers = decomposer.decompose(mass, dev, boundary, validator);
         final List<MolecularFormula> formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
