@@ -1,33 +1,28 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
 import java.util.Collections;
 import java.util.List;
 
 public class ProcessedInput {
 
-    private final MSExperimentInformation experimentInformation;
-    private final MSInput originalInput;
+    private final Ms2Experiment experiment;
     private final List<ProcessedPeak> mergedPeaks;
     private final ProcessedPeak parentPeak;
     private final List<ScoredMolecularFormula> parentMassDecompositions;
 
-    public ProcessedInput(MSExperimentInformation experimentInformation, MSInput originalInput,
+    public ProcessedInput(Ms2Experiment experiment,
                           List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak, List<ScoredMolecularFormula> parentMassDecompositions) {
-        this.experimentInformation = experimentInformation;
-        this.originalInput = originalInput;
+        this.experiment = experiment;
         this.mergedPeaks = mergedPeaks;
         this.parentPeak = parentPeak;
         this.parentMassDecompositions = parentMassDecompositions;
     }
 
-    public MSExperimentInformation getExperimentInformation() {
-        return experimentInformation;
-    }
-
-    public MSInput getOriginalInput() {
-        return originalInput;
+    public Ms2Experiment getExperimentInformation() {
+        return experiment;
     }
 
     public List<ProcessedPeak> getMergedPeaks() {

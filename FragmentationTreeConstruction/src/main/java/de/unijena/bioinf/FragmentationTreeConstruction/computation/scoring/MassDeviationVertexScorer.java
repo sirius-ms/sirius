@@ -3,6 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
@@ -16,14 +17,16 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     private final static double sqrt2 = Math.sqrt(2);
     private final double massPenalty;
     private final double sigmaquot;
+    private final boolean scoreRoot;
 
-    public MassDeviationVertexScorer() {
-        this(3);
+    public MassDeviationVertexScorer(boolean scoreRoot) {
+        this(3, scoreRoot);
     }
 
-    public MassDeviationVertexScorer(double massPenalty) {
+    public MassDeviationVertexScorer(double massPenalty, boolean scoreRoot) {
         this.massPenalty = massPenalty;
         this.sigmaquot = 1d/massPenalty;
+        this.scoreRoot = scoreRoot;
     }
 
     public double getMassPenalty() {
@@ -37,9 +40,12 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
 
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object _) {
+        if (peak.getOriginalPeaks().isEmpty()) return 0d; // don't score synthetic peaks
         final double theoreticalMass = formula.getMass();
         final double realMass = peak.getUnmodifiedMass();
-        final double sd = sigmaquot * input.getExperimentInformation().getMassError().absoluteFor(theoreticalMass);
+        final MeasurementProfile profile = input.getExperimentInformation().getMeasurementProfile();
+        final Deviation dev = scoreRoot ? profile.getExpectedIonMassDeviation() : profile.getExpectedFragmentMassDeviation();
+        final double sd = sigmaquot * dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
     }
 }
