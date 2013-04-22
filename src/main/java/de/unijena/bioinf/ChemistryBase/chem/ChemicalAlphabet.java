@@ -26,7 +26,6 @@ public class ChemicalAlphabet {
 	
 	private final TableSelection selection;
 	private final Element[] allowedElements;
-    private final int[] upperBoundOfElements;
 	private final int[] orderOfElements;
 	private final int maxLen;
 
@@ -80,7 +79,6 @@ public class ChemicalAlphabet {
 
     public ChemicalAlphabet(ChemicalAlphabet alpha) {
         this.allowedElements = alpha.allowedElements;
-        this.upperBoundOfElements = alpha.upperBoundOfElements.clone();
         this.selection = alpha.selection;
         this.orderOfElements = alpha.orderOfElements;
         this.maxLen = alpha.maxLen;
@@ -106,7 +104,6 @@ public class ChemicalAlphabet {
 			maxId = Math.max(maxId, orderOfElements[i]);
 		}
 		this.maxLen = maxId+1;
-        this.upperBoundOfElements = new int[elements.length];
 	}
 
     /*
@@ -121,15 +118,6 @@ public class ChemicalAlphabet {
     */
     public ChemicalAlphabet(TableSelection selection, Element[] elements, int[] upperbounds) {
         this(selection, elements);
-        System.arraycopy(upperbounds, 0, upperBoundOfElements, 0, upperBoundOfElements.length);
-    }
-
-    public int getUpperboundOf(Element e) {
-        return upperBoundOfElements[selection.indexOf(e)];
-    }
-
-    public void setUpperboundOf(Element e, int upperbound) {
-        upperBoundOfElements[selection.indexOf(e)] = upperbound;
     }
 
     /**
@@ -188,10 +176,8 @@ public class ChemicalAlphabet {
         if (o == null || getClass() != o.getClass()) return false;
 
         ChemicalAlphabet that = (ChemicalAlphabet) o;
-
-        if (!Arrays.equals(allowedElements, that.allowedElements)) return false;
         if (!selection.equals(that.selection)) return false;
-        if (!Arrays.equals(upperBoundOfElements, that.upperBoundOfElements)) return false;
+        if (!Arrays.equals(allowedElements, that.allowedElements)) return false;
 
         return true;
     }
@@ -200,7 +186,6 @@ public class ChemicalAlphabet {
     public int hashCode() {
         int result = selection.hashCode();
         result = 31 * result + Arrays.hashCode(allowedElements);
-        result = 31 * result + Arrays.hashCode(upperBoundOfElements);
         return result;
     }
 }

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 
 /**
  * The information in this profile should represent properties of the instrument, the measurement and the quality
@@ -18,6 +19,6 @@ public interface MeasurementProfile {
 
     public Deviation getExpectedFragmentMassDeviation();
 
-    public ChemicalAlphabet getChemicalAlphabet();
+    public FormulaConstraints getFormulaConstraints();
 
 }

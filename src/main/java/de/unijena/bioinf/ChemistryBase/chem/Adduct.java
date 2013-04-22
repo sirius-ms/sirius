@@ -5,7 +5,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  * molecule ([M-ion]) or the molecule itself is an ion ([M]).
  *
  */
-class Adduct extends Ionization {
+public class Adduct extends Ionization {
 	private final double mass;
 	private final int charge;
 	private final String formula;

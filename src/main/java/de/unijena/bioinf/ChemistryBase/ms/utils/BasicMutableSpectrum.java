@@ -11,7 +11,7 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 	protected DoubleList masses;
 	protected DoubleList intensities;
 	
-	public <S extends Spectrum<? extends P>> BasicMutableSpectrum(S immutable) {
+	public <P extends Peak, S extends Spectrum<P>> BasicMutableSpectrum(S immutable) {
 		this.masses = new ArrayDoubleList(Spectrums.copyMasses(immutable));
 		this.intensities = new ArrayDoubleList(Spectrums.copyIntensities(immutable));
 	}

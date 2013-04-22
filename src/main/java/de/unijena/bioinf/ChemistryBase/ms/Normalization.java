@@ -44,7 +44,7 @@ public class Normalization {
         Spectrums.normalize(s, this);
     }
 
-    public <S extends Spectrum<? extends Peak>> SimpleSpectrum call(S s) {
+    public <P extends Peak, S extends Spectrum<P>> SimpleSpectrum call(S s) {
         return Spectrums.getNormalizedSpectrum(s, this);
     }
 
