@@ -1,5 +1,6 @@
 package de.unijena.bioinf.MassDecomposer;
 
+import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
 import java.util.*;
@@ -19,7 +20,6 @@ public class MassDecomposer<T> {
     protected double minError, maxError;
     protected final Alphabet<T> alphabet;
     protected final int[] orderedCharacterIds;
-    protected DecompositionValidator<T> validator;
 
     /**
      * @param precision mass precision. A precision of 1e-3 means that three positions after decimal point are
@@ -43,22 +43,6 @@ public class MassDecomposer<T> {
 
     public Alphabet<T> getAlphabet() {
         return alphabet;
-    }
-
-    /**
-     * @return the active validator for the decomposer
-     */
-    public DecompositionValidator<T> getValidator() {
-        return validator;
-    }
-
-    /**
-     * set a validator which removes invalid decompositions as early as possible before returning them
-     * in {@link #decompose(double, Deviation)}}
-     * @param validator
-     */
-    public void setValidator(DecompositionValidator<T> validator) {
-        this.validator = validator;
     }
 
     /**
@@ -97,6 +81,13 @@ public class MassDecomposer<T> {
         return decompose(mass, deviation);
     }
 
+    public List<int[]> decompose(final double mass, final Deviation deviation, Map<T, Interval> boundaries) {
+        return decompose(mass, deviation, boundaries, null);
+    }
+    public List<int[]> decompose(final double mass, final Deviation deviation, final DecompositionValidator<T> filter) {
+        return decompose(mass, deviation, null, filter);
+    }
+
     /**
      * computes all decompositions for the given mass. The runtime depends only on the number of characters and the
      * number of decompositions. Therefore this method is very fast as long as the number of decompositions is low.
@@ -113,7 +104,7 @@ public class MassDecomposer<T> {
      * @return list of decompositions. Use the {@link #getCharacterIndizes} and {@link Alphabet#get(int)} method to map the
      *         indizes of compomere to the characters.
      */
-    public List<int[]> decompose(final double mass, final Deviation deviation, Map<T, Interval> boundaries){
+    public List<int[]> decompose(final double mass, final Deviation deviation, Map<T, Interval> boundaries, final DecompositionValidator<T> filter){
         init();
         if (mass == 0d) return Collections.emptyList();
         if (mass < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition");
@@ -151,7 +142,7 @@ public class MassDecomposer<T> {
                     }
                 }
                 if (Math.abs(calcMass(decomp) - mass) > absError) continue;
-                if ((validator == null) || validator.validate(decomp, orderedCharacterIds, alphabet)) {
+                if ((filter == null) || filter.validate(decomp, orderedCharacterIds, alphabet)) {
                     results.add(decomp);
                 }
             }

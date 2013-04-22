@@ -1,12 +1,10 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabetWrapper;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class ChemicalValidator implements DecompositionValidator<Element> {
+public class ChemicalValidator implements DecompositionValidator<Element>, FormulaFilter {
 
     private final double heteroToCarbonThreshold, hydrogenToCarbonThreshold,rdbeThreshold, rdbeLowerbound;
     private final double h2cto, hy2cto, rdbeo, rdbelo;
@@ -26,6 +24,10 @@ public class ChemicalValidator implements DecompositionValidator<Element> {
     }
     public static ChemicalValidator getPermissiveThreshold() {
         return new ChemicalValidator(60, -2.5, 4, 9);
+    }
+
+    public static ValenceValidator<Element> getRDBEOnlyThreshold() {
+        return new ValenceValidator<Element>(-0.5d);
     }
 
     public double getHeteroToCarbonThreshold() {
@@ -64,5 +66,12 @@ public class ChemicalValidator implements DecompositionValidator<Element> {
         final int h = compomere[characterIds[sel.hydrogenIndex()]];
         return rdbe < rdbeThreshold && (numOfAtoms-c-h)/c <= heteroToCarbonThreshold && (c/h) <= hydrogenToCarbonThreshold;
 
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula formula) {
+        final double rdbe = formula.rdbe();
+        return rdbe >= rdbeLowerbound && rdbe < rdbeThreshold && formula.hetero2CarbonRatio() < heteroToCarbonThreshold &&
+                formula.hydrogen2CarbonRatio() < hydrogenToCarbonThreshold;
     }
 }

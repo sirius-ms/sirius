@@ -2,6 +2,7 @@ package de.unijena.bioinf.MassDecomposer.Chemistry;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.MassDecomposer.*;
@@ -15,13 +16,8 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
     protected final ChemicalAlphabet alphabet;
 
     public MassToFormulaDecomposer(double precision, ChemicalAlphabet alphabet) {
-        this(precision, alphabet, ChemicalValidator.getCommonThreshold());
-    }
-
-    public MassToFormulaDecomposer(double precision, ChemicalAlphabet alphabet, ChemicalValidator validator) {
         super(precision, new ChemicalAlphabetWrapper(alphabet));
         this.alphabet = alphabet;
-        setValidator(validator);
     }
 
 
@@ -29,7 +25,7 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
         this(precision, new ChemicalAlphabet());
     }
 
-    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries) {
+    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries, final FormulaFilter filter) {
         final Map<Element, Interval> boundaryMap;
         /*
         if (((validator instanceof ChemicalValidator) && ((ChemicalValidator)validator).getRdbeLowerbound() == 0) ||
@@ -40,10 +36,13 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
             */
         // Don't use valence boundary until it is fixed
         boundaryMap = boundaries;
-        final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap);
+        final boolean isAlsoDecVal = filter == null || filter instanceof DecompositionValidator;
+        final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap, (isAlsoDecVal&&filter!=null) ? (DecompositionValidator<Element>)filter : null);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
-            formulas.add((alphabet).decompositionToFormula(ary));
+            final MolecularFormula formula = alphabet.decompositionToFormula(ary);
+            if (!isAlsoDecVal && !filter.isValid(formula)) continue;
+            formulas.add(formula);
         }
         return formulas;
     }
