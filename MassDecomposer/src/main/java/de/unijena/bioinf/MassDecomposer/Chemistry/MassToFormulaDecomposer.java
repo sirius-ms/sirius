@@ -1,9 +1,6 @@
 package de.unijena.bioinf.MassDecomposer.Chemistry;
 
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.MassDecomposer.*;
 
@@ -23,6 +20,16 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
 
     public MassToFormulaDecomposer(double precision) {
         this(precision, new ChemicalAlphabet());
+    }
+
+    public List<MolecularFormula> decMolecularFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {
+        if (!constraints.getChemicalAlphabet().equals(alphabet)) throw new IllegalArgumentException("Incompatible alphabet");
+        final Map<Element, Interval> boundaries = alphabet.toMap();
+        final int[] upperbounds = constraints.getUpperbounds();
+        for (int i=0; i < alphabet.size(); ++i) {
+            boundaries.put(alphabet.get(i), new Interval(0, upperbounds[i]));
+        }
+        return decomposeToFormulas(mass, deviation, boundaries, constraints.getFilters());
     }
 
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries, final FormulaFilter filter) {
