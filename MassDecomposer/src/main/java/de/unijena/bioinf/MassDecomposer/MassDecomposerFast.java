@@ -67,6 +67,9 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
 //        return false;
     }
 
+    public List<int[]> decompose(final double mass, Deviation dev, Map<T, Interval> boundaries) {
+        return decompose(mass, dev, boundaries, null);
+    }
 
     /**
      * computes all decompositions for the given mass. The runtime depends only on the number of characters and the
@@ -84,7 +87,7 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
      *         indizes of compomere to the characters.
      */
     @Override
-    public List<int[]> decompose(final double mass, Deviation dev, Map<T, Interval> boundaries){
+    public List<int[]> decompose(final double mass, Deviation dev, Map<T, Interval> boundaries, DecompositionValidator<T>validator){
         init();
         if (mass == 0d) return Collections.emptyList();
         if (mass < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition");

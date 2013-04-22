@@ -33,6 +33,14 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
         return decomposeToFormulas(mass, deviation, boundaries, FormulaFilterList.create(constraints.getFilters()));
     }
 
+    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation) {
+        return decomposeToFormulas(mass, deviation, null, null);
+    }
+
+    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries) {
+        return decomposeToFormulas(mass, deviation, boundaries, null);
+    }
+
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries, final FormulaFilter filter) {
         final Map<Element, Interval> boundaryMap;
         /*

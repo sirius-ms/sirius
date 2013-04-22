@@ -26,7 +26,7 @@ public class MassDecomposerTest {
 
         double mass = 212.11;
         final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(1e-5);
-        final List<MolecularFormula> ref = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3), null);
+        final List<MolecularFormula> ref = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3));
 
         final HashMap<Element, Interval> map = new HashMap<Element, Interval>();
         map.put(PeriodicTable.getInstance().getByName("C"), new Interval(0, 10));
@@ -404,9 +404,9 @@ public class MassDecomposerTest {
         //with filter
         mass = 479.43;
         boundary = new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(mass + dev.absoluteFor(mass), boundary);
-        decomposer.setValidator(new ValenceValidator<Element>(0));
+        final DecompositionValidator<Element> valenceValidator = new ValenceValidator<Element>(0);
 
-        compomers = decomposer.decompose(mass, dev, boundary);
+        compomers = decomposer.decompose(mass, dev, boundary, valenceValidator);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
@@ -486,9 +486,9 @@ public class MassDecomposerTest {
         //with filter
         mass = 479.43;
         boundary = new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(mass + dev.absoluteFor(mass), boundary);
-        decomposerFast.setValidator(new ValenceValidator<Element>(0));
+        final DecompositionValidator<Element> valenceValidator2 = new ValenceValidator<Element>(0);
 
-        compomers = decomposerFast.decompose(mass, dev, boundary);
+        compomers = decomposerFast.decompose(mass, dev, boundary, valenceValidator2);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));

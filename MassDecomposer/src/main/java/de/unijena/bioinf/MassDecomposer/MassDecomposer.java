@@ -78,7 +78,7 @@ public class MassDecomposer<T> {
      * @see #decompose(double, Deviation, java.util.Map)
      */
     public List<int[]> decompose(double mass, Deviation deviation) {
-        return decompose(mass, deviation);
+        return decompose(mass, deviation, null, null);
     }
 
     public List<int[]> decompose(final double mass, final Deviation deviation, Map<T, Interval> boundaries) {
