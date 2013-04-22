@@ -1,7 +1,9 @@
 package de.unijena.bioinf.MassDecomposer.Chemistry;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.MassDecomposer.*;
 
 import java.util.ArrayList;
@@ -12,21 +14,22 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
 
     protected final ChemicalAlphabet alphabet;
 
-    public MassToFormulaDecomposer(double precision, double errorPPM, double absMassError, ChemicalAlphabet alphabet) {
-        this(precision, errorPPM, absMassError, alphabet, ChemicalValidator.getCommonThreshold());
+    public MassToFormulaDecomposer(double precision, ChemicalAlphabet alphabet) {
+        this(precision, alphabet, ChemicalValidator.getCommonThreshold());
     }
 
-    public MassToFormulaDecomposer(double precision, double errorPPM, double absMassError, ChemicalAlphabet alphabet, ChemicalValidator validator) {
-        super(precision, errorPPM, absMassError, alphabet);
+    public MassToFormulaDecomposer(double precision, ChemicalAlphabet alphabet, ChemicalValidator validator) {
+        super(precision, new ChemicalAlphabetWrapper(alphabet));
         this.alphabet = alphabet;
-        setValidator(ChemicalValidator.getCommonThreshold());
+        setValidator(validator);
     }
 
 
-    public MassToFormulaDecomposer(double precision, double errorPPM, double absMassError) {
-        this(precision, errorPPM, absMassError, new ChemicalAlphabet());
+    public MassToFormulaDecomposer(double precision) {
+        this(precision, new ChemicalAlphabet());
     }
-    public List<MolecularFormula> decomposeToFormulas(double mass, Map<Element, Interval> boundaries) {
+
+    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries) {
         final Map<Element, Interval> boundaryMap;
         /*
         if (((validator instanceof ChemicalValidator) && ((ChemicalValidator)validator).getRdbeLowerbound() == 0) ||
@@ -37,7 +40,7 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
             */
         // Don't use valence boundary until it is fixed
         boundaryMap = boundaries;
-        final List<int[]> decompositions = super.decompose(mass, boundaryMap);
+        final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
             formulas.add((alphabet).decompositionToFormula(ary));
@@ -46,7 +49,7 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
     }
 
     @Override
-    public ChemicalAlphabet getAlphabet() {
-        return alphabet;
+    public ValencyAlphabet<Element> getAlphabet() {
+        return new ChemicalAlphabetWrapper(alphabet);
     }
 }

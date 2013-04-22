@@ -1,5 +1,7 @@
 package de.unijena.bioinf.MassDecomposer;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+
 import java.util.*;
 
 /**
@@ -13,8 +15,6 @@ public class MassDecomposer<T> {
 
     protected long[][] ERT;
     protected double precision;
-    protected final double errorPpm;
-    protected final double absMassError;
     protected final List<Weight<T>> weights;
     protected double minError, maxError;
     protected final Alphabet<T> alphabet;
@@ -24,15 +24,9 @@ public class MassDecomposer<T> {
     /**
      * @param precision mass precision. A precision of 1e-3 means that three positions after decimal point are
      *                  considered for input masses
-     * @param errorPPM relative mass error in parts per million. 10 ppm means that we have to consider a deviation
-     *                 of 0.001% of the input mass
-     * @param absMassError absolute mass error. The same as errorPPM but with absolute value. The considered
-     *                     deviation is always the maximum of the relative and absolute error
      * @param alphabet the alphabet the mass is decomposed over
      */
-    public MassDecomposer(double precision, double errorPPM, double absMassError, Alphabet<T> alphabet) {
-        this.errorPpm = errorPPM;
-        this.absMassError = absMassError;
+    public MassDecomposer(double precision, Alphabet<T> alphabet) {
         this.precision = precision;
         final int n = alphabet.size();
         this.weights = new ArrayList<Weight<T>>(n);
@@ -45,14 +39,6 @@ public class MassDecomposer<T> {
         for (int i=0; i < alphabet.size(); ++i) {
             orderedCharacterIds[i] = alphabet.indexOf(weights.get(i).getOwner());
         }
-    }
-
-    public double getErrorPpm() {
-        return errorPpm;
-    }
-
-    public double getAbsMassError() {
-        return absMassError;
     }
 
     public Alphabet<T> getAlphabet() {
@@ -68,7 +54,7 @@ public class MassDecomposer<T> {
 
     /**
      * set a validator which removes invalid decompositions as early as possible before returning them
-     * in {@link #decompose(double)}}
+     * in {@link #decompose(double, Deviation)}}
      * @param validator
      */
     public void setValidator(DecompositionValidator<T> validator) {
@@ -82,11 +68,12 @@ public class MassDecomposer<T> {
      * #decompose(mass) uses this function before starting the decomposition, therefore this method should only
      * be used if you don't want to start the decomposition algorithm.
      * @param mass
+     * @param allowedDeviation
      * @return
      */
-    public boolean maybeDecomposable(double mass) {
+    public boolean maybeDecomposable(double mass, Deviation allowedDeviation) {
         init();
-        final Interval range = integerBound(mass, getErrorForMass(mass));
+        final Interval range = integerBound(mass, allowedDeviation.absoluteFor(mass));
         final long a = weights.get(0).getIntegerMass();
         for (long i = range.getMin(); i <= range.getMax(); ++i) {
             final int r = toInt(i % a);
@@ -104,10 +91,10 @@ public class MassDecomposer<T> {
     }
 
     /**
-     * @see #decompose(double, java.util.Map)
+     * @see #decompose(double, Deviation, java.util.Map)
      */
-    public List<int[]> decompose(double mass) {
-        return decompose(mass, null);
+    public List<int[]> decompose(double mass, Deviation deviation) {
+        return decompose(mass, deviation);
     }
 
     /**
@@ -122,15 +109,16 @@ public class MassDecomposer<T> {
      *                   all decompositions for which the amound of the characters is not in the given interval. This is
      *                   done as early as possible, resulting a better performance than checking the boundary during the
      *                   validation step
+     * @param deviation allowed mass deviation which should be considered
      * @return list of decompositions. Use the {@link #getCharacterIndizes} and {@link Alphabet#get(int)} method to map the
      *         indizes of compomere to the characters.
      */
-    public List<int[]> decompose(final double mass, Map<T, Interval> boundaries){
+    public List<int[]> decompose(final double mass, final Deviation deviation, Map<T, Interval> boundaries){
         init();
         if (mass == 0d) return Collections.emptyList();
         if (mass < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition");
         double calcMass = mass;
-        final double absError = getErrorForMass(mass);
+        final double absError = deviation.absoluteFor(mass);
         final int[] minValues = new int[weights.size()];
         final int[] boundsarray = new int[weights.size()];
         boolean minAllZero = true;
@@ -360,10 +348,6 @@ public class MassDecomposer<T> {
                 Math.max(0, (long)Math.ceil((1 + minError) * (mass - absError) / precision)),
                 Math.max(0, (long)Math.floor((1 + maxError) * (mass + absError) / precision))
         );
-    }
-
-    protected double getErrorForMass(double mass){
-        return Math.max(errorPpm*1e-6*mass, absMassError);
     }
 
     protected static int toInt(long value) {

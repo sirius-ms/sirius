@@ -3,10 +3,7 @@ package de.unijena.bioinf.MassDecomposer.cli;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.MassDecomposer.Alphabet;
-import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabet;
 import de.unijena.bioinf.MassDecomposer.Interval;
-import de.unijena.bioinf.MassDecomposer.ValencyAlphabet;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;

@@ -1,5 +1,7 @@
 package de.unijena.bioinf.MassDecomposer;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+
 import java.util.*;
 
 /**
@@ -18,14 +20,10 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
     /**
      * @param precision mass precision. A precision of 1e-3 means that three positions after decimal point are
      *                  considered for input masses
-     * @param errorPPM relative mass error in parts per million. 10 ppm means that we have to consider a deviation
-     *                 of 0.001% of the input mass
-     * @param absMassError absolute mass error. The same as errorPPM but with absolute value. The considered
-     *                     deviation is always the maximum of the relative and absolute error
      * @param alphabet the alphabet the mass is decomposed over
      */
-    public MassDecomposerFast(double precision, double errorPPM, double absMassError, Alphabet<T> alphabet) {
-        super(precision, errorPPM, absMassError, alphabet);
+    public MassDecomposerFast(double precision, Alphabet<T> alphabet) {
+        super(precision, alphabet);
     }
 
     /**
@@ -38,10 +36,10 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
      * @return
      */
     @Override
-    public boolean maybeDecomposable(double mass) {
+    public boolean maybeDecomposable(double mass, Deviation dev) {
         init();
         //normal version seems to be faster, because it returns after first hit
-        final Interval range = integerBound(mass, getErrorForMass(mass));
+        final Interval range = integerBound(mass, dev.absoluteFor(mass));
         final long a = weights.get(0).getIntegerMass();
         for (long i = range.getMin(); i <= range.getMax(); ++i) {
             final int r = toInt(i % a);
@@ -86,11 +84,11 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
      *         indizes of compomere to the characters.
      */
     @Override
-    public List<int[]> decompose(final double mass, Map<T, Interval> boundaries){
+    public List<int[]> decompose(final double mass, Deviation dev, Map<T, Interval> boundaries){
         init();
         if (mass == 0d) return Collections.emptyList();
         if (mass < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition");
-        final double absError = getErrorForMass(mass);
+        final double absError = dev.absoluteFor(mass);
         final int[] minValues = new int[weights.size()];
         final int[] boundsarray = new int[weights.size()];
         boolean minAllZero = true;

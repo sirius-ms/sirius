@@ -1,17 +1,20 @@
 package de.unijena.bioinf.MassDecomposer;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabetWrapper;
 
 public class Benchmark {
 
     public static void main(String... args) {
-        final MassDecomposer<Element> elementDecomposer = new MassDecomposer<Element>(1e-5, 20, 0.002d,
-                new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl")));
-        final MassDecomposer<Element> fastDecomposer = new MassDecomposerFast<Element>(1e-5, 20, 0.002d,
-                new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl")));
+        final Deviation d = new Deviation(20, 0.002d);
+        final MassDecomposer<Element> elementDecomposer = new MassDecomposer<Element>(1e-5,
+                new ChemicalAlphabetWrapper(new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl"))));
+        final MassDecomposer<Element> fastDecomposer = new MassDecomposerFast<Element>(1e-5,
+                new ChemicalAlphabetWrapper(new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl"))));
 
         final double[] testSet = new double[]{
                 MolecularFormula.parse("C66H75Cl2N9O24").getMass(),
@@ -42,7 +45,7 @@ public class Benchmark {
         for (int i=0; i < 10; ++i) {
             double now = System.nanoTime();
             for (double x : testSet) {
-                elementDecomposer.decompose(x);
+                elementDecomposer.decompose(x, d);
             }
             double after = System.nanoTime();
             if (after-now < bestTime) {
@@ -55,7 +58,7 @@ public class Benchmark {
         for (int i=0; i < 10; ++i) {
             double now = System.nanoTime();
             for (double x : testSet) {
-                fastDecomposer.decompose(x);
+                fastDecomposer.decompose(x, d);
             }
             double after = System.nanoTime();
             if (after-now < bestTime) {

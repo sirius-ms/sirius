@@ -1,11 +1,8 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabet;
+import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabetWrapper;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import org.junit.Test;
 
@@ -13,7 +10,6 @@ import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.format;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,12 +25,12 @@ public class MassDecomposerTest {
     public void testElementBoundaries() {
 
         double mass = 212.11;
-        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(1e-5, 20, 1e-3);
-        final List<MolecularFormula> ref = decomposer.decomposeToFormulas(mass, null);
+        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(1e-5);
+        final List<MolecularFormula> ref = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3), null);
 
         final HashMap<Element, Interval> map = new HashMap<Element, Interval>();
         map.put(PeriodicTable.getInstance().getByName("C"), new Interval(0, 10));
-        final List<MolecularFormula> result1 = decomposer.decomposeToFormulas(mass, map );
+        final List<MolecularFormula> result1 = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3), map );
         assertTrue("filtered list should be smaller that unfiltered list", ref.size() > result1.size());
         for (MolecularFormula f : result1) {
             assertTrue("formula should have maximal 10 carbon atoms", f.numberOfCarbons() <= 10);
@@ -45,7 +41,7 @@ public class MassDecomposerTest {
         }
         assertEquals(expectedSize1, result1.size());
         map.put(PeriodicTable.getInstance().getByName("C"), new Interval(7, 10));
-        final List<MolecularFormula> result2 = decomposer.decomposeToFormulas(mass, map );
+        final List<MolecularFormula> result2 = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3), map );
         assertTrue("strict filtered list should be smaller that permissive filtered list", result1.size() > result2.size());
         for (MolecularFormula f : result2) {
             assertTrue("formula should have at least 7 carbon atoms", f.numberOfCarbons() >= 7);
@@ -381,8 +377,7 @@ public class MassDecomposerTest {
         double mass = 279.43;
         final Deviation dev = new Deviation(20, 0.001, Math.pow(10, -5));
         ChemicalAlphabet alphabet = new ChemicalAlphabet();
-        MassDecomposer<Element> decomposer = new MassDecomposer<Element>(dev.getPrecision(), dev.getPpm(),
-                dev.getAbsolute(),alphabet);
+        MassDecomposer<Element> decomposer = new MassDecomposer<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
 
 
         Map<Element, Interval> boundary = new HashMap<Element, Interval>();
@@ -393,7 +388,7 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("P"), new Interval(0, Integer.MAX_VALUE));
         boundary.put(table.getByName("S"), new Interval(0, Integer.MAX_VALUE));
 
-        List<int[]> compomers = decomposer.decompose(mass, boundary);
+        List<int[]> compomers = decomposer.decompose(mass, dev, boundary);
         List<MolecularFormula> formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
@@ -408,10 +403,10 @@ public class MassDecomposerTest {
 
         //with filter
         mass = 479.43;
-        boundary = new ValenceBoundary<Element>(alphabet).getMapFor(mass + dev.absoluteFor(mass), boundary);
+        boundary = new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(mass + dev.absoluteFor(mass), boundary);
         decomposer.setValidator(new ValenceValidator<Element>(0));
 
-        compomers = decomposer.decompose(mass, boundary);
+        compomers = decomposer.decompose(mass, dev, boundary);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
@@ -436,10 +431,10 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("Br"), new Interval(0, Integer.MAX_VALUE));
 
         alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H","N","O","P","S","Fe","Cl", "Br"));
-        decomposer = new MassDecomposer<Element>(dev.getPrecision(), dev.getPpm(), dev.getAbsolute(),alphabet);
+        decomposer = new MassDecomposer<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
 
         mass = 222.22;
-        compomers = decomposer.decompose(mass, boundary);
+        compomers = decomposer.decompose(mass, dev, boundary);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
@@ -464,8 +459,7 @@ public class MassDecomposerTest {
         //getting same results?
         mass = 279.43;
         alphabet = new ChemicalAlphabet();
-        MassDecomposerFast<Element> decomposerFast = new MassDecomposerFast<Element>(dev.getPrecision(), dev.getPpm(),
-                dev.getAbsolute(),alphabet);
+        MassDecomposerFast<Element> decomposerFast = new MassDecomposerFast<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
 
 
         boundary = new HashMap<Element, Interval>();
@@ -476,7 +470,7 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("P"), new Interval(0, Integer.MAX_VALUE));
         boundary.put(table.getByName("S"), new Interval(0, Integer.MAX_VALUE));
 
-        compomers = decomposerFast.decompose(mass, boundary);
+        compomers = decomposerFast.decompose(mass, dev, boundary);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
@@ -491,10 +485,10 @@ public class MassDecomposerTest {
 
         //with filter
         mass = 479.43;
-        boundary = new ValenceBoundary<Element>(alphabet).getMapFor(mass + dev.absoluteFor(mass), boundary);
+        boundary = new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(mass + dev.absoluteFor(mass), boundary);
         decomposerFast.setValidator(new ValenceValidator<Element>(0));
 
-        compomers = decomposerFast.decompose(mass, boundary);
+        compomers = decomposerFast.decompose(mass, dev, boundary);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));
@@ -519,10 +513,10 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("Br"), new Interval(0, Integer.MAX_VALUE));
 
         alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H","N","O","P","S","Fe","Cl", "Br"));
-        decomposerFast = new MassDecomposerFast<Element>(dev.getPrecision(), dev.getPpm(), dev.getAbsolute(),alphabet);
+        decomposerFast = new MassDecomposerFast<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
 
         mass = 222.22;
-        compomers = decomposerFast.decompose(mass, boundary);
+        compomers = decomposerFast.decompose(mass, dev, boundary);
         formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
             formulas.add(alphabet.decompositionToFormula(c));

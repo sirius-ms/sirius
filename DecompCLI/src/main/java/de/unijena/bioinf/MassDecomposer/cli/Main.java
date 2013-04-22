@@ -10,7 +10,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.MassDecomposer.*;
-import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabet;
 
 import java.io.PrintStream;
 import java.text.DecimalFormat;
