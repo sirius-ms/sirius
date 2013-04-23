@@ -1,12 +1,15 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 
+import com.sun.javafx.geom.Edge;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
@@ -14,10 +17,10 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merge
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing.NormalizationType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakPairScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.legacy.PeakPairScoreList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
 
@@ -33,6 +36,9 @@ public class FragmentationPatternAnalysis {
     private DecomposerCache decomposers;
     private List<DecompositionScorer<?>> decompositionScorers;
     private List<DecompositionScorer<?>> rootScorers;
+    private List<PeakPairScorer> peakPairScorers;
+    private List<PeakScorer> fragmentPeakScorers;
+    private GraphBuilder graphBuilder;
 
     public FragmentationPatternAnalysis() {
         this.inputValidators = new ArrayList<InputValidator>();
@@ -43,14 +49,38 @@ public class FragmentationPatternAnalysis {
         this.repairInput = true;
         this.decompositionScorers = new ArrayList<DecompositionScorer<?>>();
         this.rootScorers = new ArrayList<DecompositionScorer<?>>();
+        this.peakPairScorers = new ArrayList<PeakPairScorer>();
+        this.fragmentPeakScorers = new ArrayList<PeakScorer>();
+        this.graphBuilder = new SubFormulaGraphBuilder();
+    }
+
+    public FragmentationGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
+        // build Graph
+        final FragmentationGraph graph = graphBuilder.buildGraph(input, candidate);
+        // score graph
+        final Iterator<Loss> edges = graph.lossIterator();
+        while (edges.hasNext()) {
+            final Loss loss = edges.next();
+            final Fragment u = loss.getHead();
+            final Fragment v = loss.getTail();
+            final double score = v.getDecomposition()
+
+        }
     }
 
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
         // use a mutable experiment, such that we can easily modify it
         Ms2ExperimentImpl input = wrapInput(validate(experiment));
+        // normalize all peaks and merge peaks within the same spectrum
+        // put peaks from all spectra together in a flatten list
         final ArrayList<ProcessedPeak> peaks = normalize(input);
+        // merge peaks from different spectra
         final List<ProcessedPeak> processedPeaks = mergePeaks(experiment, peaks);
+        // and sort the resulting peaklist by mass
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
+        // now search the parent peak. If it is not contained in the spectrum: create one!
+        // delete all peaks behind the parent, such that the parent is the heaviest peak in the spectrum
+        // Now we can access the parent peak by peaklist[peaklist.size-1]
         final double parentmass = experiment.getIonMass();
         final Deviation parentDeviation = experiment.getMeasurementProfile().getExpectedIonMassDeviation();
         for (int i=processedPeaks.size()-1; i >= 0; --i) {
@@ -65,13 +95,14 @@ public class FragmentationPatternAnalysis {
             } else break;
         }
         assert parentDeviation.inErrorWindow(parentmass, processedPeaks.get(processedPeaks.size()-1).getMz()) : "heaviest peak is parent peak";
-        // the distance between parent peak and next peak is >2*parentDeviation
+        // the distance between parent peak and next peak have to be greater than 2*parentDeviation
         final Deviation parentDeviation2 = parentDeviation.multiply(2);
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size()-1);
         while (processedPeaks.size()>1 && parentDeviation2.inErrorWindow(parentPeak.getMz(), processedPeaks.get(processedPeaks.size()-2).getMz())) {
             processedPeaks.set(processedPeaks.size()-2, parentPeak);
             processedPeaks.remove(processedPeaks.size()-1);
         }
+        // decompose and score all peaks
         return decomposeAndScore(experiment, processedPeaks, parentDeviation, parentPeak);
     }
 
@@ -112,9 +143,17 @@ public class FragmentationPatternAnalysis {
         }
         final ProcessedInput preprocessed = new ProcessedInput(experiment, processedPeaks, parentPeak, null);
         final int n = processedPeaks.size();
+        // score peak pairs
         final double[][] peakPairScores = new double[n][n];
-
-        // score!
+        for (PeakPairScorer scorer : peakPairScorers) {
+            scorer.score(processedPeaks, preprocessed, peakPairScores);
+        }
+        // score fragment peaks
+        final double[] peakScores = new double[n];
+        for (PeakScorer scorer : fragmentPeakScorers) {
+            scorer.score(processedPeaks, preprocessed, peakScores);
+        }
+        // score peaks
         {
             final ArrayList<Object> preparations = new ArrayList<Object>(decompositionScorers.size());
             for (DecompositionScorer<?> scorer : decompositionScorers) preparations.add(scorer.prepare(preprocessed));
@@ -148,7 +187,7 @@ public class FragmentationPatternAnalysis {
             parentPeak.setDecompositions(scored);
         }
 
-        return new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions());
+        return new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
     }
 
     /*
@@ -248,13 +287,6 @@ public class FragmentationPatternAnalysis {
         }
         // finished!
         return peaklist;
-    }
-
-    protected initializeDecomposer(Ms2Experiment experiment) {
-        if (decomposer != null) {
-            final MeasurementProfile profile = experiment.getMeasurementProfile();
-            if (profile.getExpectedFragmentMassDeviation().getPrecision() != decomposer.get)
-        }
     }
 
     public Ms2Experiment validate(Ms2Experiment experiment) {

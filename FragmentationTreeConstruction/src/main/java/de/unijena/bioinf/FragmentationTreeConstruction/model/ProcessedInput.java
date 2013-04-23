@@ -12,13 +12,24 @@ public class ProcessedInput {
     private final List<ProcessedPeak> mergedPeaks;
     private final ProcessedPeak parentPeak;
     private final List<ScoredMolecularFormula> parentMassDecompositions;
+    private final double[] peakScores;
+    private final double[][] peakPairScores;
 
     public ProcessedInput(Ms2Experiment experiment,
                           List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak, List<ScoredMolecularFormula> parentMassDecompositions) {
+        this(experiment, mergedPeaks, parentPeak, parentMassDecompositions, null, null);
+
+    }
+
+    public ProcessedInput(Ms2Experiment experiment,
+                          List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak, List<ScoredMolecularFormula> parentMassDecompositions,
+                          double[] peakScores, double[][] peakPairScores) {
         this.experiment = experiment;
         this.mergedPeaks = mergedPeaks;
         this.parentPeak = parentPeak;
         this.parentMassDecompositions = parentMassDecompositions;
+        this.peakPairScores = peakPairScores;
+        this.peakScores = peakScores;
     }
 
     public Ms2Experiment getExperimentInformation() {
@@ -35,5 +46,13 @@ public class ProcessedInput {
 
     public List<ScoredMolecularFormula> getParentMassDecompositions() {
         return Collections.unmodifiableList(parentMassDecompositions);
+    }
+
+    public double[][] getPeakPairScores() {
+        return peakPairScores;
+    }
+
+    public double[] getPeakScores() {
+        return peakScores;
     }
 }
