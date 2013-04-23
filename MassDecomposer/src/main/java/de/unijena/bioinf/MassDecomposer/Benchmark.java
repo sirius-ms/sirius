@@ -46,8 +46,13 @@ public class Benchmark {
                 throw new RuntimeException(e);
             }
         }
+        System.out.println("Alphabet:");
+        for (Element e : alphabet.getElements()) {
+            System.out.println(e + ": " + e.getMass());
+        }
+        System.out.println("============");
 
-        for (int blowup : new int[]{100000, 10000, 5000, 44770, 44771, 344066, 344067}) {
+        for (double blowup : new double[]{10000d, 5000d, 2938.996619d, 5248.916666d}) {
             double bestTime = Double.MAX_VALUE;
             System.out.print("original Decompose blowup( " + blowup +  " ): ");
             for (int i=0; i < 10; ++i) {
