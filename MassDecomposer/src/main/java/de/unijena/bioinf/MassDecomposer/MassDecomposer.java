@@ -132,7 +132,7 @@ public class MassDecomposer<T> {
         ArrayList<int[]> rawDecompositions = null;
         final Interval interval = integerBound(calcMass, absError);
         if (!minAllZero && (Math.abs(calcMass) <= absError)) results.add(minValues);
-        for (long m = interval.getMin(); m < interval.getMax(); ++m) {
+        for (long m = interval.getMin(); m <= interval.getMax(); ++m) {
             rawDecompositions = integerDecompose(m, boundsarray);
             for (int i=0; i < rawDecompositions.size(); ++i) {
                 final int[] decomp = rawDecompositions.get(i);
