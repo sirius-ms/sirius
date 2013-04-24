@@ -1,8 +1,12 @@
 package de.unijena.bioinf.babelms.ms;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.GenericParser;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.List;
 
 import static junit.framework.Assert.*;
 
@@ -24,31 +28,28 @@ public class MsParserTest{
         int[] spectrumSize = new int[]{   34,        32,        20,       28,       3      };
 
         JenaMsParser msParser = new JenaMsParser();
-        MSInfo msInfo = msParser.getData(new File(this.getClass().getClassLoader().getResource("Adenosine.ms").getFile()));
+        JenaMsExperiment experiment = new GenericParser<Ms2Experiment>(msParser).parseFile(new File(this.getClass().getClassLoader().getResource("Adenosine.ms").getFile()));
 
-        assertEquals("molecule name differs", msInfo.getMoleculeNameString(), "Adenosine");
-        assertEquals("molecular formula differs", msInfo.getMolecularFormulaString(), "C10H13N5O4");
-        assertEquals("charge differs", (int)msInfo.getCharge(), 1);
-        assertEquals("parent mass differs", msInfo.getParentMass(), 268.1000061035156);
+        assertEquals("molecule name differs", experiment.getCompoundName(), "Adenosine");
+        assertEquals("molecular formula differs", experiment.getMolecularFormula(), MolecularFormula.parse("C10H13N5O4"));
+        assertEquals("charge differs", (int)experiment.getCharge(), 1);
+        assertEquals("parent mass differs", experiment.getIonMass(), 268.1000061035156);
 
-        MsSpectrum[] spectra = msInfo.getSpectra();
-        assertTrue("there are 5 spectra in the file but parsed where " + spectra.length, spectra.length == 5);
+        List<JenaMsSpectrum> ms1spectra = experiment.getMs1Spectra();
+        List<JenaMs2Spectrum> ms2spectra = experiment.getMs2Spectra();
+        assertTrue("there are 4 ms2 spectra in the file but parsed where " + ms2spectra.size(), ms2spectra.size() == 4);
+        assertTrue("there is 1 ms1 spectrum in the file but parsed where " + ms1spectra.size(), ms1spectra.size() == 1);
 
-        for (MsSpectrum msSpectrum : spectra) {
+        for (JenaMs2Spectrum msSpectrum : ms2spectra) {
             int current = -1;
-            for (int i = 0; i < spectra.length; i++) {
+            for (int i = 0; i < ms2spectra.size(); i++) {
                 if (retention[i] == msSpectrum.getRetentionTime()) current = i;
             }
 
             assertFalse("There is no spectrum with retention time "+msSpectrum.getRetentionTime(), current==-1);
             assertEquals("peak count in spectrum "+current+" differs", msSpectrum.size(), spectrumSize[current]);
-
-            if (current == 4) assertEquals("msLevel of spectrum "+current+" differs", msSpectrum.getMsLevel(), 1);
-            else {
-                assertEquals("msLevel of spectrum "+current+" differs", msSpectrum.getMsLevel(), 2);
-                assertEquals("collision energy in spectrum "+current+" differs", msSpectrum.getCollisionEnergy().getMinEnergy(), collision[current], 1e-12);
-                assertEquals("tic in spectrum "+current+" differs", msSpectrum.getTotalIonCurrent(), tic[current]);
-            }
+            assertEquals("collision energy in spectrum "+current+" differs", msSpectrum.getCollisionEnergy().getMinEnergy(), collision[current], 1e-12);
+            assertEquals("tic in spectrum "+current+" differs", msSpectrum.getTotalIonCount(), tic[current]);
         }
     }
 }

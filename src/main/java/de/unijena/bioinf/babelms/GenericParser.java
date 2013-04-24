@@ -12,16 +12,16 @@ public class GenericParser<T> implements Parser<T> {
 
 
     @Override
-    public T parse(BufferedReader reader) throws IOException {
+    public <S extends T> S parse(BufferedReader reader) throws IOException {
         return parser.parse(reader);
     }
 
-    public T parse(InputStream input) throws IOException {
+    public <S extends T> S parse(InputStream input) throws IOException {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
         return parse(reader);
     }
 
-    public T parseFile(File file) throws IOException {
+    public <S extends T> S parseFile(File file) throws IOException {
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(file));

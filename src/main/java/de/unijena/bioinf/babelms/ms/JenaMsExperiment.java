@@ -27,6 +27,14 @@ public class JenaMsExperiment implements Ms2Experiment {
         this.ms2Spectra = ms2Spectra;
     }
 
+    public String getCompoundName() {
+        return compoundName;
+    }
+
+    public int getCharge() {
+        return charge;
+    }
+
     @Override
     public List<JenaMs2Spectrum> getMs2Spectra() {
         return ms2Spectra;
