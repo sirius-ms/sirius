@@ -20,7 +20,7 @@
     <dependency>
       <artifactId>ChemistryBase</artifactId>
       <groupId>de.unijena.bioinf</groupId>
-      <version>3.1-SNAPSHOT</version>
+      <version>4-SNAPSHOT</version>
     </dependency>
     <!-- dependencies, which are only needed for tests-->
     <dependency>
@@ -40,13 +40,6 @@
     </license>
   </licenses>
   
-  <!-- Defines the svn url of this software -->
-  <scm>
-    <url>https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/babelms</url>
-    <connection>scm:svn:https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/babelms</connection>
-    <tag>HEAD</tag>
-  </scm>
-
   <!-- Where you can find the other libraries -->
   <repositories>
       <repository>

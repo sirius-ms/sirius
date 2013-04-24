@@ -23,7 +23,7 @@ public class MsParserTest{
         double[] tic = new double[]{      1386770.0, 1068350.0, 802941.0, 497284.0         };
         int[] spectrumSize = new int[]{   34,        32,        20,       28,       3      };
 
-        MsParser msParser = new MsParser();
+        JenaMsParser msParser = new JenaMsParser();
         MSInfo msInfo = msParser.getData(new File(this.getClass().getClassLoader().getResource("Adenosine.ms").getFile()));
 
         assertEquals("molecule name differs", msInfo.getMoleculeNameString(), "Adenosine");
