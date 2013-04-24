@@ -1,4 +1,4 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.legacy;
 
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;

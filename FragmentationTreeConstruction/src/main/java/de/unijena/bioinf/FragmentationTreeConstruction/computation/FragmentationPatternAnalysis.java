@@ -8,6 +8,8 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Preprocessor;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
@@ -39,6 +41,8 @@ public class FragmentationPatternAnalysis {
     private List<PeakPairScorer> peakPairScorers;
     private List<PeakScorer> fragmentPeakScorers;
     private GraphBuilder graphBuilder;
+    private List<Preprocessor> preprocessors;
+    private List<PostProcessor> postProcessors;
 
     public FragmentationPatternAnalysis() {
         this.inputValidators = new ArrayList<InputValidator>();
@@ -48,6 +52,8 @@ public class FragmentationPatternAnalysis {
         this.decomposers = new DecomposerCache();
         this.repairInput = true;
         this.decompositionScorers = new ArrayList<DecompositionScorer<?>>();
+        this.preprocessors = new ArrayList<Preprocessor>();
+        this.postProcessors = new ArrayList<PostProcessor>();
         this.rootScorers = new ArrayList<DecompositionScorer<?>>();
         this.peakPairScorers = new ArrayList<PeakPairScorer>();
         this.fragmentPeakScorers = new ArrayList<PeakScorer>();
@@ -63,17 +69,19 @@ public class FragmentationPatternAnalysis {
             final Loss loss = edges.next();
             final Fragment u = loss.getHead();
             final Fragment v = loss.getTail();
-            final double score = v.getDecomposition()
+            final double score = v.getDecomposition().getScore();
+
 
         }
     }
 
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
-        // use a mutable experiment, such that we can easily modify it
-        Ms2ExperimentImpl input = wrapInput(validate(experiment));
+        // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
+        Ms2ExperimentImpl input = wrapInput(preProcess(validate(experiment)));
         // normalize all peaks and merge peaks within the same spectrum
         // put peaks from all spectra together in a flatten list
-        final ArrayList<ProcessedPeak> peaks = normalize(input);
+        List<ProcessedPeak> peaks = normalize(input);
+        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(experiment, peaks, null, null)).getMergedPeaks();
         // merge peaks from different spectra
         final List<ProcessedPeak> processedPeaks = mergePeaks(experiment, peaks);
         // and sort the resulting peaklist by mass
@@ -102,11 +110,13 @@ public class FragmentationPatternAnalysis {
             processedPeaks.set(processedPeaks.size()-2, parentPeak);
             processedPeaks.remove(processedPeaks.size()-1);
         }
+        final List<ProcessedPeak> afterMerging =
+                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(experiment, processedPeaks, parentPeak, null)).getMergedPeaks();
         // decompose and score all peaks
-        return decomposeAndScore(experiment, processedPeaks, parentDeviation, parentPeak);
+        return decomposeAndScore(experiment, afterMerging, parentDeviation, parentPeak);
     }
 
-    protected ProcessedInput decomposeAndScore(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, Deviation parentDeviation, ProcessedPeak parentPeak) {
+    public ProcessedInput decomposeAndScore(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, Deviation parentDeviation, ProcessedPeak parentPeak) {
         // decompose peaks
         final FormulaConstraints constraints = experiment.getMeasurementProfile().getFormulaConstraints();
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
@@ -187,7 +197,10 @@ public class FragmentationPatternAnalysis {
             parentPeak.setDecompositions(scored);
         }
 
-        return new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
+        final ProcessedInput processedInput =
+                new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
+        // final processing
+        return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, processedInput);
     }
 
     /*
@@ -209,7 +222,7 @@ public class FragmentationPatternAnalysis {
      * @param peaklists a peaklist for each spectrum
      * @return a list of merged peaks
      */
-    protected ArrayList<ProcessedPeak> mergePeaks(Ms2Experiment experiment, ArrayList<ProcessedPeak> peaklists) {
+    protected ArrayList<ProcessedPeak> mergePeaks(Ms2Experiment experiment, List<ProcessedPeak> peaklists) {
         final ArrayList<ProcessedPeak> mergedPeaks = new ArrayList<ProcessedPeak>(peaklists.size());
         peakMerger.mergePeaks(mergedPeaks, experiment, experiment.getMeasurementProfile().getExpectedFragmentMassDeviation(), new Merger() {
             @Override
@@ -287,6 +300,22 @@ public class FragmentationPatternAnalysis {
         }
         // finished!
         return peaklist;
+    }
+
+    public Ms2Experiment preProcess(Ms2Experiment experiment) {
+        for (Preprocessor proc : preprocessors) {
+            experiment = proc.process(experiment);
+        }
+        return experiment;
+    }
+
+    public ProcessedInput postProcess(PostProcessor.Stage stage, ProcessedInput input) {
+        for (PostProcessor proc : postProcessors) {
+            if (proc.getStage() == stage) {
+                input = proc.process(input);
+            }
+        }
+        return input;
     }
 
     public Ms2Experiment validate(Ms2Experiment experiment) {
