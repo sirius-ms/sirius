@@ -12,7 +12,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.*;
-import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabet;
 import de.unijena.bioinf.MassDecomposer.MassDecomposer;
 import de.unijena.bioinf.MassDecomposer.ValenceValidator;
 import org.apache.commons.collections.primitives.ArrayIntList;
