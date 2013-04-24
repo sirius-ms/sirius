@@ -52,36 +52,40 @@ public class Benchmark {
         }
         System.out.println("============");
 
-        for (double blowup : new double[]{10000d, 5000d, 2938.996619d, 5248.916666d}) {
+        for (double blowup : new double[]{5963.337687d}) {
             double bestTime = Double.MAX_VALUE;
             System.out.print("original Decompose blowup( " + blowup +  " ): ");
-            for (int i=0; i < 10; ++i) {
-                final MassDecomposer<Element> elementDecomposer = new MassDecomposer<Element>(1d/blowup,
-                        new ChemicalAlphabetWrapper(alphabet));
+            final MassDecomposer<Element> elementDecomposer = new MassDecomposer<Element>(1d/blowup,
+                    new ChemicalAlphabetWrapper(alphabet));
+            for (int i=0; i < 20; ++i) {
+                int decomps = 0;
                 double now = System.nanoTime();
                 for (double x : testSet) {
-                    elementDecomposer.decompose(x, d);
+                    decomps += elementDecomposer.decompose(x, d).size();
                 }
                 double after = System.nanoTime();
                 if (after-now < bestTime) {
                     bestTime = after-now;
                 }
+                if (i==0) System.out.print("Error( " + elementDecomposer.getMaxError() + ") " + "#( " + decomps + ") ");
             }
             System.out.print((long)(bestTime*1e-6));
             System.out.println(" ms");
             bestTime = Double.MAX_VALUE;
             System.out.print("fast Decompose blowup( " + blowup +  " ): ");
-            for (int i=0; i < 10; ++i) {
-                final MassDecomposer<Element> fastDecomposer = new MassDecomposerFast<Element>(1d/blowup,
-                        new ChemicalAlphabetWrapper(alphabet));
+            final MassDecomposer<Element> fastDecomposer = new MassDecomposerFast<Element>(1d/blowup,
+                    new ChemicalAlphabetWrapper(alphabet));
+            for (int i=0; i < 20; ++i) {
+                int decomps = 0;
                 double now = System.nanoTime();
                 for (double x : testSet) {
-                    fastDecomposer.decompose(x, d);
+                    decomps += fastDecomposer.decompose(x, d).size();
                 }
                 double after = System.nanoTime();
                 if (after-now < bestTime) {
                     bestTime = after-now;
                 }
+                if (i==0) System.out.print("Error( " + fastDecomposer.getMaxError() + ") " + "#( " + decomps + ") ");
             }
             System.out.print((long)(bestTime*1e-6));
             System.out.println(" ms");

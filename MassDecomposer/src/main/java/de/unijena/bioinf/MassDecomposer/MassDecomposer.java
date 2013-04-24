@@ -333,6 +333,11 @@ public class MassDecomposer<T> {
         }
     }
 
+    public double getMaxError() {
+        computeErrors();
+        return minError;
+    }
+
     protected Interval integerBound(double mass, double error) {
         final double absError = error;
         return new Interval(
