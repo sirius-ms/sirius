@@ -5,13 +5,13 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
-public class JenaMs2Spectrum extends JenaMsSpectrum implements Ms2Spectrum {
+public class JenaMs2Spectrum extends JenaMsSpectrum implements Ms2Spectrum<Peak> {
 
     private final double precursorMz;
     private final CollisionEnergy collisionEnergy;
 
 
-    public JenaMs2Spectrum(Spectrum<Peak> spectrum, double precursorMz, double totalIonCount, CollisionEnergy collisionEnergy, double retentionTime) {
+    public JenaMs2Spectrum(Spectrum<? extends Peak> spectrum, double precursorMz, double totalIonCount, CollisionEnergy collisionEnergy, double retentionTime) {
         super(spectrum, totalIonCount, retentionTime);
         this.precursorMz = precursorMz;
         this.collisionEnergy = collisionEnergy;

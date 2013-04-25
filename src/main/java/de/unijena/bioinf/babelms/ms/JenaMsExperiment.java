@@ -1,5 +1,6 @@
 package de.unijena.bioinf.babelms.ms;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
@@ -16,6 +17,7 @@ public class JenaMsExperiment implements Ms2Experiment {
     private int charge;
     private MolecularFormula compoundFormula;
     private String compoundName;
+    private MeasurementProfile measurementProfile;
 
     JenaMsExperiment(String compoundName, MolecularFormula compoundFormula, double ionMass, int charge, Ionization ionization, List<JenaMsSpectrum> ms1Spectra, List<JenaMs2Spectrum> ms2Spectra) {
         this.compoundName = compoundName;
@@ -27,7 +29,8 @@ public class JenaMsExperiment implements Ms2Experiment {
         this.ms2Spectra = ms2Spectra;
     }
 
-    public String getCompoundName() {
+
+public String getCompoundName() {
         return compoundName;
     }
 
@@ -60,9 +63,13 @@ public class JenaMsExperiment implements Ms2Experiment {
         return false;
     }
 
+    public void setMeasurementProfile(MeasurementProfile measurementProfile) {
+        this.measurementProfile = measurementProfile;
+    }
+
     @Override
     public MeasurementProfile getMeasurementProfile() {
-        return null;
+        return measurementProfile;
     }
 
     @Override
@@ -77,6 +84,6 @@ public class JenaMsExperiment implements Ms2Experiment {
 
     @Override
     public Ionization getIonization() {
-        return ionization;
+        return ionization!=null ? ionization : new Charge(charge);
     }
 }
