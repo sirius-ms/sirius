@@ -1,0 +1,197 @@
+package de.unijena.bioinf.babelms.json;
+
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.math.BigDecimal;
+import java.util.AbstractSet;
+import java.util.Iterator;
+import java.util.Set;
+
+public class JSONDocumentType extends DataDocument<Object, JSONObject, JSONArray> {
+    @Override
+    public boolean isDictionary(Object document) {
+        return document instanceof JSONObject;
+    }
+
+    @Override
+    public boolean isList(Object document) {
+        return document instanceof JSONArray;
+    }
+
+    @Override
+    public boolean isInteger(Object document) {
+        return (document instanceof Number) && !(document instanceof Float || document instanceof Double || document instanceof BigDecimal);
+    }
+
+    @Override
+    public boolean isDouble(Object document) {
+        return (document instanceof Number) && (document instanceof Float || document instanceof Double || document instanceof BigDecimal);
+    }
+
+    @Override
+    public boolean isBoolean(Object document) {
+        return document instanceof Boolean;
+    }
+
+    @Override
+    public boolean isString(Object document) {
+        return document instanceof String;
+    }
+
+    @Override
+    public boolean isNull(Object document) {
+        return document == null;
+    }
+
+    @Override
+    public long getInt(Object document) {
+        return ((Number)document).longValue();
+    }
+
+    @Override
+    public double getDouble(Object document) {
+        return ((Number)document).doubleValue();
+    }
+
+    @Override
+    public boolean getBoolean(Object document) {
+        return (Boolean)document;
+    }
+
+    @Override
+    public String getString(Object document) {
+        return (String)document;
+    }
+
+
+    @Override
+    public JSONObject getDictionary(Object document) {
+        return (JSONObject)document;
+    }
+
+    @Override
+    public JSONArray getList(Object document) {
+        return (JSONArray)document;
+    }
+
+    @Override
+    public void addToList(JSONArray jsonArray, Object value) {
+        jsonArray.put(value);
+    }
+
+    @Override
+    public Object getFromList(JSONArray jsonArray, int index) {
+        try {
+            return jsonArray.get(index);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void setInList(JSONArray jsonArray, int index, Object value) {
+        try {
+            jsonArray.put(index, value);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Object wrap(long value) {
+        return value;
+    }
+
+    @Override
+    public Object wrap(double value) {
+        return value;
+    }
+
+    @Override
+    public Object wrap(boolean value) {
+        return value;
+    }
+
+    @Override
+    public Object getNull() {
+        return null;
+    }
+
+    @Override
+    public Object wrap(String value) {
+        return value;
+    }
+
+    @Override
+    public Object wrapDictionary(JSONObject dict) {
+        return dict;
+    }
+
+    @Override
+    public Object wrapList(JSONArray dict) {
+        return dict;
+    }
+
+    @Override
+    public JSONObject newDictionary() {
+        return new JSONObject();
+    }
+
+    @Override
+    public JSONArray newList() {
+        return new JSONArray();
+    }
+
+    @Override
+    public Object getFromDictionary(JSONObject dict, String key) {
+        try {
+            return dict.get(key);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void deleteFromList(JSONArray jsonArray, int index) {
+        jsonArray.remove(index);
+    }
+
+    @Override
+    public void addToDictionary(JSONObject dict, String key, Object value) {
+        try {
+            dict.put(key, value);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Object deleteFromDictionary(JSONObject dict, String key) {
+        return dict.remove(key);
+    }
+
+    @Override
+    public Set<String> keySetOfDictionary(final JSONObject dict) {
+        return new AbstractSet<String>() {
+            @Override
+            public Iterator<String> iterator() {
+                return dict.keys();
+            }
+
+            @Override
+            public int size() {
+                return dict.length();
+            }
+        };
+    }
+
+    @Override
+    public int sizeOfList(JSONArray jsonArray) {
+        return jsonArray.length();
+    }
+
+
+}
