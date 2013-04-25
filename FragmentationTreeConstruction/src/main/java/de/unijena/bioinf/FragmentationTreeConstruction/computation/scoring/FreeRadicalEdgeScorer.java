@@ -1,8 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.legacy.AbstractEdgeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.graph.format.ScoreName;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationPathway;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -10,7 +8,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import java.util.HashMap;
 import java.util.Map;
 
-@ScoreName("radical")
 public class FreeRadicalEdgeScorer implements LossScorer {
 
     private final Map<MolecularFormula, Double> freeRadicals;

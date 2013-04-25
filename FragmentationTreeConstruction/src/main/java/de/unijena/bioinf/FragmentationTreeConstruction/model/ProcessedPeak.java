@@ -13,7 +13,7 @@ import java.util.*;
 public class ProcessedPeak extends Peak {
     private int index;
     private List<MS2Peak> originalPeaks;
-    private double localRelativeIntensity, relativeIntensity, globalRelativeIntensity, maxGlobalIntensity;
+    private double localRelativeIntensity, relativeIntensity, globalRelativeIntensity;
     private CollisionEnergy collisionEnergy;
     private Ionization ion;
     private List<ScoredMolecularFormula> decompositions;
@@ -22,7 +22,7 @@ public class ProcessedPeak extends Peak {
         super(0, 0);
         this.index = 0;
         this.originalPeaks = Collections.emptyList();
-        this.globalRelativeIntensity = relativeIntensity = maxGlobalIntensity = 0d;
+        this.globalRelativeIntensity = relativeIntensity = localRelativeIntensity = 0d;
         this.ion = null;
         this.decompositions = Collections.emptyList();
     }
@@ -42,7 +42,6 @@ public class ProcessedPeak extends Peak {
         this.mass = peak.getMz();
         this.intensity = peak.getIntensity();
         this.localRelativeIntensity = peak.getLocalRelativeIntensity();
-        this.maxGlobalIntensity = peak.getMaxGlobalIntensity();
         this.globalRelativeIntensity = peak.getGlobalRelativeIntensity();
         this.relativeIntensity = peak.getRelativeIntensity();
         this.ion = peak.getIon();
@@ -56,14 +55,6 @@ public class ProcessedPeak extends Peak {
 
     public void setCollisionEnergy(CollisionEnergy collisionEnergy) {
         this.collisionEnergy = collisionEnergy;
-    }
-
-    public double getMaxGlobalIntensity() {
-        return maxGlobalIntensity;
-    }
-
-    public void setMaxGlobalIntensity(double maxGlobalIntensity) {
-        this.maxGlobalIntensity = maxGlobalIntensity;
     }
 
     public double getLocalRelativeIntensity() {

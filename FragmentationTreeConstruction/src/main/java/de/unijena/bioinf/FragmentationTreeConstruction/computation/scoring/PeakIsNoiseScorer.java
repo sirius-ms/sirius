@@ -29,7 +29,7 @@ public class PeakIsNoiseScorer implements PeakScorer {
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += distribution.getLogCumulativeProbability(peaks.get(i).getIntensity());
+            scores[i] -= distribution.getLogCumulativeProbability(peaks.get(i).getRelativeIntensity());
         }
     }
 }

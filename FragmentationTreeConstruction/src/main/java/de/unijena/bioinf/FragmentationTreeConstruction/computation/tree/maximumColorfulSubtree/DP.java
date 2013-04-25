@@ -41,7 +41,7 @@ class DP {
         final FragmentationTree tree = backtrack();
         final double additionalScore = attachRemainingColors(tree);
         tree.setScore(tree.getScore()+additionalScore);
-        assert tree.isComputationCorrect();
+        assert tree.isComputationCorrect(graph.getRootScore());
         return tree;
     }
 

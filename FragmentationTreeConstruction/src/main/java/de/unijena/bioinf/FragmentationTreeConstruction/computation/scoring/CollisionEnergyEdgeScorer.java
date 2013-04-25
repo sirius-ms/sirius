@@ -1,8 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.FragmentationTreeConstruction.graph.format.ScoreName;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.functional.Predicate;
 import de.unijena.bioinf.functional.list.ListOperations;
 import org.apache.commons.collections.primitives.ArrayDoubleList;
@@ -18,7 +21,6 @@ import java.util.List;
  *      - if fragment appears direct after parent, give beta (80%)probability
  * otherwise 100% probability
  */
-@ScoreName("collision")
 public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
     private final double alpha, beta, logAlpha, logBeta;
@@ -107,16 +109,16 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores) {
-        final Ms2SpectrumImpl[] spectra = input.getOriginalInput().getMs2Spectra().toArray(new Ms2SpectrumImpl[0]);
+        final List<? extends Ms2Spectrum> spectra = input.getExperimentInformation().getMs2Spectra();
         // map the different collision energies to indizes
         // for example: you have the energies [10, 20, 30, 40, 60] and you map each
         // energy to an index: 10 -> 0, 20 -> 1, 30 -> 2, 40 -> 3, 60 -> 4.
         final double[] energies;
         {
-            final ArrayDoubleList energyList = new ArrayDoubleList(spectra.length);
-            final double[] points = new double[spectra.length*2];
+            final ArrayDoubleList energyList = new ArrayDoubleList(spectra.size());
+            final double[] points = new double[spectra.size()*2];
             int k=0;
-            for (Ms2SpectrumImpl ms : spectra) {
+            for (Ms2Spectrum ms : spectra) {
                 final CollisionEnergy e = ms.getCollisionEnergy();
                 points[k++] = e.getMinEnergy();
                 points[k++] = e.getMaxEnergy();
@@ -132,10 +134,10 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         }
         // next: transform each energy to its indizes
         // so 10 becomes 0, 20-30 becomes 1-2 and so on
-        final int[] energyIndizesMin = new int[spectra.length];
-        final int[] energyIndizesMax = new int[spectra.length];
-        for (int i=0; i < spectra.length; ++i) {
-            final CollisionEnergy ce = spectra[i].getCollisionEnergy();
+        final int[] energyIndizesMin = new int[spectra.size()];
+        final int[] energyIndizesMax = new int[spectra.size()];
+        for (int i=0; i < spectra.size(); ++i) {
+            final CollisionEnergy ce = spectra.get(i).getCollisionEnergy();
             energyIndizesMin[i] = Arrays.binarySearch(energies, ce.getMinEnergy());
             energyIndizesMax[i] = Arrays.binarySearch(energies, ce.getMaxEnergy());
             assert energyIndizesMin[i] >= 0;
@@ -147,20 +149,20 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         final int[] minEnergy = new int[n], maxEnergy = new int[n];
         for (int i=0; i < input.getMergedPeaks().size(); ++i) assert input.getMergedPeaks().get(i).getIndex() == i;
         Arrays.fill(minEnergy, Integer.MAX_VALUE); Arrays.fill(maxEnergy, Integer.MIN_VALUE);
-        final List<ProcessedPeak>[] peaksPerSpectra = new List[spectra.length];
+        final List<ProcessedPeak>[] peaksPerSpectra = new List[spectra.size()];
         for (int i=0; i < peaksPerSpectra.length; ++i) {
             final int k = i;
             peaksPerSpectra[i] = ListOperations.singleton().filter(input.getMergedPeaks(), new Predicate<ProcessedPeak>() {
                 @Override
                 public boolean apply(ProcessedPeak value) {
                     for (MS2Peak p : value.getOriginalPeaks()) {
-                        if (p.getSpectrum() == spectra[k]) return true;
+                        if (p.getSpectrum() == spectra.get(k)) return true;
                     }
                     return false;
                 }
             });
         }
-        for (int i=0; i < spectra.length; ++i) {
+        for (int i=0; i < spectra.size(); ++i) {
             for (ProcessedPeak peak : peaksPerSpectra[i]) {
                 final int j = peak.getIndex();
                 minEnergy[j] = Math.min(minEnergy[j], energyIndizesMin[i]);

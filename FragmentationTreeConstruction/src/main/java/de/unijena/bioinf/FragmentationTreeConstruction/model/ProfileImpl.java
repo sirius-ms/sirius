@@ -1,13 +1,14 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 
 public class ProfileImpl implements MeasurementProfile {
 
     private Deviation expectedIonMassDeviation, expectedMassDifferenceDeviation, expectedFragmentMassDeviation;
-    private ChemicalAlphabet chemicalAlphabet;
+    private FormulaConstraints constraints;
 
     public ProfileImpl() {
 
@@ -17,7 +18,7 @@ public class ProfileImpl implements MeasurementProfile {
         this.expectedIonMassDeviation = profile.getExpectedIonMassDeviation();
         this.expectedMassDifferenceDeviation = profile.getExpectedMassDifferenceDeviation();
         this.expectedFragmentMassDeviation = profile.getExpectedFragmentMassDeviation();
-        this.chemicalAlphabet = profile.getChemicalAlphabet().clone();
+        this.constraints = new FormulaConstraints(new ChemicalAlphabet());
     }
 
     public Deviation getExpectedIonMassDeviation() {
@@ -40,15 +41,16 @@ public class ProfileImpl implements MeasurementProfile {
         return expectedFragmentMassDeviation;
     }
 
+    public void setFormulaConstraints(FormulaConstraints constraints) {
+        this.constraints = constraints;
+    }
+
+    @Override
+    public FormulaConstraints getFormulaConstraints() {
+        return constraints;
+    }
+
     public void setExpectedFragmentMassDeviation(Deviation expectedFragmentMassDeviation) {
         this.expectedFragmentMassDeviation = expectedFragmentMassDeviation;
-    }
-
-    public ChemicalAlphabet getChemicalAlphabet() {
-        return chemicalAlphabet;
-    }
-
-    public void setChemicalAlphabet(ChemicalAlphabet chemicalAlphabet) {
-        this.chemicalAlphabet = chemicalAlphabet;
     }
 }

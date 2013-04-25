@@ -132,13 +132,13 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         return TreeCursor.getCursor(getRoot(), getAdapter());
     }
 
-    public boolean isComputationCorrect() {
-        return isComputationCorrect(1e-6);
+    public boolean isComputationCorrect(double rootScore) {
+        return isComputationCorrect(rootScore, 1e-6);
     }
 
-    public boolean isComputationCorrect(double tolerance) {
+    public boolean isComputationCorrect(double rootScore, double tolerance) {
         final double score = getScore();
-        double s = 0d;
+        double s = rootScore;
         final BitSet usedColors = new BitSet();
         for (TreeFragment f : new PostOrderTraversal<TreeFragment>(getCursor())) {
             final double c = f.isRoot() ? getRoot().getDecomposition().getScore() : f.getParentEdge().getWeight();

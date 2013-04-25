@@ -2,14 +2,12 @@ package de.unijena.bioinf.FragmentationTreeConstruction;
 
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.parentPeakDetection.Detection;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProfileImpl;
@@ -30,7 +28,7 @@ public class PreprocessingTest {
         experiment.setMoleculeNeutralMass(180.0633881184);
         experiment.setMolecularFormula(MolecularFormula.parse("C6H12O6"));
         final ProfileImpl profile = new ProfileImpl();
-        profile.setChemicalAlphabet(new ChemicalAlphabet());
+        profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
         profile.setExpectedFragmentMassDeviation(new Deviation(10, 1e-3, 1e-4));
         profile.setExpectedIonMassDeviation(new Deviation(5, 1e-3, 1e-4));
         profile.setExpectedMassDifferenceDeviation(new Deviation(2, 5e-4, 1e-4));
@@ -58,14 +56,6 @@ public class PreprocessingTest {
             experiment.getMs2Spectra().add(ms2);
         }
         return experiment;
-    }
-
-    public testNormalization() {
-        final Ms2Experiment exp = testData();
-        final Detection correctParentPeak = new Detection(new Peak(exp.getIonMass(), 320), false);
-        final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
-        final ProcIanalysis.normalize(exp, correctParentPeak);
-
     }
 
 }

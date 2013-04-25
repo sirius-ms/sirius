@@ -1,6 +1,5 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.Main;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.functional.iterator.Iterators;
@@ -87,7 +86,7 @@ public class GurobiSolver implements TreeBuilder {
     public static GRBEnv getDefaultEnv() {
         try {
             final GRBEnv env = new GRBEnv();
-            env.set(GRB.IntParam.OutputFlag, Main.VERBOSE ? 1 : 0);
+            env.set(GRB.IntParam.OutputFlag, 0);
             return env;
         } catch (GRBException e) {
             throw new RuntimeException(e);
@@ -96,10 +95,10 @@ public class GurobiSolver implements TreeBuilder {
 
     @Override
     public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
-        if (lastInput != input.getOriginalInput().hashCode()) {
+        if (lastInput != input.getExperimentInformation().hashCode()) {
             // reset time limit
             freeSeconds = secondsPerInstance;
-            lastInput = input.getOriginalInput().hashCode();
+            lastInput = input.getExperimentInformation().hashCode();
         }
 
         try {
@@ -180,7 +179,7 @@ public class GurobiSolver implements TreeBuilder {
                     }
                 }
                 final FragmentationTree tree = buildSolution();
-                if (!tree.isComputationCorrect()) {
+                if (!tree.isComputationCorrect(graph.getRootScore())) {
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
                 }
                 model.dispose(); // free memory
@@ -205,7 +204,7 @@ public class GurobiSolver implements TreeBuilder {
                 case GRB.INFEASIBLE: cause = "Solution is infeasible."; break;
                 default: try {
                     if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0) cause = "Constraint are violated. Tree-correctness: "
-                            + buildSolution().isComputationCorrect();
+                            + buildSolution().isComputationCorrect(graph.getRootScore());
                 } catch (GRBException e) {
                     throw new RuntimeException("Unknown error. Status code is " + status, e);
                 }

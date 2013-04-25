@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -42,9 +43,9 @@ public class MissingValueValidator implements InputValidator {
     protected void checkMeasurementProfile(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getMeasurementProfile() == null) throw new InvalidException("Measurement profile is missing");
         final ProfileImpl profile = new ProfileImpl(input.getMeasurementProfile());
-        if (profile.getChemicalAlphabet() == null) {
-            throwOrWarn(warn, repair, "Measurement profile: Chemical alphabet is missing");
-            profile.setChemicalAlphabet(new ChemicalAlphabet());
+        if (profile.getFormulaConstraints() == null) {
+            throwOrWarn(warn, repair, "Measurement profile: Formula constraints are missing");
+            profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
         }
         // get at least one deviation
         Deviation dev = profile.getExpectedIonMassDeviation();

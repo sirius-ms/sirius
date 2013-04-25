@@ -2,7 +2,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.FragmentationTreeConstruction.graph.format.ScoreName;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationPathway;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -14,7 +13,6 @@ import java.util.Map;
 /**
  * @author Kai Dührkop
  */
-@ScoreName("common loss")
 public class CommonLossEdgeScorer implements LossScorer {
 
     private final HashMap<MolecularFormula, Double> map;

@@ -48,7 +48,7 @@ public class IlpTreeConstructor implements TreeBuilder {
                 }
             }
         }
-        assert tree.isComputationCorrect();
+        assert tree.isComputationCorrect(graph.getRootScore());
         return tree;
     }
 

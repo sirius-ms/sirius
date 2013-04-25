@@ -1,25 +1,23 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.legacy;
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationPathway;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
+/**
+ * Created with IntelliJ IDEA.
+ * User: kaidu
+ * Date: 25.04.13
+ * Time: 03:52
+ * To change this template use File | Settings | File Templates.
+ */
 public class DBELossScorer implements LossScorer {
 
-    private final double score;
-
-    public DBELossScorer(double score) {
-        this.score = score;
-    }
-
-    public DBELossScorer() {
-        this.score = Math.log(0.25);
-    }
+    private double score = score = Math.log(0.25);
 
     @Override
     public Object prepare(ProcessedInput input, FragmentationPathway graph) {
-        return null;
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

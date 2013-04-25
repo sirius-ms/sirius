@@ -3,14 +3,12 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.FragmentationTreeConstruction.graph.format.ScoreName;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@ScoreName("common fragment")
 public class CommonFragmentsScore implements DecompositionScorer<Object> {
 
 	private final HashMap<MolecularFormula, Double> commonFragments;
@@ -135,7 +133,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object> {
 
 	@Override
 	public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        final Ionization ion = input.getOriginalInput().getStandardIon();
+        final Ionization ion = input.getExperimentInformation().getIonization();
         final Double intrinsic = commonFragments.get(formula);
         final double intr = intrinsic != null ? intrinsic.doubleValue() : 0;
         if (!hTolerance && ion instanceof Charge) {

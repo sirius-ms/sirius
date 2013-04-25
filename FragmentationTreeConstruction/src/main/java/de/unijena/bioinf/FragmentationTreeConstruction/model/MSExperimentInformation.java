@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 

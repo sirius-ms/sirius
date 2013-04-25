@@ -8,6 +8,7 @@
 
     <modules>
         <module>FragmentationTreeConstruction</module>
+        <module>FTCLI</module>
     </modules>
 
     <!--                                                               -->

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Kai Dührkop
  */
-public class Ms2SpectrumImpl implements Ms2Spectrum {
+public class Ms2SpectrumImpl implements Ms2Spectrum<MS2Peak> {
 
     private final static Comparator<Ms2SpectrumImpl> ENERGY_COMPARATOR = new EnergyComparator();
 
@@ -81,8 +81,8 @@ public class Ms2SpectrumImpl implements Ms2Spectrum {
     }
 
     @Override
-    public Iterator<Peak> iterator() {
-        return (Iterator<Peak>)peaks.iterator();
+    public Iterator<MS2Peak> iterator() {
+        return peaks.iterator();
     }
 
     @Override
