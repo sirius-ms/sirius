@@ -14,7 +14,7 @@ public interface Ms2Experiment {
     /**
      * @return a list of MS2 spectra belonging to this compound
      */
-    public List<Ms2Spectrum> getMs2Spectra();
+    public List<? extends Ms2Spectrum> getMs2Spectra();
 
     /**
      * Notes:
@@ -22,7 +22,7 @@ public interface Ms2Experiment {
      * ion in each ms1 spectrum. Further peaks are not allowed!
      * @return a list of MS1 spectra with the isotope pattern of this compound
      */
-    public List<Spectrum<Peak>> getMs1Spectra();
+    public List<? extends Spectrum<Peak>> getMs1Spectra();
 
     /**
      * In practice it seems more accurate to merge all MS1 spectra into a single one and only use this for further
@@ -30,7 +30,7 @@ public interface Ms2Experiment {
      * should not be done in SIRIUS itself.
      * @return merge all ms1 spectra to single one
      */
-    public Spectrum<Peak> getMergedMs1Spectrum();
+    public <T extends Spectrum<Peak>> T getMergedMs1Spectrum();
 
     /**
      * @return the mass-to-charge ratio of the ion to analyze

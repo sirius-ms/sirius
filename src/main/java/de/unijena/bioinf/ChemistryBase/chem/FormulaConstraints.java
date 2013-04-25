@@ -3,7 +3,6 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * FormulaConstraints contains all constraints which reduce the size of all possible decompositions of a mass.
@@ -27,6 +26,7 @@ public class FormulaConstraints {
     public FormulaConstraints(ChemicalAlphabet alphabet) {
         this.chemicalAlphabet = alphabet;
         this.upperbounds = new int[alphabet.size()];
+        Arrays.fill(upperbounds, Integer.MAX_VALUE);
         this.filters = new ArrayList<FormulaFilter>();
     }
 
