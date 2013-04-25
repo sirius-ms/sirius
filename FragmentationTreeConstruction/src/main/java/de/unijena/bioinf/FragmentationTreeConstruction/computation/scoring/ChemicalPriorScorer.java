@@ -1,11 +1,13 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
-import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 
+@Called("Chemical Prior")
 public class ChemicalPriorScorer implements DecompositionScorer<Object> {
 
     private final MolecularFormulaScorer prior;

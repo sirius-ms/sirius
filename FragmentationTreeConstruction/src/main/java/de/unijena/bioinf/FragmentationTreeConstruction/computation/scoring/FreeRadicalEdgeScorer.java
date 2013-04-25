@@ -1,13 +1,14 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationPathway;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Called("Free Radical")
 public class FreeRadicalEdgeScorer implements LossScorer {
 
     private final Map<MolecularFormula, Double> freeRadicals;
@@ -37,7 +38,7 @@ public class FreeRadicalEdgeScorer implements LossScorer {
     }
 
     @Override
-    public Object prepare(ProcessedInput input, FragmentationPathway graph) {
+    public Object prepare(ProcessedInput input) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

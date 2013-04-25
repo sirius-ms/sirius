@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -9,6 +10,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import java.util.HashMap;
 import java.util.Map;
 
+@Called("Common Fragments:")
 public class CommonFragmentsScore implements DecompositionScorer<Object> {
 
 	private final HashMap<MolecularFormula, Double> commonFragments;

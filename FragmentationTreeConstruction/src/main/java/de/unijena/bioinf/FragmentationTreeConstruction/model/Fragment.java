@@ -1,6 +1,8 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTFragment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +12,7 @@ import java.util.List;
 /**
  * @author Kai Dührkop
  */
-public abstract class Fragment {
+public abstract class Fragment implements FTFragment{
 
     protected final List<Loss> outgoingEdges;
     int index;
@@ -98,5 +100,21 @@ public abstract class Fragment {
         if (!(obj instanceof Fragment)) return false;
         final Fragment f = (Fragment)obj;
         return (f.getIndex() == index && f.getColor() == getColor());
+    }
+
+    @Override
+    public double getRelativePeakIntensity() {
+        return peak.getRelativeIntensity();
+    }
+
+    @Override
+    public List<CollisionEnergy> getCollisionEnergies() {
+        final ArrayList<CollisionEnergy> energies = new ArrayList<CollisionEnergy>(peak.getOriginalPeaks().size());
+        for (MS2Peak p : peak.getOriginalPeaks()) {
+            final CollisionEnergy energy = p.getSpectrum().getCollisionEnergy();
+            if (!energies.contains(energy)) energies.add(energy);
+        }
+        Collections.sort(energies, CollisionEnergy.getMinEnergyComparator());
+        return energies;
     }
 }

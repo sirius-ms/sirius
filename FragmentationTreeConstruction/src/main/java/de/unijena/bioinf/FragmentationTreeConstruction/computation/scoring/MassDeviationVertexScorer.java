@@ -1,10 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import org.apache.commons.math3.special.Erf;
@@ -12,7 +11,7 @@ import org.apache.commons.math3.special.Erf;
 /**
  * @author Kai Dührkop
  */
-
+@Called("Mass Deviation")
 public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     private final static double sqrt2 = Math.sqrt(2);
     private final double massPenalty;

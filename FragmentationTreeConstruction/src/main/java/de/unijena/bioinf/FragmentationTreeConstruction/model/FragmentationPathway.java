@@ -1,9 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTGraph;
+
 import java.util.Iterator;
 import java.util.List;
 
-public interface FragmentationPathway {
+public interface FragmentationPathway extends FTGraph<Fragment> {
 
     public Fragment getRoot();
 

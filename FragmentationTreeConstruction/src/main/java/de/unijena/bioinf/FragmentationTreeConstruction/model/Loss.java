@@ -1,11 +1,12 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTLoss;
 
 /**
  * @author Kai Dührkop
  */
-public class Loss {
+public class Loss implements FTLoss<Fragment> {
 
     private final Fragment head, tail;
     private final MolecularFormula loss;
@@ -54,6 +55,11 @@ public class Loss {
 
     public Fragment getTail() {
         return tail;
+    }
+
+    @Override
+    public MolecularFormula getFormula() {
+        return loss;
     }
 
     public String toString() {

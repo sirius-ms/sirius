@@ -1,6 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTFragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTLoss;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +37,22 @@ public class TreeFragment extends Fragment {
     @Override
     public List<Loss> getIncomingEdges() {
         return parentLoss == null ? Collections.<Loss>emptyList() : Collections.singletonList(parentLoss);
+    }
+
+    @Override
+    public FTFragment getParent() {
+        if (parentLoss==null) return null;
+        return getParentEdge().getHead();
+    }
+
+    @Override
+    public <T extends FTLoss<? extends FTFragment>> T getIncomingEdge() {
+        return (T) getParentEdge();
+    }
+
+    @Override
+    public MolecularFormula getFormula() {
+        return decomposition.getFormula();
     }
 
     @Override

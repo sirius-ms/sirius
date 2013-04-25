@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
@@ -21,6 +22,7 @@ import java.util.List;
  *      - if fragment appears direct after parent, give beta (80%)probability
  * otherwise 100% probability
  */
+@Called("Collision Energy")
 public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
     private final double alpha, beta, logAlpha, logBeta;
@@ -172,11 +174,13 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
         // now the scoring of each pair of peaks
         for (int parent = 0; parent < peaks.size(); ++parent) {
-            for (int fragment = 0; fragment < peaks.size(); ++fragment) {
+            for (int fragment = 0; fragment < parent; ++fragment) {
                 // you don't have to score pairs where the parent is smaller than the fragment, because
                 // we don't allow this in later steps --> so matrix is not symmetric
-                if (peaks.get(parent).getMz() <= peaks.get(fragment).getMz())
+                if (peaks.get(parent).getMz() <= peaks.get(fragment).getMz())  {
                     scores[parent][fragment] += Double.NEGATIVE_INFINITY;
+                    assert false;
+                }
                 // 1. fragment appears at lower collision energies than parent -> alpha (10%) probability
                 if (minEnergy[fragment] < minEnergy[parent]) {
                     scores[parent][fragment] += logAlpha;

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationPathway;
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
@@ -11,12 +11,13 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
  * Time: 03:52
  * To change this template use File | Settings | File Templates.
  */
+@Called("Loss RDBE")
 public class DBELossScorer implements LossScorer {
 
     private double score = score = Math.log(0.25);
 
     @Override
-    public Object prepare(ProcessedInput input, FragmentationPathway graph) {
+    public Object prepare(ProcessedInput input) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

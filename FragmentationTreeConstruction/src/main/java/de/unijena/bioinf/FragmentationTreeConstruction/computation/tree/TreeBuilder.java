@@ -10,11 +10,5 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 public interface TreeBuilder {
 
     public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound);
-    
-    //public boolean msnSupported();
-    /*
-    public FragmentationTree buildMSnTree(ProcessedInput input, FragmentationGraph graph,
-    		double[][] closure) throws UnsupportedOperationException;
-	*/
 
 }

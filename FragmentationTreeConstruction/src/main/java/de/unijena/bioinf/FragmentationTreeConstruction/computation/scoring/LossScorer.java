@@ -1,6 +1,5 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationPathway;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
@@ -9,7 +8,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
  */
 public interface LossScorer {
 
-    public Object prepare(ProcessedInput input, FragmentationPathway graph);
+    public Object prepare(ProcessedInput inputh);
 
     public double score(Loss loss, ProcessedInput input, Object precomputed);
 

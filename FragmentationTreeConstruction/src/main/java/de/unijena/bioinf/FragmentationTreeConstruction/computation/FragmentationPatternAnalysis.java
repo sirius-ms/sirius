@@ -19,7 +19,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidato
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing.NormalizationType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -72,7 +71,7 @@ public class FragmentationPatternAnalysis {
         setInitial();
         inputValidators.add(new MissingValueValidator());
         decompositionScorers.add(new MassDeviationVertexScorer(false));
-        decompositionScorers.add(CommonFragmentsScore.getLearnedCommonFragmentScorer(4));
+        decompositionScorers.add(CommonFragmentsScore.getLearnedCommonFragmentScorer(4).addLosses(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).getMap()).useHTolerance());
         rootScorers.add(new MassDeviationVertexScorer(true));
         rootScorers.add(new ChemicalPriorScorer());
         fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
@@ -101,7 +100,7 @@ public class FragmentationPatternAnalysis {
         final double[][] peakPairScores = input.getPeakPairScores();
         final LossScorer[] lossScorers = this.lossScorers.toArray(new LossScorer[this.lossScorers.size()]);
         final Object[] precomputeds = new Object[lossScorers.length];
-        for (int i=0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input, graph);
+        for (int i=0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input);
         while (edges.hasNext()) {
             final Loss loss = edges.next();
             final Fragment u = loss.getHead();
@@ -389,4 +388,112 @@ public class FragmentationPatternAnalysis {
         else return new Ms2ExperimentImpl(exp);
     }
 
+    //////////////////////////////////////////
+    //        GETTER/SETTER
+    //////////////////////////////////////////
+
+
+    public List<InputValidator> getInputValidators() {
+        return inputValidators;
+    }
+
+    public void setInputValidators(List<InputValidator> inputValidators) {
+        this.inputValidators = inputValidators;
+    }
+
+    public Warning getValidatorWarning() {
+        return validatorWarning;
+    }
+
+    public void setValidatorWarning(Warning validatorWarning) {
+        this.validatorWarning = validatorWarning;
+    }
+
+    public boolean isRepairInput() {
+        return repairInput;
+    }
+
+    public void setRepairInput(boolean repairInput) {
+        this.repairInput = repairInput;
+    }
+
+    public NormalizationType getNormalizationType() {
+        return normalizationType;
+    }
+
+    public void setNormalizationType(NormalizationType normalizationType) {
+        this.normalizationType = normalizationType;
+    }
+
+    public PeakMerger getPeakMerger() {
+        return peakMerger;
+    }
+
+    public void setPeakMerger(PeakMerger peakMerger) {
+        this.peakMerger = peakMerger;
+    }
+
+    public List<DecompositionScorer<?>> getDecompositionScorers() {
+        return decompositionScorers;
+    }
+
+    public void setDecompositionScorers(List<DecompositionScorer<?>> decompositionScorers) {
+        this.decompositionScorers = decompositionScorers;
+    }
+
+    public List<DecompositionScorer<?>> getRootScorers() {
+        return rootScorers;
+    }
+
+    public void setRootScorers(List<DecompositionScorer<?>> rootScorers) {
+        this.rootScorers = rootScorers;
+    }
+
+    public List<LossScorer> getLossScorers() {
+        return lossScorers;
+    }
+
+    public void setLossScorers(List<LossScorer> lossScorers) {
+        this.lossScorers = lossScorers;
+    }
+
+    public List<PeakPairScorer> getPeakPairScorers() {
+        return peakPairScorers;
+    }
+
+    public void setPeakPairScorers(List<PeakPairScorer> peakPairScorers) {
+        this.peakPairScorers = peakPairScorers;
+    }
+
+    public List<PeakScorer> getFragmentPeakScorers() {
+        return fragmentPeakScorers;
+    }
+
+    public void setFragmentPeakScorers(List<PeakScorer> fragmentPeakScorers) {
+        this.fragmentPeakScorers = fragmentPeakScorers;
+    }
+
+    public List<Preprocessor> getPreprocessors() {
+        return preprocessors;
+    }
+
+    public void setPreprocessors(List<Preprocessor> preprocessors) {
+        this.preprocessors = preprocessors;
+    }
+
+    public List<PostProcessor> getPostProcessors() {
+        return postProcessors;
+    }
+
+    public void setPostProcessors(List<PostProcessor> postProcessors) {
+        this.postProcessors = postProcessors;
+    }
+
+    public TreeBuilder getTreeBuilder() {
+        return treeBuilder;
+    }
+
+    public void setTreeBuilder(TreeBuilder treeBuilder) {
+        this.treeBuilder = treeBuilder;
+    }
 }

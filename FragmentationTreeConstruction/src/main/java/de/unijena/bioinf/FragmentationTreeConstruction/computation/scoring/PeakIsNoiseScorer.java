@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -14,6 +15,7 @@ import java.util.List;
  * Time: 3:36 PM
  * To change this template use File | Settings | File Templates.
  */
+@Called("Intensity")
 public class PeakIsNoiseScorer implements PeakScorer {
 
     private final RealDistribution distribution;
