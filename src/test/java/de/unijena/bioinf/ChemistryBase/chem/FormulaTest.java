@@ -1,13 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotSame;
-import static junit.framework.Assert.assertSame;
-
 import org.junit.Test;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import static junit.framework.Assert.*;
 
 public class FormulaTest {
 	

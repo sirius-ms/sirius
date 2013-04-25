@@ -1,10 +1,10 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public abstract class AbstractSpectrum<T extends Peak> implements Spectrum<T> {
 	

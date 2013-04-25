@@ -1,15 +1,14 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.Iterator;
-
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Iterator;
 
 public class IsotopicDistributionJSONFile extends DistributionReader {
 

@@ -5,9 +5,10 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistributionBlueObelis
 import de.unijena.bioinf.ChemistryBase.chem.utils.PeriodicTableBlueObeliskReader;
 import de.unijena.bioinf.ChemistryBase.chem.utils.PeriodicTableJSONReader;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 import java.io.IOException;
+
+import static org.junit.Assert.*;
 
 public class ParserTest {
 

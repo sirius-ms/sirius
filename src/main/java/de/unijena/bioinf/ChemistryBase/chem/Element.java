@@ -1,12 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
-
-
 /**
  * Basic class for chemical elements. Instances of this class are read-only. So there is no possibility
  * to change their information.

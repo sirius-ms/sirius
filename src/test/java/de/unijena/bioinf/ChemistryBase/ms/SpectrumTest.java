@@ -1,15 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import org.junit.Test;
-
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.BasicMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-
 import junit.framework.TestCase;
+import org.junit.Test;
 
 public class SpectrumTest extends TestCase {
 

@@ -1,8 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
-
-
 public class Isotopes {
 
     private final double[] masses;

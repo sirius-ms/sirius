@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 
 /**

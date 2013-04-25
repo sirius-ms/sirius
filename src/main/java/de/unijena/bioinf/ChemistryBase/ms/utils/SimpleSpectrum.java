@@ -1,11 +1,10 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+
+import java.util.Arrays;
 
 public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum{
 

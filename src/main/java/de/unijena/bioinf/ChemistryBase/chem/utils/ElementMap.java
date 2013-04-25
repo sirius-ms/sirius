@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
-import java.util.*;
-
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
+
+import java.util.*;
 
 public class ElementMap<T> implements Map<Element, T> {
 

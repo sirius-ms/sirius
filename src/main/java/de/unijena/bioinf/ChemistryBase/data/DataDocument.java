@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.data;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 /**

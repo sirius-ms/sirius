@@ -3,7 +3,8 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
-import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.*;
+import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.MAX;
+import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.SUM;
 
 public class Normalization {
 	

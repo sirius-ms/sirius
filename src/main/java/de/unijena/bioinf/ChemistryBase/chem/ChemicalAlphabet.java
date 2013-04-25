@@ -2,7 +2,6 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 import org.apache.commons.collections.primitives.ArrayIntList;
-import org.apache.commons.collections.primitives.adapters.IntListList;
 
 import java.util.*;
 

@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IsotopicDistribution {
 

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<cml xmlns="http://www.xml-cml.org/schema" convention="bodr:isotopes" xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bo="http://www.blueobelisk.org/dict/terminology" xmlns:boUnits="http://www.blueobelisk.org/dict/units" xmlns:units="http://www.xml-cml.org/units/units" xmlns:isUnits="http://www.xml-cml.org/units/siUnits" xmlns:bibx="http://bibtexml.sf.net/" xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd                          http://bibtexml.sf.net/       ../schemas/bibtexml.xsd" id="isotopes" title="properties of the isotopes">
+<cml xmlns="http://www.xml-cml.org/schema" convention="bodr:isotopes"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bo="http://www.blueobelisk.org/dict/terminology"
+     xmlns:units="http://www.xml-cml.org/units/units"
+     xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd                                 /schemas/bibtexml.xsd"
+     id="isotopes" title="properties of the isotopes">
 
       <metadataList>
 	      <!-- manually updated -->

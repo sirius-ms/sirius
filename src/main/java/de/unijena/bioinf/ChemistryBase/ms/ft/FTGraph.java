@@ -1,7 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 
-public interface FTGraph {
+public interface FTGraph<T extends FTFragment> {
+
+    public T getRoot();
 
 
 

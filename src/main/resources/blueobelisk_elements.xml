@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<list id="chemicalElement" convention="bodr:elements" title="properties of the elements" xmlns="http://www.xml-cml.org/schema" xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bo="http://www.blueobelisk.org/dict/terminology" xmlns:boUnits="http://www.blueobelisk.org/dict/units" xmlns:units="http://www.xml-cml.org/units/units" xmlns:siUnits="http://www.xml-cml.org/units/siUnits" xmlns:bibx="http://bibtexml.sf.net/" xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd                            http://bibtexml.sf.net/       ../schemas/bibtexml.xsd">
+<list id="chemicalElement" convention="bodr:elements" title="properties of the elements"
+      xmlns="http://www.xml-cml.org/schema" xmlns:xml="http://www.w3.org/XML/1998/namespace"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bo="http://www.blueobelisk.org/dict/terminology"
+      xmlns:boUnits="http://www.blueobelisk.org/dict/units" xmlns:units="http://www.xml-cml.org/units/units"
+      xmlns:siUnits="http://www.xml-cml.org/units/siUnits"
+      xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd                                   /schemas/bibtexml.xsd">
 
   <metadataList>
     <!-- manually updated -->
