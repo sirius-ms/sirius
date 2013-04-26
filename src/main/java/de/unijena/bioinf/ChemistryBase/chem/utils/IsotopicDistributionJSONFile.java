@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
+import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,17 +25,16 @@ public class IsotopicDistributionJSONFile extends DistributionReader {
 			obj = new JSONObject(buffer.toString());
 			for (Iterator<?> keys = obj.keys(); keys.hasNext();) {
 				final String key = keys.next().toString();
-				final JSONObject element = (JSONObject)obj.get(key);
-                final JSONArray jmasses = (JSONArray)obj.get("masses");
-                final JSONArray jabundances = (JSONArray)obj.get("abundances");
-                if (jmasses.length() != jabundances.length())
-                    throw new IOException("Can't parse json file. Invalid JSON syntax: Size of arrays differ in element '" + key + "'");
+                final Isotopes prev = PeriodicTable.getInstance().getDistribution().getIsotopesFor(key);
+				//final JSONObject element = (JSONObject)obj.get(key);
+                //final JSONArray jmasses = (JSONArray)obj.get("masses");
+                final JSONArray jabundances = (JSONArray)obj.get(key);
                 final String elementSymbol = key;
-                final double[] masses = new double[jmasses.length()];
                 final double[] abundances = new double[jabundances.length()];
-                for (int i=0; i < jmasses.length(); ++i) {
-                    masses[i] = jmasses.getDouble(i);
+                final double[] masses = new double[jabundances.length()];
+                for (int i=0; i < prev.getNumberOfIsotopes(); ++i) {  // TODO: fix!!!
                     abundances[i] = jabundances.getDouble(i);
+                    masses[i] = prev.getMass(i);
                 }
                 dist.addIsotope(key, masses, abundances);
 			}
