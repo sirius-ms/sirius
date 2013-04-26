@@ -1,9 +1,11 @@
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -12,6 +14,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.*;
+import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabetWrapper;
 import de.unijena.bioinf.MassDecomposer.MassDecomposer;
 import de.unijena.bioinf.MassDecomposer.ValenceValidator;
 import org.apache.commons.collections.primitives.ArrayIntList;
@@ -57,8 +60,7 @@ public class Main {
         final PatternGenerator gen = new PatternGenerator(PeriodicTable.getInstance().ionByName("[M+H+]+"), Normalization.Max(1));
         final PatternScoreList<ChargedPeak, ChargedSpectrum>scorer = new PatternScoreList<ChargedPeak, ChargedSpectrum>();
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(MolecularFormula.parse(ONLY_CHNOPS ? "CHNOPS" : "CHNOPSFe").elementArray());
-        final MassDecomposer<Element> decomposer = new MassDecomposer<Element>(1e-5, 5, 0.001, alphabet);
-        decomposer.setValidator(new ValenceValidator<Element>());
+        final MassDecomposer<Element> decomposer = new MassDecomposer<Element>(1e-5, new ChemicalAlphabetWrapper(alphabet));
         if (METHOD == 0 || METHOD==2)   {
             scorer.addScorer(new MassDeviationScorer<ChargedPeak, ChargedSpectrum>(3, 5, 6.5));
         } else if (METHOD == 3) {
@@ -108,7 +110,7 @@ public class Main {
                     }
                     System.out.println("");
                 }
-                for (int[] compomer : decomposer.decompose(file.spectrum.getPeakAt(0).getNeutralMass())) {
+                for (int[] compomer : decomposer.decompose(file.spectrum.getPeakAt(0).getNeutralMass(), new Deviation(5, 1e-3, 1e-5)) ) {
                     MolecularFormula form = alphabet.decompositionToFormula(compomer);
                     if (NO_ODD_RDBE && form.doubledRDBE() % 2 != 0) continue;
 

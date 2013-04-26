@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
+import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistributionJSONFile;
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -19,19 +20,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PatternGeneratorTest {
-	
+
 	@Test
 	public void testNonChargedPatternGeneration() {
-		IsotopicDistribution.setThreadLocal(true);
-		IsotopicDistribution oldInstance = IsotopicDistribution.getInstance();
-		// compare with Chemcalc
-		
 		try {
-			IsotopicDistribution.setInstance(IsotopicDistribution.loadChemcalc2012());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		
+            PeriodicTable.getInstance().setDistribution(new IsotopicDistributionJSONFile().fromClassPath("/chemcalc_distribution.json"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 		// Generator
 		final PatternGenerator generator = new PatternGenerator(new Charge(1), Normalization.Max(100));
 		// test data
@@ -49,22 +45,16 @@ public class PatternGeneratorTest {
 		assertEquals(1.432, spectrum.getIntensityAt(2), 0.001);
 		assertEquals(0.0866, spectrum.getIntensityAt(3), 0.001);
 		assertEquals(0.009, spectrum.getIntensityAt(4), 0.001);
-		
-		IsotopicDistribution.setInstance(oldInstance);
+
 	}
 
     @Test
     public void testStrangePatternGeneration() {
-        IsotopicDistribution.setThreadLocal(true);
-        IsotopicDistribution oldInstance = IsotopicDistribution.getInstance();
-        // compare with Chemcalc
-
         try {
-            IsotopicDistribution.setInstance(IsotopicDistribution.loadChemcalc2012());
+            PeriodicTable.getInstance().setDistribution(new IsotopicDistributionJSONFile().fromClassPath("/chemcalc_distribution.json"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         // Generator
         final PatternGenerator generator = new PatternGenerator(new Charge(1), Normalization.Max(100));
         // test data
@@ -84,8 +74,6 @@ public class PatternGeneratorTest {
         assertEquals(100, s.getIntensityAt(2), 0.01);
         assertEquals(35.6837261759, s.getIntensityAt(3), 0.01);
         assertEquals(8.9481921844, s.getIntensityAt(4), 0.01);
-
-        IsotopicDistribution.setInstance(oldInstance);
 
         final Spectrum<?> testP = generator.generatePatternWithTreshold(mol, 1e-3);
         assertTrue("for ferrum: third peak is greater than first peak", s.getIntensityAt(0) < s.getIntensityAt(2));

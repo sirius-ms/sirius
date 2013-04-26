@@ -1,10 +1,12 @@
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -16,6 +18,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.extraction.PatternExtractor;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.LogNormDistributedIntensityScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MissingPeakScorer;
+import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabetWrapper;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
 import de.unijena.bioinf.MassDecomposer.ValenceBoundary;
@@ -37,6 +40,7 @@ public class DeIsotope {
     private ChemicalAlphabet alphabet;
     private double intensityOffset;
     private double intensityTreshold;
+    private double ppm, alpha, absError;
 
     public DeIsotope(double ppm) {
         this(ppm, 100*1e-6*ppm);
@@ -57,7 +61,7 @@ public class DeIsotope {
     public DeIsotope(double ppm, double absError, ChemicalAlphabet alphabet, IsotopicDistribution distribution,
                      double massPenalty, double intensityPenalty, double alpha, double beta, double relativeMassErrorFull,
                      double relativeMassErrorZero, double lambdaMissingPeak, double intensityOffset) {
-        this.decomposer = new MassToFormulaDecomposer(1e-5, ppm, absError, alphabet);
+        this.decomposer = new MassToFormulaDecomposer(1e-5, alphabet);
         this.patternExtractor = new AlreadyExtracted();
         this.isotopicDistribution = distribution;
         this.isotopePatternScorer = new PatternScoreList(new MassDeviationScorer(massPenalty, ppm*relativeMassErrorFull, ppm*relativeMassErrorZero),
@@ -65,6 +69,9 @@ public class DeIsotope {
         this.alphabet = alphabet;
         this.elementBoundary = alphabet.toMap();
         this.intensityOffset = intensityOffset;
+        this.alpha = alpha;
+        this.ppm = ppm;
+        this.absError = absError;
     }
 
     public double getIntensityTreshold() {
@@ -93,8 +100,8 @@ public class DeIsotope {
 
     public List<ScoredMolecularFormula> deisotope(ChargedSpectrum extractedSpectrum) {
         final double monoIsotopicMass = extractedSpectrum.getPeakAt(getIndexOfPeakWithMinimalMass(extractedSpectrum)).getNeutralMass();
-        final List<MolecularFormula> formulas = decomposer.decomposeToFormulas(monoIsotopicMass,
-                new ValenceBoundary<Element>(alphabet).getMapFor(monoIsotopicMass, elementBoundary));
+        final List<MolecularFormula> formulas = decomposer.decomposeToFormulas(monoIsotopicMass, new Deviation(ppm, absError, 1e-5),
+                new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(monoIsotopicMass, elementBoundary));
         final ArrayList<ScoredMolecularFormula> scoredFormulas = new ArrayList<ScoredMolecularFormula>(formulas.size());
         final double[] scores = scoreFormulas(extractedSpectrum, formulas);
         for (int i=0; i < scores.length; ++i) {

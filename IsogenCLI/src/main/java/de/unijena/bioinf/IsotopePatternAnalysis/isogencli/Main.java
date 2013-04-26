@@ -45,21 +45,21 @@ public class Main {
                         if (f.exists() && f.canRead()) {
                             final FileReader r = new FileReader(f);
                             try{
-                                distribution = new IsotopicDistributionJSONFile(r);
+                                distribution = new IsotopicDistributionJSONFile().read(r);
                             } finally {
                                 r.close();
                             }
                         } else if (dist.equalsIgnoreCase("chemcalc")) {
-                            distribution = IsotopicDistribution.loadChemcalc2012();
+                            distribution = new IsotopicDistributionJSONFile().fromClassPath("chemcalc_distribution.json");
                         } else {
-                            distribution = IsotopicDistributionJSONFile.fromClassPath(dist);
+                            distribution = new IsotopicDistributionJSONFile().fromClassPath(dist);
                         }
                     } catch (IOException e) {
                         System.err.print("Error while reading '" + f.getPath() + "': ");
                         System.err.println(e.getMessage());
                         return;
                     }
-                    IsotopicDistribution.setInstance(distribution);
+                    PeriodicTable.getInstance().setDistribution(distribution);
                 }
 
                 final MolecularFormula formula = MolecularFormula.parse(options.getMolecularFormula());
