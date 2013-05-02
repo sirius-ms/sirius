@@ -26,8 +26,11 @@ public class ChemicalValidator implements DecompositionValidator<Element>, Formu
         return new ChemicalValidator(60, -2.5, 4, 9);
     }
 
-    public static ValenceValidator<Element> getRDBEOnlyThreshold() {
-        return new ValenceValidator<Element>(-0.5d);
+    public static ChemicalValidator getRDBEOnlyThreshold() {
+        return new ChemicalValidator(Double.MAX_VALUE, -0.5, Double.MAX_VALUE, Double.MAX_VALUE);
+    }
+    public static ChemicalValidator getRDBEOnlyThreshold(double minrdbe) {
+        return new ChemicalValidator(Double.MAX_VALUE, minrdbe, Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
     public double getHeteroToCarbonThreshold() {

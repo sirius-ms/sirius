@@ -11,7 +11,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class Benchmark {
 
@@ -51,7 +54,25 @@ public class Benchmark {
             System.out.println(e + ": " + e.getMass());
         }
         System.out.println("============");
-
+        final Map<Element, Interval> bounds = alphabet.toMap();
+        for (Element e : alphabet.getElements()) {
+            bounds.put(e, new Interval(0, 7));
+        }
+        bounds.put(PeriodicTable.getInstance().getByName("C"), new Interval(0,1000));
+        bounds.put(PeriodicTable.getInstance().getByName("H"), new Interval(0,1000));
+        {
+            double blowup = 5963.337687d;
+            final MassDecomposer<Element> elementDecomposer = new MassDecomposer<Element>(1d/blowup,
+                    new ChemicalAlphabetWrapper(alphabet));
+            for (double x : testSet) {
+                final List<int[]> decomps = elementDecomposer.decompose(x, d,bounds);
+                for (int[] xs : decomps) {
+                    for (int i=0; i < xs.length; ++i)
+                        assert xs[i] <= bounds.get(alphabet.get(elementDecomposer.getCharacterIndizes()[i])).getMax() : "RangeError for element " +
+                                alphabet.get(elementDecomposer.getCharacterIndizes()[i]).getName() + " with index " + i + " and amount " + xs[i]        ;
+                }
+            }
+        }
         for (double blowup : new double[]{5963.337687d}) {
             double bestTime = Double.MAX_VALUE;
             System.out.print("original Decompose blowup( " + blowup +  " ): ");

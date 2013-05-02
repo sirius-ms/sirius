@@ -134,6 +134,7 @@ public class MassDecomposer<T> {
         if (!minAllZero && (Math.abs(calcMass) <= absError)) results.add(minValues);
         for (long m = interval.getMin(); m <= interval.getMax(); ++m) {
             rawDecompositions = integerDecompose(m, boundsarray);
+            //rawDecompositions = integerDecomposeAntonsVersion(m,boundsarray);
             for (int i=0; i < rawDecompositions.size(); ++i) {
                 final int[] decomp = rawDecompositions.get(i);
                 if (!minAllZero) {
@@ -151,6 +152,60 @@ public class MassDecomposer<T> {
     }
 
     protected ArrayList<int[]> integerDecompose(long mass, int[] bounds){
+        // Find compomers
+        ArrayList<int[]> result = new ArrayList<int[]>();
+        int k = weights.size()-1; // index of last character
+        long a = weights.get(0).getIntegerMass(); // mass of first character
+        int[] c = new int[k+1]; // compomere
+        int i=k; // current column in ERT
+        long m = mass; // current mass
+        while (i <= k) {
+            if (!decomposable(i, m, a)) { // jump back the search tree as long as there are no branches you can jump into
+                while (i <= k && !decomposable(i, m, a)) {
+                    m = m+c[i]*weights.get(i).getIntegerMass();
+                    c[i] = 0;
+                    ++i;
+                }
+                // now decomposable(i,m,a) = true
+                while (i<=k && c[i]>=bounds[i]) {  // Jump a step back if you reached the boundary
+                    m += c[i]*weights.get(i).getIntegerMass();
+                    c[i] = 0;
+                    ++i;
+                }
+                if (i <= k) {  // insert a character
+                    m -= weights.get(i).getIntegerMass();
+                    ++c[i];
+                }
+            } else {
+                while (i > 0 && decomposable(i-1, m, a)) { // go as deep as possible into the "search tree"
+                    --i; // initially we do not add any elements
+                }
+                // now decomposable[i,m,a]=true
+                if (i==0) { // you are finished: Add the decomposition
+                    c[0] = (int)(m/a);
+                    result.add(c.clone());
+                    ++i; // and go one step back in the search tree
+                }
+                while (i<=k && c[i]>=bounds[i]) { // Jump a step back if you reached the boundary
+                    m += c[i]*weights.get(i).getIntegerMass();
+                    c[i] = 0;
+                    ++i;
+                }
+                if (i <= k) {  // insert a character
+                    m -= weights.get(i).getIntegerMass();
+                    ++c[i];
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean decomposable(int i, long m, long a1) {
+        if (m<0)return false;
+        return ERT[(int)(m % a1)][i] <= m;
+    }
+
+    protected ArrayList<int[]> integerDecomposeAntonsVersion(long mass, int[] bounds){
         // Find compomers
         ArrayList<int[]> result = new ArrayList<int[]>();
         int k = weights.size();
