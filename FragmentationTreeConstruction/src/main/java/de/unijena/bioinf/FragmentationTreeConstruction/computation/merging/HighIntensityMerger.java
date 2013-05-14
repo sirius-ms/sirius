@@ -36,7 +36,7 @@ public class HighIntensityMerger implements PeakMerger {
         int parentIndex = mergeParentPeak(experiment, mergeWindow, merger, mzArray, massOrderedSpectrum);
         // after this you can merge the other peaks. Ignore all peaks near the parent peak
         final double parentMass = experiment.getIonMass();
-        for (; parentIndex >= 0 && mzArray[parentIndex].getMz()+0.1d >= parentMass; --parentIndex);
+        for (; parentIndex > 0 && mzArray[parentIndex-1].getMz()+0.1d >= parentMass; --parentIndex);
         final ProcessedPeak[] parray = Arrays.copyOf(mzArray, parentIndex);
         Arrays.sort(parray, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
         for (int i=0; i < parray.length; ++i) {
@@ -60,6 +60,11 @@ public class HighIntensityMerger implements PeakMerger {
     protected int mergeParentPeak(Ms2Experiment experiment, Deviation mergeWindow, Merger merger, ProcessedPeak[] mzArray, Spectrum<ProcessedPeak> massOrderedSpectrum) {
         final double parentMass = experiment.getIonMass();
         final int properParentPeak = Spectrums.search(massOrderedSpectrum, parentMass, mergeWindow);
+        if (properParentPeak < 0) {
+            // there is no parent peak in spectrum
+            // therefore it is save to merge all peaks
+            return mzArray.length;
+        }
         int lowerBound = properParentPeak;
         int upperBound = properParentPeak;
         double hightestIntensity = mzArray[properParentPeak].getIntensity();
