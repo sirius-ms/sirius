@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.ChemicalPriorScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakIsNoiseScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
@@ -38,7 +39,13 @@ public class TestMS2Analysis {
             profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
             experiment.setMeasurementProfile(profile);
             final StringWriter writer = new StringWriter();
+
             final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
+            analysis.getDecompositionScorers().add(new MassDeviationVertexScorer())
+            analysis.computeTrees(input);
+
+
+
             analysis.getFragmentPeakScorers().clear();
             analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer(10000));
             analysis.getDecompositionScorers().add(new ChemicalPriorScorer(new Hydrogen2CarbonScorer()));

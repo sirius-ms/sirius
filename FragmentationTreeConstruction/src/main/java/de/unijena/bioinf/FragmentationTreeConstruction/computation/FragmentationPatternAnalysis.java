@@ -80,7 +80,20 @@ public class FragmentationPatternAnalysis {
         lossScorers.add(new DBELossScorer());
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
         peakPairScorers.add(new RelativeLossSizeScorer());
+    }
 
+    public void setToSirius() {
+        setInitial();
+        inputValidators.add(new MissingValueValidator());
+        decompositionScorers.add(new MassDeviationVertexScorer(false));
+        rootScorers.add(new MassDeviationVertexScorer(true));
+        rootScorers.add(new ChemicalPriorScorer());
+        fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
+        lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1)));
+        lossScorers.add(new DBELossScorer());
+        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
+        peakPairScorers.add(new RelativeLossSizeScorer());
     }
 
     public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound) {
