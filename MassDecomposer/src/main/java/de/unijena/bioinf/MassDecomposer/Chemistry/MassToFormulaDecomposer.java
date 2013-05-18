@@ -13,14 +13,13 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
 
     protected final ChemicalAlphabet alphabet;
 
+    public MassToFormulaDecomposer() {
+        this(new ChemicalAlphabet());
+    }
+
     public MassToFormulaDecomposer(ChemicalAlphabet alphabet) {
         super(new ChemicalAlphabetWrapper(alphabet));
         this.alphabet = alphabet;
-    }
-
-
-    public MassToFormulaDecomposer(double precision) {
-        this(new ChemicalAlphabet());
     }
 
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {

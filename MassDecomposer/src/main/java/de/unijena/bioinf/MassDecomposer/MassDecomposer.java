@@ -40,7 +40,7 @@ public class MassDecomposer<T> {
     }
 
     protected double findOptimalPrecision() {
-        return 5963.337687d; // TODO: check alphabet and mass deviation, define optimal blowup for given alphabet
+        return 1d/5963.337687d; // TODO: check alphabet and mass deviation, define optimal blowup for given alphabet
     }
 
     public Alphabet<T> getAlphabet() {

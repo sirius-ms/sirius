@@ -25,7 +25,7 @@ public class MassDecomposerTest {
     public void testElementBoundaries() {
 
         double mass = 212.11;
-        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(1e-5);
+        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer();
         final List<MolecularFormula> ref = decomposer.decomposeToFormulas(mass, new Deviation(20, 1e-3));
 
         final HashMap<Element, Interval> map = new HashMap<Element, Interval>();
