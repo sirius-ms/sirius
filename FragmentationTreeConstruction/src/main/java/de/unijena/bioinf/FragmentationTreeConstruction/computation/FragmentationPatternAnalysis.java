@@ -177,6 +177,9 @@ public class FragmentationPatternAnalysis {
     }
 
     public ProcessedInput decomposeAndScore(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, Deviation parentDeviation, ProcessedPeak parentPeak) {
+        // sort again...
+        processedPeaks = new ArrayList<ProcessedPeak>(processedPeaks);
+        Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
         // decompose peaks
         final FormulaConstraints constraints = experiment.getMeasurementProfile().getFormulaConstraints();
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
@@ -185,10 +188,12 @@ public class FragmentationPatternAnalysis {
         final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(parentPeak.getUnmodifiedMass(), parentDeviation, constraints);
         final ArrayList<List<MolecularFormula>> decompositions = new ArrayList<List<MolecularFormula>>(processedPeaks.size());
         int j=0;
-        for (ProcessedPeak peak : processedPeaks) {
+        for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size()-1)) {
             peak.setIndex(j++);
             decompositions.add(decomposer.decomposeToFormulas(peak.getUnmodifiedMass(), fragmentDeviation, constraints));
         }
+        parentPeak.setIndex(processedPeaks.size()-1);
+        assert parentPeak == processedPeaks.get(processedPeaks.size()-1);
         // important: for each two peaks which are within 2*massrange:
         //  => make decomposition list disjoint
         final Deviation window = fragmentDeviation.multiply(2);

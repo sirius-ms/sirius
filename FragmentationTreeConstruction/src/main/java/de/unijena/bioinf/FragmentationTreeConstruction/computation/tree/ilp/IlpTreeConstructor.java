@@ -14,7 +14,7 @@ public class IlpTreeConstructor implements TreeBuilder {
 
     public IlpTreeConstructor(SolverFactory factory) {
         this.factory = factory;
-        factory.setParameter(Solver.VERBOSE, 1);
+        factory.setParameter(Solver.VERBOSE, 0);
     }
 
     public IlpTreeConstructor() {

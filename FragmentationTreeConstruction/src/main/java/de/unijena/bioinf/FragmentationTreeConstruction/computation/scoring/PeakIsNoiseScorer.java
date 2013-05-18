@@ -18,7 +18,15 @@ import java.util.List;
 @Called("Intensity")
 public class PeakIsNoiseScorer implements PeakScorer {
 
-    private final RealDistribution distribution;
+    private RealDistribution distribution;
+
+    public RealDistribution getDistribution() {
+        return distribution;
+    }
+
+    public void setDistribution(RealDistribution distribution) {
+        this.distribution = distribution;
+    }
 
     public PeakIsNoiseScorer(double lambda) {
         this(ExponentialDistribution.fromLambda(lambda));

@@ -4,13 +4,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kaidu
- * Date: 25.04.13
- * Time: 03:52
- * To change this template use File | Settings | File Templates.
- */
 @Called("Loss RDBE")
 public class DBELossScorer implements LossScorer {
 

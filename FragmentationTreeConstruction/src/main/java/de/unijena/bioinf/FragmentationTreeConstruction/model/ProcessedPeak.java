@@ -142,6 +142,10 @@ public class ProcessedPeak extends Peak {
         return ion;
     }
 
+    public boolean isSynthetic() {
+        return originalPeaks.isEmpty();
+    }
+
     public List<ScoredMolecularFormula> getDecompositions() {
         return Collections.unmodifiableList(decompositions);
     }

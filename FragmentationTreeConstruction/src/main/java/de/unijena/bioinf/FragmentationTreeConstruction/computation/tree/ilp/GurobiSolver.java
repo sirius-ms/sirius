@@ -1,10 +1,13 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.functional.iterator.Iterators;
 import gurobi.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
@@ -93,11 +96,32 @@ public class GurobiSolver implements TreeBuilder {
         }
     }
 
+    public void resetTimeLimit() {
+        freeSeconds = secondsPerInstance;
+    }
+
+    public void optimizeParameters(File file, ProcessedInput input, FragmentationGraph graph) {
+        try {
+            final Solver solver = new Solver(graph, input, 0d, env, feasibleSolver, Integer.MAX_VALUE);
+            solver.defineVariables();
+            solver.optimize();
+            solver.computeOffsets();
+            solver.setConstraints();
+            solver.model.update();
+            solver.model.tune();
+            solver.model.getTuneResult(0);
+            solver.model.write(file.getName());
+        } catch (GRBException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+
+    }
+
     @Override
     public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
         if (lastInput != input.getExperimentInformation().hashCode()) {
             // reset time limit
-            freeSeconds = secondsPerInstance;
+            resetTimeLimit();
             lastInput = input.getExperimentInformation().hashCode();
         }
 
@@ -200,7 +224,7 @@ public class GurobiSolver implements TreeBuilder {
             int status = model.get(GRB.IntAttr.Status);
             String cause = "";
             switch (status)  {
-                case GRB.TIME_LIMIT: cause = "Timeout (exceed time limit of " + timeLimit + " seconds per decomposition"; break;
+                case GRB.TIME_LIMIT: cause = "Timeout (exceed time limit of " + timeLimit + " seconds per decomposition"; throw new TimeoutException(cause);
                 case GRB.INFEASIBLE: cause = "Solution is infeasible."; break;
                 default: try {
                     if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0) cause = "Constraint are violated. Tree-correctness: "
@@ -209,7 +233,6 @@ public class GurobiSolver implements TreeBuilder {
                     throw new RuntimeException("Unknown error. Status code is " + status, e);
                 }
             }
-
             throw new RuntimeException("Can't find a feasible solution: " + cause);
         }
 

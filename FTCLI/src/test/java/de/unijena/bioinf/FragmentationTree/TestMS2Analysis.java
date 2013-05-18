@@ -41,8 +41,7 @@ public class TestMS2Analysis {
             final StringWriter writer = new StringWriter();
 
             final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
-            analysis.getDecompositionScorers().add(new MassDeviationVertexScorer())
-            analysis.computeTrees(input);
+
 
 
 

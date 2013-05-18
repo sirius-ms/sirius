@@ -89,6 +89,63 @@ public class FragmentationGraph implements FragmentationPathway {
         return peaks;
     }
 
+    /**
+     * Delete all but number peaks, such that the graph becomes smaller and sparser
+     * Deletes peaks with lowest intensities
+     * Have to be called AFTER prepareForTreeComputation
+     * @param number number of peaks which should be retained
+     */
+    public void retainPeaks(int number) {
+        if (vertices.size() <= number) return;
+        if (filteredPeaks == null) prepareForTreeComputation();
+        final HashSet<GraphFragment> set = new HashSet<GraphFragment>();
+        final ArrayDeque<GraphFragment> stack = new ArrayDeque<GraphFragment>(3);
+        for (GraphFragment f : getFragmentsWithoutRoot()) {
+            if (f.getColor() > number && !set.contains(f)) {
+                stack.add(f);
+                set.add(f);
+            }
+        }
+        while (!stack.isEmpty()) {
+            final GraphFragment f = stack.pop();
+            final Iterator<Loss> liter = f.incommingEdges.iterator();
+            while (liter.hasNext()) {
+                final Loss l = liter.next();
+                liter.remove();
+                ((GraphFragment)l.getHead()).removeOutgoingEdge(l);
+            }
+            final Iterator<Loss> oiter = f.outgoingEdges.iterator();
+            while (oiter.hasNext()) {
+                final Loss l = oiter.next();
+                oiter.remove();
+                final GraphFragment g = ((GraphFragment)l.getTail());
+                g.removeIncommingEdge(l);
+                if (g.incommingEdges.isEmpty() && !set.contains(g)) {
+                    stack.add(g);
+                    set.add(g);
+                }
+            }
+        }
+    }
+
+    void deleteFragments(List<GraphFragment> fs) {
+        final ArrayDeque<GraphFragment> stack = new ArrayDeque<GraphFragment>();
+        for (GraphFragment f : fs) {
+            final Iterator<Loss> liter = f.incommingEdges.iterator();
+            while (liter.hasNext()) {
+                final Loss l = liter.next();
+                liter.remove();
+                ((GraphFragment)l.getHead()).removeOutgoingEdge(l);
+            }
+            final Iterator<Loss> oiter = f.outgoingEdges.iterator();
+            while (oiter.hasNext()) {
+                final Loss l = oiter.next();
+                oiter.remove();
+                ((GraphFragment)l.getTail()).removeIncommingEdge(l);
+            }
+        }
+    }
+
     private void trim() {
         /*final long t1 = System.nanoTime();
         final int numberOfVertices = vertices.size();

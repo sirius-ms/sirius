@@ -22,11 +22,19 @@ import java.util.List;
  */
 public class HighIntensityMerger implements PeakMerger {
 
+    private double minMergeDistance;
+
+    public HighIntensityMerger(double minMergeDistance) {
+        this.minMergeDistance = minMergeDistance;
+    }
+
     public HighIntensityMerger() {
+        this(0d);
     }
 
     @Override
     public void mergePeaks(List<ProcessedPeak> peaks, Ms2Experiment experiment, Deviation mergeWindow, Merger merger) {
+        mergeWindow = new Deviation(mergeWindow.getPpm(), Math.max(mergeWindow.getAbsolute(), minMergeDistance));
         final ProcessedPeak[] mzArray = peaks.toArray(new ProcessedPeak[peaks.size()]);
         final ProcessedPeak.MassComparator massComparator = new ProcessedPeak.MassComparator();
         Arrays.sort(mzArray, new ProcessedPeak.MassComparator());

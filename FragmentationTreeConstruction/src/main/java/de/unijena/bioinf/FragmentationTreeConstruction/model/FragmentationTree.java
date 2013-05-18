@@ -141,7 +141,7 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         double s = rootScore;
         final BitSet usedColors = new BitSet();
         for (TreeFragment f : new PostOrderTraversal<TreeFragment>(getCursor())) {
-            final double c = f.isRoot() ? getRoot().getDecomposition().getScore() : f.getParentEdge().getWeight();
+            final double c = f.isRoot() ? 0d : f.getParentEdge().getWeight();
             if (c != 0) tolerance = Math.min(tolerance, Math.abs(c)/10d);
             s += c;
             if (usedColors.get(f.getColor())) {

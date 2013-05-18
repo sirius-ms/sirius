@@ -37,7 +37,7 @@ public class ProcessedInput {
     }
 
     public List<ProcessedPeak> getMergedPeaks() {
-        return Collections.unmodifiableList(mergedPeaks);
+        return mergedPeaks == null ? null : Collections.unmodifiableList(mergedPeaks);
     }
 
     public ProcessedPeak getParentPeak() {
@@ -45,7 +45,7 @@ public class ProcessedInput {
     }
 
     public List<ScoredMolecularFormula> getParentMassDecompositions() {
-        return Collections.unmodifiableList(parentMassDecompositions);
+        return parentMassDecompositions == null ? null : Collections.unmodifiableList(parentMassDecompositions);
     }
 
     public double[][] getPeakPairScores() {

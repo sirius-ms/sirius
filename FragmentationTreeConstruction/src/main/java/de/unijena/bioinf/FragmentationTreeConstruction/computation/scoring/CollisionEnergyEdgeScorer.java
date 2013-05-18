@@ -85,7 +85,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         return new int[][]{minEnergy, maxEnergy};
     }
     */
-
+    /*
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
         final int[][] prec = (int[][])precomputed;
         final int[] min = prec[0], max = prec[1];
@@ -108,6 +108,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         // otherwise 100% probability
         return 0d;
     }
+    */
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores) {
@@ -174,10 +175,15 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
         // now the scoring of each pair of peaks
         for (int parent = 0; parent < peaks.size(); ++parent) {
+            // if the parent fragment is synthetic, you can't give a score
+            final ProcessedPeak parentFragment = peaks.get(parent);
+            if (parentFragment.isSynthetic()) {
+                continue;
+            }
             for (int fragment = 0; fragment < parent; ++fragment) {
                 // you don't have to score pairs where the parent is smaller than the fragment, because
                 // we don't allow this in later steps --> so matrix is not symmetric
-                if (peaks.get(parent).getMz() <= peaks.get(fragment).getMz())  {
+                if (parentFragment.getMz() <= peaks.get(fragment).getMz())  {
                     scores[parent][fragment] += Double.NEGATIVE_INFINITY;
                     assert false;
                 }
