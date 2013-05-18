@@ -80,9 +80,9 @@ public class Main {
         } else {
             mass = options.getMass();
         }
-        final Deviation dev = new Deviation(options.getPPM(), options.getAbsoluteDeviation(), Math.pow(10, -options.getPrecision()));
+        final Deviation dev = new Deviation(options.getPPM(), options.getAbsoluteDeviation());
         final ChemicalAlphabet alphabet = options.getAlphabet().getAlphabet();
-        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(dev.getPrecision(), alphabet);
+        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(alphabet);
 
         Map<Element, Interval> boundary = options.getAlphabet().getBoundary();
         final String parentFormula = options.getParentFormula();

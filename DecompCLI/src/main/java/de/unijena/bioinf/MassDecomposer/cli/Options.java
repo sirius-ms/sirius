@@ -13,9 +13,6 @@ public interface Options {
     @Option(longName = "abs", shortName = "a", defaultValue = "0.001",description = "absolute mass error in Dalton")
     public double getAbsoluteDeviation();
 
-    @Option(longName = "prec", shortName = "p", defaultValue = "5", description = "magnitude of precision. By default '5' (for 1e-5)")
-    public int getPrecision();
-
     @Option(longName = "nofilter", shortName = "n", description = "if set, the molecular formulas are not filtered by their chemical properties")
     public boolean getDontUseRDBE();
 
