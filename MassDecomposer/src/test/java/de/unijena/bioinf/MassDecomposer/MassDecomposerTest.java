@@ -375,9 +375,9 @@ public class MassDecomposerTest {
 
 
         double mass = 279.43;
-        final Deviation dev = new Deviation(20, 0.001, Math.pow(10, -5));
+        final Deviation dev = new Deviation(20, 0.001);
         ChemicalAlphabet alphabet = new ChemicalAlphabet();
-        MassDecomposer<Element> decomposer = new MassDecomposer<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
+        MassDecomposer<Element> decomposer = new MassDecomposer<Element>(new ChemicalAlphabetWrapper(alphabet));
 
 
         Map<Element, Interval> boundary = new HashMap<Element, Interval>();
@@ -431,7 +431,7 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("Br"), new Interval(0, Integer.MAX_VALUE));
 
         alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H","N","O","P","S","Fe","Cl", "Br"));
-        decomposer = new MassDecomposer<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
+        decomposer = new MassDecomposer<Element>(new ChemicalAlphabetWrapper(alphabet));
 
         mass = 222.22;
         compomers = decomposer.decompose(mass, dev, boundary);
@@ -459,7 +459,7 @@ public class MassDecomposerTest {
         //getting same results?
         mass = 279.43;
         alphabet = new ChemicalAlphabet();
-        MassDecomposerFast<Element> decomposerFast = new MassDecomposerFast<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
+        MassDecomposerFast<Element> decomposerFast = new MassDecomposerFast<Element>(new ChemicalAlphabetWrapper(alphabet));
 
 
         boundary = new HashMap<Element, Interval>();
@@ -513,7 +513,7 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("Br"), new Interval(0, Integer.MAX_VALUE));
 
         alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H","N","O","P","S","Fe","Cl", "Br"));
-        decomposerFast = new MassDecomposerFast<Element>(dev.getPrecision(), new ChemicalAlphabetWrapper(alphabet));
+        decomposerFast = new MassDecomposerFast<Element>(new ChemicalAlphabetWrapper(alphabet));
 
         mass = 222.22;
         compomers = decomposerFast.decompose(mass, dev, boundary);

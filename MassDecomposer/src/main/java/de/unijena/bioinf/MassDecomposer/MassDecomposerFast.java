@@ -18,12 +18,10 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
     private final static boolean print = false;
 
     /**
-     * @param precision mass precision. A precision of 1e-3 means that three positions after decimal point are
-     *                  considered for input masses
      * @param alphabet the alphabet the mass is decomposed over
      */
-    public MassDecomposerFast(double precision, Alphabet<T> alphabet) {
-        super(precision, alphabet);
+    public MassDecomposerFast(Alphabet<T> alphabet) {
+        super(alphabet);
     }
 
     /**

@@ -22,12 +22,10 @@ public class MassDecomposer<T> {
     protected final int[] orderedCharacterIds;
 
     /**
-     * @param precision mass precision. A precision of 1e-3 means that three positions after decimal point are
-     *                  considered for input masses
      * @param alphabet the alphabet the mass is decomposed over
      */
-    public MassDecomposer(double precision, Alphabet<T> alphabet) {
-        this.precision = precision;
+    public MassDecomposer(Alphabet<T> alphabet) {
+        this.precision = findOptimalPrecision();
         final int n = alphabet.size();
         this.weights = new ArrayList<Weight<T>>(n);
         for (int i=0; i < n; ++i) {
@@ -39,6 +37,10 @@ public class MassDecomposer<T> {
         for (int i=0; i < alphabet.size(); ++i) {
             orderedCharacterIds[i] = alphabet.indexOf(weights.get(i).getOwner());
         }
+    }
+
+    protected double findOptimalPrecision() {
+        return 5963.337687d; // TODO: check alphabet and mass deviation, define optimal blowup for given alphabet
     }
 
     public Alphabet<T> getAlphabet() {
