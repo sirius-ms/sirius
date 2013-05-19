@@ -11,7 +11,13 @@ public class ProfileImpl implements MeasurementProfile {
     private FormulaConstraints constraints;
 
     public ProfileImpl() {
+    }
 
+    public ProfileImpl(Deviation expectedIonMassDeviation, Deviation expectedMassDifferenceDeviation, Deviation expectedFragmentMassDeviation, FormulaConstraints constraints) {
+        this.expectedIonMassDeviation = expectedIonMassDeviation;
+        this.expectedMassDifferenceDeviation = expectedMassDifferenceDeviation;
+        this.expectedFragmentMassDeviation = expectedFragmentMassDeviation;
+        this.constraints = constraints;
     }
 
     public ProfileImpl(MeasurementProfile profile) {

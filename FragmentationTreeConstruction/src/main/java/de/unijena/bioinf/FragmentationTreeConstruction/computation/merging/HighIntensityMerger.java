@@ -45,6 +45,7 @@ public class HighIntensityMerger implements PeakMerger {
         // after this you can merge the other peaks. Ignore all peaks near the parent peak
         final double parentMass = experiment.getIonMass();
         for (; parentIndex > 0 && mzArray[parentIndex-1].getMz()+0.1d >= parentMass; --parentIndex);
+        n = parentIndex;
         final ProcessedPeak[] parray = Arrays.copyOf(mzArray, parentIndex);
         Arrays.sort(parray, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
         for (int i=0; i < parray.length; ++i) {
@@ -95,7 +96,7 @@ public class HighIntensityMerger implements PeakMerger {
         // merge from lowerBound to upperBound using highest intensive peak as main
         final ProcessedPeak[] subset = new ProcessedPeak[upperBound-lowerBound+1];
         System.arraycopy(mzArray, lowerBound, subset, 0, upperBound-lowerBound+1);
-        merger.merge(Arrays.asList(mzArray), intensiveIndex-lowerBound, mzArray[intensiveIndex].getMz() );
+        merger.merge(Arrays.asList(subset), intensiveIndex-lowerBound, mzArray[intensiveIndex].getMz() );
         return lowerBound;
     }
 }

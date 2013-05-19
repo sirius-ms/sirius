@@ -13,14 +13,12 @@ class DecomposerCache {
     private MassToFormulaDecomposer decomposers[];
     private int useCounter[];
     private int size;
-    private double precision;
 
-    public DecomposerCache(double precision, int size) {
+    public DecomposerCache(int size) {
         this.alphabets = new ChemicalAlphabet[size];
         this.decomposers = new MassToFormulaDecomposer[size];
         this.useCounter = new int[size];
         this.size = 0;
-        this.precision = precision;
     }
 
     public MassToFormulaDecomposer getDecomposer(ChemicalAlphabet alphabet) {
@@ -31,21 +29,21 @@ class DecomposerCache {
             }
         }
         if (size < alphabets.length) {
-            decomposers[size] = new MassToFormulaDecomposer(precision, alphabet);
+            decomposers[size] = new MassToFormulaDecomposer(alphabet);
             alphabets[size] = alphabet;
             return decomposers[size++];
         } else {
             int mindex = 0;
             for (int i=1; i < useCounter.length; ++i)
                 if (useCounter[i] < useCounter[mindex]) mindex = i;
-            decomposers[mindex] =  new MassToFormulaDecomposer(precision, alphabet);
+            decomposers[mindex] =  new MassToFormulaDecomposer(alphabet);
             alphabets[mindex] = alphabet;
             return decomposers[mindex];
         }
     }
 
     public DecomposerCache() {
-        this(1e-4, 5);
+        this(5);
     }
 
 }
