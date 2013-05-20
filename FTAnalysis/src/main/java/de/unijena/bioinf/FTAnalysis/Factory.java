@@ -25,6 +25,9 @@ public class Factory {
         analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
         analysis.setTreeBuilder(new GurobiSolver());
         getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(ExponentialDistribution.fromLambda(8));
+        final GurobiSolver solver = new GurobiSolver();
+        solver.setNumberOfCPUs(FTAnalysis.NUMBEROFCPUS);
+        analysis.setTreeBuilder(solver);
         return analysis;
     }
 

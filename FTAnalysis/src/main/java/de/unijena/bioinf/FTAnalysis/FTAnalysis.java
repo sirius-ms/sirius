@@ -2,10 +2,8 @@ package de.unijena.bioinf.FTAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
@@ -14,6 +12,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Pos
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.IsotopePatternAnalysis.DeIsotope;
+import de.unijena.bioinf.IsotopePatternAnalysis.PatternGenerator;
 import de.unijena.bioinf.MassDecomposer.Interval;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
@@ -33,7 +33,7 @@ public class FTAnalysis {
     public static final int METLIN = 1, AGILENT = 2;
     public static final String[] NAMEOFDATA=new String[]{"none", "metlin", "agilent", "both"};
 
-    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 500, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
+    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 5, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
     private static final double DISCRIMINATING=0.8d;
 
     public static int NUMBEROFCPUS = 4;
@@ -121,7 +121,7 @@ public class FTAnalysis {
     PrintStream correctLossesPrinter, wrongLossesPrinter, correctFragmentsPrinter, wrongFragmentsPrinter, rankingPrinter,
             discriminatingFragmentWriter,discriminatingLossWriter, explainedPeakPrinterCorrect, explainedPeakPrinterWrong;
 
-    Ms2Experiment currentInput;
+    Ms2ExperimentImpl currentInput;
     MolecularFormula chargedFormula, formula;
     ChemicalAlphabet alphabet;
     OutputRow row;
@@ -213,8 +213,8 @@ public class FTAnalysis {
                     row.fileName = f;
                     if (f.getName().endsWith(".ms")) {
                         try {
-                            name = (f.getAbsolutePath().contains("/metlin/") ? "m" : "a") + f.getName().substring(0, f.getName().indexOf(".ms"));
-                            currentInput = parser.parseFile(f);
+                            name = (f.getAbsolutePath().contains("metlin") ? "m" : "a") + f.getName().substring(0, f.getName().indexOf(".ms"));
+                            currentInput = new Ms2ExperimentImpl(parser.parseFile(f));
                             // Agilent Information
                         } catch (IOException e) {
                             error(IO, e);
@@ -225,10 +225,15 @@ public class FTAnalysis {
                     {
                         final double ionMass = currentInput.getIonMass() - formula.getMass();
                         final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-2, 1);
+                        if (ion == null) {
+                            System.err.println("Can't find ion for " + name + " with mass " + ionMass);
+                        }
                         chargedFormula = ion.getAtoms().add(formula);
+                        currentInput.setIonization(ion);
                     }
                     MeasurementProfile profile = new MeasurementProfileMs(formula);
-                    ((JenaMsExperiment)currentInput).setMeasurementProfile(profile);
+                    currentInput.setMeasurementProfile(profile);
+
                     row.formula = formula;
                     row.name = name;
                     try {
@@ -436,7 +441,7 @@ public class FTAnalysis {
 
         @Override
         public Deviation getExpectedIonMassDeviation() {
-            return new Deviation(10, 1e-3, 5963.3376861d);
+            return new Deviation(10, 1e-3);
         }
 
         @Override
@@ -446,7 +451,7 @@ public class FTAnalysis {
 
         @Override
         public Deviation getExpectedFragmentMassDeviation() {
-            return new Deviation(20, 2e-3, 5963.3376861);
+            return new Deviation(20, 2e-3);
         }
 
         @Override
@@ -481,6 +486,10 @@ public class FTAnalysis {
     protected boolean processingWithTimeout() {
         final long timeNow = System.nanoTime();
         pinput = pipeline.preprocessing(currentInput);
+        pinput = new ProcessedInput(pinput.getExperimentInformation(), pinput.getMergedPeaks(),
+                pinput.getParentPeak(),
+                selectPMDsWithSimilarIsotopePattern(pinput.getParentMassDecompositions()),
+                pinput.getPeakScores(), pinput.getPeakPairScores());
         row.numberOfDecompositions = pinput.getParentMassDecompositions().size();
         /*
         if (pinput.getParentMassDecompositions().size() > MAXIMAL_NUMBER_OF_DECOMPOSITIONS) {
@@ -557,6 +566,29 @@ public class FTAnalysis {
     }
     private void error() {
         rankingPrinter.println(row.toCSV());
+    }
+
+
+    private List<ScoredMolecularFormula> selectPMDsWithSimilarIsotopePattern(List<ScoredMolecularFormula> list) {
+        if (list.size() <= MAXIMAL_NUMBER_OF_DECOMPOSITIONS) return list;
+        final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(list.size());
+        for (ScoredMolecularFormula m : list) formulas.add(m.getFormula());
+        DeIsotope deIsotope = new DeIsotope(10, 1e-3, currentInput.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
+        deIsotope.setIntensityOffset(0d);
+        deIsotope.setIntensityTreshold(0.005d);
+        PatternGenerator generator = new PatternGenerator(currentInput.getIonization(), Normalization.Sum(1d));
+        ChargedSpectrum spec = generator.generatePattern(formula, 4);
+        double[] scores = deIsotope.scoreFormulas(spec, formulas);
+        final ArrayList<ScoredMolecularFormula> resultList = new ArrayList<ScoredMolecularFormula>(list);
+        for (int i=0; i < resultList.size(); ++i) resultList.set(i, new ScoredMolecularFormula(list.get(i).getFormula(), -scores[i]));
+        Collections.sort(resultList);
+        final HashSet<MolecularFormula> include = new HashSet<MolecularFormula>(MAXIMAL_NUMBER_OF_DECOMPOSITIONS);
+        for (ScoredMolecularFormula f : resultList.subList(0, MAXIMAL_NUMBER_OF_DECOMPOSITIONS)) include.add(f.getFormula());
+        final ArrayList<ScoredMolecularFormula> giveBack = new ArrayList<ScoredMolecularFormula>();
+        for (ScoredMolecularFormula f : list)
+            if (include.contains(f.getFormula()))
+                giveBack.add(f);
+        return giveBack;
     }
 
 }
