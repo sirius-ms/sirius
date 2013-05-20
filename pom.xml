@@ -10,6 +10,7 @@
         <module>FragmentationTreeConstruction</module>
         <module>FTCLI</module>
         <module>FTAnalysis</module>
+        <module>TreeViewer</module>
     </modules>
 
     <!--                                                               -->

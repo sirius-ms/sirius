@@ -1,22 +1,15 @@
 package de.unijena.bioinf.treeviewer;
 
 import de.unijena.bioinf.treeviewer.dot.Graph;
-import de.unijena.bioinf.treeviewer.dot.Parser;
 import de.unijena.bioinf.treeviewer.dot.Parser2;
 import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
 import org.apache.batik.swing.JSVGCanvas;
-import org.apache.batik.swing.svg.GVTTreeBuilderAdapter;
-import org.apache.batik.swing.svg.GVTTreeBuilderEvent;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.svg.SVGDocument;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.logging.Logger;
 
 public class FTCanvas extends JSVGCanvas {
@@ -31,13 +24,6 @@ public class FTCanvas extends JSVGCanvas {
 
     public FTCanvas() {
         setSize(640, 480);
-        for (String path : PATHS) {
-            final File f = new File(path);
-            if (f.exists() && f.canExecute()) {
-                this.dotPath = f;
-                break;
-            }
-        }
         setVisible(true);
     }
 
@@ -92,6 +78,33 @@ public class FTCanvas extends JSVGCanvas {
         }
     }
 
+    private File getDotPath() {
+        if (dotPath != null) return dotPath;
+        final String os = System.getProperty("os.name").toLowerCase();
+        final boolean isWindoof = os.contains("win");
+        // check PATH variable
+        final String path = System.getenv("PATH");
+        if (path != null) {
+            for (String dir : path.split(isWindoof ? ";" : ":")) {
+                final File exec = new File(dir, isWindoof  ? "dot.exe" : "dot");
+                if (exec.exists()) {
+                    dotPath = exec;
+                    return exec;
+                }
+            }
+        }
+        if (!isWindoof) {
+            for (String s : PATHS) {
+                final File f = new File(s);
+                if (f.exists()) {
+                    dotPath = f;
+                    return f;
+                }
+            }
+        }
+        throw new RuntimeException("Can't find Graphviz. Please add dot command line tool to PATH variable.");
+    }
+
     private SVGDocument getSvgFromDot(DotSource treeFile) throws IOException {
         if (activeProfile != null) {
             final Reader fr = treeFile.getContent();
@@ -99,8 +112,12 @@ public class FTCanvas extends JSVGCanvas {
             fr.close();
             this.graph = g;
             return getSvgFromDot(g);
+        } else {
+            final Reader fr = treeFile.getContent();
+            this.graph = Parser2.parse(fr);//new Parser().parse(fr);
+            fr.close();
         }
-        final ProcessBuilder builder = new ProcessBuilder(dotPath.getAbsolutePath(), "-T", "svg");
+        final ProcessBuilder builder = new ProcessBuilder(getDotPath().getAbsolutePath(), "-T", "svg");
         final Process proc = builder.start();
         final Writer writer = new OutputStreamWriter(proc.getOutputStream());
         graph.write(writer);
@@ -116,7 +133,7 @@ public class FTCanvas extends JSVGCanvas {
             activeProfile.apply(graph);
         }
 
-        final ProcessBuilder builder = new ProcessBuilder(dotPath.getAbsolutePath(), "-T", "svg");
+        final ProcessBuilder builder = new ProcessBuilder(getDotPath().getAbsolutePath(), "-T", "svg");
         final Process proc = builder.start();
         final Writer writer = new OutputStreamWriter(proc.getOutputStream());
         graph.write(writer);

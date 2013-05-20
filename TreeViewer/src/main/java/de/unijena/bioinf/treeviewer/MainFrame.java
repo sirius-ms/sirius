@@ -1,15 +1,19 @@
 package de.unijena.bioinf.treeviewer;
 
+import de.unijena.bioinf.treeviewer.pcom.IOConnection;
+import de.unijena.bioinf.treeviewer.pcom.Server;
 import org.jdom2.JDOMException;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -21,7 +25,6 @@ public class MainFrame extends JFrame {
     final FTCanvas canvas;
     final FileListPane fileListPane;
     final ViewSelectionPane viewSelectionPane;
-    Pipe pipe;
     Server server;
 
     private final List<Profile> profiles;
@@ -58,6 +61,7 @@ public class MainFrame extends JFrame {
         this.fileListPane = new FileListPane(this, new CurrentFileAction() {
             @Override
             public void setFile(final DotSource f) {
+                System.out.println("SET FILE " + f.getName());
                 if (f == null) {
                     logger.info("render nothing");
                     canvas.dispose();
@@ -95,10 +99,7 @@ public class MainFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                if (pipe != null) {
-                    pipe.close();
-                    pipe = null;
-                }
+                if (server != null) server.close();
             }
         });
         final Log log = new Log();
@@ -126,13 +127,11 @@ public class MainFrame extends JFrame {
     }
 
     public void setPipe(InputStream stream) {
-        if (pipe != null) {
-            pipe.close();
-        }
-        if (stream == null) pipe = null;
-        else {
+        try {
             logger.info("read from input stream");
-            pipe = new Pipe(stream, fileListPane);
+            new IOConnection(fileListPane).readInputInParallel(System.in, null);
+        } catch (IOException e) {
+            logger.warning("Can't create pipe: " + e.getMessage());
         }
     }
 
@@ -154,7 +153,7 @@ public class MainFrame extends JFrame {
 
     public void openServer() {
         try {
-            this.server = new Server(this);
+            this.server = new Server(fileListPane);
         } catch (IOException e) {
             logger.severe(e.getMessage());
         }

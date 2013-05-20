@@ -5,7 +5,6 @@ import de.unijena.bioinf.treeviewer.dot.Vertex;
 
 import java.awt.*;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
