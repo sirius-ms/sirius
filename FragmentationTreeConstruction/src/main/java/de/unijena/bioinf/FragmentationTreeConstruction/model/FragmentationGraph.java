@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.functional.Function;
 import de.unijena.bioinf.functional.iterator.Iterators;
@@ -394,6 +395,11 @@ public class FragmentationGraph implements FragmentationPathway {
 
     public GraphFragment getRoot() {
         return vertices.get(0);
+    }
+
+    @Override
+    public Ionization getIonization() {
+        return getProcessedInput().getExperimentInformation().getIonization();
     }
 
     public List<ProcessedPeak> getPeaks() {

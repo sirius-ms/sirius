@@ -25,7 +25,7 @@ public class GurobiSolver implements TreeBuilder {
         this.env = env;
         this.feasibleSolver = feasibleSolver;
         this.secondsPerInstance = 60*30; // maximal 1/2 hour per instance
-        this.secondsPerDecomposition = 30*60; // maximal 5 minutes per decomposition
+        this.secondsPerDecomposition = 7*60; // maximal 7 minutes per decomposition
         this.lastInput = 0;
         this.freeSeconds = 0;
     }

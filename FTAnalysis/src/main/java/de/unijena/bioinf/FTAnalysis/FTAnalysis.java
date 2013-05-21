@@ -33,7 +33,7 @@ public class FTAnalysis {
     public static final int METLIN = 1, AGILENT = 2;
     public static final String[] NAMEOFDATA=new String[]{"none", "metlin", "agilent", "both"};
 
-    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 5, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
+    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 500, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
     private static final double DISCRIMINATING=0.8d;
 
     public final static boolean USE_CHARGED_FORMULAS = false;
@@ -500,7 +500,7 @@ public class FTAnalysis {
                 if (np != null) np.setLimit(Integer.MAX_VALUE);
             }
         }
-        throw new TimeoutException("Timeout, even for 30 peaks!!!");
+        throw new TimeoutException("Timeout, even for 20 peaks!!!");
     }
 
     protected boolean processingWithTimeout() {

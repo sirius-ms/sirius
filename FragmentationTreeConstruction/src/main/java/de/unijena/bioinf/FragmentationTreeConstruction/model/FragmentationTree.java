@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.functional.Function;
 import de.unijena.bioinf.functional.iterator.Iterators;
 import de.unijena.bioinf.functional.list.ListOperations;
@@ -56,6 +57,11 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
 
     public TreeFragment getRoot() {
         return root;
+    }
+
+    @Override
+    public Ionization getIonization() {
+        return getInput().getExperimentInformation().getIonization();
     }
 
     @Override
