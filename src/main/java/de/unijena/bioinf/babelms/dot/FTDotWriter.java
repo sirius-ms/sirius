@@ -38,7 +38,7 @@ public class FTDotWriter {
             buf.write("v" + id + " [label=\"" );
             buf.write(f.getFormula().toString());
             buf.write(String.format(locale, "\\n%.4f Da, %.2f %%", f.getPeak().getMass(), f.getRelativePeakIntensity()*100));
-            final double dev = f.getPeak().getMass()-f.getFormula().getMass();
+            final double dev = f.getPeak().getMass()-graph.getIonization().addToMass(f.getFormula().getMass());
             buf.write(String.format(locale, "\\nMassDev: %.4f ppm, %.4f Da", dev*1e6d/f.getPeak().getMass(), dev));
             buf.write("\\ncE: " + f.getCollisionEnergies().toString());
 
@@ -70,7 +70,7 @@ public class FTDotWriter {
                 buf.write(String.format(locale, "\\nScore: %.4f", sum));
                 buf.write("\"];\n");
                 losses.add(f.getIncomingEdge());
-            } else buf.write("\"]\n");
+            } else buf.write(String.format(locale, "\\nScore: %.4f\"];\n", sum));
         }
         for (FTLoss<? extends Fragment> loss : losses) {
             buf.write("v" + ids.get(loss.getHead()));
