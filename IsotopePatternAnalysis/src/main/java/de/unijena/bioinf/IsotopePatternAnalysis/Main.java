@@ -60,7 +60,7 @@ public class Main {
         final PatternGenerator gen = new PatternGenerator(PeriodicTable.getInstance().ionByName("[M+H+]+"), Normalization.Max(1));
         final PatternScoreList<ChargedPeak, ChargedSpectrum>scorer = new PatternScoreList<ChargedPeak, ChargedSpectrum>();
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(MolecularFormula.parse(ONLY_CHNOPS ? "CHNOPS" : "CHNOPSFe").elementArray());
-        final MassDecomposer<Element> decomposer = new MassDecomposer<Element>(1e-5, new ChemicalAlphabetWrapper(alphabet));
+        final MassDecomposer<Element> decomposer = new MassDecomposer<Element>(new ChemicalAlphabetWrapper(alphabet));
         if (METHOD == 0 || METHOD==2)   {
             scorer.addScorer(new MassDeviationScorer<ChargedPeak, ChargedSpectrum>(3, 5, 6.5));
         } else if (METHOD == 3) {
@@ -110,7 +110,7 @@ public class Main {
                     }
                     System.out.println("");
                 }
-                for (int[] compomer : decomposer.decompose(file.spectrum.getPeakAt(0).getNeutralMass(), new Deviation(5, 1e-3, 1e-5)) ) {
+                for (int[] compomer : decomposer.decompose(file.spectrum.getPeakAt(0).getNeutralMass(), new Deviation(5, 1e-3)) ) {
                     MolecularFormula form = alphabet.decompositionToFormula(compomer);
                     if (NO_ODD_RDBE && form.doubledRDBE() % 2 != 0) continue;
 

@@ -61,7 +61,7 @@ public class DeIsotope {
     public DeIsotope(double ppm, double absError, ChemicalAlphabet alphabet, IsotopicDistribution distribution,
                      double massPenalty, double intensityPenalty, double alpha, double beta, double relativeMassErrorFull,
                      double relativeMassErrorZero, double lambdaMissingPeak, double intensityOffset) {
-        this.decomposer = new MassToFormulaDecomposer(1e-5, alphabet);
+        this.decomposer = new MassToFormulaDecomposer(alphabet);
         this.patternExtractor = new AlreadyExtracted();
         this.isotopicDistribution = distribution;
         this.isotopePatternScorer = new PatternScoreList(new MassDeviationScorer(massPenalty, ppm*relativeMassErrorFull, ppm*relativeMassErrorZero),
@@ -100,7 +100,7 @@ public class DeIsotope {
 
     public List<ScoredMolecularFormula> deisotope(ChargedSpectrum extractedSpectrum) {
         final double monoIsotopicMass = extractedSpectrum.getPeakAt(getIndexOfPeakWithMinimalMass(extractedSpectrum)).getNeutralMass();
-        final List<MolecularFormula> formulas = decomposer.decomposeToFormulas(monoIsotopicMass, new Deviation(ppm, absError, 1e-5),
+        final List<MolecularFormula> formulas = decomposer.decomposeToFormulas(monoIsotopicMass, new Deviation(ppm, absError),
                 new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(monoIsotopicMass, elementBoundary));
         final ArrayList<ScoredMolecularFormula> scoredFormulas = new ArrayList<ScoredMolecularFormula>(formulas.size());
         final double[] scores = scoreFormulas(extractedSpectrum, formulas);
@@ -126,9 +126,21 @@ public class DeIsotope {
         int k=0;
         for (MolecularFormula f : formulas) {
             final Spectrum<Peak> theoreticalSpectrum= generator.generatePattern(f, spec.size()+1).getNeutralMassSpectrum();
-
-            final double score = isotopePatternScorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(1));
-            scores[k++] = score;
+            if (theoreticalSpectrum.size() < spec.size()) {
+                // TODO: Just a Workaround!!! Find something better
+                final SimpleMutableSpectrum workaround = new SimpleMutableSpectrum(measuredSpectrum);
+                while (theoreticalSpectrum.size() < workaround.size()) workaround.removePeakAt(workaround.size()-1);
+                normalize(workaround, Normalization.Sum(1));
+                double score = isotopePatternScorer.score(workaround, theoreticalSpectrum, Normalization.Sum(1));
+                // add missing peak scores too all deleted peaks if MissingPeakScorer is given
+                for (int i=theoreticalSpectrum.size(); i < spec.size(); ++i) {
+                    score -= spec.getIntensityAt(i)*100;
+                }
+                scores[k++] = score;
+            } else {
+                final double score = isotopePatternScorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(1));
+                scores[k++] = score;
+            }
         }
         return scores;
     }
