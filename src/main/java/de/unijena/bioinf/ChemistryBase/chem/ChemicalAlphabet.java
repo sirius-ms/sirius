@@ -41,32 +41,6 @@ public class ChemicalAlphabet {
      * @param varargs parameters in the order: [selection], {elementName, [elementUpperbound]}
      * @return chemical alphabet
      */
-    public static ChemicalAlphabet create(Object... varargs) {
-        if (varargs.length == 0) return new ChemicalAlphabet();
-        final PeriodicTable t = PeriodicTable.getInstance();
-        int i=0;
-        final TableSelection sel = (varargs[i] instanceof TableSelection) ? (TableSelection)varargs[i++] : null;
-        final ArrayList<Element> elements = new ArrayList<Element>();
-        final ArrayIntList bounds = new ArrayIntList();
-        for (; i < varargs.length; ++i) {
-            if (varargs[i] instanceof Element) {
-                elements.add((Element)varargs[i]);
-                bounds.add(Integer.MIN_VALUE);
-            } else if ((varargs[i] instanceof String)) {
-                elements.add(t.getByName((String)varargs[i]));
-                bounds.add(Integer.MIN_VALUE);
-            } else if (varargs[i] instanceof Integer) {
-                final int k=bounds.size()-1;
-                if (k < 0 || bounds.get(k) != Integer.MIN_VALUE)
-                    throw new IllegalArgumentException("Illegal format of parameters. Allowed is: [tableselection], {element, [number]}");
-                bounds.set(k, (Integer)varargs[i]);
-            }
-        }
-        final Element[] elems = elements.toArray(new Element[elements.size()]);
-        final int[] upperbounds = bounds.toArray();
-        final TableSelection s = (sel == null) ? t.getSelectionFor(elems) : sel;
-        return new ChemicalAlphabet(s, elems, upperbounds);
-    }
 
     /**
      * Construct a chemical alphabet containing the CHNOPS alphabet.
@@ -110,13 +84,6 @@ public class ChemicalAlphabet {
     */
     public ChemicalAlphabet(Element... elements) {
         this(PeriodicTable.getInstance().getSelectionFor(elements), elements);
-    }
-
-    /*
-   construct a chemical alphabet with the given elements and upperbounds
-    */
-    public ChemicalAlphabet(TableSelection selection, Element[] elements, int[] upperbounds) {
-        this(selection, elements);
     }
 
     /**
