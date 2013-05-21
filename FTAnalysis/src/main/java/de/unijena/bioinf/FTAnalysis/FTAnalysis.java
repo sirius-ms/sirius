@@ -36,9 +36,11 @@ public class FTAnalysis {
     private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 5, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
     private static final double DISCRIMINATING=0.8d;
 
+    public final static boolean USE_CHARGED_FORMULAS = false;
+
     public static int NUMBEROFCPUS = 4;
 
-    public final static boolean VERBOSE = false;
+    public final static boolean VERBOSE = true;
 
     public static void parameterTuning(String filename) {
         final FragmentationPatternAnalysis analysis = new Factory().getBlankAnalysis();
@@ -123,6 +125,7 @@ public class FTAnalysis {
 
     Ms2ExperimentImpl currentInput;
     MolecularFormula chargedFormula, formula;
+    MolecularFormula expectedFormula;
     ChemicalAlphabet alphabet;
     OutputRow row;
     ProcessedInput pinput;
@@ -194,9 +197,9 @@ public class FTAnalysis {
             rankingPrinter = (root.isDirectory()) ? new PrintStream(ranking) : System.out;
             rankingPrinter.println("name,formula,decompositions,correctScore,optScore,rank,runtime,error");
             explainedPeakPrinterCorrect = new PrintStream(new File(target, "intensityCorrect.csv"));
-            explainedPeakPrinterCorrect.println("name,peaks,filteredPeaks,explainedPeaks,mergedPeaks,fragments,intensity,explainedIntensity");
+            explainedPeakPrinterCorrect.println("name,peaks,filteredPeaks,explainedPeaks,mergedPeaks,mergedWithoutNoise,maxPossible,fragments,explainedIntensity");
             explainedPeakPrinterWrong = new PrintStream(new File(target, "intensityWrong.csv"));
-            explainedPeakPrinterWrong.println("name,peaks,filteredPeaks,explainedPeaks,mergedPeaks,fragments,intensity,explainedIntensity");
+            explainedPeakPrinterWrong.println("name,peaks,filteredPeaks,explainedPeaks,mergedPeaks,mergedWithoutNoise,maxPossible,fragments,intensity,explainedIntensity");
         } catch (FileNotFoundException e) {
 
         }
@@ -225,11 +228,17 @@ public class FTAnalysis {
                     {
                         final double ionMass = currentInput.getIonMass() - formula.getMass();
                         final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-2, 1);
+                        chargedFormula = ion.getAtoms().add(formula);
                         if (ion == null) {
                             System.err.println("Can't find ion for " + name + " with mass " + ionMass);
                         }
-                        chargedFormula = ion.getAtoms().add(formula);
-                        currentInput.setIonization(ion);
+                        if (USE_CHARGED_FORMULAS) {
+                            currentInput.setIonization(new Charge(1));
+                            expectedFormula = chargedFormula;
+                        } else {
+                            currentInput.setIonization(ion);
+                            expectedFormula = formula;
+                        }
                     }
                     MeasurementProfile profile = new MeasurementProfileMs(formula);
                     currentInput.setMeasurementProfile(profile);
@@ -276,8 +285,19 @@ public class FTAnalysis {
         }
         int unfiltered = 0;
         for (Ms2Spectrum s : currentInput.getMs2Spectra()) unfiltered += s.size();
-        printRow(explainedPeakPrinter, name, unfiltered, maxPeaks, explainedPeaks, pinput.getMergedPeaks().size(),
-                fragments.size(), maxIntensity, explainedIntensity);
+        int nonoise = 0;
+        for (ProcessedPeak pk : tree.getInput().getMergedPeaks()) if (pk.getDecompositions().size() > 0) nonoise++;
+        int maxpossible = 0;
+        for (ProcessedPeak pk : tree.getInput().getMergedPeaks()) {
+            for (ScoredMolecularFormula s : pk.getDecompositions()) {
+                if (expectedFormula.isSubtractable(s.getFormula())) {
+                    ++maxpossible;
+                    break;
+                }
+            }
+        }
+        printRow(explainedPeakPrinter, name, unfiltered, maxPeaks, explainedPeaks, pinput.getMergedPeaks().size(),nonoise,maxpossible,
+                fragments.size(), maxIntensity == 0 ? 100 : (explainedIntensity*100d)/maxIntensity);
 
 
     }
@@ -441,7 +461,7 @@ public class FTAnalysis {
 
         @Override
         public Deviation getExpectedIonMassDeviation() {
-            return new Deviation(10, 1e-3);
+            return new Deviation(10, 2e-3);
         }
 
         @Override
@@ -502,7 +522,7 @@ public class FTAnalysis {
         // search for correct formula in decompositions
         ScoredMolecularFormula correctFormula = null;
         for (ScoredMolecularFormula f : pinput.getParentMassDecompositions()) {
-            if (f.getFormula().equals(chargedFormula)) {
+            if (f.getFormula().equals(expectedFormula)) {
                 correctFormula = f;
                 break;
             }
@@ -512,7 +532,7 @@ public class FTAnalysis {
             return false;
         }
         // trick first compute correct tree
-        if (VERBOSE){System.out.print("Compute correct tree ( " + chargedFormula + " ): "); System.out.flush();}
+        if (VERBOSE){System.out.print("Compute correct tree ( " + expectedFormula + " ): "); System.out.flush();}
         correctTree = pipeline.computeTree(pipeline.buildGraph(pinput, correctFormula), 0);
         if (correctTree == null) {
             row.error = REALTREENOTFOUND;
@@ -577,7 +597,10 @@ public class FTAnalysis {
         deIsotope.setIntensityOffset(0d);
         deIsotope.setIntensityTreshold(0.005d);
         PatternGenerator generator = new PatternGenerator(currentInput.getIonization(), Normalization.Sum(1d));
-        ChargedSpectrum spec = generator.generatePattern(formula, 4);
+        ChargedSpectrum spec = generator.generatePatternWithTreshold(expectedFormula, 0.005d);
+        //
+        deIsotope.scoreFormula(spec, expectedFormula);
+        //
         double[] scores = deIsotope.scoreFormulas(spec, formulas);
         final ArrayList<ScoredMolecularFormula> resultList = new ArrayList<ScoredMolecularFormula>(list);
         for (int i=0; i < resultList.size(); ++i) resultList.set(i, new ScoredMolecularFormula(list.get(i).getFormula(), -scores[i]));

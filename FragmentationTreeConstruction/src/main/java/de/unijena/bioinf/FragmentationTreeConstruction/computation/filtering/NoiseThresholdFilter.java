@@ -26,8 +26,9 @@ public class NoiseThresholdFilter implements PostProcessor {
     public ProcessedInput process(ProcessedInput input) {
         final List<ProcessedPeak> peaks = input.getMergedPeaks();
         final List<ProcessedPeak> filtered = new ArrayList<ProcessedPeak>(peaks.size());
+        final ProcessedPeak parent = input.getParentPeak();
         for (ProcessedPeak p : peaks)
-            if (p.getRelativeIntensity() >= threshold)
+            if (p.getRelativeIntensity() >= threshold || p.isSynthetic() || p == parent)
                 filtered.add(p);
         return new ProcessedInput(input.getExperimentInformation(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
                 input.getPeakScores(), input.getPeakPairScores());
