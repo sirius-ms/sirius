@@ -26,7 +26,7 @@ public class FTDotWriter {
 
     public <Fragment extends FTFragment> void writeTree(Writer writer, FTGraph<Fragment> graph, Map<Fragment, Map<Class<?>, Double>> vertexScores,
                                                     Map<? extends FTLoss<Fragment>, Map<Class<?>, Double>> edgeScores) throws IOException {
-        final Locale locale = Locale.forLanguageTag("en-us");
+        final Locale locale = Locale.US;
         final BufferedWriter buf = new BufferedWriter(writer);
         final HashMap<Fragment, Integer> ids = new HashMap<Fragment, Integer>();
         buf.write("strict digraph {\n");
