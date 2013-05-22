@@ -40,7 +40,7 @@ public class FTAnalysis {
 
     public static int NUMBEROFCPUS = 4;
 
-    public final static boolean VERBOSE = true;
+    public final static boolean VERBOSE = false;
 
     public static void parameterTuning(String filename) {
         final FragmentationPatternAnalysis analysis = new Factory().getBlankAnalysis();
@@ -496,11 +496,14 @@ public class FTAnalysis {
                 return processingWithTimeout();
             } catch (TimeoutException e) {
                 row.error = TOMUCHTIME;
+                if (pipeline.getTreeBuilder() instanceof GurobiSolver) {
+                    ((GurobiSolver)pipeline.getTreeBuilder()).resetTimeLimit();
+                }
             } finally {
                 if (np != null) np.setLimit(Integer.MAX_VALUE);
             }
         }
-        throw new TimeoutException("Timeout, even for 20 peaks!!!");
+        throw new TimeoutException("Timeout for " + row.name + ", even for 20 peaks!!!");
     }
 
     protected boolean processingWithTimeout() {

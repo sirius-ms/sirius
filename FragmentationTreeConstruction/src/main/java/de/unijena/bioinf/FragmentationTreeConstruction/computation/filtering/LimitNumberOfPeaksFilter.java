@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -37,6 +38,13 @@ public class LimitNumberOfPeaksFilter implements PostProcessor{
         final ProcessedPeak[] peaks = input.getMergedPeaks().toArray(new ProcessedPeak[input.getMergedPeaks().size()]);
         Arrays.sort(peaks, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
         final List<ProcessedPeak> filtered = new ArrayList<ProcessedPeak>(Arrays.asList(peaks).subList(0, limit));
+        // !!! don't delete the parent peak !!!
+        // window may be wide, but that doesn't matter as other peaks near the parent should be already removed
+        final Deviation parentPeakDeviation = new Deviation(1, 0.1);
+        final double parentMz = input.getExperimentInformation().getIonMass();
+        for (int i=limit; i < peaks.length; ++i) {
+            if (parentPeakDeviation.inErrorWindow(parentMz, peaks[i].getMz())) filtered.add(peaks[i]);
+        }
         return new ProcessedInput(input.getExperimentInformation(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
                 input.getPeakScores(), input.getPeakPairScores());
     }
