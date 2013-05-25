@@ -34,6 +34,20 @@ public class CommonFragmentsScore implements DecompositionScorer<Object> {
             "C2H4N", 0.69, "C6H5", 0.74, "C3H3", 0.75, "C3H5", 0.9
     };
 
+
+    /*
+    This is a list of fragments which are relative common (count >= 5), which have a bad chemical prior (hetero-to-carbon > 0.6),
+    and which are contained in the KEGG database
+     */
+    private static final Object[] COMPENSATE_STRANGE_CHEMICAL_PRIOR = new Object[]{
+            "C5H6N4",1.5231111245008198,
+            "C5H5N5",3.754546488631306,
+            "C3H4ClN5",10.68601829423076,
+            "C4H4N2S",0.877725764113497,
+            "C5H4N4",1.5231111245008198,
+            "C4H5N3O",0.877725764113497
+    };
+
     public static CommonFragmentsScore map(Object... values) {
         final HashMap<MolecularFormula, Double> map = new HashMap<MolecularFormula, Double>();
         for (int i=0; i < values.length; i += 2) {
@@ -42,6 +56,10 @@ public class CommonFragmentsScore implements DecompositionScorer<Object> {
             map.put(MolecularFormula.parse(formula), score);
         }
         return new CommonFragmentsScore(map);
+    }
+
+    public static CommonFragmentsScore getLearnedCommonFragmentScorerThatCompensateChemicalPrior() {
+        return map(COMPENSATE_STRANGE_CHEMICAL_PRIOR);
     }
 
     public static CommonFragmentsScore getLearnedCommonFragmentScorer() {

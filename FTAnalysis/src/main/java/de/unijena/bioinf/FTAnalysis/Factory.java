@@ -46,6 +46,7 @@ public class Factory {
                 ChemicalCompoundScorer.createMassDependendFormulaScorer(100, ChemicalCompoundScorer.createDefaultCompoundScorer(true)),
                 ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT)
         );
+        analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorerThatCompensateChemicalPrior());
 
         analysis.setLossScorers(lossScorers);
         analysis.setPeakMerger(new HighIntensityMerger(0.05d));

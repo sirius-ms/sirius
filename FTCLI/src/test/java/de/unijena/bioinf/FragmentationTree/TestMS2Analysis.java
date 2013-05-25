@@ -47,7 +47,7 @@ public class TestMS2Analysis {
 
             analysis.getFragmentPeakScorers().clear();
             analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer(10000));
-            analysis.getDecompositionScorers().add(new ChemicalPriorScorer(new Hydrogen2CarbonScorer()));
+            analysis.getDecompositionScorers().add(new ChemicalPriorScorer(new Hydrogen2CarbonScorer(), 0d));
             final ProcessedInput processed = analysis.preprocessing(experiment);
             final FragmentationGraph graph = analysis.buildGraph(processed, new ScoredMolecularFormula(experiment.getMolecularFormula().add(MolecularFormula.parse("H")), 0d));
             final FragmentationTree tree = analysis.computeTree(graph);
