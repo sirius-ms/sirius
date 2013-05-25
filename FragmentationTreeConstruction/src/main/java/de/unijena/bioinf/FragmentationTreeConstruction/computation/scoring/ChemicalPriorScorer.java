@@ -12,14 +12,17 @@ import static de.unijena.bioinf.FragmentationTreeConstruction.inspection.Inspect
 @Called("Chemical Prior")
 public class ChemicalPriorScorer implements DecompositionScorer<Object> {
 
+    public static final double LEARNED_NORMALIZATION_CONSTANT = 0.17546357436139415d;
     private final MolecularFormulaScorer prior;
+    private double normalizationConstant;
 
     public ChemicalPriorScorer() {
-        this(ChemicalCompoundScorer.createDefaultCompoundScorer());
+        this(ChemicalCompoundScorer.createDefaultCompoundScorer(), LEARNED_NORMALIZATION_CONSTANT);
     }
 
-    public ChemicalPriorScorer(MolecularFormulaScorer prior) {
+    public ChemicalPriorScorer(MolecularFormulaScorer prior, double normalizationConstant) {
         this.prior = prior;
+        this.normalizationConstant = normalizationConstant;
     }
 
 
@@ -30,6 +33,6 @@ public class ChemicalPriorScorer implements DecompositionScorer<Object> {
 
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        return prior.score(formula);
+        return prior.score(formula) - normalizationConstant;
     }
 }

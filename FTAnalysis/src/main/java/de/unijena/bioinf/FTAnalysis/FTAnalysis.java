@@ -2,6 +2,7 @@ package de.unijena.bioinf.FTAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -34,7 +35,7 @@ public class FTAnalysis {
     public static final String[] NAMEOFDATA=new String[]{"none", "metlin", "agilent", "both"};
 
     private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 500, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
-    private static final double DISCRIMINATING=0.8d;
+    private static final double DISCRIMINATING=0.667d;
 
     public final static boolean USE_CHARGED_FORMULAS = false;
 
@@ -43,7 +44,7 @@ public class FTAnalysis {
     public final static boolean VERBOSE = false;
 
     public static void parameterTuning(String filename) {
-        final FragmentationPatternAnalysis analysis = new Factory().getBlankAnalysis();
+        final FragmentationPatternAnalysis analysis = new Factory().getBlankAnalysisWithFragPriors();
         final File f = new File(filename);
         final JenaMsParser parser = new JenaMsParser();
         MolecularFormula ionForm = null;
@@ -191,9 +192,9 @@ public class FTAnalysis {
             wrongFragmentsPrinter = new PrintStream(wrongFragments);
             wrongFragmentsPrinter.println("name,formula,parent,loss");
             discriminatingFragmentWriter = new PrintStream(new File(target, "discriminatingFragments.csv"));
-            discriminatingFragmentWriter.println("name,formula,parent,loss");
+            discriminatingFragmentWriter.println("name,inwrong,total,perc,root");
             discriminatingLossWriter = new PrintStream(new File(target, "discriminatingLosses.csv"));
-            discriminatingLossWriter.println("name,formula,parent,child");
+            discriminatingLossWriter.println("name,inwrong,total,perc");
             rankingPrinter = (root.isDirectory()) ? new PrintStream(ranking) : System.out;
             rankingPrinter.println("name,formula,decompositions,correctScore,optScore,rank,runtime,error");
             explainedPeakPrinterCorrect = new PrintStream(new File(target, "intensityCorrect.csv"));
@@ -347,45 +348,68 @@ public class FTAnalysis {
         // write common losses
         final ArrayList<Loss> losses = new ArrayList<Loss>();
         final ArrayList<Fragment> fragments = new ArrayList<Fragment>();
-        final HashSet<MolecularFormula> lossForms=new HashSet<MolecularFormula>(), fragmentForms=new HashSet<MolecularFormula>();
+        final HashSet<MolecularFormula> fragmentForms=new HashSet<MolecularFormula>();
+        final HashSet<LossObj> lossForms=new HashSet<LossObj>();
         // add all losses which occur in fragmentation tree
         for (Fragment f : correctTree.getFragmentsWithoutRoot()) {
             fragments.add(f);
             fragmentForms.add(f.getDecomposition().getFormula());
             losses.add(f.getIncomingEdges().get(0));
-            lossForms.add(f.getIncomingEdges().get(0).getLoss());
+            lossForms.add(new LossObj(f.getIncomingEdges().get(0).getLoss(), f.getPeak().getMz() ));
         }
         // count how often the fragments and losses occur also in the other optimal trees
         final int n = Math.min(row.correctRank-1, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES);
         final int allowedNum = (int)Math.ceil(n * DISCRIMINATING);
         if (allowedNum >= 1) {
-            final HashMap<MolecularFormula, Integer> lossCounter= new HashMap<MolecularFormula, Integer>(), fragmentCounter = new HashMap<MolecularFormula, Integer>();
-            final HashSet<MolecularFormula> knownLoss = new HashSet<MolecularFormula>();
+            final HashMap<LossObj, Integer> lossCounter= new HashMap<LossObj, Integer>();
+            final HashMap<MolecularFormula, Integer> fragmentCounter = new HashMap<MolecularFormula, Integer>();
             for (int i=0; i < n; ++i) {
-                knownLoss.clear();
                 for (Fragment f : trees.get(i).getFragmentsWithoutRoot()) {
+                    Integer c;
                     final MolecularFormula fform = f.getDecomposition().getFormula();
-                    Integer c = fragmentCounter.get(fform);
-                    if (c == null) c = 0;
-                    fragmentCounter.put(fform, c+1);
-                    printRow(wrongFragmentsPrinter, name, f.getDecomposition().getFormula(), f.getParents().get(0).getDecomposition(), f.getIncomingEdges().get(0).getLoss());
+                    if (!fragmentForms.contains(fform)) {
+                        printRow(wrongFragmentsPrinter, name, f.getDecomposition().getFormula(), f.getParents().get(0).getDecomposition(), f.getIncomingEdges().get(0).getLoss());
+                    } else {
+                        c = fragmentCounter.get(fform);
+                        if (c == null) c = 0;
+                        fragmentCounter.put(fform, c+1);
+                    }
                     final MolecularFormula loss = f.getIncomingEdges().get(0).getLoss();
-                    if (knownLoss.contains(loss)) continue;
-                    c = lossCounter.get(loss);
-                    if (c == null) c = 0;
-                    lossCounter.put(loss, c+1);
-                    printRow(wrongLossesPrinter, name, loss, f.getParents().get(0).getDecomposition().getFormula(), f.getDecomposition().getFormula());
-                    knownLoss.add(loss);
+                    final LossObj lo = new LossObj(loss, f.getPeak().getMz());
+                    if (!lossForms.contains(lo)) {
+                        printRow(wrongLossesPrinter, name, loss, f.getParents().get(0).getDecomposition().getFormula(), f.getDecomposition().getFormula());
+                    } else {
+                        c = lossCounter.get(loss);
+                        if (c == null) c = 0;
+                        lossCounter.put(lo, c+1);
+                    }
                 }
             }
             for (Loss l : losses) {
-                if (lossCounter.get(l.getLoss()) != null && lossCounter.get(l.getLoss()) <= allowedNum) {
-                    discriminatingLossWriter.println(l.getLoss());
+                final LossObj lo = new LossObj(l.getFormula(), l.getTail().getPeak().getMz());
+                int count = lossCounter.get(lo)==null ? 0 : lossCounter.get(lo);
+                if (count <= allowedNum) {
+                    discriminatingLossWriter.print(l.getLoss());
+                    discriminatingLossWriter.print(",");
+                    discriminatingLossWriter.print(count);
+                    discriminatingLossWriter.print(",");
+                    discriminatingLossWriter.print(n);
+                    discriminatingLossWriter.print(",");
+                    discriminatingLossWriter.println(((double)count)/n);
                 }
             }
             for (Fragment l : fragments) {
-                if (fragmentCounter.get(l.getDecomposition().getFormula()) != null && fragmentCounter.get(l.getDecomposition().getFormula()) <= allowedNum) {
-                    discriminatingLossWriter.println(l.getDecomposition().getFormula());
+                int count = fragmentCounter.get(l.getDecomposition().getFormula())==null ? 0 : fragmentCounter.get(l.getDecomposition().getFormula());
+                if (count <= allowedNum) {
+                    discriminatingFragmentWriter.print(l.getDecomposition().getFormula());
+                    discriminatingFragmentWriter.print(",");
+                    discriminatingFragmentWriter.print(count);
+                    discriminatingFragmentWriter.print(",");
+                    discriminatingFragmentWriter.print(n);
+                    discriminatingFragmentWriter.print(",");
+                    discriminatingFragmentWriter.print(((double)count)/n);
+                    discriminatingFragmentWriter.print(",");
+                    discriminatingFragmentWriter.println(correctTree.getRoot().getFormula());
                 }
             }
         }
@@ -407,6 +431,39 @@ public class FTAnalysis {
 
         rankingPrinter.println(row.toCSV());
 
+    }
+
+    private static class LossObj {
+        private final MolecularFormula formula;
+        private double mz;
+
+        private LossObj(MolecularFormula formula, double mz) {
+            this.formula = formula;
+            this.mz = mz;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            LossObj lossObj = (LossObj) o;
+
+            if (Double.compare(lossObj.mz, mz) != 0) return false;
+            if (!formula.equals(lossObj.formula)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result;
+            long temp;
+            result = formula.hashCode();
+            temp = mz != +0.0d ? Double.doubleToLongBits(mz) : 0L;
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
+            return result;
+        }
     }
 
     private void flush() {
@@ -457,6 +514,7 @@ public class FTAnalysis {
                 if (alpha.indexOf(entry.getKey()) >= 0)
                     constraints.getUpperbounds()[alpha.indexOf(entry.getKey())] = (int)entry.getValue().getMax();
             }
+            constraints.addFilter(new ValenceFilter(-0.5d));
         }
 
         @Override
@@ -551,7 +609,7 @@ public class FTAnalysis {
         trees.add(correctTree);
         final long startTime = System.nanoTime();
         for (ScoredMolecularFormula smf : pinput.getParentMassDecompositions()) {
-            if (smf != correctFormula) {
+            if (!smf.getFormula().equals(correctFormula.getFormula())) {
                 if (VERBOSE){System.out.print("Compute next tree ( " + smf + " ): "); System.out.flush();}
                 final FragmentationTree fragtree = pipeline.computeTree(pipeline.buildGraph(pinput, smf), lowerbound);
                 if (fragtree != null) trees.add(fragtree);

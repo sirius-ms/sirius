@@ -1,8 +1,8 @@
 package de.unijena.bioinf.treeviewer;
 
 
-import de.unijena.bioinf.treeviewer.dot.Graph;
-import de.unijena.bioinf.treeviewer.dot.Vertex;
+import de.unijena.bioinf.babelms.dot.Graph;
+import de.unijena.bioinf.babelms.dot.Vertex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
