@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -89,7 +90,7 @@ public class FragmentationPatternAnalysis {
         inputValidators.add(new MissingValueValidator());
         decompositionScorers.add(new MassDeviationVertexScorer(false));
         rootScorers.add(new MassDeviationVertexScorer(true));
-        rootScorers.add(new ChemicalPriorScorer());
+        rootScorers.add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(), ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT_FOR_ROOT));
         fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
         lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
         lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1)));

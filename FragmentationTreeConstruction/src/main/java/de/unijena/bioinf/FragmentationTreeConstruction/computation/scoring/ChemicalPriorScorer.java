@@ -13,18 +13,48 @@ import static de.unijena.bioinf.FragmentationTreeConstruction.inspection.Inspect
 public class ChemicalPriorScorer implements DecompositionScorer<Object> {
 
     public static final double LEARNED_NORMALIZATION_CONSTANT = 0.17546357436139415d;
-    private final MolecularFormulaScorer prior;
-    private double normalizationConstant;
+    public static final double LEARNED_NORMALIZATION_CONSTANT_FOR_ROOT = 0.22610006337600388d;
+    private MolecularFormulaScorer prior;
+    private double normalizationConstant, minimalMass;
 
     public ChemicalPriorScorer() {
-        this(ChemicalCompoundScorer.createDefaultCompoundScorer(), LEARNED_NORMALIZATION_CONSTANT);
+        this(ChemicalCompoundScorer.createDefaultCompoundScorer(), LEARNED_NORMALIZATION_CONSTANT, 100d);
     }
 
     public ChemicalPriorScorer(MolecularFormulaScorer prior, double normalizationConstant) {
+        this(prior, normalizationConstant, 100d);
+    }
+
+    public ChemicalPriorScorer(MolecularFormulaScorer prior, double normalizationConstant, double minimalMass) {
+        assert minimalMass > 10 && normalizationConstant < 10; // just to be shure that nobody mix both parameters ^^°
         this.prior = prior;
+        this.normalizationConstant = normalizationConstant;
+        this.minimalMass = minimalMass;
+    }
+
+    public MolecularFormulaScorer getPrior() {
+        return prior;
+    }
+
+    public void setPrior(MolecularFormulaScorer prior) {
+        this.prior = prior;
+    }
+
+    public double getNormalizationConstant() {
+        return normalizationConstant;
+    }
+
+    public void setNormalizationConstant(double normalizationConstant) {
         this.normalizationConstant = normalizationConstant;
     }
 
+    public double getMinimalMass() {
+        return minimalMass;
+    }
+
+    public void setMinimalMass(double minimalMass) {
+        this.minimalMass = minimalMass;
+    }
 
     @Override
     public Object prepare(ProcessedInput input) {
@@ -33,6 +63,6 @@ public class ChemicalPriorScorer implements DecompositionScorer<Object> {
 
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        return prior.score(formula) - normalizationConstant;
+        return formula.getMass() >= minimalMass ? prior.score(formula) - normalizationConstant : 0d;
     }
 }

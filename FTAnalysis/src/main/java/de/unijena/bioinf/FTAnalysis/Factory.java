@@ -42,9 +42,8 @@ public class Factory {
         lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1)));
         lossScorers.add(new DBELossScorer());
 
-        analysis.getDecompositionScorers().add(new ChemicalPriorScorer(
-                ChemicalCompoundScorer.createMassDependendFormulaScorer(100, ChemicalCompoundScorer.createDefaultCompoundScorer(true)),
-                ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT)
+        analysis.getDecompositionScorers().add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(true),
+                ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT, 100d)
         );
         analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorerThatCompensateChemicalPrior());
 

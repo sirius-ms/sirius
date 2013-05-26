@@ -42,38 +42,6 @@ public class FTAnalysis {
     public static int NUMBEROFCPUS = 4;
 
     public final static boolean VERBOSE = false;
-
-    public static void parameterTuning(String filename) {
-        final FragmentationPatternAnalysis analysis = new Factory().getBlankAnalysisWithFragPriors();
-        final File f = new File(filename);
-        final JenaMsParser parser = new JenaMsParser();
-        MolecularFormula ionForm = null;
-        Ms2Experiment experiment = null;
-        try {
-            final JenaMsExperiment exp = (JenaMsExperiment)new GenericParser<Ms2Experiment>(parser).parseFile(f);
-            exp.setMeasurementProfile(new MeasurementProfileMs(exp.getMolecularFormula()));
-            {
-                final double ionMass = exp.getIonMass() - exp.getMolecularFormula().getMass();
-                final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-2, 1);
-                ionForm = ion.getAtoms().add(exp.getMolecularFormula());
-            }
-            experiment = exp;
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-        final ProcessedInput pinput = analysis.preprocessing(experiment);
-        ScoredMolecularFormula forms = null;
-        for (ScoredMolecularFormula fm : pinput.getParentMassDecompositions())
-            if (fm.getFormula().equals(ionForm)) {
-                forms = fm; break;
-            }
-        if (forms ==null) throw new RuntimeException("Cannot find " + ionForm);
-        FragmentationGraph graph = analysis.buildGraph(pinput, forms);
-        ((GurobiSolver)analysis.getTreeBuilder()).optimizeParameters(new File("test.prm"), pinput, graph);
-
-
-    }
-
     /*
     usage:
     java -jar analysis.jar /rootdir m/n metlin #cpus
@@ -165,7 +133,7 @@ public class FTAnalysis {
             }
         }
 
-        pipeline = new Factory().getBlankAnalysis();
+        pipeline = new Factory().getBlankAnalysisWithFragPriors();
 
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
