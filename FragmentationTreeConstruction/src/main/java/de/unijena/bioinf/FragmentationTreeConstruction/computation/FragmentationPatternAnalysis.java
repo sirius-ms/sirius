@@ -95,6 +95,7 @@ public class FragmentationPatternAnalysis {
         lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
         lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1)));
         lossScorers.add(new DBELossScorer());
+        lossScorers.add(new PureCarbonNitrogenLossScorer());
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
         peakPairScorers.add(new RelativeLossSizeScorer());
     }
