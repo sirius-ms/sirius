@@ -40,23 +40,6 @@ public final class ChemicalCompoundScorer {
         return createDefaultCompoundScorer(true);
     }
 
-    /**
-     * Returns a formula scorer which is only applied for big masses. This is useful, as small masses are usually
-     * no challenge and very small molecules may look very strange
-     * @param minMass minimal mass, such that the score is applied
-     * @param scorer the formula scorer
-     * @return
-     */
-    public static MolecularFormulaScorer createMassDependendFormulaScorer(final double minMass, final MolecularFormulaScorer scorer) {
-        return new MolecularFormulaScorer() {
-            @Override
-            public double score(MolecularFormula formula) {
-                if (formula.getMass() <= minMass) return 0d;
-                return scorer.score(formula);
-            }
-        };
-    }
-
     private static class DefaultScorer implements MolecularFormulaScorer {
         private final static ImprovedHetero2CarbonScorer scorer = new ImprovedHetero2CarbonScorer();
         private final static SpecialMoleculeScorer special = new SpecialMoleculeScorer();
