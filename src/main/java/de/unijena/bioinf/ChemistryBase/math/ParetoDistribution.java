@@ -12,6 +12,14 @@ public final class ParetoDistribution extends RealDistribution {
         this.kdivxmin = k/xmin;
     }
 
+    public double getK() {
+        return k;
+    }
+
+    public double getXmin() {
+        return xmin;
+    }
+
     @Override
     public double getDensity(double x) {
         if (x < xmin) return 0d;
