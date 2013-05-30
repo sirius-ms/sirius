@@ -41,7 +41,9 @@ public class FTAnalysis {
 
     public static int NUMBEROFCPUS = 4;
 
-    public final static boolean VERBOSE = false;
+    public final static boolean VERBOSE = true;
+
+    public final static boolean JUST_USE_CORRECT_TREE = true;
     /*
     usage:
     java -jar analysis.jar /rootdir m/n metlin #cpus
@@ -133,7 +135,7 @@ public class FTAnalysis {
             }
         }
 
-        pipeline = new Factory().getBlankAnalysisWithFragPriors();
+        pipeline = new Factory().getAnalysisWithoutCommonLosses();
 
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
@@ -562,7 +564,10 @@ public class FTAnalysis {
         }
         // trick first compute correct tree
         if (VERBOSE){System.out.print("Compute correct tree ( " + expectedFormula + " ): "); System.out.flush();}
+        long startTime = System.nanoTime();
         correctTree = pipeline.computeTree(pipeline.buildGraph(pinput, correctFormula), 0);
+        long timeAfter = System.nanoTime();
+        long runtime = timeAfter-startTime;
         if (correctTree == null) {
             row.error = REALTREENOTFOUND;
             return false;
@@ -575,26 +580,29 @@ public class FTAnalysis {
         final double lowerbound = correctTree.getScore();
         trees = new ArrayList<FragmentationTree>();
         trees.add(correctTree);
-        final long startTime = System.nanoTime();
-        for (ScoredMolecularFormula smf : pinput.getParentMassDecompositions()) {
-            if (!smf.getFormula().equals(correctFormula.getFormula())) {
-                if (VERBOSE){System.out.print("Compute next tree ( " + smf + " ): "); System.out.flush();}
-                final FragmentationTree fragtree = pipeline.computeTree(pipeline.buildGraph(pinput, smf), lowerbound);
-                if (fragtree != null) trees.add(fragtree);
-                if (VERBOSE){System.out.println(fragtree == null ? "not found" : fragtree.getScore()); System.out.flush();}
-            }
-            final long currentTime = System.nanoTime();
-            if (((currentTime-startTime)*1e-9) > (20*60)) {
-                // timeout => but optimal tree could be computed, so -> it's okay. Don't rank the tree but
-                // write it as suboptimal tree
-                row.error = TOMUCHTIME;
-                break;
+        startTime = System.nanoTime();
+        if (!JUST_USE_CORRECT_TREE) {
+            for (ScoredMolecularFormula smf : pinput.getParentMassDecompositions()) {
+                if (!smf.getFormula().equals(correctFormula.getFormula())) {
+                    if (VERBOSE){System.out.print("Compute next tree ( " + smf + " ): "); System.out.flush();}
+                    final FragmentationTree fragtree = pipeline.computeTree(pipeline.buildGraph(pinput, smf), lowerbound);
+                    if (fragtree != null) trees.add(fragtree);
+                    if (VERBOSE){System.out.println(fragtree == null ? "not found" : fragtree.getScore()); System.out.flush();}
+                }
+                final long currentTime = System.nanoTime();
+                if (((currentTime-startTime)*1e-9) > (20*60)) {
+                    // timeout => but optimal tree could be computed, so -> it's okay. Don't rank the tree but
+                    // write it as suboptimal tree
+                    row.error = TOMUCHTIME;
+                    break;
+                }
             }
         }
-        final long timeAfter = System.nanoTime();
+        timeAfter = System.nanoTime();
+        runtime += timeAfter-startTime;
         Collections.sort(trees, Collections.reverseOrder());
-        final int rank = trees.indexOf(correctTree)+1;
-        row.runtime = (timeAfter-timeNow);
+        final int rank = JUST_USE_CORRECT_TREE ? 0 : trees.indexOf(correctTree)+1;
+        row.runtime = runtime;
         row.correctRank = rank;
         row.optScore = trees.get(0).getScore();
         row.correctScore = lowerbound;

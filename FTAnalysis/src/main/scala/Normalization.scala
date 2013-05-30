@@ -12,12 +12,32 @@ import scalax.io.Resource
 
 class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
 
-  def getNormalizationConstant():(Double, Double) = {
+  def getNormalizationConstantForSmallCompounds():(Double, Double) = {
     val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).flatMap(f => {
       getFragmentsFromTree(f).filter(_.formula.getMass>100).map(m=>scorer.score(m.formula))
     })
     val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
       getFragmentsFromTree(f).filter(_.formula.getMass>100).map(m=>scorer.score(m.formula))
+    })
+    (xs.reduce(_+_)/xs.size.toDouble, ys.reduce(_+_)/ys.size.toDouble)
+  }
+
+  def getNormalizationConstant():(Double, Double) = {
+    val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).flatMap(f => {
+      getFragmentsFromTree(f).map(m=>scorer.score(m.formula))
+    })
+    val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
+      getFragmentsFromTree(f).map(m=>scorer.score(m.formula))
+    })
+    (xs.reduce(_+_)/xs.size.toDouble, ys.reduce(_+_)/ys.size.toDouble)
+  }
+
+  def getNormalizationConstantForLosses():(Double, Double) = {
+    val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).flatMap(f => {
+      getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
+    })
+    val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
+      getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
     })
     (xs.reduce(_+_)/xs.size.toDouble, ys.reduce(_+_)/ys.size.toDouble)
   }
@@ -63,6 +83,13 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
         case bla => throw new RuntimeException(l + " does not match =(\n" + bla)
       }
     )
+  }
+
+  def getLossesFromTree(treeFile:File) = {
+    val reader = new FileReader(treeFile)
+    val graph = Parser.parse(reader)
+    reader.close()
+    graph.getEdges.map(e=>e.getProperties.get("label"))
   }
 
   def getRootsFromTree(treeFile: File):Fragment = {

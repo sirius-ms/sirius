@@ -1,16 +1,30 @@
 import au.com.bytecode.opencsv.CSVReader
 import collection._
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula
+import de.unijena.bioinf.ChemistryBase.chem.{Element, MolecularFormula}
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution
 import java.io.{FileReader, File}
 import scala.collection.JavaConversions._
 import Math._
 
-class LossSize(val root:String) {
+class LossSize(val root:String, val specialElement:Option[Element]) {
 
   def lossPath = new File(root, "correctLosses.csv")
 
   val SMALL = 40
+
+  val compounds = {
+    val map = mutable.Map[String, MolecularFormula]()
+    val csvr = new CSVReader(new FileReader(new File(root, "ranking.csv")))
+    csvr.readNext()
+    var line = csvr.readNext()
+    while (line != null) {
+      val name = line(0)
+      val formula = line(1)
+      map += name->MolecularFormula.parse(formula)
+      line = csvr.readNext()
+    }
+    map
+  }
 
   val commonLosses = {
     val map = mutable.Map[MolecularFormula, Int]()
@@ -18,11 +32,17 @@ class LossSize(val root:String) {
     csvr.readNext()
     var line = csvr.readNext()
     while (line != null) {
-      line = csvr.readNext()
-      val formula = MolecularFormula.parse(line(1))
-      map.get(formula) match {
-        case Some(counting) => map += formula->(counting+1)
-        case None => map += formula->1
+      val name = line(0)
+      val pass = specialElement match {
+        case Some(element) => compounds.get(name).get.numberOf(element)>0
+        case None => true
+      }
+      if (pass) {
+        val formula = MolecularFormula.parse(line(1))
+        map.get(formula) match {
+          case Some(counting) => map += formula->(counting+1)
+          case None => map += formula->1
+        }
       }
       line = csvr.readNext()
     }
@@ -36,7 +56,6 @@ class LossSize(val root:String) {
   def learnCommonLosses() = {
     val pareto = learnPareto(commonLosses)
     // search losses which are more frequently as they should be
-    val tolerance = n*0.001
     commonLosses.map(o=>(o, pareto.getDensity(o.loss.getMass)*n)).filter(p=>(p._1.count-p._2)>=10)
   }
 

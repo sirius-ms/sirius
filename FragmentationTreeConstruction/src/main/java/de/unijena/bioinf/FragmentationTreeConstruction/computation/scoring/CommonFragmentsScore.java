@@ -4,20 +4,22 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 import java.util.HashMap;
 import java.util.Map;
 
+// TODO: Add normalization as field
 @Called("Common Fragments:")
-public class CommonFragmentsScore implements DecompositionScorer<Object> {
+public class CommonFragmentsScore implements DecompositionScorer<Object>, MolecularFormulaScorer {
 
 	private final HashMap<MolecularFormula, Double> commonFragments;
     private HashMap<MolecularFormula, Double> commonFragmentsH;
     private HashMap<MolecularFormula, Double> commonFragmentsWithoutH;
     private boolean hTolerance;
-
+    /*
     private static final Object[] Fragments = new Object[]{
     "C6H6O", 0.15, "C5H5N", 0.15, "C8H6N", 0.15, "C6H9O", 0.15, "C5H7O", 0.155, "C6H5O", 0.155,
             "C4H10N", 0.155, "C5H10N", 0.155, "C8H13", 0.155, "C4H5O2", 0.16, "C6H7O", 0.16, "C3H2O", 0.16,
@@ -32,6 +34,24 @@ public class CommonFragmentsScore implements DecompositionScorer<Object> {
             "C3H5O", 0.385, "C2H5O", 0.4, "C3H7", 0.42, "C5H7", 0.425, "C4H7", 0.475, "C2H6N", 0.515, "C3H3O", 0.545,
             "C4H5", 0.56, "C3H6N", 0.565, "C4H3", 0.58, "C6H7", 0.605, "C7H7", 0.615, "C2H3O", 0.655, "C5H5", 0.685,
             "C2H4N", 0.69, "C6H5", 0.74, "C3H3", 0.75, "C3H5", 0.9
+    };
+    */
+
+    public static final double COMMON_FRAGMENTS_NORMALIZATION = 0.38019506158713545d;
+
+    public static final Object[] COMMON_FRAGMENTS = new Object[]{
+        "C6H6", 3.5774489869229, "C5H9N", 3.49383484688177, "C7H6", 3.280814303199,
+            "C9H10O2", 3.14213091566505, "C5H11N", 3.11702499453398, "C9H10O", 3.10851430486607,
+            "C4H9N", 3.10851430486607, "C8H8O2", 3.10851430486607, "C9H9N", 3.03768825229746,
+            "C5H6", 3.02847159719253, "C9H8O", 3.00977946418038, "C3H7N", 3.00030072022584,
+            "C6H4", 2.98106935829795, "C11H12O", 2.98106935829795, "C6H8", 2.98106935829795,
+            "C8H8O", 2.96146088690957, "C5H8", 2.9515105560564, "C11H12", 2.9210513485717,
+            "C11H14", 2.90021726166885, "C10H10O2", 2.90021726166885, "C6H11N", 2.88963515233832,
+            "C10H10O", 2.83497673980045, "C10H12O2", 2.83497673980045, "C8H7NO", 2.8122484887229,
+            "C4H7N", 2.80068766632182, "C6H13NO", 2.74078952474075, "C11H12O2", 2.74078952474075,
+            "C9H11N", 2.71578822253533, "C12H14", 2.71578822253533, "C12H10", 2.70304919675791,
+            "C8H9N", 2.690145791922, "C8H13N", 2.67707371035464, "C5H7N", 2.66382848360462,
+            "C4H6", 2.66382848360462, "C16H18", 2.66382848360462, "C8H8", 2.66382848360462
     };
 
 
@@ -90,7 +110,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object> {
     }
 
     public static CommonFragmentsScore getLearnedCommonFragmentScorer(double scale) {
-        final CommonFragmentsScore scorer = map(Fragments);
+        final CommonFragmentsScore scorer = map(COMMON_FRAGMENTS);
         if (scale == 1) return scorer;
         for (Map.Entry<MolecularFormula, Double> entry : scorer.commonFragments.entrySet()) {
             entry.setValue(entry.getValue()*scale);
@@ -158,10 +178,16 @@ public class CommonFragmentsScore implements DecompositionScorer<Object> {
         final double intr = intrinsic != null ? intrinsic.doubleValue() : 0;
         if (!hTolerance && ion instanceof Charge) {
             final Double score = (ion.getCharge() > 0 ? getCommonFragmentsH().get(formula) : getCommonFragmentsWithoutH().get(formula));
-            return score == null ? intr : Math.max(intr, score.doubleValue());
+            return (score == null ? intr : Math.max(intr, score.doubleValue())) - COMMON_FRAGMENTS_NORMALIZATION;
         } else {
-            return intr;
+            return intr - COMMON_FRAGMENTS_NORMALIZATION;
         }
     }
 
+    @Override
+    public double score(MolecularFormula formula) {
+        final Double val = commonFragments.get(formula);
+        if (val == null) return 0d;
+        else return val.doubleValue();
+    }
 }

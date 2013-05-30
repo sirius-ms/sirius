@@ -79,7 +79,7 @@ public class FragmentationPatternAnalysis {
         rootScorers.add(new ChemicalPriorScorer());
         fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
         lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
-        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1)));
+        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1), 0d));
         lossScorers.add(new DBELossScorer());
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
         peakPairScorers.add(new RelativeLossSizeScorer());
@@ -93,7 +93,7 @@ public class FragmentationPatternAnalysis {
         rootScorers.add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(), ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT_FOR_ROOT));
         fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
         lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
-        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1)));
+        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
         lossScorers.add(new DBELossScorer());
         lossScorers.add(new PureCarbonNitrogenLossScorer());
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));

@@ -46,6 +46,9 @@ public class CommonLossEdgeScorer implements LossScorer {
     	1.39d, 2.40d
     };
 
+
+
+
     public static CommonLossEdgeScorer getLearnedCommonLossScorerWithFixedScore(double score) {
         final HashMap<MolecularFormula, Double> map = new HashMap<MolecularFormula, Double>();
         for (String loss : ales_list) {
