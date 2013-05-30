@@ -293,6 +293,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     /**
      * a formula is subtractable from another formula, if for each element in the
      * periodic table the amount of atoms of this element is greater or equal to the other formula.
+     * for all elements ei is (this(ei) - other(ei)) >= 0
      */
     public boolean isSubtractable(MolecularFormula other) {
     	final short[] amounts = buffer();
