@@ -6,6 +6,10 @@ public class LogNormalDistribution extends RealDistribution {
     public static final double SQRT2PI = sqrt(2 * PI);
     private final double mean, var, sd;
 
+    public static LogNormalDistribution withMeanAndSd(double mean, double sd) {
+        return new LogNormalDistribution(mean, sd*sd);
+    }
+
     public LogNormalDistribution(double mean, double var) {
         this.mean = mean;
         this.var = var;
