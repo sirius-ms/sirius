@@ -90,19 +90,21 @@ public class Factory {
         return analysis;
     }
 
-    public FragmentationPatternAnalysis getAnalysisWithoutCommonLosses() {
+    public FragmentationPatternAnalysis getAnalysisWithCommonLosses() {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
         analysis.setToSirius();
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
         final List<LossScorer> lossScorers = new ArrayList<LossScorer>();
-        lossScorers.add(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1)));
         lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
         lossScorers.add(new DBELossScorer());
         lossScorers.add(new PureCarbonNitrogenLossScorer());
 
+        //lossScorers.add(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1)));
+        lossScorers.add(CommonLossEdgeScorer.getOptimizedCommonLossScorer().merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+
         final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
-        peakPairScorers.add(new LossSizeScorer(new LogNormalDistribution(3.4484318558075935d, 1.070374352318858d), -7.076877716754365d));
+        peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8885317749758523d, 0.5729427497241325d), -4.4009243238190265d));
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.getDecompositionScorers().add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(true),

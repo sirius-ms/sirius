@@ -159,7 +159,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
                 @Override
                 public boolean apply(ProcessedPeak value) {
                     for (MS2Peak p : value.getOriginalPeaks()) {
-                        if (p.getSpectrum() == spectra.get(k)) return true;
+                        if (p.getSpectrum().getCollisionEnergy().equals(spectra.get(k).getCollisionEnergy())) return true;
                     }
                     return false;
                 }

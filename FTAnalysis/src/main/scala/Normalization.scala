@@ -29,7 +29,7 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
     val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
       getFragmentsFromTree(f).map(m=>scorer.score(m.formula))
     })
-    (xs.reduce(_+_)/xs.size.toDouble, ys.reduce(_+_)/ys.size.toDouble)
+    (xs.foldLeft(0d)(_+_)/xs.size.toDouble, ys.foldLeft(0d)(_+_)/ys.size.toDouble)
   }
 
   def getNormalizationConstantForLosses():(Double, Double) = {
@@ -39,7 +39,7 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
     val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
       getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
     })
-    (xs.reduce(_+_)/xs.size.toDouble, ys.reduce(_+_)/ys.size.toDouble)
+    (xs.foldLeft(0d)(_+_)/xs.size.toDouble, ys.foldLeft(0d)(_+_)/ys.size.toDouble)
   }
 
   def getNormalizationConstantForRoot():(Double, Double) = {
@@ -49,7 +49,7 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
     val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).map(f => {
       scorer.score(getRootsFromTree(f).formula)
     })
-    (xs.reduce(_+_)/xs.size.toDouble, ys.reduce(_+_)/ys.size.toDouble)
+    (xs.foldLeft(0d)(_+_)/xs.size.toDouble, ys.foldLeft(0d)(_+_)/ys.size.toDouble)
   }
 
   def getMassDevsSd() {

@@ -41,9 +41,9 @@ public class FTAnalysis {
 
     public static int NUMBEROFCPUS = 4;
 
-    public final static boolean VERBOSE = true;
+    public final static boolean VERBOSE = false;
 
-    public final static boolean JUST_USE_CORRECT_TREE = true;
+    public final static boolean JUST_USE_CORRECT_TREE = false;
     /*
     usage:
     java -jar analysis.jar /rootdir m/n metlin #cpus
@@ -135,7 +135,7 @@ public class FTAnalysis {
             }
         }
 
-        pipeline = new Factory().getAnalysisWithoutCommonLosses();
+        pipeline = new Factory().getAnalysisWithCommonLosses();
 
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
@@ -299,7 +299,7 @@ public class FTAnalysis {
         // write trees
         if (row.correctRank == 1 && row.error != TOMUCHTIME) {
             writeTreeToFile(new File(correctOptTrees, name + ".dot"), correctTree, pipeline);
-        } else if (row.error != TOMUCHTIME) {
+        } else if (row.error != TOMUCHTIME && !JUST_USE_CORRECT_TREE) {
             getExplainedIntensity(explainedPeakPrinterWrong, trees.get(0));
             writeTreeToFile(new File(correctSuboptimalTrees, name + ".dot"), correctTree, pipeline);
             writeTreeToFile(new File(wrongOptTrees, name + ".dot"), trees.get(0), pipeline);

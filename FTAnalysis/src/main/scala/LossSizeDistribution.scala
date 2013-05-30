@@ -25,7 +25,7 @@ abstract class LossSizeDistribution {
     }
     xs.view.map(x=>(x, density(x.loss)*n, density(x.loss))).filter(x=> (x._1.count - x._2) >= LIMIT).foldLeft(mutable.Map()++map)((m,x)=>{
         if (!m.contains(x._1.loss)) println((x._1.loss, x._1.count,  x._2, x._3))
-        m += (x._1.loss -> getfromMap(x._1.loss) * (x._1.count/x._2))
+        m += (x._1.loss -> getfromMap(x._1.loss) * (x._1.count.toFloat/x._2))
       }
     )
   }

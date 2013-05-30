@@ -2,6 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -14,9 +15,10 @@ import java.util.Map;
  * @author Kai Dührkop
  */
 @Called("Common Losses:")
-public class CommonLossEdgeScorer implements LossScorer {
+public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer {
 
     private final HashMap<MolecularFormula, Double> map;
+    private final double normalization;
 
     private final static String[] implausibleLosses = new String[]{"C2O", "C4O", "C3H2", "C5H2", "C7H2", "N", "C"};
     
@@ -46,6 +48,20 @@ public class CommonLossEdgeScorer implements LossScorer {
     	1.39d, 2.40d
     };
 
+    public final static String[] optimizedList = new String[]{
+
+            "HO3P", "CO", "C6H2", "Br", "C3H6", "H2O2", "HF", "H2O", "HBr", "CHN", "Cl", "H2S", "S", "HI", "O2S", "CH4O", "CH2", "C4H2", "CH5N", "CH3", "C2H4", "HFO", "HO", "C3H4", "C2HN", "I", "H3N", "C2H2", "CH4", "HCl", "C2H2O", "C6H6", "CH3N", "CH2O"
+
+    };
+    public final static double[] optimizedListScores = new double[]{
+
+            1.508129002151327d, 2.2512917986064953d, 0.9574089776736818d, 0.8114149359105298d, 2.5851341048677208d, 1.2906136708740301d, 1.7775222832818514d, 2.3899888612834506d, 2.5009906961107125d, 2.891000833728227d, 0.7257054288034636d, 3.3582994439346434d, 0.43767013265039273d, 1.791759469228055d, 0.38416753567274053d, 0.10857803854077959d, 0.8886392272821769d, 0.1139588042526148d, 0.4054651081081644d, 2.5725297528642983d, 1.9401613201499475d, 0.18846151265655106d, 0.7852807375913329d, 1.8299983410562994d, 0.12906389595956586d, 2.916098122484529d, 1.1106606157630348d, 0.48080149651556436d, 1.1422121457072585d, 1.1209957908235615d, 0.49074069992048697d, 2.66258780484698d, 0.505935619187943d, 1.3958626871960569d
+
+    };
+
+    public final static double OPTIMIZED_NORMALIZATION = 1.7332494369066007d;
+
+
 
 
 
@@ -61,6 +77,24 @@ public class CommonLossEdgeScorer implements LossScorer {
                 map.put(formula, score);
         }
         return new CommonLossEdgeScorer(map);
+    }
+
+    public static CommonLossEdgeScorer getOptimizedCommonLossScorerWithoutNormalization() {
+        final HashMap<MolecularFormula, Double> map = new HashMap<MolecularFormula, Double>();
+        for (int i=0; i < learnedList.length; ++i) {
+            final MolecularFormula formula = MolecularFormula.parse(optimizedList[i]);
+            map.put(formula, optimizedListScores[i]); // learned losses
+        }
+        return new CommonLossEdgeScorer(map, 0d);
+    }
+
+    public static CommonLossEdgeScorer getOptimizedCommonLossScorer() {
+        final HashMap<MolecularFormula, Double> map = new HashMap<MolecularFormula, Double>();
+        for (int i=0; i < learnedList.length; ++i) {
+            final MolecularFormula formula = MolecularFormula.parse(optimizedList[i]);
+            map.put(formula, optimizedListScores[i]); // learned losses
+        }
+        return new CommonLossEdgeScorer(map, OPTIMIZED_NORMALIZATION);
     }
 
     public static CommonLossEdgeScorer getLearnedCommonLossScorer(final double ales, final double multiplicate) {
@@ -149,8 +183,13 @@ public class CommonLossEdgeScorer implements LossScorer {
     	}
     }
 
-    public CommonLossEdgeScorer(Map<MolecularFormula, Double> map) {
+    public CommonLossEdgeScorer(Map<MolecularFormula, Double> map, double normalization) {
         this.map = new HashMap<MolecularFormula, Double>(map);
+        this.normalization = normalization;
+    }
+
+    public CommonLossEdgeScorer(HashMap<MolecularFormula, Double> map) {
+        this(map, 0d);
     }
 
     @Override
@@ -170,8 +209,13 @@ public class CommonLossEdgeScorer implements LossScorer {
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        final Double score = map.get(loss.getLoss());
-        if (score == null) return 0d;
-        else return score.doubleValue();
+        return score(loss.getFormula());
+    }
+
+    @Override
+    public double score(MolecularFormula formula) {
+        final Double score = map.get(formula);
+        if (score == null) return -normalization;
+        else return score.doubleValue()-normalization;
     }
 }
