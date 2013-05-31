@@ -41,9 +41,9 @@ public class FTAnalysis {
 
     public static int NUMBEROFCPUS = 4;
 
-    public final static boolean VERBOSE = false;
+    public final static boolean VERBOSE = true;
 
-    public final static boolean JUST_USE_CORRECT_TREE = false;
+    public final static boolean JUST_USE_CORRECT_TREE = true;
     /*
     usage:
     java -jar analysis.jar /rootdir m/n metlin #cpus
@@ -71,7 +71,7 @@ public class FTAnalysis {
         
     }
 
-    static ChemicalAlphabet defaultAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "F", "I", "Na"));
+    static ChemicalAlphabet defaultAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "F", "I"/*, "Na"*/));
     static HashMap<Element, Interval> bounds;
 
     static {
@@ -87,7 +87,7 @@ public class FTAnalysis {
 
     final File root;
     final ArrayList<File> paths;
-    FragmentationPatternAnalysis pipeline;
+    FragmentationPatternAnalysis pipeline, agilentPipeline, metlinPipeline;
     final File target;
     final File wrongOptTrees, correctOptTrees, correctSuboptimalTrees, wrongSuboptimalTrees;
     final File correctLosses, wrongLosses, correctFragments, wrongFragments, ranking;
@@ -135,7 +135,8 @@ public class FTAnalysis {
             }
         }
 
-        pipeline = new Factory().getAnalysisWithCommonLosses();
+        agilentPipeline = new Factory().getAnalysisWithCommonLosses(true);
+        metlinPipeline = new Factory().getAnalysisWithCommonLosses(false);
 
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
@@ -187,7 +188,9 @@ public class FTAnalysis {
                     row.fileName = f;
                     if (f.getName().endsWith(".ms")) {
                         try {
-                            name = (f.getAbsolutePath().contains("metlin") ? "m" : "a") + f.getName().substring(0, f.getName().indexOf(".ms"));
+                            final boolean isAgilent = !f.getAbsolutePath().contains("metlin");
+                            name = (!isAgilent ? "m" : "a") + f.getName().substring(0, f.getName().indexOf(".ms"));
+                            pipeline = (isAgilent) ? agilentPipeline : metlinPipeline;
                             currentInput = new Ms2ExperimentImpl(parser.parseFile(f));
                             // Agilent Information
                         } catch (IOException e) {

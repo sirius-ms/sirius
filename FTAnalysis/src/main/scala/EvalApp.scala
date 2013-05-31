@@ -16,6 +16,7 @@ object EvalApp extends App{
     val ln = new LogNormDistributionLossSize()
     var cm:Traversable[LossObservation] = ls.commonLosses
     ln.learn(cm)
+    ln.printAdjustedLosses("pre_", cm)
     println(ln)
     var cl = ln.learnCommonLosses(ls.commonLosses)
     for (i <- 1 to 20) {
@@ -81,7 +82,7 @@ object EvalApp extends App{
 
   def normalization = {
     val scorers = List(
-      new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8885317749758523d, 0.5729427497241325d), 0),
+      new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.88566621652954d, 0.651293073713213d), 0),
       CommonLossEdgeScorer.getOptimizedCommonLossScorerWithoutNormalization()
     )
     //val scorer = new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8917028997544745, 0.5912946817526695), 0)
@@ -93,6 +94,6 @@ object EvalApp extends App{
 
   }
 
-  commonLosses
-  //normalization
+  //commonLosses
+  normalization
 }

@@ -14,8 +14,8 @@ import org.apache.commons.math3.special.Erf;
 @Called("Mass Deviation")
 public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     private final static double sqrt2 = Math.sqrt(2);
-    private final double massPenalty;
-    private final double sigmaquot;
+    private double massPenalty;
+    private double sigmaquot;
     private final boolean scoreRoot;
 
     public MassDeviationVertexScorer(boolean scoreRoot) {
@@ -26,6 +26,12 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
         this.massPenalty = massPenalty;
         this.sigmaquot = 1d/massPenalty;
         this.scoreRoot = scoreRoot;
+    }
+
+
+    public void setMassPenalty(double massPenalty) {
+        this.massPenalty = massPenalty;
+        sigmaquot = 1d/massPenalty;
     }
 
     public double getMassPenalty() {

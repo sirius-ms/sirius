@@ -53,19 +53,21 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
   }
 
   def getMassDevsSd() {
-    val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).flatMap(f => {
+    val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).filter(f=>f.getName.startsWith("a")).flatMap(f => {
       getFragmentsFromTree(f).filter(_.mz>100).map(m=>m.ppm)
     })
-    val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
+    val ys = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).filter(f=>f.getName.startsWith("m")).flatMap(f => {
       getFragmentsFromTree(f).filter(_.mz>100).map(m=>m.ppm)
     })
-    Resource.fromFile("correctTreesPPM.csv").writer.write(xs.mkString("\n"))
-    Resource.fromFile("wrongTreesPPM.csv").writer.write(ys.mkString("\n"))
+    Resource.fromFile("metlinPPM.csv").writer.write(xs.mkString("\n"))
+    Resource.fromFile("agilentPPM.csv").writer.write(ys.mkString("\n"))
     println("++++++++++++++")
     println(sd(xs))
     println(sd(ys))
 
   }
+
+  def mean(xs:Traversable[Double]) = xs.reduce(_+_)/xs.size.toDouble
 
   def sd(xs:Traversable[Double]) = {
     val e = xs.reduce(_+_)/xs.size.toDouble

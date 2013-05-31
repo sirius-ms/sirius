@@ -90,7 +90,7 @@ public class Factory {
         return analysis;
     }
 
-    public FragmentationPatternAnalysis getAnalysisWithCommonLosses() {
+    public FragmentationPatternAnalysis getAnalysisWithCommonLosses(boolean isAgilent) {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
         analysis.setToSirius();
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
@@ -104,7 +104,16 @@ public class Factory {
 
         final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
-        peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8885317749758523d, 0.5729427497241325d), -4.4009243238190265d));
+
+
+        peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.88566621652954d, 0.651293073713213d), -4.7907295282227835d));
+
+
+        final double lambda = (isAgilent ? 2.450698 : 1.107145);
+        final double massDev = (isAgilent ? 5 : 3.5);
+
+        getByClassName(MassDeviationVertexScorer.class, analysis.getDecompositionScorers()).setMassPenalty(massDev);
+
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.getDecompositionScorers().add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(true),
@@ -113,11 +122,11 @@ public class Factory {
         analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
 
         analysis.setLossScorers(lossScorers);
-        analysis.setPeakMerger(new HighIntensityMerger(0.05d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.setPeakMerger(new HighIntensityMerger(0.01d));
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(Integer.MAX_VALUE));
         analysis.setTreeBuilder(new GurobiSolver());
-        getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(ExponentialDistribution.fromLambda(12));
+        getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(ExponentialDistribution.fromLambda(lambda));
         final GurobiSolver solver = new GurobiSolver();
         solver.setNumberOfCPUs(FTAnalysis.NUMBEROFCPUS);
         analysis.setTreeBuilder(solver);
