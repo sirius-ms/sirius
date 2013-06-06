@@ -51,7 +51,7 @@ class LossSize(val root:String, val specialElement:Option[Element]) {
     map.map(x =>LossObservation(x._1, x._2, x._2/sum.toDouble))
   }
 
-  val n = commonLosses.foldLeft(0)(_+_.count)
+  val n = commonLosses.foldLeft(0d)(_+_.count).round.toInt
 
   def learnCommonLosses() = {
     val pareto = learnPareto(commonLosses)
@@ -93,8 +93,8 @@ class LossSize(val root:String, val specialElement:Option[Element]) {
     val bin1 = xs.filter(x=>x.loss.getMass<SMALL && x.loss.getMass >= 20)
     val x0 = 12.5
     val x1 = 23.5
-    val y0 = bin0.foldLeft(0)((s,x)=> s + x.count)/n.toDouble
-    val y1 = bin1.foldLeft(0)((s,x)=> s + x.count)/n.toDouble
+    val y0 = bin0.foldLeft(0d)((s,x)=> s + x.count)/n.toDouble
+    val y1 = bin1.foldLeft(0d)((s,x)=> s + x.count)/n.toDouble
     val a=(y1-y0)/(x1-x0)
     val b = y1-a*x1
     ParetoLossSizeDistribution(pareto.getK, SMALL, a, b)

@@ -47,20 +47,30 @@ public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer 
     	1.69d, 2.30d, 1.29d, 1.88d, 1.13d, 1.46d, 0.29d, 0.74d, 0.69d, 1.56d, 
     	1.39d, 2.40d
     };
-
+    /*
     public final static String[] optimizedList = new String[]{
 
-            "HO3P", "CO", "C6H2", "CS", "C3H6", "HF", "H2O", "HBr", "CHN", "C6H10O5", "H2", "Cl", "OS", "H2S", "S", "CH4O", "CH2", "C4H2", "CH5N", "O", "HN", "CH3", "C6H4", "C2H4", "HO", "C3H4", "C2HN", "I", "H3N", "C2H2", "CH4", "HCl", "C2H2O", "C6H6", "H", "CH3N", "CH2O"
+            "C2H2", "Cl", "HCl", "CH2", "O", "HF", "HO3P", "H3N", "CS", "ClN", "C6H6", "C6H5Cl", "CH3", "I", "C2H4", "CH4", "Br", "HN", "HBr", "H2S", "HI", "S", "CO", "H2", "OS", "HO2PS", "O2S", "C3H4", "H2O"
 
     };
     public final static double[] optimizedListScores = new double[]{
 
-            6.917413340048366d, 2.6390573296152584d, 3.314288332625683d, 0.9296915936411462d, 0.4836263071615044d, 0.7986990253220124d, 0.8898918088663595d, 0.4895482099368619d, 2.0020093826120027d, 0.8759534047212325d, 0.27214795605932d, 3.6025845114046033d, 2.8219357966252394d, 0.5596157879354227d, 3.001032936149767d, 3.1297171641370087d, 5.263133793194274d, 0.8064758701244231d, 0.6977597825913054d, 1.0616364364381863d, 1.879962563261482d, 2.879052610816448d, 3.1537943016338077d, 0.8186219764584206d, 0.679941370504278d, 1.8718021769015913d, 0.09093358350472346d, 1.816421168470239d, 3.03276617233013d, 0.08952006974056356d, 3.061482554784125d, 1.3489933732990782d, 2.2547887948672924d, 3.6683131796453208d, 0.6052076538832001d, 0.8522119032388769d, 0.4415101658998077d
+            2.450592466647284d, 2.6322323647885035d, 3.585635090866105d, 5.061869416500993d, 1.98735108678975d, 4.219990206399166d, 4.81556101339377d, 1.712137433054253d, 2.193608226046093d, 0.9675789664272824d, 1.4916520308347205d, 2.0064039882484526d, 2.434693632787536d, 6.1359239584496095d, 0.7300546087164697d, 0.5300547398834722d, 3.477002088748983d, 2.436610178384473d, 4.603462237399737d, 1.8124350160491391d, 5.470340264205764d, 3.4889242233884845d, 2.4718950405077442d, 8.48154326479735d, 0.853549512465558d, 3.1639280772330727d, 1.9797429997262888d, 0.5606299982203099d, 3.379679499949444d
+
+    };
+    */
+    public final static String[] optimizedList = new String[]{
+
+            "C2H2", "CH2O", "Cl", "HCl", "CH2", "O", "HF", "HO3P", "H3N", "CS", "CHN", "C6H6", "C6H5Cl", "CH3", "I", "C6H2", "C2H4", "CH4", "Br", "HN", "HBr", "H2S", "HI", "S", "C3H6", "H2", "CO", "OS", "HO2PS", "O2S", "H2O"
+
+    };
+    public final static double[] optimizedListScores = new double[]{
+
+            3.1115834530893713d, 0.8547475112700744d, 2.186994541286029d, 4.000404005539266d, 5.152849508793085d, 2.3026794488605953d, 4.394989165008551d, 4.158832761897171d, 2.215461300398177d, 0.9255949091155629d, 2.621493900166479d, 2.4518448047689096d, 1.9449601762777768d, 2.8756059927785835d, 6.808501205457337d, 1.8765183378441672d, 1.7676817930869375d, 1.6963889484398127d, 4.004985663655303d, 1.7622285584877952d, 4.35814181247161d, 2.0913417146783644d, 6.491436180021818d, 3.036081733487893d, 0.3665414365039033d, 2.9979605738824886d, 3.4406465075926307d, 1.4527550116797592d, 3.6353509359353113d, 1.7533763404422238d, 3.245636488867119d
 
     };
 
-
-    public final static double OPTIMIZED_NORMALIZATION = 0d;//1.7332494369066007d;
+    public final static double OPTIMIZED_NORMALIZATION = 2.8105910127346685d;
 
 
 
@@ -82,7 +92,7 @@ public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer 
 
     public static CommonLossEdgeScorer getOptimizedCommonLossScorerWithoutNormalization() {
         final HashMap<MolecularFormula, Double> map = new HashMap<MolecularFormula, Double>();
-        for (int i=0; i < learnedList.length; ++i) {
+        for (int i=0; i < optimizedList.length; ++i) {
             final MolecularFormula formula = MolecularFormula.parse(optimizedList[i]);
             map.put(formula, optimizedListScores[i]); // learned losses
         }
@@ -91,7 +101,7 @@ public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer 
 
     public static CommonLossEdgeScorer getOptimizedCommonLossScorer() {
         final HashMap<MolecularFormula, Double> map = new HashMap<MolecularFormula, Double>();
-        for (int i=0; i < learnedList.length; ++i) {
+        for (int i=0; i < optimizedList.length; ++i) {
             final MolecularFormula formula = MolecularFormula.parse(optimizedList[i]);
             map.put(formula, optimizedListScores[i]); // learned losses
         }
@@ -150,18 +160,31 @@ public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer 
     }
 
     public CommonLossEdgeScorer recombinate(int num) {
+        return recombinate(num, 4);
+    }
+
+    public CommonLossEdgeScorer recombinateSpec(int num, StrangeElementScorer sc) {
         final HashMap<MolecularFormula, Double> newMap = new HashMap<MolecularFormula, Double>(this.map);
         final ArrayList<ScoredMolecularFormula> decompositions = new ArrayList<ScoredMolecularFormula>();
         map2Decompositions(map, decompositions);
         ArrayList<ScoredMolecularFormula> mixedDecompositions = new ArrayList<ScoredMolecularFormula>(decompositions);
         ArrayList<ScoredMolecularFormula> buffer = new ArrayList<ScoredMolecularFormula>();
         for (int i=0; i < num; ++i) {
-        	for (ScoredMolecularFormula left : decompositions) {
-            	for (ScoredMolecularFormula right : mixedDecompositions) {
-            		final MolecularFormula combination = left.getFormula().add(right.getFormula());
+            for (ScoredMolecularFormula left : decompositions) {
+                final boolean leftNoChno = sc==null?false:sc.containsStrangeElement(left.getFormula());
+                for (ScoredMolecularFormula right : mixedDecompositions) {
+                    double scoreBonus = 0d;
+                    if (sc != null) {
+                        final boolean rightNoChno = sc.containsStrangeElement(right.getFormula());
+                        if (leftNoChno && rightNoChno) continue;
+                        if ((left.getScore() > right.getScore() && leftNoChno) || (right.getScore() > left.getScore() && rightNoChno)) {
+                            scoreBonus -= sc.getPenalty()/2;
+                        }
+                    }
+                    final MolecularFormula combination = left.getFormula().add(right.getFormula());
                     final double score =
                             //log((exp(left.getScore())+exp(right.getScore()))/4) ;
-                            (left.getScore()+right.getScore())/4;
+                            Math.min(left.getScore(), right.getScore())/6 + scoreBonus;
                     final Double oldScore = map.get(combination);
                     if (oldScore == null || score > oldScore) {
                         newMap.put(combination, score);
@@ -174,7 +197,35 @@ public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer 
             buffer = swap;
             buffer.clear();
         }
-        return new CommonLossEdgeScorer(newMap);
+        return new CommonLossEdgeScorer(newMap, normalization);
+    }
+
+    public CommonLossEdgeScorer recombinate(int num, double quot) {
+        final HashMap<MolecularFormula, Double> newMap = new HashMap<MolecularFormula, Double>(this.map);
+        final ArrayList<ScoredMolecularFormula> decompositions = new ArrayList<ScoredMolecularFormula>();
+        map2Decompositions(map, decompositions);
+        ArrayList<ScoredMolecularFormula> mixedDecompositions = new ArrayList<ScoredMolecularFormula>(decompositions);
+        ArrayList<ScoredMolecularFormula> buffer = new ArrayList<ScoredMolecularFormula>();
+        for (int i=0; i < num; ++i) {
+        	for (ScoredMolecularFormula left : decompositions) {
+            	for (ScoredMolecularFormula right : mixedDecompositions) {
+            		final MolecularFormula combination = left.getFormula().add(right.getFormula());
+                    final double score =
+                            //log((exp(left.getScore())+exp(right.getScore()))/4) ;
+                            (left.getScore()+right.getScore())/quot;
+                    final Double oldScore = map.get(combination);
+                    if (oldScore == null || score > oldScore) {
+                        newMap.put(combination, score);
+                        buffer.add(new ScoredMolecularFormula(combination, score));
+                    }
+                }
+            }
+            final ArrayList<ScoredMolecularFormula> swap = mixedDecompositions;
+            mixedDecompositions = buffer;
+            buffer = swap;
+            buffer.clear();
+        }
+        return new CommonLossEdgeScorer(newMap, normalization);
     }
     
     private void map2Decompositions(Map<MolecularFormula, Double> map, ArrayList<ScoredMolecularFormula> decompositions) {
@@ -203,7 +254,7 @@ public class CommonLossEdgeScorer implements LossScorer, MolecularFormulaScorer 
     }
 
     public CommonLossEdgeScorer merge(CommonLossEdgeScorer other) {
-        final CommonLossEdgeScorer scorer = new CommonLossEdgeScorer(map);
+        final CommonLossEdgeScorer scorer = new CommonLossEdgeScorer(map, normalization);
         scorer.map.putAll(other.map);
         return scorer;
     }

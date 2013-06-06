@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.Hydrogen2CarbonScorer;
+import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -46,7 +47,7 @@ public class TestMS2Analysis {
 
 
             analysis.getFragmentPeakScorers().clear();
-            analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer(10000));
+            analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer(ExponentialDistribution.fromLambda(10000)));
             analysis.getDecompositionScorers().add(new ChemicalPriorScorer(new Hydrogen2CarbonScorer(), 0d));
             final ProcessedInput processed = analysis.preprocessing(experiment);
             final FragmentationGraph graph = analysis.buildGraph(processed, new ScoredMolecularFormula(experiment.getMolecularFormula().add(MolecularFormula.parse("H")), 0d));

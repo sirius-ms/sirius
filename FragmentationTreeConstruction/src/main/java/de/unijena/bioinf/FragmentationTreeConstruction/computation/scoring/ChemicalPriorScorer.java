@@ -13,7 +13,7 @@ import static de.unijena.bioinf.FragmentationTreeConstruction.inspection.Inspect
 public class ChemicalPriorScorer implements DecompositionScorer<Object> {
 
     public static final double LEARNED_NORMALIZATION_CONSTANT = 0.17546357436139415d;
-    public static final double LEARNED_NORMALIZATION_CONSTANT_FOR_ROOT = 0.22610006337600388d;
+    public static final double LEARNED_NORMALIZATION_CONSTANT_FOR_ROOT = 0.43916395724493595d;
     private MolecularFormulaScorer prior;
     private double normalizationConstant, minimalMass;
 

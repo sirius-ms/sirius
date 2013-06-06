@@ -5,11 +5,13 @@ import scalax.io.Resource
 
 abstract class LossSizeDistribution {
 
-  val LIMIT = 10
+  def LIMIT(m:Double) = if (m < 20) 5 else 10
+
+  def QUOTA(m:Double) = if (m < 20) 1.5d else 1.33d
 
   def learn(xs:Traversable[LossObservation]):Unit
 
-  def count(xs:Traversable[LossObservation]):Int = xs.foldLeft(0)(_+_.count)
+  def count(xs:Traversable[LossObservation]):Int = xs.foldLeft(0d)(_+_.count).round.toInt
 
   def probability(observation: MolecularFormula):Double
 
@@ -23,8 +25,8 @@ abstract class LossSizeDistribution {
       case Some(x) => x
       case None => 1d
     }
-    xs.view.map(x=>(x, density(x.loss)*n, density(x.loss))).filter(x=> (x._1.count - x._2) >= LIMIT).foldLeft(mutable.Map()++map)((m,x)=>{
-        if (!m.contains(x._1.loss)) println((x._1.loss, x._1.count,  x._2, x._3))
+    xs.view.map(x=>(x, density(x.loss)*n, density(x.loss))).filter(x=> (x._1.count - x._2) >= LIMIT(x._1.loss.getMass) && (x._1.count/x._2 >= QUOTA(x._1.loss.getMass))).foldLeft(mutable.Map()++map)((m,x)=>{
+        if (!m.contains(x._1.loss)) println(x._1.loss, x._1.count,  x._2, x._1.count/x._2, Math.log(x._1.count/x._2))
         m += (x._1.loss -> getfromMap(x._1.loss) * (x._1.count.toFloat/x._2))
       }
     )
@@ -34,8 +36,8 @@ abstract class LossSizeDistribution {
     val n = count(xs)
     xs.map(l=> {
       val expectedFrequency = density(l.loss)
-      val expectedCount = (expectedFrequency*n).round.toInt
-      if (l.count >= (expectedCount+LIMIT)) {
+      val expectedCount = (expectedFrequency*n)
+      if (l.count >= (expectedCount+LIMIT(l.loss.getMass))) {
         LossObservation(l.loss, expectedCount, expectedFrequency )
       } else {
         l

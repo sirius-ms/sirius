@@ -1,5 +1,5 @@
 import de.unijena.bioinf.babelms.dot.Parser
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula
+import de.unijena.bioinf.ChemistryBase.chem.{Element, MolecularFormula}
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer
 import java.lang.RuntimeException
@@ -32,14 +32,26 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
     (xs.foldLeft(0d)(_+_)/xs.size.toDouble, ys.foldLeft(0d)(_+_)/ys.size.toDouble)
   }
 
-  def getNormalizationConstantForLosses():(Double, Double) = {
+  def getNormalizationConstantForLosses(e:Element):(Double, Double) = {
     val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).flatMap(f => {
-      getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
+      getLossesFromTree(f).map(MolecularFormula.parse(_)).filter(_.numberOf(e)>0).map(scorer.score(_))
     })
     val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).flatMap(f => {
-      getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
+      getLossesFromTree(f).map(MolecularFormula.parse(_)).filter(_.numberOf(e)>0).map(scorer.score(_))
     })
     (xs.foldLeft(0d)(_+_)/xs.size.toDouble, ys.foldLeft(0d)(_+_)/ys.size.toDouble)
+  }
+
+  def getNormalizationConstantForLosses():(Double, Double,Double,Double) = {
+    val xs = (new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()).map(f => {
+      val vs=getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
+      mean(vs)
+    })
+    val ys = (new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()).map(f => {
+      val vs=getLossesFromTree(f).map(m=>scorer.score(MolecularFormula.parse(m)))
+      mean(vs)
+    })
+    (mean(xs), median(xs), mean(ys), median(ys))
   }
 
   def getNormalizationConstantForRoot():(Double, Double) = {
@@ -67,7 +79,12 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
 
   }
 
-  def mean(xs:Traversable[Double]) = xs.reduce(_+_)/xs.size.toDouble
+  def correctTrees = new File(root, "correctOptimalTrees").listFiles() ++ new File(root, "correctSuboptimalTrees").listFiles()
+  def wrongTrees = new File(root, "wrongOptimalTrees").listFiles() ++ new File(root, "wrongSuboptimalTrees").listFiles()
+
+  def mean(xs:Traversable[Double]) = if(xs.isEmpty) 0d else xs.foldLeft(0d)(_+_)/xs.size.toDouble
+
+  def median(xs:Traversable[Double]):Double = if (xs.isEmpty) 0d else xs.toSeq.sorted.apply(xs.size/2)
 
   def sd(xs:Traversable[Double]) = {
     val e = xs.reduce(_+_)/xs.size.toDouble
@@ -87,6 +104,19 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
     )
   }
 
+  def getAllFragmentsFromTree(treeFile:File):Traversable[Fragment] = {
+    val reader = new FileReader(treeFile)
+    val graph = Parser.parse(reader)
+    reader.close()
+    val regexp = """(.+?)\\n(\d+\.\d+) Da, (\d+(?:\.\d+)|Infinity) %\\nMassDev: (-?\d+(?:\.\d+)) ppm""".r
+    graph.getVertices.view.map(_.getProperties.get("label")).map(l=>
+      regexp.findFirstIn(l) match {
+        case Some(regexp(form, mz, inte, ppm)) => Fragment(MolecularFormula.parse(form), mz.toDouble, inte.toDouble, ppm.toDouble)
+        case bla => throw new RuntimeException(l + " does not match =(\n" + bla)
+      }
+    )
+  }
+
   def getLossesFromTree(treeFile:File) = {
     val reader = new FileReader(treeFile)
     val graph = Parser.parse(reader)
@@ -98,7 +128,7 @@ class Normalization(val root:String, val scorer:MolecularFormulaScorer) {
     val reader = new FileReader(treeFile)
     val graph = Parser.parse(reader)
     reader.close()
-    val regexp = """(.+?)\\n(\d+\.\d+) Da, (\d+(?:\.\d+)) %\\nMassDev: (-?\d+(?:\.\d+)) ppm""".r
+    val regexp = """(.+?)\\n(\d+\.\d+) Da, (\d+(?:\.\d+)|Infinity) %\\nMassDev: (-?\d+(?:\.\d+)) ppm""".r
     val root = graph.getVertices.maxBy(_.getName.substring(1).toInt)
     regexp.findFirstIn(root.getProperties.get("label")) match {
       case Some(regexp(form, mz, inte, ppm)) => Fragment(MolecularFormula.parse(form), mz.toDouble, inte.toDouble, ppm.toDouble)

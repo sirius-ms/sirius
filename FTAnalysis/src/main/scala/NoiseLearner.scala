@@ -6,10 +6,11 @@ import de.unijena.bioinf.ChemistryBase.ms.{Deviation, Normalization, Ms2Experime
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NormalizeToSumPreprocessor
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger
 import de.unijena.bioinf.FragmentationTreeConstruction.model.{ProfileImpl, Ms2ExperimentImpl}
 import de.unijena.bioinf.MassDecomposer.{ValenceValidator, MassDecomposerFast}
 import scala.collection.JavaConversions._
-import java.io.File
+import java.io.{PrintStream, File}
 
 class NoiseLearner(val root:String) {
 
@@ -18,6 +19,14 @@ class NoiseLearner(val root:String) {
   val analysis = new FragmentationPatternAnalysis
   analysis.setInitial()
   analysis.getPreprocessors.add(new NormalizeToSumPreprocessor)
+  analysis.setPeakMerger(new HighIntensityMerger(0.01d))
+
+  def analyze() = {
+    val printer = new PrintStream(new File("./intensity.csv"))
+    printer.println("intensity")
+    printer.println(allPeaks.mkString("\n"))
+    printer.close()
+  }
 
   def allPeaks = path.listFiles().filter(f=>f.isFile && f.getName.endsWith(".ms")).flatMap(f => peaks(f))
 
@@ -32,9 +41,7 @@ class NoiseLearner(val root:String) {
       new FormulaConstraints(new ChemicalAlphabet(parent.elementArray():_*), List(new ValenceFilter(-0.5d)))))
     val preprocessed = analysis.preprocessing(expi)
     preprocessed.getMergedPeaks.filter(p=>(p.getDecompositions.isEmpty || p.getDecompositions.forall(f=> !parent.isSubtractable(f.getFormula)))).map(f=>{
-      if (f.getIntensity > 50)
-        println(file + " => " + f.getMz + " (" + f.getIntensity + " %)")
-      f.getIntensity
+      f.getRelativeIntensity
     })
 
   }

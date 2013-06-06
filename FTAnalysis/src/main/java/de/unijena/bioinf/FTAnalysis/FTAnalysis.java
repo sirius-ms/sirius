@@ -10,6 +10,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutExcept
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -34,7 +35,7 @@ public class FTAnalysis {
     public static final int METLIN = 1, AGILENT = 2;
     public static final String[] NAMEOFDATA=new String[]{"none", "metlin", "agilent", "both"};
 
-    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 500, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
+    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 300, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
     private static final double DISCRIMINATING=0.667d;
 
     public final static boolean USE_CHARGED_FORMULAS = false;
@@ -43,7 +44,12 @@ public class FTAnalysis {
 
     public final static boolean VERBOSE = true;
 
-    public final static boolean JUST_USE_CORRECT_TREE = true;
+    public final static boolean JUST_USE_CORRECT_TREE = false;
+
+    private static boolean USE_ERROR_FILES = true;
+
+    private static boolean USE_TRAINING_DATA = false;
+
     /*
     usage:
     java -jar analysis.jar /rootdir m/n metlin #cpus
@@ -106,17 +112,30 @@ public class FTAnalysis {
     Flushable[] toFlush;
     Closeable[] toClose;
     int index, size;
+
+    private static String[] ERROR_FILES = new String[]{
+            "mpos43980"
+    };
     
     FTAnalysis(File root, int index, int size, int datasets) {
         this.index = index;
         this.size = size;
         this.root = root;
+        final File agilentDB = USE_TRAINING_DATA ? new File(root, "agilent/train/") : new File(root, "agilent/eval/" );
+        final File metlinDB = USE_TRAINING_DATA ? new File(root, "metlin/train/") : new File(root, "metlin/eval/" );
         paths = new ArrayList<File>();
-        if (root.isDirectory()) {
-            if ((datasets & METLIN) == METLIN) paths.addAll(asList(new File(root, "./metlin/train").listFiles()));
-            if ((datasets & AGILENT) == AGILENT) paths.addAll(asList(new File(root, "./agilent/train").listFiles()));
+        if (USE_ERROR_FILES) {
+            for (String e : ERROR_FILES) {
+                if (e.startsWith("a")) paths.add(new File(agilentDB, e.substring(1) + ".ms"));
+                else if (e.startsWith("m")) paths.add(new File(metlinDB, e.substring(1) + ".ms"));
+            }
         } else {
-            paths.add(root);
+            if (root.isDirectory()) {
+                if ((datasets & METLIN) == METLIN) paths.addAll(asList(metlinDB.listFiles()));
+                if ((datasets & AGILENT) == AGILENT) paths.addAll(asList(agilentDB.listFiles()));
+            } else if (root.getName().endsWith(".ms")) {
+                paths.add(root);
+            }
         }
         if (size > 1) {
             final Pattern reg = Pattern.compile("(\\d+)");
@@ -135,8 +154,8 @@ public class FTAnalysis {
             }
         }
 
-        agilentPipeline = new Factory().getAnalysisWithCommonLosses(true);
-        metlinPipeline = new Factory().getAnalysisWithCommonLosses(false);
+        agilentPipeline = new Factory().getAnalysisForTraining(true);
+        metlinPipeline = new Factory().getAnalysisForTraining(false);
 
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
@@ -190,7 +209,15 @@ public class FTAnalysis {
                         try {
                             final boolean isAgilent = !f.getAbsolutePath().contains("metlin");
                             name = (!isAgilent ? "m" : "a") + f.getName().substring(0, f.getName().indexOf(".ms"));
+                            if (prevTreeSizeScore!=0){
+                                final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
+                                sc.setTreeSizeScore(prevTreeSizeScore);
+                            }
                             pipeline = (isAgilent) ? agilentPipeline : metlinPipeline;
+                            {
+                                final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
+                                prevTreeSizeScore = (sc==null) ? 0d : sc.getTreeSizeScore();
+                            }
                             currentInput = new Ms2ExperimentImpl(parser.parseFile(f));
                             // Agilent Information
                         } catch (IOException e) {
@@ -511,7 +538,7 @@ public class FTAnalysis {
         }
     }
 
-    static int[] limits = new int[]{Integer.MAX_VALUE, 60, 30, 20};
+    static int[] limits = new int[]{50, 30, 20};
 
     protected boolean processing() {
         // cutoff
@@ -527,15 +554,20 @@ public class FTAnalysis {
                 return processingWithTimeout();
             } catch (TimeoutException e) {
                 row.error = TOMUCHTIME;
+
                 if (pipeline.getTreeBuilder() instanceof GurobiSolver) {
                     ((GurobiSolver)pipeline.getTreeBuilder()).resetTimeLimit();
                 }
             } finally {
                 if (np != null) np.setLimit(Integer.MAX_VALUE);
+                final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
+                if (sc != null) sc.setTreeSizeScore(prevTreeSizeScore);
             }
         }
         throw new TimeoutException("Timeout for " + row.name + ", even for 20 peaks!!!");
     }
+
+    private double prevTreeSizeScore = 0d;
 
     protected boolean processingWithTimeout() {
         final long timeNow = System.nanoTime();
@@ -566,7 +598,8 @@ public class FTAnalysis {
             return false;
         }
         // trick first compute correct tree
-        if (VERBOSE){System.out.print("Compute correct tree ( " + expectedFormula + " ): "); System.out.flush();}
+        if (VERBOSE){System.out.println(row.name);
+            System.out.print("Compute correct tree ( " + expectedFormula + " ): "); System.out.flush();}
         long startTime = System.nanoTime();
         correctTree = pipeline.computeTree(pipeline.buildGraph(pinput, correctFormula), 0);
         long timeAfter = System.nanoTime();
@@ -575,10 +608,29 @@ public class FTAnalysis {
             row.error = REALTREENOTFOUND;
             return false;
         }
+        final int numberOfPossiblePeaks = numberOfPossiblePeaks();
         if (VERBOSE){
             System.out.println(correctTree.getScore()); System.out.flush();
-            System.out.println("Number of used peaks: " + correctTree.getFragments().size());
+            System.out.println("Number of used peaks: " + correctTree.getFragments().size() + " / " + numberOfPossiblePeaks);
         }
+
+        if (USE_TRAINING_DATA && correctTree.getFragments().size() <= 5 && numberOfPossiblePeaks >= 10) {
+            // increase TreeSize
+            final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
+            if (sc != null) {
+                prevTreeSizeScore=sc.getTreeSizeScore();
+                sc.setTreeSizeScore(prevTreeSizeScore+1d);
+                if (VERBOSE) System.out.println("Increase Tree Size from " + prevTreeSizeScore + " up to " + sc.getTreeSizeScore());
+                pinput = pipeline.preprocessing(currentInput);
+                pinput = new ProcessedInput(pinput.getExperimentInformation(), pinput.getMergedPeaks(),
+                        pinput.getParentPeak(),
+                        selectPMDsWithSimilarIsotopePattern(pinput.getParentMassDecompositions()),
+                        pinput.getPeakScores(), pinput.getPeakPairScores());
+                correctTree = pipeline.computeTree(pipeline.buildGraph(pinput, correctFormula), 0);
+                System.out.println("Now get " + correctTree.getFragments().size() + " peaks and score " + correctTree.getScore());
+            }
+        }
+
         // now use its score as lowerbound to compute all trees with better scores
         final double lowerbound = correctTree.getScore();
         trees = new ArrayList<FragmentationTree>();
@@ -611,6 +663,20 @@ public class FTAnalysis {
         row.correctScore = lowerbound;
         if (row.error == UNINITIALIZED) row.error = NOERROR;
         return true;
+    }
+
+    private int numberOfPossiblePeaks() {
+        final List<ProcessedPeak> peaks = correctTree.getInput().getMergedPeaks();
+        int i=0;
+        for (ProcessedPeak p : peaks) {
+            for (ScoredMolecularFormula m :p.getDecompositions()) {
+                if (correctTree.getRoot().getFormula().isSubtractable(m.getFormula())) {
+                    ++i;
+                    break;
+                }
+            }
+        }
+        return i;
     }
 
     private void switchPMDS(List<ScoredMolecularFormula> pmds) {
