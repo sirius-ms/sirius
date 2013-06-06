@@ -12,7 +12,7 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
  */
 public class ImprovedHetero2CarbonScorer implements MolecularFormulaScorer{
 
-    private final static PartialParetoDistribution keggDistribution = new PartialParetoDistribution(0, 2d/3d, 9);
+    private final static PartialParetoDistribution keggDistribution = new PartialParetoDistribution(0, 0.4d, 3.14534);
 
     private final DensityFunction distribution;
 

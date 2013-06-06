@@ -17,6 +17,10 @@ public abstract class RealDistribution implements IsRealDistributed {
         return log(getCumulativeProbability(x));
     }
 
+    public double getInverseLogCumulativeProbability(double x) {
+        return log(1-getCumulativeProbability(x));
+    }
+
     @Override
     public double getProbability(double begin, double end) {
         if (end < begin) throw new IllegalArgumentException();

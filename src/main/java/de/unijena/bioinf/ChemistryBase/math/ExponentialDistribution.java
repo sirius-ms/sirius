@@ -26,11 +26,11 @@ public final class ExponentialDistribution extends RealDistribution {
     @Override
     public double getCumulativeProbability(double x) {
         if (x < 0) return 0;
-        return 1 - exp(-lambda*x);
+        return 1-exp(-lambda*x);
     }
 
     @Override
-    public double getLogCumulativeProbability(double x) {
+    public double getInverseLogCumulativeProbability(double x) {
         if (x < 0) return Double.NEGATIVE_INFINITY;
         return -lambda*x;
     }
