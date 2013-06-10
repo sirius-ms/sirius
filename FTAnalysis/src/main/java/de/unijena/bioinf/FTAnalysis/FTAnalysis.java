@@ -48,7 +48,7 @@ public class FTAnalysis {
     public static final int METLIN = 1, AGILENT = 2;
     public static final String[] NAMEOFDATA=new String[]{"none", "metlin", "agilent", "both"};
 
-    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 30000, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
+    private static final int MAXIMAL_NUMBER_OF_DECOMPOSITIONS = 300, MAXIMUM_NUMBER_OF_SUBOPTIMAL_TREES = 10;
     private static final double DISCRIMINATING=0.667d;
 
     public final static boolean USE_CHARGED_FORMULAS = false;
@@ -90,7 +90,7 @@ public class FTAnalysis {
         
     }
 
-    static ChemicalAlphabet defaultAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "F", "I", "S"/*, "Na"*/));
+    static ChemicalAlphabet defaultAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "F", "I"/*, "Na"*/));
     static HashMap<Element, Interval> bounds;
 
     static {
@@ -551,90 +551,6 @@ public class FTAnalysis {
         }
     }
 
-    /*
-    public static class AlternativeMassScorer<P extends Peak, T extends Spectrum<P>> implements IsotopePatternScorer<P, T> {
-
-        private final static double root2 = Math.sqrt(2d);
-
-        private final double massDeviationPenalty;
-        private final IntensityDependency intensityDependency;
-
-        public AlternativeMassScorer(double massDeviationPenalty, double ppmFullIntensity, double ppmLowestIntensity) {
-            this(massDeviationPenalty, new LinearIntensityDependency(ppmFullIntensity, ppmLowestIntensity));
-        }
-
-        public AlternativeMassScorer(double massDeviationPenalty, IntensityDependency intensityDependency) {
-            this.massDeviationPenalty = massDeviationPenalty;
-            this.intensityDependency  = intensityDependency;
-        }
-
-        public AlternativeMassScorer(double ppmHighestIntensity, double ppmLowestIntensity) {
-            this(3, ppmHighestIntensity, ppmLowestIntensity);
-        }
-
-        @Override
-        public double score(T measured, T theoretical, Normalization norm) {
-            if (measured.size() > theoretical.size()) throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
-            // remove peaks from theoretical pattern until the length of both spectra is equal
-            final MutableSpectrum<Peak> theoreticalSpectrum = new SimpleMutableSpectrum(theoretical);
-            while (measured.size() < theoreticalSpectrum.size()) {
-                theoreticalSpectrum.removePeakAt(theoreticalSpectrum.size()-1);
-            }
-            // re-normalize
-            Spectrums.normalize(theoreticalSpectrum, Normalization.Sum(1));
-            final double mz0 = measured.getMzAt(0);
-            final double thMz0 = theoreticalSpectrum.getMzAt(0);
-            final double int0 = norm.rescale(measured.getIntensityAt(0));
-            double score = Math.log(Erf.erfc(Math.abs(thMz0 - mz0) /
-                    (root2 * (1d / (massDeviationPenalty) * intensityDependency.getValueAt(int0) * 1e-6 * mz0))));
-            for (int i=1; i < measured.size(); ++i) {
-                final double mz1 = measured.getMzAt(i) - mz0;
-                final double thMz1 = theoreticalSpectrum.getMzAt(i) - thMz0;
-                final double mz2 = measured.getMzAt(i) - measured.getMzAt(i-1);
-                final double thMz2 = theoreticalSpectrum.getMzAt(i) - theoreticalSpectrum.getMzAt(i-1);
-                final double thIntensity = norm.rescale(measured.getIntensityAt(i));
-                // TODO: thMz hier richtig?
-                final double sd = 1d/massDeviationPenalty * intensityDependency.getValueAt(thIntensity) * 1e-6 * measured.getMzAt(i);
-                score += Math.max(
-                        Math.log(Erf.erfc(Math.abs(thMz1 - mz1)/(root2*sd))),
-                        Math.log(Erf.erfc(Math.abs(thMz2 - mz2)/(root2*sd)))
-                );
-            }
-            return score;
-        }
-    }
-
-
-    protected boolean processing() {
-        double isoPPm = 10;
-        FixedBagIntensityDependency alpha = new FixedBagIntensityDependency(new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01, 0.0001}, new double[]{
-                //isoPPm*1, isoPPm*1.05, isoPPm*1.1, isoPPm*1.15, isoPPm*1.2, isoPPm*1.25
-                isoPPm*1, isoPPm*1.1, isoPPm*1.2, isoPPm*2, isoPPm*2.5, isoPPm*10, isoPPm*30
-        });
-        FixedBagIntensityDependency beta = new FixedBagIntensityDependency(new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01, 0.0001},
-                new double[]{
-                        0.06, 0.1, 0.2, 0.4, 0.9, 1.5d, 6d
-                }
-
-        );
-        DeIsotope deiso = new DeIsotope(10, 1e-3, new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S")));
-        final IsotopePatternScorer scorer = new PatternScoreList(
-                new AlternativeMassScorer(3, alpha)
-                ,
-                new LogNormDistributedIntensityScorer(3, beta)
-        );
-        deiso.setIsotopePatternScorer(scorer);
-        final MassToFormulaDecomposer decomp = new MassToFormulaDecomposer();
-        final List<MolecularFormula> formulas = decomp.decomposeToFormulas(currentInput.getIonization().subtractFromMass(591.170858154841), new Deviation(10));
-        final double[] scores = deiso.scoreFormulas(new ChargedSpectrum(currentInput.getMs1Spectra().get(0), currentInput.getIonization()), formulas);
-        final List<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>();
-        for (int i=0; i < scores.length; ++i) scored.add(new ScoredMolecularFormula(formulas.get(i), scores[i]));
-        Collections.sort(scored, Collections.reverseOrder());
-        for (ScoredMolecularFormula f : scored) System.out.println(f.getFormula() + "  :  " + f.getScore());
-        return false;
-    }
-    */
-
     static int[] limits = new int[]{50, 30, 20};
 
     protected boolean processing() {
@@ -732,17 +648,9 @@ public class FTAnalysis {
         final double lowerbound = correctTree.getScore();
         trees = new ArrayList<FragmentationTree>();
         trees.add(correctTree);
-
-        //
-        final ArrayList<ScoredMolecularFormula> formulas = new ArrayList<ScoredMolecularFormula>();
-        final MolecularFormula searched = MolecularFormula.parse("C24H28N13P2S");
-        for (ScoredMolecularFormula F : pinput.getParentMassDecompositions()) if (F.getFormula().equals(searched)) formulas.add(F);
-
-        //
-
         startTime = System.nanoTime();
         if (!JUST_USE_CORRECT_TREE) {
-            for (ScoredMolecularFormula smf : formulas){//pinput.getParentMassDecompositions()) {
+            for (ScoredMolecularFormula smf : pinput.getParentMassDecompositions()) {
                 if (!smf.getFormula().equals(correctFormula.getFormula())) {
                     if (VERBOSE){System.out.print("Compute next tree ( " + smf + " ): "); System.out.flush();}
                     final FragmentationTree fragtree = pipeline.computeTree(pipeline.buildGraph(pinput, smf), lowerbound);
