@@ -152,6 +152,7 @@ public class Factory {
         };
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
         analysis.setInitial();
+        analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
         analysis.getInputValidators().add(new MissingValueValidator());
         analysis.getDecompositionScorers().add(new MassDeviationVertexScorer(false));
         analysis.getRootScorers().add(new MassDeviationVertexScorer(true));

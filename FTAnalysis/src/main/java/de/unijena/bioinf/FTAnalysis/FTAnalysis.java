@@ -59,7 +59,7 @@ public class FTAnalysis {
 
     public final static boolean JUST_USE_CORRECT_TREE = false;
 
-    private static boolean USE_ERROR_FILES = false;
+    private static boolean USE_ERROR_FILES = true;
 
     private static boolean USE_TRAINING_DATA = false;
 
@@ -127,7 +127,7 @@ public class FTAnalysis {
     int index, size;
 
     private static String[] ERROR_FILES = new String[]{
-            "mpos43980"
+            "mpos43334"
     };
     
     FTAnalysis(File root, int index, int size, int datasets) {
@@ -170,6 +170,8 @@ public class FTAnalysis {
         agilentPipeline = new Factory().getAnalysisForTraining(true);
         metlinPipeline = new Factory().getAnalysisForTraining(false);
 
+        //agilentPipeline = new Factory().oldSiriusVersion(true);
+        //metlinPipeline = new Factory().oldSiriusVersion(false);
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
         wrongOptTrees = new File(target, "wrongOptimalTrees");

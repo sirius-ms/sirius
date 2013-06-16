@@ -82,7 +82,7 @@ object EvalApp extends App{
         val diff = if (!specialElements) specialLoss.count - expectedCount else specialLoss.count - specialCountExpectation
         val quota = if (!specialElements) specialLoss.count / expectedCount else specialLoss.count / specialCountExpectation
 
-        if (diff >= 5 && quota >= 1.5) {
+        if (diff > 2 && quota >= 1.66) {
           val d = specialLossMap.get(specialLoss.loss) match {
             case Some(x) => x
             case None => 0
@@ -306,7 +306,7 @@ object EvalApp extends App{
   //println(n.getNormalizationConstant())
 
   //findCommonFragments
-  commonLosses(false)
+  commonLosses(true)
   //strangeLosses
   //normalization
   //new NoiseLearner("D:\\daten\\arbeit\\analysis\\agilent\\train").analyze()
