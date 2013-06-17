@@ -24,6 +24,8 @@ public class TreeSizeScorer implements PeakScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
-        Arrays.fill(scores, treeSizeScore);
+        for (int i=0; i < peaks.size(); ++i) {
+            scores[i] += treeSizeScore;
+        }
     }
 }

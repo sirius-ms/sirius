@@ -15,8 +15,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
  */
 public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer {
 
-    public static final double LEARNED_PENALTY = -2.2894056568387815d;
-    public static final double LEARNED_NORMALIZATION = -0.1305033896226531d;
+    public static final double LEARNED_PENALTY = -1.9176802031231173d;
+    public static final double LEARNED_NORMALIZATION = -0.13929596343581177d;
 
     private double penalty;
     private double normalization;

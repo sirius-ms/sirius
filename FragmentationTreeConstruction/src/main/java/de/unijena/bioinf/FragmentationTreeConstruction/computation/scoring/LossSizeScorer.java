@@ -11,8 +11,8 @@ import java.util.List;
 
 public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
 
-    public static final DensityFunction LEARNED_DISTRIBUTION = new LogNormalDistribution(3.996487174706664d, 0.6334551399630994d);
-    public static final double LEARNED_NORMALIZATION = -4.527131278329685;
+    public static final DensityFunction LEARNED_DISTRIBUTION = new LogNormalDistribution(4.057753844479435d, 0.6386804182255676d);
+    public static final double LEARNED_NORMALIZATION = -5.860753214730718d;
 
     private DensityFunction distribution;
     private double normalization;
@@ -26,13 +26,17 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
         this.normalization = normalization;
     }
 
+    public double getNormalization() {
+        return normalization;
+    }
+
     private final double scoring(double mass) {
         return Math.log(distribution.getDensity(mass)) - normalization;
     }
 
     @Override
     public double score(MolecularFormula formula) {
-        return scoring(formula.getMass());
+        return scoring(formula.getMass()) - normalization;
     }
 
     @Override

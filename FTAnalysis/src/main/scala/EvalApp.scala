@@ -20,6 +20,8 @@ import util.Random
 
 object EvalApp extends App{
 
+  val USE_INTENSITY = true
+
   def commonLosses(specialElements:Boolean)={
     val element:Option[Element] = None;//Some("F").map(x=>PeriodicTable.getInstance().getByName(x))
 
@@ -82,7 +84,7 @@ object EvalApp extends App{
         val diff = if (!specialElements) specialLoss.count - expectedCount else specialLoss.count - specialCountExpectation
         val quota = if (!specialElements) specialLoss.count / expectedCount else specialLoss.count / specialCountExpectation
 
-        if (diff > 2 && quota >= 1.66) {
+        if (diff > 3 && quota >= 1.66) {
           val d = specialLossMap.get(specialLoss.loss) match {
             case Some(x) => x
             case None => 0
@@ -111,12 +113,12 @@ object EvalApp extends App{
     println(specialLossMap)
     println(ln.mean + "d, " + ln.sd + "d")
     println("----------")
-    val clfs = specialLossMap.keySet.toList
+    val clfs = specialLossMap.toList.sortBy(y => -(y._2))
     println("public final static String[] optimizedList = new String[]{\n\t")
-    println(clfs.map(x=>"\""+x+"\"").mkString(", "))
+    println(clfs.map(x=>"\""+x._1+"\"").mkString(", "))
     println("\n};")
     println("public final static double[] optimizedListScores = new double[]{\n\t")
-    println(clfs.map(x=>Math.log(specialLossMap.get(x).get)+"d").mkString(", "))
+    println(clfs.map(x=>Math.log(specialLossMap.get(x._1).get)+"d").mkString(", "))
     println("\n};")
 
   }
@@ -150,14 +152,16 @@ object EvalApp extends App{
       p.println("mz,abs,ppm, int")
       n.correctTrees.filter(f=>f.getName.startsWith("m")).flatMap(t=>n.getFragmentsFromTree(t)).foreach(x=>p.println(x.mz + "," + (x.ppm*1e-6*x.mz) + "," + x.ppm + ","+ x.intensity))
     })
+    prints("ppms_metlin2_wrong.csv", p=>{
+      p.println("mz,abs,ppm, int")
+      n.wrongTrees.filter(f=>f.getName.startsWith("m")).flatMap(t=>n.getFragmentsFromTree(t)).foreach(x=>p.println(x.mz + "," + (x.ppm*1e-6*x.mz) + "," + x.ppm + ","+ x.intensity))
+    })
+    /*
     prints("ppms_agilent2.csv", p=>{
       p.println("mz,abs,ppm, int")
       n.correctTrees.filter(f=>f.getName.startsWith("a")).flatMap(t=>n.getFragmentsFromTree(t)).foreach(x=>p.println(x.mz + "," + (x.ppm*1e-6*x.mz) + "," + x.ppm + ","+ x.intensity))
     })
-    prints("ppm_example.csv", p=>{
-      p.println("mz,abs,ppm, int")
-      n.getFragmentsFromTree(n.correctTrees.find(t=>t.getName=="mpos67197.dot").get).foreach(x=>p.println(x.mz + "," + (x.ppm*1e-6*x.mz) + "," + x.ppm + ","+ x.intensity))
-    })
+    */
   }
 
   def foobar = {
@@ -306,9 +310,9 @@ object EvalApp extends App{
   //println(n.getNormalizationConstant())
 
   //findCommonFragments
-  commonLosses(true)
+  //commonLosses(true)
   //strangeLosses
-  //normalization
+  normalization
   //new NoiseLearner("D:\\daten\\arbeit\\analysis\\agilent\\train").analyze()
   //new NoiseLearner("D:\\daten\\arbeit\\analysis\\metlin\\train").analyze()
 

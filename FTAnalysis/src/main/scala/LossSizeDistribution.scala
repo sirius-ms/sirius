@@ -5,9 +5,9 @@ import scalax.io.Resource
 
 abstract class LossSizeDistribution {
 
-  def LIMIT(m:Double) = if (m < 20) 5 else 10
+  def LIMIT(m:Double) = if (m < 10) 1d else 15d
 
-  def QUOTA(m:Double) = if (m < 20) 1.5d else 1.33d
+  def QUOTA(m:Double) = if (m < 10) 2d else 1.3d
 
   def learn(xs:Traversable[LossObservation]):Unit
 
@@ -26,7 +26,7 @@ abstract class LossSizeDistribution {
       case None => 1d
     }
     xs.view.map(x=>(x, density(x.loss)*n, density(x.loss))).filter(x=> (x._1.count - x._2) >= LIMIT(x._1.loss.getMass) && (x._1.count/x._2 >= QUOTA(x._1.loss.getMass))).foldLeft(mutable.Map()++map)((m,x)=>{
-        if (!m.contains(x._1.loss)) println(x._1.loss, x._1.count,  x._2, x._1.count/x._2, Math.log(x._1.count/x._2))
+        /*if (!m.contains(x._1.loss))*/ println(x._1.loss, x._1.count,  x._2, x._1.count/x._2, Math.log(x._1.count/x._2))
         m += (x._1.loss -> getfromMap(x._1.loss) * (x._1.count.toFloat/x._2))
       }
     )

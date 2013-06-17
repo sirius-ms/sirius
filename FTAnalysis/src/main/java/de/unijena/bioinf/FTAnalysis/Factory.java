@@ -105,19 +105,19 @@ public class Factory {
         lossScorers.add(new PureCarbonNitrogenLossScorer());
 
         //lossScorers.add(new StrangeElementScorer());
-
+        final LossSizeScorer ls = new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.4484318558075935d, 1.070374352318858d), -4.909082669257325d);
         //lossScorers.add(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1)));
-        lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1d).recombinate(2, 8).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+        lossScorers.add(CommonLossEdgeScorer.getAlesListScorer(ls).recombinate(1, ls).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
 
         final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
 
 
         //peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8656329978554234d, 0.5512475076353699d), -4.355600412857635d));
-        peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.4484318558075935d, 1.070374352318858d), -4.909082669257325d));
+        peakPairScorers.add(ls);
 
         //final double lambda = (isAgilent ? 4.492752d : 0.7507144d);
-        final double massDev = (isAgilent ? 5 : 4);
+        final double massDev = (isAgilent ? 3 : 3);
 
         final double lambda = (isAgilent ? 1.016169293d : 0.824447576d);
 
@@ -129,7 +129,7 @@ public class Factory {
                 ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT, 100d)
         );
         analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
-        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(1d));
+        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(0d));
 
         analysis.setLossScorers(lossScorers);
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
@@ -167,8 +167,38 @@ public class Factory {
         analysis.getPeakPairScorers().add(new RelativeLossSizeScorer());
         analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
 
-        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(100));
+        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(50));
 
+        return analysis;
+    }
+
+    public FragmentationPatternAnalysis oldSiriusVersionWithPareto(boolean isAgilent) {
+        final MolecularFormulaScorer h2cScorer = new MolecularFormulaScorer() {
+            @Override
+            public double score(MolecularFormula formula) {
+                return Math.log(MathUtils.pdf(formula.hetero2CarbonRatio(), 0.5886335, 0.5550574));
+            }
+        };
+        final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
+        analysis.setInitial();
+        final double lambda = (isAgilent ? 1.016169293d : 0.824447576d);
+        analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
+        analysis.getInputValidators().add(new MissingValueValidator());
+        analysis.getDecompositionScorers().add(new MassDeviationVertexScorer(false));
+        analysis.getRootScorers().add(new MassDeviationVertexScorer(true));
+        analysis.getRootScorers().add(new ChemicalPriorScorer(h2cScorer,0d));
+        analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer(4));
+        analysis.getLossScorers().add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+        analysis.getLossScorers().add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
+        analysis.getLossScorers().add(new DBELossScorer());
+        analysis.getLossScorers().add(new PureCarbonNitrogenLossScorer());
+        analysis.getLossScorers().add(new ChemicalPriorEdgeScorer(h2cScorer, 0d));
+        analysis.getPeakPairScorers().add(new CollisionEnergyEdgeScorer(0.1, 0.8));
+        analysis.getPeakPairScorers().add(new RelativeLossSizeScorer());
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+
+        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(50));
+        getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(new ParetoDistribution(lambda, 0.005d));
         return analysis;
     }
 
@@ -184,7 +214,7 @@ public class Factory {
         lossScorers.add(new StrangeElementScorer());
 
         //lossScorers.add(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1)));
-        lossScorers.add(CommonLossEdgeScorer.getOptimizedCommonLossScorer().recombinateSpec(2, new StrangeElementScorer()).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+        lossScorers.add(CommonLossEdgeScorer.getOptimizedCommonLossScorer().slightlyFavourAlesList().recombinateSpec(2, new StrangeElementScorer()).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
 
         final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
@@ -194,7 +224,7 @@ public class Factory {
         peakPairScorers.add(new LossSizeScorer(LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION));
 
         final double lambda = (isAgilent ? 1.016169293d : 0.824447576d);
-        final double massDev = (isAgilent ? 4 : 3);
+        final double massDev = (isAgilent ? 3 : 3);
 
         getByClassName(MassDeviationVertexScorer.class, analysis.getDecompositionScorers()).setMassPenalty(massDev);
 
@@ -204,11 +234,11 @@ public class Factory {
                 ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT, 100d)
         );
         analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
-        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(CommonLossEdgeScorer.OPTIMIZED_NORMALIZATION));
+        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(1));
 
         analysis.setLossScorers(lossScorers);
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(50));
         analysis.setTreeBuilder(new GurobiSolver());
         getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(new ParetoDistribution(lambda, 0.005d));

@@ -59,9 +59,10 @@ public class FTAnalysis {
 
     public final static boolean JUST_USE_CORRECT_TREE = false;
 
-    private static boolean USE_ERROR_FILES = true;
+    private static boolean USE_ERROR_FILES = false;
 
-    private static boolean USE_TRAINING_DATA = false;
+    private static int TRAIN = 1, EVAL = 2, BOTH = 3;
+    private static int USE_DATA = EVAL;
 
     /*
     usage:
@@ -90,7 +91,7 @@ public class FTAnalysis {
         
     }
 
-    static ChemicalAlphabet defaultAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "F", "I"/*, "Na"*/));
+    static ChemicalAlphabet defaultAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S"));
     static HashMap<Element, Interval> bounds;
 
     static {
@@ -127,27 +128,34 @@ public class FTAnalysis {
     int index, size;
 
     private static String[] ERROR_FILES = new String[]{
-            "mpos43334"
+            "mpos379"
     };
     
     FTAnalysis(File root, int index, int size, int datasets) {
         this.index = index;
         this.size = size;
         this.root = root;
-        final File agilentDB = USE_TRAINING_DATA ? new File(root, "agilent/train/") : new File(root, "agilent/eval/" );
-        final File metlinDB = USE_TRAINING_DATA ? new File(root, "metlin/train/") : new File(root, "metlin/eval/" );
         paths = new ArrayList<File>();
-        if (USE_ERROR_FILES) {
-            for (String e : ERROR_FILES) {
-                if (e.startsWith("a")) paths.add(new File(agilentDB, e.substring(1) + ".ms"));
-                else if (e.startsWith("m")) paths.add(new File(metlinDB, e.substring(1) + ".ms"));
+        if (root.isDirectory()) {
+            if ((datasets & METLIN) == METLIN) {
+                if ((USE_DATA & TRAIN) == TRAIN) paths.addAll(asList(new File(root, "metlin/train/").listFiles()));
+                if ((USE_DATA & EVAL) == EVAL) paths.addAll(asList(new File(root, "metlin/eval/").listFiles()));
             }
-        } else {
-            if (root.isDirectory()) {
-                if ((datasets & METLIN) == METLIN) paths.addAll(asList(metlinDB.listFiles()));
-                if ((datasets & AGILENT) == AGILENT) paths.addAll(asList(agilentDB.listFiles()));
-            } else if (root.getName().endsWith(".ms")) {
-                paths.add(root);
+            if ((datasets & AGILENT) == AGILENT) {
+                if ((USE_DATA & TRAIN) == TRAIN) paths.addAll(asList(new File(root, "agilent/train/").listFiles()));
+                if ((USE_DATA & EVAL) == EVAL) paths.addAll(asList(new File(root, "agilent/eval/").listFiles()));
+            }
+        } else if (root.getName().endsWith(".ms")) {
+            paths.add(root);
+        }
+        if (USE_ERROR_FILES) {
+            final HashSet<String> errorNames = new HashSet<String>(Arrays.asList(ERROR_FILES));
+            final Iterator<File> iter = paths.iterator();
+            while (iter.hasNext()) {
+                final File f = iter.next();
+                final char prefix = f.getParentFile().getParentFile().getName().equals("metlin") ? 'm' : 'a';
+                final String name = prefix + f.getName().split("\\.ms")[0];
+                if (!errorNames.contains(name)) iter.remove();
             }
         }
         if (size > 1) {
@@ -170,8 +178,14 @@ public class FTAnalysis {
         agilentPipeline = new Factory().getAnalysisForTraining(true);
         metlinPipeline = new Factory().getAnalysisForTraining(false);
 
-        //agilentPipeline = new Factory().oldSiriusVersion(true);
-        //metlinPipeline = new Factory().oldSiriusVersion(false);
+        /*
+        agilentPipeline = new Factory().getAnalysisStart(true);
+        metlinPipeline = new Factory().getAnalysisStart(false);
+        */
+        //agilentPipeline = new Factory().oldSiriusVersionWithPareto(true);
+        //metlinPipeline = new Factory().oldSiriusVersionWithPareto(false);
+
+
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
         target.mkdirs();
         wrongOptTrees = new File(target, "wrongOptimalTrees");
@@ -271,6 +285,12 @@ public class FTAnalysis {
                             error(OUTOFTIME, e);
                         } else {
                             error(UNKNOWN, e);
+                        }
+                    } finally {
+                        final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
+                        if (sc != null) {
+                            usedTreeSizeScore = sc.getTreeSizeScore();
+                            sc.setTreeSizeScore(prevTreeSizeScore);
                         }
                     }
                 } catch (Throwable e) {
@@ -534,7 +554,7 @@ public class FTAnalysis {
 
         @Override
         public Deviation getExpectedIonMassDeviation() {
-            return new Deviation(10, 2e-3);
+            return new Deviation(7, 2e-3);
         }
 
         @Override
@@ -544,7 +564,7 @@ public class FTAnalysis {
 
         @Override
         public Deviation getExpectedFragmentMassDeviation() {
-            return new Deviation(60, 6e-3);
+            return new Deviation(7, 2e-3);
         }
 
         @Override
@@ -575,14 +595,13 @@ public class FTAnalysis {
                 }
             } finally {
                 if (np != null) np.setLimit(Integer.MAX_VALUE);
-                final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
-                if (sc != null) sc.setTreeSizeScore(prevTreeSizeScore);
             }
         }
         throw new TimeoutException("Timeout for " + row.name + ", even for 20 peaks!!!");
     }
 
     private double prevTreeSizeScore = 0d;
+    private double usedTreeSizeScore = 0d;
 
     protected boolean processingWithTimeout() {
         final long timeNow = System.nanoTime();
@@ -598,6 +617,7 @@ public class FTAnalysis {
         }
         */
         if (VERBOSE) {
+            System.out.println(row.fileName);
             System.out.println("Number of Peaks: " + pinput.getMergedPeaks().size());
         }
         // search for correct formula in decompositions
@@ -629,12 +649,12 @@ public class FTAnalysis {
             System.out.println("Number of used peaks: " + correctTree.getFragments().size() + " / " + numberOfPossiblePeaks);
         }
 
-        if (USE_TRAINING_DATA && correctTree.getFragments().size() <= 5 && numberOfPossiblePeaks >= 10) {
+        if ((USE_DATA&TRAIN)==TRAIN && correctTree.getFragments().size() <= 5 && numberOfPossiblePeaks >= 3 && numberOfPossiblePeaks/(float)correctTree.getFragments().size() >= 2.0) {
             // increase TreeSize
             final TreeSizeScorer sc = Factory.getByClassName(TreeSizeScorer.class, pipeline.getFragmentPeakScorers());
             if (sc != null) {
                 prevTreeSizeScore=sc.getTreeSizeScore();
-                sc.setTreeSizeScore(prevTreeSizeScore+1d);
+                sc.setTreeSizeScore(prevTreeSizeScore+2d);
                 if (VERBOSE) System.out.println("Increase Tree Size from " + prevTreeSizeScore + " up to " + sc.getTreeSizeScore());
                 pinput = pipeline.preprocessing(currentInput);
                 pinput = new ProcessedInput(pinput.getExperimentInformation(), pinput.getMergedPeaks(),
