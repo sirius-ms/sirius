@@ -7,12 +7,12 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Preprocessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
@@ -24,6 +24,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakM
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
@@ -47,6 +48,56 @@ public class FragmentationPatternAnalysis {
     private List<PostProcessor> postProcessors;
     private TreeBuilder treeBuilder;
     private MeasurementProfile defaultProfile;
+
+    public static FragmentationPatternAnalysis defaultAnalyzer() {
+        final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
+        analysis.setToSirius();
+        final List<LossScorer> lossScorers = new ArrayList<LossScorer>();
+        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
+        lossScorers.add(new DBELossScorer());
+        lossScorers.add(new PureCarbonNitrogenLossScorer());
+
+        lossScorers.add(new StrangeElementScorer());
+
+        //lossScorers.add(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1)));
+        lossScorers.add(CommonLossEdgeScorer.getOptimizedCommonLossScorer().recombinateSpec(2, new StrangeElementScorer()).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+
+        final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
+        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
+
+
+        //peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8656329978554234d, 0.5512475076353699d), -4.355600412857635d));
+        peakPairScorers.add(new LossSizeScorer(LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION));
+
+        final double lambda = 1d;
+        final double massDev = 3;
+
+        getByClassName(MassDeviationVertexScorer.class, analysis.getDecompositionScorers()).setMassPenalty(massDev);
+
+        analysis.setPeakPairScorers(peakPairScorers);
+
+        analysis.getDecompositionScorers().add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(true),
+                ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT, 100d)
+        );
+        analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
+        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(1));
+
+        analysis.setLossScorers(lossScorers);
+        analysis.setPeakMerger(new HighIntensityMerger(0.01d));
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(50));
+        analysis.setTreeBuilder(new GurobiSolver());
+        getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(new ParetoDistribution(lambda, 0.005d));
+        final GurobiSolver solver = new GurobiSolver();
+        solver.setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
+        analysis.setTreeBuilder(solver);
+        return analysis;
+    }
+
+    private static <S, T extends S> T getByClassName(Class<T> klass, List<S> list) {
+        for (S elem : list) if (elem.getClass().equals(klass)) return (T)elem;
+        return null;
+    }
 
     public FragmentationPatternAnalysis() {
         this.decomposers = new DecomposerCache();
