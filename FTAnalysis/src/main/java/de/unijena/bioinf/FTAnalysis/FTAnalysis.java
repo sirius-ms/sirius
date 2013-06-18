@@ -59,7 +59,7 @@ public class FTAnalysis {
 
     public final static boolean JUST_USE_CORRECT_TREE = false;
 
-    private static boolean USE_ERROR_FILES = false;
+    private static boolean USE_ERROR_FILES = true;
 
     private static int TRAIN = 1, EVAL = 2, BOTH = 3;
     private static int USE_DATA = EVAL;
@@ -128,7 +128,7 @@ public class FTAnalysis {
     int index, size;
 
     private static String[] ERROR_FILES = new String[]{
-            "mpos379"
+            "apos4536", "apos5396", "apos6836", "apos6296", "apos7156", "apos3736", "apos1916", "apos4776", "apos1496", "apos5616", "apos56", "apos2196", "apos3258", "apos5398", "apos6298", "apos478", "apos3198", "apos4598", "apos6638", "apos4198", "apos6878", "apos6918", "apos5658", "apos2618", "apos3398", "apos6818", "apos2318", "apos378", "apos4878", "apos7418", "apos7338", "apos778", "apos3298", "apos3558", "apos6018", "apos4358", "apos3038", "apos1378", "apos1829", "apos6889", "apos4009", "apos2529", "apos3369", "apos149"
     };
     
     FTAnalysis(File root, int index, int size, int datasets) {
@@ -175,15 +175,15 @@ public class FTAnalysis {
             }
         }
 
-        agilentPipeline = new Factory().getAnalysisForTraining(true);
-        metlinPipeline = new Factory().getAnalysisForTraining(false);
+        //agilentPipeline = new Factory().getAnalysisForTraining(true);
+        //metlinPipeline = new Factory().getAnalysisForTraining(false);
 
         /*
         agilentPipeline = new Factory().getAnalysisStart(true);
         metlinPipeline = new Factory().getAnalysisStart(false);
         */
-        //agilentPipeline = new Factory().oldSiriusVersionWithPareto(true);
-        //metlinPipeline = new Factory().oldSiriusVersionWithPareto(false);
+        agilentPipeline = new Factory().oldSiriusVersion(true);
+        metlinPipeline = new Factory().oldSiriusVersion(false);
 
 
         target = new File("results" + "/" + NAMEOFDATA[datasets] + "_" + (size > 1 ? index : "" ));
