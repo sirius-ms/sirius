@@ -1,12 +1,8 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.NormalizationMode;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternScorer;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 
-public class MissingPeakScorer<P extends Peak, T extends Spectrum<P>> implements IsotopePatternScorer<P, T> {
+public class MissingPeakScorer implements IsotopePatternScorer {
 
     private final double lambda;
     private final Normalization normalization;
@@ -26,7 +22,7 @@ public class MissingPeakScorer<P extends Peak, T extends Spectrum<P>> implements
     }
 
     @Override
-    public double score(T measuredSpectrum, T theoreticalSpectrum, Normalization norm) {
+    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization norm, MsExperiment experiment) {
         final Spectrum<? extends Peak> measured, theoretical;
         if (!norm.equals(normalization)) {
             measured = normalization.call(measuredSpectrum);

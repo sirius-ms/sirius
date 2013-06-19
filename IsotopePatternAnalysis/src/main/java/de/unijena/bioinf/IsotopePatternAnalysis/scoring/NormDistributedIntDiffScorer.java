@@ -1,18 +1,13 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
-import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.FixedIntensity;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
-import de.unijena.bioinf.IsotopePatternAnalysis.util.LinearIntensityDependency;
 import org.apache.commons.math3.special.Erf;
 
-public class NormDistributedIntDiffScorer<P extends Peak, T extends Spectrum<P>> implements IsotopePatternScorer<P,T> {
+public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
 
     private final IntensityDependency intensityDependency;
     private final double intensityPenalty;
@@ -40,7 +35,7 @@ public class NormDistributedIntDiffScorer<P extends Peak, T extends Spectrum<P>>
     }
 
     @Override
-    public double score(T measuredSpectrum, T theoretical, Normalization usedNormalization) {
+    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoretical, Normalization usedNormalization, MsExperiment experiment) {
         if (measuredSpectrum.size() > theoretical.size())
             throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
         // remove peaks from theoretical pattern until the length of both spectra is equal
