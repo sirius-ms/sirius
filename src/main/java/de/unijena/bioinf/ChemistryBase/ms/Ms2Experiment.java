@@ -9,28 +9,12 @@ import java.util.List;
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
  * spectrum, clean up and separate them into multiple Ms2Experiment instances, too!
  */
-public interface Ms2Experiment {
+public interface Ms2Experiment extends MsExperiment{
 
     /**
      * @return a list of MS2 spectra belonging to this compound
      */
     public List<? extends Ms2Spectrum> getMs2Spectra();
-
-    /**
-     * Notes:
-     * - If the data is preprocessed, then there should be a *clean* and single isotope pattern of the
-     * ion in each ms1 spectrum. Further peaks are not allowed!
-     * @return a list of MS1 spectra with the isotope pattern of this compound
-     */
-    public List<? extends Spectrum<Peak>> getMs1Spectra();
-
-    /**
-     * In practice it seems more accurate to merge all MS1 spectra into a single one and only use this for further
-     * analysis. Some tools provide a very accurate peak picking and merging, such that this is something which
-     * should not be done in SIRIUS itself.
-     * @return merge all ms1 spectra to single one
-     */
-    public <T extends Spectrum<Peak>> T getMergedMs1Spectrum();
 
     /**
      * @return the mass-to-charge ratio of the ion to analyze
@@ -45,11 +29,6 @@ public interface Ms2Experiment {
      * @return
      */
     public boolean isPreprocessed();
-
-    /**
-     * @return the measurement profile which contains information about the expected measurement quality
-     */
-    public MeasurementProfile getMeasurementProfile();
 
 
     /***
@@ -69,10 +48,5 @@ public interface Ms2Experiment {
      * @return molecular formula of the neutral molecule
      */
     public MolecularFormula getMolecularFormula();
-
-    /**
-     * @return the ionization type of the ion or null if this type is unknown
-     */
-    public Ionization getIonization();
 
 }
