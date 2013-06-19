@@ -30,6 +30,7 @@ import java.util.Map;
 
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.*;
 
+@Deprecated
 public class DeIsotope {
 
     private IsotopePatternScorer<Peak, Spectrum<Peak>> isotopePatternScorer;
