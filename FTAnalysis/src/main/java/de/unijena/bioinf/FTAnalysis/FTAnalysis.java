@@ -5,35 +5,19 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
-import de.unijena.bioinf.IsotopePatternAnalysis.DeIsotope;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.PatternGenerator;
-import de.unijena.bioinf.IsotopePatternAnalysis.PatternScoreList;
-import de.unijena.bioinf.IsotopePatternAnalysis.scoring.LogNormDistributedIntensityScorer;
-import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
-import de.unijena.bioinf.IsotopePatternAnalysis.scoring.NormDistributedIntDiffScorer;
-import de.unijena.bioinf.IsotopePatternAnalysis.util.FixedBagIntensityDependency;
-import de.unijena.bioinf.IsotopePatternAnalysis.util.FixedIntensity;
-import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
-import de.unijena.bioinf.IsotopePatternAnalysis.util.LinearIntensityDependency;
-import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
-import de.unijena.bioinf.babelms.ms.JenaMsExperiment;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
-import org.apache.commons.math3.special.Erf;
 
 import java.io.*;
 import java.util.*;
@@ -571,6 +555,11 @@ public class FTAnalysis {
         public FormulaConstraints getFormulaConstraints() {
             return constraints;
         }
+
+        @Override
+        public double getExpectedIntensityDeviation() {
+            return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        }
     }
 
     static int[] limits = new int[]{50, 30, 20};
@@ -731,6 +720,7 @@ public class FTAnalysis {
 
 
     private List<ScoredMolecularFormula> selectPMDsWithSimilarIsotopePattern(List<ScoredMolecularFormula> list) {
+        /*
         if (list.size() <= MAXIMAL_NUMBER_OF_DECOMPOSITIONS) return list;
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(list.size());
         for (ScoredMolecularFormula m : list) formulas.add(m.getFormula());
@@ -753,6 +743,8 @@ public class FTAnalysis {
             if (include.contains(f.getFormula()))
                 giveBack.add(f);
         return giveBack;
+        */
+        return list;
     }
 
 }

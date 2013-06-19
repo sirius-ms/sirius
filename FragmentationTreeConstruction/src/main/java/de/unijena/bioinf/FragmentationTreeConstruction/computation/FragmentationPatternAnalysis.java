@@ -26,6 +26,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBu
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
 import java.util.*;
@@ -70,17 +71,19 @@ public class FragmentationPatternAnalysis {
         peakPairScorers.add(new LossSizeScorer(LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION));
 
         final double lambda = 1d;
-        final double massDev = 3;
+        final double massDev = 5;
 
         getByClassName(MassDeviationVertexScorer.class, analysis.getDecompositionScorers()).setMassPenalty(massDev);
 
         analysis.setPeakPairScorers(peakPairScorers);
 
+        /*
         analysis.getDecompositionScorers().add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(true),
                 ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT, 100d)
         );
+        */
         analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
-        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(1));
+        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(2d));
 
         analysis.setLossScorers(lossScorers);
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));

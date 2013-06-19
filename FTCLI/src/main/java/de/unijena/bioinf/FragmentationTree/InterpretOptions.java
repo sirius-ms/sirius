@@ -57,20 +57,21 @@ public class InterpretOptions {
     }
 
     public static MeasurementProfile getProfile(Options options) {
-        final ProfileImpl profile = new ProfileImpl(new Deviation(7), new Deviation(4), new Deviation(8, 0.2d), getFormulaConstraints(options));
+        final ProfileImpl profile = new ProfileImpl(new Deviation(7), new Deviation(4), new Deviation(8, 0.001d), getFormulaConstraints(options));
+        profile.setExpectedIntensityDeviation(1d);
         // ...
         return profile;
     }
 
     public static List<File> getFiles(Options options) {
         final List<File> files = options.getFiles();
-        final ArrayList<File> fs = new ArrayList<File>(files);
+        final ArrayList<File> fs = new ArrayList<File>(files.size());
         for (File f : files) {
             if (f.isDirectory()) {
                 fs.addAll(Arrays.asList(f.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
-                        return pathname.isFile() && pathname.canRead();
+                        return pathname.isFile() && !pathname.isDirectory() && pathname.canRead();
                     }
                 })));
             } else if (f.canRead()) {
