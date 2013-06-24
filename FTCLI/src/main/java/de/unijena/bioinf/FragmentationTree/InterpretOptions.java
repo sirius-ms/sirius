@@ -63,6 +63,12 @@ public class InterpretOptions {
         return profile;
     }
 
+    public static int maxNumberOfTrees(Options options) {
+        int n = options.getTrees();
+        n = Math.max(n, options.getTree()?1:0);
+        return n;
+    }
+
     public static List<File> getFiles(Options options) {
         final List<File> files = options.getFiles();
         final ArrayList<File> fs = new ArrayList<File>(files.size());

@@ -28,8 +28,13 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
+        new Main().run(args);
+    }
 
-        final Options options = CliFactory.createCli(Options.class).parseArguments(args);
+    private Options options;
+
+    void run(String[] args) {
+        options = CliFactory.createCli(Options.class).parseArguments(args);
 
         final List<File> files = InterpretOptions.getFiles(options);
         final MeasurementProfile profile = InterpretOptions.getProfile(options);
@@ -37,39 +42,46 @@ public class Main {
         final FragmentationPatternAnalysis analyzer = FragmentationPatternAnalysis.defaultAnalyzer();
         final IsotopePatternAnalysis deIsotope = IsotopePatternAnalysis.defaultAnalyzer();
 
+        final File target = options.getTarget();
+        if (!target.exists()) target.mkdirs();
+
+        final int maxNumberOfTrees = InterpretOptions.maxNumberOfTrees(options);
+
         for (File f : files) {
             try {
-                final List<FragmentationTree> trees = new ArrayList<FragmentationTree>();
+                if (options.getTrees()>0) {
+                    final File tdir = new File(options.getTarget(), removeExtname(f));
+                    if (tdir.exists() && !tdir.isDirectory()) {
+                        throw new RuntimeException("Cannot create directory '" + tdir.getAbsolutePath() +"': File still exists!");
+                    }
+                    tdir.mkdir();
+                }
+
                 final Ms2Experiment experiment = parseFile(f, profile);
+                final MolecularFormula correctFormula = experiment.getMolecularFormula(); // TODO: charge
                 final ProcessedInput input = analyzer.preprocessing(experiment);
-                /*
-                final List<ScoredMolecularFormula> formulas = deIsotope.deisotope(experiment).get(0);
-                Collections.sort(formulas, Collections.reverseOrder());
 
-                final Iterator<ScoredMolecularFormula> iter = formulas.iterator();
-                while (iter.hasNext()) {
-                    if (!iter.next().getFormula().equals(experiment.getMolecularFormula())) iter.remove();
+                // First: Compute correct tree
+                FragmentationTree correctTree = null;
+                if (experiment.getMolecularFormula() != null) {
+                    correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).optimalTree();
                 }
-                */
-                final ArrayList<ScoredMolecularFormula> formulas = new ArrayList<ScoredMolecularFormula>(Arrays.asList(new ScoredMolecularFormula(experiment.getMolecularFormula(), 0d)));
 
-                for (int i=0; i <formulas.size(); ++i) {
-                    ScoredMolecularFormula s = formulas.get(i);
-                    ScoredMolecularFormula t = null;
-                    for (ScoredMolecularFormula x : input.getParentMassDecompositions())
-                        if (x.getFormula().equals(s.getFormula())) {
-                            t = x;
-                            break;
-                        }
-                    System.out.println("Compute " + s.toString());
-                    final FragmentationGraph graph = analyzer.buildGraph(input, new ScoredMolecularFormula(s.getFormula(), s.getScore() + (t == null ? Math.log(0.1d) : t.getScore())));
-                    final FragmentationTree tree = analyzer.computeTree(graph);
-                    trees.add(tree);
-                }
-                Collections.sort(trees, Collections.reverseOrder());
-                for (int i=0; i < trees.size(); ++i) {
-                    System.out.println(trees.get(i).getRoot().getFormula() + " => " + trees.get(i).getScore());
-                    writeTreeToFile(new File(f.getName().split("\\.")[0] + "_" + (i+1) + trees.get(i).getRoot().getFormula().toString() + ".dot"), trees.get(i), analyzer);
+                double lowerbound = options.getLowerbound();
+                if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore());
+
+                if (options.getTrees()>0) {
+                    final List<FragmentationTree> trees = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
+                            .without(correctFormula!=null ? Arrays.asList(correctFormula) : (List<MolecularFormula>)Arrays.asList()).list();
+                    if (correctTree != null) {
+                        trees.add(correctTree);
+                        Collections.sort(trees);
+                    }
+                    for (int i=0; i < trees.size(); ++i) {
+                        final FragmentationTree tree = trees.get(i);
+                        System.out.println(trees.get(i).getRoot().getFormula() + " => " + trees.get(i).getScore());
+                        writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer);
+                    }
                 }
 
             } catch (IOException e) {
@@ -79,11 +91,22 @@ public class Main {
                 e.printStackTrace();
             }
         }
-
-
     }
 
-    private static Ms2Experiment parseFile(File f, MeasurementProfile profile) throws IOException {
+    private File prettyNameOptTree(FragmentationTree tree, File fileName) {
+        return new File(removeExtname(fileName) + ".gv");
+    }
+    private File prettyNameSuboptTree(FragmentationTree tree, File fileName, int rank, boolean correct) {
+        return new File(removeExtname(fileName), rank + (correct ? "_opt_" : "_") + tree.getRoot().getFormula() + ".gv");
+    }
+
+    private String removeExtname(File f) {
+        final String name = f.getName();
+        final int i= name.lastIndexOf('.');
+        return i<0 ? name : name.substring(0, i);
+    }
+
+    private Ms2Experiment parseFile(File f, MeasurementProfile profile) throws IOException {
         final GenericParser<Ms2Experiment> parser = new GenericParser<Ms2Experiment>(getParserFor(f));
         final Ms2Experiment experiment = parser.parseFile(f);
         final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(experiment);
@@ -98,7 +121,7 @@ public class Main {
         return impl;
     }
 
-    private static Parser<Ms2Experiment> getParserFor(File f) {
+    private Parser<Ms2Experiment> getParserFor(File f) {
         final String[] extName = f.getName().split("\\.");
         if (extName.length>1 && extName[1].equalsIgnoreCase("ms")){
             return new JenaMsParser();
@@ -108,7 +131,7 @@ public class Main {
 
     }
 
-    protected static void writeTreeToFile(File f, FragmentationTree tree, FragmentationPatternAnalysis pipeline) {
+    protected void writeTreeToFile(File f, FragmentationTree tree, FragmentationPatternAnalysis pipeline) {
         FileWriter fw = null;
         try {
             fw =  new FileWriter(f);

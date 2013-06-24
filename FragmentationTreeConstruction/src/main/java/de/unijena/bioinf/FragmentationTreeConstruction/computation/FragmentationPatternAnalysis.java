@@ -50,6 +50,9 @@ public class FragmentationPatternAnalysis {
     private TreeBuilder treeBuilder;
     private MeasurementProfile defaultProfile;
 
+    /**
+     * Construct a new FragmentationPatternAnaylsis with default scorers
+     */
     public static FragmentationPatternAnalysis defaultAnalyzer() {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
         analysis.setToSirius();
@@ -97,7 +100,18 @@ public class FragmentationPatternAnalysis {
         return analysis;
     }
 
-    private static <S, T extends S> T getByClassName(Class<T> klass, List<S> list) {
+    /**
+     * Helper function to change the parameters of a specific scorer
+     * <code>
+     * analyzer.getByClassName(MassDeviationScorer.class, analyzer.getDecompositionScorers).setMassPenalty(4d);
+     * </code>
+     * @param klass
+     * @param list
+     * @param <S>
+     * @param <T>
+     * @return
+     */
+    public static <S, T extends S> T getByClassName(Class<T> klass, List<S> list) {
         for (S elem : list) if (elem.getClass().equals(klass)) return (T)elem;
         return null;
     }
@@ -107,6 +121,9 @@ public class FragmentationPatternAnalysis {
         setToDefault();
     }
 
+    /**
+     * Remove all scorers and set analyzer to clean state
+     */
     public void setInitial() {
         this.inputValidators = new ArrayList<InputValidator>();
         this.validatorWarning = new Warning.Noop();
@@ -154,12 +171,27 @@ public class FragmentationPatternAnalysis {
         peakPairScorers.add(new RelativeLossSizeScorer());
     }
 
+    /**
+     * Compute a single fragmentation tree
+     * @param graph fragmentation graph from which the tree should be built
+     * @param lowerbound minimal score of the tree. Higher lowerbounds may result in better runtime performance
+     * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
+     */
     public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound) {
         return treeBuilder.buildTree(graph.getProcessedInput(), graph, lowerbound);
     }
 
+    /**
+     * Computes a fragmentation tree
+     * @param graph fragmentation graph from which the tree should be built
+     * @return an optimal fragmentation tree
+     */
     public FragmentationTree computeTree(FragmentationGraph graph) {
         return computeTree(graph, Double.NEGATIVE_INFINITY);
+    }
+
+    public MultipleTreeComputation computeTrees(ProcessedInput input) {
+        return new MultipleTreeComputation(this, input, input.getParentMassDecompositions(), 0, Integer.MAX_VALUE, 1 );
     }
 
     public FragmentationGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
@@ -187,7 +219,7 @@ public class FragmentationPatternAnalysis {
             loss.setWeight(score);
         }
         // set root scores
-        graph.setRootScore(candidate.getScore() + peakScores[peakScores.length-1]);
+        graph.setRootScore(candidate.getScore() + peakScores[peakScores.length - 1]);
         graph.prepareForTreeComputation();
         return graph;
     }

@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
    ftc file*.ms
 
    # compute n best trees
-   ftc --tree=5
+   ftc --trees=5
 
    # compute only correct/optimal tree
    ftc --tree
@@ -35,13 +35,26 @@ public interface Options {
     @Unparsed
     public List<File> getFiles();
 
-    @Option
-    public int getTree();
+    @Option(description = "If set, the optimal tree is written on disk. If the correct molecular formula is given, the correct tree is written instead.")
+    public boolean getTree();
 
     @Option(defaultValue = "CHNOPS")
     public String getElements();
 
-    public boolean isTree();
+    @Option(shortName = "t", defaultValue = ".")
+    public File getTarget();
+
+    @Option(shortName = "n", defaultValue = "1", description = "number of threads that should be used for computation")
+    public int getThreads();
+
+    @Option(description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
+    public int getTrees();
+
+    @Option(description = "If correct formula is given, compute only trees with higher score than the correct one")
+    public boolean getWrongPositive();
+
+    @Option(description = "Compute only trees with higher score than <value>", defaultValue = "0")
+    public double getLowerbound();
 
 
 

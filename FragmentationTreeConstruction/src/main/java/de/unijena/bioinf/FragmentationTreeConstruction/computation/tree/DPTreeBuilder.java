@@ -24,8 +24,18 @@ public class DPTreeBuilder implements TreeBuilder {
     }
 
     @Override
-    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+    public Object prepareTreeBuilding(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+        return null;
+    }
+
+    @Override
+    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
         return algorithm.compute(graph, maxNumberOfColors);
+    }
+
+    @Override
+    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+        return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
     }
 }
 
