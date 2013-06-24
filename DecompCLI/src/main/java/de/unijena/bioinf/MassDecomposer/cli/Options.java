@@ -34,6 +34,9 @@ public interface Options {
     @Option(longName = "version", description = "")
     public boolean getVersion();
 
+    @Option(description = "")
+    public boolean getCite();
+
     @Option(longName = "help", shortName = "h", helpRequest = true, description = "")
     public boolean getHelp();
 

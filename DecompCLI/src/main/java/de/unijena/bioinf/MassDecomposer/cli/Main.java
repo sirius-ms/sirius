@@ -16,7 +16,20 @@ import java.util.*;
 
 public class Main {
 
-    public static String VERSION = "DECOMP 1.2";
+    public final static String VERSION = "1.21";
+
+    public final static String CITATION =
+            "DECOMP---from interpreting Mass Spectrometry peaks to solving the Money Changing Problem\n" +
+                    "Sebastian Böcker, Zsuzsanna Lipták, Marcel Martin, Anton Pervukhin and Henner Sudek\n" +
+                    "Bioinformatics, 24(4):591-593, 2008\n\n" +
+            "Faster mass decomposition\n" +
+            "Kai Dührkop, Marcus Ludwig, Marvin Meusel and Sebastian Böcker\n" +
+            "Proc. of Workshop on Algorithms in Bioinformatics (WABI 2013), of Lect Notes Comput Sci, Springer, Berlin, 2013";
+
+    public final static String VERSION_STRING = "DECOMP " + VERSION + "\n\n" + CITATION;
+
+    public final static String USAGE = "usage:\ndecomp <mass>\ndecomp -p <ppm> -a <absolute error> -e \"CH[<min>-<max>]N[<min>-]O[-<max>]P[<num>]\" <mass>";
+
 
     public static void main(String[] args) {
         final Cli<Options> cli = CliFactory.createCli(Options.class);
@@ -32,11 +45,17 @@ public class Main {
                 out.println("Error while parsing command line arguments: " + e.getMessage());
             }
             out.println(cli.getHelpMessage());
-            out.println("usage: decomp <mass>\ndecomp -p <ppm> -a <absolute error> -e \"CH[<min>-<max>]N[<min>-]O[-<max>]P[<num>]\" <mass>");
+            out.println(USAGE);
             return;
         }
-        if (options.getVersion()) {
+        if (options.getVersion() || options.getCite()) {
             System.out.println(VERSION);
+            return;
+        }
+        if (args.length==0) {
+            System.out.println(VERSION);
+            System.out.println(USAGE);
+            System.out.println("write 'decomp --help' for further information");
             return;
         }
         final String filter = options.getFilter().toUpperCase();
