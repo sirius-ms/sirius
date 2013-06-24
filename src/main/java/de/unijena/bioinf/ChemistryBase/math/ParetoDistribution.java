@@ -2,7 +2,7 @@ package de.unijena.bioinf.ChemistryBase.math;
 
 import static java.lang.Math.pow;
 
-public final class ParetoDistribution extends RealDistribution {
+public final class ParetoDistribution extends RealDistribution implements ByMedianEstimatable<ParetoDistribution> {
 
     private final double k, xmin, kdivxmin;
 
@@ -40,5 +40,16 @@ public final class ParetoDistribution extends RealDistribution {
     @Override
     public double getMean() {
         return k <= 1 ? Double.NEGATIVE_INFINITY : (xmin*k)/(k-1);
+    }
+
+    /**
+     * Estimates a new distribution by the given median value but keep the xmin
+     * Important: If estimated from real data, remove first all values below xmin!!!
+     * @param median median of distribution.
+     * @return
+     */
+    @Override
+    public ParetoDistribution extimateByMedian(double median) {
+        return new ParetoDistribution(Math.log(2)/Math.log(median/xmin), xmin);
     }
 }

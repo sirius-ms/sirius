@@ -2,7 +2,7 @@ package de.unijena.bioinf.ChemistryBase.math;
 
 import static java.lang.Math.exp;
 
-public final class ExponentialDistribution extends RealDistribution {
+public final class ExponentialDistribution extends RealDistribution implements ByMedianEstimatable<ExponentialDistribution> {
 
     private final double lambda;
 
@@ -43,5 +43,10 @@ public final class ExponentialDistribution extends RealDistribution {
     @Override
     public double getMean() {
         return 1d/lambda;
+    }
+
+    @Override
+    public ExponentialDistribution extimateByMedian(double median) {
+        return ExponentialDistribution.fromLambda(Math.log(2)/median);
     }
 }

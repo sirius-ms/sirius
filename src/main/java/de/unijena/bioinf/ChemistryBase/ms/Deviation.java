@@ -19,6 +19,14 @@ public class Deviation {
         return new Deviation(ppm*scalar, absolute*2);
     }
 
+    public Deviation multiply(double scalar) {
+        return new Deviation(ppm*scalar, absolute*2);
+    }
+
+    public Deviation divide(double scalar) {
+        return multiply(1d/scalar);
+    }
+
     public double absoluteFor(double value) {
         return Math.max(ppm * value * 1e-6, absolute);
     }

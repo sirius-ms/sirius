@@ -12,14 +12,18 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
  */
 public interface MeasurementProfile {
 
-    public Deviation getExpectedIonMassDeviation();
+    public Deviation getAllowedMassDeviation();
 
-    public Deviation getExpectedMassDifferenceDeviation();
+    public Deviation getStandardMassDifferenceDeviation();
 
-    public Deviation getExpectedFragmentMassDeviation();
+    public Deviation getStandardMs1MassDeviation();
+
+    public Deviation getStandardMs2MassDeviation();
 
     public FormulaConstraints getFormulaConstraints();
 
     public double getExpectedIntensityDeviation();
+
+    public double getMedianNoiseIntensity();
 
 }
