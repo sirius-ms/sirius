@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class FragmentationTree implements Comparable<FragmentationTree>, FragmentationPathway {
 
-    private double score;
+    private double score, rootScore;
     private final TreeFragment root;
     private final ProcessedInput input;
 
@@ -25,6 +25,7 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         this.score = score;
         this.input = graph.getProcessedInput();
         this.root = new TreeFragment(0, null, graph.getRoot().getDecomposition(), null, graph.getRoot().getPeak());
+        this.rootScore = graph.getRootScore();
     }
 
     public TreeFragment addVertex(TreeFragment parent, Loss edge) {
@@ -159,7 +160,7 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         if (Math.abs(score - s) > tolerance) {
             System.out.println("Error!");
         }
-        return Math.abs(score - s) <= tolerance;
+        return Math.abs(score - s) <= tolerance || (Double.compare(score-s, score-s) == 0);
     }
 
     private double recScore(TreeFragment f) {
@@ -176,6 +177,10 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
 
     public void setScore(double score) {
         this.score = score;
+    }
+
+    public double getRootScore() {
+        return rootScore;
     }
 
     @Override

@@ -1,13 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
 
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProfileImpl;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -42,21 +38,26 @@ public class MissingValueValidator implements InputValidator {
 
     protected void checkMeasurementProfile(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getMeasurementProfile() == null) throw new InvalidException("Measurement profile is missing");
-        final ProfileImpl profile = new ProfileImpl(input.getMeasurementProfile());
+        final MutableMeasurementProfile profile = new MutableMeasurementProfile(input.getMeasurementProfile());
         if (profile.getFormulaConstraints() == null) {
             throwOrWarn(warn, repair, "Measurement profile: Formula constraints are missing");
             profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
         }
         // get at least one deviation
-        Deviation dev = profile.getExpectedIonMassDeviation();
-        if (dev == null) dev = profile.getExpectedFragmentMassDeviation();
-        if (profile.getExpectedFragmentMassDeviation() == null) {
-            throwOrWarn(warn, repair && dev!=null, "Measurement profile: Fragment Mass deviation is missing");
-            profile.setExpectedFragmentMassDeviation(dev);
+        Deviation dev = profile.getAllowedMassDeviation();
+        if (dev == null) dev = profile.getStandardMs2MassDeviation();
+        if (dev == null) dev = profile.getStandardMs1MassDeviation();
+        if (profile.getAllowedMassDeviation() == null) {
+            throwOrWarn(warn, repair && dev!=null, "Measurement profile: Maximal allowed Mass deviation is missing");
+            profile.setAllowedMassDeviation(dev);
         }
-        if (profile.getExpectedIonMassDeviation() == null) {
+        if (profile.getStandardMs2MassDeviation() == null) {
+            throwOrWarn(warn, repair && dev!=null, "Measurement profile: Fragment Mass deviation is missing");
+            profile.setStandardMs2MassDeviation(dev);
+        }
+        if (profile.getStandardMs1MassDeviation() == null) {
             throwOrWarn(warn, repair && dev!=null, "Measurement profile: Ion Mass deviation is missing");
-            profile.setExpectedIonMassDeviation(dev);
+            profile.setStandardMs1MassDeviation(dev);
         }
         input.setMeasurementProfile(profile);
     }
@@ -87,11 +88,23 @@ public class MissingValueValidator implements InputValidator {
         if (input.getIonization() == null) {
             throwOrWarn(warn, repair, "No ionization is given");
             if (validDouble(input.getIonMass(), false) && validDouble(input.getMoleculeNeutralMass(), false) ) {
-                final double modificationMass = input.getIonMass() - input.getMoleculeNeutralMass();
-                final Ionization ion = PeriodicTable.getInstance().ionByMass(modificationMass, 2e-3);
+                double modificationMass = input.getIonMass() - input.getMoleculeNeutralMass();
+                Ionization ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
+                if (ion == null && input.getMolecularFormula() != null) {
+                    modificationMass = input.getIonMass() - input.getMolecularFormula().getMass();
+                    ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
+                }
                 if (ion == null)  throw new InvalidException("Unknown adduct with mass " + modificationMass);
                 input.setIonization(ion);
             } else throw new InvalidException("Unknown ionization");
+        }
+        if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula()!= null ||  validDouble(input.getMoleculeNeutralMass(), false))) {
+            double modificationMass = input.getIonMass() - (input.getMolecularFormula()!= null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
+            Ionization ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2, input.getIonization().getCharge());
+            if (ion != null) {
+                warn.warn("Set ion to " + ion.toString());
+                input.setIonization(ion);
+            }
         }
     }
 

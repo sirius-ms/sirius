@@ -15,7 +15,6 @@ import org.apache.commons.math3.special.Erf;
 public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     private final static double sqrt2 = Math.sqrt(2);
     private double massPenalty;
-    private double sigmaquot;
     private final boolean scoreRoot;
 
     public MassDeviationVertexScorer(boolean scoreRoot) {
@@ -24,14 +23,12 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
 
     public MassDeviationVertexScorer(double massPenalty, boolean scoreRoot) {
         this.massPenalty = massPenalty;
-        this.sigmaquot = 1d/massPenalty;
         this.scoreRoot = scoreRoot;
     }
 
 
     public void setMassPenalty(double massPenalty) {
         this.massPenalty = massPenalty;
-        sigmaquot = 1d/massPenalty;
     }
 
     public double getMassPenalty() {
@@ -49,8 +46,8 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
         final double theoreticalMass = formula.getMass();
         final double realMass = peak.getUnmodifiedMass();
         final MeasurementProfile profile = input.getExperimentInformation().getMeasurementProfile();
-        final Deviation dev = scoreRoot ? profile.getExpectedIonMassDeviation() : profile.getExpectedFragmentMassDeviation();
-        final double sd = sigmaquot * dev.absoluteFor(realMass);
+        final Deviation dev = profile.getStandardMs2MassDeviation();
+        final double sd = dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
     }
 }

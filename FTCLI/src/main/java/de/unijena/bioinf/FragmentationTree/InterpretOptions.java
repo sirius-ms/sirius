@@ -8,7 +8,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProfileImpl;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.MassDecomposer.Interval;
 
 import java.io.File;
@@ -56,17 +56,24 @@ public class InterpretOptions {
         return constraints;
     }
 
+    public static boolean useIsotopes(Options options) {
+        return options.getFilterByIsotope() > 0 || options.getMs1();
+    }
+
     public static MeasurementProfile getProfile(Options options) {
-        final ProfileImpl profile = new ProfileImpl(new Deviation(7), new Deviation(4), new Deviation(8, 0.001d), getFormulaConstraints(options));
+
+        double ppmMax, ppmAbs, sdms1, sdms2, sdDiff;
+
+        ppmMax = options.getPPMMax();
+        ppmAbs = options.getAbsMax() == null ? ppmMax*100d*1e-6 : options.getAbsMax();
+        sdms1 = options.getStandardDeviationOfMs1()==null ? ppmMax/3d : options.getStandardDeviationOfMs1();
+        sdms2 = options.getStandardDeviationOfMs2()==null ? ppmMax/3d : options.getStandardDeviationOfMs2();
+        sdDiff = options.getStandardDeviationOfDiff()==null ? ppmMax/4d : options.getStandardDeviationOfMs2();
+
+        final MutableMeasurementProfile profile = new MutableMeasurementProfile(new Deviation(ppmMax, ppmAbs), new Deviation(sdms1), new Deviation(sdms2), new Deviation(sdDiff), getFormulaConstraints(options), options.getExpectedIntensityDeviation(), options.getNoiseMedian());
         profile.setExpectedIntensityDeviation(1d);
         // ...
         return profile;
-    }
-
-    public static int maxNumberOfTrees(Options options) {
-        int n = options.getTrees();
-        n = Math.max(n, options.getTree()?1:0);
-        return n;
     }
 
     public static List<File> getFiles(Options options) {

@@ -13,15 +13,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
-   ftc directory
-   ftc file1.ms file2.ms
-   ftc file*.ms
+   # compute optimal/correct tree
+   tree directory
+   tree file1.ms file2.ms
+   tree file*.ms
 
-   # compute n best trees
+   # compute n best trees (including correct tree if formula is given)
    ftc --trees=5
-
-   # compute only correct/optimal tree
-   ftc --tree
 
    # set measurement profile instructions
    ftc --ppm.ms1 5 --ppm.ms2 10 --elements CHNOPSIBr[0-2] file.ms
@@ -34,9 +32,6 @@ public interface Options {
 
     @Unparsed
     public List<File> getFiles();
-
-    @Option(description = "If set, the optimal tree is written on disk. If the correct molecular formula is given, the correct tree is written instead.")
-    public boolean getTree();
 
     @Option(defaultValue = "CHNOPS")
     public String getElements();
@@ -55,6 +50,51 @@ public interface Options {
 
     @Option(description = "Compute only trees with higher score than <value>", defaultValue = "0")
     public double getLowerbound();
+
+    @Option(shortName = "I", defaultValue = "0", description = "compute trees for the <value>th molecular formulas with best isotope pattern explanations")
+    public int getFilterByIsotope();
+
+    @Option(shortName = "i", description = "enable isotope pattern analysis")
+    public boolean getMs1();
+
+    /*
+        ppm
+     */
+    @Option(longName = "ppm.max", defaultValue = "10", description = "maximal ppm of peaks (used for decompositions)")
+    public Double getPPMMax();
+
+    @Option(longName = "abs.max", defaultToNull = true, description = "maximal mass deviation of peaks (used for decomposition)")
+    public Double getAbsMax();
+
+    @Option(longName = "ppm.sd.ms2", defaultToNull = true, description = "ppm standard deviation of ms2 peaks")
+    public Double getStandardDeviationOfMs1();
+
+    @Option(longName = "ppm.sd.ms1", defaultToNull = true, description = "ppm standard deviation of ms1 peaks")
+    public Double getStandardDeviationOfMs2();
+
+    @Option(longName = "ppm.sd.diff", defaultToNull = true, description = "ppm standard deviation of ms1 peak differences (~recalibrated peaks)")
+    public Double getStandardDeviationOfDiff();
+
+    @Option(longName = "intensity.sd", defaultValue = "0.02", description = "intensity standard deviation of ms1 peaks")
+    public Double getExpectedIntensityDeviation();
+
+    @Option(longName = "noise.median", defaultValue = "0.02", description = "median intensity of noise peaks (above certain threshold)")
+    public Double getNoiseMedian();
+
+    @Option(longName = "treeSize", defaultValue = "2", description = "additional score bonus per explained peak. Higher values leads to bigger trees.")
+    public Double getTreeSize();
+
+    @Option(longName = "verbose", shortName = "v")
+    public boolean getVerbose();
+
+    @Option(shortName = "h", helpRequest = true)
+    public boolean getHelp();
+
+    @Option
+    public boolean getVersion();
+
+    @Option
+    public boolean getCite();
 
 
 

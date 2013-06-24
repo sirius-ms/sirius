@@ -75,7 +75,7 @@ public class MultipleTreeComputation {
     public FragmentationTree optimalTree() {
         double lb = lowerbound;
         FragmentationTree opt = null;
-        final GraphBuildingQueue queue = new GraphBuildingQueue();
+        final GraphBuildingQueue queue =  numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
             final FragmentationTree tree = analyzer.computeTree(graph, lb);
@@ -86,9 +86,9 @@ public class MultipleTreeComputation {
         return opt;
     }
 
-    public Iterator<FragmentationTree> iterator() {
+    public TreeIterator iterator() {
         return new TreeIterator() {
-            private final GraphBuildingQueue queue = new GraphBuildingQueue();
+            private final GraphBuildingQueue queue =  numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
             private double lb = lowerbound;
             @Override
             public boolean hasNext() {
@@ -124,7 +124,7 @@ public class MultipleTreeComputation {
     public List<FragmentationTree> list() {
         final NavigableSet<FragmentationTree> trees = new TreeSet<FragmentationTree>();
         double lb = lowerbound;
-        final GraphBuildingQueue queue = new GraphBuildingQueue();
+        final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
             final FragmentationTree tree = analyzer.computeTree(graph, lb);
@@ -151,12 +151,35 @@ public class MultipleTreeComputation {
         return Math.max(1, Math.min(maxNumber, (int) gigabytes));
     }
 
-    class GraphBuildingQueue implements Iterator<FragmentationGraph> {
-        private final ArrayBlockingQueue<FragmentationGraph> queue = new ArrayBlockingQueue<FragmentationGraph>(numberOfThreads);
-        private final List<ScoredMolecularFormula> stack = new ArrayList<ScoredMolecularFormula>(formulas);
-        private int i = 0;
+    abstract class GraphBuildingQueue implements Iterator<FragmentationGraph> {
 
-        GraphBuildingQueue() {
+        protected final List<ScoredMolecularFormula> stack = new ArrayList<ScoredMolecularFormula>(formulas);
+
+        @Override
+        public boolean hasNext() {
+            synchronized (stack) {
+                return !stack.isEmpty();
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public class SinglethreadedGraphBuildingQueue extends GraphBuildingQueue {
+
+        @Override
+        public FragmentationGraph next() {
+            return analyzer.buildGraph(input, stack.remove(stack.size()-1));
+        }
+    }
+
+    class MultithreadedGraphBuildingQueue extends GraphBuildingQueue {
+        private final ArrayBlockingQueue<FragmentationGraph> queue = new ArrayBlockingQueue<FragmentationGraph>(numberOfThreads);
+
+        MultithreadedGraphBuildingQueue() {
             startComputation();
         }
 
@@ -187,21 +210,13 @@ public class MultipleTreeComputation {
         }
 
         @Override
-        public boolean hasNext() {
-            synchronized (stack) {
-                return !stack.isEmpty();
-            }
-        }
-
-        @Override
         public FragmentationGraph next() {
             if (!hasNext()) throw new NoSuchElementException();
-            return queue.poll();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
+            try {
+                return queue.take();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }
