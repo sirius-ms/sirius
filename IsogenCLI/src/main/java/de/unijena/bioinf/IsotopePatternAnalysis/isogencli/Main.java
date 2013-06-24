@@ -23,18 +23,20 @@ import java.util.regex.Pattern;
 
 public class Main {
 
-    private final static String VERSION = "2.0";
+    public final static String VERSION = "2.0";
 
-    private final static String CITATION = "SIRIUS: decomposing isotope patterns for metabolite identification\n" +
+    public final static String CITATION = "SIRIUS: decomposing isotope patterns for metabolite identification\n" +
             "Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin\n" +
             "Bioinformatics (2009) 25 (2): 218-224";
+
+    public final static String VERSION_STRING = "Isotopic Pattern Analysis " + VERSION + "\n" + CITATION;
 
 	public static void main(String[] args) {
         final Cli<Options> cli = CliFactory.createCli(Options.class);
         try {
             final Options options = cli.parseArguments(args);
             if (options.getVersion())  {
-                System.out.println("Isotopic Pattern Analysis " + VERSION + "\n" + CITATION);
+                System.out.println(VERSION_STRING);
             } else {
 
                 final String dist = options.getIsotopeDistributionFile();

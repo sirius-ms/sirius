@@ -8,6 +8,7 @@ public class FixedBagIntensityDependency implements IntensityDependency {
     protected double[] values;
 
     public FixedBagIntensityDependency(double[] bags, double[] values) {
+        if (bags.length != values.length) throw new IllegalArgumentException("array sizes differ");
         this.bags = Arrays.copyOf(bags, bags.length);
         this.values = Arrays.copyOf(values, values.length);
     }

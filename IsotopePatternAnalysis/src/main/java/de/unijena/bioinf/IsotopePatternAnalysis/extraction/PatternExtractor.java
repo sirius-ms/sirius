@@ -2,6 +2,7 @@ package de.unijena.bioinf.IsotopePatternAnalysis.extraction;
 
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 
 import java.util.List;
 
@@ -12,6 +13,6 @@ import java.util.List;
  */
 public interface PatternExtractor {
 
-    public List<Spectrum<Peak>> extractPattern(Spectrum<Peak> spectrum);
+    public List<IsotopePattern> extractPattern(Spectrum<Peak> spectrum);
 
 }

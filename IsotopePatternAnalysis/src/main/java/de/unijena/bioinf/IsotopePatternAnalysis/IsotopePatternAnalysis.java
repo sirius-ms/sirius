@@ -43,7 +43,7 @@ public class IsotopePatternAnalysis {
     public static IsotopePatternAnalysis defaultAnalyzer() {
         final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
         analyzer.isotopePatternScorers.add(new MassDeviationScorer(3, new PiecewiseLinearFunctionIntensityDependency(new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01}, new double[]{
-                1, 1, 1.2, 1.5, 2
+                1, 1, 1.2, 1.5, 2, 2.5
         })));
         analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(3, new PiecewiseLinearFunctionIntensityDependency(new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01}, new double[]{
                 0.08, 0.12, 0.25, 0.5, 1.2, 2d
@@ -51,22 +51,26 @@ public class IsotopePatternAnalysis {
         return analyzer;
     }
 
-    public List<List<ScoredMolecularFormula>> deisotope(MsExperiment experiment) {
-        final List<Spectrum<Peak>> patterns = patternExtractor.extractPattern(experiment.getMergedMs1Spectrum()); // TODO: Extra class IsotopePattern
-        final List<List<ScoredMolecularFormula>> candidates = new ArrayList<List<ScoredMolecularFormula>>();
-        final Ionization ion = experiment.getIonization();
-        for (Spectrum<Peak> spec : patterns) {
-            final ArrayList<ScoredMolecularFormula> result = new ArrayList<ScoredMolecularFormula>();
-            final List<MolecularFormula> molecules = decomposer.getDecomposer(experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(
-                    ion.subtractFromMass(spec.getMzAt(0)), experiment.getMeasurementProfile().getExpectedIonMassDeviation(), null, experiment.getMeasurementProfile().getFormulaConstraints().getFilters().get(0)
-            ); // TODO: Fix
-            final double[] scores = scoreFormulas(new ChargedSpectrum(spec, ion), molecules, experiment);
-            for (int i=0; i < scores.length; ++i) {
-                result.add(new ScoredMolecularFormula(molecules.get(i), scores[i]));
-            }
-            candidates.add(result);
+    public List<IsotopePattern> deisotope(MsExperiment experiment) {
+        final List<IsotopePattern> patterns = patternExtractor.extractPattern(experiment.getMergedMs1Spectrum()); // TODO: Extra class IsotopePattern
+        final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>();
+        for (IsotopePattern pattern : patterns) {
+            candidates.add(deisotope(experiment, pattern));
         }
         return candidates;
+    }
+
+    public IsotopePattern deisotope(MsExperiment experiment, IsotopePattern pattern) {
+        final Ionization ion = experiment.getIonization();
+        final ArrayList<ScoredMolecularFormula> result = new ArrayList<ScoredMolecularFormula>();
+        final List<MolecularFormula> molecules = decomposer.getDecomposer(experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(
+                ion.subtractFromMass(pattern.getMonoisotopicMass()), experiment.getMeasurementProfile().getAllowedMassDeviation(), null, experiment.getMeasurementProfile().getFormulaConstraints().getFilters().get(0)
+        ); // TODO: Fix
+        final double[] scores = scoreFormulas(new ChargedSpectrum(pattern.getPattern(), ion), molecules, experiment);
+        for (int i=0; i < scores.length; ++i) {
+            result.add(new ScoredMolecularFormula(molecules.get(i), scores[i]));
+        }
+        return new IsotopePattern(pattern.getPattern(), result);
     }
 
     public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, List<MolecularFormula> formulas, MsExperiment experiment) {
@@ -110,4 +114,43 @@ public class IsotopePatternAnalysis {
         return scores;
     }
 
+    public List<IsotopePatternScorer> getIsotopePatternScorers() {
+        return isotopePatternScorers;
+    }
+
+    public void setIsotopePatternScorers(List<IsotopePatternScorer> isotopePatternScorers) {
+        this.isotopePatternScorers = isotopePatternScorers;
+    }
+
+    public double getCutoff() {
+        return cutoff;
+    }
+
+    public void setCutoff(double cutoff) {
+        this.cutoff = cutoff;
+    }
+
+    public DecomposerCache getDecomposer() {
+        return decomposer;
+    }
+
+    public void setDecomposer(DecomposerCache decomposer) {
+        this.decomposer = decomposer;
+    }
+
+    public PatternExtractor getPatternExtractor() {
+        return patternExtractor;
+    }
+
+    public void setPatternExtractor(PatternExtractor patternExtractor) {
+        this.patternExtractor = patternExtractor;
+    }
+
+    public IsotopicDistribution getIsotopicDistribution() {
+        return isotopicDistribution;
+    }
+
+    public void setIsotopicDistribution(IsotopicDistribution isotopicDistribution) {
+        this.isotopicDistribution = isotopicDistribution;
+    }
 }

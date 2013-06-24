@@ -41,13 +41,13 @@ public class MassDeviationScorer implements IsotopePatternScorer {
         final double thMz0 = theoreticalSpectrum.getMzAt(0);
         final double int0 = norm.rescale(measured.getIntensityAt(0));
         double score = Math.log(Erf.erfc(Math.abs(thMz0 - mz0)/
-                (root2*(1d/(massDeviationPenalty) * experiment.getMeasurementProfile().getExpectedIonMassDeviation().getPpm() *  intensityDependency.getValueAt(int0) * 1e-6 * mz0))));
+                (root2*(1d/(massDeviationPenalty) * experiment.getMeasurementProfile().getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
         for (int i=1; i < measured.size(); ++i) {
             final double mz = measured.getMzAt(i) - mz0;
             final double thMz = theoreticalSpectrum.getMzAt(i) - thMz0;
             final double thIntensity = norm.rescale(measured.getIntensityAt(i));
             // TODO: thMz hier richtig?
-            final double sd = 1d/massDeviationPenalty * experiment.getMeasurementProfile().getExpectedMassDifferenceDeviation().getPpm() * intensityDependency.getValueAt(thIntensity) * 1e-6 * measured.getMzAt(i);
+            final double sd = 1d/massDeviationPenalty * experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
         }
         return score;

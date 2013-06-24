@@ -11,16 +11,13 @@ import org.apache.commons.math3.special.Erf;
 public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
 
     private final static double root2 = Math.sqrt(2d);
-
-    private final double massDeviationPenalty;
     private final IntensityDependency dependency;
 
-    public MassDifferenceDeviationScorer(double massDeviationPenalty, double lowestIntensityAccuracy) {
-        this(massDeviationPenalty, new LinearIntensityDependency(1d, lowestIntensityAccuracy));
+    public MassDifferenceDeviationScorer(double lowestIntensityAccuracy) {
+        this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
     }
 
-    public MassDifferenceDeviationScorer(double massDeviationPenalty, IntensityDependency dependency) {
-        this.massDeviationPenalty = massDeviationPenalty;
+    public MassDifferenceDeviationScorer(IntensityDependency dependency) {
         this.dependency = dependency;
     }
 
@@ -34,7 +31,7 @@ public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
             final double thMz = theoretical.getMzAt(i) - (i==0 ? 0 : theoretical.getMzAt(i-1));
             final double intensity = norm.rescale(measured.getIntensityAt(i));
             // TODO: thMz hier richtig?
-            final double sd = 1d/massDeviationPenalty * experiment.getMeasurementProfile().getExpectedMassDifferenceDeviation().getPpm() * dependency.getValueAt(intensity) * 1e-6 * measured.getMzAt(i);
+            final double sd = experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * dependency.getValueAt(intensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
         }
         return score;
