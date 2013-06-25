@@ -193,6 +193,12 @@ public class FragmentationPatternAnalysis {
     }
 
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
+        List<ProcessedPeak> processedPeaks = preprocessingPeaks(experiment);
+        // decompose and score all peaks
+        return decomposeAndScore(experiment, processedPeaks);
+    }
+
+    protected List<ProcessedPeak> preprocessingPeaks(Ms2Experiment experiment) {
         // first of all: insert default profile if no profile is given
         Ms2ExperimentImpl input = wrapInput(experiment);
         if (input.getMeasurementProfile()==null) input.setMeasurementProfile(defaultProfile);
@@ -207,8 +213,7 @@ public class FragmentationPatternAnalysis {
         final ProcessedPeak parentPeak = selectParentPeakAndCleanSpectrum(experiment, processedPeaks);
         final List<ProcessedPeak> afterMerging =
                 postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(experiment, processedPeaks, parentPeak, null)).getMergedPeaks();
-        // decompose and score all peaks
-        return decomposeAndScore(experiment, afterMerging);
+        return afterMerging;
     }
 
     /**

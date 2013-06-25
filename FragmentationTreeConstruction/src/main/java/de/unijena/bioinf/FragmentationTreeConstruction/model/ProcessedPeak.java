@@ -180,7 +180,7 @@ public class ProcessedPeak extends Peak {
 
         @Override
         public int compare(ProcessedPeak o1, ProcessedPeak o2) {
-            return Double.compare(o1.getRelativeIntensity(), o2.getRelativeIntensity());
+            return Double.compare(o1.getLocalRelativeIntensity(), o2.getLocalRelativeIntensity());
         }
     }
 }
