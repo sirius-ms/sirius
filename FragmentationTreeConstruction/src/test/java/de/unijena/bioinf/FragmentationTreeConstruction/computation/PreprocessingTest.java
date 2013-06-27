@@ -4,28 +4,14 @@ import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class PreprocessingTest {
 
@@ -45,11 +31,12 @@ public class PreprocessingTest {
         experiment.setIonMass(180.0633881184 + new Charge(1).getMass());
         experiment.setMoleculeNeutralMass(180.0633881184);
         experiment.setMolecularFormula(MolecularFormula.parse("C6H12O6"));
-        final ProfileImpl profile = new ProfileImpl();
+        final MutableMeasurementProfile profile = new MutableMeasurementProfile();
         profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
-        profile.setExpectedFragmentMassDeviation(new Deviation(10, 1e-3));
-        profile.setExpectedIonMassDeviation(new Deviation(5, 1e-3));
-        profile.setExpectedMassDifferenceDeviation(new Deviation(2, 5e-4));
+        profile.setStandardMs2MassDeviation(new Deviation(10, 1e-3));
+        profile.setStandardMs1MassDeviation(new Deviation(5, 1e-3));
+        profile.setStandardMassDifferenceDeviation(new Deviation(2, 5e-4));
+        profile.setAllowedMassDeviation(new Deviation(10, 2e-3));
         experiment.setMeasurementProfile(profile);
         final SimpleMutableSpectrum sp = new SimpleMutableSpectrum();
         final double c = new Charge(1).getMass();

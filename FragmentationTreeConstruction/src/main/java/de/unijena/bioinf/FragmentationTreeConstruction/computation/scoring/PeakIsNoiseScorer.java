@@ -1,21 +1,12 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
-import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
-import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
-import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
+import de.unijena.bioinf.ChemistryBase.math.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kai
- * Date: 4/18/13
- * Time: 3:36 PM
- * To change this template use File | Settings | File Templates.
- */
 @Called("Intensity")
 public class PeakIsNoiseScorer implements PeakScorer {
 
@@ -23,13 +14,13 @@ public class PeakIsNoiseScorer implements PeakScorer {
         return new PeakIsNoiseScorer(new ParetoDistribution(k, 0.005));
     }
 
-    private RealDistribution distribution;
+    private ByMedianEstimatable<? extends RealDistribution> distribution;
 
-    public RealDistribution getDistribution() {
+    public ByMedianEstimatable<? extends RealDistribution> getDistribution() {
         return distribution;
     }
 
-    public void setDistribution(RealDistribution distribution) {
+    public void setDistribution(ByMedianEstimatable<? extends RealDistribution> distribution) {
         this.distribution = distribution;
     }
 
@@ -37,14 +28,15 @@ public class PeakIsNoiseScorer implements PeakScorer {
         this(ExponentialDistribution.fromLambda(lambda));
     }
 
-    public PeakIsNoiseScorer(RealDistribution distribution) {
+    public PeakIsNoiseScorer(ByMedianEstimatable<? extends RealDistribution> distribution) {
         this.distribution = distribution;
     }
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
+        final RealDistribution estimatedDistribution = distribution.extimateByMedian(input.getExperimentInformation().getMeasurementProfile().getMedianNoiseIntensity());
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] -= distribution.getInverseLogCumulativeProbability(peaks.get(i).getRelativeIntensity());
+            scores[i] -= estimatedDistribution.getInverseLogCumulativeProbability(peaks.get(i).getRelativeIntensity());
         }
     }
 }

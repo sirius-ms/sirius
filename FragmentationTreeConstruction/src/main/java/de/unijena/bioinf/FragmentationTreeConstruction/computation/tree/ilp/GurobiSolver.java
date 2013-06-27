@@ -7,7 +7,6 @@ import de.unijena.bioinf.functional.iterator.Iterators;
 import gurobi.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
@@ -17,7 +16,7 @@ public class GurobiSolver implements TreeBuilder {
     private TreeBuilder feasibleSolver;
     private int secondsPerInstance;
     private int secondsPerDecomposition;
-    private int freeSeconds;
+    private long timeout;
     private int lastInput;
     private int numberOfCPUs;
 
@@ -27,7 +26,7 @@ public class GurobiSolver implements TreeBuilder {
         this.secondsPerInstance = 60*30; // maximal 1/2 hour per instance
         this.secondsPerDecomposition = 7*60; // maximal 7 minutes per decomposition
         this.lastInput = 0;
-        this.freeSeconds = 0;
+        this.timeout = System.currentTimeMillis();
     }
 
     public GurobiSolver() {
@@ -97,7 +96,7 @@ public class GurobiSolver implements TreeBuilder {
     }
 
     public void resetTimeLimit() {
-        freeSeconds = secondsPerInstance;
+        timeout = System.currentTimeMillis() + secondsPerDecomposition*1000l;
     }
 
     public void optimizeParameters(File file, ProcessedInput input, FragmentationGraph graph) {
@@ -119,25 +118,34 @@ public class GurobiSolver implements TreeBuilder {
 
     @Override
     public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+        return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
+    }
+
+    @Override
+    public Object prepareTreeBuilding(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
         if (lastInput != input.getExperimentInformation().hashCode()) {
             // reset time limit
             resetTimeLimit();
             lastInput = input.getExperimentInformation().hashCode();
         }
-
         try {
             if (graph.numberOfVertices() == 1) return new FragmentationTree(graph.getRootScore(), graph);
-            final long time = System.nanoTime();
-            final int timeToCompute = Math.min(secondsPerDecomposition, freeSeconds);
-            if (timeToCompute <= 0) throw new RuntimeException("Timeout: Exceeds time limit of " + secondsPerInstance + " seconds per instance");
-            final FragmentationTree tree = new Solver(graph, input, lowerbound, env, feasibleSolver,
-            		timeToCompute).solve();
-            final long time2 = System.nanoTime();
-            freeSeconds -= (time2-time)/1000000000;
-            return tree;
+            final long timeToCompute = Math.max(0l, Math.min((long) secondsPerDecomposition, timeout - System.currentTimeMillis()));
+            final Solver solver = new Solver(graph, input, lowerbound, env, feasibleSolver,
+                    (int)Math.min(Integer.MAX_VALUE, timeToCompute));
+            solver.build();
+            return solver;
         } catch (GRBException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object prepared) {
+        if (graph.numberOfVertices() == 1) return new FragmentationTree(graph.getRootScore(), graph);
+        if (!(prepared instanceof Solver)) throw new IllegalArgumentException("Expected solver to be instance of Solver, but " +  prepared.getClass() + " given.");
+        final Solver solver = (Solver)prepared;
+        return solver.solve();
     }
 
     protected static class Stackitem {
@@ -163,6 +171,7 @@ public class GurobiSolver implements TreeBuilder {
     	protected final TreeBuilder feasibleSolver;
     	protected final int timeLimit;
         protected final double lowerbound;
+        protected boolean built;
 
         protected Solver(FragmentationGraph graph, ProcessedInput input, double lowerbound, GRBEnv env, TreeBuilder feasibleSolver, int timeLimit) throws GRBException {
             this.graph = graph;
@@ -180,9 +189,10 @@ public class GurobiSolver implements TreeBuilder {
             this.feasibleSolver = feasibleSolver;
             this.timeLimit = timeLimit;
             model.getEnv().set(GRB.DoubleParam.TimeLimit, timeLimit);
+            built = false;
         }
 
-        protected FragmentationTree solve() {
+        public void build() {
             try {
                 defineVariables();
                 optimize();
@@ -194,6 +204,15 @@ public class GurobiSolver implements TreeBuilder {
                 setConstraints();
                 model.update();
                 assert model.get(GRB.IntAttr.IsMIP) != 0;
+                built = true;
+            } catch (GRBException e) {
+                throw new RuntimeException(String.valueOf(e.getErrorCode()), e);
+            }
+        }
+
+        protected FragmentationTree solve() {
+            try {
+                if (!built) build();
                 optimize();
                 if (model.get(GRB.IntAttr.Status) != GRB.OPTIMAL) {
                     if (model.get(GRB.IntAttr.Status) == GRB.INFEASIBLE) {
@@ -375,13 +394,12 @@ public class GurobiSolver implements TreeBuilder {
             final boolean[] assignments = new boolean[variables.length];
             final double tolerance = model.get(GRB.DoubleAttr.IntVio);
             for (int i=0; i < assignments.length; ++i) {
-                assert edgesAreUsed[i] >= 0 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];
-                assert edgesAreUsed[i] <= 1 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];;
+                assert edgesAreUsed[i] > -0.5 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];
+                assert edgesAreUsed[i] < 1.5 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];;
                 assignments[i] = (Math.round(edgesAreUsed[i]) == 1);
             }
             return assignments;
         }
-
     }
 
 }

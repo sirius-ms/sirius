@@ -1,0 +1,98 @@
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
+
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+public class MostRelevantPeaksFilter implements PostProcessor {
+
+    private int limit;
+
+    /**
+     * most relevant are..
+     * "the 2x<limit> most intense peaks\n" +
+       "the <limit> best peaks with mass*log(relIntensity)\n" +
+       "the <limit> best peaks with mass*log(relIntensity) int he upper mass range\n" +
+     * @param limit
+     */
+    public MostRelevantPeaksFilter(int limit){
+        this.limit = limit;
+    }
+
+    @Override
+    public ProcessedInput process(ProcessedInput input) {
+        //sort peaks in descending Intensity order
+        final List<ProcessedPeak> peaks = new ArrayList<ProcessedPeak>(input.getMergedPeaks());
+        Collections.sort(peaks, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
+        final List<ProcessedPeak> filtered = new ArrayList<ProcessedPeak>(Math.min(peaks.size(), 4*limit));
+
+
+        // x
+        int peaksExact = Math.min(peaks.size(), limit);
+        // find lowest and highest peak masses
+        double highestPeakMass = 0;
+        double lowestPeakMass =Integer.MAX_VALUE;
+        for (ProcessedPeak p : peaks){
+            if (p.getMz()>highestPeakMass) highestPeakMass = p.getMz();
+            if (p.getMz()<lowestPeakMass) lowestPeakMass = p.getMz();
+        }
+
+
+        // 1) choose the 2x most intense peaks
+        int min = Math.min(peaks.size() ,2*peaksExact);
+        filtered.addAll(peaks.subList(0, min));
+
+        // 2) choose the x best mass*logInt peaks in the upper 20 % mass range
+        Comparator<ProcessedPeak> logRelIntensityMultipliedMassComparator = new Comparator<ProcessedPeak>() {
+            @Override
+            public int compare(ProcessedPeak p1, ProcessedPeak p2) {
+                double number1 = 0;
+                double number2 = 0;
+                if (p1.getIntensity()>0){
+                    number1 = Math.log(p1.getRelativeIntensity()*100)*p1.getMass();
+                }
+                if (p2.getIntensity()>0){
+                    number2 = Math.log(p2.getRelativeIntensity()*100)*p2.getMass();
+
+                }
+                if (number1 < number2) return 1;
+                else if (number1 == number2) return 0;
+                return -1;
+            }
+        };
+
+
+
+        Collections.sort(peaks, logRelIntensityMultipliedMassComparator);
+        double areaStart = highestPeakMass - 0.1*highestPeakMass;
+        int counter = 0;
+        for (ProcessedPeak p : peaks){// peaks are sorted by their relative intensities
+            if (p.getMass()>areaStart){
+                if (!filtered.contains(p) && counter<peaksExact){
+                    counter++;
+                    filtered.add(p);
+                }
+            }
+        }
+
+        // 3) choose the x best mass*logInt peaks
+        counter =0;
+        while(counter<peaksExact && counter<peaks.size()){
+            if (!filtered.contains(peaks.get(counter))){
+                filtered.add(peaks.get(counter));
+            }
+            counter++;
+        }
+        return new ProcessedInput(input.getExperimentInformation(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
+                input.getPeakScores(), input.getPeakPairScores());
+    }
+
+    @Override
+    public Stage getStage() {
+        return Stage.AFTER_NORMALIZING;
+    }
+}

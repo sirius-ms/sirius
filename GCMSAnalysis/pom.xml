@@ -1,38 +1,23 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
-    <artifactId>FTCLI</artifactId>
-    <version>1.21-SNAPSHOT</version>
+    <artifactId>GCMSAnalysis</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <parent>
-        <groupId>de.unijena.bioinf</groupId>
         <artifactId>FragmentationTree</artifactId>
+        <groupId>de.unijena.bioinf</groupId>
         <version>1.21-SNAPSHOT</version>
     </parent>
 
-    <!--                                                               -->
-    <developers>
-    </developers>
 
     <dependencies>
+    <!-- dependencies, which are only needed for tests-->
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>1.21-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>IsotopePatternAnalysis</artifactId>
-            <version>2.11-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>IsogenCLI</artifactId>
-            <version>2.11-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
-            <artifactId>DecompCLI</artifactId>
             <version>1.21-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -41,19 +26,28 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>de.unijena.bioinf</groupId>
+            <artifactId>ChemistryBase</artifactId>
+            <version>4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.lexicalscope.jewelcli</groupId>
             <artifactId>jewelcli</artifactId>
             <version>0.8.3</version>
         </dependency>
+
+        <!-- test dependencies -->
+
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.6</version>
+            <version>4.11</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
-    <!--                                                               -->
+
 
     <licenses>
         <license>
@@ -68,12 +62,6 @@
             <id>bioinf-jena</id>
             <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
             <name>Bioinf Jena</name>
-        </repository>
-        <repository>
-            <id>XypronRelease</id>
-            <name>Xypron Release</name>
-            <url>http://rsync.xypron.de/repository</url>
-            <layout>default</layout>
         </repository>
     </repositories>
 
@@ -106,7 +94,7 @@
                         <index>false</index> <!-- leads to problems in older maven versions -->
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>de.unijena.bioinf.FragmentationTreeConstruction.Main</mainClass>
+                            <mainClass>de.unijena.bioinf.treeviewer.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -123,6 +111,18 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>deploy</phase>
+                        <goals><goal>jar</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- use the following only for command line tools! -->
             <!-- create an executable with mvn assembly:single -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -134,7 +134,7 @@
                     <archive>
                         <index>true</index>
                         <manifest>
-                            <mainClass>de.unijena.bioinf.FragmentationTreeConstruction.Main</mainClass>
+                            <mainClass>de.unijena.bioinf.treeviewer.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -145,18 +145,6 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- deploy javadoc as well -->
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.8.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <phase>deploy</phase>
-                        <goals><goal>jar</goal></goals>
                     </execution>
                 </executions>
             </plugin>
@@ -181,5 +169,4 @@
     <properties>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
     </properties>
-
 </project>
