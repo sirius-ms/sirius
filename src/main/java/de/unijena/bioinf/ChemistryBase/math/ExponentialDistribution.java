@@ -1,9 +1,17 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
+
 import static java.lang.Math.exp;
 
+@HasParameters
 public final class ExponentialDistribution extends RealDistribution implements ByMedianEstimatable<ExponentialDistribution> {
 
+    @Parameter
     private final double lambda;
 
     public static ExponentialDistribution fromLambda(double lambda) {

@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
@@ -17,7 +20,7 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
  * Remarkt that there are special compounds with very high h2c. This happens when a compound consist of a oxygen+(P,S,?)
  * backbone. Such compounds usually have lower rdbe values, because oxygen can not create much double bonds and rings.
  */
-public class Hetero2CarbonScorer implements MolecularFormulaScorer {
+public class Hetero2CarbonScorer implements MolecularFormulaScorer, Parameterized {
 
     private final static NormalDistribution keggDistribution = new NormalDistribution(0.5886335, Math.sqrt(0.5550574));
 
@@ -49,4 +52,13 @@ public class Hetero2CarbonScorer implements MolecularFormulaScorer {
         return Math.log(distribution.getDensity(hetero2carbon));
     }
 
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, String key) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, String key) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }
