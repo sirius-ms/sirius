@@ -1,10 +1,13 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -20,6 +23,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighI
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.legacy.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
@@ -29,7 +33,7 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
 import java.util.*;
 
-public class FragmentationPatternAnalysis {
+public class FragmentationPatternAnalysis implements Parameterized {
 
     private List<InputValidator> inputValidators;
     private Warning validatorWarning;
@@ -638,5 +642,54 @@ public class FragmentationPatternAnalysis {
 
     public void setDefaultProfile(MeasurementProfile defaultProfile) {
         this.defaultProfile = defaultProfile;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        setInitial();
+        fillList(preprocessors, helper,document,dictionary,"preProcessing");
+        fillList(postProcessors, helper,document,dictionary,"postProcessing");
+        fillList(rootScorers, helper,document,dictionary,"rootScorers");
+        fillList(decompositionScorers, helper,document,dictionary,"fragmentScorers");
+        fillList(fragmentPeakScorers, helper,document,dictionary,"peakScorers");
+        fillList(peakPairScorers, helper,document,dictionary,"peakPairScorers");
+        fillList(lossScorers, helper,document,dictionary,"lossScorers");
+        peakMerger = (PeakMerger)helper.unwrap(document, document.getFromDictionary(dictionary,"merge"));
+
+    }
+
+    private <T, G,D,L> void fillList(List<T> list, ParameterHelper helper, DataDocument<G,D,L> document, D dictionary, String keyName ) {
+        Iterator<G> ls = document.iteratorOfList(document.getListFromDictionary(dictionary, keyName));
+        while (ls.hasNext()) {
+            final G l = ls.next();
+            list.add((T)helper.unwrap(document,l));
+        }
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        L list = document.newList();
+        for (Preprocessor p : preprocessors) document.addToList(list, helper.wrap(document, p));
+        document.addListToDictionary(dictionary, "preProcessing", list);
+        list = document.newList();
+        for (PostProcessor p : postProcessors) document.addToList(list, helper.wrap(document, p));
+        document.addListToDictionary(dictionary, "postProcessing", list);
+        list = document.newList();
+        for (DecompositionScorer s : rootScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "rootScorers", list);
+        list = document.newList();
+        for (DecompositionScorer s : decompositionScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "fragmentScorers", list);
+        list = document.newList();
+        for (PeakScorer s : fragmentPeakScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "peakScorers", list);
+        list = document.newList();
+        for (PeakPairScorer s : peakPairScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "peakPairScorers", list);
+        list = document.newList();
+        for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "lossScorers", list);
+        document.addToDictionary(dictionary, "merge", helper.wrap(document,peakMerger));
+
     }
 }

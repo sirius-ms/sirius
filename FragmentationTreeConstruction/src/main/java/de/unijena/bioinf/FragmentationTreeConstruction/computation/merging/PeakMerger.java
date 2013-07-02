@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.merging;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
@@ -14,7 +15,7 @@ import java.util.List;
  * Important: Be careful with the parent peak! Use {{@link Ms2Experiment#getIonMass}} to get the parent mass.
  * Don't merge the best fitting parent peak away!
  */
-public interface PeakMerger {
+public interface PeakMerger extends Parameterized {
 
     public void mergePeaks(List<ProcessedPeak> peaks, Ms2Experiment experiment, Deviation mergeWindow,  Merger merger);
 

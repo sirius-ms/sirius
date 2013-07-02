@@ -5,10 +5,13 @@ import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 // TODO: Add normalization as field
@@ -19,23 +22,6 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     private HashMap<MolecularFormula, Double> commonFragmentsH;
     private HashMap<MolecularFormula, Double> commonFragmentsWithoutH;
     private boolean hTolerance;
-    /*
-    private static final Object[] Fragments = new Object[]{
-    "C6H6O", 0.15, "C5H5N", 0.15, "C8H6N", 0.15, "C6H9O", 0.15, "C5H7O", 0.155, "C6H5O", 0.155,
-            "C4H10N", 0.155, "C5H10N", 0.155, "C8H13", 0.155, "C4H5O2", 0.16, "C6H7O", 0.16, "C3H2O", 0.16,
-            "C6H7N", 0.165, "C3H6", 0.165, "C5H4N", 0.165, "C6H8N", 0.17, "C7H6N", 0.175, "C4H7N", 0.175, "C8H11", 0.175,
-            "C8H7N", 0.18, "C7H8N", 0.18, "C4H6", 0.18, "C8H8N", 0.185, "C6H11", 0.185, "C4H6NO", 0.195,
-            "C3H7O", 0.195, "C7H11", 0.205, "C5H5O", 0.215, "C4H5N", 0.215, "C6H6N", 0.215, "C4H4", 0.215,
-            "C4H7O", 0.22, "CH2N", 0.225, "C3H7N", 0.225, "C4H5O", 0.23, "C8H9", 0.23, "C5H8N", 0.23, "C5H3", 0.235,
-            "C2H2O", 0.235, "C6H4", 0.24, "C9H7", 0.245, "C4H2", 0.245, "C8H6", 0.245, "C7H7O", 0.255, "C3H4N", 0.265,
-            "C4H9", 0.27, "C3H2", 0.27, "C5H9", 0.275, "C3H5N", 0.275, "C3H8N", 0.285, "C6H9", 0.285, "C7H5", 0.285,
-            "C5H4", 0.29, "C5H6", 0.295, "C4H8N", 0.3, "C4H6N", 0.305, "C7H9", 0.31, "C2H5", 0.31, "C7H6", 0.315,
-            "C5H6N", 0.32, "CH4N", 0.33, "C2H5N", 0.33, "C2H3N", 0.34, "C6H6", 0.345, "C3H4", 0.345, "C8H7", 0.345,
-            "C3H5O", 0.385, "C2H5O", 0.4, "C3H7", 0.42, "C5H7", 0.425, "C4H7", 0.475, "C2H6N", 0.515, "C3H3O", 0.545,
-            "C4H5", 0.56, "C3H6N", 0.565, "C4H3", 0.58, "C6H7", 0.605, "C7H7", 0.615, "C2H3O", 0.655, "C5H5", 0.685,
-            "C2H4N", 0.69, "C6H5", 0.74, "C3H3", 0.75, "C3H5", 0.9
-    };
-    */
 
     public static final double COMMON_FRAGMENTS_NORMALIZATION = 0.3105875550595019d;
 
@@ -52,17 +38,6 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             "C9H11N", 2.71578822253533, "C12H14", 2.71578822253533, "C12H10", 2.70304919675791,
             "C8H9N", 2.690145791922, "C8H13N", 2.67707371035464, "C5H7N", 2.66382848360462,
             "C4H6", 2.66382848360462, "C16H18", 2.66382848360462, "C8H8", 2.66382848360462
-    };
-
-    public static final Object[] COMMON_FRAGMENTS_NEW = new Object[]{
-            "C7H7N", 3.2788239483799986, "C10H7", 3.269855261566417, "C8H6", 4.121006657249441,
-            "C9H8O", 3.3886388155368796, "C8H8O", 3.7860717152570906, "C10H10", 3.3052571842041676,
-            "C7H5N", 3.1852978650087067, "C7H6O", 3.8384397157855186, "C9H10", 3.3966069361332747,
-            "C10H8", 3.7251110337632998, "C9H7N", 3.331009660142798, "C8H8", 4.32551610553734,
-            "C13H8", 3.339448544835965, "C11H10", 3.3052571842041676, "C8H10", 3.2237641413705087,
-            "C9H8", 3.8281831961466684, "C12H10", 3.204715909898897, "C8H7N", 3.4123553230408565,
-            "C9H10O", 3.3966069361332747, "C10H6", 3.339448544835965, "C11H8", 3.364346077056241,
-            "C7H8O", 3.3886388155368796, "C9H6", 4.143821378302955
     };
 
 
@@ -139,6 +114,10 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         if (hTolerance) useHTolerance();
     }
 
+    CommonFragmentsScore() {
+        this.commonFragments = new HashMap<MolecularFormula, Double>();
+    }
+
     public CommonFragmentsScore useHTolerance() {
         if (hTolerance) return this;
         hTolerance = true;
@@ -201,4 +180,28 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         if (val == null) return 0d;
         else return val.doubleValue();
     }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        commonFragments.clear();
+        final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "fragments"));
+        while (iter.hasNext()) {
+            final Map.Entry<String,G> entry = iter.next();
+            commonFragments.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
+        }
+        commonFragmentsH = null;
+        commonFragmentsWithoutH = null;
+        if (document.getBooleanFromDictionary(dictionary, "hTolerance")) useHTolerance();
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        final D common = document.newDictionary();
+        for (Map.Entry<MolecularFormula, Double> entry : commonFragments.entrySet()) {
+            document.addToDictionary(common, entry.getKey().toString(), entry.getValue());
+        }
+        document.addDictionaryToDictionary(dictionary, "fragments", common);
+        document.addToDictionary(dictionary, "hTolerance", hTolerance);
+    }
+
 }

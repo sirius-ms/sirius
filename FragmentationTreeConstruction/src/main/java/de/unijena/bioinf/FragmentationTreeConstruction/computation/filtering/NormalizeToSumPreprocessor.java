@@ -1,5 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
@@ -27,5 +29,15 @@ public class NormalizeToSumPreprocessor implements Preprocessor {
         final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(experiment);
         exp.setMs2Spectra(spectra);
         return exp;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        // nothing
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        // nothing
     }
 }

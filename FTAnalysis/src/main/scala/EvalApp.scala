@@ -10,6 +10,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring._
 import de.unijena.bioinf.FragmentationTreeConstruction.model.{GraphFragment, Loss}
 import java.io.{IOException, FileReader, File, PrintStream}
 import collection._
+import legacy.CommonLossEdgeScorer
 import scala.Predef._
 import scala.Some
 import scala.Some

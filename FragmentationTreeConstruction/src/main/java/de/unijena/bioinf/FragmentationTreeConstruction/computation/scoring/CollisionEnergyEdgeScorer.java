@@ -1,6 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
@@ -25,7 +28,7 @@ import java.util.List;
 @Called("Collision Energy")
 public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
-    private final double alpha, beta, logAlpha, logBeta;
+    private double alpha, beta, logAlpha, logBeta;
 
     public CollisionEnergyEdgeScorer() {
         this(0.1, 0.8);
@@ -44,6 +47,16 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
 
     public double getBeta() {
         return beta;
+    }
+
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+        this.logAlpha = Math.log(alpha);
+    }
+
+    public void setBeta(double beta) {
+        this.beta = beta;
+        this.logBeta = Math.log(beta);
     }
     /*
     public Object prepare(ProcessedInput input, FragmentationGraph graph) {
@@ -299,4 +312,16 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         }
     }
     */
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        setAlpha(document.getDoubleFromDictionary(dictionary, "alpha"));
+        setBeta(document.getDoubleFromDictionary(dictionary, "beta"));
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "alpha", alpha);
+        document.addToDictionary(dictionary, "beta", beta);
+    }
 }

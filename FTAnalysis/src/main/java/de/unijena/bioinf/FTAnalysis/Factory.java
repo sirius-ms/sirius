@@ -15,6 +15,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Nor
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.legacy.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 
 import java.util.ArrayList;

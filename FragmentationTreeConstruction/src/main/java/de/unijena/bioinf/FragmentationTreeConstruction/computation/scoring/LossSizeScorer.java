@@ -2,6 +2,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -48,5 +50,17 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
                 scores[parent][fragment] += scoring(parentMass-fragmentMass);
             }
         }
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        this.distribution = (DensityFunction)helper.unwrap(document, document.getFromDictionary(dictionary, "distribution"));
+        this.normalization = document.getDoubleFromDictionary(dictionary, "normalization");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "distribution", helper.wrap(document, distribution));
+        document.addToDictionary(dictionary, "normalization", normalization);
     }
 }
