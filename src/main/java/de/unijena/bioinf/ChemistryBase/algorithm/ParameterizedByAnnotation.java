@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -25,17 +24,15 @@ public class ParameterizedByAnnotation<T> {
         this.klass = klass;
         final List<String> constructorParameters = new ArrayList<String>();
         final Set<Property> properties = new HashSet<Property>();
-        // search for fields with @Parameter annotation
-        final Set<Property> params = new HashSet<Property>();
-        for (Field f : klass.getFields()) {
+        for (Field f : klass.getDeclaredFields()) {
             if (f.isAnnotationPresent(Parameter.class)) {
                 final Parameter p = f.getAnnotation(Parameter.class);
-                final Property param = new Property(null, p.value().isEmpty() ? f.getName() : p.value(), f.getName());
-                params.add(param);
+                final Property param = new Property(null, p.value().isEmpty() ? f.getName() : p.value(), f.getName(), f.getType());
+                properties.add(param);
             }
         }
         // search for getter/setter methods with @Parameter annotation
-        for (Method m : klass.getMethods()) {
+        for (Method m : klass.getDeclaredMethods()) {
             if (m.isAnnotationPresent(Parameter.class)) {
                 final Parameter p = m.getAnnotation(Parameter.class);
                 String fieldName = null;
@@ -47,7 +44,7 @@ public class ParameterizedByAnnotation<T> {
                     throw new RuntimeException("Parameterized methods should start with get<FieldName> or is<FieldName>.");
                 }
                 fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
-                properties.add(new Property(m, p.value().isEmpty() ? fieldName : p.value(), fieldName));
+                properties.add(new Property(m, p.value().isEmpty() ? fieldName : p.value(), fieldName, m.getReturnType()));
             }
         }
         // search for constructor with @Parameter annotation
@@ -61,7 +58,7 @@ public class ParameterizedByAnnotation<T> {
                         final String name = ((Parameter)a).value();
                         constructorParameters.add(((Parameter) a).value());
                         if (((Parameter) a).value().isEmpty()) throw new RuntimeException("Constructor parameter have to be named");
-                        final Property property = new Property(null, name, name);
+                        final Property property = new Property(null, name, name, constructor.getParameterTypes()[k]);
                         if (!properties.contains(property)) properties.add(property);
                     }
                 }
@@ -70,6 +67,7 @@ public class ParameterizedByAnnotation<T> {
             }
             if (this.constructor!=null) break;
         }
+        this.constructorParameters = constructorParameters.toArray(new String[constructorParameters.size()]);
         // now for each parameter:
         // search for getter methods
         for (Property p : properties) {
@@ -89,8 +87,8 @@ public class ParameterizedByAnnotation<T> {
         for (Property p : properties) {
             if (!constructorParameterSet.contains(p.name)) {
                 try {
-                    final Method setter = klass.getMethod("set" + Character.toUpperCase(p.fieldName.charAt(0)) + p.fieldName.substring(1));
-                    setterProperties.add(new Property(setter, p.name, p.fieldName));
+                    final Method setter = klass.getMethod("set" + Character.toUpperCase(p.fieldName.charAt(0)) + p.fieldName.substring(1), p.type);
+                    setterProperties.add(new Property(setter, p.name, p.fieldName, p.type));
                 } catch (NoSuchMethodException e) {
                     throw new RuntimeException("Can't find setter method for parameter '" + p.name + "'");
                 }
@@ -142,8 +140,8 @@ public class ParameterizedByAnnotation<T> {
 
             @Override
             public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                for (Property getter : getter) {
-                    document.addToDictionary(dictionary, getter.name, helper.wrap(document, getter.get(object)) );
+                for (Property get : getter) {
+                    document.addToDictionary(dictionary, get.name, helper.wrap(document, get.get(object)) );
                 }
             }
         };
@@ -153,11 +151,13 @@ public class ParameterizedByAnnotation<T> {
         private Method method;
         private String name;
         private String fieldName;
+        private Class<?> type;
 
-        private Property(Method method, String name, String fieldName) {
+        private Property(Method method, String name, String fieldName, Class<?> type) {
             this.method = method;
             this.name = name;
             this.fieldName = fieldName;
+            this.type = type;
         }
 
         Object get(Object o) {

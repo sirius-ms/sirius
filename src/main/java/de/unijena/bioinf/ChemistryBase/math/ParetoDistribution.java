@@ -1,12 +1,15 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
 import static java.lang.Math.pow;
 
-public final class ParetoDistribution extends RealDistribution implements ByMedianEstimatable<ParetoDistribution> {
+public final class ParetoDistribution extends RealDistribution {
 
     private final double k, xmin, kdivxmin;
 
-    public ParetoDistribution(double k, double xmin) {
+    public ParetoDistribution(@Parameter("k") double k, @Parameter("xmin") double xmin) {
         this.k = k;
         this.xmin = xmin;
         this.kdivxmin = k/xmin;
@@ -45,11 +48,35 @@ public final class ParetoDistribution extends RealDistribution implements ByMedi
     /**
      * Estimates a new distribution by the given median value but keep the xmin
      * Important: If estimated from real data, remove first all values below xmin!!!
-     * @param median median of distribution.
-     * @return
      */
-    @Override
-    public ParetoDistribution extimateByMedian(double median) {
-        return new ParetoDistribution(Math.log(2)/Math.log(median/xmin), xmin);
+    public static ByMedianEstimatable<ParetoDistribution> getMedianEstimator(final double xmin) {
+        return new EstimateByMedian(xmin);
+    }
+
+    @HasParameters
+    public static class EstimateByMedian implements ByMedianEstimatable<ParetoDistribution> {
+
+        @Parameter("xmin") private double xmin;
+
+        public EstimateByMedian() {
+            this(0.01);
+        }
+
+        public EstimateByMedian(double xmin) {
+            this.xmin = xmin;
+        }
+
+        public double getXmin() {
+            return xmin;
+        }
+
+        public void setXmin(double xmin) {
+            this.xmin = xmin;
+        }
+
+        @Override
+        public ParetoDistribution extimateByMedian(double median) {
+            return new ParetoDistribution(Math.log(2)/Math.log(median/xmin), xmin);
+        }
     }
 }

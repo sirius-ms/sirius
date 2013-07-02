@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
@@ -19,7 +20,7 @@ public class SpecialMoleculeScorer implements MolecularFormulaScorer {
         this(oxygenToHeteroKegg, rdbeKegg);
     }
 
-    public SpecialMoleculeScorer(DensityFunction oxygenToHeteroDistribution, DensityFunction rdbeDistribution) {
+    public SpecialMoleculeScorer(@Parameter("oxygenToHeteroDistribution") DensityFunction oxygenToHeteroDistribution, @Parameter("rdbeDistribution") DensityFunction rdbeDistribution) {
         this.oxygenToHeteroDistribution = oxygenToHeteroDistribution;
         this.rdbeDistribution = rdbeDistribution;
     }

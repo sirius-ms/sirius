@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
 import static java.lang.Math.pow;
 
 /**
@@ -14,7 +16,7 @@ public class PartialParetoDistribution implements DensityFunction {
      * @param b interval [a,b) is optimal, For all x with a < x < b, density(x) is maximal
      * @param k shape parameter of underlying pareto distribution
      */
-    public PartialParetoDistribution(double a, double b, double k) {
+    public PartialParetoDistribution(@Parameter("a") double a, @Parameter("b") double b, @Parameter("k") double k) {
         this.a = a;
         this.b = b;
         this.k = k;
@@ -34,5 +36,17 @@ public class PartialParetoDistribution implements DensityFunction {
         } else {
             return kdivbnorm * pow(b / x, k + 1);
         }
+    }
+
+    public double getA() {
+        return a;
+    }
+
+    public double getB() {
+        return b;
+    }
+
+    public double getK() {
+        return k;
     }
 }

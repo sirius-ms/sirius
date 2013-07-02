@@ -1,29 +1,36 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 /**
- * Created with IntelliJ IDEA.
- * User: kai
- * Date: 4/22/13
- * Time: 3:36 PM
- * To change this template use File | Settings | File Templates.
+ * A formula passes this filter, if its RDBE value is greater or equal to the given limit
  */
-public class ValenceFilter implements FormulaFilter{
+@HasParameters
+public class ValenceFilter implements FormulaFilter {
 
-    private final int minValence;
+    private final int minValenceInt;
+    private final double minValence;
 
     public ValenceFilter() {
         this(-0.5d);
     }
 
-    public ValenceFilter(double minValence) {
-        this.minValence = (int)(2*minValence);
+    public ValenceFilter(@Parameter("minValence") double minValence) {
+        this.minValenceInt = (int)(2*minValence);
+        this.minValence = minValence;
+
     }
 
     @Override
     public boolean isValid(MolecularFormula formula) {
-        return formula.doubledRDBE() >= minValence;
+        return formula.doubledRDBE() >= minValenceInt;
+    }
+
+    public double getMinValence() {
+        return minValence;
     }
 }

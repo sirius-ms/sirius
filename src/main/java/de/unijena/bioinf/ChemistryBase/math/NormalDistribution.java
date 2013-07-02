@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
 import static java.lang.Math.PI;
 import static java.lang.Math.sqrt;
 
@@ -7,7 +9,7 @@ public final class NormalDistribution extends RealDistribution {
     private final static double sqrt2pi = sqrt(2*PI);
     private final double mean, var;
 
-    public NormalDistribution(double mean, double var) {
+    public NormalDistribution(@Parameter("mean") double mean, @Parameter("variance") double var) {
         this.mean = mean;
         this.var = var;
     }

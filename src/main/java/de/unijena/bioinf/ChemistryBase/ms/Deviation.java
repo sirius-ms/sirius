@@ -1,5 +1,12 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+@HasParameters
 public class Deviation {
 
     private final double ppm;
@@ -10,7 +17,7 @@ public class Deviation {
         this.absolute = 1e-4*ppm; // set absolute to 100 Da with given ppm
     }
 
-    public Deviation(double ppm, double absolute) {
+    public Deviation(@Parameter("ppm") double ppm, @Parameter("absolute") double absolute) {
         this.ppm = ppm;
         this.absolute = absolute;
     }
@@ -42,5 +49,16 @@ public class Deviation {
 
     public double getAbsolute() {
         return absolute;
+    }
+
+    public String toString() {
+        return ppm + " ppm (" + absolute + " m/z)";
+    }
+
+    private static Pattern pattern = Pattern.compile("(.+) ppm \\((.+) m\\/z\\)");
+    public static Deviation fromString(String s) {
+        final Matcher m = pattern.matcher(s);
+        if (!m.find()) throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");
+        return new Deviation(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)));
     }
 }

@@ -1,15 +1,20 @@
-package de.unijena.bioinf.ChemistryBase.data;
+package de.unijena.bioinf.ChemistryBase.algorithm;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterizedByAnnotation;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.regex.Pattern;
 
-public abstract class ParameterHelper {
+public class ParameterHelper {
 
     public final static String NAME = "$name";
     public final static String VERSION = "$version";
@@ -26,17 +31,95 @@ public abstract class ParameterHelper {
         }
     }
 
-    private HashMap<Class, ParameterizedByAnnotation> cache = new HashMap<Class, ParameterizedByAnnotation>();
+    private HashMap<Class, ParameterizedByAnnotation> cache;
+    private HashMap<String, Class<?>> nameCache;
+    private List<String> lookupPaths;
+    private Pattern pattern;
 
-    public String getKeyName(Class<?> klass) {
-        return klass.getCanonicalName();
+
+    public static ParameterHelper getParameterHelper() {
+        final ParameterHelper helper = new ParameterHelper();
+        helper.addLookupPath("de.unijena.bioinf");
+        helper.addLookupPath("de.unijena.bioinf.ChemistryBase.math");
+        helper.addLookupPath("de.unijena.bioinf.ChemistryBase.chem.utils.scoring");
+        helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring");
+        helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering");
+        helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.merging");
+        return helper;
+    }
+
+    public ParameterHelper() {
+        this.cache = new HashMap<Class, ParameterizedByAnnotation>();
+        this.nameCache = new HashMap<String, Class<?>>();
+        this.lookupPaths = new ArrayList<String>();
+    }
+
+    public void addLookupPath(String name) {
+        pattern=null;
+        lookupPaths.add(name);
+    }
+
+    private Pattern getPattern() {
+        if (pattern!=null) return pattern;
+        final StringBuilder buffer = new StringBuilder();
+        final ArrayList<String> orderedLookups = new ArrayList<String>(lookupPaths);
+        Collections.sort(orderedLookups, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                return o2.length() - o1.length();
+            }
+        });
+        final Iterator<String> lookups = orderedLookups.iterator();
+        if (!lookups.hasNext()) pattern = Pattern.compile("\\A");
+        else {
+            buffer.append("\\A(?:");
+            buffer.append(Pattern.quote(lookups.next()));
+            while (lookups.hasNext()) {
+                buffer.append("|").append(Pattern.quote(lookups.next()));
+            }
+            buffer.append(")\\.");
+            pattern = Pattern.compile(buffer.toString());
+        }
+        return pattern;
+    }
+
+    public Class<?> getFromClassName(String string) {
+        final Class<?> cached = nameCache.get(string);
+        if (cached!=null) return cached;
+        final ClassLoader loader = this.getClass().getClassLoader();
+        if (string.indexOf('.') >= 0) {
+            try {
+                final Class<?> c = loader.loadClass(string);
+                nameCache.put(string, c);
+                return c;
+            } catch (ClassNotFoundException e) {
+
+            }
+        }
+        for (String lookup : lookupPaths) {
+            final String name = lookup + '.' + string;
+            try {
+                final Class<?> c = loader.loadClass(name);
+                nameCache.put(string, c);
+                return c;
+            } catch (ClassNotFoundException e) {
+
+            }
+        }
+        throw new RuntimeException("Cannot find class with name " + string);
+    }
+
+    public String toClassName(Class<?> klass) {
+        final String name = klass.getName();
+        return getPattern().matcher(name).replaceFirst("");
     }
 
     public boolean isConvertable(Object o) {
-        return o instanceof Number || supportedClasses.contains(o.getClass());
+        return o==null || o instanceof Number || supportedClasses.contains(o.getClass());
     }
 
     public <G,D,L> Object unwrap(DataDocument<G,D,L> document, G value) {
+        if (document.isNull(value)) return null;
         if (document.isDictionary(value)) {
             final D dictionary = document.getDictionary(value);
             final G name = document.getFromDictionary(dictionary, NAME);
@@ -73,7 +156,20 @@ public abstract class ParameterHelper {
                     } catch (InstantiationException e) {
                         throw new RuntimeException(e);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                        Constructor<ImmutableParameterized> constructor;
+                        try {
+                            constructor = (Constructor<ImmutableParameterized>)klass.getDeclaredConstructor();
+                        } catch (NoSuchMethodException em) {
+                            throw new RuntimeException();
+                        }
+                        constructor.setAccessible(true);
+                        final ImmutableParameterized o;
+                        try {
+                            o = constructor.newInstance();
+                        } catch (Exception ef ) {
+                            throw new RuntimeException(ef);
+                        }
+                        return o.readFromParameters(this, document, dictionary);
                     }
                 } else {
                     throw new RuntimeException("Parameter of type " + klass + " is not importable");
@@ -82,18 +178,6 @@ public abstract class ParameterHelper {
         } else {
             return DataDocument.transform(document, jdk, value);
         }
-    }
-
-    public Class<?> getFromClassName(String string) {
-        try {
-            return ClassLoader.getSystemClassLoader().loadClass(string);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String toClassName(Class<?> klass) {
-        return klass.getCanonicalName();
     }
 
     public <G,D,L> G wrap(DataDocument<G,D,L> document, Object o) {

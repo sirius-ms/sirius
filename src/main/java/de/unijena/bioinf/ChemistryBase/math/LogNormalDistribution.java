@@ -1,6 +1,10 @@
 package de.unijena.bioinf.ChemistryBase.math;
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
 import static java.lang.Math.*;
 
+@HasParameters
 public class LogNormalDistribution extends RealDistribution {
 
     public static final double SQRT2PI = sqrt(2 * PI);
@@ -10,7 +14,7 @@ public class LogNormalDistribution extends RealDistribution {
         return new LogNormalDistribution(mean, sd*sd);
     }
 
-    public LogNormalDistribution(double mean, double var) {
+    public LogNormalDistribution(@Parameter("mean") double mean, @Parameter("variance") double var) {
         this.mean = mean;
         this.var = var;
         this.sd = sqrt(var);

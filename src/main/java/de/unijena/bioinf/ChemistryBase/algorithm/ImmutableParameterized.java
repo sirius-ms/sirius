@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
 
 public interface ImmutableParameterized<T> {
 

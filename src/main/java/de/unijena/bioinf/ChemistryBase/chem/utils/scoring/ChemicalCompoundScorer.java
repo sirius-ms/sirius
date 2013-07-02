@@ -1,8 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 
 /**
  * Factory for chemical scorers
@@ -40,7 +43,7 @@ public final class ChemicalCompoundScorer {
         return createDefaultCompoundScorer(true);
     }
 
-    private static class DefaultScorer implements MolecularFormulaScorer {
+    static class DefaultScorer implements MolecularFormulaScorer, ImmutableParameterized<MolecularFormulaScorer> {
         private final static ImprovedHetero2CarbonScorer scorer = new ImprovedHetero2CarbonScorer();
         private final static SpecialMoleculeScorer special = new SpecialMoleculeScorer();
 
@@ -55,6 +58,16 @@ public final class ChemicalCompoundScorer {
 
         public static SpecialMoleculeScorer getSpecial() {
             return special;
+        }
+
+        @Override
+        public <G, D, L> MolecularFormulaScorer readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            return new DefaultScorer();
+        }
+
+        @Override
+        public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            // nothing to export
         }
     }
 
