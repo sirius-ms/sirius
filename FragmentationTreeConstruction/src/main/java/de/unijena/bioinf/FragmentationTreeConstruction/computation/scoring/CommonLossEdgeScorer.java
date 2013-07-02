@@ -3,7 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
@@ -39,6 +39,38 @@ public class CommonLossEdgeScorer implements LossScorer{
             "H3PO3", "H3PO4", "HPO3", "C2H5O4P",
             "H2S", "S", "SO2", "SO3", "H2SO4"
     };
+
+    /**
+     * If you have no clue about the correct score of your common losses, you can assume that they are all equally distributed.
+     * In this case, you have to ignore the loss size scoring, e.g. if H2 and C6H6 have the same frequency, they are not
+     * allowed to get different scores. We do this by adding the negative loss size score as common loss score. Therefore,
+     * when adding the loss size score later, both scores are sumed up to 0.
+     * Nevertheless: Maybe it is not wrong to say: C6H6 is "nicer" than H2, as it contains more information. Therefore,
+     * you can add only e.g. 70% of the negative loss size score to the common loss score.
+     * @param lossSizeScorer
+     * @param compensation multiplicator with loss size score
+     * @return
+     */
+    public static CommonLossEdgeScorer getLossSizeCompensationForExpertList(LossSizeScorer lossSizeScorer, double compensation) {
+        final CommonLossEdgeScorer scorer = new CommonLossEdgeScorer();
+        for (String f : ales_list) {
+            final MolecularFormula m = MolecularFormula.parse(f);
+            scorer.addCommonLoss(m, -(lossSizeScorer.score(m)+lossSizeScorer.getNormalization())*compensation);
+        }
+        return scorer;
+    }
+
+    /**
+     *
+     * @param penalty
+     * @return
+     */
+    public CommonLossEdgeScorer addImplausibleLosses(double penalty) {
+        for (String f : implausibleLosses) {
+            addCommonLoss(MolecularFormula.parse(f), penalty);
+        }
+        return this;
+    }
 
 
     @Override
@@ -94,7 +126,8 @@ public class CommonLossEdgeScorer implements LossScorer{
             commonLosses.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
         }
         this.normalization = document.getDoubleFromDictionary(dictionary, "normalization");
-        this.recombinator = (Recombinator)helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
+        if (document.hasKeyInDictionary(dictionary, "recombinator"))
+            this.recombinator = (Recombinator)helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
     }
 
     @Override
@@ -104,7 +137,8 @@ public class CommonLossEdgeScorer implements LossScorer{
             document.addToDictionary(common, entry.getKey().toString(), entry.getValue());
         }
         document.addDictionaryToDictionary(dictionary, "losses", common);
-        document.addToDictionary(dictionary, "recombinator", helper.wrap(document, recombinator));
+        if (recombinator != null)
+            document.addToDictionary(dictionary, "recombinator", helper.wrap(document, recombinator));
         document.addToDictionary(dictionary, "normalization", normalization);
     }
 

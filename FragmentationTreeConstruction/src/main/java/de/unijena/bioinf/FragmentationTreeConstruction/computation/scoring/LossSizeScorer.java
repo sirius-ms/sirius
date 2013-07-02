@@ -3,7 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -38,7 +38,7 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
 
     @Override
     public double score(MolecularFormula formula) {
-        return scoring(formula.getMass()) - normalization;
+        return scoring(formula.getMass());
     }
 
     @Override

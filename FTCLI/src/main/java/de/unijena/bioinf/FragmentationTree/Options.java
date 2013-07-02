@@ -57,6 +57,9 @@ public interface Options {
     @Option(shortName = "i", description = "enable isotope pattern analysis")
     public boolean getMs1();
 
+    @Option(shortName = "p", defaultToNull = true, description = "A profile contains all scoring and preprocessing information that is necessary for the given data. It is either a profile.json file or the name of a predefined profile")
+    public String getProfile();
+
     /*
         ppm
      */
@@ -81,7 +84,7 @@ public interface Options {
     @Option(longName = "noise.median", defaultValue = "0.02", description = "median intensity of noise peaks (above certain threshold)")
     public Double getNoiseMedian();
 
-    @Option(longName = "treeSize", defaultValue = "2", description = "additional score bonus per explained peak. Higher values leads to bigger trees.")
+    @Option(longName = "treeSize", defaultToNull = true, description = "additional score bonus per explained peak. Higher values leads to bigger trees.")
     public Double getTreeSize();
 
     @Option(longName = "verbose", shortName = "v")

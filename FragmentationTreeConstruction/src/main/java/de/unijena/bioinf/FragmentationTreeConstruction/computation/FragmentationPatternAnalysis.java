@@ -4,11 +4,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
-import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -23,7 +20,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighI
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.legacy.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
@@ -52,53 +48,70 @@ public class FragmentationPatternAnalysis implements Parameterized {
     private TreeBuilder treeBuilder;
     private MeasurementProfile defaultProfile;
 
+    public static <G, D, L> FragmentationPatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
+        final ParameterHelper helper = ParameterHelper.getParameterHelper();
+        return (FragmentationPatternAnalysis)helper.unwrap(document, value);
+    }
+
     /**
      * Construct a new FragmentationPatternAnaylsis with default scorers
      */
     public static FragmentationPatternAnalysis defaultAnalyzer() {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
-        analysis.setToSirius();
+
+        // peak pair scorers
+        final LossSizeScorer lossSize = new LossSizeScorer(LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION);
+        final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
+        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
+        peakPairScorers.add(lossSize);
+
+        // loss scorers
         final List<LossScorer> lossScorers = new ArrayList<LossScorer>();
         lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
         lossScorers.add(new DBELossScorer());
         lossScorers.add(new PureCarbonNitrogenLossScorer());
-
         lossScorers.add(new StrangeElementScorer());
+        lossScorers.add(CommonLossEdgeScorer.getLossSizeCompensationForExpertList(lossSize, 0.5d));
 
-        //lossScorers.add(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1)));
-        lossScorers.add(CommonLossEdgeScorer.getOptimizedCommonLossScorer().recombinateSpec(2, new StrangeElementScorer()).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
+        // peak scorers
+        final List<PeakScorer> peakScorers = new ArrayList<PeakScorer>();
+        peakScorers.add(new PeakIsNoiseScorer());
+        peakScorers.add(new TreeSizeScorer(2d));
 
-        final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
-        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
+        // root scorers
+        final List<DecompositionScorer<?>> rootScorers = new ArrayList<DecompositionScorer<?>>();
+        rootScorers.add(new ChemicalPriorScorer());
+        rootScorers.add(new MassDeviationVertexScorer());
 
+        // fragment scorers
+        final List<DecompositionScorer<?>> fragmentScorers = new ArrayList<DecompositionScorer<?>>();
+        fragmentScorers.add(new MassDeviationVertexScorer());
 
-        //peakPairScorers.add(new LossSizeScorer(LogNormalDistribution.withMeanAndSd(3.8656329978554234d, 0.5512475076353699d), -4.355600412857635d));
-        peakPairScorers.add(new LossSizeScorer(LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION));
-
-        final double lambda = 1d;
-        final double massDev = 5;
-
-        getByClassName(MassDeviationVertexScorer.class, analysis.getDecompositionScorers()).setMassPenalty(massDev);
-
+        // setup
+        analysis.setLossScorers(lossScorers);
+        analysis.setRootScorers(rootScorers);
+        analysis.setDecompositionScorers(fragmentScorers);
+        analysis.setFragmentPeakScorers(peakScorers);
         analysis.setPeakPairScorers(peakPairScorers);
 
-        /*
-        analysis.getDecompositionScorers().add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(true),
-                ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT, 100d)
-        );
-        */
-        analysis.getDecompositionScorers().add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
-        analysis.getFragmentPeakScorers().add(new TreeSizeScorer(2d));
-
-        analysis.setLossScorers(lossScorers);
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
         analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(50));
         analysis.setTreeBuilder(new GurobiSolver());
-        getByClassName(PeakIsNoiseScorer.class, analysis.getFragmentPeakScorers()).setDistribution(new ParetoDistribution(lambda, 0.005d));
         final GurobiSolver solver = new GurobiSolver();
         solver.setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
         analysis.setTreeBuilder(solver);
+
+        final MutableMeasurementProfile profile = new MutableMeasurementProfile();
+        profile.setAllowedMassDeviation(new Deviation(10));
+        profile.setStandardMassDifferenceDeviation(new Deviation(7));
+        profile.setStandardMs2MassDeviation(new Deviation(10));
+        profile.setStandardMassDifferenceDeviation(new Deviation(5));
+        profile.setFormulaConstraints(new FormulaConstraints());
+        profile.setMedianNoiseIntensity(0.02);
+        profile.setIntensityDeviation(0.02);
+        analysis.setDefaultProfile(profile);
+
         return analysis;
     }
 
@@ -120,7 +133,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
 
     public FragmentationPatternAnalysis() {
         this.decomposers = new DecomposerCache();
-        setToDefault();
+        setInitial();
     }
 
     /**
@@ -128,6 +141,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
      */
     public void setInitial() {
         this.inputValidators = new ArrayList<InputValidator>();
+        inputValidators.add(new MissingValueValidator());
         this.validatorWarning = new Warning.Noop();
         this.normalizationType = NormalizationType.GLOBAL;
         this.peakMerger = new HighIntensityMerger();
@@ -141,40 +155,6 @@ public class FragmentationPatternAnalysis implements Parameterized {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
         this.treeBuilder = new DPTreeBuilder(16);
-    }
-
-    public void setToDefault() {
-        setInitial();
-        inputValidators.add(new MissingValueValidator());
-        decompositionScorers.add(new MassDeviationVertexScorer(false));
-        decompositionScorers.add(CommonFragmentsScore.getLearnedCommonFragmentScorer(4).addLosses(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).getMap()).useHTolerance());
-        rootScorers.add(new MassDeviationVertexScorer(true));
-        rootScorers.add(new ChemicalPriorScorer());
-        fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
-        lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
-        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1), 0d));
-        lossScorers.add(new DBELossScorer());
-        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
-        peakPairScorers.add(new RelativeLossSizeScorer());
-        final List<FormulaFilter> formulaFilters = new ArrayList<FormulaFilter>();
-        formulaFilters.add(new ValenceFilter());
-        defaultProfile = new MutableMeasurementProfile(new Deviation(10), new Deviation(10).divide(3), new Deviation(10).divide(3),
-                new Deviation(10).divide(4), new FormulaConstraints(new ChemicalAlphabet(), formulaFilters), 0.02d, 0.02d);
-    }
-
-    public void setToSirius() {
-        setInitial();
-        inputValidators.add(new MissingValueValidator());
-        decompositionScorers.add(new MassDeviationVertexScorer(false));
-        rootScorers.add(new MassDeviationVertexScorer(true));
-        rootScorers.add(new ChemicalPriorScorer(ChemicalCompoundScorer.createDefaultCompoundScorer(), ChemicalPriorScorer.LEARNED_NORMALIZATION_CONSTANT_FOR_ROOT));
-        fragmentPeakScorers.add(new PeakIsNoiseScorer(4));
-        lossScorers.add(CommonLossEdgeScorer.getDefaultCommonLossScorer(1).recombinate(3).merge(CommonLossEdgeScorer.getDefaultUnplausibleLossScorer(Math.log(0.1))));
-        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
-        lossScorers.add(new DBELossScorer());
-        lossScorers.add(new PureCarbonNitrogenLossScorer());
-        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
-        peakPairScorers.add(new RelativeLossSizeScorer());
     }
 
     /**
@@ -655,6 +635,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         fillList(peakPairScorers, helper,document,dictionary,"peakPairScorers");
         fillList(lossScorers, helper,document,dictionary,"lossScorers");
         peakMerger = (PeakMerger)helper.unwrap(document, document.getFromDictionary(dictionary,"merge"));
+        defaultProfile = (MeasurementProfile)helper.unwrap(document, document.getFromDictionary(dictionary, "default"));
 
     }
 
@@ -690,6 +671,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
         document.addToDictionary(dictionary, "merge", helper.wrap(document,peakMerger));
+        document.addToDictionary(dictionary, "default", helper.wrap(document, new MutableMeasurementProfile(defaultProfile)));
 
     }
 }

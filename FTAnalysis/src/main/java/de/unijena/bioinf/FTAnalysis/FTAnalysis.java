@@ -557,7 +557,7 @@ public class FTAnalysis {
         }
 
         @Override
-        public double getExpectedIntensityDeviation() {
+        public double getIntensityDeviation() {
             return 0;  //To change body of implemented methods use File | Settings | File Templates.
         }
     }

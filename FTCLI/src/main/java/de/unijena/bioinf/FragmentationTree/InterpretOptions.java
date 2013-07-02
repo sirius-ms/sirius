@@ -60,7 +60,7 @@ public class InterpretOptions {
         return options.getFilterByIsotope() > 0 || options.getMs1();
     }
 
-    public static MeasurementProfile getProfile(Options options) {
+    public static MeasurementProfile getMeasurementProfile(Options options) {
 
         double ppmMax, ppmAbs, sdms1, sdms2, sdDiff;
 
@@ -71,7 +71,7 @@ public class InterpretOptions {
         sdDiff = options.getStandardDeviationOfDiff()==null ? ppmMax/4d : options.getStandardDeviationOfMs2();
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile(new Deviation(ppmMax, ppmAbs), new Deviation(sdms1), new Deviation(sdms2), new Deviation(sdDiff), getFormulaConstraints(options), options.getExpectedIntensityDeviation(), options.getNoiseMedian());
-        profile.setExpectedIntensityDeviation(1d);
+        profile.setIntensityDeviation(1d);
         // ...
         return profile;
     }

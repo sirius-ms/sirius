@@ -2,7 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.data.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.math.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
@@ -12,10 +12,6 @@ import java.util.List;
 @Called("Intensity")
 public class PeakIsNoiseScorer implements PeakScorer {
 
-    public static PeakIsNoiseScorer fromPareto(double k) {
-        return new PeakIsNoiseScorer(ParetoDistribution.getMedianEstimator(0.005));
-    }
-
     private ByMedianEstimatable<? extends RealDistribution> distribution;
 
     public ByMedianEstimatable<? extends RealDistribution> getDistribution() {
@@ -24,6 +20,10 @@ public class PeakIsNoiseScorer implements PeakScorer {
 
     public void setDistribution(ByMedianEstimatable<? extends RealDistribution> distribution) {
         this.distribution = distribution;
+    }
+
+    public PeakIsNoiseScorer() {
+        this(ParetoDistribution.getMedianEstimator(0.005));
     }
 
     public PeakIsNoiseScorer(ByMedianEstimatable<? extends RealDistribution> distribution) {
