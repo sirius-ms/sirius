@@ -1,7 +1,7 @@
 package de.unijena.bioinf.babelms.json;
 
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
