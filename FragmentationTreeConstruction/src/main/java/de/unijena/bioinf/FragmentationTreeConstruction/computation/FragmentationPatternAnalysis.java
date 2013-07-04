@@ -1,16 +1,19 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Preprocessor;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
@@ -46,7 +49,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
     private List<Preprocessor> preprocessors;
     private List<PostProcessor> postProcessors;
     private TreeBuilder treeBuilder;
-    private MeasurementProfile defaultProfile;
+    private MutableMeasurementProfile defaultProfile;
 
     public static <G, D, L> FragmentationPatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
@@ -60,7 +63,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
 
         // peak pair scorers
-        final LossSizeScorer lossSize = new LossSizeScorer(LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION);
+        final LossSizeScorer lossSize = new LossSizeScorer(new LogNormalDistribution(4d, 1d), -6d);/*LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION*/
         final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
         peakPairScorers.add(lossSize);
@@ -71,7 +74,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         lossScorers.add(new DBELossScorer());
         lossScorers.add(new PureCarbonNitrogenLossScorer());
         lossScorers.add(new StrangeElementScorer());
-        lossScorers.add(CommonLossEdgeScorer.getLossSizeCompensationForExpertList(lossSize, 0.5d));
+        lossScorers.add(CommonLossEdgeScorer.getLossSizeCompensationForExpertList(lossSize, 0.7d).addImplausibleLosses(Math.log(0.01)));
 
         // peak scorers
         final List<PeakScorer> peakScorers = new ArrayList<PeakScorer>();
@@ -86,6 +89,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         // fragment scorers
         final List<DecompositionScorer<?>> fragmentScorers = new ArrayList<DecompositionScorer<?>>();
         fragmentScorers.add(new MassDeviationVertexScorer());
+        fragmentScorers.add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
 
         // setup
         analysis.setLossScorers(lossScorers);
@@ -96,7 +100,6 @@ public class FragmentationPatternAnalysis implements Parameterized {
 
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
         analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
-        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(50));
         analysis.setTreeBuilder(new GurobiSolver());
         final GurobiSolver solver = new GurobiSolver();
         solver.setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
@@ -211,10 +214,16 @@ public class FragmentationPatternAnalysis implements Parameterized {
     }
 
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
+        final ProcessedInput input = preprocessWithoutDecomposing(experiment);
+        // decompose and score all peaks
+        return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
+    }
+
+    ProcessedInput preprocessWithoutDecomposing(Ms2Experiment experiment) {
         // first of all: insert default profile if no profile is given
         Ms2ExperimentImpl input = wrapInput(experiment);
         if (input.getMeasurementProfile()==null) input.setMeasurementProfile(defaultProfile);
-        else MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile());
+        else input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
         // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
         input = wrapInput(preProcess(validate(input)));
         // normalize all peaks and merge peaks within the same spectrum
@@ -226,8 +235,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         final ProcessedPeak parentPeak = selectParentPeakAndCleanSpectrum(input, processedPeaks);
         final List<ProcessedPeak> afterMerging =
                 postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, processedPeaks, parentPeak, null)).getMergedPeaks();
-        // decompose and score all peaks
-        return decomposeAndScore(input, afterMerging);
+        return new ProcessedInput(input, afterMerging, parentPeak, null);
     }
 
     /**
@@ -616,12 +624,16 @@ public class FragmentationPatternAnalysis implements Parameterized {
         this.treeBuilder = treeBuilder;
     }
 
-    public MeasurementProfile getDefaultProfile() {
+    public MutableMeasurementProfile getDefaultProfile() {
         return defaultProfile;
     }
 
     public void setDefaultProfile(MeasurementProfile defaultProfile) {
-        this.defaultProfile = defaultProfile;
+        this.defaultProfile = new MutableMeasurementProfile(defaultProfile);
+    }
+
+    public MassToFormulaDecomposer getDecomposerFor(ChemicalAlphabet alphabet) {
+        return decomposers.getDecomposer(alphabet);
     }
 
     @Override
@@ -635,7 +647,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         fillList(peakPairScorers, helper,document,dictionary,"peakPairScorers");
         fillList(lossScorers, helper,document,dictionary,"lossScorers");
         peakMerger = (PeakMerger)helper.unwrap(document, document.getFromDictionary(dictionary,"merge"));
-        defaultProfile = (MeasurementProfile)helper.unwrap(document, document.getFromDictionary(dictionary, "default"));
+        defaultProfile = new MutableMeasurementProfile((MeasurementProfile)helper.unwrap(document, document.getFromDictionary(dictionary, "default")));
 
     }
 

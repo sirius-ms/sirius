@@ -1,9 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
@@ -20,9 +20,15 @@ public class CommonLossEdgeScorer implements LossScorer{
         this(Collections.<MolecularFormula, Double>emptyMap(), null);
     }
 
-    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator) {
+    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator, double normalization) {
         this.commonLosses = new HashMap<MolecularFormula, Double>(commonLosses);
         this.recombinatedList = null;
+        this.normalization = normalization;
+    }
+
+
+    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator) {
+        this(commonLosses, recombinator, 0d);
     }
 
 

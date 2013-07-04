@@ -1,15 +1,16 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     private HashMap<MolecularFormula, Double> commonFragmentsH;
     private HashMap<MolecularFormula, Double> commonFragmentsWithoutH;
     private boolean hTolerance;
+    private double normalization;
 
     public static final double COMMON_FRAGMENTS_NORMALIZATION = 0.3105875550595019d;
 
@@ -72,6 +74,10 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         return getLearnedCommonFragmentScorer(1);
     }
 
+    public Map<MolecularFormula, Double> getCommonFragments() {
+        return Collections.unmodifiableMap(commonFragments);
+    }
+
     public CommonFragmentsScore addLosses(Map<MolecularFormula, Double> losses) {
         commonFragmentsH = null;
         commonFragmentsWithoutH = null;
@@ -83,6 +89,16 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             }
         }
         return this;
+    }
+
+    public void addCommonFragment(MolecularFormula formula, double score) {
+        commonFragments.put(formula, score);
+        makeDirty();
+    }
+
+    private void makeDirty() {
+        commonFragmentsH=null;
+        commonFragmentsWithoutH=null;
     }
 
     private static Map<MolecularFormula, Double> mergeMaps(Map<MolecularFormula, Double> map1, Map<MolecularFormula, Double> map2, double multiplicator) {
@@ -101,21 +117,31 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         for (Map.Entry<MolecularFormula, Double> entry : scorer.commonFragments.entrySet()) {
             entry.setValue(entry.getValue()*scale);
         }
+        scorer.setNormalization(COMMON_FRAGMENTS_NORMALIZATION*scale);
         return scorer;
     }
 
 
 	public CommonFragmentsScore(HashMap<MolecularFormula, Double> commonFragments) {
-		this(commonFragments, false);
+		this(commonFragments, COMMON_FRAGMENTS_NORMALIZATION, false);
 	}
 
-    public CommonFragmentsScore(HashMap<MolecularFormula, Double> commonFragments, boolean hTolerance) {
+    public CommonFragmentsScore(HashMap<MolecularFormula, Double> commonFragments, double normalization, boolean hTolerance) {
         this.commonFragments = commonFragments;
         if (hTolerance) useHTolerance();
+        this.normalization = normalization;
     }
 
-    CommonFragmentsScore() {
+    public CommonFragmentsScore() {
         this.commonFragments = new HashMap<MolecularFormula, Double>();
+    }
+
+    public double getNormalization() {
+        return normalization;
+    }
+
+    public void setNormalization(double normalization) {
+        this.normalization = normalization;
     }
 
     public CommonFragmentsScore useHTolerance() {
@@ -168,17 +194,17 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         final double intr = intrinsic != null ? intrinsic.doubleValue() : 0;
         if (!hTolerance && ion instanceof Charge) {
             final Double score = (ion.getCharge() > 0 ? getCommonFragmentsH().get(formula) : getCommonFragmentsWithoutH().get(formula));
-            return (score == null ? intr : Math.max(intr, score.doubleValue())) - COMMON_FRAGMENTS_NORMALIZATION;
+            return (score == null ? intr : Math.max(intr, score.doubleValue())) - normalization;
         } else {
-            return intr - COMMON_FRAGMENTS_NORMALIZATION;
+            return intr - normalization;
         }
     }
 
     @Override
     public double score(MolecularFormula formula) {
         final Double val = commonFragments.get(formula);
-        if (val == null) return 0d;
-        else return val.doubleValue();
+        if (val == null) return -normalization;
+        else return val.doubleValue()-normalization;
     }
 
     @Override
@@ -192,6 +218,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         commonFragmentsH = null;
         commonFragmentsWithoutH = null;
         if (document.getBooleanFromDictionary(dictionary, "hTolerance")) useHTolerance();
+        normalization = document.getDoubleFromDictionary(dictionary, "normalization");
     }
 
     @Override
@@ -202,6 +229,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         }
         document.addDictionaryToDictionary(dictionary, "fragments", common);
         document.addToDictionary(dictionary, "hTolerance", hTolerance);
+        document.addToDictionary(dictionary, "normalization", normalization);
     }
 
 }

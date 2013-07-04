@@ -1,16 +1,10 @@
 package de.unijena.bioinf.FragmentationTree;
 
-import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.Option;
 import com.lexicalscope.jewel.cli.Unparsed;
-import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
-import de.unijena.bioinf.MassDecomposer.Interval;
 
 import java.io.File;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 /*
    # compute optimal/correct tree
@@ -63,7 +57,7 @@ public interface Options {
     /*
         ppm
      */
-    @Option(longName = "ppm.max", defaultValue = "10", description = "maximal ppm of peaks (used for decompositions)")
+    @Option(longName = "ppm.max", defaultToNull = true, description = "maximal ppm of peaks (used for decompositions)")
     public Double getPPMMax();
 
     @Option(longName = "abs.max", defaultToNull = true, description = "maximal mass deviation of peaks (used for decomposition)")
@@ -78,10 +72,10 @@ public interface Options {
     @Option(longName = "ppm.sd.diff", defaultToNull = true, description = "ppm standard deviation of ms1 peak differences (~recalibrated peaks)")
     public Double getStandardDeviationOfDiff();
 
-    @Option(longName = "intensity.sd", defaultValue = "0.02", description = "intensity standard deviation of ms1 peaks")
+    @Option(longName = "intensity.sd", defaultToNull = true, description = "intensity standard deviation of ms1 peaks")
     public Double getExpectedIntensityDeviation();
 
-    @Option(longName = "noise.median", defaultValue = "0.02", description = "median intensity of noise peaks (above certain threshold)")
+    @Option(longName = "noise.median", defaultToNull = true, description = "median intensity of noise peaks (above certain threshold)")
     public Double getNoiseMedian();
 
     @Option(longName = "treeSize", defaultToNull = true, description = "additional score bonus per explained peak. Higher values leads to bigger trees.")

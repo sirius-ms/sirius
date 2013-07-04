@@ -22,6 +22,11 @@
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
+            <artifactId>FTAnalysis</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsotopePatternAnalysis</artifactId>
             <version>2.11-SNAPSHOT</version>
         </dependency>
@@ -106,7 +111,7 @@
                         <index>false</index> <!-- leads to problems in older maven versions -->
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>de.unijena.bioinf.FragmentationTreeConstruction.Main</mainClass>
+                            <mainClass>de.unijena.bioinf.siriuscli.CLI</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -134,7 +139,7 @@
                     <archive>
                         <index>true</index>
                         <manifest>
-                            <mainClass>de.unijena.bioinf.FragmentationTreeConstruction.Main</mainClass>
+                            <mainClass>de.unijena.bioinf.siriuscli.CLI</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
