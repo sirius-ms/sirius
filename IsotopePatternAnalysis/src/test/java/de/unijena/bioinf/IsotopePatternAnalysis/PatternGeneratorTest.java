@@ -3,7 +3,6 @@ package de.unijena.bioinf.IsotopePatternAnalysis;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistributionJSONFile;
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
@@ -14,7 +13,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.lang.management.MemoryPoolMXBean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

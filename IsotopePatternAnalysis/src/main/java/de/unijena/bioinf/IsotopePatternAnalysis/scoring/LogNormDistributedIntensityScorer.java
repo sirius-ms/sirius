@@ -49,7 +49,7 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
                                                     : Spectrums.getNormalizedSpectrum(measuredSpectrum, norm);
         // score
         double score = 0d;
-        final double intensityDeviation = experiment.getMeasurementProfile().getExpectedIntensityDeviation();
+        final double intensityDeviation = experiment.getMeasurementProfile().getIntensityDeviation();
         for (int i=0; i < measured.size(); ++i) {
             final double intensity = measured.getIntensityAt(i);
             final double thIntensity = theoreticalSpectrum.getIntensityAt(i);

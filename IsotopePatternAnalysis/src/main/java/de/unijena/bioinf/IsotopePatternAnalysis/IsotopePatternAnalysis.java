@@ -5,7 +5,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.MsExperiment;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -14,14 +17,12 @@ import de.unijena.bioinf.IsotopePatternAnalysis.extraction.PatternExtractor;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.LogNormDistributedIntensityScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
-import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MissingPeakScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.addOffset;
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
 
 public class IsotopePatternAnalysis {
