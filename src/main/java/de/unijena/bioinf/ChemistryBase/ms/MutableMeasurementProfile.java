@@ -1,7 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
-import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
@@ -24,6 +22,7 @@ public class MutableMeasurementProfile implements MeasurementProfile, Parameteri
         if (profile.getStandardMs1MassDeviation()==null) profile.setStandardMs1MassDeviation(a1.getStandardMs1MassDeviation());
         if (profile.getStandardMs2MassDeviation()==null) profile.setStandardMs2MassDeviation(a1.getStandardMs2MassDeviation());
         if (profile.getFormulaConstraints()==null) profile.setFormulaConstraints(a1.getFormulaConstraints());
+        if (profile.getMedianNoiseIntensity()==0) profile.setMedianNoiseIntensity(a1.getMedianNoiseIntensity());
         return profile;
     }
 

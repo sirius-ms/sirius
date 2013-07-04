@@ -2,7 +2,7 @@
 <cml xmlns="http://www.xml-cml.org/schema" convention="bodr:isotopes"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bo="http://www.blueobelisk.org/dict/terminology"
      xmlns:units="http://www.xml-cml.org/units/units"
-     xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd                                 /schemas/bibtexml.xsd"
+     xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd"
      id="isotopes" title="properties of the isotopes">
 
       <metadataList>

@@ -1,10 +1,10 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 
 import java.util.ArrayList;
 import java.util.Iterator;

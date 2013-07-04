@@ -1,12 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
-import org.apache.commons.collections.primitives.ArrayIntList;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A chemical alphabet is a subset of the Periodic Table

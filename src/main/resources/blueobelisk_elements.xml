@@ -4,7 +4,7 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bo="http://www.blueobelisk.org/dict/terminology"
       xmlns:boUnits="http://www.blueobelisk.org/dict/units" xmlns:units="http://www.xml-cml.org/units/units"
       xmlns:siUnits="http://www.xml-cml.org/units/siUnits"
-      xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd                                   /schemas/bibtexml.xsd">
+      xsi:schemaLocation="http://www.xml-cml.org/schema ../schemas/cml25.xsd">
 
   <metadataList>
     <!-- manually updated -->

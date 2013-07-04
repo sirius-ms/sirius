@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import org.apache.commons.collections.primitives.ArrayIntList;
 
 import java.util.*;
@@ -144,6 +144,14 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     public int[] getUpperbounds() {
         return upperbounds;
+    }
+
+    public int getUpperbound(Element e) {
+        return upperbounds[chemicalAlphabet.indexOf(e)];
+    }
+
+    public void setUpperbound(Element e, int upperbound) {
+        upperbounds[chemicalAlphabet.indexOf(e)] = upperbound;
     }
 
     public void addFilter(FormulaFilter filter) {

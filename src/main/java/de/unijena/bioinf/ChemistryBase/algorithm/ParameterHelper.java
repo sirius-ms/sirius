@@ -1,14 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
-import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
-import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterizedByAnnotation;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;

@@ -38,6 +38,10 @@ public class PartialParetoDistribution implements DensityFunction {
         }
     }
 
+    public ParetoDistribution getUnderlyingParetoDistribution() {
+        return new ParetoDistribution(k, b);
+    }
+
     public double getA() {
         return a;
     }

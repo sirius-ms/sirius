@@ -149,7 +149,7 @@ public abstract class DataDocument<General, Dictionary, List> {
         final General value = getFromDictionary(dict, key);
         if (isInteger(value)) return getInt(value);
         if (!isDouble(value)) throw new TypeError("Can't convert '" + value + "' to double");
-        return getInt(value);
+        return getDouble(value);
     }
     public boolean getBooleanFromDictionary(Dictionary dict, String key) {
         final General value = getFromDictionary(dict, key);

@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.math;
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
+import static java.lang.Math.min;
 import static java.lang.Math.pow;
 
 public final class ParetoDistribution extends RealDistribution {
@@ -45,12 +46,41 @@ public final class ParetoDistribution extends RealDistribution {
         return k <= 1 ? Double.NEGATIVE_INFINITY : (xmin*k)/(k-1);
     }
 
+    public double getMedian() {
+        return xmin * pow(2, 1d/k);
+    }
+
     /**
      * Estimates a new distribution by the given median value but keep the xmin
      * Important: If estimated from real data, remove first all values below xmin!!!
      */
     public static ByMedianEstimatable<ParetoDistribution> getMedianEstimator(final double xmin) {
         return new EstimateByMedian(xmin);
+    }
+
+    public static ParetoDistribution learnFromData(double[] values) {
+        double xmin = Double.MAX_VALUE;
+        for (double v : values) xmin = min(v, xmin);
+        return learnFromData(xmin, values);
+    }
+
+    public static ParetoDistribution learnFromData(double xmin, double[] values) {
+        if (xmin <= 0) throw new IllegalArgumentException("xmin have to be greater than zero, but " + xmin + " is given!");
+        double m = 0d;
+        for (double v : values) {
+            if (v <= 0) throw new IllegalArgumentException("Negative values are not allowed, as they should have probability of zero!");
+            m += Math.log(v/xmin);
+        }
+        return new ParetoDistribution(values.length / m, xmin);
+    }
+
+    public double getQuantile(double quantile) {
+        return xmin / Math.pow(1d-quantile, 1d/k);
+    }
+
+    @Override
+    public String toString() {
+        return "ParetoDistribution(xmin=" + xmin + ", k=" + k + ")";
     }
 
     @HasParameters
