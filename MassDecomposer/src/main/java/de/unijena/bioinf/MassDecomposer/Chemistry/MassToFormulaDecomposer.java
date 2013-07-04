@@ -3,7 +3,9 @@ package de.unijena.bioinf.MassDecomposer.Chemistry;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaFilterList;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.MassDecomposer.*;
+import de.unijena.bioinf.MassDecomposer.Interval;
+import de.unijena.bioinf.MassDecomposer.MassDecomposerFast;
+import de.unijena.bioinf.MassDecomposer.ValencyAlphabet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,21 +44,12 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
 
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries, final FormulaFilter filter) {
         final Map<Element, Interval> boundaryMap;
-        /*
-        if (((validator instanceof ChemicalValidator) && ((ChemicalValidator)validator).getRdbeLowerbound() == 0) ||
-                (validator instanceof ValenceValidator && ((ValenceValidator)validator).getMinValence() == 0 ))
-            boundaryMap = new ValenceBoundary<Element>(alphabet).getMapFor(mass, boundaries); // TODO: implement parameterized valence boundary
-        else
-            boundaryMap = boundaries;
-            */
-        // Don't use valence boundary until it is fixed
         boundaryMap = boundaries;
-        final boolean isAlsoDecVal = filter == null || filter instanceof DecompositionValidator;
-        final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap, (isAlsoDecVal&&filter!=null) ? (DecompositionValidator<Element>)filter : null);
+        final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
             final MolecularFormula formula = alphabet.decompositionToFormula(ary);
-            if (!isAlsoDecVal && !filter.isValid(formula)) continue;
+            if (filter!=null && !filter.isValid(formula)) continue;
             formulas.add(formula);
         }
         return formulas;

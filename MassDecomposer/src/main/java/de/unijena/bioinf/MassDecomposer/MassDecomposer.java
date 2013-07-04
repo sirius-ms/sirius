@@ -1,6 +1,5 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
 import java.util.*;

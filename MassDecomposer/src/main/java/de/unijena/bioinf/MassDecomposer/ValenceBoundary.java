@@ -1,6 +1,7 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * This class provides an estimation for the maximal number of valence-1 characters in a valid decomposition.

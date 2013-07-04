@@ -1,7 +1,6 @@
 package de.unijena.bioinf.MassDecomposer.Chemistry;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
 /**
  * caches decomposer and corresponding alphabet. If a dataset contains a small number of different alphabets,

@@ -6,8 +6,11 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.MassDecomposer.*;
+import de.unijena.bioinf.MassDecomposer.ChemicalValidator;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import de.unijena.bioinf.MassDecomposer.DecompositionValidator;
+import de.unijena.bioinf.MassDecomposer.Interval;
+import de.unijena.bioinf.MassDecomposer.ValenceValidator;
 
 import java.io.PrintStream;
 import java.text.DecimalFormat;

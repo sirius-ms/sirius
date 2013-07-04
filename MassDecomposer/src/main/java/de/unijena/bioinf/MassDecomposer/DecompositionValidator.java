@@ -1,7 +1,5 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import java.util.List;
-
 /**
  * Filter out all decompositions which can't be valid/meaningful
  */

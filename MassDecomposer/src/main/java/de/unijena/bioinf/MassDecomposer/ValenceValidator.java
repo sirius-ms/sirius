@@ -1,7 +1,5 @@
 package de.unijena.bioinf.MassDecomposer;
 
-import java.util.List;
-
 /**
  * A decomposition validator. It allows only decomposition which form a fully connected graph using a valency alphabet
  */
