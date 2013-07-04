@@ -20,11 +20,17 @@ public interface LearnOptions {
     @Option(shortName = "i", defaultValue = "4", description = "number of iterations")
     public int getIterations();
 
+    @Option(shortName = "I", defaultValue = "3", description = "number of iterations for common loss detection and loss size distribution estimation")
+    public int getLossSizeIterations();
+
     @Option(shortName = "t", defaultValue = ".", description = "target directory")
     public File getTarget();
 
-    @Option(shortName = "f", description = "use intensities instead of frequencies for common loss estimation")
-    public boolean isIntensityCounting();
+    @Option(shortName = "f", description = "use frequencies instead of intensities for common loss estimation")
+    public boolean isFrequencyCounting();
+
+    @Option(shortName = "l", defaultToNull = true, description = "limit number of peaks to the n-th most intensive peaks. This makes computation much faster")
+    public Integer getPeakLimit();
 
     @Option(shortName = "v")
     public boolean isVerbose();
