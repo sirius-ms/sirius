@@ -26,19 +26,18 @@ public interface Options {
     */
 
     //algorithm options
-    //todo default
     @Option(shortName = "peaks", defaultToNull = true, description = "-peaks <int> \n"+"\tNumber of Peaks to score. \n"+"\t For formula identification this is a combination of:\n" +
             "\t\t the <int> most intense peaks\n" +
             "\t\t the <int> best peaks with mass*log(relIntensity)\n" +
-            "\t\t the <int> best peaks with mass*log(relIntensity) int he upper mass range\n" +
-            "	 For tree computation this is only the <int> most intense peaks.")
+            "\t\t the <int> best peaks with mass*log(relIntensity) int he upper mass range\n"
+            //+ "	 For tree computation this is only the <int> most intense peaks." //todo that's no longer done
+            )
     public Integer getPeaksToScore();
 
-    //todo default
+
     @Option(shortName = "iso", description = "Remove isotope peaks.")
     public boolean isRemoveIsotopePeaks();
 
-    //todo default
     @Option(shortName = "filter", defaultValue = "0.0", description = "Remove peaks with relative intensity below <double> %.")
     public double getFilterLowIntensity();
 

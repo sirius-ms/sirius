@@ -6,6 +6,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
+import java.util.List;
+
 /**
  * @author Kai Dührkop
  */
@@ -36,6 +38,16 @@ public class DPTreeBuilder implements TreeBuilder {
     @Override
     public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
         return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
+    }
+
+    @Override
+    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+        return algorithm.computeMultipleTrees(graph, maxNumberOfColors);
+    }
+
+    @Override
+    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+        return buildMultipleTrees(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
     }
 }
 

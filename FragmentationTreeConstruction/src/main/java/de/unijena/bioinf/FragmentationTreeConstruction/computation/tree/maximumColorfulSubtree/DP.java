@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.functional.iterator.Iterators;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
@@ -59,13 +60,42 @@ class DP {
         return Math.max(0, tables[graph.getRoot().getIndex()].bestScore());
     }
 
-    protected FragmentationTree backtrack() {
+    /**
+     * backtrack from root
+     * @return
+     */
+    protected FragmentationTree backtrack(){
+        return backtrack(graph.getRoot());
+    }
+
+    /**
+     * backtrack best tree for each vertex once as root
+     * @return
+     */
+    protected List<FragmentationTree> backTrackAll(){
+        List<FragmentationTree> fragmentationTrees = new ArrayList<FragmentationTree>();
+        for (GraphFragment vertex : vertices) {
+            final FragmentationTree tree = backtrack(vertex);
+            fragmentationTrees.add(tree);
+        }
+        return Collections.unmodifiableList(fragmentationTrees);
+    }
+
+    protected FragmentationTree backtrack(GraphFragment vertex) {
         double scoreSum = 0d;
-        final GraphFragment rootVertex = graph.getRoot();
-        final int rootId = rootVertex.getIndex();
-        final double optScore = tables[rootId].bestScore();
-        final FragmentationTree tree = new FragmentationTree(graph.getRootScore() + Math.max(optScore, 0), graph);
-        final TraceItem root = new TraceItem(rootVertex, tree.getRoot(), tables[rootId].bitset & ~tables[rootId].vertexBit,
+        final int vertexId = vertex.getIndex();
+        final double optScore = tables[vertexId].bestScore();
+        final FragmentationTree tree;
+        if (vertex.equals(graph.getRoot())){
+            tree = new FragmentationTree(graph.getRootScore() + Math.max(optScore, 0), graph);
+        } else {
+            //if root vertex != graph.getRoot()
+            //don't know score of the root vertex at this point because edges are weighted
+            //include root score in class where scoring is made
+            tree = new FragmentationTree(Math.max(optScore,0), graph, vertex, Double.NaN);
+        }
+
+        final TraceItem root = new TraceItem(vertex, tree.getRoot(), tables[vertexId].bitset & ~tables[vertexId].vertexBit,
                 optScore);
         final ArrayDeque<TraceItem> stack = new ArrayDeque<TraceItem>();
         stack.add(root);
@@ -104,9 +134,9 @@ class DP {
                 scoreSum += subtreeWeight;
             }
         }
-        if (!isEqual(scoreSum, Math.max(tables[rootId].bestScore(), 0) )) {
+        if (!isEqual(scoreSum, Math.max(tables[vertexId].bestScore(), 0) )) {
             throw new RuntimeException("Critical Error: Backtracked score " + scoreSum +
-                    " is not equal to computed score " + tables[rootId].bestScore());
+                    " is not equal to computed score " + tables[vertexId].bestScore());
         }
         return tree;
     }

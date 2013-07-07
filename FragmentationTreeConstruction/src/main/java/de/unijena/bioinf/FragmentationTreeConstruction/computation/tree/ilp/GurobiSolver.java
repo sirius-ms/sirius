@@ -9,6 +9,7 @@ import gurobi.*;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 
 public class GurobiSolver implements TreeBuilder {
 
@@ -146,6 +147,16 @@ public class GurobiSolver implements TreeBuilder {
         if (!(prepared instanceof Solver)) throw new IllegalArgumentException("Expected solver to be instance of Solver, but " +  prepared.getClass() + " given.");
         final Solver solver = (Solver)prepared;
         return solver.solve();
+    }
+
+    @Override
+    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     protected static class Stackitem {

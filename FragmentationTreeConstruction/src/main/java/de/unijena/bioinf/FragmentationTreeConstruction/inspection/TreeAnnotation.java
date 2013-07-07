@@ -5,10 +5,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.Decom
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakPairScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Fragment;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeFragment;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 
 import java.util.*;
 
@@ -18,9 +15,13 @@ public class TreeAnnotation {
     private final HashMap<Loss, Map<Class<?>, Double>> edgeAnnotations;
 
     public TreeAnnotation(FragmentationTree tree, FragmentationPatternAnalysis analysis) {
-        this.vertexAnnotations = new HashMap<Fragment, Map<Class<?>, Double>>(tree.numberOfVertices()*2);
-        this.edgeAnnotations = new HashMap<Loss, Map<Class<?>, Double>>(tree.numberOfVertices()*2);
-        annotate(tree, analysis);
+        this(tree, analysis, tree.getInput());
+    }
+
+    public TreeAnnotation(FragmentationPathway pathway, FragmentationPatternAnalysis analysis, ProcessedInput input) {
+        this.vertexAnnotations = new HashMap<Fragment, Map<Class<?>, Double>>(pathway.numberOfVertices()*2);
+        this.edgeAnnotations = new HashMap<Loss, Map<Class<?>, Double>>(pathway.numberOfVertices()*2);
+        annotate(pathway, analysis, input);
     }
 
     public HashMap<Fragment, Map<Class<?>, Double>> getVertexAnnotations() {
@@ -39,20 +40,20 @@ public class TreeAnnotation {
         return edgeAnnotations.get(l);
     }
 
-    protected void annotate(FragmentationTree tree, FragmentationPatternAnalysis analysis) {
+    protected void annotate(FragmentationPathway pathway, FragmentationPatternAnalysis analysis, ProcessedInput input) {
         // initialize scorers
         final Object[] decompositionInits, lossInits;
         decompositionInits = new Object[analysis.getDecompositionScorers().size()];
         int k=0;
-        for (DecompositionScorer s : analysis.getDecompositionScorers()) decompositionInits[k++] = s.prepare(tree.getInput());
+        for (DecompositionScorer s : analysis.getDecompositionScorers()) decompositionInits[k++] = s.prepare(input);
         k=0;
         lossInits = new Object[analysis.getLossScorers().size()];
-        for (LossScorer s : analysis.getLossScorers()) lossInits[k++] = s.prepare(tree.getInput());
+        for (LossScorer s : analysis.getLossScorers()) lossInits[k++] = s.prepare(input);
         // calculate peak scores
-        final double[][] peakScores = new double[analysis.getFragmentPeakScorers().size()][tree.getInput().getMergedPeaks().size()];
+        final double[][] peakScores = new double[analysis.getFragmentPeakScorers().size()][input.getMergedPeaks().size()];
         k=0;
         for (PeakScorer s : analysis.getFragmentPeakScorers()) {
-            s.score(tree.getInput().getMergedPeaks(), tree.getInput(), peakScores[k++]);
+            s.score(input.getMergedPeaks(), input, peakScores[k++]);
         }
         // klasses
         final Class[] rootClasses = new Class[analysis.getRootScorers().size()];
@@ -66,36 +67,36 @@ public class TreeAnnotation {
         for (int i=analysis.getLossScorers().size(); i < analysis.getPeakPairScorers().size()+analysis.getLossScorers().size(); ++i)
             lossClasses[i] = analysis.getPeakPairScorers().get(i-analysis.getLossScorers().size()).getClass();
         // calculate peak pair scores
-        final double[][][] peakPairScores = new double[analysis.getPeakPairScorers().size()][tree.getInput().getMergedPeaks().size()][tree.getInput().getMergedPeaks().size()];
+        final double[][][] peakPairScores = new double[analysis.getPeakPairScorers().size()][input.getMergedPeaks().size()][input.getMergedPeaks().size()];
         k=0;
         for (PeakPairScorer s : analysis.getPeakPairScorers()) {
-            s.score(tree.getInput().getMergedPeaks(), tree.getInput(), peakPairScores[k++]);
+            s.score(input.getMergedPeaks(), input, peakPairScores[k++]);
         }
         final ScoreReportMap rootAnnotation = new ScoreReportMap(rootClasses);
-        final TreeFragment root = tree.getRoot();
+        final Fragment root = pathway.getRoot();
         for (DecompositionScorer s : analysis.getRootScorers()) {
-            rootAnnotation.put(s.getClass(), s.score(root.getFormula(), root.getPeak(), tree.getInput(), s.prepare(tree.getInput())));
+            rootAnnotation.put(s.getClass(), s.score(root.getFormula(), root.getPeak(), input, s.prepare(input)));
         }
         vertexAnnotations.put(root, rootAnnotation);
-        annotateFragmentsAndEdges(tree, analysis, decompositionInits, lossInits, peakScores, peakPairScores, vertexClasses, lossClasses);
+        annotateFragmentsAndEdges(pathway, analysis, decompositionInits, lossInits, peakScores, peakPairScores, vertexClasses, lossClasses, input);
     }
 
-    protected void annotateFragmentsAndEdges(FragmentationTree tree, FragmentationPatternAnalysis analysis,
+    protected void annotateFragmentsAndEdges(FragmentationPathway pathway, FragmentationPatternAnalysis analysis,
                                              Object[] decompositionInits, Object[] lossInits, double[][] peakScores,
-                                             double[][][] peakPairScores, Class[] vertexClasses, Class[] lossClasses) {
+                                             double[][][] peakPairScores, Class[] vertexClasses, Class[] lossClasses, ProcessedInput input) {
         // iterate tree in post-order
-        for (Fragment vertex : tree.getFragmentsWithoutRoot()) {
-            annotateFragment(tree, analysis, decompositionInits, peakScores, vertexClasses, vertex);
-            annotateLoss(tree, analysis, lossClasses, lossInits, peakPairScores, vertex);
+        for (Fragment vertex : pathway.getFragmentsWithoutRoot()) {
+            annotateFragment(analysis, decompositionInits, peakScores, vertexClasses, vertex, input);
+            annotateLoss(analysis, lossClasses, lossInits, peakPairScores, vertex, input);
         }
     }
 
-    protected void annotateFragment(FragmentationTree tree, FragmentationPatternAnalysis analysis, Object[] decompositionInits, double[][] peakScores, Class[] vertexClasses, Fragment vertex) {
+    protected void annotateFragment(FragmentationPatternAnalysis analysis, Object[] decompositionInits, double[][] peakScores, Class[] vertexClasses, Fragment vertex, ProcessedInput input) {
         final ScoreReportMap vertexAnnotation = new ScoreReportMap(vertexClasses);
         // Formula Scorer
         int j=0;
         for (DecompositionScorer scorer : analysis.getDecompositionScorers()) {
-            final double score = scorer.score(vertex.getFormula(), vertex.getPeak(), tree.getInput(), decompositionInits[j]);
+            final double score = scorer.score(vertex.getFormula(), vertex.getPeak(), input, decompositionInits[j]);
             vertexAnnotation.put(scorer.getClass(), score);
         }
         // Peak Scorer
@@ -106,20 +107,22 @@ public class TreeAnnotation {
         vertexAnnotations.put(vertex, vertexAnnotation);
     }
 
-    protected void annotateLoss(FragmentationTree tree, FragmentationPatternAnalysis analysis, Class[] lossClasses, Object[] lossInits, double[][][] peakPairScores, Fragment vertex) {
-        int j;// Loss Scorer
-        final Loss loss = vertex.getIncomingEdge();
-        final ScoreReportMap edgeAnnotation = new ScoreReportMap(lossClasses);
-        j=0;
-        for (LossScorer s : analysis.getLossScorers()) {
-            edgeAnnotation.put(s.getClass(), s.score(loss, tree.getInput(), lossInits[j++]));
+    protected void annotateLoss(FragmentationPatternAnalysis analysis, Class[] lossClasses, Object[] lossInits, double[][][] peakPairScores, Fragment vertex, ProcessedInput input) {
+        for (final Loss loss : vertex.getIncomingEdges()) {
+            int j;// Loss Scorer
+            //final Loss loss = vertex.getIncomingEdge();
+            final ScoreReportMap edgeAnnotation = new ScoreReportMap(lossClasses);
+            j=0;
+            for (LossScorer s : analysis.getLossScorers()) {
+                edgeAnnotation.put(s.getClass(), s.score(loss, input, lossInits[j++]));
+            }
+            // peak pair Scorers
+            j=0;
+            for (PeakPairScorer s : analysis.getPeakPairScorers()) {
+                edgeAnnotation.put(s.getClass(), peakPairScores[j++][loss.getHead().getPeak().getIndex()][loss.getTail().getPeak().getIndex()]);
+            }
+            edgeAnnotations.put(loss, edgeAnnotation);
         }
-        // peak pair Scorers
-        j=0;
-        for (PeakPairScorer s : analysis.getPeakPairScorers()) {
-            edgeAnnotation.put(s.getClass(), peakPairScores[j++][loss.getHead().getPeak().getIndex()][loss.getTail().getPeak().getIndex()]);
-        }
-        edgeAnnotations.put(loss, edgeAnnotation);
     }
 
     private static class ScoreReportMap extends AbstractMap<Class<?>, Double> {

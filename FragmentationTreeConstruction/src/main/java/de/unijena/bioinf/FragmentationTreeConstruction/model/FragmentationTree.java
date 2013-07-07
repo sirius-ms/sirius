@@ -28,6 +28,13 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         this.rootScore = graph.getRootScore();
     }
 
+    public FragmentationTree(double score, FragmentationGraph graph, GraphFragment root, double rootScore) {
+        this.score = score;
+        this.input = graph.getProcessedInput();
+        this.root = new TreeFragment(root.getIndex(), null, root.getDecomposition(), null, root.getPeak());
+        this.rootScore = rootScore;
+    }
+
     public TreeFragment addVertex(TreeFragment parent, Loss edge) {
         final Fragment child = edge.getTail();
         final TreeFragment treenode = new TreeFragment(child.getIndex(), parent, child.getDecomposition(),
@@ -181,6 +188,10 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
 
     public double getRootScore() {
         return rootScore;
+    }
+
+    public void setRootScore(double rootScore) {
+        this.rootScore = rootScore;
     }
 
     @Override

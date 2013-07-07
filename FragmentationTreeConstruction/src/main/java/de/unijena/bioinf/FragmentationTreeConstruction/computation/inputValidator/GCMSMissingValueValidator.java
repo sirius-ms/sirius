@@ -66,7 +66,7 @@ public class GCMSMissingValueValidator extends MissingValueValidator {
             throwOrWarn(warn, repair && dev!=null, "Measurement profile: standardMs2MassDeviation not null. But EI uses no MS2. StandardMs2MassDeviation is set to same as MS1.");
         }
         profile.setStandardMs2MassDeviation(profile.getStandardMs1MassDeviation());
-        if (!dev.getClass().equals(EIIntensityDeviation.class)) throwOrWarn(warn, false, "Deviation is not from class 'EIIntensityDeviation' (but intensity needed for calculations).");
+        if (!dev.getClass().equals(EIIntensityDeviation.class)) throwOrWarn(warn, false, "Deviation is not from class 'EIIntensityDeviation' (but intensity is necessary for calculations).");
         input.setMeasurementProfile(profile);
     }
 

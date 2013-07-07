@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.GCMSFragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.MostRelevantPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.GCMSMissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
@@ -14,23 +15,48 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Marcus
- * Date: 11.06.13
- * Time: 12:11
- * To change this template use File | Settings | File Templates.
- */
 public class GCMSFactory {
 
-    double heteroAverage = 0.5886335;
-    double heteroDev = 0.5550574;
-    double heteroNonC = 0.8;
+    private boolean useHalogens = false;
+    private boolean useChlorine = false;
+    private boolean usePFB = false;
+    private boolean useTMS = false;
+    private boolean useDerivates = false;
+    //scoring
+    private double heteroAverage = 0.5886335;
+    private double heteroDev = 0.5550574;
+    private double heteroNonC = 0.8;
+
+    //Elements
+    private Element dmsElement;
+    private Element tmsElement;
+    private Element pfbElement;
+
+    private void setInitials(){
+        if (useHalogens || useChlorine){
+            heteroAverage = 0.5269789;
+            heteroDev = 0.521254;
+        }
+
+        //introduce new "elements"
+        PeriodicTable periodicTable = PeriodicTable.getInstance();
+        periodicTable.addElement("Pfb", "Pfb", 181.007665, 1); //C7H2F5
+        periodicTable.addElement("Tms", "Tms", 73.047352, 1); // C3H9Si
+        periodicTable.addElement("Dms", "Dms", 58.023877, 2); //C2H6Si
+
+        pfbElement = periodicTable.getByName("Pfb");
+        tmsElement = periodicTable.getByName("Tms");
+        dmsElement = periodicTable.getByName("Dms");
+
+        //to extend TableSelection
+        MolecularFormula.parse("").getTableSelection().extendElements(pfbElement, tmsElement, dmsElement);
+    }
 
     public GCMSFragmentationPatternAnalysis getGCMSAnalysis(){
+        setInitials();
 
         final PeakScorer gcmsOriginalPeakIsNoiseScorer = new PeakScorer() {
             @Called("gcms noise")
@@ -39,15 +65,14 @@ public class GCMSFactory {
             public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
                 // score peak intensity
                 for (int i = 0; i < scores.length; i++) {
-                    if (peaks.get(i).getRelativeIntensity()!=0) scores[i] += Math.log(peaks.get(i).getRelativeIntensity() * 0.1); // 0-Model: pareto distribution of noise peaks
-                    //todo but is this pareto?
+                    if (peaks.get(i).getRelativeIntensity()!=0) scores[i] += Math.log(100 * peaks.get(i).getRelativeIntensity() * 0.1); // 0-Model: pareto distribution of noise peaks
+                    //todo but what has this to do with pareto?
 
                 }
             }
         };
 
         final DecompositionScorer h2cDecompositionScorer = new DecompositionScorer() {
-            @Called("h2c decomp")
             @Override
             public Object prepare(ProcessedInput input) {
                 return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -62,20 +87,20 @@ public class GCMSFactory {
                 int tms = 0;
                 int dms = 0;
                 int pfb = 0;
-                final PeriodicTable periodicTable = formula.getTableSelection().getPeriodicTable();
-                final Element tmsElement = periodicTable.getByName("Tms");
+
                 if (tmsElement != null) tms = formula.numberOf(tmsElement);
-                final Element dmsElement = periodicTable.getByName("Dms");
                 if (dmsElement != null) dms = formula.numberOf(dmsElement);
-                final Element pfbElement = periodicTable.getByName("Pfb");
                 if (pfbElement != null) pfb = formula.numberOf(pfbElement);
 
-                final int hetero = atomCount - carbon - hydrogen + 4 * pfb; //count pfb once in atomCount and 4 extra times (5 Flour atoms)
-                final int carbonRate = carbon + 3 * tms + 2 * dms + 7 * pfb;
+//                final int hetero = atomCount - carbon - hydrogen;// + 4 * pfb; //count pfb once in atomCount and 4 extra times (5 Flour atoms)
+//                final int carbonRate = carbon;// + 3 * tms + 2 * dms + 7 * pfb;
                 //final double ratio = (double)hetero / (carbonRate == 0 ? heteroNonC : (double)carbonRate);
                 //todo in GCMSTool Peaks.scoreDecompositions without heteroNonC and the special elements stuff.
-                final double ratio = (double)hetero / ((double)carbonRate);
-                if (formula.toString().equals("C6H6O2")) System.out.println("h2cDecompscoreC6H6O2 "+(ratio>3 ? Math.log(0.00005) : 0));
+                final int hetero = atomCount- carbon - tms - dms - pfb;
+                final int carbonRate = carbon;
+                //todo different to heteroToCarbon rate, no Pfb.Tms... but instead H
+                final double ratio = (double)carbonRate / ((double)hetero);
+
                 return (ratio>3 ? Math.log(0.00005) : 0);
             }
         };
@@ -87,19 +112,15 @@ public class GCMSFactory {
             @Override
             public double score(MolecularFormula formula) {
                 //todo Kai uses improved Hetero2CarbonScorer? --> heteroWithoutOxygenToCarbonRatio()
-
                 final int atomCount = formula.atomCount();
                 final int carbon = formula.numberOfCarbons();
                 final int hydrogen = formula.numberOfHydrogens();
                 int tms = 0;
                 int dms = 0;
                 int pfb = 0;
-                final PeriodicTable periodicTable = formula.getTableSelection().getPeriodicTable();
-                final Element tmsElement = periodicTable.getByName("Tms");
+
                 if (tmsElement != null) tms = formula.numberOf(tmsElement);
-                final Element dmsElement = periodicTable.getByName("Dms");
                 if (dmsElement != null) dms = formula.numberOf(dmsElement);
-                final Element pfbElement = periodicTable.getByName("Pfb");
                 if (pfbElement != null) pfb = formula.numberOf(pfbElement);
 
                 final int hetero = atomCount - carbon - hydrogen + 4 * pfb; //count pfb once in atomCount and 4 extra times (5 Flour atoms)
@@ -119,26 +140,30 @@ public class GCMSFactory {
         analysis.getDecompositionScorers().add(new MassDeviationVertexScorer(false)); //todo compare to gcmstool. same?
         analysis.getDecompositionScorers().add(h2cDecompositionScorer);
         //scorer root
-        analysis.getRootScorers().add(new MassDeviationVertexScorer(true));
-        analysis.getRootScorers().add(new ChemicalPriorScorer(h2cScorer, 0d, 0d)); //todo nicht extra in GCMSTool gescored ? , change minimal mass?
+        //todo never scored in GCMSTool, change minimal mass?
+//        analysis.getRootScorers().add(new MassDeviationVertexScorer(true));
+//        analysis.getRootScorers().add(new ChemicalPriorScorer(h2cScorer, 0d, 11d));
         //lossScorer
         analysis.getLossScorers().add(new ChemicalPriorEdgeScorer(h2cScorer, 0d));
         analysis.getLossScorers().add(new TmsToDmsLossScorer());
         analysis.getLossScorers().add(new FractionOfParentLossScorer());
-        analysis.getLossScorers().add(EICommonLossEdgeScorer.getDefaultGCMSCommonLossScorer());
+        analysis.getLossScorers().add(EICommonLossEdgeScorer.getGCMSCommonLossScorer(useChlorine, useHalogens, usePFB, useTMS));
         //fragmentScorer
         //analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer(4));
         analysis.getFragmentPeakScorers().add(gcmsOriginalPeakIsNoiseScorer);
         //analysis.getFragmentPeakScorers().add(new TreeSizeScorer(-1d));
         //post-processors
         //analysis.getPostProcessors().add(new MostRelevantPeaksFilter(5));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(1d));
+        //analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
         //analysis.getPostProcessors().add(new MostRelevantPeaksFilter(5));
 
         //set boolean variables
         analysis.setRemoveIsotopePeaks(true);
-        analysis.setUseChlorine(false);
-        analysis.setUseHalogens(false);
+        analysis.setUseChlorine(useChlorine);
+        analysis.setUseHalogens(useHalogens);
+        analysis.setUsePFB(usePFB);
+        analysis.setUseTMS(useTMS);
+        analysis.setUseDerivates(useDerivates);
 
         return analysis;
     }
@@ -160,6 +185,47 @@ public class GCMSFactory {
         this.heteroDev = heteroDev;
     }
 
+    public boolean isUseChlorine() {
+        return useChlorine;
+    }
+
+    public void setUseChlorine(boolean useChlorine) {
+        this.useChlorine = useChlorine;
+    }
+
+    public boolean isUseHalogens() {
+        return useHalogens;
+    }
+
+    public void setUseHalogens(boolean useHalogens) {
+        this.useHalogens = useHalogens;
+    }
+
+    public boolean isUsePFB() {
+        return usePFB;
+    }
+
+    public void setUsePFB(boolean usePFB) {
+        this.usePFB = usePFB;
+    }
+
+    public boolean isUseTMS() {
+        return useTMS;
+    }
+
+    public boolean isUseDerivates() {
+        return useDerivates;
+    }
+
+    public void setUseDerivates(boolean useDerivates) {
+        this.useDerivates = useDerivates;
+    }
+
+    public void setUseTMS(boolean useTMS) {
+        this.useTMS = useTMS;
+
+
+    }
 
     private static <S, T extends S> T getByClassName(Class<T> klass, List<S> list) {
         for (S elem : list) if (elem.getClass().equals(klass)) return (T)elem;

@@ -8,23 +8,22 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Marcus
- * Date: 25.06.13
- * Time: 00:24
- * To change this template use File | Settings | File Templates.
+ * compares the mass of a loss to the parent mass or if unknown to the mass of the heaviest peak.
+ * Different to RelativeLossSizeScorer because it don't punishes if loss sizes don't grow with parent mass (?)
  */
-@Called("Fraction")
+@Called("FractionOfParent")
 public class FractionOfParentLossScorer implements LossScorer {
+    //todo implement as PeakPairScorer?...
     @Override
     public Double prepare(ProcessedInput inputh) {
         //if ion mass known take this
         double comparableMass = (inputh.getParentPeak()==null ? 0 : inputh.getParentPeak().getMz());
-        //else find largest mass
-        if (comparableMass==0d){
+        //else find largest mass, Double.MAX_VALUE means existing dummy node
+        if (comparableMass==0d || comparableMass==Double.MAX_VALUE){
+            comparableMass = 0d;
             final List<ProcessedPeak> peaks = inputh.getMergedPeaks();
             for (ProcessedPeak peak : peaks) {
-                if (peak.getMz()>comparableMass) comparableMass = peak.getMz();
+                if (peak.getMz()>comparableMass && peak.getMz()<Double.MAX_VALUE) comparableMass = peak.getMz();
             }
         }
         return comparableMass;

@@ -8,11 +8,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Marcus
- * Date: 25.06.13
- * Time: 00:21
- * To change this template use File | Settings | File Templates.
+ * If there's a conversion from head to tail of TMS into DMS this LossScorer punishes Losses which consist of more then
+ * a single CH3. Because the CH3 group of TMS is not directly connected to other groups but the DMS part.
  */
 @Called("TmsToDmsLossScorer")
 public class TmsToDmsLossScorer implements LossScorer {
@@ -26,18 +23,32 @@ public class TmsToDmsLossScorer implements LossScorer {
         final MolecularFormula lossFormula = loss.getFormula();
         final MolecularFormula headFormula = loss.getHead().getFormula();
         final MolecularFormula tailFormula = loss.getTail().getFormula();
-        final PeriodicTable periodicTable = lossFormula.getTableSelection().getPeriodicTable();
-        int tms = 0;
-        int dms = 0;
-        final Element tmsElement = periodicTable.getByName("Tms");
-        if (tmsElement != null) tms = headFormula.numberOf(tmsElement);
+        final PeriodicTable periodicTable = PeriodicTable.getInstance();
+//        int tmsHead = 0;
+//        int tmsTail = 0;
+        int dmsTail = 0;
+        int dmsHead = 0;
+
+//        final Element tmsElement = periodicTable.getByName("Tms");
+//        if (tmsElement != null){
+//            tmsHead = headFormula.numberOf(tmsElement);
+//            tmsTail = tailFormula.numberOf(tmsElement);
+//        }
         final Element dmsElement = periodicTable.getByName("Dms");
-        if (dmsElement != null) dms = tailFormula.numberOf(dmsElement);
+        if (dmsElement != null){
+            dmsTail = tailFormula.numberOf(dmsElement);
+            dmsHead = headFormula.numberOf(dmsElement);
+        }
+
 
         double score = 0;
-        if (tms>0 && dms>0){
-            score += -0.1;
-            if (!lossFormula.equals(lossFormula.getTableSelection().parse("CH3"))) score += -10;
+        //if (tmsHead>0 && dmsTail>0){
+        if (dmsTail-dmsHead>0){
+            score -= 0.1;//todo is it uncommon, that TMS looses its CH3 group? If yes, does this scoring of -0.1 influence anything if CH3 as common loss scores log(100)~=4,6..
+            //if loss != CH3 score -10
+            if (lossFormula.elements().size()!=2 || lossFormula.numberOfCarbons()!=1 || lossFormula.numberOfHydrogens()!=3){
+                score -= 10;
+            }
         }
         return score;
     }
