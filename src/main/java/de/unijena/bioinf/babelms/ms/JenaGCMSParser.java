@@ -14,6 +14,10 @@ public class JenaGCMSParser implements Parser<JenaGCMSExperiment> {
     private static final Ionization DEFAULT_IONIZATION = new ElectronIonization();
     private final boolean molecularIonKnown;
 
+    /**
+     * Parser for JenaGCMSExperiment.
+     * @param molecularIonKnown if true information about formula and mass of the molecular ion are omitted
+     */
     public JenaGCMSParser(boolean molecularIonKnown){
         this.molecularIonKnown = molecularIonKnown;
     }
@@ -83,7 +87,7 @@ public class JenaGCMSParser implements Parser<JenaGCMSExperiment> {
 
             msSpectrum  = new JenaMsSpectrum(simpleSpectrum, tic, retentionTime);
 
-            return new JenaGCMSExperiment(compoundName, compoundFormula, ionMass, ionization, Collections.singletonList(msSpectrum), collisionEnergy);
+            return new JenaGCMSExperiment(compoundName, (parentMoleculeKnown ? compoundFormula : null), (parentMoleculeKnown ? ionMass : 0d), ionization, Collections.singletonList(msSpectrum), collisionEnergy);
         }
 
     }
