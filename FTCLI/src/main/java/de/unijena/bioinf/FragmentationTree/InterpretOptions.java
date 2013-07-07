@@ -60,18 +60,26 @@ public class InterpretOptions {
         return options.getFilterByIsotope() > 0 || options.getMs1();
     }
 
-    public static MeasurementProfile getProfile(Options options) {
+    public static MeasurementProfile getMeasurementProfile(Options options) {
 
-        double ppmMax, ppmAbs, sdms1, sdms2, sdDiff;
+        Double ppmMax=null, ppmAbs=null, sdms1=null, sdms2=null, sdDiff=null;
 
         ppmMax = options.getPPMMax();
-        ppmAbs = options.getAbsMax() == null ? ppmMax*100d*1e-6 : options.getAbsMax();
-        sdms1 = options.getStandardDeviationOfMs1()==null ? ppmMax/3d : options.getStandardDeviationOfMs1();
-        sdms2 = options.getStandardDeviationOfMs2()==null ? ppmMax/3d : options.getStandardDeviationOfMs2();
-        sdDiff = options.getStandardDeviationOfDiff()==null ? ppmMax/4d : options.getStandardDeviationOfMs2();
+        ppmAbs = options.getAbsMax();
+        if (ppmMax != null && ppmAbs == null)
+            ppmAbs = ppmMax*100d*1e-6;
+        if (ppmMax != null) {
+            sdms1 = options.getStandardDeviationOfMs1()==null ? ppmMax/3d : options.getStandardDeviationOfMs1();
+            sdms2 = options.getStandardDeviationOfMs2()==null ? ppmMax/3d : options.getStandardDeviationOfMs2();
+            sdDiff = options.getStandardDeviationOfDiff()==null ? ppmMax/4d : options.getStandardDeviationOfMs2();
+        }
 
-        final MutableMeasurementProfile profile = new MutableMeasurementProfile(new Deviation(ppmMax, ppmAbs), new Deviation(sdms1), new Deviation(sdms2), new Deviation(sdDiff), getFormulaConstraints(options), options.getExpectedIntensityDeviation(), options.getNoiseMedian());
-        profile.setExpectedIntensityDeviation(1d);
+        final MutableMeasurementProfile profile = new MutableMeasurementProfile(ppmMax!=null ? new Deviation(ppmMax, ppmAbs) : null,
+                sdms1 != null ? new Deviation(sdms1) : null,
+                sdms2 != null ? new Deviation(sdms2) : null,
+                sdDiff != null ? new Deviation(sdDiff) : null, getFormulaConstraints(options), options.getExpectedIntensityDeviation()==null ? 0d : options.getExpectedIntensityDeviation(),
+                options.getNoiseMedian()==null ? 0 : options.getNoiseMedian());
+        profile.setIntensityDeviation(1d);
         // ...
         return profile;
     }

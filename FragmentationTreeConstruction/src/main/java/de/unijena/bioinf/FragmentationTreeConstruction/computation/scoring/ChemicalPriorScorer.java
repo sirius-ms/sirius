@@ -1,13 +1,13 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
-import static de.unijena.bioinf.FragmentationTreeConstruction.inspection.Inspectable.Utils.keyValues;
 
 @Called("Chemical Prior")
 public class ChemicalPriorScorer implements DecompositionScorer<Object> {
@@ -61,8 +61,26 @@ public class ChemicalPriorScorer implements DecompositionScorer<Object> {
         return null;
     }
 
+    public double score(MolecularFormula formula) {
+        return formula.getMass() >= minimalMass ? prior.score(formula) - normalizationConstant : 0d;
+    }
+
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
         return formula.getMass() >= minimalMass ? prior.score(formula) - normalizationConstant : 0d;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        this.prior = (MolecularFormulaScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "prior"));
+        this.normalizationConstant = document.getDoubleFromDictionary(dictionary, "normalization");
+        this.minimalMass = document.getDoubleFromDictionary(dictionary, "minimalMass");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "prior", helper.wrap(document, prior));
+        document.addToDictionary(dictionary, "normalization", normalizationConstant);
+        document.addToDictionary(dictionary, "minimalMass", minimalMass);
     }
 }

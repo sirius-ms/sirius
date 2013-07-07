@@ -1,9 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
@@ -67,5 +69,17 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
     public double score(MolecularFormula formula) {
         final boolean isChnops =  containsStrangeElement(formula);
         return (isChnops ? 0d : penalty) - normalization;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        penalty = document.getDoubleFromDictionary(dictionary, "penalty");
+        normalization = document.getDoubleFromDictionary(dictionary, "normalization");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "penalty", penalty);
+        document.addToDictionary(dictionary, "normalization", normalization);
     }
 }

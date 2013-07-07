@@ -13,12 +13,15 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidato
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.JSONDocumentType;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 
 import java.io.File;
@@ -56,10 +59,22 @@ public class Main {
         this.verbose = options.getVerbose();
 
         final List<File> files = InterpretOptions.getFiles(options);
-        final MeasurementProfile defaultProfile = InterpretOptions.getProfile(options);
+        final MeasurementProfile defaultProfile = InterpretOptions.getMeasurementProfile(options);
 
-        final FragmentationPatternAnalysis analyzer = FragmentationPatternAnalysis.defaultAnalyzer();
-        FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
+        final FragmentationPatternAnalysis analyzer;
+        if (options.getProfile() != null) {
+            try {
+                analyzer = FragmentationPatternAnalysis.loadFromProfile(new JSONDocumentType(), JSONDocumentType.readFromFile(new File(options.getProfile())));
+            } catch (IOException e) {
+                System.err.println(e);
+                System.exit(1);
+                return;
+            }
+        } else {
+            analyzer = FragmentationPatternAnalysis.defaultAnalyzer();
+        }
+        if (options.getTreeSize() != null)
+            FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
         analyzer.setRepairInput(true);
         final IsotopePatternAnalysis deIsotope = IsotopePatternAnalysis.defaultAnalyzer();
 
@@ -67,6 +82,18 @@ public class Main {
         if (!target.exists()) target.mkdirs();
 
         final int maxNumberOfTrees = options.getTrees();
+
+        // write used profile
+
+        {
+            try {
+                final FileWriter profileWriter = new FileWriter(new File(target, "profile.json"));
+                JSONDocumentType.writeParameters(analyzer, profileWriter);
+                profileWriter.close();
+            } catch (IOException e) {
+                System.err.println("Cannot create profile file: " + e);
+            }
+        }
 
         for (final File f : files) {
             try {

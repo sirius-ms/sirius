@@ -1,5 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.merging;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -98,5 +100,15 @@ public class HighIntensityMerger implements PeakMerger {
         System.arraycopy(mzArray, lowerBound, subset, 0, upperBound-lowerBound+1);
         merger.merge(Arrays.asList(subset), intensiveIndex-lowerBound, mzArray[intensiveIndex].getMz() );
         return lowerBound;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        minMergeDistance = document.getDoubleFromDictionary(dictionary, "minDistance");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "minDistance", minMergeDistance);
     }
 }

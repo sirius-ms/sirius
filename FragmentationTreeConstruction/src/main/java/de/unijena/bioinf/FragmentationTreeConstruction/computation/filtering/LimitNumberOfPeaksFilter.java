@@ -1,5 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
@@ -9,16 +11,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kai
- * Date: 5/14/13
- * Time: 5:44 PM
- * To change this template use File | Settings | File Templates.
- */
 public class LimitNumberOfPeaksFilter implements PostProcessor{
 
     private int limit;
+
+    public LimitNumberOfPeaksFilter() {
+        this(Integer.MAX_VALUE);
+    }
 
     public LimitNumberOfPeaksFilter(int limit) {
         this.limit = limit;
@@ -52,5 +51,15 @@ public class LimitNumberOfPeaksFilter implements PostProcessor{
     @Override
     public Stage getStage() {
         return Stage.AFTER_MERGING;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        limit = (int)document.getIntFromDictionary(dictionary, "limit");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "limit", limit);
     }
 }

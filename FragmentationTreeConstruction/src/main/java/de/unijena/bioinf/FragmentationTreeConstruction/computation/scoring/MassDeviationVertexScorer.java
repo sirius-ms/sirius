@@ -1,7 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -14,25 +16,8 @@ import org.apache.commons.math3.special.Erf;
 @Called("Mass Deviation")
 public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     private final static double sqrt2 = Math.sqrt(2);
-    private double massPenalty;
-    private final boolean scoreRoot;
 
-    public MassDeviationVertexScorer(boolean scoreRoot) {
-        this(3, scoreRoot);
-    }
-
-    public MassDeviationVertexScorer(double massPenalty, boolean scoreRoot) {
-        this.massPenalty = massPenalty;
-        this.scoreRoot = scoreRoot;
-    }
-
-
-    public void setMassPenalty(double massPenalty) {
-        this.massPenalty = massPenalty;
-    }
-
-    public double getMassPenalty() {
-        return massPenalty;
+    public MassDeviationVertexScorer() {
     }
 
     @Override
@@ -49,5 +34,15 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
         final Deviation dev = profile.getStandardMs2MassDeviation();
         final double sd = dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        // nothing ^^
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        // nothing ^^
     }
 }

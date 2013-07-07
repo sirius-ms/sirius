@@ -4,9 +4,12 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -59,7 +62,29 @@ public class MissingValueValidator implements InputValidator {
             throwOrWarn(warn, repair && dev!=null, "Measurement profile: Ion Mass deviation is missing");
             profile.setStandardMs1MassDeviation(dev);
         }
+        checkAlphabet(warn, repair, input, profile);
         input.setMeasurementProfile(profile);
+    }
+
+    protected void checkAlphabet(Warning warn, boolean repair, Ms2ExperimentImpl input, MutableMeasurementProfile prof) {
+        if (input.getMolecularFormula() != null) {
+            final FormulaConstraints constraints = prof.getFormulaConstraints();
+            final ChemicalAlphabet alphabet = constraints.getChemicalAlphabet();
+            final Set<Element> elements = new HashSet<Element>(input.getMolecularFormula().elements());
+            elements.removeAll(alphabet.getElements());
+            if (!elements.isEmpty()) {
+                throwOrWarn(warn, repair, "Missing elements " + elements.toString());
+                final Set<Element> both = new HashSet<Element>(input.getMolecularFormula().elements());
+                both.addAll(alphabet.getElements());
+                elements.addAll(alphabet.getElements());
+                final ChemicalAlphabet newAlphabet = new ChemicalAlphabet(both.toArray(new Element[elements.size()]));
+                final FormulaConstraints newConstraints = new FormulaConstraints(newAlphabet, constraints.getFilters());
+                for (Element e : alphabet.getElements()) {
+                    newConstraints.setUpperbound(e, Math.max(input.getMolecularFormula().numberOf(e), constraints.getUpperbound(e)));
+                }
+                prof.setFormulaConstraints(newConstraints);
+            }
+        }
     }
 
     protected void checkNeutralMass(Warning warn, boolean repair, Ms2ExperimentImpl input) {
@@ -119,14 +144,18 @@ public class MissingValueValidator implements InputValidator {
     }
 
     protected void checkIonMass(Warning warn, boolean repair, Ms2ExperimentImpl input) {
-        if (!validDouble(input.getIonMass(), false)) {
+        if (!validDouble(input.getIonMass(), false) || input.getIonMass()==0) {
             throwOrWarn(warn, repair, "No ion mass is given");
-            if (input.getMolecularFormula() != null) {
+            if (input.getMolecularFormula() == null && !validDouble(input.getMoleculeNeutralMass(), false)) {
                 final Spectrum<Peak> ms1 = input.getMergedMs1Spectrum();
                 // maybe the ms2 spectra have a common precursor
                 boolean found = true;
                 double mz = input.getMs2Spectra().get(0).getPrecursorMz();
                 for (Ms2Spectrum s : input.getMs2Spectra()) {
+                    if (!validDouble(s.getPrecursorMz(), false) || s.getPrecursorMz()==0) {
+                        found=false;
+                        break;
+                    }
                     final double newMz = s.getPrecursorMz();
                     if (Math.abs(mz-newMz) > 1e-3) {
                         found = false; break;
@@ -161,6 +190,16 @@ public class MissingValueValidator implements InputValidator {
                         // hopefully, this is the correct isotope peak
                         warn.warn("Predict ion mass from MS1: " + ms1.getMzAt(index));
                         input.setIonMass(ms1.getMzAt(index));
+                    }
+                }
+            } else {
+                final double parentMz = input.getIonization().addToMass(input.getMoleculeNeutralMass());
+                input.setIonMass(parentMz);
+                for (int i=0; i < input.getMs2Spectra().size(); ++i) {
+                    final Ms2Spectrum s = input.getMs2Spectra().get(i);
+                    if (Math.abs(s.getPrecursorMz() - parentMz) > 0.1d) {
+                        final Ms2Spectrum t = new Ms2SpectrumImpl(s, s.getCollisionEnergy(), parentMz, s.getTotalIonCount() );
+                        input.getMs2Spectra().set(i, t);
                     }
                 }
             }

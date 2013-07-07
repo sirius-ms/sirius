@@ -45,30 +45,10 @@
           <version>2.11-SNAPSHOT</version>
       </dependency>
       <dependency>
-          <groupId>org.scala-lang</groupId>
-          <artifactId>scala-library</artifactId>
-          <version>2.10.1</version>
+          <groupId>com.lexicalscope.jewelcli</groupId>
+          <artifactId>jewelcli</artifactId>
+          <version>0.8.3</version>
       </dependency>
-      <!-- Core -->
-      <dependency>
-          <groupId>com.github.scala-incubator.io</groupId>
-          <artifactId>scala-io-core_2.10</artifactId>
-          <version>0.4.2</version>
-      </dependency>
-
-      <!-- File -->
-      <dependency>
-          <groupId>com.github.scala-incubator.io</groupId>
-          <artifactId>scala-io-file_2.10</artifactId>
-          <version>0.4.2</version>
-      </dependency>
-
-      <dependency>
-          <groupId>net.sf.opencsv</groupId>
-          <artifactId>opencsv</artifactId>
-          <version>2.0</version>
-      </dependency>
-
 
   </dependencies>
   
@@ -99,20 +79,6 @@
   
   <!-- Defines how to compile this software -->
   <build>
-      <pluginManagement>
-          <plugins>
-              <plugin>
-                  <groupId>net.alchim31.maven</groupId>
-                  <artifactId>scala-maven-plugin</artifactId>
-                  <version>3.1.0</version>
-              </plugin>
-              <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-compiler-plugin</artifactId>
-                  <version>2.0.2</version>
-              </plugin>
-          </plugins>
-      </pluginManagement>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -123,27 +89,6 @@
           <encoding>utf-8</encoding>
         </configuration>
       </plugin>
-        <plugin>
-            <groupId>net.alchim31.maven</groupId>
-            <artifactId>scala-maven-plugin</artifactId>
-            <executions>
-                <execution>
-                    <id>scala-compile-first</id>
-                    <phase>process-resources</phase>
-                    <goals>
-                        <goal>add-source</goal>
-                        <goal>compile</goal>
-                    </goals>
-                </execution>
-                <execution>
-                    <id>scala-test-compile</id>
-                    <phase>process-test-resources</phase>
-                    <goals>
-                        <goal>testCompile</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -177,7 +122,7 @@
                 <archive>
                     <index>true</index>
                     <manifest>
-                        <mainClass>de.unijena.bioinf.FTAnalysis.FTAnalysis</mainClass>
+                        <mainClass>de.unijena.bioinf.FTAnalysis.FTLearn</mainClass>
                         <!--<mainClass>de.unijena.bioinf.FTAnalysis.GetInfo</mainClass>-->
                     </manifest>
                 </archive>

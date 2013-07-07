@@ -1,11 +1,12 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 /**
  * PostProcessors are applied after normalization and decomposition
  */
-public interface PostProcessor {
+public interface PostProcessor extends Parameterized  {
 
     /**
      *
