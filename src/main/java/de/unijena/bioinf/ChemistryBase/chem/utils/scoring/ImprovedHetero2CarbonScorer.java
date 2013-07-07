@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
@@ -14,13 +15,17 @@ public class ImprovedHetero2CarbonScorer implements MolecularFormulaScorer{
 
     private final static PartialParetoDistribution keggDistribution = new PartialParetoDistribution(0, 0.4d, 3.14534);
 
-    private final DensityFunction distribution;
+    private DensityFunction distribution;
 
     public ImprovedHetero2CarbonScorer() {
         this(keggDistribution);
     }
 
-    public ImprovedHetero2CarbonScorer(DensityFunction distribution) {
+    public ImprovedHetero2CarbonScorer(@Parameter("distribution") DensityFunction distribution) {
+        this.distribution = distribution;
+    }
+
+    public void setDistribution(DensityFunction distribution) {
         this.distribution = distribution;
     }
 

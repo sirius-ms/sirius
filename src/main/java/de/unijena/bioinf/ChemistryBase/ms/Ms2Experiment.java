@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.util.List;

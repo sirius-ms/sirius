@@ -22,7 +22,7 @@ public interface MeasurementProfile {
 
     public FormulaConstraints getFormulaConstraints();
 
-    public double getExpectedIntensityDeviation();
+    public double getIntensityDeviation();
 
     public double getMedianNoiseIntensity();
 

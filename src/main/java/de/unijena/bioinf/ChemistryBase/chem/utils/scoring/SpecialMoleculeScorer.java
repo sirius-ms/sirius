@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
@@ -12,15 +13,23 @@ public class SpecialMoleculeScorer implements MolecularFormulaScorer {
     private final static PartialParetoDistribution oxygenToHeteroKegg = new PartialParetoDistribution(0, 0.75, 5);
     private final static PartialParetoDistribution rdbeKegg = new PartialParetoDistribution(0, 2, 2);
 
-    private final DensityFunction oxygenToHeteroDistribution;
-    private final DensityFunction rdbeDistribution;
+    private DensityFunction oxygenToHeteroDistribution;
+    private DensityFunction rdbeDistribution;
 
     public SpecialMoleculeScorer() {
         this(oxygenToHeteroKegg, rdbeKegg);
     }
 
-    public SpecialMoleculeScorer(DensityFunction oxygenToHeteroDistribution, DensityFunction rdbeDistribution) {
+    public SpecialMoleculeScorer(@Parameter("oxygenToHeteroDistribution") DensityFunction oxygenToHeteroDistribution, @Parameter("rdbeDistribution") DensityFunction rdbeDistribution) {
         this.oxygenToHeteroDistribution = oxygenToHeteroDistribution;
+        this.rdbeDistribution = rdbeDistribution;
+    }
+
+    public void setOxygenToHeteroDistribution(DensityFunction oxygenToHeteroDistribution) {
+        this.oxygenToHeteroDistribution = oxygenToHeteroDistribution;
+    }
+
+    public void setRdbeDistribution(DensityFunction rdbeDistribution) {
         this.rdbeDistribution = rdbeDistribution;
     }
 

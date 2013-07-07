@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
@@ -32,7 +33,7 @@ public class Hetero2CarbonScorer implements MolecularFormulaScorer {
 
     private DensityFunction distribution;
 
-    public Hetero2CarbonScorer(DensityFunction distribution) {
+    public Hetero2CarbonScorer(@Parameter("distribution") DensityFunction distribution) {
         this.distribution = distribution;
     }
 
@@ -49,4 +50,7 @@ public class Hetero2CarbonScorer implements MolecularFormulaScorer {
         return Math.log(distribution.getDensity(hetero2carbon));
     }
 
+    public DensityFunction getDistribution() {
+        return distribution;
+    }
 }

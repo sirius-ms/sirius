@@ -1,8 +1,12 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 /**
  * Factory for chemical scorers
@@ -40,21 +44,41 @@ public final class ChemicalCompoundScorer {
         return createDefaultCompoundScorer(true);
     }
 
-    private static class DefaultScorer implements MolecularFormulaScorer {
-        private final static ImprovedHetero2CarbonScorer scorer = new ImprovedHetero2CarbonScorer();
-        private final static SpecialMoleculeScorer special = new SpecialMoleculeScorer();
+    public static class DefaultScorer implements MolecularFormulaScorer, Parameterized {
+        private ImprovedHetero2CarbonScorer scorer = new ImprovedHetero2CarbonScorer();
+        private SpecialMoleculeScorer special = new SpecialMoleculeScorer();
 
         @Override
         public double score(MolecularFormula formula) {
             return Math.max(scorer.score(formula), special.score(formula));
         }
 
-        public static ImprovedHetero2CarbonScorer getScorer() {
+        public ImprovedHetero2CarbonScorer getScorer() {
             return scorer;
         }
 
-        public static SpecialMoleculeScorer getSpecial() {
+        public SpecialMoleculeScorer getSpecial() {
             return special;
+        }
+
+        public void setScorer(ImprovedHetero2CarbonScorer scorer) {
+            this.scorer = scorer;
+        }
+
+        public void setSpecial(SpecialMoleculeScorer special) {
+            this.special = special;
+        }
+
+        @Override
+        public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            scorer = (ImprovedHetero2CarbonScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "standardScorer"));
+            special = (SpecialMoleculeScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "specialMoleculeScorer"));
+        }
+
+        @Override
+        public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            document.addToDictionary(dictionary, "standardScorer", helper.wrap(document, scorer));
+            document.addToDictionary(dictionary, "specialMoleculeScorer", helper.wrap(document, special));
         }
     }
 

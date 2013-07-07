@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
-import org.apache.commons.collections.primitives.ArrayIntList;
 
 import java.util.*;
 
@@ -11,13 +10,12 @@ import java.util.*;
  * the given alphabet (usually: metabolites -> atoms, peptides -> amino acids)
  * - The TableSelection is for internal use: It improves performance and memory efficient by bundling elements which
  *  often occur together. It has no meaning for the application and should not be used by the user.
- * - in contrast, the chemical alphabet said which elements from the periodic table should be considered in an specific
+ * - in contrast, the chemical alphabet says which elements from the periodic table should be considered in an specific
  *   application. Obviously, the chemical alphabet and table selection may be identical sometimes, but this is no requirement
  *
- * In addition to the selection of elements, the chemical alphabet contains also the number how much from which element
- * should be expected.
- * The chemical alphabet is implemented such that is works together well with the MassDecomposer. But there are other
- * use-cases for this class.
+ * The chemical alphabet is implemented such that is works together well with the MassDecomposer. This means, that
+ * elements are internally always ordered by mass. But there are other
+ * use-cases for this class. In general: Whenever you want the user to submit a subset of the periodic table, use this class.
  *
  *
  */
@@ -29,22 +27,7 @@ public class ChemicalAlphabet {
 	private final int maxLen;
 
     /**
-     * A factory method which provides a nice way to instantiate chemical alphabets, but which is not type-safe. So
-     * use it carefully and only if your alphabet is a "literal" or constant.
-     *
-     * <pre>ChemicalAlphabet.create(myTableSelection, "C", "H", "N", "O", "P", 5, "S", 3, "F", 6);</pre>
-     * <pre>ChemicalAlphabet.create("C",20, "H", "Fe", 3);</pre>
-     *
-     * This will compile but throw a runtime exception
-     * <pre>ChemicalAlphabet.create(321.02, new int[0], "Bla");</pre>
-     *
-     * @param varargs parameters in the order: [selection], {elementName, [elementUpperbound]}
-     * @return chemical alphabet
-     */
-
-    /**
      * Construct a chemical alphabet containing the CHNOPS alphabet.
-     * TODO: This method fails if the periodic table contains no CHNOPS: We should consider to change this sometimes.
      */
     public ChemicalAlphabet() {
         this(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S"));
@@ -153,5 +136,13 @@ public class ChemicalAlphabet {
         int result = selection.hashCode();
         result = 31 * result + Arrays.hashCode(allowedElements);
         return result;
+    }
+
+
+    @Override
+    public String toString() {
+        final short[] buffer = new short[maxLen];
+        for (Element e : allowedElements) buffer[selection.indexOf(e)] = 1;
+        return MolecularFormula.fromCompomer(selection, buffer).formatByHill();
     }
 }

@@ -13,6 +13,7 @@ public abstract class DataDocument<General, Dictionary, List> {
 
     public static <Gen1, Dict1, List1, Gen2, Dict2, List2> Gen2 transform(DataDocument<Gen1, Dict1, List1> from,
                                                                           DataDocument<Gen2, Dict2, List2> to, Gen1 value) {
+        if (from.equals(to)) return (Gen2)value;
         if (from.isInteger(value)) return to.wrap(from.getInt(value));
         if (from.isDouble(value)) return to.wrap(from.getDouble(value));
         if (from.isBoolean(value)) return to.wrap(from.getBoolean(value));
@@ -146,8 +147,9 @@ public abstract class DataDocument<General, Dictionary, List> {
     }
     public double getDoubleFromDictionary(Dictionary dict, String key) {
         final General value = getFromDictionary(dict, key);
+        if (isInteger(value)) return getInt(value);
         if (!isDouble(value)) throw new TypeError("Can't convert '" + value + "' to double");
-        return getInt(value);
+        return getDouble(value);
     }
     public boolean getBooleanFromDictionary(Dictionary dict, String key) {
         final General value = getFromDictionary(dict, key);
@@ -215,6 +217,10 @@ public abstract class DataDocument<General, Dictionary, List> {
     }
     public void addListToDictionary(Dictionary dict, String key, List value) {
         addToDictionary(dict, key, wrapList(value));
+    }
+
+    public boolean hasKeyInDictionary(Dictionary dict, String key) {
+        return keySetOfDictionary(dict).contains(key);
     }
 
     public abstract General deleteFromDictionary(Dictionary dict, String key);

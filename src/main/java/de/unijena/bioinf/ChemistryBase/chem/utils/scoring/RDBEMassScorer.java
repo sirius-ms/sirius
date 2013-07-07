@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
@@ -36,7 +37,7 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
 
     private DensityFunction distribution;
 
-    public RDBEMassScorer(DensityFunction distribution) {
+    public RDBEMassScorer(@Parameter("distribution") DensityFunction distribution) {
         this.distribution = distribution;
     }
 
@@ -51,5 +52,9 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
 
     public double score(double rdbe, double mass) {
         return Math.log(distribution.getDensity(rdbe/sqrt(mass)));
+    }
+
+    public DensityFunction getDistribution() {
+        return distribution;
     }
 }

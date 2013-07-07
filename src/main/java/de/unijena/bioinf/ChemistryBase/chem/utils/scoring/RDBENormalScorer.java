@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
@@ -20,7 +21,7 @@ public class RDBENormalScorer implements MolecularFormulaScorer{
 
     private DensityFunction distribution;
 
-    public RDBENormalScorer(RealDistribution distribution) {
+    public RDBENormalScorer(@Parameter("distribution") RealDistribution distribution) {
         this.distribution = distribution;
     }
 
@@ -31,5 +32,9 @@ public class RDBENormalScorer implements MolecularFormulaScorer{
     @Override
     public double score(MolecularFormula formula) {
         return Math.log(distribution.getDensity(formula.rdbe()));
+    }
+
+    public DensityFunction getDistribution() {
+        return distribution;
     }
 }
