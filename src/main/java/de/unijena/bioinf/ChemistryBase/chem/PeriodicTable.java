@@ -395,9 +395,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
     
     /**
-     * return the element with the given name.
+     * return the element with the given symbol.
      * @param name
-     * @return an Element or null if there is no element with this name
+     * @return an Element or null if there is no element with this symbol
      */
     public Element getByName(String name) {
         return nameMap.get(name);

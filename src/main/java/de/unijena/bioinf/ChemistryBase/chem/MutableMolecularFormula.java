@@ -38,13 +38,13 @@ public class MutableMolecularFormula extends MolecularFormula {
 	/**
 	 * Changes the amount of the element given as index. The index have to be valid, which means,
 	 * there have to be a mapping in the table selection from the index to an element. To add
-	 * an element which is not contained in the selection, use #{{@link set(Element, int}} or
-	 * #{{@link setByName(String, int}}
+	 * an element which is not contained in the selection, use #{@link this.set(Element, int)} or
+	 * #{@link this.setByName(String, int)}
 	 */
 	public void setAt(int index, int amount) {
 		if (amount < Short.MIN_VALUE || amount > Short.MAX_VALUE)
 			throw new RuntimeException("Element number exceeds formula space: " + amount);
-		if (index > amounts.length && index < selection.size()) {
+		if (index >= amounts.length && index < selection.size()) {
 			this.amounts = Arrays.copyOf(amounts, index+1);
 		}
 		this.amounts[index] = (short)amount;
@@ -55,7 +55,7 @@ public class MutableMolecularFormula extends MolecularFormula {
 	 * the selection is either extended or a new selection is choosed.
 	 */
 	public void set(Element element, int amount) {
-		final int index = selection.getIndexIfExist(element);
+        final int index = selection.getIndexIfExist(element);
 		if (index >= 0) setAt(index, amount);
 		else if (amount != 0) extendByElement(element, amount);
 	}
