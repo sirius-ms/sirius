@@ -1,9 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
@@ -17,7 +19,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 @Called("EI Common Losses")
-public class EICommonLossEdgeScorer extends CommonLossEdgeScorer {
+public class EICommonLossEdgeScorer implements LossScorer{
+    private final HashMap<MolecularFormula, Double> commonLosses;
     public final static List<String> neutralLossList;
 
     static {
@@ -38,7 +41,7 @@ public class EICommonLossEdgeScorer extends CommonLossEdgeScorer {
 
 
     public EICommonLossEdgeScorer(HashMap<MolecularFormula, Double> map){
-        super(map);
+        commonLosses = new HashMap<MolecularFormula, Double>(map);
     }
 
     public static EICommonLossEdgeScorer getDefaultGCMSCommonLossScorer(){
@@ -134,9 +137,8 @@ public class EICommonLossEdgeScorer extends CommonLossEdgeScorer {
         return score(loss.getFormula());
     }
 
-    @Override
     public double score(MolecularFormula formula) {
-        final Double score = getMap().get(formula);
+        final Double score = commonLosses.get(formula);
         if (score==null) {
             //unknown loss
             double score2 = (Math.log(0.1)+(formula.rdbe()>=0 ? 0 : Math.log(0.25))); //The loss should obey the seniorRule: DBE >= 0
@@ -152,5 +154,15 @@ public class EICommonLossEdgeScorer extends CommonLossEdgeScorer {
             return score2;
         }
         return score;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }

@@ -636,6 +636,10 @@ public class FragmentationPatternAnalysis implements Parameterized {
         return decomposers.getDecomposer(alphabet);
     }
 
+    public void setGraphBuilder(GraphBuilder graphBuilder) {
+        this.graphBuilder = graphBuilder;
+    }
+
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         setInitial();

@@ -1,10 +1,12 @@
 package de.unijena.bioinf.GCMSAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.GCMSFragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.MostRelevantPeaksFilter;
@@ -70,9 +72,19 @@ public class GCMSFactory {
 
                 }
             }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
         };
 
-        final DecompositionScorer h2cDecompositionScorer = new DecompositionScorer() {
+        final DecompositionScorer h2cDecompositionScorer = new DecompositionScorer<Object>() {
             @Override
             public Object prepare(ProcessedInput input) {
                 return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -102,6 +114,16 @@ public class GCMSFactory {
                 final double ratio = (double)carbonRate / ((double)hetero);
 
                 return (ratio>3 ? Math.log(0.00005) : 0);
+            }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
             }
         };
         final MolecularFormulaScorer h2cScorer = new MolecularFormulaScorer() {
@@ -135,13 +157,13 @@ public class GCMSFactory {
         //no pre-processors
         //....
         //validator
-        analysis.getInputValidators().add(new GCMSMissingValueValidator());
+        //analysis.getInputValidators().add(new GCMSMissingValueValidator());
         //decomp scorer vertices
-        analysis.getDecompositionScorers().add(new MassDeviationVertexScorer(false)); //todo compare to gcmstool. same?
+        analysis.getDecompositionScorers().add(new MassDeviationVertexScorer()); //todo compare to gcmstool. same?
         analysis.getDecompositionScorers().add(h2cDecompositionScorer);
         //scorer root
         //todo never scored in GCMSTool, change minimal mass?
-//        analysis.getRootScorers().add(new MassDeviationVertexScorer(true));
+//        analysis.getRootScorers().add(new MassDeviationVertexScorer);
 //        analysis.getRootScorers().add(new ChemicalPriorScorer(h2cScorer, 0d, 11d));
         //lossScorer
         analysis.getLossScorers().add(new ChemicalPriorEdgeScorer(h2cScorer, 0d));

@@ -7,9 +7,18 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Preprocessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.GCMSMissingValueValidator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakPairScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.graphUtils.tree.TreeCursor;
@@ -70,7 +79,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
             //                " is not equal to computed score " + tables[vertexId].bestScore());
             //    }
         - MassDeviationVertexScorer scores unmodified masses not ions??
-        - no massPenalty option anymore. Why? Incorporate it in used Deviation?
+        - no massPenalty option anymore. Why? //todo massPenalty required for gcms?
         - //todo equals problem with mutable immutable MolecularFormula different amounts [3,1,0,0] vs. [3,1] -> is this desired or change it?
 
      */
@@ -102,7 +111,19 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
 
     @Override
     public void setInitial() {
-        super.setInitial();
+        this.setInputValidators(new ArrayList<InputValidator>());
+        getInputValidators().add(new GCMSMissingValueValidator());
+        this.setValidatorWarning(new Warning.Noop());
+        this.setRepairInput(true);
+        this.setDecompositionScorers(new ArrayList<DecompositionScorer<?>>());
+        this.setPreprocessors(new ArrayList<Preprocessor>());
+        this.setPostProcessors(new ArrayList<PostProcessor>());
+        this.setRootScorers(new ArrayList<DecompositionScorer<?>>());
+        this.setPeakPairScorers(new ArrayList<PeakPairScorer>());
+        this.setFragmentPeakScorers(new ArrayList<PeakScorer>());
+        this.setGraphBuilder(new SubFormulaGraphBuilder());
+        this.setLossScorers(new ArrayList<LossScorer>());
+        this.setTreeBuilder(new DPTreeBuilder(16));
     }
 
 

@@ -1,6 +1,8 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
@@ -35,5 +37,15 @@ public class FractionOfParentLossScorer implements LossScorer {
         double comparableMass = (Double)precomputed;
         // Score with fraction of the parentmass or largest mass in spectrum.
         return Math.log(1-(loss.getFormula().getMass()/comparableMass));
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }

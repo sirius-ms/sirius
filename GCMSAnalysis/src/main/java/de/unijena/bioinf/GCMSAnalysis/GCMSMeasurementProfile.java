@@ -77,7 +77,7 @@ public class GCMSMeasurementProfile implements MeasurementProfile{
 
     @Override
     public Deviation getStandardMs2MassDeviation() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     @Override
