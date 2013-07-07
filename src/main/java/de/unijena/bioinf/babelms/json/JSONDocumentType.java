@@ -1,16 +1,52 @@
 package de.unijena.bioinf.babelms.json;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
+import java.io.*;
 import java.math.BigDecimal;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Set;
 
 public class JSONDocumentType extends DataDocument<Object, JSONObject, JSONArray> {
+
+    public static void writeParameters(Object o, Writer out) throws IOException {
+        final ParameterHelper helper = ParameterHelper.getParameterHelper();
+        final JSONDocumentType json = new JSONDocumentType();
+        final Object value = helper.wrap(json, o);
+        writeJson(json, value, out);
+    }
+
+    public static <G, D, L> void writeJson(DataDocument<G, D, L> document, G value, Writer out) throws IOException {
+        final JSONDocumentType json = new JSONDocumentType();
+        final Object object = DataDocument.transform(document, json, value);
+        try {
+            out.write(JSONObject.valueToString(object));
+        } catch (JSONException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static JSONObject readFromFile(File fileName) throws IOException {
+        final FileReader reader = new FileReader(fileName);
+        final JSONObject o = read(reader);
+        reader.close();
+        return o;
+    }
+
+    public static JSONObject read(Reader reader) throws IOException {
+        try {
+            return new JSONObject(new JSONTokener(reader));
+        } catch (JSONException e) {
+            throw new IOException(e);
+        }
+    }
+
     @Override
     public boolean isDictionary(Object document) {
         return document instanceof JSONObject;
