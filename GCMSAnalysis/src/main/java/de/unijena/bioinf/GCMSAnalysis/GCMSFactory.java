@@ -1,13 +1,15 @@
 package de.unijena.bioinf.GCMSAnalysis;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.GCMSFragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.MostRelevantPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
@@ -15,9 +17,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidato
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import org.apache.commons.math3.special.Erf;
 
 
-import java.util.Arrays;
 import java.util.List;
 
 public class GCMSFactory {
@@ -61,7 +63,6 @@ public class GCMSFactory {
         setInitials();
 
         final PeakScorer gcmsOriginalPeakIsNoiseScorer = new PeakScorer() {
-            @Called("gcms noise")
 
             @Override
             public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
@@ -127,7 +128,6 @@ public class GCMSFactory {
             }
         };
         final MolecularFormulaScorer h2cScorer = new MolecularFormulaScorer() {
-            @Called("h2c MFScorer")
             //Parameter
             final double heteroNonC = 0.8;
             //
@@ -152,6 +152,41 @@ public class GCMSFactory {
             }
         };
 
+        /**
+         * MassdeviationScorer with massPenalty as in GCMSTool
+         */
+        final DecompositionScorer<Object> oldMassDeviationVertexScorer = new DecompositionScorer<Object>() {
+            private final double sqrt2 = Math.sqrt(2);
+            private final double massPenalty = 3.0;
+            @Override
+            public Object prepare(ProcessedInput input) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
+                if (peak.getOriginalPeaks().isEmpty()) return 0d; // don't score synthetic peaks
+                //difference to MassDeviationVertexScorer: score ions not unmodified mass
+                final Ionization ionization = input.getExperimentInformation().getIonization();
+                final double theoreticalMass = ionization.addToMass(formula.getMass());
+                final double realMass = peak.getMass();
+                final MeasurementProfile profile = input.getExperimentInformation().getMeasurementProfile();
+                final Deviation dev = profile.getStandardMs2MassDeviation();
+                final double sd = dev.absoluteFor(realMass);
+                return Math.log(Erf.erfc(Math.abs(realMass - theoreticalMass) * massPenalty / (sd * sqrt2)));
+            }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        };
+
         final GCMSFragmentationPatternAnalysis analysis = new GCMSFragmentationPatternAnalysis();
         analysis.setInitial();
         //no pre-processors
@@ -159,7 +194,7 @@ public class GCMSFactory {
         //validator
         //analysis.getInputValidators().add(new GCMSMissingValueValidator());
         //decomp scorer vertices
-        analysis.getDecompositionScorers().add(new MassDeviationVertexScorer()); //todo compare to gcmstool. same?
+        analysis.getDecompositionScorers().add(oldMassDeviationVertexScorer);
         analysis.getDecompositionScorers().add(h2cDecompositionScorer);
         //scorer root
         //todo never scored in GCMSTool, change minimal mass?

@@ -11,9 +11,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Pre
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.GCMSMissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakPairScorer;
@@ -21,7 +19,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakS
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.graphUtils.tree.TreeCursor;
 
 import java.util.*;
 
@@ -81,6 +78,12 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         - MassDeviationVertexScorer scores unmodified masses not ions??
         - no massPenalty option anymore. Why? //todo massPenalty required for gcms?
         - //todo equals problem with mutable immutable MolecularFormula different amounts [3,1,0,0] vs. [3,1] -> is this desired or change it?
+        - //todo error in DP backtrack?  tested with new and old version, and tree size
+          -> edges in graph loss:    <0:C32767H32767Cl32767Dms32767K32767N32767Na32767O32767P32767Pfb32767S32767Tms32767 (0,000)> -> <15:C10H11 (-0,121)> [:0.0]
+                            and :    <35:C10H13 (-3,058)> -> <15:C10H11 (-0,121)> [H2:0.2426246210745533]
+                            are combined in tree to <0:C32767H32767Cl32767Dms32767K32767N32767Na32767O32767P32767Pfb32767S32767Tms32767 (0,000)> -> <15:C10H11 (-0,121)> [H2:0.2426246210745533]
+                            problem with reconnecting edges? not yet fully implemented?
+
 
      */
     private static final boolean VERBOSE = true;
@@ -104,7 +107,6 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
     private boolean removeIsotopePeaks;
     private static final double NEUTRON_MASS = 1.00866491;
     private static final double ELECTRON_MASS = 0.00054857990946;
-    private Ms2ExperimentImpl preprocessedInput;
     private MolecularFormula dummyFormula;
 
 
@@ -129,11 +131,11 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
 
     @Override
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
-        List<ProcessedPeak> processedPeaks = preprocessingPeaks(experiment);
+        final ProcessedInput processedInput = preprocessWithoutDecomposing(experiment);
         // decompose and score all peaks
         //todo split decomposeAndScore method to differentiate in scoring whether molecule peak present or not
         if (moleculePeakPresent){
-            return decomposeAndScore(preprocessedInput, processedPeaks);
+            return decomposeAndScore(processedInput.getExperimentInformation(), processedInput.getMergedPeaks());
         } else {
             //todo return a decomposeAndScore without parent
             return null;
@@ -141,36 +143,36 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
 
     }
 
-
-    protected List<ProcessedPeak> preprocessingPeaks(Ms2Experiment experiment) {
+    @Override
+    ProcessedInput preprocessWithoutDecomposing(Ms2Experiment experiment) {
         //is molecule peak known or unknown?
         if (experiment.getIonMass()==0) moleculePeakKnown = false;
         else moleculePeakKnown = true;
         // first of all: insert default profile if no profile is given
-        preprocessedInput = wrapInput(experiment);
-        if (preprocessedInput.getMeasurementProfile()==null) preprocessedInput.setMeasurementProfile(getDefaultProfile());
+        Ms2ExperimentImpl input = wrapInput(experiment);
+        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(getDefaultProfile());
         // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
-        preprocessedInput = wrapInput(preProcess(validate(experiment)));
-        List<ProcessedPeak> peaks = normalize(preprocessedInput);
+        input = wrapInput(preProcess(validate(experiment)));
+        List<ProcessedPeak> peaks = normalize(input);
 
-        testForDerivatization(preprocessedInput, peaks);
-        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(preprocessedInput, peaks, null, null)).getMergedPeaks();
+        testForDerivatization(input, peaks);
+        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, peaks, null, null)).getMergedPeaks();
         if (removeIsotopePeaks){
-            peaks = removeIsotopePeaks(preprocessedInput, peaks);
-            if (VERBOSE && moleculePeakKnown) System.out.println("ionMass: "+preprocessedInput.getIonMass()+", largest peak mass: "+peaks.get(peaks.size()-1).getMz());
+            peaks = removeIsotopePeaks(input, peaks);
+            if (VERBOSE && moleculePeakKnown) System.out.println("ionMass: "+ input.getIonMass()+", largest peak mass: "+peaks.get(peaks.size()-1).getMz());
         }
         //todo after isotopeStuff
 
-        final ProcessedPeak parentPeak = selectMoleculePeakAndCleanSpectrum(preprocessedInput, peaks);
+        final ProcessedPeak parentPeak = selectMoleculePeakAndCleanSpectrum(input, peaks);
         //todo after parentPeak selection the molecule peak has to be last in list (assumed in decomposeAndScore)
         if (moleculePeakPresent) assert parentPeak.equals(peaks.get(peaks.size()-1)) : "parent is last in peak list";
         if (moleculePeakPresent){
             //todo some PostProcesses assume that parent peak present -> create new Stage to differentiate between methods which need parent or don't need? or make all methods also work without
             //PostProcessor.Stage.AFTER_MERGING ist z.B. NoiseThreshold
-            peaks = postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(preprocessedInput, peaks, parentPeak, null)).getMergedPeaks();
+            peaks = postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, peaks, parentPeak, null)).getMergedPeaks();
         }
 
-        return peaks;
+        return new ProcessedInput(input, peaks, parentPeak, null);
     }
 
     @Override
@@ -357,8 +359,8 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         TableSelection selection = input.getExperimentInformation().getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().getTableSelection();
         short[] amounts = new short[selection.size()];
         Arrays.fill(amounts, Short.MAX_VALUE);
-        dummyFormula = selection.toFormula(amounts);
-        dummy.setDecompositions(Collections.singletonList(new ScoredMolecularFormula(new DerivatesMolecularFormula(dummyFormula), 0)));
+        dummyFormula = new DerivatesMolecularFormula(selection.toFormula(amounts));
+        dummy.setDecompositions(Collections.singletonList(new ScoredMolecularFormula(dummyFormula, 0)));
 
         ArrayList<ProcessedPeak> mergedPeaks = new ArrayList<ProcessedPeak>(input.getMergedPeaks());
         mergedPeaks.add(dummy);
@@ -370,6 +372,8 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         for (int i = 0; i < peakPairScores.length; i++) {
             newPeakPairScores[i] = Arrays.copyOf(peakPairScores[i], peakPairScores.length+1);
         }
+        Arrays.fill(newPeakPairScores[newPeakPairScores.length-1], 0d);
+
         ProcessedInput processedInputForGraphBuilding = new ProcessedInput(input.getExperimentInformation(), mergedPeaks, dummy, dummy.getDecompositions(), newPeakScores, newPeakPairScores);
         FragmentationGraph graph = buildGraph(processedInputForGraphBuilding, dummy.getDecompositions().get(0));
         //set unwanted weights of dummy outgoing edges to 0

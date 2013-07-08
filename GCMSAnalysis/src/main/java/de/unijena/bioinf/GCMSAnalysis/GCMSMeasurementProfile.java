@@ -39,10 +39,6 @@ public class GCMSMeasurementProfile implements MeasurementProfile{
             usedElements.add(periodicTable.getByName("Dms"));
         }
 
-        for (Element usedElement : usedElements) {
-            System.out.println("#"+usedElement.getSymbol());
-        }
-
         ChemicalAlphabet simpleAlphabet = new ChemicalAlphabet(usedElements.toArray(new Element[0]));
 
         this.constraints = new FormulaConstraints(simpleAlphabet);
