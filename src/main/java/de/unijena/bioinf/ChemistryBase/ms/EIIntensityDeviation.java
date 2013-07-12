@@ -19,6 +19,7 @@ public class EIIntensityDeviation extends Deviation{
      */
     public EIIntensityDeviation(double smallErrorPpm, double largeErrorPpm, double smallAbsError, double largeAbsError) {
         super(0, 0);
+        if (smallAbsError>largeAbsError || smallErrorPpm>largeErrorPpm) throw new IllegalArgumentException("large errors have to be greater than small errors");
         this.smallErrorPpm = smallErrorPpm;
         this.largeErrorPpm = largeErrorPpm;
         this.smallAbsError = smallAbsError;
@@ -27,6 +28,9 @@ public class EIIntensityDeviation extends Deviation{
     }
 
     @Override
+    /**
+     * use for intensity Normalization.Max(1d) only
+     */
     public double absoluteFor(double value) {
         final double absolute = (intensity*(largeAbsError-smallAbsError)/1d+smallAbsError);
         final double relative = (intensity*(largeErrorPpm-smallErrorPpm)/1d+smallErrorPpm)*1e-6*value;
@@ -36,6 +40,16 @@ public class EIIntensityDeviation extends Deviation{
     @Override
     public boolean inErrorWindow(double center, double value) {
         return super.inErrorWindow(center, value);
+    }
+
+    @Override
+    public Deviation multiply(int scalar) {
+        return new EIIntensityDeviation(smallErrorPpm*scalar, largeErrorPpm*scalar, smallAbsError*2, largeAbsError*2);
+    }
+
+    @Override
+    public Deviation multiply(double scalar) {
+        return new EIIntensityDeviation(smallErrorPpm*scalar, largeErrorPpm*scalar, smallAbsError*2, largeAbsError*2);
     }
 
     public void setRelIntensity(double relIntensity){
