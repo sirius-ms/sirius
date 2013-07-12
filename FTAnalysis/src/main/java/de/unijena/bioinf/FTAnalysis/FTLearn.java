@@ -120,7 +120,10 @@ public class FTLearn {
     private final static String[] endings = new String[]{"st", "nd", "rd"};
     public void iterativeLearning() {
         if (!options.getTarget().exists()) options.getTarget().mkdir();
-        if (options.isWriting()) writeProfile(new File(options.getTarget(), "initial"));
+        if (options.isWriting()) {
+            new File(options.getTarget(), "initial").mkdir();
+            writeProfile(new File(options.getTarget(), "initial"));
+        }
         initialLearning();
         for (int i=0; i < options.getIterations(); ++i) {
             println((i+1) + (i < endings.length ? endings[i] : "th") + " iteration step");
