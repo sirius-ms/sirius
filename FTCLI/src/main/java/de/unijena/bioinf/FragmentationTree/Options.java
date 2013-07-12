@@ -45,6 +45,9 @@ public interface Options {
     @Option(description = "Compute only trees with higher score than <value>", defaultValue = "0")
     public double getLowerbound();
 
+    @Option(hidden = true, defaultToNull = true)
+    public File getRanking();
+
     @Option(shortName = "I", defaultValue = "0", description = "compute trees for the <value>th molecular formulas with best isotope pattern explanations")
     public int getFilterByIsotope();
 

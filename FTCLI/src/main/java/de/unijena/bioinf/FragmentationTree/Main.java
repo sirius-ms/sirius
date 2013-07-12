@@ -24,9 +24,7 @@ import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -47,6 +45,9 @@ public class Main {
 
     private Options options;
     private boolean verbose;
+    private PrintStream rankWriter;
+
+    private List<PrintStream> openStreams;
 
     void run(String[] args) {
         options = CliFactory.createCli(Options.class).parseArguments(args);
@@ -57,6 +58,18 @@ public class Main {
         }
 
         this.verbose = options.getVerbose();
+
+        this.openStreams = new ArrayList<PrintStream>();
+        if (options.getRanking() != null) {
+            try {
+                rankWriter = new PrintStream(options.getRanking());
+                openStreams.add(rankWriter);
+                rankWriter.println("name,formula,mass,decompositions,rank,score,optScore,explainedPeaks,computationTime");
+            } catch (FileNotFoundException e) {
+                System.err.println(e.getMessage());
+                System.exit(1);
+            }
+        }
 
         final List<File> files = InterpretOptions.getFiles(options);
         final MeasurementProfile defaultProfile = InterpretOptions.getMeasurementProfile(options);
@@ -97,6 +110,7 @@ public class Main {
 
         for (final File f : files) {
             try {
+                long computationTime = System.nanoTime();
                 if (verbose) System.out.println("parse " + f); System.out.flush();
                 analyzer.setValidatorWarning(new Warning(){
                     @Override
@@ -191,7 +205,8 @@ public class Main {
 
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
                 if (correctFormula!=null) blacklist.add(correctFormula);
-
+                int rank = 1;
+                double optScore = (correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
                 if (options.getTrees()>0) {
                     final List<FragmentationTree> trees;
                     final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
@@ -225,6 +240,10 @@ public class Main {
                     }
                     for (int i=0; i < trees.size(); ++i) {
                         final FragmentationTree tree = trees.get(i);
+                        if (correctTree!=null && correctTree.getScore() < tree.getScore()) {
+                            ++rank;
+                        }
+                        optScore = Math.max(optScore, tree.getScore());
                         writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer);
                     }
                 } else {
@@ -243,6 +262,13 @@ public class Main {
                         writeTreeToFile(prettyNameOptTree(tree, f), tree, analyzer);
                     }
                 }
+                computationTime = System.nanoTime() - computationTime;
+                computationTime /= 1000000;
+                if (correctTree!=null && rankWriter!=null) {
+                    rankWriter.println(f.getName() + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() +"," + input.getParentMassDecompositions().size() + "," +
+                            rank +
+                            "," + correctTree.getScore() + "," + optScore + "," + correctTree.numberOfVertices() + "," + computationTime);
+                }
 
             } catch (IOException e) {
                 System.err.println("Error while parsing " + f + ":\n" + e);
@@ -251,13 +277,16 @@ public class Main {
                 e.printStackTrace();
             }
         }
+        for (PrintStream writer : openStreams) {
+            writer.close();
+        }
     }
 
     private File prettyNameOptTree(FragmentationTree tree, File fileName) {
         return new File(removeExtname(fileName) + ".dot");
     }
     private File prettyNameSuboptTree(FragmentationTree tree, File fileName, int rank, boolean correct) {
-        return new File(removeExtname(fileName), rank + (correct ? "_opt_" : "_") + tree.getRoot().getFormula() + ".dot");
+        return new File(new File(options.getTarget(), removeExtname(fileName)), rank + (correct ? "_opt_" : "_") + tree.getRoot().getFormula() + ".dot");
     }
 
     private String removeExtname(File f) {
@@ -275,7 +304,7 @@ public class Main {
             final double ionMass = experiment.getIonMass() - experiment.getMoleculeNeutralMass();
             final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-3, experiment.getIonization().getCharge());
             impl.setIonization(ion);
-            impl.setMergedMs1Spectrum(impl.getMs1Spectra().get(0));
+            if (impl.getMs1Spectra() != null && !impl.getMs1Spectra().isEmpty()) impl.setMergedMs1Spectrum(impl.getMs1Spectra().get(0));
         }
         impl.setMeasurementProfile(profile);
         return impl;

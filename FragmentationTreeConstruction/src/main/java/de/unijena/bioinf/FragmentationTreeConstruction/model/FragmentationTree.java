@@ -121,6 +121,11 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         return getCursor().numberOfVertices();
     }
 
+    @Override
+    public int numberOfEdges() {
+        return numberOfVertices()-1;
+    }
+
     public static TreeAdapter<TreeFragment> getAdapter() {
         return new TreeAdapter<TreeFragment>() {
             @Override

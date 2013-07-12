@@ -14,7 +14,7 @@ public interface LearnOptions {
     @Option(shortName = "p", defaultToNull = true, description = "initial profile to start learning")
     public String getProfile();
 
-    @Option(shortName = "w", description = "write trees")
+    @Option(shortName = "w", description = "write trees and profiles for each iteration step")
     public boolean isTrees();
 
     @Option(shortName = "i", defaultValue = "4", description = "number of iterations")
@@ -31,6 +31,16 @@ public interface LearnOptions {
 
     @Option(shortName = "l", defaultToNull = true, description = "limit number of peaks to the n-th most intensive peaks. This makes computation much faster")
     public Integer getPeakLimit();
+
+    @Option(shortName = "L", description = "common loss analysis. Available options: SKIP (analysis), " +
+            "REPLACE (previous common losses), ADD (losses to previous common losses), " +
+            "MERGE (losses with previous common losses", defaultValue = "MERGE")
+    public LearnMethod getCommonLosses();
+
+    @Option(shortName = "F", description = "common fragment analysis. Available options: SKIP (analysis), " +
+            "REPLACE (previous common fragments), ADD (fragments to previous common fragments), " +
+            "MERGE (fragments with previous common fragments", defaultValue = "MERGE")
+    public LearnMethod getCommonFragments();
 
     @Option(shortName = "v")
     public boolean isVerbose();

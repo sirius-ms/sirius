@@ -365,6 +365,15 @@ public class FragmentationGraph implements FragmentationPathway {
         return vertices.size();
     }
 
+    @Override
+    public int numberOfEdges() {
+        int c = 0;
+        for (Fragment f : getFragments()) {
+            c += f.numberOfChildren();
+        }
+        return c;
+    }
+
     public int numberOfColors() {
         return peaks.size();
     }
