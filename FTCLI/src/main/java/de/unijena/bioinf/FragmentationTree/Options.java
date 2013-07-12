@@ -55,7 +55,10 @@ public interface Options {
     @Option(shortName = "i", description = "enable isotope pattern analysis")
     public boolean getMs1();
 
-    @Option(shortName = "p", defaultToNull = true, description = "A profile contains all scoring and preprocessing information that is necessary for the given data. It is either a profile.json file or the name of a predefined profile")
+    @Option(shortName = "p", defaultValue = "default", description =
+            "A profile contains all scoring and preprocessing information that is necessary for the given data. " +
+                    "It is either a profile.json file or the name of a predefined profile. Predefined profiles are: " +
+                    "default, qtof, qtof.high, orbitrap")
     public String getProfile();
 
     /*

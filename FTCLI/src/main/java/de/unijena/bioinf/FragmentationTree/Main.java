@@ -88,7 +88,7 @@ public class Main {
         final FragmentationPatternAnalysis analyzer;
         if (options.getProfile() != null) {
             try {
-                analyzer = FragmentationPatternAnalysis.loadFromProfile(new JSONDocumentType(), JSONDocumentType.readFromFile(new File(options.getProfile())));
+                analyzer = Profile.getFTAnalysisProfile(options.getProfile());
             } catch (IOException e) {
                 System.err.println(e);
                 System.exit(1);
