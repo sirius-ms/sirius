@@ -160,7 +160,9 @@ public class FragmentationPatternAnalysis implements Parameterized {
         this.fragmentPeakScorers = new ArrayList<PeakScorer>();
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
-        this.treeBuilder = new DPTreeBuilder(16);
+        this.treeBuilder = new GurobiSolver();
+        ((GurobiSolver)treeBuilder).setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
+
     }
 
     /**
