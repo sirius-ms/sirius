@@ -1,9 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
+import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
 
 import static java.lang.Math.sqrt;
@@ -26,9 +28,12 @@ import static java.lang.Math.sqrt;
  * may result in better scores, but only if the input dataset has the same formula distribution as the training set. While
  * this scorer should work for all data as long as there are no "extremely strange" molecules in there.
  */
+@HasParameters
 public class RDBEMassScorer implements MolecularFormulaScorer {
 
     private final static PartialParetoDistribution keggParetoDistribution = new PartialParetoDistribution(-0.5, 0.75, 9);
+
+    private final static NormalDistribution keggNormalDistribution = new NormalDistribution(0.1481998, 0.07341486);
 
 
     public static PartialParetoDistribution getRDBEDistributionFromKEGG() {
@@ -42,16 +47,23 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
     }
 
     public RDBEMassScorer() {
-        this(keggParetoDistribution);
+        this(keggNormalDistribution);
+    }
+
+    public final double getRDBEMassValue(MolecularFormula formula) {
+        return getRDBEMassValue(formula.rdbe(), formula.getMass());
+    }
+    public final double getRDBEMassValue(double rdbe, double mass) {
+        return rdbe/Math.pow(mass, 2d / 3d);
     }
 
     @Override
     public double score(MolecularFormula formula) {
-        return Math.log(distribution.getDensity(formula.rdbe()/sqrt(formula.getMass())));
+        return Math.log(distribution.getDensity(getRDBEMassValue(formula)));
     }
 
     public double score(double rdbe, double mass) {
-        return Math.log(distribution.getDensity(rdbe/sqrt(mass)));
+        return Math.log(distribution.getDensity(getRDBEMassValue(rdbe, mass)));
     }
 
     public DensityFunction getDistribution() {

@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
 
+@HasParameters
 public final class ParetoDistribution extends RealDistribution {
 
     private final double k, xmin, kdivxmin;

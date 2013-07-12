@@ -214,6 +214,14 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
         return sum;
     }
 
+    public boolean isCHNO() {
+        return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens();
+    }
+
+    public boolean isCHNOPS() {
+        return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens() + numberOf(getTableSelection().getPeriodicTable().getByName("S"));
+    }
+
     /**
      * A formula is charged if its rdbe value is not a whole-number (for example if it is 0.5)
      * or if its doubled-rdbe is an odd number.
@@ -270,6 +278,11 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     public int numberOfOxygens() {
         final int hi = getTableSelection().oxygenIndex();
         return buffer().length > hi ? buffer()[hi] : 0;
+    }
+
+    public int numberOfNitrogens() {
+        final int ni = getTableSelection().nitrogenIndex();
+        return buffer().length > ni ? buffer()[ni] : 0;
     }
 
     /**

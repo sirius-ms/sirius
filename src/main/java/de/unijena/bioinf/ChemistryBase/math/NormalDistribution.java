@@ -1,10 +1,13 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
 import static java.lang.Math.PI;
+import static java.lang.Math.log;
 import static java.lang.Math.sqrt;
 
+@HasParameters
 public final class NormalDistribution extends RealDistribution {
     private final static double sqrt2pi = sqrt(2*PI);
     private final double mean, var;
@@ -32,6 +35,10 @@ public final class NormalDistribution extends RealDistribution {
     @Override
     public double getLogDensity(double x) {
         return -(x - mean) * (x - mean) / (2. * var) - sqrt2pi*sqrt(var);
+    }
+
+    public double getStandardDeviation() {
+        return sqrt(var);
     }
 
     @Override

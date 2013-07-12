@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
 
-import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 
 /**
  * Factory for chemical scorers
@@ -45,40 +45,71 @@ public final class ChemicalCompoundScorer {
     }
 
     public static class DefaultScorer implements MolecularFormulaScorer, Parameterized {
-        private ImprovedHetero2CarbonScorer scorer = new ImprovedHetero2CarbonScorer();
-        private SpecialMoleculeScorer special = new SpecialMoleculeScorer();
+        private ImprovedHetero2CarbonScorer heteroAtom2CarbonScorer;
+        private RDBEMassScorer rdbeScorer;
+        private SpecialMoleculeScorer oxygenBackboneScorer;
+
+        public DefaultScorer() {
+            this.heteroAtom2CarbonScorer = new ImprovedHetero2CarbonScorer();
+            this.rdbeScorer = new RDBEMassScorer();
+            this.oxygenBackboneScorer = new SpecialMoleculeScorer();
+        }
 
         @Override
         public double score(MolecularFormula formula) {
-            return Math.max(scorer.score(formula), special.score(formula));
+            return Math.max(heteroAtom2CarbonScorer.score(formula) + rdbeScorer.score(formula), oxygenBackboneScorer.score(formula));
         }
 
-        public ImprovedHetero2CarbonScorer getScorer() {
-            return scorer;
+        public ImprovedHetero2CarbonScorer getHeteroAtom2CarbonScorer() {
+            return heteroAtom2CarbonScorer;
         }
 
-        public SpecialMoleculeScorer getSpecial() {
-            return special;
+        public void setHeteroAtom2CarbonScorer(ImprovedHetero2CarbonScorer heteroAtom2CarbonScorer) {
+            this.heteroAtom2CarbonScorer = heteroAtom2CarbonScorer;
         }
 
-        public void setScorer(ImprovedHetero2CarbonScorer scorer) {
-            this.scorer = scorer;
+        public RDBEMassScorer getRdbeScorer() {
+            return rdbeScorer;
         }
 
-        public void setSpecial(SpecialMoleculeScorer special) {
-            this.special = special;
+        public void setRdbeScorer(RDBEMassScorer rdbeScorer) {
+            this.rdbeScorer = rdbeScorer;
+        }
+
+        public SpecialMoleculeScorer getOxygenBackboneScorer() {
+            return oxygenBackboneScorer;
+        }
+        public void setOxygenBackboneScorer(SpecialMoleculeScorer oxygenBackboneScorer) {
+            this.oxygenBackboneScorer = oxygenBackboneScorer;
+        }
+
+        public void disableRDBEScorer() {
+            rdbeScorer = new RDBEMassScorer(new DensityFunction() {
+                @Override
+                public double getDensity(double x) {
+                    return 0d;
+                }
+            });
         }
 
         @Override
         public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-            scorer = (ImprovedHetero2CarbonScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "standardScorer"));
-            special = (SpecialMoleculeScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "specialMoleculeScorer"));
+            if (document.hasKeyInDictionary(dictionary, "standardScorer")) {
+                // LEGACY PATH
+                heteroAtom2CarbonScorer = (ImprovedHetero2CarbonScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "heteroAtom2CarbonScorer"));
+                disableRDBEScorer();
+            } else {
+                heteroAtom2CarbonScorer = (ImprovedHetero2CarbonScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "heteroAtom2CarbonScorer"));
+                rdbeScorer = (RDBEMassScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "rdbeScorer"));
+            }
+            oxygenBackboneScorer = (SpecialMoleculeScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "specialMoleculeScorer"));
         }
 
         @Override
         public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-            document.addToDictionary(dictionary, "standardScorer", helper.wrap(document, scorer));
-            document.addToDictionary(dictionary, "specialMoleculeScorer", helper.wrap(document, special));
+            document.addToDictionary(dictionary, "heteroAtom2CarbonScorer", helper.wrap(document, heteroAtom2CarbonScorer));
+            document.addToDictionary(dictionary, "rdbeScorer", helper.wrap(document, rdbeScorer));
+            document.addToDictionary(dictionary, "specialMoleculeScorer", helper.wrap(document, oxygenBackboneScorer));
         }
     }
 

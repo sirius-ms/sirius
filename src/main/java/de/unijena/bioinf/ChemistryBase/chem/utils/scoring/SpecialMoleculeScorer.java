@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
@@ -7,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
 
 
+@HasParameters
 public class SpecialMoleculeScorer implements MolecularFormulaScorer {
 
 

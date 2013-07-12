@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
 import static java.lang.Math.pow;
@@ -7,6 +8,7 @@ import static java.lang.Math.pow;
 /**
  * A distribution which is uniform from a to b and pareto distributed from b to infinity
  */
+@HasParameters
 public class PartialParetoDistribution implements DensityFunction {
 
     private final double a, b, k, norm, opt, kdivbnorm;
