@@ -64,7 +64,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
 
         // peak pair scorers
-        final LossSizeScorer lossSize = new LossSizeScorer(new LogNormalDistribution(4d, 0.5d), -6d);/*LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION*/
+        final LossSizeScorer lossSize = new LossSizeScorer(new LogNormalDistribution(5d, 1d), -6d);/*LossSizeScorer.LEARNED_DISTRIBUTION, LossSizeScorer.LEARNED_NORMALIZATION*/
         final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
         peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
         peakPairScorers.add(lossSize);

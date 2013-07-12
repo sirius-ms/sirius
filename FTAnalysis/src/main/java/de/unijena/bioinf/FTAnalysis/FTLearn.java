@@ -105,6 +105,7 @@ public class FTLearn {
         this.analyzer = initialAnalyzer;
         if (DEBUG) {
             writeProfile(new File("."));
+            System.exit(1);
         }
         this.options = options;
         if (options.getPeakLimit() != null) {
