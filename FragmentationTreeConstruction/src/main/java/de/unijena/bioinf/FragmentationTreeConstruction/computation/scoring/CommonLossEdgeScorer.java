@@ -24,6 +24,7 @@ public class CommonLossEdgeScorer implements LossScorer{
         this.commonLosses = new HashMap<MolecularFormula, Double>(commonLosses);
         this.recombinatedList = null;
         this.normalization = normalization;
+        this.recombinator = recombinator;
     }
 
 
@@ -114,13 +115,17 @@ public class CommonLossEdgeScorer implements LossScorer{
         recombinatedList = null;
     }
 
-    @Override
-    public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        Double score = recombinatedList.get(loss.getFormula());
+    public double score(MolecularFormula formula) {
+        Double score = recombinatedList.get(formula);
         if (score!=null) return score.doubleValue() - normalization;
-        score = commonLosses.get(loss.getFormula());
+        score = commonLosses.get(formula);
         if (score!=null) return score.doubleValue() - normalization;
         return -normalization;
+    }
+
+    @Override
+    public double score(Loss loss, ProcessedInput input, Object precomputed) {
+        return score(loss.getFormula());
     }
 
     @Override
@@ -169,6 +174,10 @@ public class CommonLossEdgeScorer implements LossScorer{
         private final LossSizeScorer lossSizeScorer;
 
 
+        LossSizeRecombinator() {
+            this(null, 0d);
+        }
+
         public LossSizeRecombinator(LossSizeScorer scorer, double penalty) {
             this.penalty = penalty;
             this.lossSizeScorer = scorer;
@@ -197,6 +206,7 @@ public class CommonLossEdgeScorer implements LossScorer{
             }
             return recombination;
         }
+
         @Override
         public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
             return new LossSizeRecombinator((LossSizeScorer)helper.unwrap(document,document.getFromDictionary(dictionary,"lossSize")), document.getDoubleFromDictionary(dictionary,"penalty"));
