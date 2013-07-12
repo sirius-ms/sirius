@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FTAnalysis;
 
 import com.lexicalscope.jewel.cli.CliFactory;
+import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
@@ -53,7 +54,13 @@ public class FTLearn {
     public final static String VERSION_STRING = "ModelparameterEstimation " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
     public static void main(String[] args) {
-        final LearnOptions options = CliFactory.createCli(LearnOptions.class).parseArguments(args);
+        final LearnOptions options;
+        try {
+            options = CliFactory.createCli(LearnOptions.class).parseArguments(args);
+        } catch (HelpRequestedException h) {
+            System.out.println(h.getMessage());
+            return;
+        }
 
         final List<File> files = new ArrayList<File>();
         for (File f : options.getTrainingdata()) {

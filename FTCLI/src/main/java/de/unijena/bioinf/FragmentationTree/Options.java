@@ -27,16 +27,17 @@ public interface Options {
     @Unparsed
     public List<File> getFiles();
 
-    @Option(defaultValue = "CHNOPS")
+    @Option(defaultValue = "CHNOPS", description = "Allowed elements. Write e.g. CHNOPFI to allow the elements C, H, N, O, P, F and I. You can " +
+            "also give upperbounds for the element by writing them in square brackets, e.g. CHNOPCl[1]F[5]Br[1]")
     public String getElements();
 
-    @Option(shortName = "t", defaultValue = ".")
+    @Option(shortName = "t", defaultValue = ".", description = "target directory for the output data")
     public File getTarget();
 
     @Option(shortName = "n", defaultValue = "1", description = "number of threads that should be used for computation")
     public int getThreads();
 
-    @Option(description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
+    @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 
     @Option(description = "If correct formula is given, compute only trees with higher score than the correct one")

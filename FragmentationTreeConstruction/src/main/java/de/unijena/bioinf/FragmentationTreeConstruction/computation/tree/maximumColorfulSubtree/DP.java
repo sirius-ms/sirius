@@ -26,7 +26,10 @@ class DP {
         double epsilon = 1e-6;
         this.transitiveClosure = transitiveClosure;
         for (GraphFragment vertex : vertices) {
-            for (Loss l : vertex.getIncomingEdges()) epsilon = Math.min(Math.abs(l.getWeight()/10d), epsilon);
+            for (Loss l : vertex.getIncomingEdges()) {
+                final double abs = Math.abs(l.getWeight());
+                epsilon = Math.min(Math.abs(l.getWeight()/10d), epsilon);
+            }
             tables[vertex.getIndex()] = new DPTable(algo, vertex.getColor(), colorsetFor(vertex));
         }
         this.epsilon = epsilon;
