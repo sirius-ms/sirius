@@ -15,7 +15,7 @@ public interface LearnOptions {
     public String getProfile();
 
     @Option(shortName = "w", description = "write trees and profiles for each iteration step")
-    public boolean isTrees();
+    public boolean isWriting();
 
     @Option(shortName = "i", defaultValue = "4", description = "number of iterations")
     public int getIterations();
