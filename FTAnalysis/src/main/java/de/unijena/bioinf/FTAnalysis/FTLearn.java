@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FTAnalysis;
 
 import com.lexicalscope.jewel.cli.CliFactory;
+import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
@@ -52,10 +53,14 @@ public class FTLearn {
 
     public final static String VERSION_STRING = "ModelparameterEstimation " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
-    private static final boolean DEBUG = true;
-
     public static void main(String[] args) {
-        final LearnOptions options = CliFactory.createCli(LearnOptions.class).parseArguments(args);
+        final LearnOptions options;
+        try {
+            options = CliFactory.createCli(LearnOptions.class).parseArguments(args);
+        } catch (HelpRequestedException h) {
+            System.out.println(h.getMessage());
+            return;
+        }
 
         final List<File> files = new ArrayList<File>();
         for (File f : options.getTrainingdata()) {
@@ -103,9 +108,6 @@ public class FTLearn {
     public FTLearn(FragmentationPatternAnalysis initialAnalyzer, List<File> trainingsData, LearnOptions options) {
         this.trainingsData = trainingsData;
         this.analyzer = initialAnalyzer;
-        if (DEBUG) {
-            writeProfile(new File("."));
-        }
         this.options = options;
         if (options.getPeakLimit() != null) {
             LimitNumberOfPeaksFilter f = getScorer(analyzer.getPostProcessors(), LimitNumberOfPeaksFilter.class);
@@ -125,6 +127,10 @@ public class FTLearn {
     private final static String[] endings = new String[]{"st", "nd", "rd"};
     public void iterativeLearning() {
         if (!options.getTarget().exists()) options.getTarget().mkdir();
+        if (options.isWriting()) {
+            new File(options.getTarget(), "initial").mkdir();
+            writeProfile(new File(options.getTarget(), "initial"));
+        }
         initialLearning();
         for (int i=0; i < options.getIterations(); ++i) {
             println((i+1) + (i < endings.length ? endings[i] : "th") + " iteration step");
@@ -181,7 +187,7 @@ public class FTLearn {
                         input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getMz()) - correctFormula.getMass(),
                         1d)
                 );
-                if (options.isTrees()) {
+                if (options.isWriting()) {
                     final String name = fileName.substring(0, fileName.lastIndexOf('.')) + ".dot";
                     dir.mkdir();
                     writeTreeToFile(new File(dir, name), tree);
@@ -265,9 +271,9 @@ public class FTLearn {
         for (PredictedLoss l : Compound.foreachLoss(compounds)) {
             massDevs.add(new XYZ(l.fragmentMz, l.fragmentNeutralMass-l.fragmentFormula.getMass(), l.fragmentIntensity));
         }
-        if (DEBUG) {
+        if (options.isWriting()) {
             try {
-                final PrintStream ps = new PrintStream(new File(dir, "debug.csv"));
+                final PrintStream ps = new PrintStream(new File(dir, "learnedProfile.csv"));
                 ps.println(PredictedLoss.csvHeader());
                 for (PredictedLoss l : Compound.foreachLoss(compounds)) {
                     ps.println(l.toCSV());
@@ -291,7 +297,7 @@ public class FTLearn {
         /*
         If -w given, write profile
          */
-        if (options.isTrees()) {
+        if (options.isWriting()) {
             writeProfile(dir);
         }
 

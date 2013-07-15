@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 public class InterpretOptions {
 
-    private final static Pattern INTERVAL = Pattern.compile("\\[(\\d+)?(\\s*-\\s*(\\d+)?)?\\]");
+    private final static Pattern INTERVAL = Pattern.compile("\\[(\\d*)\\]");
     public static FormulaConstraints getFormulaConstraints(Options options) {
         final PeriodicTable PT = PeriodicTable.getInstance();
         final Pattern pattern = PT.getPattern();
@@ -39,11 +39,8 @@ public class InterpretOptions {
             if (end-start > 0) {
                 final Matcher n = INTERVAL.matcher(string.substring(start, end));
                 if (n.find()) {
-                    final int a = n.group(0)!=null ? Integer.parseInt(n.group(0)) : 0;
-                    // TODO: support lowerbounds
-                    if (a != 0) throw new UnsupportedOperationException("Lowerbounds are  currently not supported");
-                    final int b = n.group(1)!=null ? (n.group(2)!=null ? Integer.parseInt(n.group(2)) : Integer.MAX_VALUE) : Integer.MAX_VALUE;
-                    elements.put(element, new Interval(a, b));
+                    final int a = n.group(1)!=null ? Integer.parseInt(n.group(1)) : Integer.MAX_VALUE;
+                    elements.put(element, new Interval(0, a));
                 }
             }
             if (!next) break;

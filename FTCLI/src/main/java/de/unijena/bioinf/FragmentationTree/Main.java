@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTree;
 
 import com.lexicalscope.jewel.cli.CliFactory;
+import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
@@ -50,7 +51,12 @@ public class Main {
     private List<PrintStream> openStreams;
 
     void run(String[] args) {
-        options = CliFactory.createCli(Options.class).parseArguments(args);
+        try {
+            options = CliFactory.createCli(Options.class).parseArguments(args);
+        } catch (HelpRequestedException h) {
+            System.out.println(h.getMessage());
+            System.exit(0);
+        }
 
         if (options.getCite() || options.getVersion() || args.length==0) {
             System.out.println(VERSION_STRING);
@@ -58,6 +64,11 @@ public class Main {
         }
 
         this.verbose = options.getVerbose();
+
+        if (options.getThreads()>1) {
+            System.err.println("Multiple threads are currently not supported. Please restart the program without the option -n");
+            System.exit(1);
+        }
 
         this.openStreams = new ArrayList<PrintStream>();
         if (options.getRanking() != null) {
@@ -77,7 +88,7 @@ public class Main {
         final FragmentationPatternAnalysis analyzer;
         if (options.getProfile() != null) {
             try {
-                analyzer = FragmentationPatternAnalysis.loadFromProfile(new JSONDocumentType(), JSONDocumentType.readFromFile(new File(options.getProfile())));
+                analyzer = Profile.getFTAnalysisProfile(options.getProfile());
             } catch (IOException e) {
                 System.err.println(e);
                 System.exit(1);
@@ -236,7 +247,7 @@ public class Main {
                     }
                     if (correctTree != null) {
                         trees.add(correctTree);
-                        Collections.sort(trees);
+                        Collections.sort(trees, Collections.reverseOrder());
                     }
                     for (int i=0; i < trees.size(); ++i) {
                         final FragmentationTree tree = trees.get(i);
@@ -283,10 +294,10 @@ public class Main {
     }
 
     private File prettyNameOptTree(FragmentationTree tree, File fileName) {
-        return new File(removeExtname(fileName) + ".dot");
+        return new File(options.getTarget(), removeExtname(fileName) + ".dot");
     }
     private File prettyNameSuboptTree(FragmentationTree tree, File fileName, int rank, boolean correct) {
-        return new File(new File(options.getTarget(), removeExtname(fileName)), rank + (correct ? "_opt_" : "_") + tree.getRoot().getFormula() + ".dot");
+        return new File(new File(options.getTarget(), removeExtname(fileName)), rank + (correct ? "_correct_" : "_") + tree.getRoot().getFormula() + ".dot");
     }
 
     private String removeExtname(File f) {

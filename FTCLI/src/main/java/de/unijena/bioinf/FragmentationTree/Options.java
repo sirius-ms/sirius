@@ -27,16 +27,17 @@ public interface Options {
     @Unparsed
     public List<File> getFiles();
 
-    @Option(defaultValue = "CHNOPS")
+    @Option(defaultValue = "CHNOPS", description = "Allowed elements. Write e.g. CHNOPFI to allow the elements C, H, N, O, P, F and I. You can " +
+            "also give upperbounds for the element by writing them in square brackets, e.g. CHNOPCl[1]F[5]Br[1]")
     public String getElements();
 
-    @Option(shortName = "t", defaultValue = ".")
+    @Option(shortName = "t", defaultValue = ".", description = "target directory for the output data")
     public File getTarget();
 
     @Option(shortName = "n", defaultValue = "1", description = "number of threads that should be used for computation")
     public int getThreads();
 
-    @Option(description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
+    @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 
     @Option(description = "If correct formula is given, compute only trees with higher score than the correct one")
@@ -54,7 +55,10 @@ public interface Options {
     @Option(shortName = "i", description = "enable isotope pattern analysis")
     public boolean getMs1();
 
-    @Option(shortName = "p", defaultToNull = true, description = "A profile contains all scoring and preprocessing information that is necessary for the given data. It is either a profile.json file or the name of a predefined profile")
+    @Option(shortName = "p", defaultValue = "default", description =
+            "A profile contains all scoring and preprocessing information that is necessary for the given data. " +
+                    "It is either a profile.json file or the name of a predefined profile. Predefined profiles are: " +
+                    "default, qtof, qtof.high, orbitrap")
     public String getProfile();
 
     /*
