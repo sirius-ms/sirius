@@ -42,6 +42,12 @@ public interface LearnOptions {
             "MERGE (fragments with previous common fragments", defaultValue = "MERGE")
     public LearnMethod getCommonFragments();
 
+    @Option
+    public boolean isRecombinateLosses();
+
+    @Option
+    public boolean useExponentialDistribution();
+
     @Option(shortName = "v")
     public boolean isVerbose();
 

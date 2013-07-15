@@ -768,6 +768,14 @@ public class FTLearn {
     }
 
     private void fitIntensityDistribution(double[] noiseIntensities, double cutoff) {
+        fitParetoNoiseDistribution(noiseIntensities, cutoff);
+    }
+
+    private void fitExponentialNoiseDistribution(double[] noiseIntensitites, double cutoff) {
+
+    }
+
+    private void fitParetoNoiseDistribution(double[] noiseIntensities, double cutoff) {
         final ArrayDoubleList ys = new ArrayDoubleList(noiseIntensities.length/10);
         for (double v : noiseIntensities) if (v >= cutoff) ys.add(v);
         final ParetoDistribution dist = ParetoDistribution.learnFromData(cutoff, ys.toArray());
