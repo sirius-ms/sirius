@@ -94,6 +94,8 @@ public class Main {
                 System.exit(1);
                 return;
             }
+        } else if (options.isOldSirius()) {
+            analyzer = FragmentationPatternAnalysis.oldSiriusAnalyzer();
         } else {
             analyzer = FragmentationPatternAnalysis.defaultAnalyzer();
         }

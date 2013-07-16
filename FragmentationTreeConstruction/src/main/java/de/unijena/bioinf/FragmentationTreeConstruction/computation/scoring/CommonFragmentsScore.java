@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
@@ -10,18 +11,17 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 // TODO: Add normalization as field
 @Called("Common Fragments:")
 public class CommonFragmentsScore implements DecompositionScorer<Object>, MolecularFormulaScorer {
 
 	private final HashMap<MolecularFormula, Double> commonFragments;
+    private HashMap<MolecularFormula, Double> recombinatedFragments;
     private HashMap<MolecularFormula, Double> commonFragmentsH;
     private HashMap<MolecularFormula, Double> commonFragmentsWithoutH;
+    private Recombinator recombinator;
     private boolean hTolerance;
     private double normalization;
 
@@ -78,19 +78,6 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         return Collections.unmodifiableMap(commonFragments);
     }
 
-    public CommonFragmentsScore addLosses(Map<MolecularFormula, Double> losses) {
-        commonFragmentsH = null;
-        commonFragmentsWithoutH = null;
-        final MolecularFormula[] fs = commonFragments.keySet().toArray(new MolecularFormula[0]);
-        for (Map.Entry<MolecularFormula, Double> entry : losses.entrySet()) {
-            for (MolecularFormula f : fs) {
-                final MolecularFormula fx = f.add(entry.getKey());
-                if (!commonFragments.containsKey(fx)) commonFragments.put(fx, commonFragments.get(f));
-            }
-        }
-        return this;
-    }
-
     public void addCommonFragment(MolecularFormula formula, double score) {
         commonFragments.put(formula, score);
         makeDirty();
@@ -99,6 +86,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     private void makeDirty() {
         commonFragmentsH=null;
         commonFragmentsWithoutH=null;
+        recombinatedFragments = commonFragments;
     }
 
     private static Map<MolecularFormula, Double> mergeMaps(Map<MolecularFormula, Double> map1, Map<MolecularFormula, Double> map2, double multiplicator) {
@@ -130,10 +118,23 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         this.commonFragments = commonFragments;
         if (hTolerance) useHTolerance();
         this.normalization = normalization;
+        recombinatedFragments = commonFragments;
+        recombinator = null;
+    }
+
+    public Recombinator getRecombinator() {
+        return recombinator;
+    }
+
+    public void setRecombinator(Recombinator recombinator) {
+        if (recombinator == this.recombinator) return;
+        this.recombinator = recombinator;
+        this.recombinatedFragments = commonFragments;
+        makeDirty();
     }
 
     public CommonFragmentsScore() {
-        this.commonFragments = new HashMap<MolecularFormula, Double>();
+        this(new HashMap<MolecularFormula, Double>(), 0d, false);
     }
 
     public double getNormalization() {
@@ -145,19 +146,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     public CommonFragmentsScore useHTolerance() {
-        if (hTolerance) return this;
         hTolerance = true;
-        final MolecularFormula h = MolecularFormula.parse("H");
-        final MolecularFormula[] forms = commonFragments.keySet().toArray(new MolecularFormula[0]);
-        for (MolecularFormula f : forms) {
-            final double score = commonFragments.get(f);
-            final MolecularFormula fh = f.add(h);
-            final MolecularFormula fn = f.subtract(h);
-            final Double fhScore = commonFragments.get(fh);
-            final Double fnScore = commonFragments.get(fn);
-            commonFragments.put(fh, Math.max(score, fhScore == null ? 0 : fhScore));
-            commonFragments.put(fn, Math.max(score, fnScore == null ? 0 : fnScore));
-        }
         return this;
     }
 
@@ -190,9 +179,9 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
 	@Override
 	public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
         final Ionization ion = input.getExperimentInformation().getIonization();
-        final Double intrinsic = commonFragments.get(formula);
+        final Double intrinsic = getRecombinatedFragments().get(formula);
         final double intr = intrinsic != null ? intrinsic.doubleValue() : 0;
-        if (!hTolerance && ion instanceof Charge) {
+        if (hTolerance && ion instanceof Charge) {
             final Double score = (ion.getCharge() > 0 ? getCommonFragmentsH().get(formula) : getCommonFragmentsWithoutH().get(formula));
             return (score == null ? intr : Math.max(intr, score.doubleValue())) - normalization;
         } else {
@@ -202,7 +191,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
 
     @Override
     public double score(MolecularFormula formula) {
-        final Double val = commonFragments.get(formula);
+        final Double val = getRecombinatedFragments().get(formula);
         if (val == null) return -normalization;
         else return val.doubleValue()-normalization;
     }
@@ -219,6 +208,9 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         commonFragmentsWithoutH = null;
         if (document.getBooleanFromDictionary(dictionary, "hTolerance")) useHTolerance();
         normalization = document.getDoubleFromDictionary(dictionary, "normalization");
+        if (document.hasKeyInDictionary(dictionary, "recombinator")) {
+            this.recombinator = (Recombinator) helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
+        }
     }
 
     @Override
@@ -230,6 +222,79 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         document.addDictionaryToDictionary(dictionary, "fragments", common);
         document.addToDictionary(dictionary, "hTolerance", hTolerance);
         document.addToDictionary(dictionary, "normalization", normalization);
+        if (recombinator != null) document.addToDictionary(dictionary, "recombinator", helper.wrap(document, recombinator));
+    }
+
+    protected HashMap<MolecularFormula, Double> getRecombinatedFragments() {
+        if (recombinatedFragments == commonFragments && recombinator != null) {
+            recombinatedFragments = recombinator.recombinate(commonFragments, normalization);
+        }
+        return recombinatedFragments;
+    }
+
+    /**
+     * A recombinator extends the list of common losses by combination of losses
+     */
+    public interface Recombinator extends ImmutableParameterized<Recombinator> {
+        public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant);
+    }
+
+    public static class LossCombinator implements Recombinator {
+
+        private List<MolecularFormula> losses;
+        private double penalty;
+
+        public LossCombinator() {
+            this.losses = new ArrayList<MolecularFormula>();
+            this.penalty = 0d;
+        }
+
+        public LossCombinator(double penalty, List<MolecularFormula> losses) {
+            this.penalty = penalty;
+            this.losses = new ArrayList<MolecularFormula>(losses);
+        }
+
+        public LossCombinator(double penalty, CommonLossEdgeScorer lossScorer, LossSizeScorer lossSizeScorer) {
+            this.penalty = penalty;
+            losses = new ArrayList<MolecularFormula>();
+            final Map<MolecularFormula, Double> commonLosses = lossScorer.getCommonLosses();
+            for (MolecularFormula f : commonLosses.keySet()) {
+                final double adjustedScore = commonLosses.get(f) + lossSizeScorer.score(f);
+                if (commonLosses.get(f) > 1) {
+                    losses.add(f);
+                }
+            }
+        }
+
+        @Override
+        public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant) {
+            final HashMap<MolecularFormula, Double> recombination = new HashMap<MolecularFormula, Double>();
+            for (MolecularFormula loss : losses) {
+                for (MolecularFormula f : source.keySet()) {
+                    final MolecularFormula recomb = loss.add(f);
+                    final double  score = source.get(f)+penalty;
+                    if (!source.containsKey(recomb) || source.get(recomb)<score) recombination.put(recomb, score);
+                }
+            }
+            return recombination;
+        }
+
+        @Override
+        public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            double penalty = document.getDoubleFromDictionary(dictionary, "penalty");
+            List<MolecularFormula> losses = new ArrayList<MolecularFormula>();
+            final Iterator<G> iter = document.iteratorOfList(document.getListFromDictionary(dictionary, "losses"));
+            while (iter.hasNext()) losses.add(MolecularFormula.parse(document.getString(iter.next())));
+            return new LossCombinator(penalty, losses);
+        }
+
+        @Override
+        public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            document.addToDictionary(dictionary, "penalty", penalty);
+            final L ls = document.newList();
+            for (MolecularFormula l : losses) document.addToList(ls, l.formatByHill());
+            document.addListToDictionary(dictionary, "losses", ls);
+        }
     }
 
 }

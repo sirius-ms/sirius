@@ -46,7 +46,10 @@ public interface LearnOptions {
     public boolean isRecombinateLosses();
 
     @Option
-    public boolean useExponentialDistribution();
+    public boolean isExponentialDistribution();
+
+    @Option(defaultToNull = true)
+    public Double getMaximalCommonLossScore();
 
     @Option(shortName = "v")
     public boolean isVerbose();

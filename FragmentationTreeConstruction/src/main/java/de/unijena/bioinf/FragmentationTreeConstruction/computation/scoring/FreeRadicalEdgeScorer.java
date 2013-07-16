@@ -28,7 +28,8 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
         		MolecularFormula.parse("H"), MolecularFormula.parse("O"), MolecularFormula.parse("OH"), 
         		MolecularFormula.parse("CH3"), MolecularFormula.parse("CH3O"),
         		MolecularFormula.parse("C3H7"), MolecularFormula.parse("C4H9"), 
-        		MolecularFormula.parse("C6H5O"), MolecularFormula.parse("C6H5"), MolecularFormula.parse("C6H6N"), MolecularFormula.parse("I")
+        		MolecularFormula.parse("C6H5O"), MolecularFormula.parse("C6H5"), MolecularFormula.parse("C6H6N"), MolecularFormula.parse("I"),
+                MolecularFormula.parse("NO"), MolecularFormula.parse("NO2"), MolecularFormula.parse("Br"), MolecularFormula.parse("Cl")
         };
         final HashMap<MolecularFormula, Double> radicals = new HashMap<MolecularFormula, Double>(formulas.length*2);
         for (MolecularFormula formula : formulas) {

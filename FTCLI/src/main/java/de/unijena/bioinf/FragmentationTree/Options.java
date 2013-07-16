@@ -49,6 +49,9 @@ public interface Options {
     @Option(hidden = true, defaultToNull = true)
     public File getRanking();
 
+    @Option(hidden = true)
+    public boolean isOldSirius();
+
     @Option(shortName = "I", defaultValue = "0", description = "compute trees for the <value>th molecular formulas with best isotope pattern explanations")
     public int getFilterByIsotope();
 
