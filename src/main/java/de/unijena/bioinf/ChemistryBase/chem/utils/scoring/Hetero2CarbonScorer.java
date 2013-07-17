@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
@@ -18,9 +19,10 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
  * Remarkt that there are special compounds with very high h2c. This happens when a compound consist of a oxygen+(P,S,?)
  * backbone. Such compounds usually have lower rdbe values, because oxygen can not create much double bonds and rings.
  */
+@HasParameters
 public class Hetero2CarbonScorer implements MolecularFormulaScorer {
 
-    private final static NormalDistribution keggDistribution = new NormalDistribution(0.5886335, Math.sqrt(0.5550574));
+    private final static NormalDistribution keggDistribution = new NormalDistribution(0.5886335, 0.5550574);
 
     private final static PartialParetoDistribution keggParetoDistribution = new PartialParetoDistribution(0, 1, 3);
 

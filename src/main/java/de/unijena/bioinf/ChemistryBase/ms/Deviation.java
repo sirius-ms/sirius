@@ -23,11 +23,11 @@ public class Deviation {
     }
 
     public Deviation multiply(int scalar) {
-        return new Deviation(ppm*scalar, absolute*2);
+        return new Deviation(ppm*scalar, absolute*scalar);
     }
 
     public Deviation multiply(double scalar) {
-        return new Deviation(ppm*scalar, absolute*2);
+        return new Deviation(ppm*scalar, absolute*scalar);
     }
 
     public Deviation divide(double scalar) {

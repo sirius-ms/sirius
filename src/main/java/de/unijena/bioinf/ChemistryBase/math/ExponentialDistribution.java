@@ -4,6 +4,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
 import static java.lang.Math.exp;
+import static java.lang.Math.log;
+import static java.lang.Math.min;
 
 @HasParameters
 public final class ExponentialDistribution extends RealDistribution {
@@ -50,12 +52,32 @@ public final class ExponentialDistribution extends RealDistribution {
         return 1d/lambda;
     }
 
+    public double getMedian() {
+        return log(2)/lambda;
+    }
+
+    @Override
+    public String toString() {
+        return "ExponentialDistribution(\u03BB = " + lambda + ")";
+    }
+
+    public static ExponentialDistribution learnFromData(double[] values) {
+        double avg = 0d;
+        for (double v : values) avg += v;
+        return ExponentialDistribution.fromMean(avg/values.length);
+    }
+
     public static ByMedianEstimatable<ExponentialDistribution> getMedianEstimator() {
-        return new ByMedianEstimatable<ExponentialDistribution>() {
-            @Override
-            public ExponentialDistribution extimateByMedian(double median) {
-                return ExponentialDistribution.fromLambda(Math.log(2)/median);
-            }
-        };
+        return new EstimateByMedian();
+    }
+
+    @HasParameters
+    public static class EstimateByMedian implements ByMedianEstimatable<ExponentialDistribution> {
+        public EstimateByMedian() {
+        }
+        @Override
+        public ExponentialDistribution extimateByMedian(double median) {
+            return ExponentialDistribution.fromLambda(Math.log(2)/median);
+        }
     }
 }
