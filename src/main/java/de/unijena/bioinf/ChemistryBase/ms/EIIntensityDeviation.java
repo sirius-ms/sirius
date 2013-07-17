@@ -1,8 +1,15 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * For peaks in EI spectra the allowed deviation increases with increasing intensity.
  */
+@HasParameters
 public class EIIntensityDeviation extends Deviation{
     private double smallAbsError;
     private double largeAbsError;
@@ -17,7 +24,7 @@ public class EIIntensityDeviation extends Deviation{
      * @param smallAbsError
      * @param largeAbsError
      */
-    public EIIntensityDeviation(double smallErrorPpm, double largeErrorPpm, double smallAbsError, double largeAbsError) {
+    public EIIntensityDeviation(@Parameter("minPpm")double smallErrorPpm, @Parameter("maxPpm")double largeErrorPpm, @Parameter("minAbsolute")double smallAbsError, @Parameter("maxAbsolute")double largeAbsError) {
         super(0, 0);
         if (smallAbsError>largeAbsError || smallErrorPpm>largeErrorPpm) throw new IllegalArgumentException("large errors have to be greater than small errors");
         this.smallErrorPpm = smallErrorPpm;
@@ -27,10 +34,11 @@ public class EIIntensityDeviation extends Deviation{
 
     }
 
-    @Override
+
     /**
      * use for intensity Normalization.Max(1d) only
      */
+    @Override
     public double absoluteFor(double value) {
         final double absolute = (intensity*(largeAbsError-smallAbsError)/1d+smallAbsError);
         final double relative = (intensity*(largeErrorPpm-smallErrorPpm)/1d+smallErrorPpm)*1e-6*value;
@@ -74,5 +82,16 @@ public class EIIntensityDeviation extends Deviation{
 
     public double getIntensity() {
         return intensity;
+    }
+
+    public String toString() {
+        return smallErrorPpm + " minPpm " + largeErrorPpm+" maxPpm (" + smallAbsError + " min m/z " + largeAbsError+ " max m/z)";
+    }
+
+    private static Pattern pattern = Pattern.compile("(.+) minPpm (.+) maxPpm \\((.+) min m\\/z (.+) max m\\/z\\)");
+    public static EIIntensityDeviation fromString(String s) {
+        final Matcher m = pattern.matcher(s);
+        if (!m.find()) throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");
+        return new EIIntensityDeviation(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)), Double.parseDouble(m.group(3)), Double.parseDouble(m.group(4)));
     }
 }
