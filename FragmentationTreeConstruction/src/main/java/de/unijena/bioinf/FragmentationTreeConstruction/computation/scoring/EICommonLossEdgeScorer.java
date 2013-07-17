@@ -156,6 +156,10 @@ public class EICommonLossEdgeScorer implements LossScorer{
         return score;
     }
 
+    public HashMap<MolecularFormula, Double> getCommonLosses() {
+        return new HashMap<MolecularFormula, Double>(commonLosses);
+    }
+
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         //To change body of implemented methods use File | Settings | File Templates.
@@ -163,6 +167,10 @@ public class EICommonLossEdgeScorer implements LossScorer{
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        final D common = document.newDictionary();
+        for (Map.Entry<MolecularFormula, Double> entry : commonLosses.entrySet()) {
+            document.addToDictionary(common, entry.getKey().toString(), entry.getValue());
+        }
+        document.addDictionaryToDictionary(dictionary, "losses", common);
     }
 }

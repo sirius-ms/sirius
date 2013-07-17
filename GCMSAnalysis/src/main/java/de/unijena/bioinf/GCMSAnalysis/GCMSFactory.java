@@ -15,12 +15,16 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Mos
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.GCMSMissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import org.apache.commons.math3.special.Erf;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GCMSFactory {
 
@@ -201,7 +205,7 @@ public class GCMSFactory {
 //        analysis.getRootScorers().add(new MassDeviationVertexScorer);
 //        analysis.getRootScorers().add(new ChemicalPriorScorer(h2cScorer, 0d, 11d));
         //lossScorer
-        analysis.getLossScorers().add(new ChemicalPriorEdgeScorer(h2cScorer, 0d));
+        analysis.getLossScorers().add(new ChemicalPriorEdgeScorer(h2cScorer, 0d, 0d));
         analysis.getLossScorers().add(new TmsToDmsLossScorer());
         analysis.getLossScorers().add(new FractionOfParentLossScorer());
         analysis.getLossScorers().add(EICommonLossEdgeScorer.getGCMSCommonLossScorer(useChlorine, useHalogens, usePFB, useTMS));
@@ -225,6 +229,88 @@ public class GCMSFactory {
         return analysis;
     }
 
+
+    public GCMSFragmentationPatternAnalysis getSparseGCMSAnalysis(){
+        setInitials();
+
+        final GCMSFragmentationPatternAnalysis analysis = new GCMSFragmentationPatternAnalysis();
+        analysis.setInitial();   //todo weglassen?
+
+
+        LossScorer mayNotBeSingle = new LossScorer() {
+            @Override
+            public Object prepare(ProcessedInput inputh) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public double score(Loss loss, ProcessedInput input, Object precomputed) {
+                final List<Element> elements = loss.getFormula().elements();
+                if (elements.size() == 1) {
+                    //C and N may not be a single loss
+                    final String mayNotBeSingle = "CN";
+                    if (mayNotBeSingle.contains(elements.get(0).getSymbol())){
+                        return Math.log(0.0001);
+                    }
+                    if (elements.get(0).getSymbol().equals("H") && loss.getFormula().numberOfHydrogens()>2){
+                        return Math.log(0.0001);
+                    }
+                }
+                return 0;
+            }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        };
+
+        // loss scorers
+        final List<LossScorer> lossScorers = new ArrayList<LossScorer>();
+        //lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
+        lossScorers.add(new DBELossScorer());
+        lossScorers.add(new PureCarbonNitrogenLossScorer());
+        lossScorers.add(new ChemicalPriorEdgeScorer()); //todo nicht in default FPA
+        lossScorers.add(mayNotBeSingle);
+
+
+        Map<MolecularFormula, Double> commonLosses = EICommonLossEdgeScorer.getSingleLossesGCMSCommonLossScorer().getCommonLosses();
+        Map<MolecularFormula, Double> commonLossesConservative = new HashMap<MolecularFormula, Double>();
+        for (Map.Entry<MolecularFormula, Double> entry : commonLosses.entrySet()) {
+            if (entry.getValue().equals(Math.log(5))){
+                commonLossesConservative.put(entry.getKey(), Math.log(2));
+            } else if (entry.getValue().equals(Math.log(10))){
+                commonLossesConservative.put(entry.getKey(), Math.log(4));
+            } else if (entry.getValue().equals(Math.log(50))){
+                commonLossesConservative.put(entry.getKey(), Math.log(8));
+            } else if (entry.getValue().equals(Math.log(100))){
+                commonLossesConservative.put(entry.getKey(), Math.log(16));
+            }
+        }
+        CommonLossEdgeScorer commonLossEdgeScorer = new CommonLossEdgeScorer(commonLossesConservative, null);
+
+
+        lossScorers.add(commonLossEdgeScorer);
+        analysis.setLossScorers(lossScorers);
+
+        // root scorers
+        analysis.getRootScorers().add(new ChemicalPriorScorer());
+
+        //set boolean variables
+        analysis.setRemoveIsotopePeaks(true);
+        analysis.setUseChlorine(useChlorine);
+        analysis.setUseHalogens(useHalogens);
+        analysis.setUsePFB(usePFB);
+        analysis.setUseTMS(useTMS);
+        analysis.setUseDerivates(useDerivates);
+
+        return analysis;
+    }
 
     public double getHeteroAverage() {
         return heteroAverage;

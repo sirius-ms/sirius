@@ -52,7 +52,7 @@ public class FTLearn {
 
     public final static String VERSION_STRING = "ModelparameterEstimation " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public static void main(String[] args) {
         final LearnOptions options = CliFactory.createCli(LearnOptions.class).parseArguments(args);

@@ -568,6 +568,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
             if (diff<minDiff){
                 minDiff = diff;
                 parentPos = i;
+                //remove peaks above parent
                 if (i < processedPeaks.size()-1) processedPeaks.remove(i+1);
             }
         }

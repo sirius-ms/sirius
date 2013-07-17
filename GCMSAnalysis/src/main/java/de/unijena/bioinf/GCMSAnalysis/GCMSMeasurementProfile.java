@@ -1,6 +1,9 @@
 package de.unijena.bioinf.GCMSAnalysis;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.EIIntensityDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
@@ -12,7 +15,7 @@ import java.util.List;
 /**
  * MeasurementProfile for EI uses EIIntensityDeviation and introduces special elements like halogens, TMS or PFB if necessary.
  */
-public class GCMSMeasurementProfile implements MeasurementProfile{
+public class GCMSMeasurementProfile implements MeasurementProfile, Parameterized {
 
     private final double smallErrorPpm = 7;
     private final double largeErrorPPm = 25;
@@ -44,14 +47,14 @@ public class GCMSMeasurementProfile implements MeasurementProfile{
         this.constraints = new FormulaConstraints(simpleAlphabet);
 
         //todo really wanna use this strict filter????
-        FormulaFilter filter = new FormulaFilter() {
-            @Override
-            public boolean isValid(MolecularFormula formula) {
-                if (formula.rdbe()>=0) return true;
-                return false;
-            }
-        };
-        constraints.addFilter(filter);
+//        FormulaFilter filter = new FormulaFilter() {
+//            @Override
+//            public boolean isValid(MolecularFormula formula) {
+//                if (formula.rdbe()>=0) return true;
+//                return false;
+//            }
+//        };
+//        constraints.addFilter(filter);
 
         //constraints.addFilter(new ValenceFilter(-0.5d));
     }
@@ -63,7 +66,7 @@ public class GCMSMeasurementProfile implements MeasurementProfile{
 
     @Override
     public Deviation getAllowedMassDeviation() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return new EIIntensityDeviation(smallErrorPpm, largeErrorPPm, smallAbsError, largeAbsError);
     }
 
     @Override
@@ -89,6 +92,30 @@ public class GCMSMeasurementProfile implements MeasurementProfile{
     @Override
     public double getIntensityDeviation() {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        //todo
+//        setIntensityDeviation(document.getDoubleFromDictionary(dictionary, "intensityDeviation"));
+//        setMedianNoiseIntensity(document.getDoubleFromDictionary(dictionary, "medianNoiseIntensity"));
+//        setFormulaConstraints((FormulaConstraints)helper.unwrap(document, document.getFromDictionary(dictionary, "formulaConstraints")));
+//        final Set<String> keys = document.keySetOfDictionary(dictionary);
+//        if (keys.contains("allowedMassDeviation")) allowedMassDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "allowedMassDeviation"));
+//        if (keys.contains("standardMs1MassDeviation")) standardMs1MassDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "standardMs1MassDeviation"));
+//        if (keys.contains("standardMs2MassDeviation")) standardMs2MassDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "standardMs2MassDeviation"));
+//        if (keys.contains("standardMassDifferenceDeviation")) standardMassDifferenceDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "standardMassDifferenceDeviation"));
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "intensityDeviation", getIntensityDeviation());
+        document.addToDictionary(dictionary, "medianNoiseIntensity", getMedianNoiseIntensity());
+        if (constraints!=null) document.addToDictionary(dictionary, "formulaConstraints", helper.wrap(document, getFormulaConstraints()));
+        if (getAllowedMassDeviation()!=null)document.addToDictionary(dictionary, "allowedMassDeviation", getAllowedMassDeviation().toString());
+        if (getStandardMs1MassDeviation()!=null)document.addToDictionary(dictionary, "standardMs1MassDeviation", getStandardMs1MassDeviation().toString());
+        if (getStandardMs2MassDeviation()!=null)document.addToDictionary(dictionary, "standardMs2MassDeviation", getStandardMs2MassDeviation().toString());
+        if (getStandardMassDifferenceDeviation()!=null)document.addToDictionary(dictionary, "standardMassDifferenceDeviation", getStandardMassDifferenceDeviation().toString());
     }
 
 }
