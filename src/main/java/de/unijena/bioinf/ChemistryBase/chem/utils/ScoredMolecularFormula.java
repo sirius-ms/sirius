@@ -87,6 +87,6 @@ public class ScoredMolecularFormula implements Comparable<ScoredMolecularFormula
 
     @Override
     public int compareTo(ScoredMolecularFormula o) {
-        return Double.compare(score, o.score);
+        return new Double(score).compareTo(o.score);
     }
 }
