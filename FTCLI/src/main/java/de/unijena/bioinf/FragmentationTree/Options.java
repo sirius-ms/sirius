@@ -40,11 +40,14 @@ public interface Options {
     @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 
+    @Option(defaultValue = "0")
+    public double getRecalibrate();
+
     @Option(description = "If correct formula is given, compute only trees with higher score than the correct one")
     public boolean getWrongPositive();
 
-    @Option(description = "Compute only trees with higher score than <value>", defaultValue = "0")
-    public double getLowerbound();
+    @Option(description = "Compute only trees with higher score than <value>", defaultToNull =true)
+    public Double getLowerbound();
 
     @Option(hidden = true, defaultToNull = true)
     public File getRanking();

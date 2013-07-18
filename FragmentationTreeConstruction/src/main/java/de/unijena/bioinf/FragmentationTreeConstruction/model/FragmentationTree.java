@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class FragmentationTree implements Comparable<FragmentationTree>, FragmentationPathway {
 
-    private double score, rootScore;
+    private double score, rootScore, recalibrationBonus;
     private final TreeFragment root;
     private final ProcessedInput input;
 
@@ -50,6 +50,14 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         final Loss l = new Loss(v, w, vw.getLoss(), vw.getWeight() );
         v.addOutgoingEdge(l);
         ((TreeFragment) w).setParentEdge(l);
+    }
+
+    public double getRecalibrationBonus() {
+        return recalibrationBonus;
+    }
+
+    public void setRecalibrationBonus(double recalibrationBonus) {
+        this.recalibrationBonus = recalibrationBonus;
     }
 
     public ProcessedInput getInput() {

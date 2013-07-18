@@ -130,8 +130,8 @@ public class MultipleTreeComputation {
                 trees.add(tree);
                 if (trees.size() > maximalNumber) {
                     trees.pollFirst();
-                    final double newLowerbound = trees.first().getScore();
-                    assert newLowerbound >= lb;
+                    final double newLowerbound = Math.max(0, trees.first().getScore());
+                    assert newLowerbound >= lb : newLowerbound + " should be greater than " + lb;
                     lb = Math.max(lowerbound, newLowerbound);
                 }
             }

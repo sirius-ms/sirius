@@ -26,6 +26,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidato
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -33,6 +34,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.Guro
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.function.Identity;
 
 import java.util.*;
 
@@ -54,6 +57,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
     private List<PostProcessor> postProcessors;
     private TreeBuilder treeBuilder;
     private MutableMeasurementProfile defaultProfile;
+    private RecalibrationMethod recalibrationMethod;
 
     public static <G, D, L> FragmentationPatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
@@ -87,6 +91,8 @@ public class FragmentationPatternAnalysis implements Parameterized {
             alesscorer.addCommonLoss(MolecularFormula.parse(s), GAMMA * Math.log(10));
         }
 
+        lossScorers.add(alesscorer);
+
         // peak scorers
         final List<PeakScorer> peakScorers = new ArrayList<PeakScorer>();
         peakScorers.add(new PeakIsNoiseScorer(ExponentialDistribution.getMedianEstimator()));
@@ -94,7 +100,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
 
         // root scorers
         final List<DecompositionScorer<?>> rootScorers = new ArrayList<DecompositionScorer<?>>();
-        //rootScorers.add(new ChemicalPriorScorer());
+        rootScorers.add(new ChemicalPriorScorer(new Hetero2CarbonScorer(Hetero2CarbonScorer.getHeteroToCarbonDistributionFromKEGG()), 0d, 0d));
         rootScorers.add(new MassDeviationVertexScorer());
 
         // fragment scorers
@@ -247,6 +253,59 @@ public class FragmentationPatternAnalysis implements Parameterized {
      */
     public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound) {
         return treeBuilder.buildTree(graph.getProcessedInput(), graph, lowerbound);
+    }
+
+    public RecalibrationMethod.Recalibration recalibrate(final FragmentationTree tree, double modify) {
+        if (recalibrationMethod == null) return null;
+        final RecalibrationMethod.Recalibration method = recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer());
+        final UnivariateFunction f = method.recalibrationFunction();
+        if (f instanceof Identity) return null;
+        final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(tree.getInput().getExperimentInformation());
+        final ArrayList<Ms2Spectrum> specs = new ArrayList<Ms2Spectrum>();
+        for (Ms2Spectrum spec : exp.getMs2Spectra()) {
+            specs.add(new Ms2SpectrumImpl(Spectrums.map(spec, new Spectrums.Transformation<Peak, Peak>() {
+                @Override
+                public Peak transform(Peak input) {
+                    return new Peak(f.value(input.getMass()), input.getIntensity());
+                }
+            }), spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount()));
+        }
+        exp.setMs2Spectra(specs);
+        final MutableMeasurementProfile prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
+        prof.setStandardMs2MassDeviation(prof.getStandardMs2MassDeviation().multiply(modify));
+        exp.setMeasurementProfile(prof);
+        final FragmentationTree newTree = computeTrees(preprocessing(exp)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(tree.getScore()).optimalTree();
+        return new RecalibrationMethod.Recalibration() {
+            @Override
+            public double getScoreBonus() {
+                if (newTree==null) return 0d;
+                return newTree.getScore()-tree.getScore();
+            }
+
+            @Override
+            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer) {
+                return newTree;
+            }
+
+            @Override
+            public boolean shouldRecomputeTree() {
+                return false;
+            }
+
+            @Override
+            public UnivariateFunction recalibrationFunction() {
+                return f;
+            }
+        };
+
+    }
+
+    public RecalibrationMethod getRecalibrationMethod() {
+        return recalibrationMethod;
+    }
+
+    public void setRecalibrationMethod(RecalibrationMethod recalibrationMethod) {
+        this.recalibrationMethod = recalibrationMethod;
     }
 
     /**
@@ -450,6 +509,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
                 scored.add(new ScoredMolecularFormula(f, score));
 
             }
+            Collections.sort(scored, Collections.reverseOrder());
             parentPeak.setDecompositions(scored);
         }
         // set peak indizes

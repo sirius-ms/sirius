@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -34,6 +35,11 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
         final Deviation dev = profile.getStandardMs2MassDeviation();
         final double sd = dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
+    }
+
+    public NormalDistribution getDistribution(double peakMz, double peakIntensity, ProcessedInput input) {
+        final double sd = input.getExperimentInformation().getMeasurementProfile().getStandardMs2MassDeviation().absoluteFor(peakMz);
+        return new NormalDistribution(0d, sd*sd);
     }
 
     @Override
