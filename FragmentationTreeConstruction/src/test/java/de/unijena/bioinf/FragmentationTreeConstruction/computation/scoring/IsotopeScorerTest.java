@@ -416,12 +416,6 @@ public class IsotopeScorerTest {
      */
     private List<ProcessedPeak> randomizePattern(ChargedSpectrum chargedSpectrum, boolean changeScale){
         if (changeScale){
-//            -> endlich committen
-//                    -> und vielleicht als PatternExtractor implementieren?
-//            scale vielleicht auch pareto? denn intensitäten sahen ähnlihc verteilt aus wie noise.;
-//            oder exponential probieren;
-//            noise vor oder nach Normalisieren gefittet? Sollte noise nicht immer gleich hoch sein, egal wie hoch rest ist??
-
             final double scale = random.nextDouble()*0.8+0.2;
             return randomizePattern(chargedSpectrum, scale);
         }  else {
@@ -429,16 +423,6 @@ public class IsotopeScorerTest {
         }
     }
 
-    @Test
-    public void pareto(){
-        ArrayDoubleList list = new ArrayDoubleList();
-        for (int i = 0; i < 1000; i++) {
-            list.add(rpareto(0.0001, 0.6));
-        }
-        ParetoDistribution distribution = ParetoDistribution.learnFromData(list.toArray());
-        System.out.println("xmin: "+distribution.getXmin());
-        System.out.println("k: "+distribution.getK());
-    }
 
     private List<ProcessedPeak> randomizePattern(ChargedSpectrum chargedSpectrum, double scale){
 //        ... manche Spektren sind ja insgesamt intensitätsärmer.
@@ -449,7 +433,7 @@ public class IsotopeScorerTest {
             final ProcessedPeak processedPeak = new ProcessedPeak();
             processedPeak.setMz(randomizeMass(peak.getMass(), massDeviation));
             if (VERBOSE) System.out.println("old mass: "+peak.getMass()+" | new: "+processedPeak.getMass());
-            processedPeak.setIntensity(randomizeIntensity(peak.getIntensity()*scale, intensityDeviation));//*Math.exp(intensityDeviation*random.nextGaussian())); //todo wie richtig?
+            processedPeak.setIntensity(randomizeIntensity(peak.getIntensity()*scale, intensityDeviation));
             if (VERBOSE) System.out.println("old intensity: "+peak.getIntensity()+" | new: "+processedPeak.getIntensity());
             processedPeak.setIon(peak.getIonization());
             mergedPeaks.add(processedPeak);
@@ -567,6 +551,7 @@ public class IsotopeScorerTest {
     public void intensityTest() throws IOException {
         ArrayDoubleList randoms = new ArrayDoubleList();
         for (int i = 0; i < 1000; i++) {
+
              randoms.add(randomizeIntensity(0.1, 0.2));
         }
         File intFile = new File("C:/Isotopes/intensities.txt");
@@ -580,45 +565,17 @@ public class IsotopeScorerTest {
         fw.close();
     }
 
-//    #sampling pareto
-//    ppareto <- function(x, scale, shape)
-//    {
-//        ifelse(x > scale, 1 - (scale / x) ^ shape, 0)
-//    }
-//    qpareto <- function(y, scale, shape)
-//    {
-//        ifelse(
-//                y >= 0 & y <= 1,
-//                scale * ((1 - y) ^ (-1 / shape)),
-//                NaN
-//        )
-//    }
-//    rpareto <- function(n, scale, shape, lower_bound = scale, upper_bound = Inf)
-//    {
-//        quantiles <- ppareto(c(lower_bound, upper_bound), scale, shape)
-//        uniform_random_numbers <- runif(n, quantiles[1], quantiles[2])
-//        qpareto(uniform_random_numbers, scale, shape)
-//    }
-//
-//    #------------------------------------------
-
-    private double ppareto(double x, double xmin, double k){
-        //todo gibts schon in Pareto von Kai??????
-        if (x>xmin) return 1-Math.pow(xmin/x, k);
-        return 0;
-    }
-    private double qpareto(double y, double xmin, double k){
-        if (y>=0 && y<=1) return  xmin * Math.pow((1-y), (-1/k));
-        else return Double.NaN;
-    }
-    private double rpareto(double xmin, double k){
-        return rpareto(xmin, k, xmin, Double.POSITIVE_INFINITY);
-    }
-    private double rpareto(double xmin, double k, double lowerBound, double upperBound){
-        double quantil1 = ppareto(lowerBound, xmin, k);
-        double quantil2 = ppareto(upperBound, xmin, k);
-        double uniformRandom = quantil1+random.nextDouble()*(quantil2-quantil1);
-        return qpareto(uniformRandom, xmin, k);
+    @Test
+    public void pareto(){
+        ParetoDistribution dist = new ParetoDistribution(0.6, 0.0001);
+        ArrayDoubleList list = new ArrayDoubleList();
+        for (int i = 0; i < 1000; i++) {
+            //list.add(rpareto(0.0001, 0.6));
+            list.add(dist.nextRandom());
+        }
+        ParetoDistribution distribution = ParetoDistribution.learnFromData(list.toArray());
+        System.out.println("xmin: "+distribution.getXmin());
+        System.out.println("k: "+distribution.getK());
     }
 
 

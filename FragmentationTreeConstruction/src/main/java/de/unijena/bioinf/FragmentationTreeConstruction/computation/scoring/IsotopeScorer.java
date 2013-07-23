@@ -22,7 +22,7 @@ import java.util.*;
 
 
 /**
- * //todo UNDER CONSTRUCTION! NOT TESTED BY NOW!
+ * //todo UNDER CONSTRUCTION! NOT completely TESTED BY NOW!
  * Scorers the isotope patterns.
  * finds the most likely segmentation of isotope patterns using Maximum-Weight Independent Set.
  * By Now only this explanation is used. Later suboptimal patterns will be added greedy.
@@ -43,6 +43,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
     private boolean isPrepared;
     private double indecomposablePenalty = -1000; //maybe noise or an isotope
     private static final boolean VERBOSE = false;
+    private static final double DEFAULT_PENALTY = -5;
     //todo irgendwas mit Intensitäten und relativen Intensitäten beachten?
 
 
@@ -68,7 +69,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
     }
 
     public IsotopeScorer(IsotopePatternAnalysis isotopePatternScorer, MassToFormulaDecomposer decomposer, int maxPatternLength){
-        this(getDefaultEnv(), isotopePatternScorer, decomposer, maxPatternLength, 0);
+        this(getDefaultEnv(), isotopePatternScorer, decomposer, maxPatternLength, DEFAULT_PENALTY);
     }
 
     @Override

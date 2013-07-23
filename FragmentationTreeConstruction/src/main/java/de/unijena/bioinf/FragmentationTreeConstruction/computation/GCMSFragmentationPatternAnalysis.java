@@ -123,7 +123,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         this.setRootScorers(new ArrayList<DecompositionScorer<?>>());
         this.setPeakPairScorers(new ArrayList<PeakPairScorer>());
         this.setFragmentPeakScorers(new ArrayList<PeakScorer>());
-        this.setGraphBuilder(new SubFormulaGraphBuilder());
+        //this.setGraphBuilder(new SubFormulaGraphBuilder()); //todo für IsotopePattern neuer GraphBuilder benötigt?
         this.setLossScorers(new ArrayList<LossScorer>());
         this.setTreeBuilder(new DPTreeBuilder(16));
     }
