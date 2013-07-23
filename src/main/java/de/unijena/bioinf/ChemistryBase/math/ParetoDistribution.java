@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
+import static java.lang.Math.random;
 
 @HasParameters
 public final class ParetoDistribution extends RealDistribution {
@@ -49,6 +50,22 @@ public final class ParetoDistribution extends RealDistribution {
 
     public double getMedian() {
         return xmin * pow(2, 1d/k);
+    }
+
+    public double getInverseOfCDF(double y){
+        if (y<0 || y>1) return Double.NaN;
+        return  xmin * pow((1-y), (-1/k));
+    }
+
+    public double nextRandom(){
+        return nextRandom(xmin, Double.POSITIVE_INFINITY);
+    }
+
+    public double nextRandom(double lowerBound, double upperBound){
+        double quantil1 = getCumulativeProbability(lowerBound);
+        double quantil2 = getCumulativeProbability(upperBound);
+        double uniformRandom = quantil1+random()*(quantil2-quantil1);
+        return getInverseOfCDF(uniformRandom);
     }
 
     /**
