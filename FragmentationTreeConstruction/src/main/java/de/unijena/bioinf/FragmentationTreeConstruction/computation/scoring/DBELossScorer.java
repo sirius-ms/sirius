@@ -12,7 +12,7 @@ public class DBELossScorer implements LossScorer {
     private double score;
 
     public DBELossScorer() {
-        this(Math.log(2d/3d));
+        this(Math.log(1d/3d));
     }
 
     public DBELossScorer(double score) {
@@ -35,7 +35,7 @@ public class DBELossScorer implements LossScorer {
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
         final int rdbe = loss.getLoss().doubledRDBE();
-        if (rdbe < 0) return Math.max(Math.log(0.2), Math.abs(rdbe)*score);
+        if (rdbe < 0) return Math.max(Math.log(0.05), Math.abs(rdbe)*score);
         else return 0;
     }
 

@@ -79,6 +79,10 @@ public class CommonLossEdgeScorer implements LossScorer{
         return this;
     }
 
+    public Map<MolecularFormula, Double> getCommonLosses() {
+        return Collections.unmodifiableMap(commonLosses);
+    }
+
 
     @Override
     public Object prepare(ProcessedInput input) {
@@ -160,6 +164,39 @@ public class CommonLossEdgeScorer implements LossScorer{
         public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant);
     }
 
+    public static class LegacyOldSiriusRecombinator implements Recombinator {
+
+
+        @Override
+        public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant) {
+            final ArrayList<MolecularFormula> losses = new ArrayList<MolecularFormula>(source.keySet());
+            final HashMap<MolecularFormula, Double> recs = new HashMap<MolecularFormula, Double>();
+            List<MolecularFormula> src = new ArrayList<MolecularFormula>(losses);
+            final double gamma = Math.exp(source.get(Math.log(10)));
+            for (int i=1; i <=3; ++i) {
+                final double score = Math.log(gamma/i);
+                final ArrayList<MolecularFormula> newSrc = new ArrayList<MolecularFormula>();
+                for (MolecularFormula f : losses) {
+                    for (MolecularFormula g : src) {
+                        newSrc.add(f.add(g));
+                    }
+                }
+                src = newSrc;
+                for (MolecularFormula f : src) recs.put(f, score);
+            }
+            return recs;
+        }
+
+        @Override
+        public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+            return new LegacyOldSiriusRecombinator();
+        }
+
+        @Override
+        public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        }
+    }
+
     /**
      * The LossSizeRecombinator recombinates by the following strategy:
      * 1. calculate the final score of both common loss (after adding loss size prior and normalizations)
@@ -195,7 +232,7 @@ public class CommonLossEdgeScorer implements LossScorer{
                     final double bScore = lossSizeScorer.score(b) + source.get(b) - normalizationConstant;
                     final MolecularFormula combination = a.add(b);
                     final double abScore = lossSizeScorer.score(combination);
-                    final double combinatedScore = (aScore + bScore)/2d -abScore + normalizationConstant + penalty;
+                    final double combinatedScore = (aScore + bScore) -abScore + normalizationConstant + penalty;
                     if (combinatedScore > 0d ) {
                         Double sc = source.get(combination);
                         if (sc == null || sc.doubleValue() < combinatedScore) {

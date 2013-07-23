@@ -15,7 +15,7 @@ public interface LearnOptions {
     public String getProfile();
 
     @Option(shortName = "w", description = "write trees and profiles for each iteration step")
-    public boolean isTrees();
+    public boolean isWriting();
 
     @Option(shortName = "i", defaultValue = "4", description = "number of iterations")
     public int getIterations();
@@ -41,6 +41,15 @@ public interface LearnOptions {
             "REPLACE (previous common fragments), ADD (fragments to previous common fragments), " +
             "MERGE (fragments with previous common fragments", defaultValue = "MERGE")
     public LearnMethod getCommonFragments();
+
+    @Option
+    public boolean isRecombinateLosses();
+
+    @Option
+    public boolean isExponentialDistribution();
+
+    @Option(defaultToNull = true)
+    public Double getMaximalCommonLossScore();
 
     @Option(shortName = "v")
     public boolean isVerbose();
