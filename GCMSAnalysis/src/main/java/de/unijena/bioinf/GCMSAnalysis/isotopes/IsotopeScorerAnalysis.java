@@ -1,9 +1,12 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
+package de.unijena.bioinf.GCMSAnalysis.isotopes;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.IsotopeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -13,7 +16,6 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import org.apache.commons.collections.primitives.ArrayDoubleList;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -32,7 +34,7 @@ import static junit.framework.Assert.assertTrue;
  * Time: 18:27
  * To change this template use File | Settings | File Templates.
  */
-public class IsotopeScorerTest {
+public class IsotopeScorerAnalysis {
     private static final boolean VERBOSE = true;
     private static final boolean isAssert = false;
     private Random random;
@@ -76,7 +78,7 @@ public class IsotopeScorerTest {
 
 
         decomposer = new MassToFormulaDecomposer();
-        experiment = new MyExperiment();
+        experiment = new IsotopeExperiment();
     }
 
     @Test
@@ -588,106 +590,4 @@ public class IsotopeScorerTest {
         return intensity;
     }
 
-    private class PatternFromFormula implements Comparable<PatternFromFormula>{
-        private List<ProcessedPeak> pattern;
-        private MolecularFormula formula;
-        public PatternFromFormula(List<ProcessedPeak> pattern, MolecularFormula formula) {
-            this.pattern = new ArrayList<ProcessedPeak>(pattern);
-            this.formula = formula;
-        }
-
-        public MolecularFormula getFormula() {
-            return formula;
-        }
-
-        public List<ProcessedPeak> getPattern() {
-            return pattern;
-        }
-
-        private void setPattern(List<ProcessedPeak> pattern) {
-            this.pattern = pattern;
-        }
-
-        public int size(){
-            return pattern.size();
-        }
-
-        @Override
-        public int compareTo(PatternFromFormula o) {
-            List<ProcessedPeak> oPattern = o.getPattern();
-//            final int compareLength = -Integer.compare(oPattern.size(), pattern.size());
-//            if (compareLength!=0) return compareLength;
-            for (int i = 0; i < Math.min(oPattern.size(), pattern.size()); i++) {
-                final int compare = -Double.compare(oPattern.get(i).getMass(), pattern.get(i).getMass());
-                if (compare!=0) return compare;
-            }
-            return -Integer.compare(oPattern.size(), pattern.size());
-
-        }
-    }
-
-    private static class MyExperiment implements Ms2Experiment {
-        private MutableMeasurementProfile measurementProfile;
-        private Ionization ionization;
-        public MyExperiment(){
-            this.measurementProfile = new MutableMeasurementProfile();
-            measurementProfile.setAllowedMassDeviation(new Deviation(7, 5e-2)); //todo welche abweichugn`?
-            measurementProfile.setStandardMs1MassDeviation(new Deviation(7, 5e-3));
-            measurementProfile.setStandardMassDifferenceDeviation(new Deviation(7, 5e-3));
-            measurementProfile.setIntensityDeviation(10);
-
-
-            PeriodicTable periodicTable =  PeriodicTable.getInstance();
-            //introduce new Elements
-            List<Element> usedElements = new ArrayList<Element>(Arrays.asList(periodicTable.getAllByName("C", "H", "N", "O", "P", "S")));
-            ChemicalAlphabet simpleAlphabet = new ChemicalAlphabet(usedElements.toArray(new Element[0]));
-
-            measurementProfile.setFormulaConstraints(new FormulaConstraints(simpleAlphabet));
-            this.ionization = new ElectronIonization();
-        }
-        @Override
-        public MeasurementProfile getMeasurementProfile() {
-            return measurementProfile;
-        }
-
-        @Override
-        public Ionization getIonization() {
-            return ionization;
-        }
-
-        @Override
-        public List<? extends Spectrum<Peak>> getMs1Spectra() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public <T extends Spectrum<Peak>> T getMergedMs1Spectrum() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public List<? extends Ms2Spectrum> getMs2Spectra() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public double getIonMass() {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public boolean isPreprocessed() {
-            return false;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public double getMoleculeNeutralMass() {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public MolecularFormula getMolecularFormula() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-    }
 }
