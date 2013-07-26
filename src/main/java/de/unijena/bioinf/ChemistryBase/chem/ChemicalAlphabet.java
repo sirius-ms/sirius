@@ -26,6 +26,10 @@ public class ChemicalAlphabet {
 	private final int[] orderOfElements;
 	private final int maxLen;
 
+    public static ChemicalAlphabet getExtendedAlphabet() {
+        return new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl", "Br", "I", "F", "Na", "Si"));
+    }
+
     /**
      * Construct a chemical alphabet containing the CHNOPS alphabet.
      */
