@@ -1,14 +1,12 @@
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.MsExperiment;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -21,17 +19,95 @@ import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionInte
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
 
-public class IsotopePatternAnalysis {
+public class IsotopePatternAnalysis implements Parameterized {
 
     private List<IsotopePatternScorer> isotopePatternScorers;
     private double cutoff;
     private DecomposerCache decomposer;
     private PatternExtractor patternExtractor;
     private IsotopicDistribution isotopicDistribution;
+    private MeasurementProfile defaultProfile;
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        if (document.hasKeyInDictionary(dictionary, "patternScorers")) {
+            final Iterator<G> scorers = document.iteratorOfList(document.getListFromDictionary(dict, "patternScorers"));
+            while (scorers.hasNext()) {
+                getIsotopePatternScorers().add((IsotopePatternScorer) helper.unwrap(document, scorers.next()));
+            }
+        }
+        if (document.hasKeyInDictionary(dictionary, "cutoff"))
+            setCutoff(document.getDoubleFromDictionary(dictionary, "cutoff"));
+        if (document.hasKeyInDictionary(dictionary, "patternExtractor"))
+            setPatternExtractor((PatternExtractor) helper.unwrap(document, document.getFromDictionary(dict, "patternExtractor")));
+        if (document.hasKeyInDictionary(dictionary, "isotopes"))
+            setIsotopicDistribution((IsotopicDistribution) helper.unwrap(document, document.getFromDictionary(dict, "isotopes")));
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        exportParameters(helper, document, dictionary, true);
+    }
+
+
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, boolean withProfile) {
+        document.addToDictionary(dictionary, "cutoff", cutoff);
+        if (withProfile && defaultProfile!=null) document.addToDictionary(dictionary, "default", helper.wrap(document, defaultProfile));
+        // export isotope distribution for relevant elements
+        final ChemicalAlphabet alphabet;
+        if (defaultProfile != null) {
+            alphabet = defaultProfile.getFormulaConstraints().getChemicalAlphabet();
+        } else {
+            alphabet = ChemicalAlphabet.getExtendedAlphabet();
+        }
+        final IsotopicDistribution dist = isotopicDistribution.subset(alphabet.getElements());
+        document.addToDictionary(dictionary, "isotopes", helper.wrap(document, dist));
+        final L scorers = document.newList();
+        for (IsotopePatternScorer scorer : isotopePatternScorers)
+            document.addToList(scorers, helper.wrap(document, scorer));
+        document.addListToDictionary(dictionary, "patternScorers", scorers);
+        document.addToDictionary(dictionary, "patternExtractor", helper.wrap(document, patternExtractor));
+
+    }
+
+    public static <G, D, L> IsotopePatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
+        final ParameterHelper helper = ParameterHelper.getParameterHelper();
+        final D dict = document.getDictionary(value);
+        if (!document.hasKeyInDictionary(dict, "IsotopePatternAnalysis"))
+            throw new IllegalArgumentException("No field 'IsotopePatternAnalysis' in profile");
+        final IsotopePatternAnalysis analyzer = (IsotopePatternAnalysis)helper.unwrap(document,
+                document.getFromDictionary(dict, "IsotopePatternAnalysis"));
+        if (document.hasKeyInDictionary(dict, "profile")) {
+            final MeasurementProfile prof = ((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile")));
+            if (analyzer.defaultProfile==null) analyzer.defaultProfile=new MutableMeasurementProfile(prof);
+            else analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
+        }
+    }
+
+    public <G, D, L> void writeToProfile(DataDocument<G, D, L> document, G value) {
+        final ParameterHelper helper = ParameterHelper.getParameterHelper();
+        final D dict = document.getDictionary(value);
+        final D fpa = document.newDictionary();
+        exportParameters(helper, document, fpa);
+        document.addDictionaryToDictionary(dict, "IsotopePatternAnalysis", fpa);
+        if (document.hasKeyInDictionary(dict, "profile")) {
+            final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
+            if (!otherProfile.equals(defaultProfile)) {
+                final D profDict = document.newDictionary();
+                new MutableMeasurementProfile(defaultProfile).exportParameters(helper, document, profDict);
+                document.addDictionaryToDictionary(fpa, "default", profDict);
+            }
+        } else {
+            final D profDict = document.newDictionary();
+            new MutableMeasurementProfile(defaultProfile).exportParameters(helper, document, profDict);
+            document.addDictionaryToDictionary(dict, "profile", profDict);
+        }
+    }
 
     IsotopePatternAnalysis() {
         this.isotopePatternScorers = new ArrayList<IsotopePatternScorer>();
