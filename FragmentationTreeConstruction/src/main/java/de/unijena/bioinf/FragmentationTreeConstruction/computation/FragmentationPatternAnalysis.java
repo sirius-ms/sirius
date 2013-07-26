@@ -61,7 +61,37 @@ public class FragmentationPatternAnalysis implements Parameterized {
 
     public static <G, D, L> FragmentationPatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
-        return (FragmentationPatternAnalysis)helper.unwrap(document, value);
+        final D dict = document.getDictionary(value);
+        if (!document.hasKeyInDictionary(dict, "FragmentationPatternAnalysis"))
+            throw new IllegalArgumentException("No field 'FragmentationPatternAnalysis' in profile");
+        final FragmentationPatternAnalysis analyzer = (FragmentationPatternAnalysis)helper.unwrap(document,
+                document.getFromDictionary(dict, "FragmentationPatternAnalysis"));
+        if (document.hasKeyInDictionary(dict, "profile")) {
+            final MeasurementProfile prof = ((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile")));
+            if (analyzer.defaultProfile==null) analyzer.defaultProfile=new MutableMeasurementProfile(prof);
+            else analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
+        }
+        return analyzer;
+    }
+
+    public <G, D, L> void writeToProfile(DataDocument<G, D, L> document, G value) {
+        final ParameterHelper helper = ParameterHelper.getParameterHelper();
+        final D dict = document.getDictionary(value);
+        final D fpa = document.newDictionary();
+        exportParameters(helper, document, fpa);
+        document.addDictionaryToDictionary(dict, "FragmentationPatternAnalysis", fpa);
+        if (document.hasKeyInDictionary(dict, "profile")) {
+            final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
+            if (!otherProfile.equals(defaultProfile)) {
+                final D profDict = document.newDictionary();
+                defaultProfile.exportParameters(helper, document, profDict);
+                document.addDictionaryToDictionary(fpa, "default", profDict);
+            }
+        } else {
+            final D profDict = document.newDictionary();
+            defaultProfile.exportParameters(helper, document, profDict);
+            document.addDictionaryToDictionary(dict, "profile", profDict);
+        }
     }
 
     /**
@@ -786,7 +816,10 @@ public class FragmentationPatternAnalysis implements Parameterized {
         fillList(peakPairScorers, helper,document,dictionary,"peakPairScorers");
         fillList(lossScorers, helper,document,dictionary,"lossScorers");
         peakMerger = (PeakMerger)helper.unwrap(document, document.getFromDictionary(dictionary,"merge"));
-        defaultProfile = new MutableMeasurementProfile((MeasurementProfile)helper.unwrap(document, document.getFromDictionary(dictionary, "default")));
+        if (document.hasKeyInDictionary(dictionary, "default"))
+            defaultProfile = new MutableMeasurementProfile((MeasurementProfile)helper.unwrap(document, document.getFromDictionary(dictionary, "default")));
+        else
+            defaultProfile = null;
 
     }
 
@@ -800,6 +833,10 @@ public class FragmentationPatternAnalysis implements Parameterized {
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        exportParameters(helper, document, dictionary, true);
+    }
+
+    protected <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, boolean withProfile) {
         L list = document.newList();
         for (Preprocessor p : preprocessors) document.addToList(list, helper.wrap(document, p));
         document.addListToDictionary(dictionary, "preProcessing", list);
@@ -822,7 +859,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
         document.addToDictionary(dictionary, "merge", helper.wrap(document,peakMerger));
-        document.addToDictionary(dictionary, "default", helper.wrap(document, new MutableMeasurementProfile(defaultProfile)));
+        if (withProfile) document.addToDictionary(dictionary, "default", helper.wrap(document, new MutableMeasurementProfile(defaultProfile)));
 
     }
 }
