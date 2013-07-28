@@ -1,14 +1,15 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class IsotopicDistribution {
+public class IsotopicDistribution implements Parameterized {
 
 	private final HashMap<String, Isotopes> isotopeMap;
     private ArrayList<Isotopes> isotopes;
@@ -38,6 +39,13 @@ public class IsotopicDistribution {
         return null;
     }
 
+    public IsotopicDistribution subset(Iterable<Element> elements) {
+        final IsotopicDistribution dist = new IsotopicDistribution(table);
+        for (Element e : elements)
+            dist.addIsotope(e.getSymbol(), getIsotopesFor(e));
+        return dist;
+    }
+
     public void merge(IsotopicDistribution otherDist){
         for (Map.Entry<String, Isotopes> entry : otherDist.isotopeMap.entrySet()) {
             addIsotope(entry.getKey(), entry.getValue());
@@ -56,5 +64,25 @@ public class IsotopicDistribution {
     public void addIsotope(String elementSymbol, double[] masses, double[] abundances) {
         addIsotope(elementSymbol, new Isotopes(masses, abundances));
     }
-	
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        final D isotopes = document.getDictionaryFromDictionary(dictionary, "isotopes");
+        final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(isotopes);
+        while (iter.hasNext()) {
+            final Map.Entry<String, G> entry = iter.next();
+            addIsotope(entry.getKey(), new Isotopes().readFromParameters(helper, document, document.getDictionary(entry.getValue())));
+        }
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        final D dict = document.newDictionary();
+        for (Map.Entry<String, Isotopes> e : isotopeMap.entrySet()) {
+            final D iso = document.newDictionary();
+            e.getValue().exportParameters(helper, document, iso);
+            document.addDictionaryToDictionary(dict, e.getKey(), iso);
+        }
+        document.addDictionaryToDictionary(dictionary, "isotopes", dict);
+    }
 }

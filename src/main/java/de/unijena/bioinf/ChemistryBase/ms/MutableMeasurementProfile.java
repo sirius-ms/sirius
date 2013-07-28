@@ -14,6 +14,13 @@ public class MutableMeasurementProfile implements MeasurementProfile, Parameteri
     private double intensityDeviation;
     private double medianNoiseIntensity;
 
+    /**
+     * Merges two profiles a1 and a2 such that the resulting profile contains all fields from a2 and, for all fields
+     * that are null in a2 it contains the value of a1.
+     * @param a1
+     * @param a2
+     * @return
+     */
     public static MeasurementProfile merge(MeasurementProfile a1, MeasurementProfile a2) {
         final MutableMeasurementProfile profile = new MutableMeasurementProfile(a2);
         if (profile.getAllowedMassDeviation() == null) profile.setAllowedMassDeviation(a1.getAllowedMassDeviation());
@@ -103,10 +110,10 @@ public class MutableMeasurementProfile implements MeasurementProfile, Parameteri
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        setIntensityDeviation(document.getDoubleFromDictionary(dictionary, "intensityDeviation"));
-        setMedianNoiseIntensity(document.getDoubleFromDictionary(dictionary, "medianNoiseIntensity"));
-        setFormulaConstraints((FormulaConstraints)helper.unwrap(document, document.getFromDictionary(dictionary, "formulaConstraints")));
         final Set<String> keys = document.keySetOfDictionary(dictionary);
+        if (keys.contains("intensityDeviation")) setIntensityDeviation(document.getDoubleFromDictionary(dictionary, "intensityDeviation"));
+        if (keys.contains("medianNoiseIntensity")) setMedianNoiseIntensity(document.getDoubleFromDictionary(dictionary, "medianNoiseIntensity"));
+        if (keys.contains("formulaConstraints")) setFormulaConstraints((FormulaConstraints)helper.unwrap(document, document.getFromDictionary(dictionary, "formulaConstraints")));
         if (keys.contains("allowedMassDeviation")) allowedMassDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "allowedMassDeviation"));
         if (keys.contains("standardMs1MassDeviation")) standardMs1MassDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "standardMs1MassDeviation"));
         if (keys.contains("standardMs2MassDeviation")) standardMs2MassDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "standardMs2MassDeviation"));
@@ -115,8 +122,8 @@ public class MutableMeasurementProfile implements MeasurementProfile, Parameteri
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "intensityDeviation", getIntensityDeviation());
-        document.addToDictionary(dictionary, "medianNoiseIntensity", getMedianNoiseIntensity());
+        if (intensityDeviation!=0 && !Double.isNaN(intensityDeviation)) document.addToDictionary(dictionary, "intensityDeviation", getIntensityDeviation());
+        if (getMedianNoiseIntensity()!=0 && !Double.isNaN(getMedianNoiseIntensity())) document.addToDictionary(dictionary, "medianNoiseIntensity", getMedianNoiseIntensity());
         if (formulaConstraints!=null) document.addToDictionary(dictionary, "formulaConstraints", helper.wrap(document, getFormulaConstraints()));
         if (getAllowedMassDeviation()!=null)document.addToDictionary(dictionary, "allowedMassDeviation", getAllowedMassDeviation().toString());
         if (getStandardMs1MassDeviation()!=null)document.addToDictionary(dictionary, "standardMs1MassDeviation", getStandardMs1MassDeviation().toString());
