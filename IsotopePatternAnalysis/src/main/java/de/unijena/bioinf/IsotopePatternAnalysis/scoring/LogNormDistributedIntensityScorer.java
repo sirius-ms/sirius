@@ -1,6 +1,8 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -14,8 +16,8 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
 
     private final static double root2 = sqrt(2d);
 
-    private final double intensityDeviationPenalty;
-    private final IntensityDependency intensityDependency;
+    private double intensityDeviationPenalty;
+    private IntensityDependency intensityDependency;
 
     public LogNormDistributedIntensityScorer(double intensityDeviationPenalty, IntensityDependency intensityDependency) {
         this.intensityDeviationPenalty = intensityDeviationPenalty;
@@ -57,5 +59,17 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
             score += log(Erf.erfc(abs(log(thIntensity / intensity)/(root2*sd))));
         }
         return score;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        this.intensityDependency = (IntensityDependency)helper.unwrap(document, document.getFromDictionary(dictionary, "intensityDependency"));
+        this.intensityDeviationPenalty = document.getDoubleFromDictionary(dictionary, "intensityDeviationPenalty");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "intensityDependency", helper.wrap(document,intensityDependency));
+        document.addToDictionary(dictionary, "intensityDeviationPenalty", intensityDeviationPenalty);
     }
 }

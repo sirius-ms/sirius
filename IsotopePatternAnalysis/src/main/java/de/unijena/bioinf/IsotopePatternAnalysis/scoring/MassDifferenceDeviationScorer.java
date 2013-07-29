@@ -1,5 +1,7 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.MsExperiment;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -11,7 +13,7 @@ import org.apache.commons.math3.special.Erf;
 public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
 
     private final static double root2 = Math.sqrt(2d);
-    private final IntensityDependency dependency;
+    private IntensityDependency dependency;
 
     public MassDifferenceDeviationScorer(double lowestIntensityAccuracy) {
         this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
@@ -35,5 +37,15 @@ public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
         }
         return score;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        this.dependency = (IntensityDependency)helper.unwrap(document, document.getFromDictionary(dictionary, "intensityDependency"));
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "intensityDependency", helper.wrap(document,dependency));
     }
 }

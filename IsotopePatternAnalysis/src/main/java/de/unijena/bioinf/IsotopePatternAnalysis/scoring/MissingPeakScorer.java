@@ -1,11 +1,13 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 
 public class MissingPeakScorer implements IsotopePatternScorer {
 
-    private final double lambda;
-    private final Normalization normalization;
+    private double lambda;
+    private Normalization normalization;
     private final static double sqrt2 = Math.sqrt(2);
 
     public MissingPeakScorer(NormalizationMode normalization, double lambda) {
@@ -38,5 +40,17 @@ public class MissingPeakScorer implements IsotopePatternScorer {
             score -=  lambda*theoretical.getIntensityAt(i);
         }
         return score;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        this.normalization = (Normalization)helper.unwrap(document, document.getFromDictionary(dictionary, "normalization"));
+        this.lambda = document.getDoubleFromDictionary(dictionary, "lambda");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "normalization", helper.wrap(document, normalization));
+        document.addToDictionary(dictionary, "lambda", lambda);
     }
 }

@@ -36,7 +36,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         if (document.hasKeyInDictionary(dictionary, "patternScorers")) {
-            final Iterator<G> scorers = document.iteratorOfList(document.getListFromDictionary(dict, "patternScorers"));
+            final Iterator<G> scorers = document.iteratorOfList(document.getListFromDictionary(dictionary, "patternScorers"));
             while (scorers.hasNext()) {
                 getIsotopePatternScorers().add((IsotopePatternScorer) helper.unwrap(document, scorers.next()));
             }
@@ -44,9 +44,9 @@ public class IsotopePatternAnalysis implements Parameterized {
         if (document.hasKeyInDictionary(dictionary, "cutoff"))
             setCutoff(document.getDoubleFromDictionary(dictionary, "cutoff"));
         if (document.hasKeyInDictionary(dictionary, "patternExtractor"))
-            setPatternExtractor((PatternExtractor) helper.unwrap(document, document.getFromDictionary(dict, "patternExtractor")));
+            setPatternExtractor((PatternExtractor) helper.unwrap(document, document.getFromDictionary(dictionary, "patternExtractor")));
         if (document.hasKeyInDictionary(dictionary, "isotopes"))
-            setIsotopicDistribution((IsotopicDistribution) helper.unwrap(document, document.getFromDictionary(dict, "isotopes")));
+            setIsotopicDistribution((IsotopicDistribution) helper.unwrap(document, document.getFromDictionary(dictionary, "isotopes")));
     }
 
     @Override
@@ -87,6 +87,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             if (analyzer.defaultProfile==null) analyzer.defaultProfile=new MutableMeasurementProfile(prof);
             else analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
         }
+        return analyzer;
     }
 
     public <G, D, L> void writeToProfile(DataDocument<G, D, L> document, G value) {

@@ -1,11 +1,12 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.ms.MsExperiment;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
-public interface IsotopePatternScorer {
+public interface IsotopePatternScorer extends Parameterized{
 
     /**
      * computes the log likelihood that the isotopic pattern spectrum explains the measured data. Both input spectra
