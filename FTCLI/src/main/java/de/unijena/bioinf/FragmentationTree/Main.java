@@ -108,7 +108,7 @@ public class Main {
         analyzer.setRepairInput(true);
         final IsotopePatternAnalysis deIsotope = IsotopePatternAnalysis.defaultAnalyzer();
 
-        if (options.getRecalibrate()!=0) {
+        if (options.getRecalibrate() && analyzer.getRecalibrationMethod()==null) {
             analyzer.setRecalibrationMethod(new HypothesenDrivenRecalibration());
         }
 

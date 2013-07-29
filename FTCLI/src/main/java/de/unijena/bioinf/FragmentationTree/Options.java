@@ -43,8 +43,8 @@ public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
     @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 
-    @Option(defaultValue = "0")
-    public double getRecalibrate();
+    @Option()
+    public boolean getRecalibrate();
 
     @Option(description = "If correct formula is given, compute only trees with higher score than the correct one")
     public boolean getWrongPositive();
