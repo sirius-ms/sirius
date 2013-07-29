@@ -12,7 +12,6 @@ import org.apache.commons.math3.special.Erf;
 public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
 
     private IntensityDependency intensityDependency;
-    private double intensityPenalty;
     private final static double root2div2 = Math.sqrt(2);
 
     public NormDistributedIntDiffScorer() {
@@ -20,16 +19,7 @@ public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
     }
 
     public NormDistributedIntDiffScorer(IntensityDependency intensityDependency) {
-        this(3, intensityDependency);
-    }
-
-    public NormDistributedIntDiffScorer(double penalty, IntensityDependency intensityDependency) {
-        this.intensityPenalty = penalty;
         this.intensityDependency = intensityDependency;
-    }
-
-    public double getIntensityPenalty() {
-        return intensityPenalty;
     }
 
     public IntensityDependency getIntensityDependency() {
@@ -51,7 +41,7 @@ public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
         for (int i=0; i < theoreticalSpectrum.size(); ++i) {
             final double measuredIntensity = measuredSpectrum.getIntensityAt(i);
             final double theoreticalIntensity = theoreticalSpectrum.getIntensityAt(i);
-            final double sd = 1d/intensityPenalty * intensityDependency.getValueAt(measuredIntensity);
+            final double sd = intensityDependency.getValueAt(measuredIntensity);
             score += Math.log(Erf.erfc(Math.abs(measuredIntensity - theoreticalIntensity)/(root2div2*sd)));
         }
         return score;
@@ -60,13 +50,11 @@ public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         this.intensityDependency = (IntensityDependency)helper.unwrap(document, document.getFromDictionary(dictionary, "intensityDependency"));
-        this.intensityPenalty = document.getDoubleFromDictionary(dictionary, "intensityPenalty");
 
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "intensityDependency", helper.wrap(document,intensityDependency));
-        document.addToDictionary(dictionary, "intensityPenalty", intensityPenalty);
     }
 }

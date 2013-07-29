@@ -13,20 +13,14 @@ public class MassDeviationScorer implements IsotopePatternScorer {
 
     private final static double root2 = Math.sqrt(2d);
 
-    private double massDeviationPenalty;
     private IntensityDependency intensityDependency;
 
-    public MassDeviationScorer(double massDeviationPenalty, double lowestIntensityAccuracy) {
-        this(massDeviationPenalty, new LinearIntensityDependency(1d, lowestIntensityAccuracy));
-    }
-
-    public MassDeviationScorer(double massDeviationPenalty, IntensityDependency intensityDependency) {
-        this.massDeviationPenalty = massDeviationPenalty;
-        this.intensityDependency  = intensityDependency;
-    }
-
     public MassDeviationScorer(double lowestIntensityAccuracy) {
-        this(3, lowestIntensityAccuracy);
+        this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
+    }
+
+    public MassDeviationScorer(IntensityDependency intensityDependency) {
+        this.intensityDependency  = intensityDependency;
     }
 
     @Override
@@ -43,13 +37,13 @@ public class MassDeviationScorer implements IsotopePatternScorer {
         final double thMz0 = theoreticalSpectrum.getMzAt(0);
         final double int0 = norm.rescale(measured.getIntensityAt(0));
         double score = Math.log(Erf.erfc(Math.abs(thMz0 - mz0)/
-                (root2*(1d/(massDeviationPenalty) * experiment.getMeasurementProfile().getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
+                (root2*(experiment.getMeasurementProfile().getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
         for (int i=1; i < measured.size(); ++i) {
             final double mz = measured.getMzAt(i) - mz0;
             final double thMz = theoreticalSpectrum.getMzAt(i) - thMz0;
             final double thIntensity = norm.rescale(measured.getIntensityAt(i));
             // TODO: thMz hier richtig?
-            final double sd = 1d/massDeviationPenalty * experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
+            final double sd = experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
         }
         return score;
@@ -58,12 +52,10 @@ public class MassDeviationScorer implements IsotopePatternScorer {
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         this.intensityDependency = (IntensityDependency)helper.unwrap(document, document.getFromDictionary(dictionary, "intensityDependency"));
-        this.massDeviationPenalty = document.getDoubleFromDictionary(dictionary, "massDeviationPenalty");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "intensityDependency", helper.wrap(document, intensityDependency));
-        document.addToDictionary(dictionary, "massDeviationPenalty", massDeviationPenalty);
     }
 }

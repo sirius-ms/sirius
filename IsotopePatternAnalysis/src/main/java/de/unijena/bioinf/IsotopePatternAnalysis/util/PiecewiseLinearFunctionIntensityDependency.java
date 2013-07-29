@@ -4,6 +4,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 /**
+ * A piecewise linear function F: Intensity -> R.
+ * Each
 
  */
 public class PiecewiseLinearFunctionIntensityDependency extends FixedBagIntensityDependency {

@@ -10,11 +10,13 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.extraction.AlreadyExtracted;
 import de.unijena.bioinf.IsotopePatternAnalysis.extraction.PatternExtractor;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.LogNormDistributedIntensityScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
+import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
@@ -22,12 +24,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.addOffset;
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
 
 public class IsotopePatternAnalysis implements Parameterized {
 
     private List<IsotopePatternScorer> isotopePatternScorers;
     private double cutoff;
+    private double intensityOffset;
     private DecomposerCache decomposer;
     private PatternExtractor patternExtractor;
     private IsotopicDistribution isotopicDistribution;
@@ -43,6 +47,8 @@ public class IsotopePatternAnalysis implements Parameterized {
         }
         if (document.hasKeyInDictionary(dictionary, "cutoff"))
             setCutoff(document.getDoubleFromDictionary(dictionary, "cutoff"));
+        if (document.hasKeyInDictionary(dictionary, "intensityOffset"))
+            setIntensityOffset(document.getDoubleFromDictionary(dictionary, "intensityOffset"));
         if (document.hasKeyInDictionary(dictionary, "patternExtractor"))
             setPatternExtractor((PatternExtractor) helper.unwrap(document, document.getFromDictionary(dictionary, "patternExtractor")));
         if (document.hasKeyInDictionary(dictionary, "isotopes"))
@@ -72,6 +78,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             document.addToList(scorers, helper.wrap(document, scorer));
         document.addListToDictionary(dictionary, "patternScorers", scorers);
         document.addToDictionary(dictionary, "patternExtractor", helper.wrap(document, patternExtractor));
+        document.addToDictionary(dictionary, "intensityOffset", intensityOffset);
 
     }
 
@@ -99,11 +106,13 @@ public class IsotopePatternAnalysis implements Parameterized {
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
             if (!otherProfile.equals(defaultProfile)) {
-                final D profDict = document.newDictionary();
-                new MutableMeasurementProfile(defaultProfile).exportParameters(helper, document, profDict);
-                document.addDictionaryToDictionary(fpa, "default", profDict);
+                if (defaultProfile != null) {
+                    final D profDict = document.newDictionary();
+                    new MutableMeasurementProfile(defaultProfile).exportParameters(helper, document, profDict);
+                    document.addDictionaryToDictionary(fpa, "default", profDict);
+                }
             }
-        } else {
+        } else if (defaultProfile!=null){
             final D profDict = document.newDictionary();
             new MutableMeasurementProfile(defaultProfile).exportParameters(helper, document, profDict);
             document.addDictionaryToDictionary(dict, "profile", profDict);
@@ -116,17 +125,28 @@ public class IsotopePatternAnalysis implements Parameterized {
         this.patternExtractor = new AlreadyExtracted();
         this.isotopicDistribution = PeriodicTable.getInstance().getDistribution();
         this.cutoff = 0.01d;
+        this.intensityOffset = 0d;
     }
 
     public static IsotopePatternAnalysis defaultAnalyzer() {
         final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
-        analyzer.isotopePatternScorers.add(new MassDeviationScorer(3, new PiecewiseLinearFunctionIntensityDependency(new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01}, new double[]{
-                1, 1, 1.2, 1.5, 2, 2.5
+        double offset = 1.323d;
+        analyzer.intensityOffset = 0.178/100d;
+        analyzer.isotopePatternScorers.add(new MassDeviationScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{0.15, 0.1}, new double[]{
+                1.0, 1.5
         })));
-        analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(3, new PiecewiseLinearFunctionIntensityDependency(new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01}, new double[]{
-                0.08, 0.12, 0.25, 0.5, 1.2, 2d
+        analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(3, new PiecewiseLinearFunctionIntensityDependency(new double[]{1.0, 0.3, 0.15, 0.03}, new double[]{
+                0.0075, 0.017, 0.05, 0.07
         })));
         return analyzer;
+    }
+
+    public double getIntensityOffset() {
+        return intensityOffset;
+    }
+
+    public void setIntensityOffset(double intensityOffset) {
+        this.intensityOffset = intensityOffset;
     }
 
     public List<IsotopePattern> deisotope(MsExperiment experiment) {
@@ -154,11 +174,10 @@ public class IsotopePatternAnalysis implements Parameterized {
     public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, List<MolecularFormula> formulas, MsExperiment experiment) {
         final PatternGenerator generator = new PatternGenerator(isotopicDistribution, extractedSpectrum.getIonization(), Normalization.Sum(1));
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(extractedSpectrum.getNeutralMassSpectrum());
-        // TODO: Add offset in MeasurementProfile
-        /*
         normalize(spec, Normalization.Sum(1));
-        addOffset(spec, 0, intensityOffset);
-         */
+        if (intensityOffset != 0d) {
+            addOffset(spec, 0d, intensityOffset);
+        }
         normalize(spec, Normalization.Sum(1));
         while (spec.getIntensityAt(spec.size()-1) < cutoff) spec.removePeakAt(spec.size()-1);
         normalize(spec, Normalization.Sum(1));
