@@ -42,6 +42,7 @@ public class ParameterHelper {
         helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.merging");
         helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration");
         helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation");
+        helper.addLookupPath("de.unijena.bioinf.IsotopePatternAnalysis");
         return helper;
     }
 

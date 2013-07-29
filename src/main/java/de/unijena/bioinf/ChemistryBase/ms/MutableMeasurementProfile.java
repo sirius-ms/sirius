@@ -122,6 +122,7 @@ public class MutableMeasurementProfile implements MeasurementProfile, Parameteri
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "$name", helper.toClassName(MutableMeasurementProfile.class));
         if (intensityDeviation!=0 && !Double.isNaN(intensityDeviation)) document.addToDictionary(dictionary, "intensityDeviation", getIntensityDeviation());
         if (getMedianNoiseIntensity()!=0 && !Double.isNaN(getMedianNoiseIntensity())) document.addToDictionary(dictionary, "medianNoiseIntensity", getMedianNoiseIntensity());
         if (formulaConstraints!=null) document.addToDictionary(dictionary, "formulaConstraints", helper.wrap(document, getFormulaConstraints()));
