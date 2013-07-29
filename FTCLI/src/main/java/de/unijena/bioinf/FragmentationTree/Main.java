@@ -96,8 +96,6 @@ public class Main {
             try {
                 profile = new Profile(options.getProfile());
                 analyzer = profile.fragmentationPatternAnalysis;
-                final IsotopePatternAnalysis iso = IsotopePatternAnalysis.defaultAnalyzer();
-                new Profile(iso, analyzer).writeToFile("myprofile.json");
             } catch (IOException e) {
                 System.err.println(e);
                 System.exit(1);
