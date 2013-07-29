@@ -26,7 +26,7 @@ public class ChemicalPriorScorer implements DecompositionScorer<Object> {
     }
 
     public ChemicalPriorScorer(MolecularFormulaScorer prior, double normalizationConstant, double minimalMass) {
-        assert minimalMass > 10 && normalizationConstant < 10; // just to be shure that nobody mix both parameters ^^°
+        assert minimalMass >= 0 && normalizationConstant < 10; // just to be shure that nobody mix both parameters ^^°
         this.prior = prior;
         this.normalizationConstant = normalizationConstant;
         this.minimalMass = minimalMass;

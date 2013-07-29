@@ -2,14 +2,12 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidat
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,7 +20,7 @@ public class MissingValueValidator implements InputValidator {
 
 
     private boolean validDouble(double val, boolean mayNegative) {
-        return !Double.isInfinite(val) && !Double.isNaN(val) && (mayNegative || val >= 0d);
+        return !Double.isInfinite(val) && !Double.isNaN(val) && (mayNegative || val > 0d);
     }
 
     @Override
@@ -30,12 +28,12 @@ public class MissingValueValidator implements InputValidator {
         final Ms2ExperimentImpl input = new Ms2ExperimentImpl(originalInput);
         if (input.getMs2Spectra() == null || input.getMs2Spectra().isEmpty()) throw new InvalidException("Miss MS2 spectra");
         if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
+        checkMeasurementProfile(warn, repair, input);
         removeEmptySpectra(warn, input);
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
         checkNeutralMass(warn, repair, input);
-        checkMeasurementProfile(warn, repair, input);
         return input;
     }
 
@@ -120,8 +118,35 @@ public class MissingValueValidator implements InputValidator {
                     ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
                 }
                 if (ion == null)  throw new InvalidException("Unknown adduct with mass " + modificationMass);
+                warn.warn("set ion to " + ion);
                 input.setIonization(ion);
-            } else throw new InvalidException("Unknown ionization");
+            } else if (input.getMolecularFormula()!=null || validDouble(input.getMoleculeNeutralMass(), false)) {
+                final double neutral = (input.getMolecularFormula()!=null) ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass();
+                // TODO: negative ions
+                // search for [M+H]+
+                final Ionization mhp = PeriodicTable.getInstance().ionByName("[M+H]+");
+                final double mz = mhp.addToMass(neutral);
+                final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
+                for (Spectrum<Peak> spec : input.getMs2Spectra()) {
+                    if (Spectrums.search(spec, mz, dev) >= 0) {
+                        warn.warn("Set ion to " + mhp.toString());
+                        input.setIonization(mhp);
+                        return;
+                    }
+                }
+                // search for other ions
+                final List<Ionization> ions = PeriodicTable.getInstance().getIons();
+                for (Spectrum<Peak> spec : input.getMs2Spectra()) {
+                    for (Ionization ion : ions) {
+                        if (Spectrums.search(spec, ion.addToMass(neutral), dev) >= 0) {
+                            warn.warn("Set ion to " + ion.toString());
+                            input.setIonization(ion);
+                            return;
+                        }
+                    }
+                }
+                throw new InvalidException("Unknown ionization");
+            }
         }
         if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula()!= null ||  validDouble(input.getMoleculeNeutralMass(), false))) {
             double modificationMass = input.getIonMass() - (input.getMolecularFormula()!= null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());

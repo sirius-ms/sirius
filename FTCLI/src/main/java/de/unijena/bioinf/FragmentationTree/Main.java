@@ -11,6 +11,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
@@ -39,6 +41,8 @@ public class Main {
     public static final String USAGE = "tree -n 10 <file1> <file2>";
 
     public final static String VERSION_STRING = "FragmentationPatternAnalysis " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
+
+    private static boolean DEBUG = true;
 
     public static void main(String[] args) {
         new Main().run(args);
@@ -86,16 +90,16 @@ public class Main {
         final MeasurementProfile defaultProfile = InterpretOptions.getMeasurementProfile(options);
 
         final FragmentationPatternAnalysis analyzer;
-        if (options.getProfile() != null) {
+        if (options.isOldSirius()) {
+            analyzer = FragmentationPatternAnalysis.oldSiriusAnalyzer();
+        } else if (options.getProfile() != null) {
             try {
-                analyzer = Profile.getFTAnalysisProfile(options.getProfile());
+                analyzer = new Profile(options.getProfile()).fragmentationPatternAnalysis;
             } catch (IOException e) {
                 System.err.println(e);
                 System.exit(1);
                 return;
             }
-        } else if (options.isOldSirius()) {
-            analyzer = FragmentationPatternAnalysis.oldSiriusAnalyzer();
         } else {
             analyzer = FragmentationPatternAnalysis.defaultAnalyzer();
         }
@@ -103,6 +107,10 @@ public class Main {
             FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
         analyzer.setRepairInput(true);
         final IsotopePatternAnalysis deIsotope = IsotopePatternAnalysis.defaultAnalyzer();
+
+        if (options.getRecalibrate() && analyzer.getRecalibrationMethod()==null) {
+            analyzer.setRecalibrationMethod(new HypothesenDrivenRecalibration());
+        }
 
         final File target = options.getTarget();
         if (!target.exists()) target.mkdirs();
@@ -121,6 +129,7 @@ public class Main {
             }
         }
 
+        eachFile:
         for (final File f : files) {
             try {
                 long computationTime = System.nanoTime();
@@ -162,7 +171,6 @@ public class Main {
 
                     }
                 }
-
                 ProcessedInput input = analyzer.preprocessing(experiment);
 
                 // use corrected input information
@@ -200,11 +208,20 @@ public class Main {
 
                 // First: Compute correct tree
                 FragmentationTree correctTree = null;
+                double lowerbound = options.getLowerbound()==null? 0d : options.getLowerbound();
                 if (experiment.getMolecularFormula() != null) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).optimalTree();
+                    if (correctTree != null) {
+                        if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore()-correctTree.getRecalibrationBonus());
+                    }
                     if (verbose) {
-                        if (correctTree != null) System.out.println("correct tree  " + correctFormula + " (" + correctTree.getScore() + ") explaining " + correctTree.getFragments().size() + " peaks");
-                        else System.out.println("correct tree not found. Please increase allowed mass deviation.");
+                        if (correctTree != null) {
+                            printResult(correctTree);
+                        }
+                        else {
+                            System.out.println("correct tree not found. Please increase allowed mass deviation.");
+                            if (options.getWrongPositive()) continue eachFile;
+                        }
                     }
                 }
 
@@ -212,9 +229,6 @@ public class Main {
                     System.out.println(input.getParentMassDecompositions().size() + " further candidate formulas.");
                     System.out.flush();
                 }
-
-                double lowerbound = options.getLowerbound();
-                if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore());
 
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
                 if (correctFormula!=null) blacklist.add(correctFormula);
@@ -230,16 +244,20 @@ public class Main {
                         final TreeSet<FragmentationTree> bestTrees = new TreeSet<FragmentationTree>();
                         final TreeIterator treeIter = m.iterator();
                         double lb = lowerbound;
+                        treeIteration:
                         while (treeIter.hasNext()) {
                             System.out.print("Compute next tree: ");
-                            final FragmentationTree tree = treeIter.next();
+                            FragmentationTree tree = treeIter.next();
                             if (tree == null) System.out.println("To low score");
                             else {
-                                System.out.println(tree.getRoot().getFormula() + " (" + tree.getScore() + ")");
+                                printResult(tree);
                                 bestTrees.add(tree);
                                 if (bestTrees.size() > options.getTrees()) {
                                     bestTrees.pollFirst();
-                                    lb = bestTrees.first().getScore();
+                                    lb = bestTrees.first().getScore()-bestTrees.first().getRecalibrationBonus();
+                                    if (DEBUG && bestTrees.first().getScore() > correctTree.getScore()) {
+                                        break treeIteration;
+                                    }
                                     treeIter.setLowerbound(lb);
                                     System.out.println("Increase lowerbound to " + lb);
                                 }
@@ -260,14 +278,14 @@ public class Main {
                         writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer);
                     }
                 } else {
-                    final FragmentationTree tree;
+                    FragmentationTree tree;
                     if (correctTree == null) {
                         if (verbose) {
                             System.out.print("Compute optimal tree "); System.out.flush();
                         }
                         tree = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
                                 .without(blacklist).optimalTree();
-                        if (verbose) System.out.println(tree.getRoot().getFormula() + " (" + tree.getScore() + ") explaining " + tree.getFragments().size() + " peaks");
+                        if (verbose) printResult(tree);
                     } else tree = correctTree;
                     if (tree == null) {
                         System.err.println("Can't find any tree");
@@ -281,6 +299,7 @@ public class Main {
                     rankWriter.println(f.getName() + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() +"," + input.getParentMassDecompositions().size() + "," +
                             rank +
                             "," + correctTree.getScore() + "," + optScore + "," + correctTree.numberOfVertices() + "," + computationTime);
+                    if (verbose) rankWriter.flush();
                 }
 
             } catch (IOException e) {
@@ -293,6 +312,14 @@ public class Main {
         for (PrintStream writer : openStreams) {
             writer.close();
         }
+    }
+
+    private void printResult(FragmentationTree tree) {
+        System.out.print("correct tree  " + tree.getRoot().getFormula() + " (" + (tree.getScore()-tree.getRecalibrationBonus()));
+        if (tree.getRecalibrationBonus() > 1e-6) {
+            System.out.print(" -> " + tree.getScore());
+        }
+        System.out.println(") explaining " + tree.getFragments().size() + " peaks");
     }
 
     private File prettyNameOptTree(FragmentationTree tree, File fileName) {
