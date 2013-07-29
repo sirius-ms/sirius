@@ -32,8 +32,10 @@ public class Profile {
     public Profile(String name) throws IOException {
         final JSONObject json = getJSON(name);
         final JSONDocumentType document = new JSONDocumentType();
-        this.fragmentationPatternAnalysis = FragmentationPatternAnalysis.loadFromProfile(document, json);
-        this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
+        if (document.hasKeyInDictionary(json, "FragmentationPatternAnalysis")) this.fragmentationPatternAnalysis = FragmentationPatternAnalysis.loadFromProfile(document, json);
+        else fragmentationPatternAnalysis=null;
+        if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
+        else isotopePatternAnalysis=null;
     }
 
 }

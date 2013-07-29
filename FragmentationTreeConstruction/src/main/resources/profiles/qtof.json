@@ -295,6 +295,14 @@
         "$name": "NoiseThresholdFilter",
         "threshold": 0.005
       }
-    ]
+    ],
+    "recalibrationMethod": {
+      "$name": "HypothesenDrivenRecalibration",
+      "method": {
+        "$name": "MedianSlope",
+        "epsilon": "5.0 ppm (0.001 m/z)"
+      },
+      "threshold": 0.0002
+    }
   }
 }

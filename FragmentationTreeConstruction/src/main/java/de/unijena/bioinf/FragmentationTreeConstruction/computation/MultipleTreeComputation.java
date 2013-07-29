@@ -17,26 +17,28 @@ public class MultipleTreeComputation {
     private final List<ScoredMolecularFormula> formulas;
     private final FragmentationPatternAnalysis analyzer;
     private final ProcessedInput input;
+    private final boolean recalibration;
 
-    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<ScoredMolecularFormula> formulas, double lowerbound, int maximalNumber, int numberOfThreads) {
+    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<ScoredMolecularFormula> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration) {
         this.analyzer = analyzer;
         this.input = input;
         this.formulas = formulas;
         this.lowerbound = lowerbound;
         this.maximalNumber = maximalNumber;
         this.numberOfThreads = numberOfThreads;
+        this.recalibration = recalibration;
     }
 
     public MultipleTreeComputation withLowerbound(double lowerbound) {
-        return new MultipleTreeComputation(analyzer, input,formulas, lowerbound, maximalNumber, numberOfThreads);
+        return new MultipleTreeComputation(analyzer, input,formulas, lowerbound, maximalNumber, numberOfThreads, recalibration);
     }
 
     public MultipleTreeComputation computeMaximal(int maximalNumber) {
-        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads);
+        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads, recalibration);
     }
 
     public MultipleTreeComputation inParallel(int numberOfThreads) {
-        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, Math.max(1, Math.min(guessNumberOfThreads(), numberOfThreads)));
+        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, Math.max(1, Math.min(guessNumberOfThreads(), numberOfThreads)), recalibration);
     }
 
     public MultipleTreeComputation onlyWith(Iterable<MolecularFormula> formulas) {
@@ -49,7 +51,7 @@ public class MultipleTreeComputation {
                 pmds.add(f);
             }
         }
-        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads);
+        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration);
     }
 
     public MultipleTreeComputation without(Iterable<MolecularFormula> formulas) {
@@ -63,7 +65,7 @@ public class MultipleTreeComputation {
                 pmds.add(f);
             }
         }
-        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads);
+        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration);
     }
 
     public MultipleTreeComputation inParallel() {
@@ -76,7 +78,7 @@ public class MultipleTreeComputation {
         final GraphBuildingQueue queue =  numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
-            final FragmentationTree tree = analyzer.computeTree(graph, lb);
+            final FragmentationTree tree = analyzer.computeTree(graph, lb, recalibration);
             if (tree != null && (opt == null || tree.getScore() < opt.getScore())) {
                 opt = tree;
             }
@@ -96,7 +98,7 @@ public class MultipleTreeComputation {
             @Override
             public FragmentationTree next() {
                 while (hasNext()) {
-                    FragmentationTree tree = analyzer.computeTree(queue.next(), lb);
+                    FragmentationTree tree = analyzer.computeTree(queue.next(), lb, recalibration);
                     if (tree != null) return tree;
                 }
                 return null;
@@ -125,7 +127,7 @@ public class MultipleTreeComputation {
         final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
-            final FragmentationTree tree = analyzer.computeTree(graph, lb);
+            final FragmentationTree tree = analyzer.computeTree(graph, lb, recalibration);
             if (tree != null) {
                 trees.add(tree);
                 if (trees.size() > maximalNumber) {
@@ -147,6 +149,18 @@ public class MultipleTreeComputation {
         final int maxNumber = Runtime.getRuntime().availableProcessors();
         final long gigabytes = Math.round(((double)Runtime.getRuntime().maxMemory())/(1024*1024*1024));
         return Math.max(1, Math.min(maxNumber, (int) gigabytes));
+    }
+
+    public MultipleTreeComputation withRecalibration(boolean recalibration) {
+        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads, recalibration);
+    }
+
+    public MultipleTreeComputation withRecalibration() {
+        return withRecalibration(true);
+    }
+
+    public MultipleTreeComputation withoutRecalibration() {
+        return withRecalibration(false);
     }
 
     abstract class GraphBuildingQueue implements Iterator<FragmentationGraph> {

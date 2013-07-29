@@ -94,7 +94,7 @@ public class Main {
             analyzer = FragmentationPatternAnalysis.oldSiriusAnalyzer();
         } else if (options.getProfile() != null) {
             try {
-                analyzer = Profile.getFTAnalysisProfile(options.getProfile());
+                analyzer = new Profile(options.getProfile()).fragmentationPatternAnalysis;
             } catch (IOException e) {
                 System.err.println(e);
                 System.exit(1);
@@ -211,20 +211,12 @@ public class Main {
                 double lowerbound = options.getLowerbound()==null? 0d : options.getLowerbound();
                 if (experiment.getMolecularFormula() != null) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).optimalTree();
-                    final double scoreBonus;
                     if (correctTree != null) {
-                        if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore());
-                        final RecalibrationMethod.Recalibration rec = analyzer.recalibrate(correctTree, options.getRecalibrate());
-                        scoreBonus = Math.max(0, rec==null ? 0d : rec.getScoreBonus());
-                        correctTree.setScore(correctTree.getScore()+scoreBonus);
-                        correctTree.setRecalibrationBonus(scoreBonus);
-                    } else scoreBonus=0d;
+                        if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore()-correctTree.getRecalibrationBonus());
+                    }
                     if (verbose) {
                         if (correctTree != null) {
-                            System.out.println("correct tree  " + correctFormula + " (" + (correctTree.getScore()-scoreBonus) + ") explaining " + correctTree.getFragments().size() + " peaks");
-                            /////////////////////////////////////
-                            System.out.println("Get " + scoreBonus + " additional score through recalibration");
-                            /////////////////////////////////////
+                            printResult(correctTree);
                         }
                         else {
                             System.out.println("correct tree not found. Please increase allowed mass deviation.");
@@ -255,19 +247,10 @@ public class Main {
                         treeIteration:
                         while (treeIter.hasNext()) {
                             System.out.print("Compute next tree: ");
-                            final FragmentationTree tree = treeIter.next();
+                            FragmentationTree tree = treeIter.next();
                             if (tree == null) System.out.println("To low score");
                             else {
-                                final RecalibrationMethod.Recalibration rec = analyzer.recalibrate(tree, options.getRecalibrate());
-                                final double recab = Math.max(0, rec==null ? 0d : rec.getScoreBonus());
-                                if (recab == 0) {
-                                    System.out.println(tree.getRoot().getFormula() + " (" + tree.getScore() + ")");
-                                } else {
-                                    System.out.println(tree.getRoot().getFormula() + " (" + tree.getScore() + " -> " + (tree.getScore()+recab) + ")");
-                                    tree.setRecalibrationBonus(recab);
-                                    tree.setScore(recab+tree.getScore());
-                                }
-
+                                printResult(tree);
                                 bestTrees.add(tree);
                                 if (bestTrees.size() > options.getTrees()) {
                                     bestTrees.pollFirst();
@@ -295,14 +278,14 @@ public class Main {
                         writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer);
                     }
                 } else {
-                    final FragmentationTree tree;
+                    FragmentationTree tree;
                     if (correctTree == null) {
                         if (verbose) {
                             System.out.print("Compute optimal tree "); System.out.flush();
                         }
                         tree = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
                                 .without(blacklist).optimalTree();
-                        if (verbose) System.out.println(tree.getRoot().getFormula() + " (" + tree.getScore() + ") explaining " + tree.getFragments().size() + " peaks");
+                        if (verbose) printResult(tree);
                     } else tree = correctTree;
                     if (tree == null) {
                         System.err.println("Can't find any tree");
@@ -329,6 +312,14 @@ public class Main {
         for (PrintStream writer : openStreams) {
             writer.close();
         }
+    }
+
+    private void printResult(FragmentationTree tree) {
+        System.out.print("correct tree  " + tree.getRoot().getFormula() + " (" + (tree.getScore()-tree.getRecalibrationBonus()));
+        if (tree.getRecalibrationBonus() > 1e-6) {
+            System.out.print(" -> " + tree.getScore());
+        }
+        System.out.println(") explaining " + tree.getFragments().size() + " peaks");
     }
 
     private File prettyNameOptTree(FragmentationTree tree, File fileName) {

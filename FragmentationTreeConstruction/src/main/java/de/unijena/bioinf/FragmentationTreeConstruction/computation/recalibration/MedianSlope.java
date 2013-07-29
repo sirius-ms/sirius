@@ -2,6 +2,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibratio
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -10,8 +13,10 @@ import de.unijena.bioinf.recal.MzRecalibration;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 
-@HasParameters
-public class MedianSlope implements SpectrumRecalibration{
+/**
+ * Recommended recalibration strategy.
+ */
+public class MedianSlope implements RecalibrationStrategy, Parameterized {
 
     private Deviation epsilon;
 
@@ -19,8 +24,12 @@ public class MedianSlope implements SpectrumRecalibration{
         this(new Deviation(5, 0.001));
     }
 
-    public MedianSlope(@Parameter Deviation epsilon) {
+    public MedianSlope(Deviation epsilon) {
         this.epsilon = epsilon;
+    }
+
+    public Deviation getEpsilon() {
+        return epsilon;
     }
 
     @Override
@@ -32,9 +41,19 @@ public class MedianSlope implements SpectrumRecalibration{
                 return dev.absoluteFor(x);
             }
         });
-        if (values[0].length<6) return new Identity();
+        if (values[0].length<5) return new Identity();
         final UnivariateFunction recalibration = MzRecalibration.getMedianLinearRecalibration(values[0], values[1]);
         MzRecalibration.recalibrate(spectrum, recalibration);
         return recalibration;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        epsilon = Deviation.fromString(document.getStringFromDictionary(dictionary, "epsilon"));
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "epsilon", epsilon.toString());
     }
 }

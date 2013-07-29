@@ -247,6 +247,9 @@ public class FragmentationPatternAnalysis implements Parameterized {
         return null;
     }
 
+    /**
+     *
+     */
     public FragmentationPatternAnalysis() {
         this.decomposers = new DecomposerCache();
         setInitial();
@@ -282,52 +285,51 @@ public class FragmentationPatternAnalysis implements Parameterized {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound) {
-        return treeBuilder.buildTree(graph.getProcessedInput(), graph, lowerbound);
+        return computeTree(graph, lowerbound, recalibrationMethod!=null);
     }
 
-    public RecalibrationMethod.Recalibration recalibrate(final FragmentationTree tree, double modify) {
-        if (recalibrationMethod == null) return null;
-        final RecalibrationMethod.Recalibration method = recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer());
-        final UnivariateFunction f = method.recalibrationFunction();
-        if (f instanceof Identity) return null;
-        final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(tree.getInput().getExperimentInformation());
-        final ArrayList<Ms2Spectrum> specs = new ArrayList<Ms2Spectrum>();
-        for (Ms2Spectrum spec : exp.getMs2Spectra()) {
-            specs.add(new Ms2SpectrumImpl(Spectrums.map(spec, new Spectrums.Transformation<Peak, Peak>() {
-                @Override
-                public Peak transform(Peak input) {
-                    return new Peak(f.value(input.getMass()), input.getIntensity());
-                }
-            }), spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount()));
+    /**
+     * Compute a single fragmentation tree
+     * @param graph fragmentation graph from which the tree should be built
+     * @param lowerbound minimal score of the tree. Higher lowerbounds may result in better runtime performance
+     * @param recalibration if true, the tree will be recalibrated
+     * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
+     */
+    public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound, boolean recalibration) {
+        FragmentationTree tree = treeBuilder.buildTree(graph.getProcessedInput(), graph, lowerbound);
+        if (tree != null && recalibration) tree = recalibrate(tree);
+        return tree;
+    }
+
+    /**
+     * Recalibrates the tree
+     * @return Recalibration object containing score bonus and new tree
+     */
+    protected RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+        if (recalibrationMethod == null || tree == null) return null;
+        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer());
+    }
+
+    /**
+     * Recalibrates the tree. Returns either a new recalibrated tree or the old tree with recalibrated deviations and
+     * (maybe) higher scores. The FragmentationTree#getRecalibrationBonus returns the improvement of the score after
+     * recalibration
+     * @param tree
+     * @return
+     */
+    protected FragmentationTree recalibrate(FragmentationTree tree) {
+        if (tree == null) return null;
+        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree);
+        if (rec == null || rec.getScoreBonus() <= 0) return tree;
+        double oldScore = tree.getScore();
+        if (rec.shouldRecomputeTree()) {
+            tree = rec.getCorrectedTree(this);
+            tree.setRecalibrationBonus(tree.getScore()-oldScore);
+        } else {
+            tree.setScore(rec.getScoreBonus());
+            tree.setRecalibrationBonus(tree.getScore()-oldScore);
         }
-        exp.setMs2Spectra(specs);
-        final MutableMeasurementProfile prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
-        prof.setStandardMs2MassDeviation(prof.getStandardMs2MassDeviation().multiply(modify));
-        exp.setMeasurementProfile(prof);
-        final FragmentationTree newTree = computeTrees(preprocessing(exp)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(tree.getScore()).optimalTree();
-        return new RecalibrationMethod.Recalibration() {
-            @Override
-            public double getScoreBonus() {
-                if (newTree==null) return 0d;
-                return newTree.getScore()-tree.getScore();
-            }
-
-            @Override
-            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer) {
-                return newTree;
-            }
-
-            @Override
-            public boolean shouldRecomputeTree() {
-                return false;
-            }
-
-            @Override
-            public UnivariateFunction recalibrationFunction() {
-                return f;
-            }
-        };
-
+        return tree;
     }
 
     public RecalibrationMethod getRecalibrationMethod() {
@@ -348,7 +350,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
     }
 
     public MultipleTreeComputation computeTrees(ProcessedInput input) {
-        return new MultipleTreeComputation(this, input, input.getParentMassDecompositions(), 0, Integer.MAX_VALUE, 1 );
+        return new MultipleTreeComputation(this, input, input.getParentMassDecompositions(), 0, Integer.MAX_VALUE, 1, recalibrationMethod!=null);
     }
 
     public FragmentationGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
@@ -816,6 +818,9 @@ public class FragmentationPatternAnalysis implements Parameterized {
         fillList(peakPairScorers, helper,document,dictionary,"peakPairScorers");
         fillList(lossScorers, helper,document,dictionary,"lossScorers");
         peakMerger = (PeakMerger)helper.unwrap(document, document.getFromDictionary(dictionary,"merge"));
+        if (document.hasKeyInDictionary(dictionary, "recalibrationMethod")) {
+            recalibrationMethod = (RecalibrationMethod) helper.unwrap(document, document.getFromDictionary(dictionary, "recalibrationMethod"));
+        } else recalibrationMethod = null;
         if (document.hasKeyInDictionary(dictionary, "default"))
             defaultProfile = new MutableMeasurementProfile((MeasurementProfile)helper.unwrap(document, document.getFromDictionary(dictionary, "default")));
         else
@@ -858,6 +863,8 @@ public class FragmentationPatternAnalysis implements Parameterized {
         list = document.newList();
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
+        if (recalibrationMethod != null)
+            document.addToDictionary(dictionary, "recalibrationMethod", helper.wrap(document, recalibrationMethod));
         document.addToDictionary(dictionary, "merge", helper.wrap(document,peakMerger));
         if (withProfile) document.addToDictionary(dictionary, "default", helper.wrap(document, new MutableMeasurementProfile(defaultProfile)));
 
