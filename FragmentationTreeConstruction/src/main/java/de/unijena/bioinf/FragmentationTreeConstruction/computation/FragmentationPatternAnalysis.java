@@ -83,11 +83,13 @@ public class FragmentationPatternAnalysis implements Parameterized {
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
             if (!otherProfile.equals(defaultProfile)) {
-                final D profDict = document.newDictionary();
-                defaultProfile.exportParameters(helper, document, profDict);
-                document.addDictionaryToDictionary(fpa, "default", profDict);
+                if (defaultProfile!=null) {
+                    final D profDict = document.newDictionary();
+                    defaultProfile.exportParameters(helper, document, profDict);
+                    document.addDictionaryToDictionary(fpa, "default", profDict);
+                }
             }
-        } else {
+        } else if (defaultProfile!=null) {
             final D profDict = document.newDictionary();
             defaultProfile.exportParameters(helper, document, profDict);
             document.addDictionaryToDictionary(dict, "profile", profDict);

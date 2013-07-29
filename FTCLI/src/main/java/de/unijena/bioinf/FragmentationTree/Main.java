@@ -51,6 +51,7 @@ public class Main {
     private Options options;
     private boolean verbose;
     private PrintStream rankWriter;
+    private Profile profile;
 
     private List<PrintStream> openStreams;
 
@@ -90,18 +91,26 @@ public class Main {
         final MeasurementProfile defaultProfile = InterpretOptions.getMeasurementProfile(options);
 
         final FragmentationPatternAnalysis analyzer;
-        if (options.isOldSirius()) {
-            analyzer = FragmentationPatternAnalysis.oldSiriusAnalyzer();
-        } else if (options.getProfile() != null) {
+
+        if (options.getProfile() != null) {
             try {
-                analyzer = new Profile(options.getProfile()).fragmentationPatternAnalysis;
+                profile = new Profile(options.getProfile());
+                analyzer = profile.fragmentationPatternAnalysis;
+                final IsotopePatternAnalysis iso = IsotopePatternAnalysis.defaultAnalyzer();
+                new Profile(iso, analyzer).writeToFile("myprofile.json");
             } catch (IOException e) {
                 System.err.println(e);
                 System.exit(1);
                 return;
             }
         } else {
-            analyzer = FragmentationPatternAnalysis.defaultAnalyzer();
+            try {
+                profile = new Profile("default");
+                analyzer = profile.fragmentationPatternAnalysis;
+            } catch (IOException e) {
+                System.err.println("Can't find default profile");
+                return;
+            }
         }
         if (options.getTreeSize() != null)
             FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
@@ -121,9 +130,7 @@ public class Main {
 
         {
             try {
-                final FileWriter profileWriter = new FileWriter(new File(target, "profile.json"));
-                JSONDocumentType.writeParameters(analyzer, profileWriter);
-                profileWriter.close();
+                profile.writeToFile(new File(target, "profile.json"));
             } catch (IOException e) {
                 System.err.println("Cannot create profile file: " + e);
             }
