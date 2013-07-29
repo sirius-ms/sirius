@@ -1,11 +1,14 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.MAX;
 import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.SUM;
 
+@HasParameters
 public class Normalization {
 	
 	private final NormalizationMode mode;
@@ -22,7 +25,7 @@ public class Normalization {
 		return new Normalization(MAX, norm);
 	}
 	
-	public Normalization(NormalizationMode mode, double norm) {
+	public Normalization(@Parameter("mode") NormalizationMode mode, @Parameter("base") double norm) {
 		this.mode = mode;
 		this.norm = norm;
 	}
