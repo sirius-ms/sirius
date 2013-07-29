@@ -40,6 +40,8 @@ public class ParameterHelper {
         helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring");
         helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering");
         helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.merging");
+        helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration");
+        helper.addLookupPath("de.unijena.bioinf.FragmentationTreeConstruction.computation");
         return helper;
     }
 
