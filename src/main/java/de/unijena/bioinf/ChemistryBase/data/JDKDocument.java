@@ -23,7 +23,7 @@ public class JDKDocument extends DataDocument<Object, Map<String, Object>, List<
 
     @Override
     public boolean isDouble(Object document) {
-        return (document instanceof Number) && (document instanceof Float || document instanceof Double || document instanceof BigDecimal);
+        return document instanceof Number;
     }
 
     @Override

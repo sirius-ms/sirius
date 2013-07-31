@@ -15,6 +15,10 @@ public class IsotopicDistribution implements Parameterized {
     private ArrayList<Isotopes> isotopes;
     private PeriodicTable table;
 
+    public IsotopicDistribution() {
+        this(PeriodicTable.getInstance());
+    }
+
     public IsotopicDistribution(PeriodicTable table) {
         this.table = table;
         this.isotopeMap = new HashMap<String, Isotopes>();

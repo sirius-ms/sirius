@@ -49,6 +49,10 @@ public abstract class DataDocument<General, Dictionary, List> {
 
     public abstract boolean isInteger(General document);
 
+    /**
+     * @param document
+     * @return true if the document can be converted to a double
+     */
     public abstract boolean isDouble(General document);
 
     public abstract boolean isBoolean(General document);
