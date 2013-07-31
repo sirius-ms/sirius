@@ -83,7 +83,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static Pattern LINE_PATTERN = Pattern.compile("^\\s*([>#]|\\d)");
 
-        private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?";
+        private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?(?:[eE]-?\\d+)?";
 
         private static final Pattern MASS_PATTERN = Pattern.compile("("+decimalPattern + ")(?:\\s*Da)?");
 
