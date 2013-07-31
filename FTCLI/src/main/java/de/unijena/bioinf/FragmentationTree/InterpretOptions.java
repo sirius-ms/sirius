@@ -76,7 +76,7 @@ public class InterpretOptions {
                 sdms2 != null ? new Deviation(sdms2) : null,
                 sdDiff != null ? new Deviation(sdDiff) : null, getFormulaConstraints(options), options.getExpectedIntensityDeviation()==null ? 0d : options.getExpectedIntensityDeviation(),
                 options.getNoiseMedian()==null ? 0 : options.getNoiseMedian());
-        profile.setIntensityDeviation(1d);
+        profile.setIntensityDeviation(0d);
         // ...
         return profile;
     }

@@ -27,6 +27,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -188,6 +189,7 @@ public class FTLearn {
             final JSONDocumentType doc = new JSONDocumentType();
             final JSONObject obj = doc.newDictionary();
             analyzer.writeToProfile(doc, obj);
+            IsotopePatternAnalysis.defaultAnalyzer().writeToProfile(doc, obj);
             JSONDocumentType.writeJson(doc, obj, writer);
             writer.close();
         } catch (IOException e) {
@@ -225,7 +227,7 @@ public class FTLearn {
                 massDevs.add(new XYZ(
                         input.getParentPeak().getOriginalMz(),
                         input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
-                        1d)
+                        2d)
                 );
                 // get signal peaks
                 {
@@ -1014,14 +1016,15 @@ public class FTLearn {
             if (!Double.isNaN(sd3) && sd3 > sd1) sd1 = sd3;
 
             // search for a good cutoff
-            final double allowedOutliers = (int)ceil((0.03d) * (sum1+sum2));
+            final double allowedOutliers = (int)ceil((0.01d) * (sum1+sum2));
             final int[] cutoffs = new int[]{3, 4, 5, 6, 7, 8, 9, 10};
             for (int cutoff1 : cutoffs) {
                 for (int cutoff2 : cutoffs) {
                     final Deviation dev = new Deviation(sd2*cutoff2, sd1*cutoff1);
                     double outliers = 0;
                     for (XYZ value : values)
-                        if (!dev.inErrorWindow(value.x, value.x + value.y)) outliers += value.z;
+                        if (!dev.inErrorWindow(value.x, value.x + value.y))
+                            outliers += value.z;
                     final double newAreaUnderTheCurve = areaUnderTheCurve(dev, maxMass);
                     if (outliers<=allowedOutliers) {
                         if (newAreaUnderTheCurve < areaUnderTheCurve) {

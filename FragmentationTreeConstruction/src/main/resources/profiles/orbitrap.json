@@ -55,25 +55,6 @@
       },
       "threshold": 0.00010
     },
-    "default": {
-      "allowedMassDeviation": "5.5 ppm (0.001 m/z)",
-      "intensityDeviation": 0.02,
-      "standardMs2MassDeviation": "1.8 ppm (3.4E-4 m/z)",
-      "$name": "ChemistryBase.ms.MutableMeasurementProfile",
-      "medianNoiseIntensity": 0.01177087021643545,
-      "formulaConstraints": {
-        "$name": "ChemistryBase.chem.FormulaConstraints",
-        "upperbounds": {},
-        "alphabet": "CHNOPS",
-        "filters": [
-          {
-            "$name": "ChemistryBase.chem.utils.ValenceFilter",
-            "minValence": -0.5
-          }
-        ]
-      },
-      "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
-    },
     "preProcessing": [
       {
         "$name": "NormalizeToSumPreprocessor",
@@ -129,7 +110,7 @@
     "peakScorers": [
       {
         "$name": "TreeSizeScorer",
-        "score": 0
+        "score": 1
       },
       {
         "$name": "PeakIsNoiseScorer",
@@ -309,8 +290,10 @@
   },
   "profile": {
     "allowedMassDeviation": "5.5 ppm (0.001 m/z)",
-    "intensityDeviation": 0.02,
+    "standardMassDifferenceDeviation": "1.3 ppm (3E-4 m/z)",
+    "intensityDeviation": 0.008,
     "standardMs2MassDeviation": "1.8 ppm (3.4E-4 m/z)",
+    "standardMs1MassDeviation": "2 ppm (7E-4 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
     "medianNoiseIntensity": 0.01177087021643545,
     "formulaConstraints": {
@@ -323,7 +306,173 @@
           "minValence": -0.5
         }
       ]
+    }
+  },
+  "IsotopePatternAnalysis": {
+    "$name": "IsotopePatternAnalysis",
+    "patternScorers": [
+      {
+        "$name": "scoring.MassDeviationScorer",
+        "intensityDependency": {
+          "$name": "util.PiecewiseLinearFunctionIntensityDependency",
+          "values": [
+            1,
+            1.5
+          ],
+          "bags": [
+            0.15,
+            0.1
+          ]
+        }
+      },
+      {
+        "$name": "scoring.LogNormDistributedIntensityScorer",
+        "intensityDependency": {
+          "$name": "util.PiecewiseLinearFunctionIntensityDependency",
+          "values": [
+            0.7,
+            0.6,
+            0.8,
+            0.5
+          ],
+          "bags": [
+            1,
+            0.3,
+            0.15,
+            0.03
+          ]
+        }
+      }
+    ],
+    "isotopes": {
+      "$name": "ChemistryBase.chem.utils.IsotopicDistribution",
+      "isotopes": {
+        "Cl": {
+          "abundances": [
+            0.7578,
+            0.2422
+          ],
+          "masses": [
+            34.96885268,
+            36.96590259
+          ]
+        },
+        "F": {
+          "abundances": [
+            1
+          ],
+          "masses": [
+            18.99840322
+          ]
+        },
+        "P": {
+          "abundances": [
+            1
+          ],
+          "masses": [
+            30.97376163
+          ]
+        },
+        "Si": {
+          "abundances": [
+            0.9222969999999999,
+            0.046832000000000006,
+            0.030872
+          ],
+          "masses": [
+            27.97692653,
+            28.9764947,
+            29.97377017
+          ]
+        },
+        "S": {
+          "abundances": [
+            0.9493,
+            0.0076,
+            0.0429,
+            0.00020
+          ],
+          "masses": [
+            31.972071,
+            32.97145876,
+            33.9678669,
+            35.96708076
+          ]
+        },
+        "Br": {
+          "abundances": [
+            0.5069,
+            0.49310000000000004
+          ],
+          "masses": [
+            78.9183371,
+            80.9162906
+          ]
+        },
+        "C": {
+          "abundances": [
+            0.9893000000000001,
+            0.010700000000000001
+          ],
+          "masses": [
+            12,
+            13.00335484
+          ]
+        },
+        "N": {
+          "abundances": [
+            0.9963200000000001,
+            0.00368
+          ],
+          "masses": [
+            14.003074,
+            15.0001089
+          ]
+        },
+        "O": {
+          "abundances": [
+            0.9975700000000001,
+            0.00037999999999999997,
+            0.0020499999999999997
+          ],
+          "masses": [
+            15.99491462,
+            16.9991317,
+            17.999161
+          ]
+        },
+        "H": {
+          "abundances": [
+            0.999885,
+            0.000115
+          ],
+          "masses": [
+            1.007825032,
+            2.014101778
+          ]
+        },
+        "I": {
+          "abundances": [
+            1
+          ],
+          "masses": [
+            126.904473
+          ]
+        },
+        "Na": {
+          "abundances": [
+            1
+          ],
+          "masses": [
+            22.98976928
+          ]
+        }
+      }
     },
-    "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
+    "cutoff": 0.01,
+    "patternExtractor": {
+      "$name": "extraction.AlreadyExtracted"
+    },
+    "intensityOffset": 0.00178
   }
 }

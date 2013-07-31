@@ -165,7 +165,12 @@ public class MultipleTreeComputation {
 
     abstract class GraphBuildingQueue implements Iterator<FragmentationGraph> {
 
-        protected final List<ScoredMolecularFormula> stack = new ArrayList<ScoredMolecularFormula>(formulas);
+        protected GraphBuildingQueue() {
+            stack = new ArrayList<ScoredMolecularFormula>(formulas);
+            Collections.reverse(stack);
+        }
+
+        protected final List<ScoredMolecularFormula> stack;
 
         @Override
         public boolean hasNext() {

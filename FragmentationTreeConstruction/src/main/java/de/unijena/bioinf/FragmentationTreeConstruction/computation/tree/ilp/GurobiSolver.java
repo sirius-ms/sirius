@@ -375,8 +375,10 @@ public class GurobiSolver implements TreeBuilder {
                 model.addConstr(lowerboundExpression, GRB.LESS_EQUAL, -lowerbound, null);//String.valueOf(++identifier));
             }
             */
-            final double realLowerbound = lowerbound-graph.getRootScore();
-            model.getEnv().set(GRB.DoubleParam.Cutoff, Math.min(0, -realLowerbound));
+            if (lowerbound != 0) {
+                final double realLowerbound = lowerbound-graph.getRootScore();
+                model.getEnv().set(GRB.DoubleParam.Cutoff, Math.min(0, -realLowerbound));
+            }
         }
 
         protected void optimize() throws GRBException {
