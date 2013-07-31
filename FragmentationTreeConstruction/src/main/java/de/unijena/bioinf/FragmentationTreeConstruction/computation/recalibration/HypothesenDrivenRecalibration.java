@@ -86,6 +86,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                     correctedTree = tree;
                     return tree;
                 }
+                /*
                 final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(tree.getInput().getExperimentInformation());
                 final ArrayList<Ms2Spectrum> specs = new ArrayList<Ms2Spectrum>();
                 for (Ms2Spectrum spec : exp.getMs2Spectra()) {
@@ -99,7 +100,8 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 exp.setMs2Spectra(specs);
                 final MutableMeasurementProfile prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
                 exp.setMeasurementProfile(prof);
-                correctedTree = analyzer.computeTrees(analyzer.preprocessing(exp)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(tree.getScore()).withoutRecalibration().optimalTree();
+                */
+                correctedTree = analyzer.computeTrees(analyzer.preprocessingWithRecalibration(tree.getInput().getExperimentInformation(), this)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(tree.getScore()).withoutRecalibration().optimalTree();
                 if (correctedTree == null) correctedTree = tree;
                 return correctedTree;
             }

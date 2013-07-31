@@ -301,7 +301,7 @@ public class Main {
                 computationTime = System.nanoTime() - computationTime;
                 computationTime /= 1000000;
                 if (correctTree!=null && rankWriter!=null) {
-                    rankWriter.println(f.getName() + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() +"," + input.getParentMassDecompositions().size() + "," +
+                    rankWriter.println(escapeCSV(f.getName()) + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() +"," + input.getParentMassDecompositions().size() + "," +
                             rank +
                             "," + correctTree.getScore() + "," + optScore + "," + correctTree.numberOfVertices() + "," + computationTime);
                     if (verbose) rankWriter.flush();
@@ -319,8 +319,18 @@ public class Main {
         }
     }
 
+    private static String escapeCSV(String s) {
+        if (s.indexOf(',') >= 0) {
+            return "\"" + s.replaceAll("\"", "\"\"") + "\"";
+        } else if (s.indexOf('"') >= 0) {
+            return s.replaceAll("\"", "\"\"");
+        } else {
+            return s;
+        }
+    }
+
     private void printResult(FragmentationTree tree) {
-        System.out.print("correct tree  " + tree.getRoot().getFormula() + " (" + (tree.getScore()-tree.getRecalibrationBonus()));
+        System.out.print(tree.getRoot().getFormula() + " (" + (tree.getScore()-tree.getRecalibrationBonus()));
         if (tree.getRecalibrationBonus() > 1e-6) {
             System.out.print(" -> " + tree.getScore());
         }
@@ -381,7 +391,7 @@ public class Main {
                 ano.getVertexAnnotations().put(tree.getRoot(), map);
             }
             //
-            new FTDotWriter().writeTree(fw, tree, ano.getVertexAnnotations(), ano.getEdgeAnnotations());
+            new FTDotWriter().writeTree(fw, tree, ano.getAdditionalProperties(), ano.getVertexAnnotations(), ano.getEdgeAnnotations());
         } catch (IOException e) {
             System.err.println("Error while writing in " + f + " for input ");
             e.printStackTrace();

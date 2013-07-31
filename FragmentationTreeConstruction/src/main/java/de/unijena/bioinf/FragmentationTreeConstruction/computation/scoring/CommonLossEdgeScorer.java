@@ -105,6 +105,14 @@ public class CommonLossEdgeScorer implements LossScorer{
         return recombinator;
     }
 
+    public double getNormalization() {
+        return normalization;
+    }
+
+    public void setNormalization(double normalization) {
+        this.normalization = normalization;
+    }
+
     public void merge(HashMap<MolecularFormula, Double> map) {
         this.commonLosses.putAll(map);
         recombinatedList = null;

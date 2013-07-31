@@ -12,9 +12,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.ChemicalPriorScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakIsNoiseScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsExperiment;
@@ -24,6 +22,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
 
 public class TestMS2Analysis {
 
@@ -54,7 +54,7 @@ public class TestMS2Analysis {
             System.out.println(tree.getScore());
             final TreeAnnotation annotation = new TreeAnnotation(tree, analysis);
             final FTDotWriter dotWriter = new FTDotWriter();
-            dotWriter.writeTree(writer, tree, annotation.getVertexAnnotations(), annotation.getEdgeAnnotations());
+            dotWriter.writeTree(writer, tree, annotation.getAdditionalProperties(), annotation.getVertexAnnotations(), annotation.getEdgeAnnotations());
             System.out.println(writer.toString());
 
         } catch (IOException e) {

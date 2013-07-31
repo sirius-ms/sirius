@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.inspection;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
@@ -13,15 +14,22 @@ public class TreeAnnotation {
 
     private final HashMap<Fragment, Map<Class<?>, Double>> vertexAnnotations;
     private final HashMap<Loss, Map<Class<?>, Double>> edgeAnnotations;
+    private final HashMap<Fragment, List<String>> additionalProperties;
 
     public TreeAnnotation(FragmentationTree tree, FragmentationPatternAnalysis analysis) {
         this(tree, analysis, tree.getInput());
     }
 
     public TreeAnnotation(FragmentationPathway pathway, FragmentationPatternAnalysis analysis, ProcessedInput input) {
-        this.vertexAnnotations = new HashMap<Fragment, Map<Class<?>, Double>>(pathway.numberOfVertices()*2);
-        this.edgeAnnotations = new HashMap<Loss, Map<Class<?>, Double>>(pathway.numberOfVertices()*2);
+        final int N = pathway.numberOfVertices();
+        this.vertexAnnotations = new HashMap<Fragment, Map<Class<?>, Double>>(N*2);
+        this.edgeAnnotations = new HashMap<Loss, Map<Class<?>, Double>>(N*2);
+        this.additionalProperties = new HashMap<Fragment, List<String>>(N*2);
         annotate(pathway, analysis, input);
+    }
+
+    public HashMap<Fragment, List<String>> getAdditionalProperties() {
+        return additionalProperties;
     }
 
     public HashMap<Fragment, Map<Class<?>, Double>> getVertexAnnotations() {
@@ -88,7 +96,18 @@ public class TreeAnnotation {
         for (Fragment vertex : pathway.getFragmentsWithoutRoot()) {
             annotateFragment(analysis, decompositionInits, peakScores, vertexClasses, vertex, input);
             annotateLoss(analysis, lossClasses, lossInits, peakPairScores, vertex, input);
+            additionalAnnotationsForFragments(analysis, vertex, input);
         }
+    }
+
+    private void additionalAnnotationsForFragments(FragmentationPatternAnalysis analysis, Fragment vertex, ProcessedInput input) {
+        final List<String> annotations = new ArrayList<String>();
+        // add recalibration
+        if (Math.abs(vertex.getPeak().getRecalibrationShift()) > 1e-5 ) {
+            final Deviation dev = Deviation.fromMeasurementAndReference(vertex.getPeak().getMz(), vertex.getPeak().getOriginalMz());
+            annotations.add(String.format(Locale.US, "Calibration: %+.2f ppm (%.3g m/z)", dev.getPpm(), dev.getAbsolute()));
+        }
+        if (!annotations.isEmpty()) additionalProperties.put(vertex, annotations);
     }
 
     protected void annotateFragment(FragmentationPatternAnalysis analysis, Object[] decompositionInits, double[][] peakScores, Class[] vertexClasses, Fragment vertex, ProcessedInput input) {

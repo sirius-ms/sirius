@@ -39,7 +39,9 @@ import org.apache.commons.math3.analysis.function.Identity;
 
 import java.util.*;
 
-public class FragmentationPatternAnalysis implements Parameterized {
+public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
+
+    public static final String ANALYZER_NAME = "FragmentationPatternAnalysis";
 
     private List<InputValidator> inputValidators;
     private Warning validatorWarning;
@@ -79,6 +81,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
         final D dict = document.getDictionary(value);
         final D fpa = document.newDictionary();
         exportParameters(helper, document, fpa);
+        document.addToDictionary(fpa, "$name", helper.toClassName(getClass()));
         document.addDictionaryToDictionary(dict, "FragmentationPatternAnalysis", fpa);
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
@@ -307,7 +310,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
      * Recalibrates the tree
      * @return Recalibration object containing score bonus and new tree
      */
-    protected RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
         if (recalibrationMethod == null || tree == null) return null;
         else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer());
     }
@@ -325,8 +328,11 @@ public class FragmentationPatternAnalysis implements Parameterized {
         if (rec == null || rec.getScoreBonus() <= 0) return tree;
         double oldScore = tree.getScore();
         if (rec.shouldRecomputeTree()) {
-            tree = rec.getCorrectedTree(this);
-            tree.setRecalibrationBonus(tree.getScore()-oldScore);
+            final FragmentationTree newTree = rec.getCorrectedTree(this);
+            if (newTree.getScore() > tree.getScore()) {
+                tree = newTree;
+                tree.setRecalibrationBonus(tree.getScore()-oldScore);
+            }
         } else {
             tree.setScore(rec.getScoreBonus());
             tree.setRecalibrationBonus(tree.getScore()-oldScore);
@@ -385,6 +391,17 @@ public class FragmentationPatternAnalysis implements Parameterized {
         return graph;
     }
 
+    public ProcessedInput preprocessingWithRecalibration(Ms2Experiment experiment, RecalibrationMethod.Recalibration recalibration) {
+        final ProcessedInput input = preprocessWithoutDecomposing(experiment);
+        final UnivariateFunction f = recalibration.recalibrationFunction();
+        for (ProcessedPeak peak :input.getMergedPeaks()) {
+            peak.setOriginalMz(peak.getMz());
+            peak.setMz(f.value(peak.getMz()));
+        }
+        // decompose and score all peaks
+        return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
+    }
+
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
         final ProcessedInput input = preprocessWithoutDecomposing(experiment);
         // decompose and score all peaks
@@ -434,6 +451,7 @@ public class FragmentationPatternAnalysis implements Parameterized {
                     final ProcessedPeak syntheticParent = new ProcessedPeak();
                     syntheticParent.setIon(experiment.getIonization());
                     syntheticParent.setMz(parentmass);
+                    syntheticParent.setOriginalMz(parentmass);
                     processedPeaks.add(syntheticParent);
                     break;
                 } else processedPeaks.remove(i);

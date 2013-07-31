@@ -117,35 +117,14 @@ public class MissingValueValidator implements InputValidator {
                     modificationMass = input.getIonMass() - input.getMolecularFormula().getMass();
                     ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
                 }
-                if (ion == null)  throw new InvalidException("Unknown adduct with mass " + modificationMass);
-                warn.warn("set ion to " + ion);
-                input.setIonization(ion);
+                if (ion == null)  {
+                    searchForIon(warn, input);
+                } else {
+                    warn.warn("set ion to " + ion);
+                    input.setIonization(ion);
+                }
             } else if (input.getMolecularFormula()!=null || validDouble(input.getMoleculeNeutralMass(), false)) {
-                final double neutral = (input.getMolecularFormula()!=null) ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass();
-                // TODO: negative ions
-                // search for [M+H]+
-                final Ionization mhp = PeriodicTable.getInstance().ionByName("[M+H]+");
-                final double mz = mhp.addToMass(neutral);
-                final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
-                for (Spectrum<Peak> spec : input.getMs2Spectra()) {
-                    if (Spectrums.search(spec, mz, dev) >= 0) {
-                        warn.warn("Set ion to " + mhp.toString());
-                        input.setIonization(mhp);
-                        return;
-                    }
-                }
-                // search for other ions
-                final List<Ionization> ions = PeriodicTable.getInstance().getIons();
-                for (Spectrum<Peak> spec : input.getMs2Spectra()) {
-                    for (Ionization ion : ions) {
-                        if (Spectrums.search(spec, ion.addToMass(neutral), dev) >= 0) {
-                            warn.warn("Set ion to " + ion.toString());
-                            input.setIonization(ion);
-                            return;
-                        }
-                    }
-                }
-                throw new InvalidException("Unknown ionization");
+                searchForIon(warn, input);
             }
         }
         if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula()!= null ||  validDouble(input.getMoleculeNeutralMass(), false))) {
@@ -154,8 +133,42 @@ public class MissingValueValidator implements InputValidator {
             if (ion != null) {
                 warn.warn("Set ion to " + ion.toString());
                 input.setIonization(ion);
+            } else {
+                searchForIon(warn, input);
             }
         }
+    }
+
+    private void searchForIon(Warning warn, Ms2ExperimentImpl input) {
+        final double neutral = (input.getMolecularFormula()!=null) ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass();
+        final ArrayList<Spectrum<Peak>> spectra = new ArrayList<Spectrum<Peak>>(input.getMs1Spectra());
+        for (Ms2Spectrum<Peak> ms2 : input.getMs2Spectra()) spectra.add(ms2);
+        // TODO: negative ions
+        // search for [M+H]+
+        final Ionization mhp = PeriodicTable.getInstance().ionByName("[M+H]+");
+        final double mz = mhp.addToMass(neutral);
+        final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
+        for (Spectrum<Peak> spec : spectra) {
+            final int peak = Spectrums.search(spec, mz, dev);
+            if (peak >= 0) {
+                warn.warn("Set ion to " + mhp.toString());
+                input.setIonization(mhp);
+                input.setIonMass(spec.getMzAt(peak));
+                return;
+            }
+        }
+        // search for other ions
+        final List<Ionization> ions = PeriodicTable.getInstance().getIons();
+        for (Spectrum<Peak> spec : spectra) {
+            for (Ionization ion : ions) {
+                if (Spectrums.search(spec, ion.addToMass(neutral), dev) >= 0) {
+                    warn.warn("Set ion to " + ion.toString());
+                    input.setIonization(ion);
+                    return;
+                }
+            }
+        }
+        throw new InvalidException("Unknown ionization");
     }
 
     protected void checkMergedMs1(Warning warn, boolean repair, Ms2ExperimentImpl input) {

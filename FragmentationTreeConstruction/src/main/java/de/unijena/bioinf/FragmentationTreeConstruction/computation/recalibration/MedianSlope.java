@@ -19,13 +19,15 @@ import org.apache.commons.math3.analysis.function.Identity;
 public class MedianSlope implements RecalibrationStrategy, Parameterized {
 
     private Deviation epsilon;
+    private int minNumberOfPeaks;
 
     public MedianSlope() {
-        this(new Deviation(5, 0.001));
+        this(new Deviation(5, 0.001), 5);
     }
 
-    public MedianSlope(Deviation epsilon) {
+    public MedianSlope(Deviation epsilon, int minNumberOfPeaks) {
         this.epsilon = epsilon;
+        this.minNumberOfPeaks = minNumberOfPeaks;
     }
 
     public Deviation getEpsilon() {
@@ -41,7 +43,7 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
                 return dev.absoluteFor(x);
             }
         });
-        if (values[0].length<5) return new Identity();
+        if (values[0].length<minNumberOfPeaks) return new Identity();
         final UnivariateFunction recalibration = MzRecalibration.getMedianLinearRecalibration(values[0], values[1]);
         MzRecalibration.recalibrate(spectrum, recalibration);
         return recalibration;
@@ -50,10 +52,12 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         epsilon = Deviation.fromString(document.getStringFromDictionary(dictionary, "epsilon"));
+        minNumberOfPeaks = (int)document.getIntFromDictionary(dictionary, "minNumberOfPeaks");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "epsilon", epsilon.toString());
+        document.addToDictionary(dictionary, "minNumberOfPeaks", minNumberOfPeaks);
     }
 }

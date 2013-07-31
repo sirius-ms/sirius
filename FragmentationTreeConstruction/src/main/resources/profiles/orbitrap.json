@@ -1,31 +1,13 @@
 {
-  "profile": {
-    "allowedMassDeviation": "5.0 ppm (0.001 m/z)",
-    "intensityDeviation": 0.02,
-    "standardMs2MassDeviation": "1.5 ppm (25.0E-5 m/z)",
-    "$name": "ChemistryBase.ms.MutableMeasurementProfile",
-    "medianNoiseIntensity": 0.011618881573390685,
-    "formulaConstraints": {
-      "$name": "ChemistryBase.chem.FormulaConstraints",
-      "upperbounds": {},
-      "alphabet": "CHNOPS",
-      "filters": [
-        {
-          "$name": "ChemistryBase.chem.utils.ValenceFilter",
-          "minValence": -0.5
-        }
-      ]
-    },
-    "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
-  },
   "FragmentationPatternAnalysis": {
+    "$name": "FragmentationPatternAnalysis",
     "rootScorers": [
       {
         "$name": "MassDeviationVertexScorer"
       },
       {
         "$name": "ChemicalPriorScorer",
-        "normalization": 0.7954349682463361,
+        "normalization": 0.935511962762032,
         "minimalMass": 100,
         "prior": {
           "heteroAtom2CarbonScorer": {
@@ -64,10 +46,38 @@
         }
       }
     ],
-    "$name": "FragmentationTreeConstruction.computation.FragmentationPatternAnalysis",
+    "recalibrationMethod": {
+      "$name": "HypothesenDrivenRecalibration",
+      "method": {
+        "$name": "MedianSlope",
+        "minNumberOfPeaks": 5,
+        "epsilon": "5.0 ppm (0.001 m/z)"
+      },
+      "threshold": 0.00010
+    },
+    "default": {
+      "allowedMassDeviation": "5.5 ppm (0.001 m/z)",
+      "intensityDeviation": 0.02,
+      "standardMs2MassDeviation": "1.8 ppm (3.4E-4 m/z)",
+      "$name": "ChemistryBase.ms.MutableMeasurementProfile",
+      "medianNoiseIntensity": 0.01177087021643545,
+      "formulaConstraints": {
+        "$name": "ChemistryBase.chem.FormulaConstraints",
+        "upperbounds": {},
+        "alphabet": "CHNOPS",
+        "filters": [
+          {
+            "$name": "ChemistryBase.chem.utils.ValenceFilter",
+            "minValence": -0.5
+          }
+        ]
+      },
+      "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
+    },
     "preProcessing": [
       {
-        "$name": "NormalizeToSumPreprocessor"
+        "$name": "NormalizeToSumPreprocessor",
+        "onlyForRelativeIntensities": true
       }
     ],
     "merge": {
@@ -81,45 +91,45 @@
       {
         "$name": "CommonFragmentsScore",
         "fragments": {
-          "C6H4": 5.168083717391234,
-          "C4H7N": 4.416414965211633,
-          "C3H5N": 4.605041011643129,
-          "C4H9N": 3.754039443318441,
-          "C8H6": 4.495770623734131,
-          "C8H8": 4.474936536831289,
-          "C5H4": 4.91556555739712,
-          "C10H8": 4.086173278341056,
-          "C4H6": 4.612407527459892,
-          "C13H8": 3.754039443318441,
-          "C4H4": 4.267459102261479,
-          "C3H7N": 4.3589939118429255,
-          "C4H5N": 3.7964186662873027,
-          "C4H2": 4.3447079545954495,
-          "C7H6O": 4.125752264621714,
-          "C8H8O": 3.9210935279816073,
-          "C5H5N": 4.005353871599348,
-          "C3H4O": 3.749701041719843,
-          "C5H9N": 3.898870391196897,
-          "C5H7N": 3.7796818739317786,
-          "C3H2O": 4.246515928416235,
-          "C5H6": 4.429718930837995,
-          "C5H8": 4.044963009694393,
-          "C6H6": 4.849761556564317,
-          "C7H8": 4.061014718704901,
-          "C6H8": 4.113740108173711,
-          "C9H8": 4.1317046631490095,
-          "C7H6": 5.072036423880076,
-          "C9H6": 4.524227828548167,
-          "C4H8": 3.8723033638121755
+          "C6H4": 3.471869693487544,
+          "C4H7N": 2.9669057449640306,
+          "C3H5N": 3.0936229364452976,
+          "C4H9N": 2.5219281428345885,
+          "C8H6": 3.0202161247676464,
+          "C8H8": 3.0062199825097227,
+          "C5H4": 3.3022303852486767,
+          "C10H8": 2.7450525075031402,
+          "C4H6": 3.098571692001396,
+          "C13H8": 2.5219281428345885,
+          "C4H4": 2.8668386070220437,
+          "C3H7N": 2.9283308251561184,
+          "C4H5N": 2.550398103443782,
+          "C4H2": 2.918733654382149,
+          "C7H6O": 2.7716412956267464,
+          "C8H8O": 2.634153494711844,
+          "C5H5N": 2.690758795509283,
+          "C3H4O": 2.5190136457304364,
+          "C5H9N": 2.619224201899225,
+          "C5H7N": 2.539154484856528,
+          "C3H2O": 2.8527691811893976,
+          "C5H6": 2.9758432230675553,
+          "C5H8": 2.7173678393362217,
+          "C6H6": 3.258023880730797,
+          "C7H8": 2.728151225420841,
+          "C6H8": 2.7635716426942847,
+          "C9H8": 2.77564006058114,
+          "C7H6": 3.4073460313880415,
+          "C9H6": 3.0393334054383803,
+          "C4H8": 2.601376724523292
         },
-        "normalization": 1.2626018327351904,
+        "normalization": 0.09035859661268708,
         "hTolerance": false
       }
     ],
     "peakScorers": [
       {
         "$name": "TreeSizeScorer",
-        "score": 1
+        "score": 0
       },
       {
         "$name": "PeakIsNoiseScorer",
@@ -137,7 +147,7 @@
       },
       {
         "$name": "LossSizeScorer",
-        "normalization": -5.33120368019232,
+        "normalization": -5.7030965874956125,
         "distribution": {
           "$name": "LogNormalDistribution",
           "mean": 4.107336914319953,
@@ -174,7 +184,7 @@
       },
       {
         "$name": "CommonLossEdgeScorer",
-        "normalization": 3.0814783217219084,
+        "normalization": 3.481085744599375,
         "recombinator": {
           "$name": "CommonLossEdgeScorer$LossSizeRecombinator",
           "lossSize": {
@@ -251,7 +261,7 @@
       },
       {
         "$name": "ChemicalPriorEdgeScorer",
-        "normalization": -0.05539505066696687,
+        "normalization": -0.037525199828504205,
         "minimalMass": 100,
         "prior": {
           "heteroAtom2CarbonScorer": {
@@ -295,14 +305,25 @@
         "$name": "NoiseThresholdFilter",
         "threshold": 0.005
       }
-    ],
-    "recalibrationMethod": {
-      "$name": "HypothesenDrivenRecalibration",
-      "method": {
-        "$name": "MedianSlope",
-        "epsilon": "5.0 ppm (0.001 m/z)"
-      },
-      "threshold": 0.0001
-    }
+    ]
+  },
+  "profile": {
+    "allowedMassDeviation": "5.5 ppm (0.001 m/z)",
+    "intensityDeviation": 0.02,
+    "standardMs2MassDeviation": "1.8 ppm (3.4E-4 m/z)",
+    "$name": "ChemistryBase.ms.MutableMeasurementProfile",
+    "medianNoiseIntensity": 0.01177087021643545,
+    "formulaConstraints": {
+      "$name": "ChemistryBase.chem.FormulaConstraints",
+      "upperbounds": {},
+      "alphabet": "CHNOPS",
+      "filters": [
+        {
+          "$name": "ChemistryBase.chem.utils.ValenceFilter",
+          "minValence": -0.5
+        }
+      ]
+    },
+    "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
   }
 }

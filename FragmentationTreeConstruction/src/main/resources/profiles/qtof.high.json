@@ -1,3 +1,4 @@
+
 {
   "profile": {
     "allowedMassDeviation": "7.0 ppm (0.0015 m/z)",
@@ -300,7 +301,8 @@
       "$name": "HypothesenDrivenRecalibration",
       "method": {
         "$name": "MedianSlope",
-        "epsilon": "5.0 ppm (0.001 m/z)"
+        "epsilon": "5.0 ppm (0.001 m/z)",
+        "minNumberOfPeaks": 5
       },
       "threshold": 0.0001
     }

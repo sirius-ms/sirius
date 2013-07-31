@@ -270,7 +270,7 @@ public class Main {
         try {
             fw =  new FileWriter(f);
             final TreeAnnotation ano = new TreeAnnotation(tree, pipeline);
-            new FTDotWriter().writeTree(fw, tree, ano.getVertexAnnotations(), ano.getEdgeAnnotations());
+            new FTDotWriter().writeTree(fw, tree, ano.getAdditionalProperties(),  ano.getVertexAnnotations(), ano.getEdgeAnnotations());
         } catch (IOException e) {
             System.err.println("Error while writing tree in " + f + " for input " + inputFile);
             e.printStackTrace();
