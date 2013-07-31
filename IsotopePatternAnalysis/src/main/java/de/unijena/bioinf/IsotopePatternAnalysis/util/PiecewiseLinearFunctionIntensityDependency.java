@@ -10,6 +10,9 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
  */
 public class PiecewiseLinearFunctionIntensityDependency extends FixedBagIntensityDependency {
 
+    public PiecewiseLinearFunctionIntensityDependency() {
+    }
+
     public PiecewiseLinearFunctionIntensityDependency(double[] bags, double[] values) {
         super(bags, values);
     }

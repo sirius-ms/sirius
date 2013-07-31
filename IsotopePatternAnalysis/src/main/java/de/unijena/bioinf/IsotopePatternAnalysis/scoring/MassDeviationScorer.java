@@ -15,6 +15,10 @@ public class MassDeviationScorer implements IsotopePatternScorer {
 
     private IntensityDependency intensityDependency;
 
+    public MassDeviationScorer() {
+        this(1.5d);
+    }
+
     public MassDeviationScorer(double lowestIntensityAccuracy) {
         this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
     }

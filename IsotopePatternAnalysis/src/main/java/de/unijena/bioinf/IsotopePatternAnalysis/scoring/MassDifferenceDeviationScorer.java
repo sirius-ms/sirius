@@ -15,6 +15,10 @@ public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
     private final static double root2 = Math.sqrt(2d);
     private IntensityDependency dependency;
 
+    public MassDifferenceDeviationScorer() {
+        this(1.5d);
+    }
+
     public MassDifferenceDeviationScorer(double lowestIntensityAccuracy) {
         this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
     }

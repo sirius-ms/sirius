@@ -17,6 +17,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.scoring.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.LogNormDistributedIntensityScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
+import de.unijena.bioinf.IsotopePatternAnalysis.util.MutableMsExperiment;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
@@ -28,6 +29,8 @@ import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.addOffset;
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
 
 public class IsotopePatternAnalysis implements Parameterized {
+
+    public static final String ANALYZER_NAME = "IsotopePatternAnalysis";
 
     private List<IsotopePatternScorer> isotopePatternScorers;
     private double cutoff;
@@ -85,10 +88,10 @@ public class IsotopePatternAnalysis implements Parameterized {
     public static <G, D, L> IsotopePatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
         final D dict = document.getDictionary(value);
-        if (!document.hasKeyInDictionary(dict, "IsotopePatternAnalysis"))
+        if (!document.hasKeyInDictionary(dict, ANALYZER_NAME))
             throw new IllegalArgumentException("No field 'IsotopePatternAnalysis' in profile");
         final IsotopePatternAnalysis analyzer = (IsotopePatternAnalysis)helper.unwrap(document,
-                document.getFromDictionary(dict, "IsotopePatternAnalysis"));
+                document.getFromDictionary(dict, ANALYZER_NAME));
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile prof = ((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile")));
             if (analyzer.defaultProfile==null) analyzer.defaultProfile=new MutableMeasurementProfile(prof);
@@ -102,7 +105,8 @@ public class IsotopePatternAnalysis implements Parameterized {
         final D dict = document.getDictionary(value);
         final D fpa = document.newDictionary();
         exportParameters(helper, document, fpa);
-        document.addDictionaryToDictionary(dict, "IsotopePatternAnalysis", fpa);
+        document.addToDictionary(fpa, "$name", ANALYZER_NAME );
+        document.addDictionaryToDictionary(dict, ANALYZER_NAME, fpa);
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
             if (!otherProfile.equals(defaultProfile)) {
@@ -119,7 +123,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         }
     }
 
-    IsotopePatternAnalysis() {
+    public IsotopePatternAnalysis() {
         this.isotopePatternScorers = new ArrayList<IsotopePatternScorer>();
         this.decomposer = new DecomposerCache();
         this.patternExtractor = new AlreadyExtracted();
@@ -135,8 +139,8 @@ public class IsotopePatternAnalysis implements Parameterized {
         analyzer.isotopePatternScorers.add(new MassDeviationScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{0.15, 0.1}, new double[]{
                 1.0, 1.5
         })));
-        analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(3, new PiecewiseLinearFunctionIntensityDependency(new double[]{1.0, 0.3, 0.15, 0.03}, new double[]{
-                0.0075, 0.017, 0.05, 0.07
+        analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{1.0, 0.3, 0.15, 0.03}, new double[]{
+                0.7, 0.6, 0.8, 0.5
         })));
         return analyzer;
     }
@@ -159,6 +163,9 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public IsotopePattern deisotope(MsExperiment experiment, IsotopePattern pattern) {
+        final MutableMsExperiment mexperiment = new MutableMsExperiment(experiment);
+        mexperiment.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, experiment.getMeasurementProfile()));
+        experiment = mexperiment;
         final Ionization ion = experiment.getIonization();
         final ArrayList<ScoredMolecularFormula> result = new ArrayList<ScoredMolecularFormula>();
         final List<MolecularFormula> molecules = decomposer.getDecomposer(experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(
