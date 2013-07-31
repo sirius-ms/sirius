@@ -363,12 +363,12 @@ public class Spectrums {
 	public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz, Deviation d) {
 		int pos = binarySearch(spectrum, mz);
 		if (pos >= 0) return pos;
-		final int realPos = -(pos+1);
-		final double dev1 = realPos >= spectrum.size() ? Double.POSITIVE_INFINITY : Math.abs(mz - spectrum.getMzAt(realPos));
-		final double dev2 = realPos <= 0 ? Double.POSITIVE_INFINITY :  Math.abs(mz - spectrum.getMzAt(realPos-1));
-		if (dev1 < dev2 && d.inErrorWindow(mz, dev1)) return realPos;
-		if (dev2 <= dev1 && d.inErrorWindow(mz, dev2)) return realPos+1;
-		return -pos;
+		final int insertionPoint = -pos-1;
+		final double dev1 = insertionPoint >= spectrum.size() ? Double.POSITIVE_INFINITY : Math.abs(mz - spectrum.getMzAt(insertionPoint));
+		final double dev2 = insertionPoint <= 0 ? Double.POSITIVE_INFINITY :  Math.abs(mz - spectrum.getMzAt(insertionPoint-1));
+		if (dev1 < dev2 && dev1 < d.absoluteFor(mz)) return insertionPoint;
+		if (dev2 <= dev1 && dev2 < d.absoluteFor(mz)) return insertionPoint-1;
+		return pos;
 	}
 	
 	/**

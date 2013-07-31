@@ -12,6 +12,12 @@ public class Deviation {
     private final double ppm;
     private final double absolute;
 
+    public static Deviation fromMeasurementAndReference(double measurementMz, double referenceMz) {
+        final double absMz = measurementMz - referenceMz;
+        final double ppm = absMz*1e6/measurementMz;
+        return new Deviation(ppm, absMz);
+    }
+
     public Deviation(double ppm) {
         this.ppm = ppm;
         this.absolute = 1e-4*ppm; // set absolute to 100 Da with given ppm
