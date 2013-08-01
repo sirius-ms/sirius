@@ -2,6 +2,7 @@ package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -83,7 +84,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static Pattern LINE_PATTERN = Pattern.compile("^\\s*([>#]|\\d)");
 
-        private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?(?:[eE]-?\\d+)?";
+        private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?";
 
         private static final Pattern MASS_PATTERN = Pattern.compile("("+decimalPattern + ")(?:\\s*Da)?");
 
@@ -149,6 +150,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 this.isMs1 = true;
             } else if (optionName.equals("retention")) {
                 parseRetention(value);
+            } else if (optionName.equals("ionization")) {
+                final Ionization ion = PeriodicTable.getInstance().ionByName(value.trim());
+                if (ion==null) {
+                    warn("Unknown ionization: '" + value + "'");
+                } else {
+                    this.ionization = ion;
+                }
+
             } else {
                 warn("Unknown option '>" + optionName + "'");
             }
