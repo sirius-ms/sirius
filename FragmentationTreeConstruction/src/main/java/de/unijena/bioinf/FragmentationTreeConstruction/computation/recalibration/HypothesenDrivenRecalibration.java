@@ -119,9 +119,10 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                     final double oldMz = f.getPeak().getMz();
                     final double newMz = recalibrationFunction.value(oldMz);
                     distance += Math.abs(newMz-oldMz);
+                    final double theoreticalMz = ion.addToMass(f.getDecomposition().getFormula().getMass());
                     final NormalDistribution dist = scorer.getDistribution(newMz, f.getRelativePeakIntensity(), tree.getInput());
-                    final double newScore = Math.log(dist.getCumulativeProbability(newMz-ion.addToMass(f.getDecomposition().getFormula().getMass())));
-                    final double oldScore = Math.log(dist.getCumulativeProbability(oldMz-ion.addToMass(f.getDecomposition().getFormula().getMass())));
+                    final double newScore = Math.log(dist.getErrorProbability(newMz-theoreticalMz));
+                    final double oldScore = Math.log(dist.getErrorProbability(oldMz-theoreticalMz));
                     sc += (newScore - oldScore);
                 }
                 this.scoreBonus = sc;

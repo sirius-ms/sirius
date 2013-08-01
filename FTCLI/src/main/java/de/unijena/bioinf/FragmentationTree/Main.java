@@ -42,7 +42,7 @@ public class Main {
 
     public final static String VERSION_STRING = "FragmentationPatternAnalysis " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
-    private static boolean DEBUG = true;
+    private static boolean DEBUG = false;
 
     public static void main(String[] args) {
         new Main().run(args);
@@ -389,10 +389,12 @@ public class Main {
         final Ms2Experiment experiment = parser.parseFile(f);
         final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(experiment);
         {
-            final MolecularFormula formula = experiment.getMolecularFormula();
-            final double ionMass = experiment.getIonMass() - experiment.getMoleculeNeutralMass();
-            final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-3, experiment.getIonization().getCharge());
-            impl.setIonization(ion);
+            if (impl.getIonization()==null) {
+                final MolecularFormula formula = experiment.getMolecularFormula();
+                final double ionMass = experiment.getIonMass() - experiment.getMoleculeNeutralMass();
+                final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-3, experiment.getIonization().getCharge());
+                impl.setIonization(ion);
+            }
             if (impl.getMs1Spectra() != null && !impl.getMs1Spectra().isEmpty()) impl.setMergedMs1Spectrum(impl.getMs1Spectra().get(0));
         }
         impl.setMeasurementProfile(profile);
