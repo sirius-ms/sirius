@@ -27,6 +27,16 @@ public final class NormalDistribution extends RealDistribution {
         return MathUtils.cdf(begin, end, mean, var);
     }
 
+    /**
+     * equal to 1-getProbability(mu-x, mu+x)
+     * Computes the probability to observe a value deviating by x from the mean of the normal distribution
+     * @param x
+     * @return
+     */
+    public double getErrorProbability(double x) {
+        return MathUtils.erfc(Math.abs(mean-x)/(Math.sqrt(2*var)));
+    }
+
     @Override
     public double getCumulativeProbability(double x) {
         return MathUtils.cdf(x, mean, var);
