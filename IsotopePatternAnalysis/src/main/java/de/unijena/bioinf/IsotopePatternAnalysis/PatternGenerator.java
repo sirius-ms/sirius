@@ -1,5 +1,6 @@
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
+import com.sun.deploy.perf.PerfRollup;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
@@ -95,7 +96,7 @@ public class PatternGenerator {
 		List<Peak> candidateDistribution = null;
 
 		for(Element e : formula){
-            final Isotopes iso = distribution.getIsotopesFor(e);
+            final Isotopes iso = getIsotope(e);
             List<Peak> modIsoDist = new ArrayList<Peak>(iso.getNumberOfIsotopes());
             final int monoIsotopicMass = iso.getIntegerMass(0);
             int maxMass =iso.getIntegerMass(iso.getNumberOfIsotopes()-1)-monoIsotopicMass;
@@ -155,7 +156,7 @@ public class PatternGenerator {
 		List<Peak> candidateDistribution = null;
 
 		for(Element e : formula){
-            final Isotopes iso = distribution.getIsotopesFor(e);
+            final Isotopes iso = getIsotope(e);
             List<Peak> modIsoDist = new ArrayList<Peak>(iso.getNumberOfIsotopes());
             final int monoIsotopicMass = iso.getIntegerMass(0);
             int maxMass =iso.getIntegerMass(iso.getNumberOfIsotopes()-1)-monoIsotopicMass;
@@ -198,7 +199,16 @@ public class PatternGenerator {
 		return candidateDistribution;
 	}
 
-	/**
+    private Isotopes getIsotope(Element e) {
+        Isotopes iso = distribution.getIsotopesFor(e);
+        if (iso ==null) {
+            iso = PeriodicTable.getInstance().getDistribution().getIsotopesFor(e);
+            if (iso == null) throw new RuntimeException("No known isotopes for " + e);
+        }
+        return iso;
+    }
+
+    /**
 	 *
 	 * @param list1 first list to be fold
 	 * @param list2 second list to be fold

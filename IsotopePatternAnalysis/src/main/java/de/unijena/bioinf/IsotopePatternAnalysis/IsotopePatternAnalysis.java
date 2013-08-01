@@ -210,8 +210,16 @@ public class IsotopePatternAnalysis implements Parameterized {
                 scores[k++] = score;
             } else {
                 double score = 0d;
-                for (IsotopePatternScorer scorer : isotopePatternScorers)
-                    score += scorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(1), experiment);
+                if (f.equals(MolecularFormula.parse("C37H47O15S"))) {
+                    System.out.println("DEBUG!");
+                }
+                for (IsotopePatternScorer scorer : isotopePatternScorers) {
+                    final double s = scorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(1), experiment);
+                    if (Double.isInfinite(s)) {
+                        score = s;
+                        break;
+                    } else score += s;
+                }
                 scores[k++] = score;
             }
         }

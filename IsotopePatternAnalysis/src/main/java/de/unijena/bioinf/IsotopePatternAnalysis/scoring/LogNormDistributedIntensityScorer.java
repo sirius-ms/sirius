@@ -51,7 +51,9 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
             final double intensity = measured.getIntensityAt(i);
             final double thIntensity = theoreticalSpectrum.getIntensityAt(i);
             final double sd = log(intensity)-log(intensity-intensityDeviation*intensityDependency.getValueAt(intensity));//log(1 + intensityDeviation*intensityDependency.getValueAt(intensity));
-            score += log(Erf.erfc(abs(log(thIntensity / intensity)/(root2*sd))));
+            final double newScore = log(Erf.erfc(abs(log(thIntensity / intensity)/(root2*sd))));
+            if (Double.isInfinite(newScore)) return newScore;
+            score += newScore;
         }
         return score;
     }
