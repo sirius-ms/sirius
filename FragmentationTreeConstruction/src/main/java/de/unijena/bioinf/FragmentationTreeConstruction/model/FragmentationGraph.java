@@ -4,8 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.functional.Function;
 import de.unijena.bioinf.functional.iterator.Iterators;
-import org.apache.commons.collections.primitives.ArrayIntList;
-import org.apache.commons.collections.primitives.IntList;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 
@@ -260,7 +259,7 @@ public class FragmentationGraph implements FragmentationPathway {
 
     private boolean trimLeaves() {
         int x = vertices.size();
-        final IntList toDelete = new ArrayIntList(20);
+        final TIntArrayList toDelete = new TIntArrayList(20);
         final ArrayList<GraphFragment> ordered = verticesInPostOrder();
         for (int i=0; i < ordered.size()-1; ++i) {
             final GraphFragment fragment = ordered.get(i);
@@ -274,7 +273,7 @@ public class FragmentationGraph implements FragmentationPathway {
                 }
             }
         }
-        final int[] ids = toDelete.toArray(new int[toDelete.size()]);
+        final int[] ids = toDelete.toArray();
         Arrays.sort(ids);
         int n = vertices.size();
         for (int i = ids.length-1; i >= 0; --i) {
@@ -375,7 +374,7 @@ public class FragmentationGraph implements FragmentationPathway {
     }
 
     public int numberOfColors() {
-        return peaks.size();
+        return filteredPeaks != null ? filteredPeaks.size() : peaks.size();
     }
 
     public Loss getLossOf(int u, int v) {

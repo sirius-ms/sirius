@@ -90,6 +90,7 @@ public class MultipleTreeComputation {
         return new TreeIterator() {
             private final GraphBuildingQueue queue =  numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
             private double lb = lowerbound;
+            private FragmentationGraph lastGraph;
             @Override
             public boolean hasNext() {
                 return queue.hasNext();
@@ -98,9 +99,11 @@ public class MultipleTreeComputation {
             @Override
             public FragmentationTree next() {
                 while (hasNext()) {
-                    FragmentationTree tree = analyzer.computeTree(queue.next(), lb, recalibration);
+                    lastGraph = queue.next();
+                    FragmentationTree tree = analyzer.computeTree(lastGraph, lb, recalibration);
                     if (tree != null) return tree;
                 }
+                lastGraph = null;
                 return null;
             }
 
@@ -117,6 +120,11 @@ public class MultipleTreeComputation {
             @Override
             public double getLowerbound() {
                 return lb;
+            }
+
+            @Override
+            public FragmentationGraph lastGraph() {
+                return lastGraph;
             }
         };
     }

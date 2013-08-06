@@ -10,11 +10,13 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
@@ -111,7 +113,13 @@ public class Main {
             }
         }
         if (options.getTreeSize() != null)
-            FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
+            FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
+
+        if (options.getPeakLimit() != null) {
+            FragmentationPatternAnalysis.getOrCreateByClassName(LimitNumberOfPeaksFilter.class, analyzer.getPostProcessors()).setLimit(options.getPeakLimit().intValue());
+        }
+
+
         analyzer.setRepairInput(true);
         final IsotopePatternAnalysis deIsotope = (profile.isotopePatternAnalysis != null) ? profile.isotopePatternAnalysis : IsotopePatternAnalysis.defaultAnalyzer();
 
@@ -265,6 +273,7 @@ public class Main {
                 if (correctFormula!=null) blacklist.add(correctFormula);
                 int rank = 1;
                 double optScore = (correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
+                final boolean printGraph = options.isWriteGraphInstances();
                 if (options.getTrees()>0) {
                     final List<FragmentationTree> trees;
                     final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
@@ -278,10 +287,17 @@ public class Main {
                         treeIteration:
                         while (treeIter.hasNext()) {
                             System.out.print("Compute next tree: ");
+                            final long now = System.nanoTime();
                             FragmentationTree tree = treeIter.next();
+                            final long runtime = System.nanoTime() - now;
                             if (tree == null) System.out.println("To low score");
                             else {
                                 printResult(tree);
+                                if (printGraph && runtime>6000000000l){
+                                    System.out.println("OUTPUT GRAPH!!!!!");
+                                    new GraphOutput().printToFile(treeIter.lastGraph(),
+                                            new File(options.getTarget(), removeExtname(f) + tree.getRoot().getFormula().toString() + ".txt"));
+                                }
                                 bestTrees.add(tree);
                                 if (bestTrees.size() > options.getTrees()) {
                                     bestTrees.pollFirst();
@@ -371,8 +387,11 @@ public class Main {
         System.out.println(") explaining " + tree.getFragments().size() + " peaks");
     }
 
+    private File prettyNameOptTree(FragmentationTree tree, File fileName, String suffix) {
+        return new File(options.getTarget(), removeExtname(fileName) + suffix);
+    }
     private File prettyNameOptTree(FragmentationTree tree, File fileName) {
-        return new File(options.getTarget(), removeExtname(fileName) + ".dot");
+        return prettyNameOptTree(tree, fileName, ".dot");
     }
     private File prettyNameSuboptTree(FragmentationTree tree, File fileName, int rank, boolean correct) {
         return new File(new File(options.getTarget(), removeExtname(fileName)), rank + (correct ? "_correct_" : "_") + tree.getRoot().getFormula() + ".dot");

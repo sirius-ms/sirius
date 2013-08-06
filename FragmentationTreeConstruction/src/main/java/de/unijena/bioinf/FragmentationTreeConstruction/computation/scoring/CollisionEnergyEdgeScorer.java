@@ -10,7 +10,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.functional.Predicate;
 import de.unijena.bioinf.functional.list.ListOperations;
-import org.apache.commons.collections.primitives.ArrayDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -129,7 +129,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         // energy to an index: 10 -> 0, 20 -> 1, 30 -> 2, 40 -> 3, 60 -> 4.
         final double[] energies;
         {
-            final ArrayDoubleList energyList = new ArrayDoubleList(spectra.size());
+            final TDoubleArrayList energyList = new TDoubleArrayList(spectra.size());
             final double[] points = new double[spectra.size()*2];
             int k=0;
             for (Ms2Spectrum ms : spectra) {

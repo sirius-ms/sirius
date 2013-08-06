@@ -25,7 +25,7 @@ public class GurobiSolver implements TreeBuilder {
         this.env = env;
         this.feasibleSolver = feasibleSolver;
         this.secondsPerInstance = 60*60; // maximal 1 hour per instance
-        this.secondsPerDecomposition = 7*60; // maximal 7 minutes per decomposition
+        this.secondsPerDecomposition = 70*60; // maximal 7 minutes per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
     }
@@ -186,7 +186,7 @@ public class GurobiSolver implements TreeBuilder {
 
         protected Solver(FragmentationGraph graph, ProcessedInput input, double lowerbound, GRBEnv env, TreeBuilder feasibleSolver, int timeLimit) throws GRBException {
             this.graph = graph;
-            this.losses = new ArrayList<Loss>();
+            this.losses = new ArrayList<Loss>(graph.numberOfVertices()*10);
             for (Fragment f : graph.getFragments()) {
                 for (Loss l : f.getIncomingEdges()) losses.add(l);
             }

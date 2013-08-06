@@ -13,6 +13,10 @@ public interface ProfileOptions {
     /*
         ppm
      */
+
+    @Option(shortName = "l", defaultToNull = true, description = "limit number of peaks to the n-th most intensive peaks. This makes computation much faster")
+    public Integer getPeakLimit();
+
     @Option(longName = "ppm.max", defaultToNull = true, description = "maximal ppm of peaks (used for decompositions)")
     public Double getPPMMax();
 
@@ -38,3 +42,4 @@ public interface ProfileOptions {
     public Double getTreeSize();
 
 }
+

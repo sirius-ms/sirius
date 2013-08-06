@@ -34,7 +34,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
-import org.apache.commons.collections.primitives.ArrayDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 import org.apache.commons.math3.analysis.BivariateFunction;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
@@ -199,7 +199,7 @@ public class FTLearn {
 
     private boolean iterativeLearningStep(int step) {
         final ArrayList<XYZ> massDevs=  new ArrayList<XYZ>();
-        final ArrayDoubleList noiseIntensities = new ArrayDoubleList(trainingsData.size()*30);
+        final TDoubleArrayList noiseIntensities = new TDoubleArrayList(trainingsData.size()*30);
         double averageExplainedIntensity = 0d;
         printProgressFirst();
         int numberOfExperiments=0;
@@ -816,8 +816,8 @@ public class FTLearn {
     private void learnPosteriorParameters() {
         println("learn mass deviations from precursor peaks");
         final ArrayList<XYZ> values = new ArrayList<XYZ>(trainingsData.size());
-        final ArrayDoubleList noiseIntensities = new ArrayDoubleList(trainingsData.size()*20);
-        final ArrayDoubleList signalIntensities = new ArrayDoubleList(trainingsData.size()*20);
+        final TDoubleArrayList noiseIntensities = new TDoubleArrayList(trainingsData.size()*20);
+        final TDoubleArrayList signalIntensities = new TDoubleArrayList(trainingsData.size()*20);
         // remove cutoff
         removeScorer(analyzer.getPostProcessors(), NoiseThresholdFilter.class);
         removeScorer(analyzer.getPostProcessors(), LimitNumberOfPeaksFilter.class);
@@ -929,7 +929,7 @@ public class FTLearn {
     private void fitParetoNoiseDistribution(double[] noiseIntensities, double cutoff) {
         final double[] intensities;
         {
-            final ArrayDoubleList ys = new ArrayDoubleList(noiseIntensities.length/10);
+            final TDoubleArrayList ys = new TDoubleArrayList(noiseIntensities.length/10);
             for (double v : noiseIntensities) if (v >= cutoff) ys.add(v);
             intensities = ys.toArray();
         }

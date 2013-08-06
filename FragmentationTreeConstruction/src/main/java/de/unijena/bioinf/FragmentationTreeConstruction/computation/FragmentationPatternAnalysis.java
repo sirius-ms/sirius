@@ -252,6 +252,20 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return null;
     }
 
+    public static <S, T extends S> T getOrCreateByClassName(Class<T> klass, List<S> list) {
+        for (S elem : list) if (elem.getClass().equals(klass)) return (T)elem;
+        try {
+            final T obj = klass.newInstance();
+            list.add(obj);
+            return obj;
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     /**
      *
      */
