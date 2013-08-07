@@ -2,8 +2,7 @@ package de.unijena.bioinf.ChemistryBase.chem.utils;
 
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import org.apache.commons.collections.primitives.ArrayDoubleList;
-import org.apache.commons.collections.primitives.DoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -52,15 +51,15 @@ public class IsotopicDistributionBlueObeliskReader extends DistributionReader {
 
         private final IsotopicDistribution dist;
         private String symbol;
-        private final DoubleList masses, abundances;
+        private final TDoubleArrayList masses, abundances;
         private double mass, abundance;
         private final StringBuilder buffer;
         private int state; // isoList=1, isotope=2, mass=3, abundance=4
 
         private Handler() {
             dist = new IsotopicDistribution(PeriodicTable.getInstance());
-            this.masses = new ArrayDoubleList(7);
-            this.abundances = new ArrayDoubleList(7);
+            this.masses = new TDoubleArrayList(7);
+            this.abundances = new TDoubleArrayList(7);
             this.buffer = new StringBuilder();
         }
 

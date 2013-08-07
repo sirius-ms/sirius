@@ -3,22 +3,21 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import org.apache.commons.collections.primitives.ArrayDoubleList;
-import org.apache.commons.collections.primitives.DoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 
 public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpectrum<P> implements MutableSpectrum<P> {
 
-	protected DoubleList masses;
-	protected DoubleList intensities;
+	protected TDoubleArrayList masses;
+	protected TDoubleArrayList intensities;
 	
 	public <P extends Peak, S extends Spectrum<P>> BasicMutableSpectrum(S immutable) {
-		this.masses = new ArrayDoubleList(Spectrums.copyMasses(immutable));
-		this.intensities = new ArrayDoubleList(Spectrums.copyIntensities(immutable));
+		this.masses = new TDoubleArrayList(Spectrums.copyMasses(immutable));
+		this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(immutable));
 	}
 	
 	public BasicMutableSpectrum() {
-		this.masses = new ArrayDoubleList();
-		this.intensities = new ArrayDoubleList();
+		this.masses = new TDoubleArrayList();
+		this.intensities = new TDoubleArrayList();
 	}
 
 	@Override
@@ -51,8 +50,8 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 	@Override
 	public Peak removePeakAt(int index) {
 		final Peak p = getPeakAt(index);
-		masses.removeElementAt(index);
-		intensities.removeElementAt(index);
+		masses.remove(index, 1);
+		intensities.remove(index, 1);
 		return p;
 	}
 
