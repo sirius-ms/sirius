@@ -12,6 +12,7 @@
         <module>FTAnalysis</module>
         <module>TreeViewer</module>
         <module>GCMSAnalysis</module>
+        <module>FTEval</module>
     </modules>
 
     <!--                                                               -->

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.FragmentationTree;
+package de.unijena.bioinf.fteval;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;

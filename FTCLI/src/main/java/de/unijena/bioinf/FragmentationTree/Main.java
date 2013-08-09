@@ -13,8 +13,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
@@ -26,8 +24,8 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
-import de.unijena.bioinf.babelms.json.JSONDocumentType;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.sirius.cli.ProfileOptions;
 
 import java.io.*;
 import java.util.*;
@@ -89,8 +87,8 @@ public class Main {
             }
         }
 
-        final List<File> files = InterpretOptions.getFiles(options);
-        final MeasurementProfile defaultProfile = InterpretOptions.getMeasurementProfile(options);
+        final List<File> files = getFiles(options);
+        final MeasurementProfile defaultProfile = ProfileOptions.Interpret.getMeasurementProfile(options);
 
         final FragmentationPatternAnalysis analyzer;
 
@@ -191,7 +189,7 @@ public class Main {
                 assert experiment.getIonization()!=null;
 
                 // isotope pattern analysis
-                final List<IsotopePattern> patterns = InterpretOptions.useIsotopes(options) ? deIsotope.getPatternExtractor().extractPattern(experiment.getMergedMs1Spectrum())
+                final List<IsotopePattern> patterns = useIsotopes(options) ? deIsotope.getPatternExtractor().extractPattern(experiment.getMergedMs1Spectrum())
                         : new ArrayList<IsotopePattern>() ;
                 IsotopePattern pattern = null;
                 for (IsotopePattern iso : patterns) {
@@ -448,6 +446,28 @@ public class Main {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static boolean useIsotopes(Options options) {
+        return options.getFilterByIsotope() > 0 || options.getMs1();
+    }
+
+    public static List<File> getFiles(Options options) {
+        final List<File> files = options.getFiles();
+        final ArrayList<File> fs = new ArrayList<File>(files.size());
+        for (File f : files) {
+            if (f.isDirectory()) {
+                fs.addAll(Arrays.asList(f.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.isFile() && !pathname.isDirectory() && pathname.canRead();
+                    }
+                })));
+            } else if (f.canRead()) {
+                fs.add(f);
+            }
+        }
+        return fs;
     }
 
 

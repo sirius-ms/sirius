@@ -2,10 +2,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibratio
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 public interface RecalibrationMethod extends Parameterized {

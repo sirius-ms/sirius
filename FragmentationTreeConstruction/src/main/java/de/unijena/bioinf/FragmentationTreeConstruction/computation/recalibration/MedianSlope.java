@@ -1,7 +1,5 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
-import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;

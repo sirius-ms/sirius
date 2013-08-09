@@ -2,9 +2,9 @@ package de.unijena.bioinf.FragmentationTree;
 
 import com.lexicalscope.jewel.cli.Option;
 import com.lexicalscope.jewel.cli.Unparsed;
-import de.unijena.bioinf.siriuscli.BasicOptions;
+import de.unijena.bioinf.sirius.cli.BasicOptions;
+import de.unijena.bioinf.sirius.cli.ProfileOptions;
 import de.unijena.bioinf.siriuscli.OutputOptions;
-import de.unijena.bioinf.siriuscli.ProfileOptions;
 
 import java.io.File;
 import java.util.List;
@@ -29,10 +29,6 @@ public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
 
     @Unparsed
     public List<File> getFiles();
-
-    @Option(defaultValue = "CHNOPS", description = "Allowed elements. Write e.g. CHNOPFI to allow the elements C, H, N, O, P, F and I. You can " +
-            "also give upperbounds for the element by writing them in square brackets, e.g. CHNOPCl[1]F[5]Br[1]")
-    public String getElements();
 
     @Option(shortName = "t", defaultValue = ".", description = "target directory for the output data")
     public File getTarget();
