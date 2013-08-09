@@ -28,7 +28,7 @@ class DP {
         for (GraphFragment vertex : vertices) {
             for (Loss l : vertex.getIncomingEdges()) {
                 final double abs = Math.abs(l.getWeight());
-                epsilon = Math.min(Math.abs(l.getWeight()/10d), epsilon);
+                if (abs>0) epsilon = Math.min(Math.abs(l.getWeight()/10d), epsilon);
             }
             tables[vertex.getIndex()] = new DPTable(algo, vertex.getColor(), colorsetFor(vertex));
         }

@@ -43,11 +43,11 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         return treenode;
     }
 
-    // remove edge uv and create new edge from u -> v -> w
+    // remove edge uw and create new edge from u -> v -> w
     // TODO: =/
     public void reconnect(Loss uw, Loss uv, Loss vw) {
         final Fragment u = uw.getHead();
-        final Fragment v = uv.getHead();
+        final Fragment v = uv.getTail();
         final Fragment w = uw.getTail();
         assert u instanceof TreeFragment;
         assert v instanceof TreeFragment;
