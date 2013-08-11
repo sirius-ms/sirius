@@ -29,7 +29,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
     private double distanceThreshold;
 
     public HypothesenDrivenRecalibration() {
-        this(new MedianSlope(), 0.0002d);
+        this(new LeastSquare(), 0.0002d);
     }
 
     public HypothesenDrivenRecalibration(RecalibrationStrategy recalibrationMethod, double distanceThreshold) {

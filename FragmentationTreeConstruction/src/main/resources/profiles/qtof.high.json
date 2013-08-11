@@ -300,9 +300,9 @@
     "recalibrationMethod": {
       "$name": "HypothesenDrivenRecalibration",
       "method": {
-        "$name": "MedianSlope",
+        "$name": "LeastSquare",
         "epsilon": "5.0 ppm (0.001 m/z)",
-        "minNumberOfPeaks": 5
+        "minNumberOfPeaks": 10
       },
       "threshold": 0.0001
     }

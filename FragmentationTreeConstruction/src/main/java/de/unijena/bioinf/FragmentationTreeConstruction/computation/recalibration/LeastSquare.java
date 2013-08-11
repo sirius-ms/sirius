@@ -14,16 +14,16 @@ import org.apache.commons.math3.analysis.function.Identity;
 /**
  * Recommended recalibration strategy.
  */
-public class MedianSlope implements RecalibrationStrategy, Parameterized {
+public class LeastSquare implements RecalibrationStrategy, Parameterized {
 
     private Deviation epsilon;
     private int minNumberOfPeaks;
 
-    public MedianSlope() {
-        this(new Deviation(5, 0.001), 5);
+    public LeastSquare() {
+        this(new Deviation(4, 0.001), 10);
     }
 
-    public MedianSlope(Deviation epsilon, int minNumberOfPeaks) {
+    public LeastSquare(Deviation epsilon, int minNumberOfPeaks) {
         this.epsilon = epsilon;
         this.minNumberOfPeaks = minNumberOfPeaks;
     }
@@ -42,7 +42,7 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
             }
         });
         if (values[0].length<minNumberOfPeaks) return new Identity();
-        final UnivariateFunction recalibration = MzRecalibration.getMedianLinearRecalibration(values[0], values[1]);
+        final UnivariateFunction recalibration = MzRecalibration.getLinearRecalibration(values[0], values[1]);
         MzRecalibration.recalibrate(spectrum, recalibration);
         return recalibration;
     }

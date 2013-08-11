@@ -17,7 +17,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.PatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MissingPeakScorer;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import org.apache.commons.collections.primitives.ArrayDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.junit.Before;
 import org.junit.Test;
@@ -558,7 +558,7 @@ public class IsotopeScorerAnalysis {
 
     @Test
     public void intensityTest() throws IOException {
-        ArrayDoubleList randoms = new ArrayDoubleList();
+        TDoubleArrayList randoms = new TDoubleArrayList(1000);
         for (int i = 0; i < 1000; i++) {
 
              randoms.add(randomizeIntensity(0.1, 0.2));
@@ -577,7 +577,7 @@ public class IsotopeScorerAnalysis {
     @Test
     public void pareto(){
         ParetoDistribution dist = new ParetoDistribution(0.6, 0.0001);
-        ArrayDoubleList list = new ArrayDoubleList();
+        TDoubleArrayList list = new TDoubleArrayList(1000);
         for (int i = 0; i < 1000; i++) {
             //list.add(rpareto(0.0001, 0.6));
             list.add(dist.nextRandom());
