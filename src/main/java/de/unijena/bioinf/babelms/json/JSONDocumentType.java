@@ -47,6 +47,23 @@ public class JSONDocumentType extends DataDocument<Object, JSONObject, JSONArray
         }
     }
 
+    public static JSONObject getJSON(String cpName, String fileName) throws IOException {
+        // 1. check for resource with same name
+        final InputStream stream = JSONDocumentType.class.getResourceAsStream(cpName);
+        if (stream != null) {
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            try {
+                final JSONObject obj = JSONDocumentType.read(reader);
+                return obj;
+            } finally {
+                reader.close();
+            }
+        } else {
+            // 2. check for file
+            return JSONDocumentType.readFromFile(new File(fileName));
+        }
+    }
+
     @Override
     public boolean isDictionary(Object document) {
         return document instanceof JSONObject;
