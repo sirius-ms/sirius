@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
 import static java.lang.Math.PI;
-import static java.lang.Math.log;
 import static java.lang.Math.sqrt;
 
 @HasParameters

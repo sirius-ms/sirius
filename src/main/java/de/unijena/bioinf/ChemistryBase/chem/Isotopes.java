@@ -2,10 +2,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-
-import java.util.Iterator;
 
 public class Isotopes implements ImmutableParameterized<Isotopes> {
 

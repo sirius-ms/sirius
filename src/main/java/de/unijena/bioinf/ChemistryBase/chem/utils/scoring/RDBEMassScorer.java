@@ -8,8 +8,6 @@ import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
 
-import static java.lang.Math.sqrt;
-
 /**
  * Prior based on ring double bond equation (RDBE) value of the molecule. In contrast to RDBENormal Scorer this
  * scorer does not penalize low RDBE values. Although molecules with low rdbe values are rare, a low rdbe is not

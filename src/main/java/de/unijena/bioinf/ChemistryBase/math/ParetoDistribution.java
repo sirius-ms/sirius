@@ -3,9 +3,7 @@ package de.unijena.bioinf.ChemistryBase.math;
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
-import static java.lang.Math.min;
-import static java.lang.Math.pow;
-import static java.lang.Math.random;
+import static java.lang.Math.*;
 
 @HasParameters
 public final class ParetoDistribution extends RealDistribution {

@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
-import static java.lang.Math.min;
 
 @HasParameters
 public final class ExponentialDistribution extends RealDistribution {

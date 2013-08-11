@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.data;
 
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 

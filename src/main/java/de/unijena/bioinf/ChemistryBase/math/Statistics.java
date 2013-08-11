@@ -86,6 +86,27 @@ public class Statistics {
     }
 
     /**
+     * permutes the array randomly
+     */
+    public static void shuffle(Object[] array) {
+        shuffle(array, 0, array.length, array.length);
+    }
+
+    /**
+     * permutes a part of the array randomly
+     */
+    public static void shuffle(Object[] array, int number, int offset, int length) {
+        if (number > length) throw new IndexOutOfBoundsException("number cannot be smaller than length");
+        final Random r = new Random();
+        for (int i=offset; i < number; ++i) {
+            final int k = r.nextInt(length-i)+i;
+            final Object mem = array[i];
+            array[i] = array[k];
+            array[k] = mem;
+        }
+    }
+
+    /**
      * copies randomly values from the array into the destination array.
      * This is done WITHOUT repition
      */
