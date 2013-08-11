@@ -14,7 +14,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Lim
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
@@ -291,11 +290,13 @@ public class Main {
                             if (tree == null) System.out.println("To low score");
                             else {
                                 printResult(tree);
+                                /*
                                 if (printGraph && runtime>6000000000l){
                                     System.out.println("OUTPUT GRAPH!!!!!");
                                     new GraphOutput().printToFile(treeIter.lastGraph(),
                                             new File(options.getTarget(), removeExtname(f) + tree.getRoot().getFormula().toString() + ".txt"));
                                 }
+                                */
                                 bestTrees.add(tree);
                                 if (bestTrees.size() > options.getTrees()) {
                                     bestTrees.pollFirst();

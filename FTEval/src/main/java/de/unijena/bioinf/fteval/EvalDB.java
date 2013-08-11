@@ -29,6 +29,15 @@ public class EvalDB {
         });
     }
 
+    File[] dotFiles(String profile) {
+        return new File(root, "ms").listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".ms");
+            }
+        });
+    }
+
     String removeExtName(File name) {
         return name.getName().substring(0, name.getName().lastIndexOf('.'));
     }
@@ -40,4 +49,19 @@ public class EvalDB {
     }
 
 
+    public File sdf(String name) {
+        return new File(new File(root, "sdf"), removeExtName(new File(name)) + ".sdf");
+    }
+
+    public File fingerprint(String name) {
+        return new File(new File(root, "fingerprints"), name);
+    }
+
+    public File[] sdfFiles() {
+        return new File(root, "sdf").listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".sdf") && new File(new File(root, "ms"), removeExtName(new File(name)) + ".ms").exists();
+            }
+        });
+    }
 }

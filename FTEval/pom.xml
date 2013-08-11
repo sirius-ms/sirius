@@ -45,6 +45,18 @@
           <version>2.0</version>
       </dependency>
 
+      <dependency>
+          <groupId>org.openscience.cdk</groupId>
+          <artifactId>cdk-fingerprint</artifactId>
+          <version>1.4.9</version>
+      </dependency>
+      <dependency>
+          <groupId>org.openscience.cdk</groupId>
+          <artifactId>cdk-io</artifactId>
+          <version>1.4.9</version>
+      </dependency>
+
+
   </dependencies>
   
   <!--                                                               -->
@@ -70,6 +82,14 @@
           <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
           <name>Bioinf Jena</name>
       </repository>
+      <repository>
+          <id>ambit-plovdiv</id>
+          <url>http://ambit.uni-plovdiv.bg:8083/nexus/content/repositories/thirdparty</url>
+          <snapshots>
+              <enabled>false</enabled>
+          </snapshots>
+      </repository>
+
   </repositories>
   
   <!-- Defines how to compile this software -->

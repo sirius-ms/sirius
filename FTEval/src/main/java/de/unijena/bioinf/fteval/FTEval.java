@@ -7,16 +7,17 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.sirius.cli.ProfileOptions;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import javax.swing.border.CompoundBorder;
+import java.io.*;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * fteval gets a dataset and creates following directories
@@ -36,6 +37,11 @@ import java.util.Arrays;
  *
  * fteval compute profil.json
  *
+ * fteval tanimoto x1 x2 x3
+ * fteval tanimoto all
+ *
+ * fteval align
+ *
  * fteval ssps
  *
  */
@@ -54,10 +60,73 @@ public class FTEval {
             init(cropped);
         } else if (args[0].equals("compute")) {
             compute(cropped);
+        } else if (args[0].equals("tanimoto")) {
+            tanimoto(cropped);
+        } else if (args[0].equals("align")) {
+            align(cropped);
         } else if (args[0].equals("ssps")) {
             ssps(cropped);
         } else {
             System.err.println("Unknown command '" + args[0] + "'. Allowed are 'init', 'compute' and 'ssps'");
+        }
+    }
+
+    private static void align(String[] args) {
+        final Interact I = new Shell();
+        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, args);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+
+    }
+
+    private static void tanimoto(String[] args) {
+        // TODO: parameters
+        final Interact I = new Shell();
+        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, args);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+        final ChemicalSimilarity chem = new ChemicalSimilarity(evalDB);
+        for (File sdf : evalDB.sdfFiles()) {
+            try {
+                chem.add(sdf.getName());
+            } catch (IOException e) {
+                System.err.println("Can't parse '" + sdf.getName() + "':\n" +e.getMessage());
+            }
+        }
+        int i=-1;
+        for (File dir : chem.getDirectories()) {
+            ++i;
+            if (dir.exists()) {
+                if (I.ask("A directory with name '" + dir.getName() + "' is still existing. Do you want to replace it?")) {
+                    try {
+                        deleteRecDir(dir);
+                    } catch (IOException e) {
+                        System.err.println("Can't delete directory '" + dir + "':\n"+e.getMessage());
+                    }
+                } else continue;
+            }
+            dir.mkdir();
+            float[][][] matrix = chem.computeTanimoto();
+            I.sayln("Compute " + dir.getName());
+            try {
+                final BufferedWriter fileWriter = new BufferedWriter(new FileWriter(new File(dir, "tanimoto.csv")));
+                // write header
+                final List<ChemicalSimilarity.Compound> compounds = chem.getCompounds();
+                for (int j=0; j <compounds.size(); ++j) {
+                    fileWriter.append('"').append(compounds.get(j).name).append('"');
+                    if (j+1 < compounds.size()) fileWriter.append(",");
+                }
+                fileWriter.newLine();
+                // write rows
+                for (int row=0; row < matrix[i].length; ++row) {
+                    fileWriter.append('"').append(compounds.get(row).name).append('"');
+                    for (int col=0; col < compounds.size(); ++col) {
+                        fileWriter.append(',').append(String.valueOf(matrix[i][row][col]));
+                    }
+                    fileWriter.newLine();
+                }
+                fileWriter.close();
+            } catch (IOException e) {
+                System.err.println("Error while writing in '" + new File(dir, "tanimoto.csv") + "':\n" + e.getMessage());
+            }
         }
     }
 
@@ -81,8 +150,10 @@ public class FTEval {
         final File sdfs = new File(target, "sdf");
         final File mss = new File(target, "ms");
         final File profiles = new File(target, "profiles");
+        final File fingerprints = new File(target, "fingerprints");
         sdfs.mkdir();
         mss.mkdir();
+        fingerprints.mkdir();
         profiles.mkdir();
         if (opts.getSdf() != null) {
             final File[] files = opts.getSdf().listFiles(new FilenameFilter() {
@@ -137,15 +208,17 @@ public class FTEval {
         }
         final File target = evalDB.profile(name);
         if (target.exists()) {
-            if (!I.ask(name + " still exists. Do you want to replace it?")) {
+            final int choice = I.choice(name + " still exists.", "Replace all", "Compute missing", "Skip");
+            if (choice==2) {
                 I.sayln("Cancel computation.");
                 return;
-            }
-            try {
-                deleteRecDir(target);
-            } catch (IOException e) {
-                System.err.println(e);
-                return;
+            } else if (choice == 0) {
+                try {
+                    deleteRecDir(target);
+                } catch (IOException e) {
+                    System.err.println(e);
+                    return;
+                }
             }
         }
         target.mkdir();
@@ -160,28 +233,38 @@ public class FTEval {
         }
         I.sayln("Compute trees for all ms files.");
         for (File f : evalDB.msFiles()) {
-            I.sayln("Compute '" + f.getName() + "'");
-            final Ms2Experiment exp;
-            try {
-                exp = new GenericParser<Ms2Experiment>(new JenaMsParser()).parseFile(f);
-            } catch (IOException e) {
-                System.err.println("Can't parse '" + f.getName() + "':\n" + e.getMessage());
+            final String n = f.getName();
+            final File treeFile = new File(dot, n.substring(0, n.lastIndexOf('.'))+".dot");
+            if (treeFile.exists()) {
                 continue;
-            }
-            final FragmentationTree tree = prof.fragmentationPatternAnalysis.computeTrees(prof.fragmentationPatternAnalysis.preprocessing(exp)).withRecalibration().
-                    onlyWith(Arrays.asList(exp.getMolecularFormula())).optimalTree();
-            if (tree == null) {
-                I.sayln("Don't find tree for '" + f.getName() + "'");
             } else {
-                final String n = f.getName();
-                final TreeAnnotation ano = new TreeAnnotation(tree, prof.fragmentationPatternAnalysis);
-                final File treeFile = new File(dot, n.substring(0, n.lastIndexOf('.'))+".dot");
+                I.sayln("Compute '" + f.getName() + "'");
+            }
+            try {
+                final Ms2Experiment exp;
                 try {
-                    new FTDotWriter().writeTreeToFile(treeFile, tree, ano.getAdditionalProperties(),
-                            ano.getVertexAnnotations(), ano.getEdgeAnnotations());
+                    exp = new GenericParser<Ms2Experiment>(new JenaMsParser()).parseFile(f);
                 } catch (IOException e) {
-                    System.err.println("Cannot write tree to file '" + treeFile.getAbsolutePath() + "':\n" + e);
+                    System.err.println("Can't parse '" + f.getName() + "':\n" + e.getMessage());
+                    continue;
                 }
+                final FragmentationTree tree = prof.fragmentationPatternAnalysis.computeTrees(prof.fragmentationPatternAnalysis.preprocessing(exp)).withRecalibration().
+                        onlyWith(Arrays.asList(exp.getMolecularFormula())).optimalTree();
+                if (tree == null) {
+                    I.sayln("Don't find tree for '" + f.getName() + "'");
+                } else {
+                    final TreeAnnotation ano = new TreeAnnotation(tree, prof.fragmentationPatternAnalysis);
+                    try {
+                        new FTDotWriter().writeTreeToFile(treeFile, tree, ano.getAdditionalProperties(),
+                                ano.getVertexAnnotations(), ano.getEdgeAnnotations());
+                    } catch (IOException e) {
+                        System.err.println("Cannot write tree to file '" + treeFile.getAbsolutePath() + "':\n" + e);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println(e);
+                e.printStackTrace();
+                System.err.println("SKIP '" + f.getName() + "'");
             }
         }
     }
@@ -215,10 +298,5 @@ public class FTEval {
     public static void ssps(String[] args) {
 
     }
-
-
-
-
-
 
 }
