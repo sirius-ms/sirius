@@ -2,7 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import org.apache.commons.collections.primitives.DoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -120,7 +120,7 @@ public class Spectrums {
 		return new SimpleSpectrum(mzs, intensities);
 	}
 	
-	public static SimpleSpectrum from(DoubleList mzsL, DoubleList intensitiesL) {
+	public static SimpleSpectrum from(TDoubleArrayList mzsL, TDoubleArrayList intensitiesL) {
 		if (mzsL.size() != intensitiesL.size())
 			throw new IllegalArgumentException("size of masses and intensities differ");
 		return new SimpleSpectrum(mzsL.toArray(), intensitiesL.toArray());

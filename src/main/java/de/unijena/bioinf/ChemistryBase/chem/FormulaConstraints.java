@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import org.apache.commons.collections.primitives.ArrayIntList;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -86,7 +86,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         int i=0;
         TableSelection sel = null;
         final ArrayList<Element> elements = new ArrayList<Element>();
-        final ArrayIntList bounds = new ArrayIntList();
+        final TIntArrayList bounds = new TIntArrayList();
         for (; i < varargs.length; ++i) {
             final Object o = varargs[i];
             if (o instanceof Element) {

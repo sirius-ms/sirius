@@ -149,7 +149,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     private void addDefaultIons() {
         final String[] ions = new String[]{"[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M-2H]-", "[M+K]+", "[M+K-2H]+",
-                "[M-OH]-", "[M+Na]+", "[M+Cl]-", "[M+H-H20]+"};
+                "[M-OH]-", "[M+Na]+", "[M+Cl]-", "[M+H-H2O]+"};
         final MolecularFormula[] formulas = new MolecularFormula[]{
                 MolecularFormula.parse("H"), MolecularFormula.parse("H").negate(), MolecularFormula.parse(""), MolecularFormula.parse(""),
                 MolecularFormula.parse("H2").negate(), MolecularFormula.parse("K"),
@@ -460,7 +460,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     	} catch (RuntimeException e) {
     		return null;
     	}
-    	for (Ionization ion : ionMap.subMap(a.getMass()-1e-3, a.getMass()+1e-3).values()) {
+    	for (Ionization ion : ionMap.subMap(a.getMass()-1e-2, a.getMass()+1e-2).values()) {
             if (ion.equals(a)) return ion;
         }
         return null;
