@@ -1,6 +1,4 @@
 package de.unijena.bioinf.IsotopePatternAnalysis;
-
-import com.sun.deploy.perf.PerfRollup;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
