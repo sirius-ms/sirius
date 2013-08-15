@@ -165,12 +165,12 @@ public class FTLearn {
         }
         initialLearning();
         for (int i=0; i < options.getIterations(); ++i) {
+            if (getTreeSize() >= 0.25d) increaseTreeSize(-0.25d);
             println((i+1) + (i < endings.length ? endings[i] : "th") + " iteration step");
             boolean done;
             do {
                 done = iterativeLearningStep(i);
             } while (!done);
-            if (getTreeSize() >= 0.25d) increaseTreeSize(-0.25d);
         }
         writeProfile(options.getTarget());
 

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fteval;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 
 public class EvalDB {
@@ -38,6 +39,24 @@ public class EvalDB {
         });
     }
 
+    File scoreMatrix(String profile) {
+        return new File(profile(profile),"matrix.csv");
+    }
+
+    String[] profiles() {
+        final File[] files = new File(root, "profiles").listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isDirectory() && new File(pathname, "dot").exists();
+            }
+        });
+        final String[] names = new String[files.length];
+        for (int i=0; i < names.length; ++i) {
+            names[i] = files[i].getName();
+        }
+        return names;
+    }
+
     String removeExtName(File name) {
         return name.getName().substring(0, name.getName().lastIndexOf('.'));
     }
@@ -54,7 +73,18 @@ public class EvalDB {
     }
 
     public File fingerprint(String name) {
-        return new File(new File(root, "fingerprints"), name);
+        return new File(new File(new File(root, "fingerprints"), name), "tanimoto.csv");
+    }
+    public String[] fingerprints() {
+        final File[] dirs = new File(root, "fingerprints").listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isDirectory() && new File(pathname, "tanimoto.csv").exists();
+            }
+        });
+        final String[] names = new String[dirs.length];
+        for (int i=0; i < names.length; ++i) names[i] = dirs[i].getName();
+        return names;
     }
 
     public File[] sdfFiles() {

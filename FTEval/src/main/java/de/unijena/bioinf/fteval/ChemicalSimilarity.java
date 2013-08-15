@@ -92,7 +92,7 @@ public class ChemicalSimilarity {
         for (IFingerprinter finger : fingerprinters) {
             final Class<? extends IFingerprinter> klass = finger.getClass();
             final String name = klass.getSimpleName().replace("Fingerprinter", "");
-            final File dir = db.fingerprint(name);
+            final File dir = db.fingerprint(name).getParentFile();
             names[k++] = dir;
         }
         return names;

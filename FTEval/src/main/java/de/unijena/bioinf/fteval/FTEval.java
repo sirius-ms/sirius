@@ -1,12 +1,16 @@
 package de.unijena.bioinf.fteval;
 
+import au.com.bytecode.opencsv.CSVReader;
 import com.lexicalscope.jewel.cli.CliFactory;
+import de.unijena.bioinf.ChemistryBase.data.DoubleDataMatrix;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.ftblast.Dataset;
+import de.unijena.bioinf.ftblast.ScoreTable;
 import de.unijena.bioinf.sirius.cli.ProfileOptions;
 
 import javax.swing.border.CompoundBorder;
@@ -16,8 +20,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * fteval gets a dataset and creates following directories
@@ -73,9 +76,22 @@ public class FTEval {
 
     private static void align(String[] args) {
         final Interact I = new Shell();
-        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, args);
+        final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
-
+        final ArrayList<String> arguments = new ArrayList<String>();
+        arguments.add("-n");
+        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors()-1));
+        if (!opts.isNoFingerprints()) arguments.add("-f");
+        arguments.add("-z");
+        if (opts.isNoMultijoin()) arguments.add("-j");
+        else arguments.addAll(Arrays.asList("-j", "3"));
+        arguments.add("-x");
+        for (String profil : evalDB.profiles()) {
+            final File dots = new File(evalDB.profile(profil), "dot");
+            arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "-m",
+                    new File(evalDB.profile(profil), "matrix.csv").getAbsolutePath()));
+            de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
+        }
     }
 
     private static void tanimoto(String[] args) {
@@ -295,7 +311,81 @@ public class FTEval {
         });
     }
 
+    private static Iterator<String[]> parseMatrix(File file) throws IOException {
+        final BufferedReader r = new BufferedReader(new FileReader(file));
+        final CSVReader reader = new CSVReader(r);
+        return new Iterator<String[]>() {
+            String[] row = reader.readNext();
+            @Override
+            public boolean hasNext() {
+                return row != null;
+            }
+
+            @Override
+            public String[] next() {
+                if (hasNext()) {
+                    final String[] r = row;
+                    readNext();
+                    return r;
+                } else throw new NoSuchElementException();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+            private void readNext() {
+                try {
+                    row = reader.readNext();
+                    if (row==null) reader.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+    }
+
     public static void ssps(String[] args) {
+        final Interact I = new Shell();
+        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, args);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+        final List<Iterator<String[]>> templates = new ArrayList<Iterator<String[]>>();
+        final List<Iterator<String[]>> others = new ArrayList<Iterator<String[]>>();
+        final List<String> names = new ArrayList<String>();
+        for (String p : evalDB.profiles()) {
+            try {
+                templates.add(parseMatrix(evalDB.scoreMatrix(p)));
+                names.add(p);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+        for (String tanimoto : evalDB.fingerprints()) {
+            try {
+                others.add(parseMatrix(evalDB.fingerprint(tanimoto)));
+                names.add(tanimoto);
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+        final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
+        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
+        for (int k=2; k < 5; ++k) {
+            System.out.println("SSPS (k = " + k + ": ");
+            System.out.println("Opt: " + dataset.sspsOpt(k));
+            System.out.println("Random: " + dataset.sspsAverageRandom(k));
+            for (int i=0; i < matrices.getLayerHeader().length; ++i) {
+                if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
+                else {
+                    final ScoreTable tab = new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
+                    System.out.println(tab.getName() + ": " + dataset.ssps(tab, k));
+                }
+            }
+        }
+
+
+
 
     }
 
