@@ -196,6 +196,16 @@ public class DoubleDataMatrix {
         return buf;
     }
 
+    public double[][] getLayer(int layer) {
+        return values[layer];
+    }
+
+    public double[][] getLayer(String name) {
+        for (int l=0; l < layerHeader.length; ++l)
+            if (layerHeader[l].equals(name)) return getLayer(l);
+        return null;
+    }
+
     public double[][][] getValues() {
         return values;
     }
