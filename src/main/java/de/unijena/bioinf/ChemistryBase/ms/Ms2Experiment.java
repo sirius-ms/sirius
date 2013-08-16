@@ -20,16 +20,6 @@ public interface Ms2Experiment extends MsExperiment{
      */
     public double getIonMass();
 
-    /**
-     * Preprocessing means:
-     * - pick all isotope patterns from MS1 and delete peaks which do not belong to the isotope pattern of the ion
-     * - if there are multiple-charge ions, the peaks have to be neutralized. Thats easier than considering this
-     *   special and very unusual case in further steps of the analysis.
-     * @return
-     */
-    public boolean isPreprocessed();
-
-
     /***
      * The further methods provide information which is OPTIONAL. The algorithm should be able to handle cases in
      * which this methods return NULL.
