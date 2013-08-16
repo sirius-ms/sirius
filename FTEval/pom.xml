@@ -60,6 +60,11 @@
           <artifactId>cdk-io</artifactId>
           <version>1.4.9</version>
       </dependency>
+      <dependency>
+          <groupId>org.openscience.cdk</groupId>
+          <artifactId>cdk-inchi</artifactId>
+          <version>1.4.9</version>
+      </dependency>
 
 
   </dependencies>

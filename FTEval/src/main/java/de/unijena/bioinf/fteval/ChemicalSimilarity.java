@@ -1,9 +1,12 @@
 package de.unijena.bioinf.fteval;
 
 import de.unijena.bioinf.ChemistryBase.data.DoubleDataMatrix;
+import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.Molecule;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
+import org.openscience.cdk.inchi.InChIGenerator;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
 import org.openscience.cdk.similarity.Tanimoto;
@@ -18,11 +21,13 @@ public class ChemicalSimilarity {
 
     public static class Compound {
         private BitSet[] fingerprints;
+        String inchi;
         String name;
 
-        private Compound(String name, BitSet[] fingerprints) {
+        private Compound(String name, BitSet[] fingerprints, String inchi) {
             this.name = name;
             this.fingerprints = fingerprints;
+            this.inchi = inchi;
         }
     }
 
@@ -41,6 +46,12 @@ public class ChemicalSimilarity {
     }
 
     public void add(String name) throws IOException {
+        InChIGeneratorFactory factory = null;
+        try {
+            factory = InChIGeneratorFactory.getInstance();
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
         final File sdf = db.sdf(name);
         final BufferedReader reader = new BufferedReader(new FileReader(sdf));
         final ISimpleChemObjectReader chemReader = new ReaderFactory().createReader(reader);
@@ -51,7 +62,11 @@ public class ChemicalSimilarity {
             for (IFingerprinter finger : fingerprinters) {
                 bitsets[k++] = finger.getFingerprint(mol);
             }
-            compounds.add(new Compound(db.removeExtName(new File(name)), bitsets));
+            final InChIGenerator gen = factory.getInChIGenerator(mol);
+            if (gen.getReturnStatus() != INCHI_RET.OKAY) {
+                System.err.println(gen.getMessage());
+            }
+            compounds.add(new Compound(db.removeExtName(new File(name)), bitsets, gen.getInchi()));
         } catch (CDKException e) {
             throw new RuntimeException(e);
         }

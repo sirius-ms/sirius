@@ -107,6 +107,17 @@ public class FTEval {
                 System.err.println("Can't parse '" + sdf.getName() + "':\n" +e.getMessage());
             }
         }
+        try {
+            final BufferedWriter inchiWriter = new BufferedWriter(new FileWriter("fingerprints/inchi.txt"));
+            for (ChemicalSimilarity.Compound c : chem.getCompounds()) {
+                inchiWriter.write(c.name + ":" + c.inchi);
+                inchiWriter.newLine();
+            }
+            inchiWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         int i=-1;
         for (File dir : chem.getDirectories()) {
             ++i;
