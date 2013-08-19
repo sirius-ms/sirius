@@ -10,6 +10,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.*;
 
@@ -241,27 +242,33 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
 
     public static class LossCombinator implements Recombinator {
 
-        private List<MolecularFormula> losses;
+        private TObjectDoubleHashMap<MolecularFormula> losses;
         private double penalty;
 
         public LossCombinator() {
-            this.losses = new ArrayList<MolecularFormula>();
+            this.losses = new TObjectDoubleHashMap<MolecularFormula>();
             this.penalty = 0d;
         }
 
-        public LossCombinator(double penalty, List<MolecularFormula> losses) {
-            this.penalty = penalty;
-            this.losses = new ArrayList<MolecularFormula>(losses);
+        public LossCombinator(double  penalty, Map<MolecularFormula, Double> losses) {
+            this.losses = new TObjectDoubleHashMap<MolecularFormula>();
+            this.penalty = 0d;
+            for (Map.Entry<MolecularFormula, Double> e : losses.entrySet()) this.losses.put(e.getKey(), e.getValue());
+        }
+
+        LossCombinator(double  penalty, TObjectDoubleHashMap<MolecularFormula> losses) {
+            this.losses = losses;
+            this.penalty = 0d;
         }
 
         public LossCombinator(double penalty, CommonLossEdgeScorer lossScorer, LossSizeScorer lossSizeScorer) {
             this.penalty = penalty;
-            losses = new ArrayList<MolecularFormula>();
+            losses = new TObjectDoubleHashMap<MolecularFormula>();
             final Map<MolecularFormula, Double> commonLosses = lossScorer.getCommonLosses();
             for (MolecularFormula f : commonLosses.keySet()) {
-                final double adjustedScore = commonLosses.get(f) + lossSizeScorer.score(f);
-                if (commonLosses.get(f) > 1) {
-                    losses.add(f);
+                final double adjustedScore = commonLosses.get(f) + lossSizeScorer.score(f) + penalty;
+                if (adjustedScore > 0) {
+                    losses.put(f, adjustedScore);
                 }
             }
         }
@@ -269,10 +276,10 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         @Override
         public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant) {
             final HashMap<MolecularFormula, Double> recombination = new HashMap<MolecularFormula, Double>();
-            for (MolecularFormula loss : losses) {
+            for (MolecularFormula loss : losses.keySet()) {
                 for (MolecularFormula f : source.keySet()) {
                     final MolecularFormula recomb = loss.add(f);
-                    final double  score = source.get(f)+penalty;
+                    final double  score = losses.get(loss);
                     if (!source.containsKey(recomb) || source.get(recomb)<score) recombination.put(recomb, score);
                 }
             }
@@ -282,18 +289,21 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         @Override
         public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
             double penalty = document.getDoubleFromDictionary(dictionary, "penalty");
-            List<MolecularFormula> losses = new ArrayList<MolecularFormula>();
-            final Iterator<G> iter = document.iteratorOfList(document.getListFromDictionary(dictionary, "losses"));
-            while (iter.hasNext()) losses.add(MolecularFormula.parse(document.getString(iter.next())));
+            TObjectDoubleHashMap<MolecularFormula> losses = new TObjectDoubleHashMap<MolecularFormula>();
+            final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "losses"));
+            while (iter.hasNext()) {
+                final Map.Entry<String, G> entry = iter.next();
+                losses.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
+            }
             return new LossCombinator(penalty, losses);
         }
 
         @Override
         public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
             document.addToDictionary(dictionary, "penalty", penalty);
-            final L ls = document.newList();
-            for (MolecularFormula l : losses) document.addToList(ls, l.formatByHill());
-            document.addListToDictionary(dictionary, "losses", ls);
+            final D ls = document.newDictionary();
+            for (MolecularFormula l : losses.keySet()) document.addToDictionary(ls, l.formatByHill(), losses.get(l));
+            document.addDictionaryToDictionary(dictionary, "losses", ls);
         }
     }
 

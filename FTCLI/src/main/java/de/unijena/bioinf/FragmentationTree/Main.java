@@ -13,6 +13,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonFragmentsScore;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
@@ -109,6 +112,13 @@ public class Main {
                 return;
             }
         }
+
+        /*
+        FragmentationPatternAnalysis.getOrCreateByClassName(CommonFragmentsScore.class, analyzer.getDecompositionScorers()).setRecombinator(
+                new CommonFragmentsScore.LossCombinator(-1, FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, analyzer.getLossScorers()),
+                        FragmentationPatternAnalysis.getOrCreateByClassName(LossSizeScorer.class, analyzer.getPeakPairScorers())));
+
+        */
         if (options.getTreeSize() != null)
             FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
 

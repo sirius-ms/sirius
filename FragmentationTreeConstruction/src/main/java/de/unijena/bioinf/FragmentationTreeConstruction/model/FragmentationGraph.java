@@ -263,14 +263,16 @@ public class FragmentationGraph implements FragmentationPathway {
         final ArrayList<GraphFragment> ordered = verticesInPostOrder();
         for (int i=0; i < ordered.size()-1; ++i) {
             final GraphFragment fragment = ordered.get(i);
-            if (fragment.shouldBeTrimmed()) {
-                toDelete.add(fragment.getIndex());
+            if (fragment.isLeaf()) {
                 final Iterator<Loss> out = fragment.incommingEdges.iterator();
                 while (out.hasNext()) {
                     final Loss l = out.next();
-                    ((GraphFragment)l.getHead()).removeOutgoingEdge(l);
-                    out.remove();
+                    if (l.getWeight() < 0) {
+                        ((GraphFragment)l.getHead()).removeOutgoingEdge(l);
+                        out.remove();
+                    }
                 }
+                if (fragment.incommingEdges.isEmpty()) toDelete.add(fragment.getIndex());
             }
         }
         final int[] ids = toDelete.toArray();
