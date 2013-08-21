@@ -78,20 +78,25 @@ public class FTEval {
         final Interact I = new Shell();
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
-        final ArrayList<String> arguments = new ArrayList<String>();
-        arguments.add("-n");
-        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors()-1));
-        if (!opts.isNoFingerprints()) arguments.add("-f");
-        arguments.add("-z");
-        if (opts.isNoMultijoin()) arguments.add("-j");
-        else arguments.addAll(Arrays.asList("-j", "3"));
-        arguments.add("-x");
         for (String profil : evalDB.profiles()) {
             final File dots = new File(evalDB.profile(profil), "dot");
+            final ArrayList<String> arguments = getAlignArguments(opts);
             arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "-m",
                     new File(evalDB.profile(profil), "matrix.csv").getAbsolutePath()));
             de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
         }
+    }
+
+    private static ArrayList<String> getAlignArguments(AlignOpts opts) {
+        final ArrayList<String> arguments = new ArrayList<String>();
+        arguments.add("-n");
+        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors()-1));
+        //if (!opts.isNoFingerprints()) arguments.add("-f");
+        arguments.add("-z");
+        if (opts.isNoMultijoin()) arguments.add("-j");
+        else arguments.addAll(Arrays.asList("-j", "3"));
+        arguments.add("-x");
+        return arguments;
     }
 
     private static void tanimoto(String[] args) {
@@ -178,6 +183,8 @@ public class FTEval {
         final File mss = new File(target, "ms");
         final File profiles = new File(target, "profiles");
         final File fingerprints = new File(target, "fingerprints");
+        final File other = new File(target, "scores");
+        other.mkdir();
         sdfs.mkdir();
         mss.mkdir();
         fingerprints.mkdir();
@@ -359,7 +366,7 @@ public class FTEval {
 
     public static void ssps(String[] args) {
         final Interact I = new Shell();
-        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, args);
+        final SSPSBasicOptions opts = CliFactory.parseArguments(SSPSBasicOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final List<Iterator<String[]>> templates = new ArrayList<Iterator<String[]>>();
         final List<Iterator<String[]>> others = new ArrayList<Iterator<String[]>>();
@@ -380,24 +387,51 @@ public class FTEval {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
         }
-        final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
-        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
-        for (int k=2; k < 5; ++k) {
-            System.out.println("SSPS (k = " + k + ": ");
-            System.out.println("Opt: " + dataset.sspsOpt(k));
-            System.out.println("Random: " + dataset.sspsAverageRandom(k));
-            for (int i=0; i < matrices.getLayerHeader().length; ++i) {
-                if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
-                else {
-                    final ScoreTable tab = new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
-                    System.out.println(tab.getName() + ": " + dataset.ssps(tab, k));
-                }
+        for (File score : evalDB.otherScores()) {
+            try {
+                others.add(parseMatrix(score));
+                names.add(score.getName().substring(0, score.getName().indexOf('.')));
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
         }
+        final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
+        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
+        if (!opts.isNoFingerprint()) dataset.computeFingerprints();
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(
+                    new FileWriter(new File(evalDB.root, "ssps.csv")));
+            writer.append("k,opt,rand");
+            for (int i=0; i < matrices.getLayerHeader().length; ++i) {
+                if (!matrices.getLayerHeader()[i].equals("Pubchem")) {
+                    writer.append(",");
+                    writer.append(matrices.getLayerHeader()[i]);
+                }
+            }
+            writer.newLine();
+            for (int k=1; k <= 300; ++k) {
+                final float K = k/10f;
+                writer.append(String.valueOf(K));
+                writer.append(",");
+                writer.append(String.valueOf(dataset.sspsOpt(K)));
+                writer.append(",");
+                writer.append(String.valueOf(dataset.sspsAverageRandom()));
+                for (int i=0; i < matrices.getLayerHeader().length; ++i) {
+                    if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
+                    else {
+                        writer.append(",");
+                        final ScoreTable tab = new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
+                        writer.append(String.valueOf(dataset.ssps(tab, K)));
+                    }
+                }
+                writer.newLine();
+            }
+            writer.close();
 
-
-
-
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
     }
 
 }
