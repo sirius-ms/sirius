@@ -2,12 +2,10 @@ package de.unijena.bioinf.IsotopePatternAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
@@ -23,6 +21,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionInte
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -134,6 +133,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public static IsotopePatternAnalysis defaultAnalyzer() {
+        final PeriodicTable T = PeriodicTable.getInstance();
         final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
         double offset = 1.323d;
         analyzer.intensityOffset = 0.178/100d;
@@ -143,6 +143,16 @@ public class IsotopePatternAnalysis implements Parameterized {
         analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{1.0, 0.3, 0.15, 0.03}, new double[]{
                 0.7, 0.6, 0.8, 0.5
         })));
+        final FormulaConstraints constr =  new FormulaConstraints(new ChemicalAlphabet(T.getAllByName("C", "H",
+                "N", "O", "P", "S", "Cl", "Na")), null);
+        constr.setUpperbound(T.getByName("Cl"), 1);
+        constr.setUpperbound(T.getByName("Na"), 1);
+        constr.setUpperbound(T.getByName("P"), 3);
+        constr.setUpperbound(T.getByName("S"), 3);
+        constr.setUpperbound(T.getByName("N"), 10);
+        constr.setUpperbound(T.getByName("O"), 25);
+
+        analyzer.defaultProfile = new MutableMeasurementProfile(new Deviation(10), new Deviation(5), new Deviation(5), new Deviation(2.5), constr, 0.008d, 0.02d);
         return analyzer;
     }
 
@@ -225,6 +235,14 @@ public class IsotopePatternAnalysis implements Parameterized {
             }
         }
         return scores;
+    }
+
+    public MeasurementProfile getDefaultProfile() {
+        return defaultProfile;
+    }
+
+    public void setDefaultProfile(MeasurementProfile defaultProfile) {
+        this.defaultProfile = defaultProfile;
     }
 
     public List<IsotopePatternScorer> getIsotopePatternScorers() {
