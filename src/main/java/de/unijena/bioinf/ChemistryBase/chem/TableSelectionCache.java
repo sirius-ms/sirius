@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class TableSelectionCache {
 	
-	final static int DEFAULT_MAX_COMPOMERE_SIZE = 10;
+	final static int DEFAULT_MAX_COMPOMERE_SIZE = 12;
 	final static String DEFAULT_ALPHABET = "CHNOPS";
 	final static String START_SET = "HCNO";
     final static String[] START_SET_ARRAY = new String[]{"H", "C", "N", "O"};

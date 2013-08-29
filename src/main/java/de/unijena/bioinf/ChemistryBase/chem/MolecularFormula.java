@@ -439,7 +439,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
 
     @Override
     public int hashCode() {
-        int hash = (int)getMass();
+        int hash = (int)getMass()*1500450271;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         for (int i=0; i < amounts.length; ++i) {
