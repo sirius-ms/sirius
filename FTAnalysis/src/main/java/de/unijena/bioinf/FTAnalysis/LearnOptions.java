@@ -11,6 +11,9 @@ public interface LearnOptions {
     @Unparsed
     public List<File> getTrainingdata();
 
+    @Option(shortName = "e", defaultValue = "80", description = "expected percentage of explained peaks")
+    public double getExplain();
+
     @Option(shortName = "p", defaultToNull = true, description = "initial profile to start learning")
     public String getProfile();
 

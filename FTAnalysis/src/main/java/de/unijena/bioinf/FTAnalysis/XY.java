@@ -1,8 +1,8 @@
 package de.unijena.bioinf.FTAnalysis;
 
 final class XY implements Comparable<XY> {
-    final double x;
-    final double y;
+    double x;
+    double y;
     XY(double x, double y) {
         this.x = x;
         this.y = y;

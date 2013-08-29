@@ -34,6 +34,7 @@ public class TestMS2Analysis {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setAllowedMassDeviation(new Deviation(20, 2e-3));
             profile.setStandardMs2MassDeviation(new Deviation(20, 2e-3));
+            profile.setMedianNoiseIntensity(0.01);
             profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
             experiment.setMeasurementProfile(profile);
             final StringWriter writer = new StringWriter();

@@ -202,7 +202,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // fragment scorers
         final List<DecompositionScorer<?>> fragmentScorers = new ArrayList<DecompositionScorer<?>>();
         fragmentScorers.add(new MassDeviationVertexScorer());
-        //fragmentScorers.add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
+        fragmentScorers.add(new CommonFragmentsScore(new HashMap<MolecularFormula, Double>()));
 
         // setup
         analysis.setLossScorers(lossScorers);
@@ -212,7 +212,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
         analysis.setTreeBuilder(new GurobiSolver());

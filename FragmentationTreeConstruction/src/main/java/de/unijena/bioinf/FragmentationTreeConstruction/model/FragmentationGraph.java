@@ -147,42 +147,14 @@ public class FragmentationGraph implements FragmentationPathway {
     }
 
     private void trim() {
-        /*final long t1 = System.nanoTime();
-        final int numberOfVertices = vertices.size();
 
-        */
-        final int numberOfEdges = Iterators.count(lossIterator());
         trimLeaves();
         trimEdges();
+
         int k=0;
         for (GraphFragment f : vertices) {
             f.index = k++;
         }
-        final int numberOfEdges2 = Iterators.count(lossIterator());
-        //System.err.println(numberOfEdges2 + " / " + numberOfEdges + " edges trimmed");
-        /*
-        {
-            // TODO: Hotfix
-            final Iterator<Loss> l = lossIterator();
-            while (l.hasNext()) {
-                Loss x = l.next();
-                if (Double.isInfinite(x.getWeight())) x.setWeight(-10000000d);
-
-            }
-        }
-        */
-        //trimEdges();
-        //assert !trimLeaves();
-        //trimEdges();
-        //assert !trimEdges();
-        /*
-        final int numberOfVertices2 = vertices.size();
-        final int numberOfEdges2 = Iterators.count(lossIterator());
-        final long t2 = System.nanoTime();
-        System.err.println(numberOfVertices2 + " / " + numberOfVertices + " vertices trimmed");
-        System.err.println(numberOfEdges2 + " / " + numberOfEdges + " edges trimmed");
-        System.err.println("trim time: " + (t2-t1)/1000000);
-        */
     }
 
     private void trimEdges() {

@@ -17,7 +17,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.Commo
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -285,7 +287,7 @@ public class Main {
                     final List<FragmentationTree> trees;
                     final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
                             .without(blacklist);
-                    if (!verbose) {
+                    if (!verbose && !printGraph) {
                         trees = m.list();
                     } else {
                         final TreeSet<FragmentationTree> bestTrees = new TreeSet<FragmentationTree>();
@@ -293,20 +295,32 @@ public class Main {
                         double lb = lowerbound;
                         treeIteration:
                         while (treeIter.hasNext()) {
-                            System.out.print("Compute next tree: ");
-                            final long now = System.nanoTime();
-                            FragmentationTree tree = treeIter.next();
-                            final long runtime = System.nanoTime() - now;
-                            if (tree == null) System.out.println("To low score");
+                            if (verbose) System.out.print("Compute next tree: ");
+
+                            FragmentationTree tree;
+
+                            if (printGraph) {
+                                treeIter.setLowerbound(0d);
+                                do {
+                                    final long now = System.nanoTime();
+                                    tree = treeIter.next();
+                                    final long runtime = System.nanoTime() - now;
+                                    if (runtime>8000000000l){
+                                        final int numberOfSeconds = (int)Math.round(runtime/1000000000d);
+                                        System.out.println("OUTPUT GRAPH!!!!!");
+                                        new GraphOutput().printToFile(treeIter.lastGraph(), tree.getScore()-tree.getRootScore(),
+                                                new File(options.getTarget(), removeExtname(f) + tree.getRoot().getFormula().toString() + "_" + numberOfSeconds + ".txt"));
+                                    }
+                                    if (tree.getScore() < lb) tree = null;
+                                } while (tree == null);
+                                treeIter.setLowerbound(lb);
+                            } else {
+                                tree = treeIter.next();
+                            }
+
+                            if (tree == null && verbose) System.out.println("To low score");
                             else {
                                 printResult(tree);
-                                /*
-                                if (printGraph && runtime>6000000000l){
-                                    System.out.println("OUTPUT GRAPH!!!!!");
-                                    new GraphOutput().printToFile(treeIter.lastGraph(),
-                                            new File(options.getTarget(), removeExtname(f) + tree.getRoot().getFormula().toString() + ".txt"));
-                                }
-                                */
                                 bestTrees.add(tree);
                                 if (bestTrees.size() > options.getTrees()) {
                                     bestTrees.pollFirst();
@@ -315,7 +329,7 @@ public class Main {
                                         break treeIteration;
                                     }
                                     treeIter.setLowerbound(lb);
-                                    System.out.println("Increase lowerbound to " + lb);
+                                    if (verbose) System.out.println("Increase lowerbound to " + lb);
                                 }
                             }
                         }

@@ -10,6 +10,11 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import gnu.trove.decorator.TObjectDoubleMapDecorator;
+import gnu.trove.function.TDoubleFunction;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TObjectDoubleProcedure;
+import gnu.trove.procedure.TObjectProcedure;
 
 import java.util.*;
 
@@ -17,12 +22,9 @@ import java.util.*;
 @Called("Common Fragments:")
 public class CommonFragmentsScore implements DecompositionScorer<Object>, MolecularFormulaScorer {
 
-    private final HashMap<MolecularFormula, Double> commonFragments;
-    private HashMap<MolecularFormula, Double> recombinatedFragments;
-    private HashMap<MolecularFormula, Double> commonFragmentsH;
-    private HashMap<MolecularFormula, Double> commonFragmentsWithoutH;
+    private final TObjectDoubleHashMap<MolecularFormula> commonFragments;
+    private TObjectDoubleHashMap<MolecularFormula> recombinatedFragments;
     private Recombinator recombinator;
-    private boolean hTolerance;
     private double normalization;
 
     public static final double COMMON_FRAGMENTS_NORMALIZATION = 0.3105875550595019d;
@@ -75,7 +77,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     public Map<MolecularFormula, Double> getCommonFragments() {
-        return Collections.unmodifiableMap(commonFragments);
+        return Collections.unmodifiableMap(new TObjectDoubleMapDecorator<MolecularFormula>(commonFragments));
     }
 
     public void addCommonFragment(MolecularFormula formula, double score) {
@@ -84,8 +86,6 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     private void makeDirty() {
-        commonFragmentsH=null;
-        commonFragmentsWithoutH=null;
         recombinatedFragments = commonFragments;
     }
 
@@ -99,28 +99,37 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         return merged;
     }
 
-    public static CommonFragmentsScore getLearnedCommonFragmentScorer(double scale) {
+    public static CommonFragmentsScore getLearnedCommonFragmentScorer(final double scale) {
         final CommonFragmentsScore scorer = map(COMMON_FRAGMENTS);
         if (scale == 1) return scorer;
-        for (Map.Entry<MolecularFormula, Double> entry : scorer.commonFragments.entrySet()) {
-            entry.setValue(entry.getValue()*scale);
-        }
+        scorer.commonFragments.transformValues(new TDoubleFunction() {
+            @Override
+            public double execute(double value) {
+                return value * scale;
+            }
+        });
         scorer.setNormalization(COMMON_FRAGMENTS_NORMALIZATION*scale);
         return scorer;
     }
 
 
     public CommonFragmentsScore(HashMap<MolecularFormula, Double> commonFragments) {
-        this(commonFragments, COMMON_FRAGMENTS_NORMALIZATION, false);
+        this(commonFragments, COMMON_FRAGMENTS_NORMALIZATION);
     }
 
-    public CommonFragmentsScore(HashMap<MolecularFormula, Double> commonFragments, double normalization, boolean hTolerance) {
-        this.commonFragments = commonFragments;
-        if (hTolerance) useHTolerance();
+    public CommonFragmentsScore(Map<MolecularFormula, Double> commonFragments, double normalization) {
+        this.commonFragments = convertMap(commonFragments);
         this.normalization = normalization;
-        recombinatedFragments = commonFragments;
+        recombinatedFragments = this.commonFragments;
         recombinator = null;
     }
+
+    private static TObjectDoubleHashMap<MolecularFormula> convertMap(Map<MolecularFormula, Double> map) {
+        final TObjectDoubleHashMap newMap = new TObjectDoubleHashMap<MolecularFormula>(map.size());
+        for (Map.Entry<MolecularFormula, Double> entry : map.entrySet()) newMap.put(entry.getKey(), entry.getValue());
+        return newMap;
+    }
+
 
     public Recombinator getRecombinator() {
         return recombinator;
@@ -134,7 +143,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     public CommonFragmentsScore() {
-        this(new HashMap<MolecularFormula, Double>(), 0d, false);
+        this(new HashMap<MolecularFormula, Double>(), 0d);
     }
 
     public double getNormalization() {
@@ -145,48 +154,13 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         this.normalization = normalization;
     }
 
-    public CommonFragmentsScore useHTolerance() {
-        hTolerance = true;
-        return this;
-    }
-
-    protected HashMap<MolecularFormula, Double> getCommonFragmentsWithoutH() {
-        if (commonFragmentsWithoutH == null) {
-            commonFragmentsWithoutH = new HashMap<MolecularFormula, Double>((int)(commonFragments.size()*1.4d));
-            final MolecularFormula h = MolecularFormula.parse("H");
-            for (Map.Entry<MolecularFormula, Double> entry : commonFragments.entrySet()) {
-                commonFragmentsWithoutH.put(entry.getKey().subtract(h), entry.getValue());
-            }
-        }
-        return commonFragmentsWithoutH;
-    }
-
-    protected HashMap<MolecularFormula, Double> getCommonFragmentsH() {
-        if (commonFragmentsH == null) {
-            commonFragmentsH = new HashMap<MolecularFormula, Double>((int)(commonFragments.size()*1.4d));
-            final MolecularFormula h = MolecularFormula.parse("H");
-            for (Map.Entry<MolecularFormula, Double> entry : commonFragments.entrySet()) {
-                commonFragmentsH.put(entry.getKey().add(h), entry.getValue());
-            }
-        }
-        return commonFragmentsH;
-    }
-
     public Object prepare(ProcessedInput input) {
         return null;
     }
 
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        final Ionization ion = input.getExperimentInformation().getIonization();
-        final Double intrinsic = getRecombinatedFragments().get(formula);
-        final double intr = intrinsic != null ? intrinsic.doubleValue() : 0;
-        if (hTolerance && ion instanceof Charge) {
-            final Double score = (ion.getCharge() > 0 ? getCommonFragmentsH().get(formula) : getCommonFragmentsWithoutH().get(formula));
-            return (score == null ? intr : Math.max(intr, score.doubleValue())) - normalization;
-        } else {
-            return intr - normalization;
-        }
+        return getRecombinatedFragments().get(formula);
     }
 
     @Override
@@ -204,9 +178,6 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             final Map.Entry<String,G> entry = iter.next();
             commonFragments.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
         }
-        commonFragmentsH = null;
-        commonFragmentsWithoutH = null;
-        if (document.getBooleanFromDictionary(dictionary, "hTolerance")) useHTolerance();
         normalization = document.getDoubleFromDictionary(dictionary, "normalization");
         if (document.hasKeyInDictionary(dictionary, "recombinator")) {
             this.recombinator = (Recombinator) helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
@@ -214,18 +185,21 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     @Override
-    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+    public <G, D, L> void exportParameters(final ParameterHelper helper, final DataDocument<G, D, L> document, final D dictionary) {
         final D common = document.newDictionary();
-        for (Map.Entry<MolecularFormula, Double> entry : commonFragments.entrySet()) {
-            document.addToDictionary(common, entry.getKey().toString(), entry.getValue());
-        }
+        commonFragments.forEachEntry(new TObjectDoubleProcedure<MolecularFormula>() {
+            @Override
+            public boolean execute(MolecularFormula a, double b) {
+                document.addToDictionary(common, a.toString(), b);
+                return false;
+            }
+        });
         document.addDictionaryToDictionary(dictionary, "fragments", common);
-        document.addToDictionary(dictionary, "hTolerance", hTolerance);
         document.addToDictionary(dictionary, "normalization", normalization);
         if (recombinator != null) document.addToDictionary(dictionary, "recombinator", helper.wrap(document, recombinator));
     }
 
-    protected HashMap<MolecularFormula, Double> getRecombinatedFragments() {
+    protected TObjectDoubleHashMap<MolecularFormula> getRecombinatedFragments() {
         if (recombinatedFragments == commonFragments && recombinator != null) {
             recombinatedFragments = recombinator.recombinate(commonFragments, normalization);
         }
@@ -236,7 +210,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
      * A recombinator extends the list of common losses by combination of losses
      */
     public interface Recombinator extends ImmutableParameterized<Recombinator> {
-        public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant);
+        public TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula>  source, double normalizationConstant);
     }
 
     public static class LossCombinator implements Recombinator {
@@ -267,8 +241,8 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
         }
 
         @Override
-        public HashMap<MolecularFormula, Double> recombinate(Map<MolecularFormula, Double> source, double normalizationConstant) {
-            final HashMap<MolecularFormula, Double> recombination = new HashMap<MolecularFormula, Double>();
+        public TObjectDoubleHashMap<MolecularFormula>  recombinate(TObjectDoubleHashMap<MolecularFormula>  source, double normalizationConstant) {
+            final TObjectDoubleHashMap<MolecularFormula>  recombination = new TObjectDoubleHashMap<MolecularFormula> (source.size()*losses.size());
             for (MolecularFormula loss : losses) {
                 for (MolecularFormula f : source.keySet()) {
                     final MolecularFormula recomb = loss.add(f);
