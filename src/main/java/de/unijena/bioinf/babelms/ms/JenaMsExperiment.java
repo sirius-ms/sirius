@@ -58,11 +58,6 @@ public String getCompoundName() {
         return ionMass;
     }
 
-    @Override
-    public boolean isPreprocessed() {
-        return false;
-    }
-
     public void setMeasurementProfile(MeasurementProfile measurementProfile) {
         this.measurementProfile = measurementProfile;
     }

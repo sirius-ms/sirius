@@ -46,11 +46,6 @@ public class JenaGCMSExperiment implements Ms2Experiment {
     }
 
     @Override
-    public boolean isPreprocessed() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public double getMoleculeNeutralMass() {
         return compoundFormula != null ? compoundFormula.getMass() : Double.NaN;
     }
