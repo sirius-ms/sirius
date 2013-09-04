@@ -20,10 +20,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.util.MutableMsExperiment;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.addOffset;
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
@@ -186,6 +183,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         for (int i=0; i < scores.length; ++i) {
             result.add(new ScoredMolecularFormula(molecules.get(i), scores[i]));
         }
+        Collections.sort(result, Collections.reverseOrder());
         return new IsotopePattern(pattern.getPattern(), result);
     }
 
@@ -212,8 +210,9 @@ public class IsotopePatternAnalysis implements Parameterized {
                 while (theoreticalSpectrum.size() < workaround.size()) workaround.removePeakAt(workaround.size()-1);
                 normalize(workaround, Normalization.Sum(1));
                 double score = 0d;
-                for (IsotopePatternScorer scorer : isotopePatternScorers)
+                for (IsotopePatternScorer scorer : isotopePatternScorers)  {
                     score += scorer.score(workaround, theoreticalSpectrum, Normalization.Sum(1), experiment);
+                }
                 // add missing peak scores too all deleted peaks if MissingPeakScorer is given
                 for (int i=theoreticalSpectrum.size(); i < spec.size(); ++i) {
                     score -= spec.getIntensityAt(i)*100;
@@ -221,9 +220,6 @@ public class IsotopePatternAnalysis implements Parameterized {
                 scores[k++] = score;
             } else {
                 double score = 0d;
-                if (f.equals(MolecularFormula.parse("C37H47O15S"))) {
-                    System.out.println("DEBUG!");
-                }
                 for (IsotopePatternScorer scorer : isotopePatternScorers) {
                     final double s = scorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(1), experiment);
                     if (Double.isInfinite(s)) {
