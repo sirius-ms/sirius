@@ -35,7 +35,7 @@ public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
         while (measuredSpectrum.size() < theoreticalSpectrum.size()) {
             theoreticalSpectrum.removePeakAt(theoreticalSpectrum.size()-1);
         }
-        Spectrums.normalize(theoreticalSpectrum, Normalization.Sum(1));
+        Spectrums.normalize(theoreticalSpectrum, usedNormalization);
         final double maxIntensity = Spectrums.getMaximalIntensity(measuredSpectrum);
         double score = 0d;
         for (int i=0; i < theoreticalSpectrum.size(); ++i) {

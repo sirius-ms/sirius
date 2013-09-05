@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
@@ -20,10 +19,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.util.MutableMsExperiment;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.PiecewiseLinearFunctionIntensityDependency;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.addOffset;
 import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.normalize;
@@ -189,19 +185,33 @@ public class IsotopePatternAnalysis implements Parameterized {
         return new IsotopePattern(pattern.getPattern(), result);
     }
 
-    public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, List<MolecularFormula> formulas, MsExperiment experiment) {
-        final PatternGenerator generator = new PatternGenerator(isotopicDistribution, extractedSpectrum.getIonization(), Normalization.Sum(1));
+    public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, double summedUpIntensities, List<MolecularFormula> formulas, MsExperiment experiment){
+        //if summedUpIntensities <= 0 use intensity sum of pattern to normalize
+        if (summedUpIntensities<=0) {
+            summedUpIntensities = 0;
+            for (int i = 0; i < extractedSpectrum.size(); i++) {
+                summedUpIntensities += extractedSpectrum.getIntensityAt(i);
+            }
+        }
+        final PatternGenerator generator = new PatternGenerator(isotopicDistribution, extractedSpectrum.getIonization(), Normalization.Sum(summedUpIntensities));
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(extractedSpectrum.getNeutralMassSpectrum());
-        normalize(spec, Normalization.Sum(1));
+
+        normalize(spec, Normalization.Sum(summedUpIntensities));
         if (intensityOffset != 0d) {
             addOffset(spec, 0d, intensityOffset);
         }
-        normalize(spec, Normalization.Sum(1));
+
+        normalize(spec, Normalization.Sum(summedUpIntensities));
+
+        if (spec.getIntensityAt(0) < cutoff){
+            //intensity of first peak is below cutoff, cannot score
+            double[] scores = new double[formulas.size()];
+            Arrays.fill(scores, Double.NEGATIVE_INFINITY);
+            return scores;
+        }
         while (spec.getIntensityAt(spec.size()-1) < cutoff) spec.removePeakAt(spec.size()-1);
-        normalize(spec, Normalization.Sum(1));
+        normalize(spec, Normalization.Sum(summedUpIntensities));
         final Spectrum<Peak> measuredSpectrum = new SimpleSpectrum(spec);
-        final double monoIsotopicMass = spec.getMzAt(0);
-        final ArrayList<ScoredMolecularFormula> scoredFormulas = new ArrayList<ScoredMolecularFormula>(formulas.size());
         final double[] scores = new double[formulas.size()];
         int k=0;
         for (MolecularFormula f : formulas) {
@@ -213,7 +223,7 @@ public class IsotopePatternAnalysis implements Parameterized {
                 normalize(workaround, Normalization.Sum(1));
                 double score = 0d;
                 for (IsotopePatternScorer scorer : isotopePatternScorers)
-                    score += scorer.score(workaround, theoreticalSpectrum, Normalization.Sum(1), experiment);
+                    score += scorer.score(workaround, theoreticalSpectrum, Normalization.Sum(summedUpIntensities), experiment);
                 // add missing peak scores too all deleted peaks if MissingPeakScorer is given
                 for (int i=theoreticalSpectrum.size(); i < spec.size(); ++i) {
                     score -= spec.getIntensityAt(i)*100;
@@ -221,11 +231,8 @@ public class IsotopePatternAnalysis implements Parameterized {
                 scores[k++] = score;
             } else {
                 double score = 0d;
-                if (f.equals(MolecularFormula.parse("C37H47O15S"))) {
-                    System.out.println("DEBUG!");
-                }
                 for (IsotopePatternScorer scorer : isotopePatternScorers) {
-                    final double s = scorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(1), experiment);
+                    final double s = scorer.score(measuredSpectrum, theoreticalSpectrum, Normalization.Sum(summedUpIntensities), experiment);
                     if (Double.isInfinite(s)) {
                         score = s;
                         break;
@@ -235,6 +242,10 @@ public class IsotopePatternAnalysis implements Parameterized {
             }
         }
         return scores;
+    }
+
+    public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, List<MolecularFormula> formulas, MsExperiment experiment) {
+        return scoreFormulas(extractedSpectrum, 1, formulas, experiment);
     }
 
     public MeasurementProfile getDefaultProfile() {

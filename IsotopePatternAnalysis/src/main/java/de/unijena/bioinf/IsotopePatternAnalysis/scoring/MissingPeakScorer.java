@@ -26,7 +26,7 @@ public class MissingPeakScorer implements IsotopePatternScorer {
     @Override
     public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization norm, MsExperiment experiment) {
         final Spectrum<? extends Peak> measured, theoretical;
-        if (!norm.equals(normalization)) {
+        if (normalization.getMode()!=null && !norm.equals(normalization)) {
             measured = normalization.call(measuredSpectrum);
             theoretical = normalization.call(theoreticalSpectrum);
         } else {

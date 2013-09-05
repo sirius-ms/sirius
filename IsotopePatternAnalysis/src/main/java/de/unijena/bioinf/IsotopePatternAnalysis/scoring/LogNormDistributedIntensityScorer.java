@@ -40,18 +40,15 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
             theoreticalSpectrum.removePeakAt(theoreticalSpectrum.size()-1);
         }
         // re-normalize
-        Spectrums.normalize(theoreticalSpectrum, Normalization.Sum(1));
-        final Spectrum<? extends Peak> measured =
-                (norm.equals(Normalization.Sum(1))) ? measuredSpectrum
-                                                    : Spectrums.getNormalizedSpectrum(measuredSpectrum, norm);
+        Spectrums.normalize(theoreticalSpectrum, norm);
         // score
         double score = 0d;
         final double intensityDeviation = experiment.getMeasurementProfile().getIntensityDeviation();
-        for (int i=0; i < measured.size(); ++i) {
-            final double intensity = measured.getIntensityAt(i);
+        for (int i=0; i < measuredSpectrum.size(); ++i) {
+            final double intensity = measuredSpectrum.getIntensityAt(i);
             final double thIntensity = theoreticalSpectrum.getIntensityAt(i);
             // TODO: TEST!!!!!!!!!!!
-            final double sd = log(intensity)+log(intensity+intensityDeviation*intensityDependency.getValueAt(intensity));//log(1 + intensityDeviation*intensityDependency.getValueAt(intensity));
+            final double sd = log(intensity)-log(intensity+intensityDeviation*intensityDependency.getValueAt(intensity));//log(1 + intensityDeviation*intensityDependency.getValueAt(intensity));
             final double newScore = log(Erf.erfc(abs(log(thIntensity / intensity)/(root2*sd))));
             if (Double.isInfinite(newScore)) return newScore;
             score += newScore;

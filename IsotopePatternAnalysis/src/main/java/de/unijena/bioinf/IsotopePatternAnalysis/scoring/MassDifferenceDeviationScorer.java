@@ -35,7 +35,7 @@ public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
         for (int i=0; i < measured.size(); ++i) {
             final double mz = measured.getMzAt(i) - (i==0 ? 0 : measured.getMzAt(i-1));
             final double thMz = theoretical.getMzAt(i) - (i==0 ? 0 : theoretical.getMzAt(i-1));
-            final double intensity = norm.rescale(measured.getIntensityAt(i));
+            final double intensity = measured.getIntensityAt(i);
             // TODO: thMz hier richtig?
             final double sd = experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * dependency.getValueAt(intensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));

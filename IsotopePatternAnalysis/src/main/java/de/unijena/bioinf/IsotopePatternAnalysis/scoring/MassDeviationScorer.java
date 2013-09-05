@@ -36,16 +36,16 @@ public class MassDeviationScorer implements IsotopePatternScorer {
             theoreticalSpectrum.removePeakAt(theoreticalSpectrum.size()-1);
         }
         // re-normalize
-        Spectrums.normalize(theoreticalSpectrum, Normalization.Sum(1));
+        Spectrums.normalize(theoreticalSpectrum, norm);
         final double mz0 = measured.getMzAt(0);
         final double thMz0 = theoreticalSpectrum.getMzAt(0);
-        final double int0 = norm.rescale(measured.getIntensityAt(0));
+        final double int0 = measured.getIntensityAt(0);
         double score = Math.log(Erf.erfc(Math.abs(thMz0 - mz0)/
                 (root2*(experiment.getMeasurementProfile().getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
         for (int i=1; i < measured.size(); ++i) {
             final double mz = measured.getMzAt(i) - mz0;
             final double thMz = theoreticalSpectrum.getMzAt(i) - thMz0;
-            final double thIntensity = norm.rescale(measured.getIntensityAt(i));
+            final double thIntensity = measured.getIntensityAt(i);
             // TODO: thMz hier richtig?
             final double sd = experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
