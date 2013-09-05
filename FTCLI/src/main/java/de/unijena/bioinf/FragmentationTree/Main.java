@@ -38,6 +38,8 @@ public class Main {
 
     public static final String VERSION = "1.21";
 
+    public static final boolean DEBUG_MODE = true;
+
     public static final String CITE = "Computing fragmentation trees from tandem mass spectrometry data\n" +
             "Florian Rasche, Aleš Svatoš, Ravi Kumar Maddula, Christoph Böttcher and Sebastian Böcker\n" +
             "Anal Chem, 83(4):1243-1251, 2011.";
@@ -255,8 +257,12 @@ public class Main {
                 }
 
                 // First: Compute correct tree
+                // DONT USE LOWERBOUNDS
                 FragmentationTree correctTree = null;
                 double lowerbound = options.getLowerbound()==null? 0d : options.getLowerbound();
+
+                if (DEBUG_MODE) lowerbound = 0d;
+
                 if (experiment.getMolecularFormula() != null) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).optimalTree();
                     if (correctTree != null) {
@@ -285,6 +291,7 @@ public class Main {
                 final boolean printGraph = options.isWriteGraphInstances();
                 if (options.getTrees()>0) {
                     final List<FragmentationTree> trees;
+                    if (DEBUG_MODE) lowerbound = 0d;
                     final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
                             .without(blacklist);
                     if (!verbose && !printGraph) {
@@ -296,7 +303,7 @@ public class Main {
                         treeIteration:
                         while (treeIter.hasNext()) {
                             if (verbose) System.out.print("Compute next tree: ");
-
+                            if (DEBUG_MODE) treeIter.setLowerbound(0d);
                             FragmentationTree tree;
 
                             if (printGraph) {

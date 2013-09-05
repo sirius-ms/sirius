@@ -52,7 +52,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
         final SimpleMutableSpectrum ref = new SimpleMutableSpectrum();
         final Ionization ion = tree.getIonization();
         for (TreeFragment f : fragments) {
-            spec.addPeak(f.getPeak());
+            spec.addPeak(new Peak(f.getPeak().getMass(), f.getPeak().getRelativeIntensity()));
             ref.addPeak(new Peak(ion.addToMass(f.getDecomposition().getFormula().getMass()), f.getPeak().getRelativeIntensity()));
         }
         final UnivariateFunction recalibrationFunction = method.recalibrate(spec, ref);

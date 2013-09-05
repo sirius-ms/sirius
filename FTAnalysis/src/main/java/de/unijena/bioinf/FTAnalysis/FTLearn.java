@@ -483,7 +483,7 @@ public class FTLearn {
         println("initial distribution: " + distribution);
         XY sum = new XY(0,0);
         for (PredictedLoss loss : forEachLoss()) {
-            final double weight = Math.min(1, loss.maxIntensity);
+            final double weight = loss.maxIntensity;
             XY v = lossCounter.get(loss.lossFormula);
             if (v==null) v = new XY(1,weight);
             else v = new XY(v.x+1, v.y + weight);
@@ -520,7 +520,7 @@ public class FTLearn {
                     for (Element e : f.elements()) {
                         if (e==C || e == H || e==N || e==O) continue;
                         double is = 0d;
-                        for (PredictedLoss l : compound.losses) is += Math.min(1, l.maxIntensity);
+                        for (PredictedLoss l : compound.losses) is += l.maxIntensity;
                         if (nonchno.containsKey(e)) {
                             nonchno.put(e, nonchno.get(e)+compound.losses.length);
                             nonchnoIntensities.put(e, nonchnoIntensities.get(e)+is);
@@ -536,7 +536,7 @@ public class FTLearn {
         final HashMap<MolecularFormula, XY> originalOne = new HashMap<MolecularFormula, XY>(lossCounter);
         final int lossSizeIterations = options.getLossSizeIterations()==0 ? 100 : options.getLossSizeIterations();
         for (int I=0; I < lossSizeIterations; ++I) {
-            final int frequencyThreshold = 2;
+            final int frequencyThreshold = 10;
             final double intensityThreshold = 2;
             boolean changed = false;
 
@@ -569,13 +569,12 @@ public class FTLearn {
                 final double observedFrequency = OFFSET + entry.getValue().x;
                 final double expectedIntensity = OFFSET + intensityOfCompounds * distribution.getDensity(entry.getKey().getMass());
                 final double observedIntensity = OFFSET + entry.getValue().y;
-                final double LIMIT = 0;//(I==0) ? 4 : 1;
+                final double LIMIT = (I==0) ? 4 : 1;
                 final boolean newLoss = !commonLosses.containsKey(entry.getKey());
                 final double newLossThreshold = isChno ? 10 : 3;
 
                 //
-
-                if ((!newLoss || observedFrequency-expectedFrequency >= newLossThreshold) && (entry.getKey().getIntMass() <= 2 || (observedFrequency-expectedFrequency >= frequencyThreshold &&  observedIntensity-expectedIntensity >= intensityThreshold))) {
+                if (((!isChno || entry.getKey().getMass() <= 10) && observedFrequency-expectedFrequency >= LIMIT) || observedFrequency-expectedFrequency >= frequencyThreshold &&  observedIntensity-expectedIntensity >= intensityThreshold) {
                     final double score;
                     if (USE_INTENSITY_FOR_COUNTING) {
                         score = Math.log(observedIntensity/expectedIntensity);
@@ -641,6 +640,7 @@ public class FTLearn {
                 commonLosses.put(f, -newLossSizeScorer.score(f));
             }
         }
+
 
         final Map<MolecularFormula, Double> oldScorer = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, analyzer.getLossScorers()).getCommonLosses();
 
@@ -799,6 +799,7 @@ public class FTLearn {
             }
         }
         println("]");
+
 
     }
 

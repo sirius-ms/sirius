@@ -1,6 +1,8 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -11,6 +13,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  * is, for ESI, very rarely and should be penalized, as all hypothesis with [M+H]+ should have higher probability.
  */
 public class IntrinsicallyChargedScorer implements DecompositionScorer {
+
+    private static boolean DEBUG_MODE = true;
 
     private double penalty;
 
@@ -29,7 +33,13 @@ public class IntrinsicallyChargedScorer implements DecompositionScorer {
 
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        if (formula.maybeCharged()) return penalty;
+        final Ionization ion = input.getExperimentInformation().getIonization();
+        // if ion is intrinsically charged, behave as if you wouldn't know it
+        if (DEBUG_MODE && (int)Math.round(ion.getMass()) == 0) {
+            if (!formula.maybeCharged()) return penalty;
+            return 0d;
+        }
+        if (!formula.maybeCharged() == (ion instanceof Charge)) return penalty;
         else return 0d;
     }
 
