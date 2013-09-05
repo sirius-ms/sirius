@@ -182,6 +182,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         for (int i=0; i < scores.length; ++i) {
             result.add(new ScoredMolecularFormula(molecules.get(i), scores[i]));
         }
+        Collections.sort(result, Collections.reverseOrder());
         return new IsotopePattern(pattern.getPattern(), result);
     }
 
@@ -222,8 +223,9 @@ public class IsotopePatternAnalysis implements Parameterized {
                 while (theoreticalSpectrum.size() < workaround.size()) workaround.removePeakAt(workaround.size()-1);
                 normalize(workaround, Normalization.Sum(1));
                 double score = 0d;
-                for (IsotopePatternScorer scorer : isotopePatternScorers)
+                for (IsotopePatternScorer scorer : isotopePatternScorers){
                     score += scorer.score(workaround, theoreticalSpectrum, Normalization.Sum(summedUpIntensities), experiment);
+                }
                 // add missing peak scores too all deleted peaks if MissingPeakScorer is given
                 for (int i=theoreticalSpectrum.size(); i < spec.size(); ++i) {
                     score -= spec.getIntensityAt(i)*100;
