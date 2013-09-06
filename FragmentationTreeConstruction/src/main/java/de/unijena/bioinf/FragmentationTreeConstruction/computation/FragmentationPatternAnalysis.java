@@ -117,6 +117,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         //lossScorers.add(new ChemicalPriorEdgeScorer(new Hetero2CarbonScorer(new NormalDistribution(0.5886335d, 0.5550574d)), 0d, 0d));
         //lossScorers.add(new StrangeElementScorer());
         final CommonLossEdgeScorer alesscorer = new CommonLossEdgeScorer();
+        alesscorer.setRecombinator(new CommonLossEdgeScorer.LegacyOldSiriusRecombinator());
 
         final double GAMMA = 1;
 
