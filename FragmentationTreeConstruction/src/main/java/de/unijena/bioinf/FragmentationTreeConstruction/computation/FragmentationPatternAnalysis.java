@@ -27,6 +27,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merge
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -148,13 +149,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
         //analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
-        analysis.setTreeBuilder(new GurobiSolver());
-        final GurobiSolver solver = new GurobiSolver();
-        solver.setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
-        analysis.setTreeBuilder(solver);
+        analysis.setTreeBuilder(new DPTreeBuilder(15));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
         profile.setAllowedMassDeviation(new Deviation(10));

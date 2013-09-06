@@ -39,6 +39,9 @@ public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
     @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 
+    @Option(hidden = true, shortName = "C")
+    public boolean isIsotopeFilteringCheat();
+
     @Option(hidden = true)
     public boolean isWriteGraphInstances();
 

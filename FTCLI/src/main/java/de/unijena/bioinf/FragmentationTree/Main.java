@@ -30,6 +30,7 @@ import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.sirius.cli.ProfileOptions;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.io.*;
 import java.util.*;
@@ -86,7 +87,11 @@ public class Main {
             try {
                 rankWriter = new PrintStream(options.getRanking());
                 openStreams.add(rankWriter);
-                rankWriter.println("name,formula,mass,decompositions,rank,score,optScore,explainedPeaks,computationTime");
+                rankWriter.print("name,formula,mass,decompositions,rank,score,optScore,explainedPeaks,computationTime");
+                if (options.isIsotopeFilteringCheat()) {
+                    rankWriter.print("," + "iso20" + "," + "iso10" + "," + "iso5" + "," + "isoX");
+                }
+                rankWriter.println("");
             } catch (FileNotFoundException e) {
                 System.err.println(e.getMessage());
                 System.exit(1);
@@ -96,7 +101,7 @@ public class Main {
         final List<File> files = getFiles(options);
         final MeasurementProfile defaultProfile = ProfileOptions.Interpret.getMeasurementProfile(options);
 
-        final FragmentationPatternAnalysis analyzer;
+        FragmentationPatternAnalysis analyzer;
 
         if (options.getProfile() != null) {
             try {
@@ -115,6 +120,12 @@ public class Main {
                 System.err.println("Can't find default profile");
                 return;
             }
+        }
+        if (options.isOldSirius()) {
+            SiriusProfile sirius = new SiriusProfile();
+            if (profile != null) sirius.fragmentationPatternAnalysis.setDefaultProfile(profile.fragmentationPatternAnalysis.getDefaultProfile());
+            profile = sirius;
+            analyzer = profile.fragmentationPatternAnalysis;
         }
 
         /*
@@ -140,8 +151,6 @@ public class Main {
 
         final File target = options.getTarget();
         if (!target.exists()) target.mkdirs();
-
-        final int maxNumberOfTrees = options.getTrees();
 
         // write used profile
 
@@ -196,6 +205,35 @@ public class Main {
                     }
                 }
                 ProcessedInput input = analyzer.preprocessing(experiment);
+
+                /*
+                TODO: Push into separate branch "newScores2013"
+                 */
+                final TObjectIntHashMap<MolecularFormula> isoRankingMap;
+                // isoN = Rank of correct compound if you remove all explanations before it that have an isotope rank of
+                // worse than N % relative to all decompositions
+                int iso20=0, iso10=0, iso5=0;
+                double isoX=0d;
+
+                final int NumberOfDecompositions = input.getParentMassDecompositions().size();
+                {
+                    if (options.isIsotopeFilteringCheat()) {
+                        final EvalIsotopeScorer isoScorer = new EvalIsotopeScorer(experiment.getMolecularFormula());
+                        final ArrayList<ScoredMolecularFormula> scoredList = new ArrayList<ScoredMolecularFormula>();
+                        isoRankingMap = new TObjectIntHashMap<MolecularFormula>(input.getParentMassDecompositions().size());
+                        for (ScoredMolecularFormula scf : input.getParentMassDecompositions()) {
+                            scoredList.add(new ScoredMolecularFormula(scf.getFormula(), isoScorer.score(scf.getFormula())));
+                        }
+                        Collections.sort(scoredList, Collections.reverseOrder());
+                        for (int i=0; i < scoredList.size(); ++i) {
+                            isoRankingMap.put(scoredList.get(i).getFormula(), i);
+                        }
+                    } else {
+                        isoRankingMap = null;
+                    }
+                }
+
+
 
                 // use corrected input information
                 experiment = input.getExperimentInformation();
@@ -286,13 +324,14 @@ public class Main {
 
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
                 if (correctFormula!=null) blacklist.add(correctFormula);
+                final int NumberOfTreesToCompute = (options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() : options.getTrees());
                 int rank = 1;
                 double optScore = (correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
                 final boolean printGraph = options.isWriteGraphInstances();
-                if (options.getTrees()>0) {
+                if (NumberOfTreesToCompute>0) {
                     final List<FragmentationTree> trees;
                     if (DEBUG_MODE) lowerbound = 0d;
-                    final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
+                    final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
                             .without(blacklist);
                     if (!verbose && !printGraph) {
                         trees = m.list();
@@ -329,7 +368,7 @@ public class Main {
                             else {
                                 printResult(tree);
                                 bestTrees.add(tree);
-                                if (bestTrees.size() > options.getTrees()) {
+                                if (bestTrees.size() >  NumberOfTreesToCompute) {
                                     bestTrees.pollFirst();
                                     lb = bestTrees.first().getScore()-bestTrees.first().getRecalibrationBonus();
                                     if (DEBUG && bestTrees.first().getScore() > correctTree.getScore()) {
@@ -362,13 +401,42 @@ public class Main {
                         optScore = Math.max(optScore, tree.getScore());
                         writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer, isotopeScores.get(tree.getRoot().getFormula()));
                     }
+
+
+                    /*
+                   TODO: Push into separate branch "newScores2013"
+                    */
+                    {
+                        iso20=1; iso10=1; iso5=1;
+                        int isoXRank = NumberOfDecompositions;
+                        final int threshold20=(int)Math.round(NumberOfDecompositions*0.2), threshold10=(int)Math.round(NumberOfDecompositions*0.1), threshold5=(int)Math.round(NumberOfDecompositions*0.05);
+                        for (int i=0; i < trees.size(); ++i) {
+                            final FragmentationTree tree = trees.get(i);
+                            final MolecularFormula tf = tree.getRoot().getFormula();
+                            if (correctTree!=null && correctTree.getScore() < tree.getScore()) {
+                                isoXRank = Math.min(isoRankingMap.get(tf), isoXRank);
+                                if (isoRankingMap.get(tf) <= threshold20 ) ++iso20;
+                                if (isoRankingMap.get(tf) <= threshold10 ) ++iso10;
+                                if (isoRankingMap.get(tf) <= threshold5 ) ++iso5;
+                            } else {
+                                break;
+                            }
+                        }
+                        isoX = ((double)isoXRank)/NumberOfDecompositions;
+                    }
+
+
+
+
+
+
                 } else {
                     FragmentationTree tree;
                     if (correctTree == null) {
                         if (verbose) {
                             System.out.print("Compute optimal tree "); System.out.flush();
                         }
-                        tree = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(maxNumberOfTrees).withLowerbound(lowerbound)
+                        tree = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
                                 .without(blacklist).optimalTree();
                         if (verbose) printResult(tree);
                     } else tree = correctTree;
@@ -381,9 +449,13 @@ public class Main {
                 computationTime = System.nanoTime() - computationTime;
                 computationTime /= 1000000;
                 if (correctTree!=null && rankWriter!=null) {
-                    rankWriter.println(escapeCSV(f.getName()) + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() +"," + input.getParentMassDecompositions().size() + "," +
+                    rankWriter.print(escapeCSV(f.getName()) + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() +"," + input.getParentMassDecompositions().size() + "," +
                             rank +
                             "," + correctTree.getScore() + "," + optScore + "," + correctTree.numberOfVertices() + "," + computationTime);
+                    if (options.isIsotopeFilteringCheat()) {
+                        rankWriter.print("," + iso20 + "," + iso10 + "," + iso5 + "," + ((int)Math.round(isoX*100)));
+                    }
+                    rankWriter.println("");
                     if (verbose) rankWriter.flush();
                 }
 
