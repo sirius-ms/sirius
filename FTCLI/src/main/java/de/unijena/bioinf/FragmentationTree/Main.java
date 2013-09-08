@@ -302,7 +302,7 @@ public class Main {
                 if (DEBUG_MODE) lowerbound = 0d;
 
                 if (experiment.getMolecularFormula() != null) {
-                    correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).optimalTree();
+                    correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
                     if (correctTree != null) {
                         if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore()-correctTree.getRecalibrationBonus());
                     }
@@ -325,6 +325,7 @@ public class Main {
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
                 if (correctFormula!=null) blacklist.add(correctFormula);
                 final int NumberOfTreesToCompute = (options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() : options.getTrees());
+                final int TreesToConsider = options.getTrees();
                 int rank = 1;
                 double optScore = (correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
                 final boolean printGraph = options.isWriteGraphInstances();
@@ -332,17 +333,17 @@ public class Main {
                     final List<FragmentationTree> trees;
                     if (DEBUG_MODE) lowerbound = 0d;
                     final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
-                            .without(blacklist);
+                            .without(blacklist).withoutRecalibration();
                     if (!verbose && !printGraph) {
                         trees = m.list();
                     } else {
                         final TreeSet<FragmentationTree> bestTrees = new TreeSet<FragmentationTree>();
                         final TreeIterator treeIter = m.iterator();
                         double lb = lowerbound;
+                        if (DEBUG_MODE) treeIter.setLowerbound(0d);
                         treeIteration:
                         while (treeIter.hasNext()) {
                             if (verbose) System.out.print("Compute next tree: ");
-                            if (DEBUG_MODE) treeIter.setLowerbound(0d);
                             FragmentationTree tree;
 
                             if (printGraph) {
@@ -374,10 +375,11 @@ public class Main {
                                     if (DEBUG && bestTrees.first().getScore() > correctTree.getScore()) {
                                         break treeIteration;
                                     }
-                                    treeIter.setLowerbound(lb);
+                                    treeIter.setLowerbound(DEBUG_MODE ? 0d : lb);
                                     if (verbose) System.out.println("Increase lowerbound to " + lb);
                                 }
                             }
+                            if (DEBUG_MODE) treeIter.setLowerbound(0d);
                         }
                         trees = new ArrayList<FragmentationTree>(bestTrees.descendingSet());
                     }
@@ -391,6 +393,18 @@ public class Main {
                             t.setScore(t.getScore() + isotopeScores.get(t.getRoot().getFormula()));
                         }
                     }
+                    Collections.sort(trees, Collections.reverseOrder());
+
+                    // recalibrate best trees
+                    for (int i=0; i < TreesToConsider; ++i) {
+                        if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
+                        trees.set(i, analyzer.recalibrate(trees.get(i)));
+                        if (verbose) {
+                            if (trees.get(i).getRecalibrationBonus()>0) System.out.println(" -> " + trees.get(i).getScore());
+                            else System.out.println("");
+                        }
+                    }
+
                     Collections.sort(trees, Collections.reverseOrder());
 
                     for (int i=0; i < trees.size(); ++i) {

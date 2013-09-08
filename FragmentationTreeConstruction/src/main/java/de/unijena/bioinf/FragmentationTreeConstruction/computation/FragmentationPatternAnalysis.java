@@ -332,7 +332,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param tree
      * @return
      */
-    protected FragmentationTree recalibrate(FragmentationTree tree) {
+    public FragmentationTree recalibrate(FragmentationTree tree) {
         if (tree == null) return null;
         RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree);
         if (rec == null || rec.getScoreBonus() <= 0) return tree;
