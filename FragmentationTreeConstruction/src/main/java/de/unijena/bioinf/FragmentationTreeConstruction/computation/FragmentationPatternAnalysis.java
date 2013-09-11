@@ -320,9 +320,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Recalibrates the tree
      * @return Recalibration object containing score bonus and new tree
      */
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree, boolean force) {
         if (recalibrationMethod == null || tree == null) return null;
-        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer());
+        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer(), force);
+    }
+
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+        return getRecalibrationFromTree(tree,false);
     }
 
     /**
@@ -332,14 +336,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param tree
      * @return
      */
-    public FragmentationTree recalibrate(FragmentationTree tree) {
+    public FragmentationTree recalibrate(FragmentationTree tree, boolean force) {
         if (tree == null) return null;
-        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree);
-        if (rec == null || rec.getScoreBonus() <= 0) return tree;
+        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree, force);
+        if (rec == null || (!force && rec.getScoreBonus() <= 0)) return tree;
         double oldScore = tree.getScore();
-        if (rec.shouldRecomputeTree()) {
+        if (force || rec.shouldRecomputeTree()) {
             final FragmentationTree newTree = rec.getCorrectedTree(this);
-            if (newTree.getScore() > tree.getScore()) {
+            if (force || newTree.getScore() > tree.getScore()) {
                 tree = newTree;
                 tree.setRecalibrationBonus(tree.getScore()-oldScore);
             }
@@ -348,6 +352,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             tree.setRecalibrationBonus(tree.getScore()-oldScore);
         }
         return tree;
+    }
+
+    public FragmentationTree recalibrate(FragmentationTree tree) {
+        return recalibrate(tree, false);
     }
 
     public RecalibrationMethod getRecalibrationMethod() {
@@ -405,8 +413,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final ProcessedInput input = preprocessWithoutDecomposing(experiment);
         final UnivariateFunction f = recalibration.recalibrationFunction();
         for (ProcessedPeak peak :input.getMergedPeaks()) {
-            peak.setOriginalMz(peak.getMz());
-            peak.setMz(f.value(peak.getMz()));
+            //peak.setOriginalMz(peak.getMz());
+            peak.setMz(f.value(peak.getOriginalMz()));
         }
         // decompose and score all peaks
         return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
@@ -420,8 +428,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     ProcessedInput preprocessWithoutDecomposing(Ms2Experiment experiment) {
         // first of all: insert default profile if no profile is given
-        Ms2ExperimentImpl input = wrapInput(experiment);
-        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(defaultProfile);
+        Ms2ExperimentImpl input = new Ms2ExperimentImpl(experiment);
+        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(new MutableMeasurementProfile(defaultProfile));
         else input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
         // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
         input = wrapInput(preProcess(validate(input)));
@@ -492,7 +500,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Ionization ion = experiment.getIonization();
         final Deviation fragmentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
-        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(parentPeak.getUnmodifiedMass(), parentDeviation, constraints);
+        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(parentPeak.getUnmodifiedOriginalMass(), parentDeviation, constraints);
         final ArrayList<List<MolecularFormula>> decompositions = new ArrayList<List<MolecularFormula>>(processedPeaks.size());
         int j=0;
         for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size()-1)) {
@@ -632,7 +640,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     ArrayList<ProcessedPeak> normalize(Ms2Experiment experiment) {
         final double parentMass  = experiment.getIonMass();
         final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
-        final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation();
+        final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation().divide(2d);
         final Ionization ion = experiment.getIonization();
         double globalMaxIntensity = 0d;
         for (Ms2Spectrum s : experiment.getMs2Spectra()) {

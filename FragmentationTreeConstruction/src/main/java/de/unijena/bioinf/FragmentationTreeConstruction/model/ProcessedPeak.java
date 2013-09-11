@@ -170,6 +170,10 @@ public class ProcessedPeak extends Peak {
         return globalRelativeIntensity + "@" + mass + " Da";
     }
 
+    public double getUnmodifiedOriginalMass() {
+        return ion.subtractFromMass(originalMz);
+    }
+
     public static class MassComparator implements Comparator<ProcessedPeak> {
 
         @Override
