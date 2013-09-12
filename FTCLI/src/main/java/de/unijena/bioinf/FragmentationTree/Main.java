@@ -2,8 +2,10 @@ package de.unijena.bioinf.FragmentationTree;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -15,16 +17,10 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Lim
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.MedianSlope;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonFragmentsScore;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossSizeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -164,17 +160,83 @@ public class Main {
             }
         }
 
+        analyzer.getRootScorers().add(new DecompositionScorer<Object>() {
+            @Override
+            public Object prepare(ProcessedInput input) {
+                return PeriodicTable.getInstance().getByName("P");
+            }
+
+            @Override
+            public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
+                return formula.numberOf((Element)precomputed) > 0 ? Math.log(0.25) : 0;
+            }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+
+        final FragmentationPatternAnalysis A = analyzer;
+        analyzer.getLossScorers().add(new LossScorer() {
+            @Override
+            public Object prepare(ProcessedInput input) {
+                return FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, A.getLossScorers());
+            }
+
+            @Override
+            public double score(Loss loss, ProcessedInput input, Object precomputed) {
+                if (loss.getFormula().isCHNO()) {
+                    return 0d;
+                }
+                if (((CommonLossEdgeScorer)precomputed).getCommonLosses().containsKey(loss.getFormula())) {
+                    return Math.log(1.5);
+                } else if (((CommonLossEdgeScorer)precomputed).score(loss.getFormula()) > ((CommonLossEdgeScorer)precomputed).getNormalization()) {
+                    return Math.log(1.25);
+                } else return 0d;
+            }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+
+        analyzer.getFragmentPeakScorers().add(new PeakScorer() {
+            @Override
+            public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
+                for (int i=0; i < peaks.size(); ++i) {
+                    scores[i] += Math.max(0, 1 - peaks.get(i).getOriginalMz()/200d);
+                }
+            }
+
+            @Override
+            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+
+
         eachFile:
         for (final File f : files) {
             try {
                 long computationTime = System.nanoTime();
                 if (verbose) System.out.println("parse " + f); System.out.flush();
-                analyzer.setValidatorWarning(new Warning(){
-                    @Override
-                    public void warn(String message) {
-                        System.err.println(f.getName() + ": " + message);
-                    }
-                });
                 if (options.getTrees()>0) {
                     final File tdir = new File(options.getTarget(), removeExtname(f));
                     if (tdir.exists() && !tdir.isDirectory()) {
@@ -206,6 +268,13 @@ public class Main {
 
                     }
                 }
+                analyzer.setValidatorWarning(new Warning(){
+                    @Override
+                    public void warn(String message) {
+                        System.err.println(f.getName() + ": " + message);
+                    }
+                });
+                experiment = analyzer.validate(experiment);
                 ProcessedInput input = analyzer.preprocessing(experiment);
 
                 /*
@@ -238,7 +307,7 @@ public class Main {
 
 
                 // use corrected input information
-                experiment = input.getExperimentInformation();
+                experiment = analyzer.validate(experiment);
                 assert experiment.getIonization()!=null;
 
                 // isotope pattern analysis
@@ -293,17 +362,22 @@ public class Main {
                         } while (inf && list.size()>i);
                     }
 
-                    input = new ProcessedInput(input.getExperimentInformation(), input.getMergedPeaks(), input.getParentPeak(), list, input.getPeakScores(), input.getPeakPairScores());
+                    input = new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), input.getMergedPeaks(), input.getParentPeak(), list, input.getPeakScores(), input.getPeakPairScores());
                 }
 
                 // First: Compute correct tree
                 // DONT USE LOWERBOUNDS
                 FragmentationTree correctTree = null;
+                int correctRankInPmds = 0;
+                for (ScoredMolecularFormula pmd : input.getParentMassDecompositions())
+                    if (pmd.getFormula().equals(correctFormula)) break;
+                    else ++correctRankInPmds;
+                if (correctRankInPmds >= 1000) System.err.println("Correct formula not in top 1000");
                 double lowerbound = options.getLowerbound()==null? 0d : options.getLowerbound();
 
                 if (DEBUG_MODE) lowerbound = 0d;
 
-                if (experiment.getMolecularFormula() != null) {
+                if (experiment.getMolecularFormula() != null && correctRankInPmds < 1000) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
                     if (correctTree != null) {
                         if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore()-correctTree.getRecalibrationBonus());
@@ -333,8 +407,8 @@ public class Main {
                 final boolean printGraph = options.isWriteGraphInstances();
                 lowerbound = 0d; // don't use correct tree as lowerbound! This crashs with the recalibration
                 if (NumberOfTreesToCompute>0) {
-                    final List<FragmentationTree> trees;
-                    final MultipleTreeComputation m = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
+                    List<FragmentationTree> trees;
+                    final MultipleTreeComputation m = analyzer.computeTrees(input).withRoots(input.getParentMassDecompositions().subList(0,Math.min(input.getParentMassDecompositions().size(),1000))).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
                             .without(blacklist).withoutRecalibration();
                     if (!verbose && !printGraph) {
                         trees = m.list();
@@ -396,7 +470,7 @@ public class Main {
                         }
                     }
                     Collections.sort(trees, Collections.reverseOrder());
-
+                    trees = new ArrayList<FragmentationTree>(trees.subList(0, Math.min(TreesToConsider, trees.size())));
                     // recalibrate best trees
                     if (!trees.isEmpty()) {
                         for (int i=0; i < Math.min(TreesToConsider, trees.size()); ++i) {
@@ -431,14 +505,14 @@ public class Main {
                     }
 
                     Collections.sort(trees, Collections.reverseOrder());
-
+                    final boolean correctTreeContained = trees.contains(correctTree);
                     for (int i=0; i < Math.min(TreesToConsider, trees.size()); ++i) {
                         final FragmentationTree tree = trees.get(i);
-                        if (correctTree!=null && correctTree.getScore() < tree.getScore()) {
+                        if (correctTreeContained && correctTree.getScore() < tree.getScore()) {
                             ++rank;
                         }
                         optScore = Math.max(optScore, tree.getScore());
-                        if (i < TreesToConsider || tree==correctTree)
+                        if (i < Math.max(10, TreesToConsider) || tree==correctTree)    // TODO: FIX Math.max(10
                             writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer, isotopeScores.get(tree.getRoot().getFormula()));
                     }
 

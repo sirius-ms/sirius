@@ -12,6 +12,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeFragment;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
@@ -122,11 +123,12 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 final MutableMeasurementProfile prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
                 exp.setMeasurementProfile(prof);
                 */
-                final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(tree.getInput().getExperimentInformation());
+                final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(analyzer.validate(tree.getInput().getOriginalInput()));
                 final MutableMeasurementProfile prof = new MutableMeasurementProfile(impl.getMeasurementProfile());
                 prof.setStandardMs2MassDeviation(prof.getStandardMs2MassDeviation().multiply(deviationScale));
                 impl.setMeasurementProfile(prof);
-                correctedTree = analyzer.computeTrees(analyzer.preprocessingWithRecalibration(impl, this)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : tree.getScore()).withoutRecalibration().optimalTree();
+                ProcessedInput pinp = analyzer.preprocessingWithRecalibration(impl, this);
+                correctedTree = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : tree.getScore()).withoutRecalibration().optimalTree();
                 if (correctedTree == null) {
                     assert !force;
                     correctedTree = tree;

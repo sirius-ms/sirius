@@ -54,6 +54,10 @@ public class MultipleTreeComputation {
         return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration);
     }
 
+    public MultipleTreeComputation withRoots(Collection<ScoredMolecularFormula> formulas) {
+        return new MultipleTreeComputation(analyzer, input, new ArrayList<ScoredMolecularFormula>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration);
+    }
+
     public MultipleTreeComputation without(Iterable<MolecularFormula> formulas) {
         final HashSet<MolecularFormula> blacklist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();

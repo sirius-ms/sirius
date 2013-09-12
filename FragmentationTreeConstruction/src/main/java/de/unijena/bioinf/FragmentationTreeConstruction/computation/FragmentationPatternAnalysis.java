@@ -417,32 +417,28 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             peak.setMz(f.value(peak.getOriginalMz()));
         }
         // decompose and score all peaks
-        return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
+        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
     }
 
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
         final ProcessedInput input = preprocessWithoutDecomposing(experiment);
         // decompose and score all peaks
-        return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
+        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
     }
 
     ProcessedInput preprocessWithoutDecomposing(Ms2Experiment experiment) {
-        // first of all: insert default profile if no profile is given
-        Ms2ExperimentImpl input = new Ms2ExperimentImpl(experiment);
-        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(new MutableMeasurementProfile(defaultProfile));
-        else input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
         // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
-        input = wrapInput(preProcess(validate(input)));
+        Ms2Experiment input = wrapInput(preProcess(validate(experiment)));
         // normalize all peaks and merge peaks within the same spectrum
         // put peaks from all spectra together in a flatten list
         List<ProcessedPeak> peaks = normalize(input);
-        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, peaks, null, null)).getMergedPeaks();
+        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, experiment, peaks, null, null)).getMergedPeaks();
         // merge peaks from different spectra
         final List<ProcessedPeak> processedPeaks = mergePeaks(input, peaks);
         final ProcessedPeak parentPeak = selectParentPeakAndCleanSpectrum(input, processedPeaks);
         final List<ProcessedPeak> afterMerging =
-                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, processedPeaks, parentPeak, null)).getMergedPeaks();
-        return new ProcessedInput(input, afterMerging, parentPeak, null);
+                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, experiment, processedPeaks, parentPeak, null)).getMergedPeaks();
+        return new ProcessedInput(input, experiment, afterMerging, parentPeak, null);
     }
 
     /**
@@ -489,7 +485,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return parentPeak;
     }
 
-    ProcessedInput decomposeAndScore(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks) {
+    ProcessedInput decomposeAndScore(Ms2Experiment experiment, Ms2Experiment originalExperiment, List<ProcessedPeak> processedPeaks) {
         final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
         // sort again...
         processedPeaks = new ArrayList<ProcessedPeak>(processedPeaks);
@@ -533,7 +529,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 decompositions.set(i, new ArrayList<MolecularFormula>(right));
             }
         }
-        final ProcessedInput preprocessed = new ProcessedInput(experiment, processedPeaks, parentPeak, null);
+        final ProcessedInput preprocessed = new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak, null);
         final int n = processedPeaks.size();
         // score peak pairs
         final double[][] peakPairScores = new double[n][n];
@@ -586,7 +582,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (int i=0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
 
         final ProcessedInput processedInput =
-                new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
+                new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
         // final processing
         return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, processedInput);
     }
@@ -712,7 +708,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return input;
     }
 
-    Ms2Experiment validate(Ms2Experiment experiment) {
+    public Ms2Experiment validate(Ms2Experiment experiment) {
+        // first of all: insert default profile if no profile is given
+        Ms2ExperimentImpl input = new Ms2ExperimentImpl(experiment);
+        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(new MutableMeasurementProfile(defaultProfile));
+        else input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
+        experiment = input;
         for (InputValidator validator : inputValidators) {
             experiment = validator.validate(experiment, validatorWarning, repairInput);
         }
