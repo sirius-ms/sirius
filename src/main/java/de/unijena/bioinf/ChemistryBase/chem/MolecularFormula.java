@@ -219,7 +219,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     }
 
     public boolean isCHNOPS() {
-        return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens() + numberOf(getTableSelection().getPeriodicTable().getByName("S"));
+        return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens() + numberOf(getTableSelection().getPeriodicTable().getByName("S")) + numberOf(getTableSelection().getPeriodicTable().getByName("P"));
     }
 
     /**

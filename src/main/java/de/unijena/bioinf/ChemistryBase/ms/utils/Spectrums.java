@@ -7,6 +7,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 
 public class Spectrums {
 	
@@ -464,7 +465,7 @@ public class Spectrums {
 	void __sortSpectrum__(S spectrum, PeakComparator<T,S> comp) {
 		final int n = spectrum.size();
 		// Insertion sort on smallest arrays
-        if (n < 7) {
+        if (n <= 20) {
             for (int i = 0; i < n; i++) {
                 for (int j=i; j>0 && comp.compare(spectrum,spectrum, j, j-1) < 0; j--) {
                 	__swap__(spectrum, j, j-1);
@@ -474,7 +475,11 @@ public class Spectrums {
         }
         // quicksort on larger arrays
 		if (n > 0) {
-			__quickSort__(spectrum, comp, 0, n-1);
+            int i=1;
+            for ( ; i < n; ++i ) {
+                if (comp.compare(spectrum, spectrum, i, i-1) < 0) break;
+            }
+			if (i < n) __quickSort__(spectrum, comp, i, n-1);
 		}
 	}
 	
@@ -495,13 +500,25 @@ public class Spectrums {
 	 */
 	private static <T extends Peak, S extends MutableSpectrum<T>>
 	void __quickSort__(S s, PeakComparator<T, S> comp, int low, int high) {
-		if (low < high) {
-			int pivot = low+(high-low)/2;
-			pivot = __partition__(s,comp, low, high, pivot);
-			__quickSort__(s, comp, low, pivot-1);
-			__quickSort__(s, comp, pivot+1, high);
-		}
+        int n = high - low + 1;
+        if (n >= 20) {
+            if (low < high) {
+                int pivot = RANDOM.nextInt(high-low-4)+low+5;
+                pivot = __partition__(s,comp, low, high, pivot);
+                __quickSort__(s, comp, low, pivot-1);
+                __quickSort__(s, comp, pivot+1, high);
+            }
+        } else if (n > 0) {
+            for (int i = low; i <= high; i++) {
+                for (int j=i; j>low && comp.compare(s,s, j, j-1) < 0; j--) {
+                    __swap__(s, j, j-1);
+                }
+            }
+            return;
+        }
 	}
+
+    private static Random RANDOM = new Random();
 	
 	/**
 	 * http://en.wikipedia.org/wiki/Quicksort#In-place_version
@@ -511,18 +528,20 @@ public class Spectrums {
 	 * @param pivot
 	 * @return
 	 */
-	private static <T extends Peak, S extends MutableSpectrum<T>>
+    private static <T extends Peak, S extends MutableSpectrum<T>>
     int __partition__(S s, PeakComparator<T, S> comp, int low, int high, int pivot) {
         __swap__(s, high, pivot);
         int store = low;
         for (int i = low; i < high; i++) {
-        	if (comp.compare(s,s, i,high) < 0) {
-        		__swap__(s, i,store);
-        		store++;
-        	}
+            if (comp.compare(s,s, i,high) < 0) {
+                if (i != store) __swap__(s, i,store);
+                store++;
+            }
         }
         __swap__(s, store,high);
         return store;
     }
+
+
 	
 }
