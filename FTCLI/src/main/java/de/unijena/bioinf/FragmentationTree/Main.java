@@ -472,7 +472,7 @@ public class Main {
                     Collections.sort(trees, Collections.reverseOrder());
                     trees = new ArrayList<FragmentationTree>(trees.subList(0, Math.min(TreesToConsider, trees.size())));
                     // recalibrate best trees
-                    if (!trees.isEmpty()) {
+                    if (!trees.isEmpty() && analyzer.getRecalibrationMethod()!=null) {
                         for (int i=0; i < Math.min(TreesToConsider, trees.size()); ++i) {
                             ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
                             if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
@@ -508,7 +508,7 @@ public class Main {
                     final boolean correctTreeContained = trees.contains(correctTree);
                     for (int i=0; i < Math.min(TreesToConsider, trees.size()); ++i) {
                         final FragmentationTree tree = trees.get(i);
-                        if (correctTreeContained && correctTree.getScore() < tree.getScore()) {
+                        if (!correctTreeContained || correctTree.getScore() < tree.getScore()) {
                             ++rank;
                         }
                         optScore = Math.max(optScore, tree.getScore());
