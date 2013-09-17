@@ -159,28 +159,8 @@ public class Main {
                 System.err.println("Cannot create profile file: " + e);
             }
         }
-
-        analyzer.getRootScorers().add(new DecompositionScorer<Object>() {
-            @Override
-            public Object prepare(ProcessedInput input) {
-                return PeriodicTable.getInstance().getByName("P");
-            }
-
-            @Override
-            public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-                return formula.numberOf((Element)precomputed) > 0 ? Math.log(0.25) : 0;
-            }
-
-            @Override
-            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
+        if (!options.isOldSirius())  {
+        analyzer.getRootScorers().add(new StrangeElementRootScorer());
 
         final FragmentationPatternAnalysis A = analyzer;
         analyzer.getLossScorers().add(new LossScorer() {
@@ -212,24 +192,9 @@ public class Main {
             }
         });
 
-        analyzer.getFragmentPeakScorers().add(new PeakScorer() {
-            @Override
-            public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
-                for (int i=0; i < peaks.size(); ++i) {
-                    scores[i] += Math.max(0, 1 - peaks.get(i).getOriginalMz()/200d);
-                }
-            }
+        analyzer.getFragmentPeakScorers().add(new FragmentSizeScorer());
 
-            @Override
-            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
+        }
 
 
         eachFile:
