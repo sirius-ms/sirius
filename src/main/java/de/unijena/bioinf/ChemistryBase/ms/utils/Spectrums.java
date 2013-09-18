@@ -479,7 +479,7 @@ public class Spectrums {
             for ( ; i < n; ++i ) {
                 if (comp.compare(spectrum, spectrum, i, i-1) < 0) break;
             }
-			if (i < n) __quickSort__(spectrum, comp, i, n-1);
+			if (i < n) __quickSort__(spectrum, comp, i-1, n-1);
 		}
 	}
 	
