@@ -81,10 +81,12 @@ public class HighIntensityMerger implements PeakMerger {
         int upperBound = properParentPeak;
         double hightestIntensity = mzArray[properParentPeak].getIntensity();
         int intensiveIndex = properParentPeak;
+        int secondIntensiveIndex = properParentPeak;
         // merge now all peaks in its neighbourhood
         for (int j = properParentPeak-1; j >= 0 && mergeWindow.inErrorWindow(parentMass, mzArray[j].getMz()); --j ) {
             lowerBound=j;
             if (hightestIntensity < mzArray[j].getIntensity()) {
+                secondIntensiveIndex = intensiveIndex;
                 hightestIntensity = mzArray[j].getIntensity();
                 intensiveIndex = j;
             }
@@ -93,13 +95,21 @@ public class HighIntensityMerger implements PeakMerger {
             upperBound=j;
             if (hightestIntensity < mzArray[j].getIntensity()) {
                 hightestIntensity = mzArray[j].getIntensity();
+                secondIntensiveIndex = intensiveIndex;
                 intensiveIndex = j;
             }
         }
-        // merge from lowerBound to upperBound using highest intensive peak as main
+        // merge from lowerBound to upperBound
+        // main peak is: take the two most intensive peaks with at least 10% intensity and select the peak that is
+        // nearest to the parent mass
+        final int mainIndex;
+        if (mzArray[secondIntensiveIndex].getIntensity() < 0.1 ) mainIndex = intensiveIndex;
+        else if (Math.abs(mzArray[secondIntensiveIndex].getMz() - parentMass) < Math.abs(mzArray[intensiveIndex].getMz() - parentMass))
+            mainIndex = secondIntensiveIndex;
+        else mainIndex = intensiveIndex;
         final ProcessedPeak[] subset = new ProcessedPeak[upperBound-lowerBound+1];
         System.arraycopy(mzArray, lowerBound, subset, 0, upperBound-lowerBound+1);
-        merger.merge(Arrays.asList(subset), intensiveIndex-lowerBound, mzArray[intensiveIndex].getMz() );
+        merger.merge(Arrays.asList(subset), mainIndex-lowerBound, mzArray[mainIndex].getMz() );
         return lowerBound;
     }
 

@@ -19,7 +19,7 @@ public class FragmentSizeScorer implements PeakScorer {
     private double maxScore;
 
     public FragmentSizeScorer() {
-        this(200, 1);
+        this(200, 2);
     }
 
     public FragmentSizeScorer(double maxSize, double maxScore) {
@@ -46,7 +46,7 @@ public class FragmentSizeScorer implements PeakScorer {
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
         for (int i=0; i < peaks.size(); ++i) {
-            scores[i] += Math.max(0, maxScore - peaks.get(i).getOriginalMz()/maxSize);
+            scores[i] += maxScore - Math.min(1,peaks.get(i).getOriginalMz()/maxSize)*maxScore;
         }
     }
 

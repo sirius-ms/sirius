@@ -53,6 +53,8 @@ public class Main {
         new Main().run(args);
     }
 
+    private PrintStream DEBUGSTREAM=null;
+
     private Options options;
     private boolean verbose;
     private PrintStream rankWriter;
@@ -160,7 +162,8 @@ public class Main {
             }
         }
         if (!options.isOldSirius())  {
-        analyzer.getRootScorers().add(new StrangeElementRootScorer());
+            /*
+            analyzer.getRootScorers().add(new StrangeElementRootScorer());
 
         final FragmentationPatternAnalysis A = analyzer;
         analyzer.getLossScorers().add(new LossScorer() {
@@ -191,6 +194,8 @@ public class Main {
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         });
+
+        */
 
         analyzer.getFragmentPeakScorers().add(new FragmentSizeScorer());
 
@@ -241,6 +246,27 @@ public class Main {
                 });
                 experiment = analyzer.validate(experiment);
                 ProcessedInput input = analyzer.preprocessing(experiment);
+
+                if(false){
+                    final ArrayList<ScoredMolecularFormula> list = new ArrayList<ScoredMolecularFormula>();
+                    for (ScoredMolecularFormula x : input.getParentMassDecompositions()) {
+                        final double mzdev = Math.abs(input.getExperimentInformation().getIonization().addToMass(x.getFormula().getMass()) - input.getParentPeak().getMz());
+                        list.add(new ScoredMolecularFormula(x.getFormula(), mzdev));
+                    }
+                    Collections.sort(list);
+                    int pos=0;
+                    for (; pos < list.size(); ++pos) {
+                        if (list.get(pos).getFormula().equals(correctFormula)) break;
+                    }
+                    if (DEBUGSTREAM==null) {
+                        DEBUGSTREAM = new PrintStream("mzdev.csv");
+                        openStreams.add(DEBUGSTREAM);
+                        DEBUGSTREAM.println("name,formula,mass,decompositions,rank");
+                    }
+                    DEBUGSTREAM.println(f.getName() + "," + correctFormula.toString() + "," + input.getParentPeak().getMz() + "," + list.size() + "," + (pos+1));
+                    if (true) continue eachFile;
+
+                }
 
                 /*
                 TODO: Push into separate branch "newScores2013"
@@ -337,7 +363,7 @@ public class Main {
                 for (ScoredMolecularFormula pmd : input.getParentMassDecompositions())
                     if (pmd.getFormula().equals(correctFormula)) break;
                     else ++correctRankInPmds;
-                if (correctRankInPmds >= 1000) System.err.println("Correct formula not in top 1000");
+                if (correctRankInPmds >= options.getTrees()) System.err.println("Correct formula not in top " + options.getTrees());
                 double lowerbound = options.getLowerbound()==null? 0d : options.getLowerbound();
 
                 if (DEBUG_MODE) lowerbound = 0d;
@@ -365,7 +391,7 @@ public class Main {
 
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
                 if (correctFormula!=null) blacklist.add(correctFormula);
-                final int NumberOfTreesToCompute = (options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() : options.getTrees());
+                final int NumberOfTreesToCompute = (/*options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() :*/ options.getTrees());
                 final int TreesToConsider = options.getTrees();
                 int rank = 1;
                 double optScore = Double.NEGATIVE_INFINITY;//(correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
@@ -477,7 +503,7 @@ public class Main {
                             ++rank;
                         }
                         optScore = Math.max(optScore, tree.getScore());
-                        if (i < Math.max(10, TreesToConsider) || tree==correctTree)    // TODO: FIX Math.max(10
+                        if (i < Math.min(10, TreesToConsider) || tree==correctTree)    // TODO: FIX Math.min(10
                             writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer, isotopeScores.get(tree.getRoot().getFormula()));
                     }
 
