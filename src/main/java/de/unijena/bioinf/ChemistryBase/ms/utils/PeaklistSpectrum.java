@@ -44,13 +44,4 @@ public class PeaklistSpectrum<P extends Peak> implements Spectrum<P> {
         return peaks.iterator();
     }
 
-    @Override
-    public <T> T getProperty(String name) {
-        return null;
-    }
-
-    @Override
-    public <T> T getProperty(String name, T defaultValue) {
-        return null;
-    }
 }

@@ -11,5 +11,7 @@ public interface MutableSpectrum<T extends Peak> extends Spectrum<T> {
 	public void setIntensityAt(int index, double intensity);
 	
 	public Peak removePeakAt(int index);
+	
+	public void swap(int index1, int index2);	
 
 }

@@ -29,14 +29,4 @@ public abstract class BasicSpectrum<P extends Peak> extends AbstractSpectrum<P> 
 		return masses.length;
 	}
 
-	@Override
-	public <T> T getProperty(String name) {
-		return null;
-	}
-
-	@Override
-	public <T> T getProperty(String name, T defaultValue) {
-		return defaultValue;
-	}
-
 }

@@ -85,13 +85,13 @@ public class ArrayWrapperSpectrum extends AbstractSpectrum<Peak> implements Muta
 	}
 
 	@Override
-	public <T> T getProperty(String name) {
-		return null;
-	}
-
-	@Override
-	public <T> T getProperty(String name, T defaultValue) {
-		return defaultValue;
+	public void swap(int index1, int index2) {
+		final double mz = mzs[index1];
+		final double in = ints[index1];
+		mzs[index1] = mzs[index2];
+		ints[index1] = ints[index2];
+		mzs[index2] = mz;
+		ints[index2] = in;
 	}
 
 }

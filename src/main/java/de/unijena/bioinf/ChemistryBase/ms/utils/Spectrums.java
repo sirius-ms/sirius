@@ -1,13 +1,18 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
 public class Spectrums {
 	
@@ -23,8 +28,8 @@ public class Spectrums {
 		});
 	}
 
-    public static <P extends Peak, S extends Spectrum<P>>
-    SimpleSpectrum mergeSpectra(final S... spectra) {
+	public static <P extends Peak, S extends Spectrum<P>>
+    SimpleSpectrum mergeSpectra(@SuppressWarnings("unchecked") final S... spectra) {
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
         for (S s : spectra) {
             for (Peak p : s) {
@@ -215,6 +220,7 @@ public class Spectrums {
 		return peaks;
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public static <P extends Peak, S extends Spectrum<P>> double[] copyIntensities(S spectrum, double[] buffer, int offset) {
 		final int n = spectrum.size();
         if (spectrum instanceof BasicSpectrum) {
@@ -235,6 +241,7 @@ public class Spectrums {
 		return copyIntensities(spectrum, new double[spectrum.size()], 0);
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public static <P extends Peak, S extends Spectrum<P>> double[] copyMasses(S spectrum, double[] buffer, int offset) {
         final int n = spectrum.size();
         if (spectrum instanceof BasicSpectrum) {
@@ -468,7 +475,7 @@ public class Spectrums {
         if (n <= 20) {
             for (int i = 0; i < n; i++) {
                 for (int j=i; j>0 && comp.compare(spectrum,spectrum, j, j-1) < 0; j--) {
-                	__swap__(spectrum, j, j-1);
+                	spectrum.swap(j, j-1);
                 }
             }
             return;
@@ -482,21 +489,6 @@ public class Spectrums {
 			if (i < n) __quickSort__(spectrum, comp, i-1, n-1);
 		}
 	}
-	
-	private static <T extends Peak> void __swap__(MutableSpectrum<T> spectrum, int index1, int index2) {
-		final T p = spectrum.getPeakAt(index1);
-		spectrum.setPeakAt(index1, spectrum.getPeakAt(index2));
-		spectrum.setPeakAt(index2, p);
-	}
-	
-//	private static <T extends Peak> void __swap__(MutableSpectrum<T> spectrum, int index1, int index2) {
-//		final double mz = spectrum.getMzAt(index1);
-//		final double in = spectrum.getIntensityAt(index1);
-//		spectrum.setMzAt(index1, spectrum.getMzAt(index2));
-//		spectrum.setIntensityAt(index1, spectrum.getIntensityAt(index2));
-//		spectrum.setMzAt(index2, mz);
-//		spectrum.setIntensityAt(index2, in);
-//	}
 	
 	/**
 	 * http://en.wikipedia.org/wiki/Quicksort#In-place_version
@@ -517,7 +509,7 @@ public class Spectrums {
         } else if (n > 0) {
             for (int i = low; i <= high; i++) {
                 for (int j=i; j>low && comp.compare(s,s, j, j-1) < 0; j--) {
-                    __swap__(s, j, j-1);
+                	s.swap(j, j-1);
                 }
             }
             return;
@@ -536,15 +528,15 @@ public class Spectrums {
 	 */
     private static <T extends Peak, S extends MutableSpectrum<T>>
     int __partition__(S s, PeakComparator<T, S> comp, int low, int high, int pivot) {
-        __swap__(s, high, pivot);
+    	s.swap(high, pivot);
         int store = low;
         for (int i = low; i < high; i++) {
             if (comp.compare(s,s, i,high) < 0) {
-                if (i != store) __swap__(s, i,store);
+                if (i != store) s.swap(i, store);
                 store++;
             }
         }
-        __swap__(s, store,high);
+        s.swap(store, high);
         return store;
     }
 

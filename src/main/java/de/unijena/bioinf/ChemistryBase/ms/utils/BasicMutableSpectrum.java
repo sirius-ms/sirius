@@ -10,7 +10,7 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 	protected TDoubleArrayList masses;
 	protected TDoubleArrayList intensities;
 	
-	public <S extends Spectrum<P>> BasicMutableSpectrum(S immutable) {
+	public <T extends Peak, S extends Spectrum<T>> BasicMutableSpectrum(S immutable) {
 		this.masses = new TDoubleArrayList(Spectrums.copyMasses(immutable));
 		this.intensities = new TDoubleArrayList(Spectrums.copyIntensities(immutable));
 	}
@@ -26,16 +26,6 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 	}
 
 	@Override
-	public <T> T getProperty(String name) {
-		return null;
-	}
-
-	@Override
-	public <T> T getProperty(String name, T defaultValue) {
-		return defaultValue;
-	}
-
-	@Override
 	public void addPeak(P peak) {
 		masses.add(peak.getMass());
 		intensities.add(peak.getIntensity());
@@ -48,13 +38,23 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 	}
 
 	@Override
-	public Peak removePeakAt(int index) {
-		final Peak p = getPeakAt(index);
+	public P removePeakAt(int index) {
+		final P p = getPeakAt(index);
 		masses.remove(index, 1);
 		intensities.remove(index, 1);
 		return p;
 	}
 
+	@Override
+	public double getMzAt(int index) {
+		return masses.get(index);
+	}
+	
+	@Override
+	public double getIntensityAt(int index) {
+		return intensities.get(index);
+	}
+	
 	@Override
 	public void setMzAt(int index, double mz) {
 		masses.set(index, mz);
@@ -64,6 +64,15 @@ public abstract class BasicMutableSpectrum<P extends Peak> extends AbstractSpect
 	public void setIntensityAt(int index, double intensity) {
 		intensities.set(index, intensity);
 	}
-	
+
+	@Override
+	public void swap(int index1, int index2) {
+		final double mz = masses.get(index1);
+		final double in = intensities.get(index1);
+		masses.set(index1, masses.get(index2));
+		intensities.set(index1, intensities.get(index2));
+		masses.set(index2, mz);
+		intensities.set(index2, in);
+	}
 
 }
