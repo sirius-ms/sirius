@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @HasParameters
-public class Deviation {
+public class Deviation implements Cloneable{
 
     private final double ppm;
     private final double absolute;
@@ -40,6 +40,10 @@ public class Deviation {
         return multiply(1d/scalar);
     }
 
+    public Deviation roundUp() {
+        return new Deviation(Math.ceil(ppm/0.2)*0.2, Math.ceil(absolute/0.00002)*0.00002);
+    }
+
     public double absoluteFor(double value) {
         return Math.max(ppm * value * 1e-6, absolute);
     }
@@ -61,10 +65,32 @@ public class Deviation {
         return ppm + " ppm (" + absolute + " m/z)";
     }
 
-    private static Pattern pattern = Pattern.compile("(.+) ppm \\((.+) m\\/z\\)");
+    private static Pattern pattern = Pattern.compile("(?:(.+)\\s*ppm\\s*)?(?:(?:,|\\(|)\\s*(.+?)\\s*(m\\/z|mDa|Da|u)\\s*\\)?)?");
     public static Deviation fromString(String s) {
         final Matcher m = pattern.matcher(s);
         if (!m.find()) throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");
-        return new Deviation(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)));
+        final String ppm = m.group(1);
+        final String abs = m.group(2);
+        final String unit = m.group(3);
+        double absolute = Double.NaN;
+        if (abs != null && !abs.isEmpty()) {
+            assert unit!=null && !unit.isEmpty();
+            absolute = Double.parseDouble(abs);
+            if (unit.equalsIgnoreCase("mDa")) absolute /= 1000;
+        }
+        if (ppm != null && !ppm.isEmpty()) {
+            double ppmValue = Double.parseDouble(ppm);
+            return Double.isNaN(absolute) ? new Deviation(ppmValue) : new Deviation(ppmValue, absolute);
+        } else if (!Double.isNaN(absolute)) {
+            return fromMeasurementAndReference(100+absolute, 100);
+        } else throw new IllegalArgumentException("Pattern should have the format <number> ppm (<number> m/z)");
+    }
+
+    public Deviation clone() {
+        return new Deviation(ppm, absolute);
+    }
+
+    public static Deviation valueOf(String s) {
+        return fromString(s);
     }
 }
