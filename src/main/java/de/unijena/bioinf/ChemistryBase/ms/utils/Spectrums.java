@@ -484,13 +484,19 @@ public class Spectrums {
 	}
 	
 	private static <T extends Peak> void __swap__(MutableSpectrum<T> spectrum, int index1, int index2) {
-		final double mz = spectrum.getMzAt(index1);
-		final double in = spectrum.getIntensityAt(index1);
-		spectrum.setMzAt(index1, spectrum.getMzAt(index2));
-		spectrum.setIntensityAt(index1, spectrum.getIntensityAt(index2));
-		spectrum.setMzAt(index2, mz);
-		spectrum.setIntensityAt(index2, in);
+		final T p = spectrum.getPeakAt(index1);
+		spectrum.setPeakAt(index1, spectrum.getPeakAt(index2));
+		spectrum.setPeakAt(index2, p);
 	}
+	
+//	private static <T extends Peak> void __swap__(MutableSpectrum<T> spectrum, int index1, int index2) {
+//		final double mz = spectrum.getMzAt(index1);
+//		final double in = spectrum.getIntensityAt(index1);
+//		spectrum.setMzAt(index1, spectrum.getMzAt(index2));
+//		spectrum.setIntensityAt(index1, spectrum.getIntensityAt(index2));
+//		spectrum.setMzAt(index2, mz);
+//		spectrum.setIntensityAt(index2, in);
+//	}
 	
 	/**
 	 * http://en.wikipedia.org/wiki/Quicksort#In-place_version
