@@ -85,16 +85,6 @@ public class Ms2SpectrumImpl implements Ms2Spectrum<MS2Peak> {
         return peaks.iterator();
     }
 
-    @Override
-    public <T> T getProperty(String name) {
-        return null;
-    }
-
-    @Override
-    public <T> T getProperty(String name, T defaultValue) {
-        return defaultValue;
-    }
-
     private final static class EnergyComparator implements Comparator<Ms2SpectrumImpl> {
         @Override
         public int compare(Ms2SpectrumImpl o1, Ms2SpectrumImpl o2) {
