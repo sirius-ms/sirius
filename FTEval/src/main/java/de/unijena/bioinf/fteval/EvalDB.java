@@ -103,4 +103,10 @@ public class EvalDB {
             }
         });
     }
+
+    public File decoy(String profil) {
+        final File d1 = new File(profile(profil), "decoy" );
+        if (d1.exists()) return d1;
+        return new File(root, "decoy");
+    }
 }

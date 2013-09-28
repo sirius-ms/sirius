@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 public class CLI {
 
     public final static Command[] COMMANDS = new Command[]{
-        new TreeCommand(), new AnalyzeCommand(), new LearnCommand(), new DecompCommand(), new IsogenCommand(), new EvalCommand(), new AlignCommand()
+        new TreeCommand(), new LearnCommand(), new DecompCommand(), new IsogenCommand(), new EvalCommand(), new AlignCommand()
     };
 
     public static void main(String[] args) {

@@ -162,7 +162,7 @@ public class Main {
             }
         }
         if (!options.isOldSirius())  {
-            /*
+
             analyzer.getRootScorers().add(new StrangeElementRootScorer());
 
         final FragmentationPatternAnalysis A = analyzer;
@@ -195,7 +195,7 @@ public class Main {
             }
         });
 
-        */
+
 
         analyzer.getFragmentPeakScorers().add(new FragmentSizeScorer());
 

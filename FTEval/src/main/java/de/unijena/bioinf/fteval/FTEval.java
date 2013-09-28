@@ -67,10 +67,12 @@ public class FTEval {
             tanimoto(cropped);
         } else if (args[0].equals("align")) {
             align(cropped);
+        } else if (args[0].equals("decoy")) {
+            decoy(cropped);
         } else if (args[0].equals("ssps")) {
             ssps(cropped);
         } else {
-            System.err.println("Unknown command '" + args[0] + "'. Allowed are 'init', 'compute' and 'ssps'");
+            System.err.println("Unknown command '" + args[0] + "'. Allowed are 'init', 'compute', 'align', 'decoy' and 'ssps'");
         }
     }
 
@@ -362,6 +364,91 @@ public class FTEval {
             }
         };
 
+    }
+
+    public static void decoy(String[] args) {
+        final Interact I = new Shell();
+        final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+        for (String profil : evalDB.profiles()) {
+            final File decoy = evalDB.decoy(profil);
+            final File dots = new File(evalDB.profile(profil), "dot");
+            final ArrayList<String> arguments = getAlignArguments(opts);
+            arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "--with", decoy.getAbsolutePath(), "-m",
+                    new File(evalDB.profile(profil), "decoymatrix.csv").getAbsolutePath()));
+            de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
+            try {
+                calculateQValues(new File(evalDB.profile(profil), "matrix.csv"), new File(evalDB.profile(profil), "decoymatrix.csv"));
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }
+
+    private static class Hit implements Comparable<Hit> {
+        private final boolean decoy;
+        private final double score;
+        private final int left, right;
+
+        private Hit(int left, int right, double score, boolean decoy) {
+            this.left = left;
+            this.right = right;
+            this.score = score;
+            this.decoy = decoy;
+        }
+
+        @Override
+        public int compareTo(Hit o) {
+            return Double.compare(score, o.score);
+        }
+    }
+
+    private static void calculateQValues(File query, File decoy) throws IOException {
+        final List<Hit> hits = new ArrayList<Hit>();
+        final DoubleDataMatrix matrix1 = DoubleDataMatrix.overlay(Arrays.asList(parseMatrix(query)), null, Arrays.asList("query"), null, Double.NEGATIVE_INFINITY);
+        final DoubleDataMatrix matrix2 = DoubleDataMatrix.overlay(Arrays.asList(parseMatrix(decoy)), null, Arrays.asList("query"), null, Double.NEGATIVE_INFINITY);
+        final double[][] m1 = matrix1.getLayer(0);
+        final double[][] m2 = matrix2.getLayer(0);
+        for (int i=0; i < matrix1.getRowHeader().length; ++i) {
+            for (int j=0; j < matrix1.getColHeader().length; ++j) {
+                hits.add(new Hit(i, j, m1[i][j], false));
+            }
+        }
+        for (int i=0; i < matrix2.getRowHeader().length; ++i) {
+            for (int j=0; j < matrix2.getColHeader().length; ++j) {
+                hits.add(new Hit(i, j, m2[i][j], true));
+            }
+        }
+        Collections.sort(hits, Collections.reverseOrder());
+        final int dbLength = matrix2.getRowHeader().length;
+        final int decoyLength = matrix2.getColHeader().length;
+        int n=0;
+        int decoys=0;
+        for (Hit h : hits) {
+            if (h.decoy) {
+                ++decoys;
+            } else {
+                ++n;
+                double fdr = decoys/n;
+                m1[h.left][h.right] = fdr;
+            }
+        }
+        final BufferedWriter writer = new BufferedWriter(new FileWriter(new File(query.getParent(), "qvalues.csv")));
+        writer.write("scores");
+        for (int j=0; j < matrix1.getColHeader().length; ++j) {
+            writer.write(",");
+            writer.write(matrix1.getColHeader()[j]);
+        }
+        writer.newLine();
+        for (int i=0; i < matrix1.getRowHeader().length; ++i) {
+            writer.write(matrix1.getRowHeader()[i]);
+            for (int j=0; j < matrix1.getColHeader().length; ++j) {
+                writer.write(",");
+                writer.write(String.valueOf(m1[i][j]));
+            }
+            writer.newLine();
+        }
+        writer.close();
     }
 
     public static void ssps(String[] args) {
