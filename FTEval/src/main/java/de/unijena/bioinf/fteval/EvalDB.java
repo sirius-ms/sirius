@@ -1,5 +1,4 @@
 package de.unijena.bioinf.fteval;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
@@ -108,5 +107,9 @@ public class EvalDB {
         final File d1 = new File(profile(profil), "decoy" );
         if (d1.exists()) return d1;
         return new File(root, "decoy");
+    }
+
+    public File qvalueMatrix(String p) {
+        return new File(profile(p),"qvalues.csv");
     }
 }

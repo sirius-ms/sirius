@@ -529,12 +529,6 @@ public class Main {
                         }
                         isoX = ((double)isoXRank)/NumberOfDecompositions;
                     }
-
-
-
-
-
-
                 } else {
                     FragmentationTree tree;
                     if (correctTree == null) {

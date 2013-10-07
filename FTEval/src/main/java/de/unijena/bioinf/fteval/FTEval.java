@@ -376,7 +376,7 @@ public class FTEval {
             final ArrayList<String> arguments = getAlignArguments(opts);
             arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "--with", decoy.getAbsolutePath(), "-m",
                     new File(evalDB.profile(profil), "decoymatrix.csv").getAbsolutePath()));
-            de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
+            if (!(new File(evalDB.profile(profil), "decoymatrix.csv")).exists()) de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
             try {
                 calculateQValues(new File(evalDB.profile(profil), "matrix.csv"), new File(evalDB.profile(profil), "decoymatrix.csv"));
             } catch (IOException e) {
@@ -422,15 +422,15 @@ public class FTEval {
         Collections.sort(hits, Collections.reverseOrder());
         final int dbLength = matrix2.getRowHeader().length;
         final int decoyLength = matrix2.getColHeader().length;
-        int n=0;
-        int decoys=0;
+        double n=0;
+        double decoys=0;
         for (Hit h : hits) {
             if (h.decoy) {
                 ++decoys;
             } else {
                 ++n;
                 double fdr = decoys/n;
-                m1[h.left][h.right] = fdr;
+                m1[h.left][h.right] = m1[h.left][h.right]*1e-9 - fdr;
             }
         }
         final BufferedWriter writer = new BufferedWriter(new FileWriter(new File(query.getParent(), "qvalues.csv")));
@@ -462,6 +462,10 @@ public class FTEval {
             try {
                 templates.add(parseMatrix(evalDB.scoreMatrix(p)));
                 names.add(p);
+                if (evalDB.qvalueMatrix(p).exists()) {
+                    templates.add(parseMatrix(evalDB.qvalueMatrix(p)));
+                    names.add(p + "_qValue");
+                }
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
