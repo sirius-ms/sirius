@@ -486,7 +486,7 @@ public class Spectrums {
             for ( ; i < n; ++i ) {
                 if (comp.compare(spectrum, spectrum, i, i-1) < 0) break;
             }
-			if (i < n) __quickSort__(spectrum, comp, i-1, n-1);
+			if (i < n) __quickSort__(spectrum, comp, 0, n-1);
 		}
 	}
 	
@@ -501,7 +501,7 @@ public class Spectrums {
         int n = high - low + 1;
         if (n >= 20) {
             if (low < high) {
-                int pivot = RANDOM.nextInt(high-low-4)+low+5;
+                int pivot = RANDOM.nextInt(high-low)+low;
                 pivot = __partition__(s,comp, low, high, pivot);
                 __quickSort__(s, comp, low, pivot-1);
                 __quickSort__(s, comp, pivot+1, high);
@@ -528,7 +528,7 @@ public class Spectrums {
 	 */
     private static <T extends Peak, S extends MutableSpectrum<T>>
     int __partition__(S s, PeakComparator<T, S> comp, int low, int high, int pivot) {
-    	s.swap(high, pivot);
+        s.swap(high, pivot);
         int store = low;
         for (int i = low; i < high; i++) {
             if (comp.compare(s,s, i,high) < 0) {
