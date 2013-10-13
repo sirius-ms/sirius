@@ -68,7 +68,7 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
         List<? extends Ms2Spectrum> specs = experiment.getMs2Spectra();
         final ArrayList<Ms2Spectrum> spectra = new ArrayList<Ms2Spectrum>(specs.size());
         for (Ms2Spectrum spec : specs) {
-            final SimpleMutableSpectrum ms = new SimpleMutableSpectrum(spec);
+            final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
             for (Object p : spec) if (((Peak)p).getIntensity() > threshold) ms.addPeak((Peak)p);
             final Ms2SpectrumImpl ms2 = new Ms2SpectrumImpl(ms, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount());
             spectra.add(ms2);
