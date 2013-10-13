@@ -37,7 +37,7 @@
         <dependency>
             <groupId>com.lexicalscope.jewelcli</groupId>
             <artifactId>jewelcli</artifactId>
-            <version>0.8.3</version>
+            <version>0.8.6</version>
         </dependency>
     </dependencies>
 
