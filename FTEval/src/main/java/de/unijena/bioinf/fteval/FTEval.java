@@ -109,7 +109,12 @@ public class FTEval {
             arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "-m",
                     new File(evalDB.profile(profil), opts.getTarget()).getAbsolutePath()));
             if (opts.getXtra() != null) {
-                arguments.addAll(opts.getXtra());
+                for (String s : opts.getXtra()) {
+                    if (s.charAt(0)=='"') {
+                        s = s.substring(1,s.length()-1);
+                    }
+                    arguments.add(s);
+                }
             }
             System.err.println(arguments);
             de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));

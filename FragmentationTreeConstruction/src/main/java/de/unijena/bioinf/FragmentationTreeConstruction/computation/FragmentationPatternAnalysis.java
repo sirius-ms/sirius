@@ -13,10 +13,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NormalizeToSumPreprocessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Preprocessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
@@ -122,7 +119,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final double GAMMA = 1;
 
         for (String s : CommonLossEdgeScorer.ales_list) {
-            alesscorer.addCommonLoss(MolecularFormula.parse(s), GAMMA * Math.log(10));
+            alesscorer.addCommonLoss(MolecularFormula.parse(s), /*GAMMA * Math.log(10)*/1);
         }
 
         lossScorers.add(alesscorer);
@@ -150,16 +147,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
-        //analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
-        analysis.setTreeBuilder(new DPTreeBuilder(15));
+        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(100));
+
+        //analysis.setTreeBuilder(new DPTreeBuilder(15));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
-        profile.setAllowedMassDeviation(new Deviation(10));
+        profile.setAllowedMassDeviation(new Deviation(11));
         profile.setStandardMassDifferenceDeviation(new Deviation(2.5d));
-        profile.setStandardMs2MassDeviation(new Deviation(10d/3d));
-        profile.setStandardMs1MassDeviation(new Deviation(10d / 3d));
+        profile.setStandardMs2MassDeviation(new Deviation(11d/4d));
+        profile.setStandardMs1MassDeviation(new Deviation(11d / 4d));
         profile.setFormulaConstraints(new FormulaConstraints());
         profile.setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.04d).getMedian());
         profile.setIntensityDeviation(0.02);
@@ -594,7 +593,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         - 2. der Peakmerger bekommt nur Peak aus unterschiedlichen Spektren und mergt diese
         - 3. Nach der Decomposition läuft man alle peaks in der Liste durch. Wenn zwischen zwei
              Peaks der Abstand zu klein wird, werden diese Peaks disjunkt, in dem die doppelt vorkommenden
-             Decompositions auf einen peak (den mit der geringeren Masseabweichung) eindeutig verteilt werden.
+             Decompositions auf einen peak (den mit der geringeren asseabweichung) eindeutig verteilt werden.
 
      */
 

@@ -368,7 +368,7 @@ public class Main {
 
                 if (DEBUG_MODE) lowerbound = 0d;
 
-                if (experiment.getMolecularFormula() != null && correctRankInPmds < 1000) {
+                if (experiment.getMolecularFormula() != null /*&& correctRankInPmds < 1000*/ /* TODO: What does this mean? */) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
                     if (correctTree != null) {
                         if (options.getWrongPositive() && correctTree != null) lowerbound = Math.max(lowerbound, correctTree.getScore()-correctTree.getRecalibrationBonus());
