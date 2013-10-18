@@ -83,7 +83,7 @@ public class MultipleTreeComputation {
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
             final FragmentationTree tree = analyzer.computeTree(graph, lb, recalibration);
-            if (tree != null && (opt == null || tree.getScore() < opt.getScore())) {
+            if (tree != null && (opt == null || tree.getScore() > opt.getScore())) {
                 opt = tree;
             }
         }

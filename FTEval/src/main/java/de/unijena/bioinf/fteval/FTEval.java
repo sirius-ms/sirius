@@ -73,9 +73,33 @@ public class FTEval {
             decoy(cropped);
         } else if (args[0].equals("ssps")) {
             ssps(cropped);
+        } else if (args[0].equals("test")) {
+            test(cropped);
         } else {
             System.err.println("Unknown command '" + args[0] + "'. Allowed are 'init', 'compute', 'align', 'decoy' and 'ssps'");
         }
+    }
+
+    private static void test(String[] args) {
+        final Interact I = new Shell();
+        final SSPSBasicOptions opts = CliFactory.parseArguments(SSPSBasicOptions.class, args);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+        final List<Iterator<String[]>> templates = new ArrayList<Iterator<String[]>>();
+        final List<Iterator<String[]>> others = new ArrayList<Iterator<String[]>>();
+        final List<String> names = new ArrayList<String>();
+        for (String p : evalDB.profiles()) {
+            try {
+                templates.add(parseMatrix(new File("/home/kai/Documents/temp/fingerprinttest/tablex.csv")));
+                names.add("test");
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+        final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
+        final ScoreTable sc = new ScoreTable("test", matrices.getLayer(0));
+        sc.toFingerprints();
+        sc.getOrdered();
+        System.out.println("TEST");
     }
 
     private static void peakcounting(String[] args) {
