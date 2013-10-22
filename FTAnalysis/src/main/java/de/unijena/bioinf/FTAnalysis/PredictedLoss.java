@@ -22,9 +22,9 @@ public class PredictedLoss {
         this.lossFormula = l.getFormula();
         this.fragmentFormula = l.getTail().getFormula();
         this.fragmentIntensity = l.getTail().getRelativePeakIntensity();
-        this.fragmentMz = l.getTail().getPeak().getMz();
+        this.fragmentMz = l.getTail().getPeak().getOriginalMz();
         this.maxIntensity = Math.max(l.getTail().getRelativePeakIntensity(), l.getHead().getRelativePeakIntensity());
-        this.fragmentNeutralMass = ion.subtractFromMass(l.getTail().getPeak().getMz());
+        this.fragmentNeutralMass = ion.subtractFromMass(l.getTail().getPeak().getOriginalMz());
     }
 
     public String toCSV() {

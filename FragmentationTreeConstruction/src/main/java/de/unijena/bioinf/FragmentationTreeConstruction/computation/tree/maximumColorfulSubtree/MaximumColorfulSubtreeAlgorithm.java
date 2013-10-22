@@ -4,6 +4,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -29,6 +30,18 @@ public class MaximumColorfulSubtreeAlgorithm {
         final FragmentationTree tree = new DP(this, graph, maxColorNumber, false).runAlgorithm();
         cleanupCacheIfFull();
         return tree;
+    }
+
+    public List<FragmentationTree> computeMultipleTrees(FragmentationGraph graph, int maxColorNumber) {
+        DP dp = new DP(this, graph, maxColorNumber, false);
+        dp.compute();
+        final List<FragmentationTree> trees = dp.backTrackAll();
+        for (FragmentationTree tree : trees) {
+            final double additionalScore = dp.attachRemainingColors(tree);
+            tree.setScore(tree.getScore()+additionalScore);
+        }
+        cleanupCacheIfFull();
+        return trees;
     }
 
     void cleanupCacheIfFull() {

@@ -32,6 +32,14 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
         return normalization;
     }
 
+    public void setDistribution(DensityFunction distribution) {
+        this.distribution = distribution;
+    }
+
+    public void setNormalization(double normalization) {
+        this.normalization = normalization;
+    }
+
     public DensityFunction getDistribution() {
         return distribution;
     }

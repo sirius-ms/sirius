@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 
 import java.util.Iterator;
@@ -15,5 +16,6 @@ public interface TreeIterator extends Iterator<FragmentationTree> {
 
     public void setLowerbound(double lowerbound);
     public double getLowerbound();
+    public FragmentationGraph lastGraph();
 
 }

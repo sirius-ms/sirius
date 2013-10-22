@@ -41,4 +41,9 @@ public class XYZ implements Comparable<XYZ> {
     public int compareTo(XYZ o) {
         return Double.compare(x, o.x);
     }
+
+    @Override
+    public String toString() {
+        return "(" + x + ", " + y + ", " + z + ")";
+    }
 }

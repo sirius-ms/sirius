@@ -30,7 +30,6 @@ public class Ms2ExperimentImpl implements Ms2Experiment {
         this.measurementProfile = exp.getMeasurementProfile();
         this.molecularFormula = exp.getMolecularFormula();
         this.ionization = exp.getIonization();
-        this.preprocessed = exp.isPreprocessed();
     }
 
     public Ms2ExperimentImpl() {
@@ -91,14 +90,6 @@ public class Ms2ExperimentImpl implements Ms2Experiment {
 
     public void setMolecularFormula(MolecularFormula molecularFormula) {
         this.molecularFormula = molecularFormula;
-    }
-
-    public boolean isPreprocessed() {
-        return preprocessed;
-    }
-
-    public void setPreprocessed(boolean preprocessed) {
-        this.preprocessed = preprocessed;
     }
 
     public Ionization getIonization() {

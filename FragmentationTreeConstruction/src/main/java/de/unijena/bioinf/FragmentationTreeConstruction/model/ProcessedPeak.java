@@ -17,6 +17,7 @@ public class ProcessedPeak extends Peak {
     private CollisionEnergy collisionEnergy;
     private Ionization ion;
     private List<ScoredMolecularFormula> decompositions;
+    private double originalMz;
 
     public ProcessedPeak() {
         super(0, 0);
@@ -25,6 +26,7 @@ public class ProcessedPeak extends Peak {
         this.globalRelativeIntensity = relativeIntensity = localRelativeIntensity = 0d;
         this.ion = null;
         this.decompositions = Collections.emptyList();
+        this.originalMz = getMz();
     }
 
     public ProcessedPeak(MS2Peak peak) {
@@ -33,6 +35,7 @@ public class ProcessedPeak extends Peak {
         this.intensity = peak.getIntensity();
         this.originalPeaks = Collections.singletonList(peak);
         this.collisionEnergy = peak.getSpectrum().getCollisionEnergy();
+        this.originalMz = peak.getMz();
     }
 
     public ProcessedPeak(ProcessedPeak peak) {
@@ -47,6 +50,15 @@ public class ProcessedPeak extends Peak {
         this.ion = peak.getIon();
         this.decompositions = peak.getDecompositions();
         this.collisionEnergy = peak.getCollisionEnergy();
+        this.originalMz = peak.getOriginalMz();
+    }
+
+    public double getOriginalMz() {
+        return originalMz;
+    }
+
+    public void setOriginalMz(double originalMz) {
+        this.originalMz = originalMz;
     }
 
     public CollisionEnergy getCollisionEnergy() {
@@ -146,6 +158,10 @@ public class ProcessedPeak extends Peak {
         return originalPeaks.isEmpty();
     }
 
+    public double getRecalibrationShift() {
+        return getMz() - originalMz;
+    }
+
     public List<ScoredMolecularFormula> getDecompositions() {
         return Collections.unmodifiableList(decompositions);
     }
@@ -180,7 +196,7 @@ public class ProcessedPeak extends Peak {
 
         @Override
         public int compare(ProcessedPeak o1, ProcessedPeak o2) {
-            return Double.compare(o1.getRelativeIntensity(), o2.getRelativeIntensity());
+            return Double.compare(o1.getLocalRelativeIntensity(), o2.getLocalRelativeIntensity());
         }
     }
 }

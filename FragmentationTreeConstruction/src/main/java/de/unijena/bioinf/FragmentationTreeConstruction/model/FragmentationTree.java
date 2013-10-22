@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class FragmentationTree implements Comparable<FragmentationTree>, FragmentationPathway {
 
-    private double score, rootScore;
+    private double score, rootScore, recalibrationBonus;
     private final TreeFragment root;
     private final ProcessedInput input;
 
@@ -28,6 +28,13 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         this.rootScore = graph.getRootScore();
     }
 
+    public FragmentationTree(double score, FragmentationGraph graph, GraphFragment root, double rootScore) {
+        this.score = score;
+        this.input = graph.getProcessedInput();
+        this.root = new TreeFragment(root.getIndex(), null, root.getDecomposition(), null, root.getPeak());
+        this.rootScore = rootScore;
+    }
+
     public TreeFragment addVertex(TreeFragment parent, Loss edge) {
         final Fragment child = edge.getTail();
         final TreeFragment treenode = new TreeFragment(child.getIndex(), parent, child.getDecomposition(),
@@ -36,11 +43,11 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         return treenode;
     }
 
-    // remove edge uv and create new edge from u -> v -> w
+    // remove edge uw and create new edge from u -> v -> w
     // TODO: =/
     public void reconnect(Loss uw, Loss uv, Loss vw) {
         final Fragment u = uw.getHead();
-        final Fragment v = uv.getHead();
+        final Fragment v = uv.getTail();
         final Fragment w = uw.getTail();
         assert u instanceof TreeFragment;
         assert v instanceof TreeFragment;
@@ -50,6 +57,14 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
         final Loss l = new Loss(v, w, vw.getLoss(), vw.getWeight() );
         v.addOutgoingEdge(l);
         ((TreeFragment) w).setParentEdge(l);
+    }
+
+    public double getRecalibrationBonus() {
+        return recalibrationBonus;
+    }
+
+    public void setRecalibrationBonus(double recalibrationBonus) {
+        this.recalibrationBonus = recalibrationBonus;
     }
 
     public ProcessedInput getInput() {
@@ -186,6 +201,10 @@ public class FragmentationTree implements Comparable<FragmentationTree>, Fragmen
 
     public double getRootScore() {
         return rootScore;
+    }
+
+    public void setRootScore(double rootScore) {
+        this.rootScore = rootScore;
     }
 
     @Override

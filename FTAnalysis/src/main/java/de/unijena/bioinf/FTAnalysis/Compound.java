@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FTAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.functional.Function;
 import de.unijena.bioinf.functional.iterator.Iterators;
 

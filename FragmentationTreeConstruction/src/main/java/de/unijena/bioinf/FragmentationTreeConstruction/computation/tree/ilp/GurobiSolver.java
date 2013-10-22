@@ -9,6 +9,7 @@ import gurobi.*;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 
 public class GurobiSolver implements TreeBuilder {
 
@@ -23,8 +24,8 @@ public class GurobiSolver implements TreeBuilder {
     public GurobiSolver(GRBEnv env, TreeBuilder feasibleSolver) {
         this.env = env;
         this.feasibleSolver = feasibleSolver;
-        this.secondsPerInstance = 60*30; // maximal 1/2 hour per instance
-        this.secondsPerDecomposition = 7*60; // maximal 7 minutes per decomposition
+        this.secondsPerInstance = 60*60; // maximal 1 hour per instance
+        this.secondsPerDecomposition = 70*60; // maximal 7 minutes per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
     }
@@ -148,6 +149,16 @@ public class GurobiSolver implements TreeBuilder {
         return solver.solve();
     }
 
+    @Override
+    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     protected static class Stackitem {
         private final TreeFragment treeNode;
         private final GraphFragment graphNode;
@@ -175,7 +186,7 @@ public class GurobiSolver implements TreeBuilder {
 
         protected Solver(FragmentationGraph graph, ProcessedInput input, double lowerbound, GRBEnv env, TreeBuilder feasibleSolver, int timeLimit) throws GRBException {
             this.graph = graph;
-            this.losses = new ArrayList<Loss>();
+            this.losses = new ArrayList<Loss>(graph.numberOfVertices()*10);
             for (Fragment f : graph.getFragments()) {
                 for (Loss l : f.getIncomingEdges()) losses.add(l);
             }
@@ -195,14 +206,14 @@ public class GurobiSolver implements TreeBuilder {
         public void build() {
             try {
                 defineVariables();
-                optimize();
+                model.update();
                 if (feasibleSolver != null) {
                     final FragmentationTree presolvedTree = feasibleSolver.buildTree(input, graph, lowerbound);
                     setStartValues(presolvedTree);
                 }
                 computeOffsets();
                 setConstraints();
-                model.update();
+                setLowerbound();
                 assert model.get(GRB.IntAttr.IsMIP) != 0;
                 built = true;
             } catch (GRBException e) {
@@ -219,6 +230,7 @@ public class GurobiSolver implements TreeBuilder {
                         return null; // lowerbound reached
                     } else {
                         errorHandling();
+                        return null;
                     }
                 }
                 final FragmentationTree tree = buildSolution();
@@ -235,7 +247,6 @@ public class GurobiSolver implements TreeBuilder {
         protected void setConstraints() throws GRBException {
         	setTreeConstraint();
             setColorConstraint();
-            setLowerbound();
 		}
 
 		protected void errorHandling() throws GRBException{
@@ -245,6 +256,7 @@ public class GurobiSolver implements TreeBuilder {
             switch (status)  {
                 case GRB.TIME_LIMIT: cause = "Timeout (exceed time limit of " + timeLimit + " seconds per decomposition"; throw new TimeoutException(cause);
                 case GRB.INFEASIBLE: cause = "Solution is infeasible."; break;
+                case GRB.CUTOFF: return;
                 default: try {
                     if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0) cause = "Constraint are violated. Tree-correctness: "
                             + buildSolution().isComputationCorrect(graph.getRootScore());
@@ -352,6 +364,7 @@ public class GurobiSolver implements TreeBuilder {
         }
 
         protected void setLowerbound() throws GRBException {
+            /*
             if (lowerbound != 0) {
                 final GRBLinExpr lowerboundExpression = new GRBLinExpr();
                 for (int i=0; i < losses.size(); ++i) {
@@ -360,6 +373,11 @@ public class GurobiSolver implements TreeBuilder {
                 }
                 assert !Double.isInfinite(-lowerbound) && !Double.isNaN(-lowerbound);
                 model.addConstr(lowerboundExpression, GRB.LESS_EQUAL, -lowerbound, null);//String.valueOf(++identifier));
+            }
+            */
+            if (lowerbound != 0) {
+                final double realLowerbound = lowerbound-graph.getRootScore();
+                model.getEnv().set(GRB.DoubleParam.Cutoff, Math.min(0, -realLowerbound));
             }
         }
 

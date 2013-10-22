@@ -2,7 +2,6 @@ package de.unijena.bioinf.FragmentationTree;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.Hydrogen2CarbonScorer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -35,6 +34,7 @@ public class TestMS2Analysis {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setAllowedMassDeviation(new Deviation(20, 2e-3));
             profile.setStandardMs2MassDeviation(new Deviation(20, 2e-3));
+            profile.setMedianNoiseIntensity(0.01);
             profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
             experiment.setMeasurementProfile(profile);
             final StringWriter writer = new StringWriter();
@@ -54,7 +54,7 @@ public class TestMS2Analysis {
             System.out.println(tree.getScore());
             final TreeAnnotation annotation = new TreeAnnotation(tree, analysis);
             final FTDotWriter dotWriter = new FTDotWriter();
-            dotWriter.writeTree(writer, tree, annotation.getVertexAnnotations(), annotation.getEdgeAnnotations());
+            dotWriter.writeTree(writer, tree, annotation.getAdditionalProperties(), annotation.getVertexAnnotations(), annotation.getEdgeAnnotations());
             System.out.println(writer.toString());
 
         } catch (IOException e) {

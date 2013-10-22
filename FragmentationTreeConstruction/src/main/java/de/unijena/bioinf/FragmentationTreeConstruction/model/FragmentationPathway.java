@@ -19,6 +19,10 @@ public interface FragmentationPathway extends FTGraph<Fragment> {
 
     public int numberOfColors();
 
+    /**
+     *
+     * @return
+     */
     public int numberOfVertices();
 
     public int numberOfEdges();

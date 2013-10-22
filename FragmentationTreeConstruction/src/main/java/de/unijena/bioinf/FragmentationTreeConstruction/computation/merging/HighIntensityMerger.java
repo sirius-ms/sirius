@@ -69,6 +69,7 @@ public class HighIntensityMerger implements PeakMerger {
     }
 
     protected int mergeParentPeak(Ms2Experiment experiment, Deviation mergeWindow, Merger merger, ProcessedPeak[] mzArray, Spectrum<ProcessedPeak> massOrderedSpectrum) {
+        mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation().divide(2d);
         final double parentMass = experiment.getIonMass();
         final int properParentPeak = Spectrums.search(massOrderedSpectrum, parentMass, mergeWindow);
         if (properParentPeak < 0) {

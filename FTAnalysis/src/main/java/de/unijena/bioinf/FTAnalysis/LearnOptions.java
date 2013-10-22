@@ -11,6 +11,9 @@ public interface LearnOptions {
     @Unparsed
     public List<File> getTrainingdata();
 
+    @Option(shortName = "e", defaultValue = "80", description = "expected percentage of explained peaks")
+    public double getExplain();
+
     @Option(shortName = "p", defaultToNull = true, description = "initial profile to start learning")
     public String getProfile();
 
@@ -41,6 +44,15 @@ public interface LearnOptions {
             "REPLACE (previous common fragments), ADD (fragments to previous common fragments), " +
             "MERGE (fragments with previous common fragments", defaultValue = "MERGE")
     public LearnMethod getCommonFragments();
+
+    @Option
+    public boolean isRecombinateLosses();
+
+    @Option
+    public boolean isExponentialDistribution();
+
+    @Option(defaultToNull = true)
+    public Double getMaximalCommonLossScore();
 
     @Option(shortName = "v")
     public boolean isVerbose();

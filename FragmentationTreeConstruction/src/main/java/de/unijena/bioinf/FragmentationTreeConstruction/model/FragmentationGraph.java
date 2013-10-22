@@ -4,8 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.functional.Function;
 import de.unijena.bioinf.functional.iterator.Iterators;
-import org.apache.commons.collections.primitives.ArrayIntList;
-import org.apache.commons.collections.primitives.IntList;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 
@@ -148,42 +147,14 @@ public class FragmentationGraph implements FragmentationPathway {
     }
 
     private void trim() {
-        /*final long t1 = System.nanoTime();
-        final int numberOfVertices = vertices.size();
 
-        */
-        final int numberOfEdges = Iterators.count(lossIterator());
         trimLeaves();
         trimEdges();
+
         int k=0;
         for (GraphFragment f : vertices) {
             f.index = k++;
         }
-        final int numberOfEdges2 = Iterators.count(lossIterator());
-        //System.err.println(numberOfEdges2 + " / " + numberOfEdges + " edges trimmed");
-        /*
-        {
-            // TODO: Hotfix
-            final Iterator<Loss> l = lossIterator();
-            while (l.hasNext()) {
-                Loss x = l.next();
-                if (Double.isInfinite(x.getWeight())) x.setWeight(-10000000d);
-
-            }
-        }
-        */
-        //trimEdges();
-        //assert !trimLeaves();
-        //trimEdges();
-        //assert !trimEdges();
-        /*
-        final int numberOfVertices2 = vertices.size();
-        final int numberOfEdges2 = Iterators.count(lossIterator());
-        final long t2 = System.nanoTime();
-        System.err.println(numberOfVertices2 + " / " + numberOfVertices + " vertices trimmed");
-        System.err.println(numberOfEdges2 + " / " + numberOfEdges + " edges trimmed");
-        System.err.println("trim time: " + (t2-t1)/1000000);
-        */
     }
 
     private void trimEdges() {
@@ -260,21 +231,23 @@ public class FragmentationGraph implements FragmentationPathway {
 
     private boolean trimLeaves() {
         int x = vertices.size();
-        final IntList toDelete = new ArrayIntList(20);
+        final TIntArrayList toDelete = new TIntArrayList(20);
         final ArrayList<GraphFragment> ordered = verticesInPostOrder();
         for (int i=0; i < ordered.size()-1; ++i) {
             final GraphFragment fragment = ordered.get(i);
-            if (fragment.shouldBeTrimmed()) {
-                toDelete.add(fragment.getIndex());
+            if (fragment.isLeaf()) {
                 final Iterator<Loss> out = fragment.incommingEdges.iterator();
                 while (out.hasNext()) {
                     final Loss l = out.next();
-                    ((GraphFragment)l.getHead()).removeOutgoingEdge(l);
-                    out.remove();
+                    if (l.getWeight() < 0) {
+                        ((GraphFragment)l.getHead()).removeOutgoingEdge(l);
+                        out.remove();
+                    }
                 }
+                if (fragment.incommingEdges.isEmpty()) toDelete.add(fragment.getIndex());
             }
         }
-        final int[] ids = toDelete.toArray(new int[toDelete.size()]);
+        final int[] ids = toDelete.toArray();
         Arrays.sort(ids);
         int n = vertices.size();
         for (int i = ids.length-1; i >= 0; --i) {
@@ -375,7 +348,7 @@ public class FragmentationGraph implements FragmentationPathway {
     }
 
     public int numberOfColors() {
-        return peaks.size();
+        return filteredPeaks != null ? filteredPeaks.size() : peaks.size();
     }
 
     public Loss getLossOf(int u, int v) {
