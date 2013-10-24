@@ -5,7 +5,8 @@ public class Ion extends Ionization{
 	private int charge;
 	private MolecularFormula molecule;
 	
-	public static final double ELECTRON_MASS = 0.0005485299999998805d;
+	public static final double ELECTRON_MASS = 0.00054857990946d;
+	// siehe http://physics.nist.gov/cgi-bin/cuu/Value?meu
 	
 	public Ion(MolecularFormula molecule, int charge){
 		this.charge = charge;
