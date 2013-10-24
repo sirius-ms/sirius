@@ -49,7 +49,7 @@ public class DoubleDataMatrix {
     public static DoubleDataMatrix overlay(List<Iterator<String[]>> templateTables, List<Iterator<String[]>> additionalTables, List<String> names, List<NameNormalizer> nameNormalizers, double neutralElement) {
 
         if (templateTables==null) templateTables = Collections.emptyList();
-        if (additionalTables==null) templateTables = Collections.emptyList();
+        if (additionalTables==null) additionalTables = Collections.emptyList();
         final NameNormalizer[] norms = new NameNormalizer[templateTables.size()+additionalTables.size()];
         if (nameNormalizers != null) {
             for (int i=0; i < nameNormalizers.size(); ++i) norms[i] = nameNormalizers.get(i);
