@@ -21,9 +21,9 @@
 			<attribute name="javadoc_location" value="jar:file:/home/kai/.m2/repository/net/sf/javailp/1.2a/javailp-1.2a-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="var" path="M2_REPO/gurobi/gurobi-linux64/5.1.0/gurobi-linux64-5.1.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/rosuda/Rserve/0.68/Rserve-0.68.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/rosuda/REngine/0.68/REngine-0.68.jar"/>
-	<classpathentry kind="src" path="/babelms"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/BabelMs"/>
+	<classpathentry kind="var" path="M2_REPO/gurobi/gurobi-win64/5.5.0/gurobi-win64-5.5.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
