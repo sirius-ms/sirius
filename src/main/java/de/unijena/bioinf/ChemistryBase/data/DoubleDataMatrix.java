@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.data;
 
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 
@@ -86,6 +87,132 @@ public class DoubleDataMatrix {
             }
         });
         return new DoubleDataMatrix(matrix, rowNameArray, colNameArray, names.toArray(new String[N]));
+    }
+
+    private static class Tab {
+        TreeMap<String, double[]> rows;
+        String[] colNames;
+        Tab(Iterator<String[]> iter, NameNormalizer norm) {
+            String[] header = iter.next();
+            if (!iter.hasNext()) {
+                // empty table
+                colNames = new String[0];
+                rows = new TreeMap<String, double[]>();
+            } else {
+                rows = new TreeMap<String, double[]>();
+                String[] row = iter.next();
+                // parse Header
+                if (header.length == row.length) {
+                    // first element in header is placeholder
+                    colNames = new String[row.length-1];
+                    if (norm != null)
+                        for (int i=1; i < header.length; ++i) colNames[i] = norm.normalize(header[i]);
+                    else System.arraycopy(header, 1, colNames, 0, colNames.length);
+                } else if (header.length == row.length-1) {
+                    // header contains only col names
+                    if (norm != null) {
+                        colNames = new String[header.length];
+                        for (int i=0; i < header.length; ++i) colNames[i] = norm.normalize(header[i]);
+                    } else {
+                        colNames = Arrays.copyOf(header, header.length);
+                    }
+                } else {
+                    throw new IllegalArgumentException("Row size differs");
+                }
+                // parse rows
+                while (row != null) {
+                    String rowName = norm != null ? norm.normalize(row[0]) : row[0];
+                    double[] rowValues = new double[row.length-1];
+                    for (int i=1; i < row.length; ++i) rowValues[i-1] = Double.parseDouble(row[i]);
+                    rows.put(rowName, rowValues);
+                    row = iter.hasNext() ? iter.next() : null;
+                }
+            }
+        }
+    }
+
+    public static DoubleDataMatrix overlayIntersection(List<Iterator<String[]>> tables, List<String> names, List<NameNormalizer> norms) {
+        final TObjectIntHashMap<String> rowNames = new TObjectIntHashMap<String>(40, 0.75f, -1);
+        final TObjectIntHashMap<String> colNames = new TObjectIntHashMap<String>(40, 0.5f, -1);
+
+        final List<Tab> matrices = new ArrayList<Tab>();
+        for (int i=0; i < tables.size(); ++i) {
+            final NameNormalizer n = (norms == null || norms.size() <= i) ? null : norms.get(i);
+            matrices.add(new Tab(tables.get(i), n));
+        }
+
+        // intersect matrices
+        final TreeSet<String> colIntersections = new TreeSet<String>();
+        final TreeSet<String> rowIntersections = new TreeSet<String>();
+
+        final Iterator<Tab> matrixIter = matrices.iterator();
+
+        Tab t = matrixIter.next();
+        colIntersections.addAll(Arrays.asList(t.colNames));
+        rowIntersections.addAll(t.rows.keySet());
+
+        while (matrixIter.hasNext()) {
+            t = matrixIter.next();
+            colIntersections.retainAll(new TreeSet<String>(Arrays.asList(t.colNames))); // stupid java collection api -_-
+            rowIntersections.retainAll(t.rows.keySet());
+        }
+
+        // rearrange tables
+
+        final double[][][] matrix = new double[tables.size()][rowIntersections.size()][colIntersections.size()];
+
+        int k1=0;
+        for (String s : rowIntersections) rowNames.put(s, k1++);
+        int k2=0;
+        for (String s : colIntersections) colNames.put(s, k2++);
+
+        final int[] from = new int[colNames.size()];
+        final int[] to = new int[colNames.size()];
+
+        for (int T = 0; T < tables.size(); ++T) {
+            final Tab table = matrices.get(T);
+            int K=0;
+            for (int col=0; col < table.colNames.length; ++col) {
+                if (colIntersections.contains(table.colNames[col])) {
+                    from[K] = col;
+                    to[K] = colNames.get(table.colNames[col]);
+                    ++K;
+                }
+            }
+            final double[][] M = matrix[T];
+            rowNames.forEachEntry(new TObjectIntProcedure<String>() {
+                @Override
+                public boolean execute(String a, int b) {
+                    final double[] source = table.rows.get(a);
+                    final double[] target = M[b];
+                    for (int K=0; K < from.length; ++K) {
+                        target[to[K]] = source[from[K]];
+                    }
+                    return true;
+                }
+            });
+        }
+
+        final String[] finalRowNames = new String[rowNames.size()];
+        final String[] finalColNames = new String[colNames.size()];
+        rowNames.forEachEntry(new TObjectIntProcedure<String>() {
+            @Override
+            public boolean execute(String a, int b) {
+                finalRowNames[b] = a;
+                return true;
+            }
+        });
+        colNames.forEachEntry(new TObjectIntProcedure<String>() {
+            @Override
+            public boolean execute(String a, int b) {
+                finalColNames[b] = a;
+                return true;
+            }
+        });
+
+
+
+        return new DoubleDataMatrix(matrix, finalRowNames, finalColNames, names.toArray(new String[tables.size()]));
     }
 
     private static void extractAdditionalTables(List<Iterator<String[]>> templateTables, List<Iterator<String[]>> additionalTables, double neutralElement, NameNormalizer[] norms, TObjectIntHashMap<String> rowNames, TObjectIntHashMap<String> colNames, TreeMap<Integer, double[]>[] rowBuffers) {
