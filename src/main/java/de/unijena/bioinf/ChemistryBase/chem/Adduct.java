@@ -12,7 +12,7 @@ public class Adduct extends Ionization {
 	private final MolecularFormula molecularFormula;
 	
 	public static final double ELECTRON_MASS = 0.00054857990946d;
-	// http://physics.nist.gov/cgi-bin/cuu/Value?meu
+	// siehe http://physics.nist.gov/cgi-bin/cuu/Value?meu
 	
 	public Adduct(int charge, String name, MolecularFormula formula) {
 		this(formula.getMass(), charge, name, formula);
@@ -45,7 +45,7 @@ public class Adduct extends Ionization {
 
 	@Override
 	public double getMass() {
-		return molecularFormula.getMass() - charge*ELECTRON_MASS;
+		return mass + charge*ELECTRON_MASS;
 	}
 
 	@Override
@@ -60,9 +60,10 @@ public class Adduct extends Ionization {
 
     @Override
     public String toString() {
-    	if(charge>1)  return molecularFormula.toString()+charge+"+";
-		if(charge>0)  return molecularFormula.toString()+"+";
-		if(charge<-1) return molecularFormula.toString()+charge+"-";
-		return molecularFormula.toString()+"-";
+        if(charge>1) return molecularFormula.toString()+charge+"-";
+        if(charge==1) return molecularFormula.toString()+"-";
+        if(charge==-1) return molecularFormula.toString()+"+";
+        if(charge<-1) return molecularFormula.toString()+charge+"+";
+        return molecularFormula.toString();
     }
 }
