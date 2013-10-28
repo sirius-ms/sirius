@@ -149,19 +149,37 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     private void addDefaultIons() {
         final String[] ions = new String[]{"[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M-2H]-", "[M+K]+", "[M+K-2H]+",
-                "[M-OH]-", "[M+Na]+", "[M+Cl]-", "[M+H-H2O]+"};
-        final MolecularFormula[] formulas = new MolecularFormula[]{
-                MolecularFormula.parse("H"), MolecularFormula.parse("H").negate(), MolecularFormula.parse(""), MolecularFormula.parse(""),
-                MolecularFormula.parse("H2").negate(), MolecularFormula.parse("K"),
-                MolecularFormula.parse("K").subtract(MolecularFormula.parse("H2")),
-                MolecularFormula.parse("OH").negate(), MolecularFormula.parse("Na"), MolecularFormula.parse("Cl"),
-                MolecularFormula.parse("HO").negate()
+                "[M-OH]-", "[M+Na]+", "[M+Cl]-", "[M+H-H2O]+", "[M-H+Na]+", "[M+2Na-H]+","[M+Na2-H]+", "[M+NH3+H]+", "[(M+NH3)+H]+", "[M+NH4]+",
+                "[M+H-C6H10O4]+", "[M+H-C6H10O5]+", "[M-H+OH]-", "[M+HCOO-]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
         };
+        final MolecularFormula[] formulas = new MolecularFormula[]{
+                MolecularFormula.parse("H"),
+                MolecularFormula.parse("H").negate(),
+                MolecularFormula.parse(""),
+                MolecularFormula.parse(""),
+                MolecularFormula.parse("H2").negate(),
+                MolecularFormula.parse("K"),
+                MolecularFormula.parse("K").subtract(MolecularFormula.parse("H2")),
+                MolecularFormula.parse("OH").negate(),
+                MolecularFormula.parse("Na"),
+                MolecularFormula.parse("Cl"),
+                MolecularFormula.parse("HO").negate() ,
+                MolecularFormula.parse("Na").subtract(MolecularFormula.parse("H")),
+                MolecularFormula.parse("Na2").subtract(MolecularFormula.parse("H")),MolecularFormula.parse("Na2").subtract(MolecularFormula.parse("H")),
+                MolecularFormula.parse("NH4"), MolecularFormula.parse("NH4"), MolecularFormula.parse("NH4"),
+                MolecularFormula.parse("H").subtract(MolecularFormula.parse("C6H10O4")),
+                MolecularFormula.parse("H").subtract(MolecularFormula.parse("C6H10O5")),
+                MolecularFormula.parse("O"),
+                MolecularFormula.parse("HCO2"),
+                MolecularFormula.parse("C2H3O2"), MolecularFormula.parse("C2H3O2")
+        };
+
+        assert ions.length==formulas.length;
         for (int i=0; i < ions.length; ++i) {
             final String ion = ions[i];
             final MolecularFormula form = formulas[i];
             final int charge = ion.endsWith("+") ? 1 : -1;
-            final Adduct adduct = new Adduct(form.getMass() - Charge.PROTON_MASS*charge, charge , ion, form );
+            final Adduct adduct = new Adduct(form.getMass() - Charge.ELECTRON_MASS *charge, charge , ion, form );
             ionizations.add(adduct);
             ionNameMap.put(ion, adduct);
             ionMap.put(adduct.getMass(), adduct);
@@ -265,9 +283,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     public void addIonizationAdduct(Adduct adduct) {
-        if (ionNameMap.containsKey(adduct.getFormula())) throw new IllegalArgumentException("There is already an ionization with name '" + adduct.getFormula() + "'");
+        if (ionNameMap.containsKey(adduct.getName())) throw new IllegalArgumentException("There is already an ionization with name '" + adduct.getName() + "'");
         ionMap.put(adduct.getMass(), adduct);
-        ionNameMap.put(adduct.getFormula(), adduct);
+        ionNameMap.put(adduct.getName(), adduct);
     }
 
     public Pattern getPattern() {
@@ -325,7 +343,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     
     //private static final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*([+-])\\s*(.+)([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
-    private Ionization __parseIonFromString(String s) {
+    Adduct __parseIonFromString(String s) {
     	final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*(?:([+-])\\s*(.+))?([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
     	final Matcher m = ION_PATTERN.matcher(s);
     	if (!m.find()) throw new RuntimeException("Can't parse ion: '" + s + "'");
@@ -336,8 +354,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     	//final char electron = m.group(3).isEmpty() ? '.' : m.group(3).charAt(0);
     	double mass = molecule.getMass();
     	//switch (electron) {
-			/*case '+':*/if (charge > 0) mass -= Charge.PROTON_MASS*numberOfCharges;//break;
-			/*case '-':*/else if (charge < 0) mass += Charge.PROTON_MASS*numberOfCharges;// break;
+			/*case '+':*/if (charge > 0) mass -= Charge.ELECTRON_MASS *numberOfCharges;//break;
+			/*case '-':*/else if (charge < 0) mass += Charge.ELECTRON_MASS *numberOfCharges;// break;
 			//default:
 		//}
     	return (add) 	? new Adduct(mass, numberOfCharges*charge, s, molecule) 
@@ -466,7 +484,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     	for (Ionization ion : ionMap.subMap(a.getMass()-1e-2, a.getMass()+1e-2).values()) {
             if (ion.equals(a)) return ion;
         }
-        return null;
+        return a;
     }
 
     /**

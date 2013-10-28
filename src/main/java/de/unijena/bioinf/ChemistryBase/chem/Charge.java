@@ -8,7 +8,8 @@ public class Charge extends Ionization {
     /*
     it seems that Na - Na+ ~= H - H+ ~=
      */
-	public final static double PROTON_MASS = 0.0005485299999998805d;
+    // source: Mohr, Peter J. and Taylor, Barry N. and Newell, David B., Rev. Mod. Phys. 2012.
+	public final static double ELECTRON_MASS =   0.00054857990946d;
 	private final int charge;
 	
 	public Charge(int charge) {
@@ -22,7 +23,7 @@ public class Charge extends Ionization {
      */
 	@Override
 	public double getMass() {
-		return -charge * PROTON_MASS;
+		return -charge * ELECTRON_MASS;
 	}
 
 	@Override
@@ -31,7 +32,7 @@ public class Charge extends Ionization {
 	}
 
 	@Override
-	public String getFormula() {
+	public String getName() {
 		return charge > 0 ? "[M+?]+" : (charge < 0 ? "[M+?]-" : "[M+?]"); 
 	}
 	

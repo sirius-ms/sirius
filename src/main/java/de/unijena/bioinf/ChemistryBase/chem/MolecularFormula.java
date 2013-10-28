@@ -83,11 +83,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     }
     
     static MolecularFormula parse(String text, PeriodicTable pt) {
-    	int labelindex = Arrays.binarySearch(Static.MOLECULE_NAME, text);
-    	if (labelindex > -1) {
-    		text = Static.MOLECULE_FORMULA[labelindex];
-    	}
-    	
     	final ArrayList<Pair> pairs = new ArrayList<Pair>();
     	pt.parse(text, new FormulaVisitor<Object>() {
 			@Override
