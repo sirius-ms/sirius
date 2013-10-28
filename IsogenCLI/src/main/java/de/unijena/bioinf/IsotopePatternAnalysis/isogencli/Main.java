@@ -97,7 +97,7 @@ public class Main {
                             }
 
                             @Override
-                            public String getFormula() {
+                            public String getName() {
                                 return ioF;
                             }
                         };
