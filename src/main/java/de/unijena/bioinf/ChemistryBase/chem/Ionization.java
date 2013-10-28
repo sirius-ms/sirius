@@ -51,7 +51,7 @@ public abstract class Ionization implements Comparable<Ionization> {
     	return null;
     }
     
-    public abstract String getFormula();
+    public abstract String getName();
 
     @Override
     public boolean equals(Object o) {
@@ -77,7 +77,7 @@ public abstract class Ionization implements Comparable<Ionization> {
 
     @Override
     public String toString() {
-        return getFormula();
+        return getName();
     }
 
     @Override

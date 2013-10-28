@@ -24,7 +24,7 @@ public class Ion extends Ionization{
 	}
 
 	@Override
-	public String getFormula() {
+	public String getName() {
 		return this.molecule.toString();
 	}
 

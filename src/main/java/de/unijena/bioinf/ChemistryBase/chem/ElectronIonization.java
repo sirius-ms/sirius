@@ -12,7 +12,7 @@ public class ElectronIonization extends Ionization {
 
     @Override
     public double getMass() {
-        return -Static.ELECTRON_MASS;
+        return -Charge.ELECTRON_MASS;
     }
 
     @Override
@@ -21,7 +21,7 @@ public class ElectronIonization extends Ionization {
     }
 
     @Override
-    public String getFormula() {
+    public String getName() {
         return "M+.";
     }
 }
