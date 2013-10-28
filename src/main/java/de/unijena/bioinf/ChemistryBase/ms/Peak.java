@@ -14,7 +14,11 @@ public class Peak implements Comparable<Peak>, Cloneable {
 	
 	protected double mass;
 	protected double intensity;
-	
+
+    public Peak(Peak x) {
+        this(x.getMass(), x.getIntensity());
+    }
+
 	public Peak(double mass, double intensity) {
 		super();
 		this.mass = mass;

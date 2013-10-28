@@ -451,6 +451,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     /**
      * search for an ion with the given name. Usually, the names are in the format '[M'[+-]X']'[+-] where
      * X is a molecular formula, for example [M+H2O]+.
+     *
+     * [M+H]+
+     *
      */
     public Ionization ionByName(String name) {
     	if (ionNameMap.containsKey(name)) return ionNameMap.get(name);
