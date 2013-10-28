@@ -31,7 +31,7 @@ public class MainIsoTest {
             boolean found = false;
             for (ScoredMolecularFormula s : scored) {
                 ++rank;
-                if (s.getFormula().equals(right)) {
+                if (s.getName().equals(right)) {
                     found = true;
                     break;
                 }
