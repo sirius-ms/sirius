@@ -37,21 +37,21 @@ public class ExpRek implements RecalibrationStrategy, Parameterized {
                 list.add(mes.getMzAt(i));
             }
         }
-        final Deviation dev = new Deviation(5, 1e-3);
+        final Deviation dev = new Deviation(4, 1e-3);
         final double[][] values = MzRecalibration.maxIntervalStabbing(mes, ref, new UnivariateFunction() {
             @Override
             public double value(double x) {
                 return dev.absoluteFor(x);
             }
         });
-        // 2. there have to be at least 5 peaks with > 4% intensity
+        // 2. there have to be at least 6 peaks with > 4% intensity
         int found = 0;
         for (double x : values[0]) {
             if (list.contains(x)) ++found;
         }
 
 
-        if (found<5) return new Identity();
+        if (found<6) return new Identity();
         final UnivariateFunction recalibration = MzRecalibration.getLinearRecalibration(values[0], values[1]);
         MzRecalibration.recalibrate(spectrum, recalibration);
         return recalibration;

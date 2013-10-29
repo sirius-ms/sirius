@@ -190,9 +190,9 @@ public class CommonLossEdgeScorer implements LossScorer{
             final ArrayList<MolecularFormula> losses = new ArrayList<MolecularFormula>(source.keySet());
             final TObjectDoubleHashMap<MolecularFormula> recs = new TObjectDoubleHashMap<MolecularFormula>(source.size()*source.size()*source.size());
             List<MolecularFormula> src = new ArrayList<MolecularFormula>(losses);
-            final double gamma = 10;
+            final double gamma = 1;
             for (int i=1; i <=3; ++i) {
-                final double score = Math.log(gamma/i);
+                final double score = /*Math.log(*/gamma/i/*)*/;
                 final ArrayList<MolecularFormula> newSrc = new ArrayList<MolecularFormula>();
                 for (MolecularFormula f : losses) {
                     for (MolecularFormula g : src) {

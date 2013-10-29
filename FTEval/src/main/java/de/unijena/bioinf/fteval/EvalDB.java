@@ -1,5 +1,4 @@
 package de.unijena.bioinf.fteval;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
@@ -21,8 +20,12 @@ public class EvalDB {
         return new File(new File(root, "profiles"), removeExtName(name));
     }
 
+    File msDir() {
+        return new File(root, "ms");
+    }
+
     File[] msFiles() {
-        return new File(root, "ms").listFiles(new FilenameFilter() {
+        return msDir().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith(".ms");
@@ -31,10 +34,10 @@ public class EvalDB {
     }
 
     File[] dotFiles(String profile) {
-        return new File(root, "ms").listFiles(new FilenameFilter() {
+        return dotDir(profile).listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith(".ms");
+                return name.endsWith(".dot");
             }
         });
     }
@@ -95,12 +98,34 @@ public class EvalDB {
         });
     }
 
+    public File garbageDir() {
+        return new File(root, "garbage");
+    }
+
+    public File otherScoreDir() {
+        return new File(root, "scores");
+    }
+
     public File[] otherScores() {
-        return new File(root, "scores").listFiles(new FilenameFilter() {
+        return otherScoreDir().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith(".csv");
             }
         });
+    }
+
+    public File decoy(String profil) {
+        final File d1 = new File(profile(profil), "decoy" );
+        if (d1.exists()) return d1;
+        return new File(root, "decoy");
+    }
+
+    public File qvalueMatrix(String p) {
+        return new File(profile(p),"qvalues.csv");
+    }
+
+    public File dotDir(String prof) {
+        return new File(profile(prof), "dot");
     }
 }
