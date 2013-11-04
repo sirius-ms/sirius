@@ -26,7 +26,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
@@ -213,9 +212,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
-        analysis.setTreeBuilder(new GurobiSolver());
-        final GurobiSolver solver = new GurobiSolver();
-        solver.setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
+
+        final TreeBuilder solver = loadTreeBuilder();
         analysis.setTreeBuilder(solver);
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -229,6 +227,29 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setDefaultProfile(profile);
 
         return analysis;
+    }
+
+    private static TreeBuilder loadTreeBuilder() {
+        try {
+            // is gurobi.jar in classpath?
+            final Class<TreeBuilder> kl = (Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver");
+            // is gurobi native library in classpath?
+            if (!System.getProperty("java.library.path").contains("GurobiJni")) {
+                System.err.println("Warning: No gurobi ilp solver in java library path. Use DP solver instead.");
+                return new DPTreeBuilder(12);
+            } else {
+                try {
+                    final TreeBuilder b = kl.newInstance();
+                    kl.getMethod("setNumberOfCPUs", int.class).invoke(b, Runtime.getRuntime().availableProcessors() );
+                    return b;
+                } catch (Exception e) {
+                    System.err.println("Warning: Gurobi couldn't loaded: " + e.getMessage());
+                    return new DPTreeBuilder(12);
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            return new DPTreeBuilder(12);
+        }
     }
 
     /**
@@ -287,8 +308,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.fragmentPeakScorers = new ArrayList<PeakScorer>();
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
-        this.treeBuilder = new GurobiSolver();
-        ((GurobiSolver)treeBuilder).setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
+        final TreeBuilder solver = loadTreeBuilder();
+        setTreeBuilder(solver);
 
     }
 

@@ -15,6 +15,7 @@ import de.unijena.bioinf.spectralign.Main;
 import de.unijena.bioinf.spectralign.SpectralAligner;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
+import javax.swing.border.CompoundBorder;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;

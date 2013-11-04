@@ -3,8 +3,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.Charge;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -14,7 +12,6 @@ import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.function.TDoubleFunction;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.procedure.TObjectDoubleProcedure;
-import gnu.trove.procedure.TObjectProcedure;
 
 import java.util.*;
 

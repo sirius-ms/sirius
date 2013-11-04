@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class DynamicTreeSizeScorer implements PeakScorer {
