@@ -9,27 +9,33 @@ import java.util.List;
 public class ProcessedInput {
 
     private final Ms2Experiment experiment;
+    private final Ms2Experiment originalInput;
     private final List<ProcessedPeak> mergedPeaks;
     private final ProcessedPeak parentPeak;
     private final List<ScoredMolecularFormula> parentMassDecompositions;
     private final double[] peakScores;
     private final double[][] peakPairScores;
 
-    public ProcessedInput(Ms2Experiment experiment,
+    public ProcessedInput(Ms2Experiment experiment, Ms2Experiment originalInput,
                           List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak, List<ScoredMolecularFormula> parentMassDecompositions) {
-        this(experiment, mergedPeaks, parentPeak, parentMassDecompositions, null, null);
+        this(experiment, originalInput, mergedPeaks, parentPeak, parentMassDecompositions, null, null);
 
     }
 
-    public ProcessedInput(Ms2Experiment experiment,
+    public ProcessedInput(Ms2Experiment experiment, Ms2Experiment originalInput,
                           List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak, List<ScoredMolecularFormula> parentMassDecompositions,
                           double[] peakScores, double[][] peakPairScores) {
         this.experiment = experiment;
+        this.originalInput = originalInput;
         this.mergedPeaks = mergedPeaks;
         this.parentPeak = parentPeak;
         this.parentMassDecompositions = parentMassDecompositions;
         this.peakPairScores = peakPairScores;
         this.peakScores = peakScores;
+    }
+
+    public Ms2Experiment getOriginalInput() {
+        return originalInput;
     }
 
     public Ms2Experiment getExperimentInformation() {

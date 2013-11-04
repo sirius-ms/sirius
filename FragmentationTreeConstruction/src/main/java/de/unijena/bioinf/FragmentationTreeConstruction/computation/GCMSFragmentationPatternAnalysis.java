@@ -134,7 +134,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         // decompose and score all peaks
         //todo split decomposeAndScore method to differentiate in scoring whether molecule peak present or not
         if (moleculePeakPresent){
-            return decomposeAndScore(processedInput.getExperimentInformation(), processedInput.getMergedPeaks());
+            return decomposeAndScore(processedInput.getExperimentInformation(), experiment, processedInput.getMergedPeaks());
         } else {
             //todo return a decomposeAndScore without parent
             return null;
@@ -155,7 +155,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         List<ProcessedPeak> peaks = normalize(input);
 
         testForDerivatization(input, peaks);
-        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, peaks, null, null)).getMergedPeaks();
+        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, experiment, peaks, null, null)).getMergedPeaks();
         if (removeIsotopePeaks){
             peaks = removeIsotopePeaks(input, peaks);
             if (VERBOSE && moleculePeakKnown) System.out.println("ionMass: "+ input.getIonMass()+", largest peak mass: "+peaks.get(peaks.size()-1).getMz());
@@ -168,10 +168,10 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         if (moleculePeakPresent){
             //todo some PostProcesses assume that parent peak present -> create new Stage to differentiate between methods which need parent or don't need? or make all methods also work without
             //PostProcessor.Stage.AFTER_MERGING ist z.B. NoiseThreshold
-            peaks = postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, peaks, parentPeak, null)).getMergedPeaks();
+            peaks = postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, experiment, peaks, parentPeak, null)).getMergedPeaks();
         }
 
-        return new ProcessedInput(input, peaks, parentPeak, null);
+        return new ProcessedInput(input, experiment, peaks, parentPeak, null);
     }
 
     @Override
@@ -198,7 +198,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
     }
 
     @Override
-    ProcessedInput decomposeAndScore(Ms2Experiment ms2Experiment, List<ProcessedPeak> processedPeaks) {
+    ProcessedInput decomposeAndScore(Ms2Experiment ms2Experiment, Ms2Experiment originalInput, List<ProcessedPeak> processedPeaks) {
         Ms2ExperimentImpl experiment = new Ms2ExperimentImpl(ms2Experiment);
         final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
         // sort again...
@@ -247,7 +247,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
                 decompositions.set(i, new ArrayList<MolecularFormula>(right));
             }
         }
-        final ProcessedInput preprocessed = new ProcessedInput(experiment, processedPeaks, parentPeak, null);
+        final ProcessedInput preprocessed = new ProcessedInput(experiment, originalInput, processedPeaks, parentPeak, null);
         final int n = processedPeaks.size();
         // score peak pairs
         final double[][] peakPairScores = new double[n][n];
@@ -301,7 +301,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         for (int i=0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
 
         final ProcessedInput processedInput =
-                new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
+                new ProcessedInput(experiment, originalInput, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
         // final processing
         return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, processedInput);
     }
@@ -373,7 +373,7 @@ public class GCMSFragmentationPatternAnalysis extends FragmentationPatternAnalys
         }
         Arrays.fill(newPeakPairScores[newPeakPairScores.length-1], 0d);
 
-        ProcessedInput processedInputForGraphBuilding = new ProcessedInput(input.getExperimentInformation(), mergedPeaks, dummy, dummy.getDecompositions(), newPeakScores, newPeakPairScores);
+        ProcessedInput processedInputForGraphBuilding = new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), mergedPeaks, dummy, dummy.getDecompositions(), newPeakScores, newPeakPairScores);
         FragmentationGraph graph = buildGraph(processedInputForGraphBuilding, dummy.getDecompositions().get(0));
         //set unwanted weights of dummy outgoing edges to 0
         //todo learn cool weights

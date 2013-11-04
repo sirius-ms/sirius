@@ -46,6 +46,6 @@ public interface RecalibrationMethod extends Parameterized {
      * #getCorrectedTree method.
      * @return recalibration 'method' object
      */
-    public Recalibration recalibrate(FragmentationTree tree,MassDeviationVertexScorer scorer);
+    public Recalibration recalibrate(FragmentationTree tree,MassDeviationVertexScorer scorer,boolean force);
 
 }

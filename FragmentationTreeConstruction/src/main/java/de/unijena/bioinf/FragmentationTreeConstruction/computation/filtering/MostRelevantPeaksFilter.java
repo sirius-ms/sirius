@@ -112,7 +112,7 @@ public class MostRelevantPeaksFilter implements PostProcessor {
              filteredList.get(i).setIndex(i);
         }
 
-        return new ProcessedInput(input.getExperimentInformation(), filteredList, input.getParentPeak(), input.getParentMassDecompositions(),
+        return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), filteredList, input.getParentPeak(), input.getParentMassDecompositions(),
                 input.getPeakScores(), input.getPeakPairScores());
     }
 

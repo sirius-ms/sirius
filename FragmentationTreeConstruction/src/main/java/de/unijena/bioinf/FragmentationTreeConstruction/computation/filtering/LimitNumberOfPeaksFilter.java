@@ -44,7 +44,7 @@ public class LimitNumberOfPeaksFilter implements PostProcessor{
         for (int i=limit; i < peaks.length; ++i) {
             if (parentPeakDeviation.inErrorWindow(parentMz, peaks[i].getMz())) filtered.add(peaks[i]);
         }
-        return new ProcessedInput(input.getExperimentInformation(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
+        return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
                 input.getPeakScores(), input.getPeakPairScores());
     }
 

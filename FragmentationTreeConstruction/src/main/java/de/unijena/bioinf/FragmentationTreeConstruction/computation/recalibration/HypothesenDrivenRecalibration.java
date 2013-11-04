@@ -5,11 +5,14 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeFragment;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
@@ -27,6 +30,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
 
     private RecalibrationStrategy method;
     private double distanceThreshold;
+    private double deviationScale=1d;
 
     public HypothesenDrivenRecalibration() {
         this(new LeastSquare(), 0.00002d);
@@ -37,9 +41,32 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
         this.distanceThreshold = distanceThreshold;
     }
 
+    public RecalibrationStrategy getMethod() {
+        return method;
+    }
+
+    public double getDeviationScale() {
+        return deviationScale;
+    }
+
+    public void setDeviationScale(double deviationScale) {
+        this.deviationScale = deviationScale;
+    }
+
+    public void setMethod(RecalibrationStrategy method) {
+        this.method = method;
+    }
+
+    public double getDistanceThreshold() {
+        return distanceThreshold;
+    }
+
+    public void setDistanceThreshold(double distanceThreshold) {
+        this.distanceThreshold = distanceThreshold;
+    }
 
     @Override
-    public Recalibration recalibrate(final FragmentationTree tree, final MassDeviationVertexScorer scorer) {
+    public Recalibration recalibrate(final FragmentationTree tree, final MassDeviationVertexScorer scorer, final boolean force) {
         // get peaks from tree
         final List<TreeFragment> fragments = new ArrayList<TreeFragment>(tree.getFragments());
         Collections.sort(fragments, new Comparator<TreeFragment>() {
@@ -52,7 +79,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
         final SimpleMutableSpectrum ref = new SimpleMutableSpectrum();
         final Ionization ion = tree.getIonization();
         for (TreeFragment f : fragments) {
-            spec.addPeak(new Peak(f.getPeak().getMass(), f.getPeak().getRelativeIntensity()));
+            spec.addPeak(new Peak(f.getPeak().getOriginalMz(), f.getPeak().getRelativeIntensity()));
             ref.addPeak(new Peak(ion.addToMass(f.getDecomposition().getFormula().getMass()), f.getPeak().getRelativeIntensity()));
         }
         final UnivariateFunction recalibrationFunction = method.recalibrate(spec, ref);
@@ -77,7 +104,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
             private FragmentationTree recomputeTree(FragmentationPatternAnalysis analyzer) {
                 getScoreBonus();
                 final UnivariateFunction f = recalibrationFunction;
-                if (f instanceof Identity) {
+                if (f instanceof Identity && !force) {
                     correctedTree = tree;
                     return tree;
                 }
@@ -96,8 +123,19 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 final MutableMeasurementProfile prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
                 exp.setMeasurementProfile(prof);
                 */
-                correctedTree = analyzer.computeTrees(analyzer.preprocessingWithRecalibration(tree.getInput().getExperimentInformation(), this)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(tree.getScore()).withoutRecalibration().optimalTree();
-                if (correctedTree == null) correctedTree = tree;
+                final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(analyzer.validate(tree.getInput().getOriginalInput()));
+                final MutableMeasurementProfile prof = new MutableMeasurementProfile(impl.getMeasurementProfile());
+                prof.setStandardMs2MassDeviation(prof.getStandardMs2MassDeviation().multiply(deviationScale));
+                impl.setMeasurementProfile(prof);
+                ProcessedInput pinp = analyzer.preprocessingWithRecalibration(impl, this);
+                correctedTree = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : tree.getScore()).withoutRecalibration().optimalTree();
+                if (correctedTree == null) {
+                    assert !force;
+                    correctedTree = tree;
+                }
+                final FragmentationTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(correctedTree.getScore()).withoutRecalibration().optimalTree();
+                if (ft2 == null) return correctedTree;
+                else if (ft2.getScore() > correctedTree.getScore()) return ft2;
                 return correctedTree;
             }
 
@@ -111,7 +149,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 double sc=0d;
                 double distance = 0d;
                 for (TreeFragment f : fragments) {
-                    final double oldMz = f.getPeak().getMz();
+                    final double oldMz = f.getPeak().getOriginalMz();
                     final double newMz = recalibrationFunction.value(oldMz);
                     distance += Math.abs(newMz-oldMz);
                     final double theoreticalMz = ion.addToMass(f.getDecomposition().getFormula().getMass());

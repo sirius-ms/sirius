@@ -90,14 +90,13 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        final FreeRadicalEdgeScorer edgeScorer = new FreeRadicalEdgeScorer();
         final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "commonRadicals"));
         while (iter.hasNext()) {
             final Map.Entry<String,G> v = iter.next();
-            edgeScorer.addRadical(MolecularFormula.parse(v.getKey()), (Double)v.getValue());
+            addRadical(MolecularFormula.parse(v.getKey()), (Double)v.getValue());
         }
-        edgeScorer.setGeneralRadicalScore(document.getDoubleFromDictionary(dictionary, "radicalPenalty"));
-        edgeScorer.setNormalization(document.getDoubleFromDictionary(dictionary, "normalization"));
+        setGeneralRadicalScore(document.getDoubleFromDictionary(dictionary, "radicalPenalty"));
+        setNormalization(document.getDoubleFromDictionary(dictionary, "normalization"));
     }
 
     @Override
