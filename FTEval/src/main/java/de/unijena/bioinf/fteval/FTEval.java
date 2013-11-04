@@ -397,7 +397,6 @@ public class FTEval {
         }
         final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
         final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
-        if (!opts.isNoFingerprint()) dataset.computeFingerprints();
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(
@@ -422,6 +421,7 @@ public class FTEval {
                     else {
                         writer.append(",");
                         final ScoreTable tab = new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
+                        if (!tab.getName().equals("Pubchem") && !tab.getName().equals("MACCS")) tab.toFingerprints();
                         writer.append(String.valueOf(dataset.ssps(tab, K)));
                     }
                 }
