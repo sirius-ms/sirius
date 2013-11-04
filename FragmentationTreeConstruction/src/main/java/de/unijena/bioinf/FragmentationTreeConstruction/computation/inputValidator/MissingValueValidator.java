@@ -89,7 +89,7 @@ public class MissingValueValidator implements InputValidator {
             throwOrWarn(warn, repair, "Neutral mass is missing");
             if (input.getMolecularFormula() != null) {
                 input.setMoleculeNeutralMass(input.getMolecularFormula().getMass());
-            } else {
+            } else if (input.getIonization() != null) {
                 input.setMoleculeNeutralMass(input.getIonization().subtractFromMass(input.getIonMass()));
             }
         }

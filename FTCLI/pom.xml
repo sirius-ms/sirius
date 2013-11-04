@@ -99,14 +99,6 @@
                     <encoding>utf-8</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-plugin</artifactId>
-                <version>1.5</version>
-                <configuration>
-                    <connectionType>connection</connectionType>
-                </configuration>
-            </plugin>
             <!-- create a jar file with mvn package -->
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>

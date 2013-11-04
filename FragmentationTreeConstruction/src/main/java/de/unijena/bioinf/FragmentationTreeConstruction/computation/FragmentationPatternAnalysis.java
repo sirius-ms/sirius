@@ -13,10 +13,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NormalizeToSumPreprocessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Preprocessor;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
@@ -121,7 +118,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final double GAMMA = 1;
 
         for (String s : CommonLossEdgeScorer.ales_list) {
-            alesscorer.addCommonLoss(MolecularFormula.parse(s), GAMMA * Math.log(10));
+            alesscorer.addCommonLoss(MolecularFormula.parse(s), /*GAMMA * Math.log(10)*/1);
         }
 
         lossScorers.add(alesscorer);
@@ -149,16 +146,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
-        //analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
-        analysis.setTreeBuilder(new DPTreeBuilder(15));
+        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(100));
+
+        //analysis.setTreeBuilder(new DPTreeBuilder(15));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
-        profile.setAllowedMassDeviation(new Deviation(10));
+        profile.setAllowedMassDeviation(new Deviation(11));
         profile.setStandardMassDifferenceDeviation(new Deviation(2.5d));
-        profile.setStandardMs2MassDeviation(new Deviation(10d/3d));
-        profile.setStandardMs1MassDeviation(new Deviation(10d / 3d));
+        profile.setStandardMs2MassDeviation(new Deviation(11d/4d));
+        profile.setStandardMs1MassDeviation(new Deviation(11d / 4d));
         profile.setFormulaConstraints(new FormulaConstraints());
         profile.setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.04d).getMedian());
         profile.setIntensityDeviation(0.02);
@@ -341,9 +340,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Recalibrates the tree
      * @return Recalibration object containing score bonus and new tree
      */
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree, boolean force) {
         if (recalibrationMethod == null || tree == null) return null;
-        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer());
+        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer(), force);
+    }
+
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+        return getRecalibrationFromTree(tree,false);
     }
 
     /**
@@ -353,14 +356,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param tree
      * @return
      */
-    protected FragmentationTree recalibrate(FragmentationTree tree) {
+    public FragmentationTree recalibrate(FragmentationTree tree, boolean force) {
         if (tree == null) return null;
-        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree);
-        if (rec == null || rec.getScoreBonus() <= 0) return tree;
+        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree, force);
+        if (rec == null || (!force && rec.getScoreBonus() <= 0)) return tree;
         double oldScore = tree.getScore();
-        if (rec.shouldRecomputeTree()) {
+        if (force || rec.shouldRecomputeTree()) {
             final FragmentationTree newTree = rec.getCorrectedTree(this);
-            if (newTree.getScore() > tree.getScore()) {
+            if (force || newTree.getScore() > tree.getScore()) {
                 tree = newTree;
                 tree.setRecalibrationBonus(tree.getScore()-oldScore);
             }
@@ -369,6 +372,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             tree.setRecalibrationBonus(tree.getScore()-oldScore);
         }
         return tree;
+    }
+
+    public FragmentationTree recalibrate(FragmentationTree tree) {
+        return recalibrate(tree, false);
     }
 
     public RecalibrationMethod getRecalibrationMethod() {
@@ -426,36 +433,32 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final ProcessedInput input = preprocessWithoutDecomposing(experiment);
         final UnivariateFunction f = recalibration.recalibrationFunction();
         for (ProcessedPeak peak :input.getMergedPeaks()) {
-            peak.setOriginalMz(peak.getMz());
-            peak.setMz(f.value(peak.getMz()));
+            //peak.setOriginalMz(peak.getMz());
+            peak.setMz(f.value(peak.getOriginalMz()));
         }
         // decompose and score all peaks
-        return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
+        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
     }
 
     public ProcessedInput preprocessing(Ms2Experiment experiment) {
         final ProcessedInput input = preprocessWithoutDecomposing(experiment);
         // decompose and score all peaks
-        return decomposeAndScore(input.getExperimentInformation(), input.getMergedPeaks());
+        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
     }
 
     ProcessedInput preprocessWithoutDecomposing(Ms2Experiment experiment) {
-        // first of all: insert default profile if no profile is given
-        Ms2ExperimentImpl input = wrapInput(experiment);
-        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(defaultProfile);
-        else input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
         // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
-        input = wrapInput(preProcess(validate(input)));
+        Ms2Experiment input = wrapInput(preProcess(validate(experiment)));
         // normalize all peaks and merge peaks within the same spectrum
         // put peaks from all spectra together in a flatten list
         List<ProcessedPeak> peaks = normalize(input);
-        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, peaks, null, null)).getMergedPeaks();
+        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, experiment, peaks, null, null)).getMergedPeaks();
         // merge peaks from different spectra
         final List<ProcessedPeak> processedPeaks = mergePeaks(input, peaks);
         final ProcessedPeak parentPeak = selectParentPeakAndCleanSpectrum(input, processedPeaks);
         final List<ProcessedPeak> afterMerging =
-                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, processedPeaks, parentPeak, null)).getMergedPeaks();
-        return new ProcessedInput(input, afterMerging, parentPeak, null);
+                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, experiment, processedPeaks, parentPeak, null)).getMergedPeaks();
+        return new ProcessedInput(input, experiment, afterMerging, parentPeak, null);
     }
 
     /**
@@ -502,7 +505,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return parentPeak;
     }
 
-    ProcessedInput decomposeAndScore(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks) {
+    ProcessedInput decomposeAndScore(Ms2Experiment experiment, Ms2Experiment originalExperiment, List<ProcessedPeak> processedPeaks) {
         final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
         // sort again...
         processedPeaks = new ArrayList<ProcessedPeak>(processedPeaks);
@@ -513,7 +516,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Ionization ion = experiment.getIonization();
         final Deviation fragmentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
-        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(parentPeak.getUnmodifiedMass(), parentDeviation, constraints);
+        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(parentPeak.getUnmodifiedOriginalMass(), parentDeviation, constraints);
         final ArrayList<List<MolecularFormula>> decompositions = new ArrayList<List<MolecularFormula>>(processedPeaks.size());
         int j=0;
         for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size()-1)) {
@@ -546,7 +549,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 decompositions.set(i, new ArrayList<MolecularFormula>(right));
             }
         }
-        final ProcessedInput preprocessed = new ProcessedInput(experiment, processedPeaks, parentPeak, null);
+        final ProcessedInput preprocessed = new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak, null);
         final int n = processedPeaks.size();
         // score peak pairs
         final double[][] peakPairScores = new double[n][n];
@@ -599,7 +602,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (int i=0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
 
         final ProcessedInput processedInput =
-                new ProcessedInput(experiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
+                new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
         // final processing
         return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, processedInput);
     }
@@ -611,7 +614,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         - 2. der Peakmerger bekommt nur Peak aus unterschiedlichen Spektren und mergt diese
         - 3. Nach der Decomposition läuft man alle peaks in der Liste durch. Wenn zwischen zwei
              Peaks der Abstand zu klein wird, werden diese Peaks disjunkt, in dem die doppelt vorkommenden
-             Decompositions auf einen peak (den mit der geringeren Masseabweichung) eindeutig verteilt werden.
+             Decompositions auf einen peak (den mit der geringeren asseabweichung) eindeutig verteilt werden.
 
      */
 
@@ -653,7 +656,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     ArrayList<ProcessedPeak> normalize(Ms2Experiment experiment) {
         final double parentMass  = experiment.getIonMass();
         final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
-        final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation();
+        final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation().divide(2d);
         final Ionization ion = experiment.getIonization();
         double globalMaxIntensity = 0d;
         for (Ms2Spectrum s : experiment.getMs2Spectra()) {
@@ -725,7 +728,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return input;
     }
 
-    Ms2Experiment validate(Ms2Experiment experiment) {
+    public Ms2Experiment validate(Ms2Experiment experiment) {
+        // first of all: insert default profile if no profile is given
+        Ms2ExperimentImpl input = new Ms2ExperimentImpl(experiment);
+        if (input.getMeasurementProfile()==null) input.setMeasurementProfile(new MutableMeasurementProfile(defaultProfile));
+        else input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
+        experiment = input;
         for (InputValidator validator : inputValidators) {
             experiment = validator.validate(experiment, validatorWarning, repairInput);
         }

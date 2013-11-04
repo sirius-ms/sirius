@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.recal.MzRecalibration;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
@@ -18,6 +19,7 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
 
     private Deviation epsilon;
     private int minNumberOfPeaks;
+    private double minIntensity;
 
     public MedianSlope() {
         this(new Deviation(4, 0.001), 10);
@@ -26,6 +28,27 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
     public MedianSlope(Deviation epsilon, int minNumberOfPeaks) {
         this.epsilon = epsilon;
         this.minNumberOfPeaks = minNumberOfPeaks;
+        this.minIntensity = 0d;
+    }
+
+    public int getMinNumberOfPeaks() {
+        return minNumberOfPeaks;
+    }
+
+    public void setEpsilon(Deviation epsilon) {
+        this.epsilon = epsilon;
+    }
+
+    public void setMinNumberOfPeaks(int minNumberOfPeaks) {
+        this.minNumberOfPeaks = minNumberOfPeaks;
+    }
+
+    public double getMinIntensity() {
+        return minIntensity;
+    }
+
+    public void setMinIntensity(double minIntensity) {
+        this.minIntensity = minIntensity;
     }
 
     public Deviation getEpsilon() {
@@ -35,6 +58,14 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
     @Override
     public UnivariateFunction recalibrate(MutableSpectrum<Peak> spectrum, Spectrum<Peak> referenceSpectrum) {
         final Deviation dev = epsilon;
+        spectrum = new SimpleMutableSpectrum(spectrum);
+        final SimpleMutableSpectrum ref = new SimpleMutableSpectrum(referenceSpectrum);
+        for (int i=0; i < ref.size(); ++i) {
+            if (spectrum.getIntensityAt(i) < minIntensity) {
+                ref.removePeakAt(i);
+                spectrum.removePeakAt(i);
+            }
+        }
         final double[][] values = MzRecalibration.maxIntervalStabbing(spectrum, referenceSpectrum, new UnivariateFunction() {
             @Override
             public double value(double x) {

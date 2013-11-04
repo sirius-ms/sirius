@@ -1,6 +1,10 @@
 package de.unijena.bioinf.fteval;
 
 import com.lexicalscope.jewel.cli.Option;
+import com.lexicalscope.jewel.cli.Unparsed;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,5 +17,11 @@ public interface SSPSBasicOptions extends EvalBasicOptions{
 
     @Option(shortName = "F")
     public boolean isNoFingerprint();
+
+    @Option(shortName = "t", defaultValue = "ssps.csv")
+    public File getTarget();
+
+    @Unparsed()
+    public List<File> getInput();
 
 }

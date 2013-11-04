@@ -535,9 +535,10 @@ public class FTLearn {
         }
         final HashMap<MolecularFormula, XY> originalOne = new HashMap<MolecularFormula, XY>(lossCounter);
         final int lossSizeIterations = options.getLossSizeIterations()==0 ? 100 : options.getLossSizeIterations();
-        for (int I=0; I < lossSizeIterations; ++I) {
-            final int frequencyThreshold = 10;
-            final double intensityThreshold = 2;
+        int I;
+        for (I=0; I < lossSizeIterations; ++I) {
+            final int frequencyThreshold = 5;
+            final double intensityThreshold = 0.5d;
             boolean changed = false;
 
             // for losses with mass below 12 Da, the log norm distribution heavily underestimate the frequency of losses
@@ -563,25 +564,27 @@ public class FTLearn {
 
                 }
 
-                final double OFFSET = 0.001d;
+                final double OFFSET = 0d;
 
                 final double expectedFrequency = OFFSET + numOfCompounds * distribution.getDensity(entry.getKey().getMass());
                 final double observedFrequency = OFFSET + entry.getValue().x;
                 final double expectedIntensity = OFFSET + intensityOfCompounds * distribution.getDensity(entry.getKey().getMass());
                 final double observedIntensity = OFFSET + entry.getValue().y;
-                final double LIMIT = (I==0) ? 4 : 1;
                 final boolean newLoss = !commonLosses.containsKey(entry.getKey());
+                final double LIMIT = (newLoss) ? (5+OFFSET) : 0;
                 final double newLossThreshold = isChno ? 10 : 3;
 
                 //
-                if (((!isChno || entry.getKey().getMass() <= 10) && observedFrequency-expectedFrequency >= LIMIT) || observedFrequency-expectedFrequency >= frequencyThreshold &&  observedIntensity-expectedIntensity >= intensityThreshold) {
+                //if  (((!isChno || entry.getKey().getMass() <= 10) && observedFrequency-expectedFrequency >= LIMIT) || observedFrequency-expectedFrequency >= frequencyThreshold &&  observedIntensity-expectedIntensity >= intensityThreshold) {
+                //if (observedFrequency >= LIMIT && (!isChno || entry.getKey().getMass() <= 10d || (observedFrequency-expectedFrequency >= frequencyThreshold) && observedIntensity-expectedIntensity >= intensityThreshold)) {
+                if (observedFrequency >= LIMIT && (observedFrequency-expectedFrequency >= frequencyThreshold && observedIntensity - expectedIntensity >= intensityThreshold)) {
                     final double score;
                     if (USE_INTENSITY_FOR_COUNTING) {
                         score = Math.log(observedIntensity/expectedIntensity);
                     } else {
                         score = Math.log(observedFrequency/expectedFrequency);
                     }
-                    if (score >= Math.log(1.5)) {
+                    if (score >= Math.log(1.33333333d)) {
                         changed = true;
                         if (commonLosses.containsKey(entry.getKey())) commonLosses.put(entry.getKey(), score + commonLosses.get(entry.getKey()));
                         else commonLosses.put(entry.getKey(), score);
@@ -589,7 +592,7 @@ public class FTLearn {
                     }
                 }
             }
-            if (I>0 && (!changed || I == (lossSizeIterations-1))) break;
+            if (I>0 && (I >= (lossSizeIterations-1))) break;
             // estimate loss size distribution
             double mean = 0d;
             double ms = 0d, msI=0, msF=0;
@@ -611,6 +614,7 @@ public class FTLearn {
             sum = new XY(msF, msI);
             distribution = new LogNormalDistribution(mean, var);
         }
+        System.out.println("Break after " + I + " iterations.");
 
         final LogNormalDistribution resultingDist = distribution;
         final LossSizeScorer newLossSizeScorer = new LossSizeScorer(distribution, 0d);

@@ -2,6 +2,8 @@ package de.unijena.bioinf.fteval;
 
 import com.lexicalscope.jewel.cli.Option;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: kai
@@ -11,9 +13,13 @@ import com.lexicalscope.jewel.cli.Option;
  */
 public interface AlignOpts extends EvalBasicOptions{
 
-    @Option(shortName = "F")
-    public boolean isNoFingerprints();
     @Option(shortName = "J")
     public boolean isNoMultijoin();
+
+    @Option(shortName = "t", defaultValue = "matrix.csv")
+    public String getTarget();
+
+    @Option(shortName = "x", defaultToNull = true)
+    public List<String> getXtra();
 
 }

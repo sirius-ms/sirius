@@ -27,7 +27,7 @@ public class Ms2ExperimentImpl implements Ms2Experiment {
         this.mergedMs1Spectrum = exp.getMergedMs1Spectrum();
         this.ionMass = exp.getIonMass();
         this.moleculeNeutralMass = exp.getMoleculeNeutralMass();
-        this.measurementProfile = exp.getMeasurementProfile();
+        this.measurementProfile = exp.getMeasurementProfile()==null ? null : exp.getMeasurementProfile();
         this.molecularFormula = exp.getMolecularFormula();
         this.ionization = exp.getIonization();
     }
