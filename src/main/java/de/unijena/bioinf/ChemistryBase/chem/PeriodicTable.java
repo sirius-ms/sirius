@@ -210,6 +210,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     private final HashMap<String, Ionization> ionNameMap;
     private final ArrayList<Element> elements;
     private IsotopicDistribution distribution;
+    private final MolecularFormula emptyFormula;
     /**
      * Cache which is used to build molecular formulas with shared structure
      */
@@ -260,6 +261,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         this.ionMap = new TreeMap<Double, Ionization>(); // TODO: Use MultiMaps
         this.ionNameMap = new HashMap<String, Ionization>();
         this.distribution = new IsotopicDistribution(this);
+        this.emptyFormula = MolecularFormula.fromCompomer(cache.getSelectionFor(new BitSet()), new short[0]);
     }
 
     PeriodicTable(PeriodicTable pt) {
@@ -271,8 +273,13 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         // new cache =(
         this.cache = new TableSelectionCache(this, TableSelectionCache.DEFAULT_MAX_COMPOMERE_SIZE);
         this.ionNameMap = new HashMap<String, Ionization>(pt.ionNameMap);
+        this.emptyFormula = MolecularFormula.fromCompomer(cache.getSelectionFor(new BitSet()), new short[0]);
         this.distribution = new IsotopicDistribution(this);
         distribution.merge(pt.distribution);
+    }
+
+    public MolecularFormula emptyFormula() {
+        return emptyFormula;
     }
 
     public void addElement(String name, String symbol, double mass, int valence) {

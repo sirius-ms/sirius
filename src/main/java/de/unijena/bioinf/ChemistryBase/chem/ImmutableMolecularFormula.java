@@ -10,8 +10,15 @@ class ImmutableMolecularFormula extends MolecularFormula {
 	private final int hash;
 	
 	public ImmutableMolecularFormula(MolecularFormula formula) {
-		this(formula.getTableSelection(), formula.buffer());
+		this(formula.getTableSelection(), formula.buffer(), formula.getMass(), formula.hashCode());
 	}
+
+    private ImmutableMolecularFormula(TableSelection selection, short[] buffer, double mass, int hash) {
+        this.amounts = buffer.clone();
+        this.selection = selection;
+        this.mass = mass;
+        this.hash = hash;
+    }
 
 	ImmutableMolecularFormula(TableSelection selection, short[] buffer) {
 		int i = buffer.length-1;
@@ -60,7 +67,5 @@ class ImmutableMolecularFormula extends MolecularFormula {
 	protected short[] buffer() {
 		return amounts;
 	}
-	
-	
 
 }
