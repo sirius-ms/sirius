@@ -44,6 +44,10 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     public static MolecularFormula from(MolecularFormula formula) {
     	return new ImmutableMolecularFormula(formula);
     }
+
+    public static MolecularFormula emptyFormula() {
+        return PeriodicTable.getInstance().emptyFormula();
+    }
     
     /**
      * build a new molecular formula from an array and a table selection. The array is copied during the
