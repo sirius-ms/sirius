@@ -49,7 +49,8 @@ public class Peak implements Comparable<Peak>, Cloneable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof Peak) {
+		if (obj == this) return true;
+        if (obj instanceof Peak) {
 			Peak p = (Peak) obj;
 			return Math.abs(mass - p.mass) < DELTA && Math.abs(intensity - p.intensity) < DELTA;
 		}

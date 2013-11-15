@@ -1,6 +1,9 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
-public class Ion extends Ionization{
+/**
+ * TODO: @Marvin remove this class as soon as you replaced all references to it by Adduct
+ */
+@Deprecated public class Ion extends Ionization{
 	
 	private int charge;
 	private MolecularFormula molecule;
