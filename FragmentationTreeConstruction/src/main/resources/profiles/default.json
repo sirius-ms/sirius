@@ -163,7 +163,7 @@
       },
       {
         "$name": "IntrinsicallyChargedScorer",
-        "score": -4.60517
+        "score": -2.3025850929940455
       },
       {
         "$name": "ChemicalPriorScorer",
@@ -239,6 +239,11 @@
     "fragmentScorers": [
       {
         "$name": "MassDeviationVertexScorer"
+      },
+      {
+        "$name": "FragmentSizeScorer",
+        "maxSize": 200,
+        "maxScore": 2
       },
       {
         "$name": "CommonFragmentsScore",
