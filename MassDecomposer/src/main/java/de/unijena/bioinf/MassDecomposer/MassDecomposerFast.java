@@ -87,9 +87,11 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
     @Override
     public List<int[]> decompose(final double mass, Deviation dev, Map<T, Interval> boundaries, DecompositionValidator<T>validator){
         init();
-        if (mass == 0d) return Collections.emptyList();
-        if (mass < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition");
         final double absError = dev.absoluteFor(mass);
+        if (mass <= 0d) {
+            if (mass < -absError) return Collections.emptyList();//throw new IllegalArgumentException("Expect positive mass for decomposition");
+            else return Collections.emptyList();
+        }
         final int[] minValues = new int[weights.size()];
         final int[] boundsarray = new int[weights.size()];
         boolean minAllZero = true;
