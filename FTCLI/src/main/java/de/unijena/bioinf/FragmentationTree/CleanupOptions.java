@@ -35,7 +35,7 @@ public interface CleanupOptions extends ProfileOptions, BasicOptions {
     @Unparsed
     public List<File> getFiles();
 
-    @Option(shortName = "t", defaultValue = ".", description = "target directory for the output data")
+    @Option(shortName = "t", defaultValue = "cleanedUp", description = "target directory for the output data")
     public File getTarget();
 
 }
