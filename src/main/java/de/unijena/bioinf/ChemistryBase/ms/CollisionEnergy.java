@@ -66,4 +66,14 @@ public class CollisionEnergy {
         };
     }
 
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = Double.doubleToLongBits(minEnergy);
+        result = (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(maxEnergy);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
+    }
 }

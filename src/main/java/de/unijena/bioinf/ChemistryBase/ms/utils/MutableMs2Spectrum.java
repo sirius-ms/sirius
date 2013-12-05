@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +23,12 @@ public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spec
 
     public <S extends Spectrum<? extends Peak>> MutableMs2Spectrum(S s){
         super(s);
+        if (s instanceof Ms2Spectrum) {
+            Ms2Spectrum ms = (Ms2Spectrum) s;
+            this.precursorMz = ms.getPrecursorMz();
+            this.collisionEnergy = ms.getCollisionEnergy();
+            this.totalIonCurrent = ms.getTotalIonCount();
+        }
     }
 
     @Override
