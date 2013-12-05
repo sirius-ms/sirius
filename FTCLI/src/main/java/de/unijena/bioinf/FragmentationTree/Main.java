@@ -606,7 +606,7 @@ public class Main {
         return i<0 ? name : name.substring(0, i);
     }
 
-    private Ms2Experiment parseFile(File f, MeasurementProfile profile) throws IOException {
+    public static Ms2Experiment parseFile(File f, MeasurementProfile profile) throws IOException {
         final GenericParser<Ms2Experiment> parser = new GenericParser<Ms2Experiment>(getParserFor(f));
         final Ms2Experiment experiment = parser.parseFile(f);
         final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(experiment);
@@ -623,7 +623,7 @@ public class Main {
         return impl;
     }
 
-    private Parser<Ms2Experiment> getParserFor(File f) {
+    public static Parser<Ms2Experiment> getParserFor(File f) {
         final String[] extName = f.getName().split("\\.");
         if (extName.length>1 && extName[1].equalsIgnoreCase("ms")){
             return new JenaMsParser();
