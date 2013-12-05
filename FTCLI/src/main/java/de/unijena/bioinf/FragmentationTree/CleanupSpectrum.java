@@ -12,6 +12,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2Spectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
+import de.unijena.bioinf.babelms.GenericWriter;
+import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import org.apache.commons.math3.analysis.UnivariateFunction;
@@ -93,6 +95,8 @@ public class CleanupSpectrum {
                 } else {
                     // do nothing
                 }
+                if (!options.getTarget().exists()) options.getTarget().mkdirs();
+                new GenericWriter<Ms2Experiment>(new JenaMsWriter()).writeToFile(new File(options.getTarget(), f.getName()), experiment);
 
             } catch (IOException e) {
                 e.printStackTrace();
