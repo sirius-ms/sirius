@@ -176,7 +176,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         final Ionization ion = experiment.getIonization();
         final ArrayList<ScoredMolecularFormula> result = new ArrayList<ScoredMolecularFormula>();
         final List<MolecularFormula> molecules = decomposer.getDecomposer(experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(
-                ion.subtractFromMass(pattern.getMonoisotopicMass()), experiment.getMeasurementProfile().getAllowedMassDeviation(), null, experiment.getMeasurementProfile().getFormulaConstraints().getFilters().get(0)
+                ion.subtractFromMass(pattern.getMonoisotopicMass()), experiment.getMeasurementProfile().getAllowedMassDeviation(), experiment.getMeasurementProfile().getFormulaConstraints()
         ); // TODO: Fix
         final double[] scores = scoreFormulas(new ChargedSpectrum(pattern.getPattern(), ion), molecules, experiment);
         for (int i=0; i < scores.length; ++i) {
