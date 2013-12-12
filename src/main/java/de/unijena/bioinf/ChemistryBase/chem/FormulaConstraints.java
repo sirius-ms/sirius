@@ -50,7 +50,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
             if (end-start > 0) {
                 final Matcher n = INTERVAL.matcher(string.substring(start, end));
                 if (n.find()) {
-                    final int a = Integer.parseInt(n.group(0));
+                    final int a = Integer.parseInt(n.group(1));
                     elements.put(element, a);
                 }
             }
