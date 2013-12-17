@@ -94,8 +94,7 @@ public class CommonLossEdgeScorer implements LossScorer{
 
     @Override
     public Object prepare(ProcessedInput input) {
-        if (recombinatedList==null) recombinatedList = recombinator==null ? new TObjectDoubleHashMap<MolecularFormula>()
-                : recombinator.recombinate(commonLosses, normalization);
+        getRecombinatedList();
         return null;
     }
 
@@ -173,6 +172,12 @@ public class CommonLossEdgeScorer implements LossScorer{
         if (recombinator != null)
             document.addToDictionary(dictionary, "recombinator", helper.wrap(document, recombinator));
         document.addToDictionary(dictionary, "normalization", normalization);
+    }
+
+    TObjectDoubleHashMap<MolecularFormula> getRecombinatedList() {
+        if (recombinatedList==null) recombinatedList = recombinator==null ? new TObjectDoubleHashMap<MolecularFormula>()
+                : recombinator.recombinate(commonLosses, normalization);
+        return recombinatedList;
     }
 
     /**

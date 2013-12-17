@@ -188,7 +188,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             @Override
             public boolean execute(MolecularFormula a, double b) {
                 document.addToDictionary(common, a.toString(), b);
-                return false;
+                return true;
             }
         });
         document.addDictionaryToDictionary(dictionary, "fragments", common);

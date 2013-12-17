@@ -128,12 +128,6 @@ public class Main {
             analyzer = profile.fragmentationPatternAnalysis;
         }
 
-        /*
-        FragmentationPatternAnalysis.getOrCreateByClassName(CommonFragmentsScore.class, analyzer.getDecompositionScorers()).setRecombinator(
-                new CommonFragmentsScore.LossCombinator(-1, FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, analyzer.getLossScorers()),
-                        FragmentationPatternAnalysis.getOrCreateByClassName(LossSizeScorer.class, analyzer.getPeakPairScorers())));
-
-        */
         if (options.getTreeSize() != null)
             FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
 
@@ -161,45 +155,7 @@ public class Main {
                 System.err.println("Cannot create profile file: " + e);
             }
         }
-        if (!options.isOldSirius())  {
 
-            analyzer.getRootScorers().add(new StrangeElementRootScorer());
-
-        final FragmentationPatternAnalysis A = analyzer;
-        analyzer.getLossScorers().add(new LossScorer() {
-            @Override
-            public Object prepare(ProcessedInput input) {
-                return FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, A.getLossScorers());
-            }
-
-            @Override
-            public double score(Loss loss, ProcessedInput input, Object precomputed) {
-                if (loss.getFormula().isCHNO()) {
-                    return 0d;
-                }
-                if (((CommonLossEdgeScorer)precomputed).getCommonLosses().containsKey(loss.getFormula())) {
-                    return Math.log(1.5);
-                } else if (((CommonLossEdgeScorer)precomputed).score(loss.getFormula()) > ((CommonLossEdgeScorer)precomputed).getNormalization()) {
-                    return Math.log(1.25);
-                } else return 0d;
-            }
-
-            @Override
-            public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-
-            @Override
-            public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
-
-
-
-        analyzer.getFragmentPeakScorers().add(new FragmentSizeScorer());
-
-        }
 
 
         eachFile:
