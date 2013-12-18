@@ -2,7 +2,6 @@ package de.unijena.bioinf.FragmentationTree;
 
 import com.lexicalscope.jewel.cli.Option;
 import com.lexicalscope.jewel.cli.Unparsed;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.sirius.cli.BasicOptions;
 import de.unijena.bioinf.sirius.cli.ProfileOptions;
 
@@ -14,23 +13,18 @@ import java.util.List;
  */
 public interface CleanupOptions extends ProfileOptions, BasicOptions {
 
-    public static enum MZ {
-        RECALIBRATE, IDEALIZE, KEEP;
-    }
-
-    public static enum NOISE {
-        POSSIBLE, EXPLAINED;
+    public static enum NOISE_FILTER {
+        EXPLAINABLE, EXPLAINED;
     }
 
     @Option(shortName = "f", description = "molecular formula of the compound", defaultToNull = true)
     public String getFormula();
 
-    @Option(shortName = "m", description = "how to change the masses: recalibrate, idealize or keep the original mzs", defaultValue = "IDEALIZE")
-    public MZ getMz();
+    @Option(description = "recalibrate the spectrum using the annotated peaks from the fragmentation tree")
+    public boolean getRecalibrate();
 
-    @Option(shortName = "n", description = "which peaks should be contained in the spectrum: all peaks for which a " +
-            "POSSIBLE molecular formula exists or all peaks that are EXPLAINED in the tree.", defaultValue = "EXPLAINED")
-    public NOISE getPeakFilter();
+    @Option(description = "EXPLAINABLE: delete all peaks with no explanation for the parent formula\nEXPLAINED: delete all peaks which are not contained in the tree", defaultToNull = true)
+    public NOISE_FILTER getFilter();
 
     @Unparsed
     public List<File> getFiles();

@@ -7,7 +7,7 @@ public class AlignCommand implements Command {
 
     @Override
     public String getDescription() {
-        return ""; // TODO
+        return "compute alignment scores between fragmentation trees"; // TODO
     }
 
     @Override

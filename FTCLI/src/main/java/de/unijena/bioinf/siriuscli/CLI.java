@@ -29,6 +29,7 @@ public class CLI {
                 printHelp();
             }
         }
+        if (args.length==0) printHelp();
     }
 
     private static void printHelp() {

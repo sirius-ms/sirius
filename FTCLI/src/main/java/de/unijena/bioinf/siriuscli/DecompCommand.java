@@ -5,7 +5,7 @@ import de.unijena.bioinf.MassDecomposer.cli.Main;
 public class DecompCommand implements Command {
     @Override
     public String getDescription() {
-        return "Decompose the given mass.\n" + Main.USAGE;
+        return "Decompose the given mass.";
     }
 
     @Override

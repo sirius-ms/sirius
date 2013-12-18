@@ -133,7 +133,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                     assert !force;
                     correctedTree = tree;
                 }
-                final FragmentationTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(correctedTree.getScore()).withoutRecalibration().optimalTree();
+                final FragmentationTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().optimalTree();
                 if (ft2 == null) return correctedTree;
                 else if (ft2.getScore() > correctedTree.getScore()) return ft2;
                 return correctedTree;

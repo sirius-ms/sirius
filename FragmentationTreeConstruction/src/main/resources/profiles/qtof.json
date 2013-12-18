@@ -749,8 +749,9 @@
   },
   "profile": {
     "allowedMassDeviation": "11.0 ppm (0.0025 m/z)",
-    "intensityDeviation": 0.02,
-    "standardMs2MassDeviation": "4.0 ppm (0.0012 m/z)",
+    "intensityDeviation": 0.005,
+    "standardMs2MassDeviation": "6.0 ppm (0.0012 m/z)",
+    "standardMs1MassDeviation": "6.0 ppm (0.0012 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
     "medianNoiseIntensity": 0.01577468397703731,
     "formulaConstraints": {
@@ -764,6 +765,6 @@
         }
       ]
     },
-    "standardMassDifferenceDeviation": "5.0 ppm (5.0E-4 m/z)"
+    "standardMassDifferenceDeviation": "4.0 ppm (4.0E-4 m/z)"
   }
 }

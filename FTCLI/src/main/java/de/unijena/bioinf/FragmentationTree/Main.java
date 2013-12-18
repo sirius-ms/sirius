@@ -66,6 +66,7 @@ public class Main {
         try {
             options = CliFactory.createCli(Options.class).parseArguments(args);
         } catch (HelpRequestedException h) {
+            System.out.println(VERSION_STRING);
             System.out.println(h.getMessage());
             System.exit(0);
         }
@@ -319,7 +320,7 @@ public class Main {
                 for (ScoredMolecularFormula pmd : input.getParentMassDecompositions())
                     if (pmd.getFormula().equals(correctFormula)) break;
                     else ++correctRankInPmds;
-                if (correctRankInPmds >= options.getTrees()) System.err.println("Correct formula not in top " + options.getTrees());
+                //if (correctRankInPmds >= options.getTrees()) System.err.println("Correct formula not in top " + options.getTrees());
                 double lowerbound = options.getLowerbound()==null? 0d : options.getLowerbound();
 
                 if (DEBUG_MODE) lowerbound = 0d;
@@ -492,8 +493,15 @@ public class Main {
                             System.out.print("Compute optimal tree "); System.out.flush();
                         }
                         tree = analyzer.computeTrees(input).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
-                                .without(blacklist).optimalTree();
+                                .without(blacklist).withRecalibration().optimalTree();
                         if (verbose) printResult(tree);
+                    } else if (analyzer.getRecalibrationMethod()!=null){
+                        final FragmentationTree t = analyzer.recalibrate(correctTree);
+                        MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                        method.setMinNumberOfPeaks(10);
+                        method.setEpsilon(new Deviation(4, 4e-4));
+                        ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
+                        tree = analyzer.recalibrate(t,true);
                     } else tree = correctTree;
                     if (tree == null) {
                         System.err.println("Can't find any tree");
