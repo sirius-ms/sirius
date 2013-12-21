@@ -411,13 +411,12 @@ public class Main {
                         trees.add(correctTree);
                     }
 
-                    // TODO: Workaround =(
-                    if (pattern!=null) {
-                        for (FragmentationTree t : trees) {
-                            t.setScore(t.getScore() + isotopeScores.get(t.getRoot().getFormula()));
+                    Collections.sort(trees, (pattern != null ? new Comparator<FragmentationTree>() {
+                        @Override
+                        public int compare(FragmentationTree o1, FragmentationTree o2) {
+                            return new Double(o2.getScore()+isotopeScores.get(o2.getRoot().getFormula())).compareTo(o1.getScore()+isotopeScores.get(o1.getRoot().getFormula()));
                         }
-                    }
-                    Collections.sort(trees, Collections.reverseOrder());
+                    } : Collections.<FragmentationTree>reverseOrder()));
                     trees = new ArrayList<FragmentationTree>(trees.subList(0, Math.min(TreesToConsider, trees.size())));
                     // recalibrate best trees
                     if (!trees.isEmpty() && analyzer.getRecalibrationMethod()!=null) {
@@ -432,7 +431,7 @@ public class Main {
                             if (trees.get(i)==correctTree) {
                                 correctTree = analyzer.recalibrate(correctTree);
                                 MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                method.setMinNumberOfPeaks(10);
+                                method.setMinNumberOfPeaks(8);
                                 method.setEpsilon(new Deviation(4, 4e-4));
                                 ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
                                 correctTree = analyzer.recalibrate(correctTree, true);
@@ -440,7 +439,7 @@ public class Main {
                             } else {
                                 final FragmentationTree t = analyzer.recalibrate(trees.get(i));
                                 MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                method.setMinNumberOfPeaks(10);
+                                method.setMinNumberOfPeaks(8);
                                 method.setEpsilon(new Deviation(4, 4e-4));
                                 ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
                                 trees.set(i, analyzer.recalibrate(t, true));
@@ -449,6 +448,13 @@ public class Main {
                                 if (trees.get(i).getRecalibrationBonus()!=0) System.out.println(" -> " + trees.get(i).getScore());
                                 else System.out.println("");
                             }
+                        }
+                    }
+
+                    // TODO: Workaround =(
+                    if (pattern!=null) {
+                        for (FragmentationTree t : trees) {
+                            t.setScore(t.getScore() + isotopeScores.get(t.getRoot().getFormula()));
                         }
                     }
 

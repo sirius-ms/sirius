@@ -751,7 +751,6 @@
     "allowedMassDeviation": "5.5 ppm (0.001 m/z)",
     "intensityDeviation": 0.008,
     "standardMs2MassDeviation": "1.8 ppm (3.4E-4 m/z)",
-    "standardMs1MassDeviation": "1.8 ppm (3.4E-4 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
     "standardMs1MassDeviation": "2.0 ppm (7.0E-4 m/z)",
     "medianNoiseIntensity": 0.01177087021643545,
