@@ -534,7 +534,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     	final short[] buffer = buffer();
     	final TableSelection sel = getTableSelection();
     	for (int i=0; i < buffer.length; ++i) {
-    		visitor.visit(sel.get(i), buffer[i]);
+    		if (buffer[i] > 0) visitor.visit(sel.get(i), buffer[i]);
     	}
     }
     
