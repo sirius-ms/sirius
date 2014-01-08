@@ -128,6 +128,7 @@ public class Main {
             profile = sirius;
             analyzer = profile.fragmentationPatternAnalysis;
         }
+        profile.fragmentationPatternAnalysis.setDefaultProfile(MutableMeasurementProfile.merge(profile.fragmentationPatternAnalysis.getDefaultProfile(), defaultProfile));
 
         if (options.getTreeSize() != null)
             FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(options.getTreeSize());
@@ -160,7 +161,8 @@ public class Main {
 
 
         eachFile:
-        for (final File f : files) {
+        for (int fnum=0; fnum < files.size(); ++fnum) {
+            final File f = files.get(fnum);
             try {
                 long computationTime = System.nanoTime();
                 if (verbose) System.out.println("parse " + f); System.out.flush();
@@ -502,11 +504,24 @@ public class Main {
                                 .without(blacklist).withRecalibration().optimalTree();
                         if (verbose) printResult(tree);
                     } else if (analyzer.getRecalibrationMethod()!=null){
+                        TreeSizeScorer origScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
+                        double origScore = origScorer==null ? 0d : origScorer.getTreeSizeScore();
+                        if (options.getForceExplainedIntensity() > 0) {
+                            while (true) {
+                                final double intensity = intensityOfTree(correctTree);
+                                final TreeSizeScorer scorer = FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
+                                if (intensity < options.getForceExplainedIntensity() && scorer.getTreeSizeScore() < 4) {
+                                    scorer.setTreeSizeScore(scorer.getTreeSizeScore() + 0.5d);
+                                    correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
+                                } else break;
+                            }
+                        }
                         final FragmentationTree t = analyzer.recalibrate(correctTree);
                         MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                        method.setMinNumberOfPeaks(10);
+                        method.setMinNumberOfPeaks(5);
                         method.setEpsilon(new Deviation(4, 4e-4));
                         ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
+                        FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(origScore);
                         tree = analyzer.recalibrate(t,true);
                     } else tree = correctTree;
                     if (tree == null) {
@@ -538,6 +553,13 @@ public class Main {
         for (PrintStream writer : openStreams) {
             writer.close();
         }
+    }
+
+    private static double intensityOfTree(FragmentationTree tree) {
+        double treeIntensity = 0d, maxIntensity=0d;
+        for (TreeFragment f : tree.getFragmentsWithoutRoot()) treeIntensity += f.getRelativePeakIntensity();
+        for (ProcessedPeak p : tree.getInput().getMergedPeaks()) if (p!=tree.getInput().getParentPeak()) maxIntensity += p.getRelativeIntensity();
+        return treeIntensity/maxIntensity;
     }
 
     private PrintStream DEBUGWRITER;
