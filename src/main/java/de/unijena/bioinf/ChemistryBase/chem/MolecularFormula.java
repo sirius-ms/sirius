@@ -473,6 +473,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
      * their amount. The first element is C, the second is H, all further elements are sorted alphabetically.
      * For single-amount elements the number is skipped. For zero-amount elements both number and element
      * symbol is skipped. Example: CH4, H2, NOH, Fe
+     *
+     * TODO: Handle special cases of negative amounts!
      */
     public String formatByHill() {
     	final short[] amounts = buffer();
@@ -506,7 +508,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     		buffer.append(selection.get(selection.hydrogenIndex()).getSymbol());
     	}
     	if (Math.abs(h) > 1) {
-    		buffer.append(h);
+    		buffer.append(Math.abs(h));
     	}
     	for (int i=0; i < k; ++i) {
     		final int n = numberOf(elements[i]);

@@ -148,7 +148,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     private void addDefaultIons() {
-        final String[] ions = new String[]{"[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M-2H]-", "[M+K]+", "[M+K-2H]+",
+        final String[] ions = new String[]{"[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M-2H]-", "[M+K]+", "[M+K-2H]+", "[M+K-2H]-",
                 "[M-OH]-", "[M+Na]+", "[M+Cl]-", "[M+H-H2O]+", "[M-H+Na]+", "[M+2Na-H]+","[M+Na2-H]+", "[M+NH3+H]+", "[(M+NH3)+H]+", "[M+NH4]+",
                 "[M+H-C6H10O4]+", "[M+H-C6H10O5]+", "[M-H+OH]-", "[M+HCOO-]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
         };
@@ -159,6 +159,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                 MolecularFormula.parse(""),
                 MolecularFormula.parse("H2").negate(),
                 MolecularFormula.parse("K"),
+                MolecularFormula.parse("K").subtract(MolecularFormula.parse("H2")),
                 MolecularFormula.parse("K").subtract(MolecularFormula.parse("H2")),
                 MolecularFormula.parse("OH").negate(),
                 MolecularFormula.parse("Na"),
@@ -352,6 +353,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     
     //private static final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*([+-])\\s*(.+)([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
     Adduct __parseIonFromString(String s) {
+        if (true) throw new RuntimeException("The current implementation seems to be buggy!"); // TODO: FIX!!!
     	final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*(?:([+-])\\s*(.+))?([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
     	final Matcher m = ION_PATTERN.matcher(s);
     	if (!m.find()) throw new RuntimeException("Can't parse ion: '" + s + "'");
