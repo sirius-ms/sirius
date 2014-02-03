@@ -2,10 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
@@ -67,9 +64,11 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
     public Ms2Experiment process(Ms2Experiment experiment) {
         List<? extends Ms2Spectrum> specs = experiment.getMs2Spectra();
         final ArrayList<Ms2Spectrum> spectra = new ArrayList<Ms2Spectrum>(specs.size());
-        for (Ms2Spectrum spec : specs) {
+        final Deviation allowedDev = experiment.getMeasurementProfile().getAllowedMassDeviation();
+        final Deviation parentWindow = new Deviation(allowedDev.getPpm(), Math.min(allowedDev.getAbsolute(), 0.1d));
+        for (Ms2Spectrum<? extends Peak> spec : specs) {
             final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
-            for (Object p : spec) if (((Peak)p).getIntensity() > threshold) ms.addPeak((Peak)p);
+            for (Peak p : spec) if (p.getIntensity() > threshold || parentWindow.inErrorWindow(experiment.getIonMass(), p.getMass()) ) ms.addPeak(p);
             final Ms2SpectrumImpl ms2 = new Ms2SpectrumImpl(ms, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount());
             spectra.add(ms2);
         }
