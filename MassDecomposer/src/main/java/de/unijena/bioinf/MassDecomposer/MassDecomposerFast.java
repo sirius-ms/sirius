@@ -226,12 +226,15 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
     @Override
     public void init() {
         if (ERTs != null) return;
-        ERTs = new ArrayList<long[][]>();
-        discretizeMasses();
-        divideByGCD();
-        computeLCMs();
-        calcERT();
-        computeErrors();
+        synchronized (this) {
+            if (ERTs != null) return;
+            ERTs = new ArrayList<long[][]>();
+            discretizeMasses();
+            divideByGCD();
+            computeLCMs();
+            calcERT();
+            computeErrors();
+        }
     }
 
 

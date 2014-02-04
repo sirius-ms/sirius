@@ -273,11 +273,14 @@ public class MassDecomposer<T> {
      */
     public void init() {
         if (ERT != null) return;
-        discretizeMasses();
-        divideByGCD();
-        computeLCMs();
-        calcERT();
-        computeErrors();
+        synchronized (this) {
+            if (ERT != null) return;
+            discretizeMasses();
+            divideByGCD();
+            computeLCMs();
+            calcERT();
+            computeErrors();
+        }
     }
 
     protected double calcMass(int[] input){
