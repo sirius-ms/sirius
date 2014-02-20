@@ -295,6 +295,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         if (ionNameMap.containsKey(adduct.getName())) throw new IllegalArgumentException("There is already an ionization with name '" + adduct.getName() + "'");
         ionMap.put(adduct.getMass(), adduct);
         ionNameMap.put(adduct.getName(), adduct);
+        ionizations.add(adduct);
     }
 
     public Pattern getPattern() {
