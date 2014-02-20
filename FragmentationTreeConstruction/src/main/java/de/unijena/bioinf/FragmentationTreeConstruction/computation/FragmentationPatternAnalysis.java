@@ -30,6 +30,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.util.*;
 
@@ -236,7 +237,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             // is gurobi native library in classpath?
             try {
                 final TreeBuilder b = kl.newInstance();
-                kl.getMethod("setNumberOfCPUs", int.class).invoke(b, Runtime.getRuntime().availableProcessors() );
+                kl.getMethod("setNumberOfCPUs", int.class).invoke(b, Math.min(4, Runtime.getRuntime().availableProcessors()) );
                 return b;
             } catch (Throwable e) {
                 System.err.println("Warning: Gurobi couldn't loaded: " + e.getMessage());
@@ -354,10 +355,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public FragmentationTree recalibrate(FragmentationTree tree, boolean force) {
         if (tree == null) return null;
         RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree, force);
+        final UnivariateFunction func = (rec==null) ? null : rec.recalibrationFunction();
+        assert (func==null || (!(func instanceof PolynomialFunction) || ((PolynomialFunction)func).degree()>=1) );
         if (rec == null || (!force && rec.getScoreBonus() <= 0)) return tree;
         double oldScore = tree.getScore();
         if (force || rec.shouldRecomputeTree()) {
-            final FragmentationTree newTree = rec.getCorrectedTree(this);
+            final FragmentationTree newTree = rec.getCorrectedTree(this, tree);
             if (force || newTree.getScore() > tree.getScore()) {
                 tree = newTree;
                 tree.setRecalibrationBonus(tree.getScore()-oldScore);
@@ -391,7 +394,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public MultipleTreeComputation computeTrees(ProcessedInput input) {
-        return new MultipleTreeComputation(this, input, input.getParentMassDecompositions(), 0, Integer.MAX_VALUE, 1, recalibrationMethod!=null);
+        return new MultipleTreeComputation(this, input, input.getParentMassDecompositions(), 0, Integer.MAX_VALUE, 1, recalibrationMethod!=null,null);
     }
 
     public FragmentationGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {

@@ -35,6 +35,14 @@ public interface RecalibrationMethod extends Parameterized {
         public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer);
 
         /**
+         * Recompute the tree and return the corrected tree
+         * @param analyzer the analyzer pipeline that should be used for recomputation
+         * @param oldTree (optional) the oldTree given as template for faster computation
+         * @return the recalibrated tree. It may differ from the original one in structure, score and number of vertices
+         */
+        public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer, FragmentationTree oldTree);
+
+        /**
          * @return a function which maps each peak mass to its recalibrated mass
          */
         public UnivariateFunction recalibrationFunction();

@@ -358,7 +358,7 @@ public class Main {
                 lowerbound = 0d; // don't use correct tree as lowerbound! This crashs with the recalibration
                 if (NumberOfTreesToCompute>0) {
                     List<FragmentationTree> trees;
-                    final MultipleTreeComputation m = analyzer.computeTrees(input).withRoots(input.getParentMassDecompositions().subList(0,Math.min(input.getParentMassDecompositions().size(),1000))).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
+                    final MultipleTreeComputation m = analyzer.computeTrees(input).withRoots(input.getParentMassDecompositions()).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
                             .without(blacklist).withoutRecalibration();
                     if (!verbose && !printGraph) {
                         trees = m.list();
@@ -427,14 +427,16 @@ public class Main {
                             if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
                             {
                                 MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                                method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(2d/3d));
                                 method.setMinNumberOfPeaks(5);
-                                method.setEpsilon(new Deviation(7, 0.001d));
+                                method.setEpsilon(new Deviation(6, 0.001d));
+                                method.setMinIntensity(0.02);
                             }
                             if (trees.get(i)==correctTree) {
                                 correctTree = analyzer.recalibrate(correctTree);
                                 MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
                                 method.setMinNumberOfPeaks(8);
-                                method.setEpsilon(new Deviation(4, 4e-4));
+                                method.setEpsilon(new Deviation(2, 2e-4));
                                 ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
                                 correctTree = analyzer.recalibrate(correctTree, true);
                                 trees.set(i, correctTree);
@@ -442,7 +444,7 @@ public class Main {
                                 final FragmentationTree t = analyzer.recalibrate(trees.get(i));
                                 MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
                                 method.setMinNumberOfPeaks(8);
-                                method.setEpsilon(new Deviation(4, 4e-4));
+                                method.setEpsilon(new Deviation(2, 2e-4));
                                 ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
                                 trees.set(i, analyzer.recalibrate(t, true));
                             }

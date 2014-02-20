@@ -20,6 +20,7 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
     private Deviation epsilon;
     private int minNumberOfPeaks;
     private double minIntensity;
+    private Deviation maxDeviation;
 
     public MedianSlope() {
         this(new Deviation(4, 0.001), 10);
@@ -29,6 +30,15 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
         this.epsilon = epsilon;
         this.minNumberOfPeaks = minNumberOfPeaks;
         this.minIntensity = 0d;
+        this.maxDeviation = new Deviation(10, 5e-4);
+    }
+
+    public Deviation getMaxDeviation() {
+        return maxDeviation;
+    }
+
+    public void setMaxDeviation(Deviation maxDeviation) {
+        this.maxDeviation = maxDeviation;
     }
 
     public int getMinNumberOfPeaks() {
@@ -60,11 +70,12 @@ public class MedianSlope implements RecalibrationStrategy, Parameterized {
         final Deviation dev = epsilon;
         spectrum = new SimpleMutableSpectrum(spectrum);
         final SimpleMutableSpectrum ref = new SimpleMutableSpectrum(referenceSpectrum);
-        for (int i=0; i < ref.size(); ++i) {
-            if (spectrum.getIntensityAt(i) < minIntensity) {
+        int i=0;
+        while (i < ref.size()) {
+            if (spectrum.getIntensityAt(i) < minIntensity || !maxDeviation.inErrorWindow(spectrum.getMzAt(i), referenceSpectrum.getMzAt(i))) {
                 ref.removePeakAt(i);
                 spectrum.removePeakAt(i);
-            }
+            } else ++i;
         }
         final double[][] values = MzRecalibration.maxIntervalStabbing(spectrum, referenceSpectrum, new UnivariateFunction() {
             @Override

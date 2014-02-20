@@ -2,6 +2,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -18,8 +20,9 @@ public class MultipleTreeComputation {
     private final FragmentationPatternAnalysis analyzer;
     private final ProcessedInput input;
     private final boolean recalibration;
+    private final HashMap<MolecularFormula, FragmentationTree> backbones;
 
-    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<ScoredMolecularFormula> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration) {
+    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<ScoredMolecularFormula> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration, HashMap<MolecularFormula, FragmentationTree> backbones) {
         this.analyzer = analyzer;
         this.input = input;
         this.formulas = formulas;
@@ -27,18 +30,26 @@ public class MultipleTreeComputation {
         this.maximalNumber = maximalNumber;
         this.numberOfThreads = numberOfThreads;
         this.recalibration = recalibration;
+        this.backbones = backbones;
+    }
+
+    public MultipleTreeComputation withBackbones(FragmentationTree... backbones) {
+        final HashMap<MolecularFormula, FragmentationTree> trees = new HashMap<MolecularFormula, FragmentationTree>();
+        if (this.backbones!=null) trees.putAll(this.backbones);
+        for (FragmentationTree t : backbones) trees.put(t.getRoot().getFormula(), t);
+        return new MultipleTreeComputation(analyzer, input,formulas, lowerbound, maximalNumber, numberOfThreads, recalibration, trees);
     }
 
     public MultipleTreeComputation withLowerbound(double lowerbound) {
-        return new MultipleTreeComputation(analyzer, input,formulas, lowerbound, maximalNumber, numberOfThreads, recalibration);
+        return new MultipleTreeComputation(analyzer, input,formulas, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation computeMaximal(int maximalNumber) {
-        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads, recalibration);
+        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation inParallel(int numberOfThreads) {
-        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, Math.max(1, Math.min(guessNumberOfThreads(), numberOfThreads)), recalibration);
+        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, Math.max(1, Math.min(guessNumberOfThreads(), numberOfThreads)), recalibration, backbones);
     }
 
     public MultipleTreeComputation onlyWith(Iterable<MolecularFormula> formulas) {
@@ -51,11 +62,11 @@ public class MultipleTreeComputation {
                 pmds.add(f);
             }
         }
-        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration);
+        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation withRoots(Collection<ScoredMolecularFormula> formulas) {
-        return new MultipleTreeComputation(analyzer, input, new ArrayList<ScoredMolecularFormula>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration);
+        return new MultipleTreeComputation(analyzer, input, new ArrayList<ScoredMolecularFormula>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation without(Iterable<MolecularFormula> formulas) {
@@ -69,7 +80,7 @@ public class MultipleTreeComputation {
                 pmds.add(f);
             }
         }
-        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration);
+        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation inParallel() {
@@ -82,7 +93,7 @@ public class MultipleTreeComputation {
         final GraphBuildingQueue queue =  numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
-            final FragmentationTree tree = analyzer.computeTree(graph, lb, recalibration);
+            final FragmentationTree tree = computeTree(graph, lb, recalibration);
             if (tree != null && (opt == null || tree.getScore() > opt.getScore())) {
                 opt = tree;
             }
@@ -104,7 +115,7 @@ public class MultipleTreeComputation {
             public FragmentationTree next() {
                 while (hasNext()) {
                     lastGraph = queue.next();
-                    FragmentationTree tree = analyzer.computeTree(lastGraph, lb, recalibration);
+                    FragmentationTree tree = computeTree(lastGraph, lb, recalibration);
                     if (tree != null) return tree;
                 }
                 lastGraph = null;
@@ -139,7 +150,7 @@ public class MultipleTreeComputation {
         final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {
             final FragmentationGraph graph = queue.next();
-            final FragmentationTree tree = analyzer.computeTree(graph, lb, recalibration);
+            final FragmentationTree tree = computeTree(graph, lb, recalibration);
             if (tree != null) {
                 trees.add(tree);
                 if (trees.size() > maximalNumber) {
@@ -153,6 +164,58 @@ public class MultipleTreeComputation {
         return new ArrayList<FragmentationTree>(trees.descendingSet());
     }
 
+    private FragmentationTree computeTree(FragmentationGraph graph, double lb, boolean recalibration) {
+        final TreeBuilder tb = analyzer.getTreeBuilder();
+        final FragmentationTree backbone = backbones==null ? null : backbones.get(graph.getRoot().getFormula());
+        if (backbone!=null && tb instanceof GurobiSolver) {
+            final GurobiSolver gb = (GurobiSolver)tb;
+            try {
+                gb.setFeasibleSolver(new BackboneTreeBuilder(backbone));
+                return analyzer.computeTree(graph,lb,recalibration);
+            } finally {
+                gb.setFeasibleSolver(null);
+            }
+        } else {
+            // does not support backbones
+            return analyzer.computeTree(graph,lb,recalibration);
+        }
+    }
+
+
+    private static class BackboneTreeBuilder implements TreeBuilder {
+
+        private final FragmentationTree backbone;
+        private BackboneTreeBuilder(FragmentationTree backbone) {
+            this.backbone = backbone;
+        }
+
+        @Override
+        public Object prepareTreeBuilding(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+            return null;
+        }
+
+        @Override
+        public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+            return buildTree(input, graph, lowerbound);
+        }
+
+        @Override
+        public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+            if (!graph.getRoot().getFormula().equals(backbone.getRoot().getFormula())) throw new RuntimeException("Backbone is not matching graph");
+            return backbone;
+        }
+
+        @Override
+        public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+            throw new RuntimeException("Stub code");
+        }
+
+        @Override
+        public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+            throw new RuntimeException("Stub code");
+        }
+    }
+
     /**
      * returns the number of threads that can be used for graph computation. It is assumed that each graph needs
      * 1 GB memory, so multiple threads are only allowed if there is enough memory.
@@ -164,7 +227,7 @@ public class MultipleTreeComputation {
     }
 
     public MultipleTreeComputation withRecalibration(boolean recalibration) {
-        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads, recalibration);
+        return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation withRecalibration() {

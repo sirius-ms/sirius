@@ -35,12 +35,12 @@ public class IntrinsicallyChargedScorer implements DecompositionScorer {
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
         final Ionization ion = input.getExperimentInformation().getIonization();
         // if ion is intrinsically charged, behave as if you wouldn't know it
-        /*
+
         if (DEBUG_MODE && (int)Math.round(ion.getMass()) == 0) {
             if (!formula.maybeCharged()) return penalty;
             return 0d;
         }
-        */
+
         if (!formula.maybeCharged() == (ion instanceof Charge)) return penalty;
         else return 0d;
     }

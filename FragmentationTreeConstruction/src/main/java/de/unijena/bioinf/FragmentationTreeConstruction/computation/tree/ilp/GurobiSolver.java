@@ -1,9 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.functional.iterator.Iterators;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.*;
 
 import java.io.File;
@@ -260,6 +262,7 @@ public class GurobiSolver implements TreeBuilder {
                 default: try {
                     if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0) cause = "Constraint are violated. Tree-correctness: "
                             + buildSolution().isComputationCorrect(graph.getRootScore());
+                    else cause = "Unknown error. Status code is " + status;
                 } catch (GRBException e) {
                     throw new RuntimeException("Unknown error. Status code is " + status, e);
                 }
@@ -275,18 +278,21 @@ public class GurobiSolver implements TreeBuilder {
         }
 
         protected void setStartValues(FragmentationTree presolvedTree) throws GRBException {
-            final double[] vector = new double[variables.length];
-            final boolean[][] adjacenceMatrix = new boolean[graph.numberOfVertices()][graph.numberOfVertices()];
-            for (Loss l : Iterators.asIterable(presolvedTree.lossIterator())) {
-                adjacenceMatrix[l.getHead().getIndex()][l.getTail().getIndex()] = true;
-            }
+            final TObjectIntHashMap<MolecularFormula> map = new TObjectIntHashMap<MolecularFormula>(presolvedTree.numberOfVertices()*3, 0.5f, -1);
+            int k=0;
+            for (Fragment f : presolvedTree.getFragments()) map.put(f.getFormula(), k++);
+            final boolean[][] matrix = new boolean[k][k];
+            for (Fragment f : presolvedTree.getFragmentsWithoutRoot()) matrix[map.get(f.getFormula())][map.get(f.getIncomingEdge().getHead().getFormula())] = true;
+            final double[] startValues = new double[losses.size()];
             for (int i=0; i < losses.size(); ++i) {
-                final Loss uv = losses.get(i);
-                if (adjacenceMatrix[uv.getHead().getIndex()][uv.getTail().getIndex()]) {
-                    vector[i] = 1;
-                }
+                final Loss l = losses.get(i);
+                final int u = map.get(l.getHead().getFormula());
+                if (u < 0) continue;
+                final int v = map.get(l.getTail().getFormula());
+                if (v < 0) continue;
+                if (matrix[v][u]) startValues[i] = 1.0d;
             }
-            model.set(GRB.DoubleAttr.Start, variables, vector);
+            model.set(GRB.DoubleAttr.Start, variables, startValues);
         }
 
         protected void computeOffsets() {

@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
@@ -96,12 +97,17 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
             }
 
             @Override
-            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer) {
+            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer, FragmentationTree oldTree) {
                 if (correctedTree != null) return correctedTree;
-                else return recomputeTree(analyzer);
+                else return recomputeTree(analyzer,oldTree);
             }
 
-            private FragmentationTree recomputeTree(FragmentationPatternAnalysis analyzer) {
+            @Override
+            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer) {
+                return getCorrectedTree(analyzer,null);
+            }
+
+            private FragmentationTree recomputeTree(FragmentationPatternAnalysis analyzer, FragmentationTree oldTree) {
                 getScoreBonus();
                 final UnivariateFunction f = recalibrationFunction;
                 if (f instanceof Identity && !force) {
@@ -128,12 +134,14 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 prof.setStandardMs2MassDeviation(prof.getStandardMs2MassDeviation().multiply(deviationScale));
                 impl.setMeasurementProfile(prof);
                 ProcessedInput pinp = analyzer.preprocessingWithRecalibration(impl, this);
-                correctedTree = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : tree.getScore()).withoutRecalibration().optimalTree();
+                MultipleTreeComputation mtc = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : tree.getScore()).withoutRecalibration();
+                if (oldTree != null) mtc = mtc.withBackbones(oldTree);
+                correctedTree = mtc.optimalTree();
                 if (correctedTree == null) {
                     assert !force;
                     correctedTree = tree;
                 }
-                final FragmentationTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().optimalTree();
+                final FragmentationTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().withBackbones(correctedTree).optimalTree();
                 if (ft2 == null) return correctedTree;
                 else if (ft2.getScore() > correctedTree.getScore()) return ft2;
                 return correctedTree;

@@ -59,6 +59,7 @@ public class StrangeElementRootScorer implements DecompositionScorer {
                     return null;
                 }
             });
+            assert !Double.isNaN(score[0]);
             return score[0];
         }
         return 0d;
