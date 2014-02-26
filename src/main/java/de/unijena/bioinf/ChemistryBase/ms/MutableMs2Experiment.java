@@ -20,7 +20,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
     private double ionMass;
     private Ionization ionization;
     private List<? extends Spectrum<Peak>> ms1Spectra;
-    private List<? extends Ms2Spectrum> ms2Spectra;
+    private List<? extends Ms2Spectrum<? extends Peak>> ms2Spectra;
     private MeasurementProfile measurementProfile;
     private Spectrum<Peak> mergedMs1Spectrum;
 
@@ -31,7 +31,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
         this(experiment.getMolecularFormula(), experiment.getIonMass(), experiment.getIonization(), experiment.getMs1Spectra(), experiment.getMs2Spectra());
     }
 
-    public MutableMs2Experiment(MolecularFormula compoundFormula, double ionMass, Ionization ionization, List<? extends Spectrum<Peak>> ms1Spectra, List<? extends Ms2Spectrum> ms2Spectra){
+    public MutableMs2Experiment(MolecularFormula compoundFormula, double ionMass, Ionization ionization, List<? extends Spectrum<Peak>> ms1Spectra, List<? extends Ms2Spectrum<? extends Peak>> ms2Spectra){
         this.compoundFormula = compoundFormula;
         this.ionMass = ionMass;
         this.ionization = ionization;
@@ -41,7 +41,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
 
     @Override
-    public List<? extends Ms2Spectrum> getMs2Spectra() {
+    public List<? extends Ms2Spectrum<? extends Peak>> getMs2Spectra() {
         return ms2Spectra;
     }
 

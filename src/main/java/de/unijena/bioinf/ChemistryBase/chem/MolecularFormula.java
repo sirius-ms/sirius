@@ -74,7 +74,22 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
     	}
     	return fromCompomer(selection, buffer);
     }
-    
+
+    public static MolecularFormula singleElement(Element e, int amount) {
+        if (amount > Short.MAX_VALUE) throw new IllegalArgumentException("amount of " + e.getName() + " have to be smaller or equal to " + Short.MAX_VALUE + ", but " + amount + " given.");
+        final PeriodicTable t = PeriodicTable.getInstance();
+        final BitSet set = new BitSet(e.getId()+1);
+        set.set(e.getId());
+        final TableSelection sel = t.getSelectionFor(set);
+        final short[] buffer = new short[sel.indexOf(e)+1];
+        buffer[sel.indexOf(e)] = (short)amount;
+        return new ImmutableMolecularFormula(sel, buffer);
+    }
+
+    public static MolecularFormula singleElement(Element e) {
+        return singleElement(e, 1);
+    }
+
     /**
      * creates a new molecular formula from a given string. This should be the preferred way
      * to create molecular formulas. Typical strings which are recognized are

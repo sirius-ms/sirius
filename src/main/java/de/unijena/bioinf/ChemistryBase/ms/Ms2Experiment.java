@@ -13,7 +13,7 @@ public interface Ms2Experiment extends MsExperiment{
     /**
      * @return a list of MS2 spectra belonging to this compound
      */
-    public List<? extends Ms2Spectrum> getMs2Spectra();
+    public List<? extends Ms2Spectrum<? extends Peak>> getMs2Spectra();
 
     /**
      * @return the mass-to-charge ratio of the ion to analyze
