@@ -96,7 +96,7 @@ public class MissingValueValidator implements InputValidator {
     }
 
     protected void removeEmptySpectra(Warning warn, Ms2ExperimentImpl input) {
-        final Iterator<Ms2Spectrum> iter = input.getMs2Spectra().iterator();
+        final Iterator<Ms2Spectrum<? extends Peak>> iter = input.getMs2Spectra().iterator();
         while (iter.hasNext()) {
             final Ms2Spectrum spec = iter.next();
             if (spec.size()==0) {
@@ -140,14 +140,14 @@ public class MissingValueValidator implements InputValidator {
 
     private void searchForIon(Warning warn, Ms2ExperimentImpl input) {
         final double neutral = (input.getMolecularFormula()!=null) ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass();
-        final ArrayList<Spectrum<Peak>> spectra = new ArrayList<Spectrum<Peak>>(input.getMs1Spectra());
-        for (Ms2Spectrum<Peak> ms2 : input.getMs2Spectra()) spectra.add(ms2);
+        final ArrayList<Spectrum<? extends Peak>> spectra = new ArrayList<Spectrum<? extends Peak>>(input.getMs1Spectra());
+        for (Ms2Spectrum<? extends Peak> ms2 : input.getMs2Spectra()) spectra.add(ms2);
         // TODO: negative ions
         // search for [M+H]+
         final Ionization mhp = PeriodicTable.getInstance().ionByName("[M+H]+");
         final double mz = mhp.addToMass(neutral);
         final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
-        for (Spectrum<Peak> spec : spectra) {
+        for (Spectrum<? extends Peak> spec : spectra) {
             final int peak = Spectrums.search(spec, mz, dev);
             if (peak >= 0) {
                 warn.warn("Set ion to " + mhp.toString());
@@ -158,7 +158,7 @@ public class MissingValueValidator implements InputValidator {
         }
         // search for other ions
         final List<Ionization> ions = PeriodicTable.getInstance().getIons();
-        for (Spectrum<Peak> spec : spectra) {
+        for (Spectrum<? extends Peak> spec : spectra) {
             for (Ionization ion : ions) {
                 if (Spectrums.search(spec, ion.addToMass(neutral), dev) >= 0) {
                     warn.warn("Set ion to " + ion.toString());

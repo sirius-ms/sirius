@@ -6,16 +6,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.AbstractRecalibrationStrategy;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.LeastSquare;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.MedianSlope;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
@@ -203,7 +202,9 @@ public class Main {
                         System.err.println(f.getName() + ": " + message);
                     }
                 });
+
                 experiment = analyzer.validate(experiment);
+
                 ProcessedInput input = analyzer.preprocessing(experiment);
 
                 if(false){
@@ -420,37 +421,48 @@ public class Main {
                         }
                     } : Collections.<FragmentationTree>reverseOrder()));
                     trees = new ArrayList<FragmentationTree>(trees.subList(0, Math.min(TreesToConsider, trees.size())));
+                    if (correctTree != null && !trees.contains(correctTree)) trees.add(correctTree);
                     // recalibrate best trees
                     if (!trees.isEmpty() && analyzer.getRecalibrationMethod()!=null) {
-                        for (int i=0; i < Math.min(TreesToConsider, trees.size()); ++i) {
-                            ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
-                            if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
-                            {
-                                MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(2d/3d));
-                                method.setMinNumberOfPeaks(5);
-                                method.setEpsilon(new Deviation(6, 0.001d));
-                                method.setMinIntensity(0.02);
-                            }
-                            if (trees.get(i)==correctTree) {
-                                correctTree = analyzer.recalibrate(correctTree);
-                                MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                method.setMinNumberOfPeaks(8);
-                                method.setEpsilon(new Deviation(2, 2e-4));
-                                ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
-                                correctTree = analyzer.recalibrate(correctTree, true);
-                                trees.set(i, correctTree);
-                            } else {
-                                final FragmentationTree t = analyzer.recalibrate(trees.get(i));
-                                MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                method.setMinNumberOfPeaks(8);
-                                method.setEpsilon(new Deviation(2, 2e-4));
-                                ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
-                                trees.set(i, analyzer.recalibrate(t, true));
-                            }
-                            if (verbose) {
-                                if (trees.get(i).getRecalibrationBonus()!=0) System.out.println(" -> " + trees.get(i).getScore());
-                                else System.out.println("");
+
+                        // only recalibrate if at least one tree has more than 5 nodes
+                        boolean doRecalibrate = false;
+                        for (FragmentationTree t : trees) if (t.numberOfVertices() >= 6) doRecalibrate=true;
+                        if (doRecalibrate) {
+                            for (int i=0; i < Math.min(TreesToConsider+1, trees.size()); ++i) {
+                                ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
+                                if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
+                                /*
+                                {
+                                    AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                                    method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(2d/3d));
+                                    method.setMinNumberOfPeaks(5);
+                                    method.setEpsilon(new Deviation(6, 0.001d));
+                                    method.setMinIntensity(0);
+                                }
+                                */
+                                if (trees.get(i)==correctTree) {
+                                    correctTree = analyzer.recalibrate(correctTree);
+                                    AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                                    method.setMinNumberOfPeaks(6);
+                                    method.setEpsilon(new Deviation(2, 2e-4));
+                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
+                                    correctTree = analyzer.recalibrate(correctTree, true);
+
+                                    trees.set(i, correctTree);
+
+                                } else {
+                                    final FragmentationTree t = analyzer.recalibrate(trees.get(i));
+                                    AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                                    method.setMinNumberOfPeaks(6);
+                                    method.setEpsilon(new Deviation(2, 2e-4));
+                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
+                                    trees.set(i, analyzer.recalibrate(t, true));
+                                }
+                                if (verbose) {
+                                    if (trees.get(i).getRecalibrationBonus()!=0) System.out.println(" -> " + trees.get(i).getScore());
+                                    else System.out.println("");
+                                }
                             }
                         }
                     }
@@ -464,7 +476,7 @@ public class Main {
 
                     Collections.sort(trees, Collections.reverseOrder());
                     final boolean correctTreeContained = trees.contains(correctTree);
-                    for (int i=0; i < Math.min(TreesToConsider, trees.size()); ++i) {
+                    for (int i=0; i < Math.min(TreesToConsider+1, trees.size()); ++i) {
                         final FragmentationTree tree = trees.get(i);
                         if (!correctTreeContained || correctTree.getScore() < tree.getScore()) {
                             ++rank;
@@ -519,9 +531,9 @@ public class Main {
                             }
                         }
                         final FragmentationTree t = analyzer.recalibrate(correctTree);
-                        MedianSlope method = (MedianSlope)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                        method.setMinNumberOfPeaks(5);
-                        method.setEpsilon(new Deviation(4, 4e-4));
+                        AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                        //method.setMinNumberOfPeaks(5);
+                        //method.setEpsilon(new Deviation(2, 2e-4));
                         ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
                         FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(origScore);
                         tree = analyzer.recalibrate(t,true);

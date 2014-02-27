@@ -246,17 +246,18 @@ public class CommonLossEdgeScorer implements LossScorer{
             final List<MolecularFormula> sourceList = new ArrayList<MolecularFormula>(source.keySet());
             for (int i=0; i < sourceList.size(); ++i) {
                 final MolecularFormula a = sourceList.get(i);
-                final double aScore = lossSizeScorer.score(a) + source.get(a) - normalizationConstant ;
+                if (source.get(a) < 0) continue;
+                final double aScore = lossSizeScorer.score(a) + source.get(a) ;
                 for (int j=i; j < sourceList.size(); ++j) {
                     final MolecularFormula b = sourceList.get(j);
-                    final double bScore = lossSizeScorer.score(b) + source.get(b) - normalizationConstant;
+                    if (source.get(b) < 0) continue;
+                    final double bScore = lossSizeScorer.score(b) + source.get(b);
                     final MolecularFormula combination = a.add(b);
-                    final double combinatedScore = Math.min(aScore, bScore) + penalty;
-                    if (combinatedScore > 0d ) {
-                        Double sc = source.get(combination);
-                        if (sc == null || sc.doubleValue() < combinatedScore) {
-                            recombination.put(combination, combinatedScore);
-                        }
+                    final double combinationScore = lossSizeScorer.score(combination) + source.get(combination);
+                    final double recombinationScore = Math.min(aScore, bScore) + penalty;
+                    if (recombinationScore > combinationScore ) {
+                        final double finalScore = recombinationScore - lossSizeScorer.score(combination);
+                        recombination.put(combination, finalScore);
                     }
                 }
             }
@@ -265,7 +266,7 @@ public class CommonLossEdgeScorer implements LossScorer{
 
         @Override
         public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-            return new LossSizeRecombinator((LossSizeScorer)helper.unwrap(document,document.getFromDictionary(dictionary,"lossSize")), document.getDoubleFromDictionary(dictionary,"penalty"));
+            return new MinimalScoreRecombinator((LossSizeScorer)helper.unwrap(document,document.getFromDictionary(dictionary,"lossSize")), document.getDoubleFromDictionary(dictionary,"penalty"));
         }
 
         @Override
@@ -315,6 +316,7 @@ public class CommonLossEdgeScorer implements LossScorer{
                         Double sc = source.get(combination);
                         if (sc == null || sc.doubleValue() < combinatedScore) {
                             recombination.put(combination, combinatedScore);
+                            System.out.println("RECOMB: " + combination + " = " + a + " (" + source.get(a) + ") + " + b + " (" + source.get(b) + ") = " + combinatedScore);
                         }
                     }
                 }

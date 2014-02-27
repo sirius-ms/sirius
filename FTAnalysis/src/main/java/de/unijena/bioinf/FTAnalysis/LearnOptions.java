@@ -35,6 +35,9 @@ public interface LearnOptions {
     @Option(shortName = "l", defaultToNull = true, description = "limit number of peaks to the n-th most intensive peaks. This makes computation much faster")
     public Integer getPeakLimit();
 
+    @Option(shortName = "P", description = "if set, posteriori parameters (mass deviation and noise distribution) are not learned from data")
+    public boolean isSkipPosteriori();
+
     @Option(shortName = "L", description = "common loss analysis. Available options: SKIP (analysis), " +
             "REPLACE (previous common losses), ADD (losses to previous common losses), " +
             "MERGE (losses with previous common losses", defaultValue = "MERGE")
@@ -47,6 +50,9 @@ public interface LearnOptions {
 
     @Option
     public boolean isRecombinateLosses();
+
+    @Option(shortName = "X", description = "start with expert loss annotations and old sirius 2 loss size distribution instead of using the scorers given in the profile")
+    public boolean isStartWithExpertLosses();
 
     @Option
     public boolean isExponentialDistribution();

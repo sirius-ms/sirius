@@ -249,9 +249,22 @@ public class GurobiSolver implements TreeBuilder {
         protected void setConstraints() throws GRBException {
         	setTreeConstraint();
             setColorConstraint();
+
+
+            // HACK!
+            //setMaxNumberOfPeaksConstraint();
+
 		}
 
-		protected void errorHandling() throws GRBException{
+        private void setMaxNumberOfPeaksConstraint() throws GRBException {
+            final GRBLinExpr expr = new GRBLinExpr();
+            for (int i=0; i < variables.length; ++i) {
+                expr.addTerm(1, variables[i]);
+            }
+            model.addConstr(expr, GRB.LESS_EQUAL, 30, null);
+        }
+
+        protected void errorHandling() throws GRBException{
             // infeasible solution!
             int status = model.get(GRB.IntAttr.Status);
             String cause = "";

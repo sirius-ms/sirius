@@ -72,7 +72,7 @@ public class CleanupSpectrum {
         }
         final List<File> files = getFiles(options);
         profile.fragmentationPatternAnalysis.setRepairInput(true);
-        profile.fragmentationPatternAnalysis.setRecalibrationMethod(new HypothesenDrivenRecalibration(new MedianSlope(profile.fragmentationPatternAnalysis.getDefaultProfile().getStandardMs2MassDeviation().divide(2), 7), 1e-8));
+        profile.fragmentationPatternAnalysis.setRecalibrationMethod(new HypothesenDrivenRecalibration(new MedianSlope(profile.fragmentationPatternAnalysis.getDefaultProfile().getStandardMs2MassDeviation().divide(2), 7, 0.01d), 1e-8));
         ((HypothesenDrivenRecalibration)profile.fragmentationPatternAnalysis.getRecalibrationMethod()).setDeviationScale(1d);//(2d/3d);
         for (File f : files) {
             try {
@@ -123,7 +123,7 @@ public class CleanupSpectrum {
         final RecalibrationMethod.Recalibration rec = profile.fragmentationPatternAnalysis.getRecalibrationFromTree(tree, false);
         final UnivariateFunction f = rec.recalibrationFunction();
         if (f==null || f instanceof Identity || rec.getCorrectedTree(profile.fragmentationPatternAnalysis).getScore() <= tree.getScore()) return;
-        final ArrayList<Ms2Spectrum> spectra = new ArrayList<Ms2Spectrum>();
+        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>();
         for (int k=0; k < experiment.getMs2Spectra().size(); ++k) {
             final MutableMs2Spectrum spec;
             {
@@ -156,12 +156,12 @@ public class CleanupSpectrum {
         for (Ms2SpectrumImpl spec : spectra.values()) {
             Collections.sort(spec.getPeaks());
         }
-        experiment.setMs2Spectra(new ArrayList<Ms2Spectrum>(spectra.values()));
+        experiment.setMs2Spectra(new ArrayList<Ms2Spectrum<? extends Peak>>(spectra.values()));
 
     }
 
     private static void filterPossible(Ms2ExperimentImpl experiment, FragmentationTree tree, Profile profile) {
-        final ArrayList<Ms2Spectrum> spectra = new ArrayList<Ms2Spectrum>();
+        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>();
         final ChemicalAlphabet alphabet = experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet();
         final MassToFormulaDecomposer decomposer = profile.fragmentationPatternAnalysis.getDecomposerFor(alphabet);
         final Map<Element, Interval> boundaries = alphabet.toMap();
@@ -200,7 +200,7 @@ public class CleanupSpectrum {
                 spectra.get(peak.getSpectrum().getCollisionEnergy()).addPeak(peak);
             }
         }
-        experiment.setMs2Spectra(new ArrayList<Ms2Spectrum>());
+        experiment.setMs2Spectra(new ArrayList<Ms2Spectrum<? extends Peak>>());
         for (Ms2Spectrum spec : spectra.values()) experiment.getMs2Spectra().add(spec);
     }
 

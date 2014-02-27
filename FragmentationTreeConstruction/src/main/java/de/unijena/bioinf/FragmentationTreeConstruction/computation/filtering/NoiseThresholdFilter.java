@@ -63,7 +63,7 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
     @Override
     public Ms2Experiment process(Ms2Experiment experiment) {
         List<? extends Ms2Spectrum> specs = experiment.getMs2Spectra();
-        final ArrayList<Ms2Spectrum> spectra = new ArrayList<Ms2Spectrum>(specs.size());
+        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>(specs.size());
         final Deviation allowedDev = experiment.getMeasurementProfile().getAllowedMassDeviation();
         final Deviation parentWindow = new Deviation(allowedDev.getPpm(), Math.min(allowedDev.getAbsolute(), 0.1d));
         for (Ms2Spectrum<? extends Peak> spec : specs) {

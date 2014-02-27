@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class Ms2ExperimentImpl implements Ms2Experiment {
 
-    private List<Ms2Spectrum> ms2Spectra;
+    private List<Ms2Spectrum<? extends Peak>> ms2Spectra;
     private List<Spectrum<Peak>> ms1Spectra;
     private Spectrum<Peak> mergedMs1Spectrum;
     private double ionMass, moleculeNeutralMass;
@@ -22,7 +22,7 @@ public class Ms2ExperimentImpl implements Ms2Experiment {
     private boolean preprocessed;
 
     public Ms2ExperimentImpl(Ms2Experiment exp) {
-        this.ms2Spectra = new ArrayList<Ms2Spectrum>(safeArrayListCreation(exp.getMs2Spectra()));
+        this.ms2Spectra = new ArrayList<Ms2Spectrum<? extends Peak>>(safeArrayListCreation(exp.getMs2Spectra()));
         this.ms1Spectra = new ArrayList<Spectrum<Peak>>(safeArrayListCreation(exp.getMs1Spectra()));
         this.mergedMs1Spectrum = exp.getMergedMs1Spectrum();
         this.ionMass = exp.getIonMass();
@@ -36,11 +36,11 @@ public class Ms2ExperimentImpl implements Ms2Experiment {
 
     }
 
-    public List<Ms2Spectrum> getMs2Spectra() {
+    public List<Ms2Spectrum<? extends Peak>> getMs2Spectra() {
         return ms2Spectra;
     }
 
-    public void setMs2Spectra(List<Ms2Spectrum> ms2Spectra) {
+    public void setMs2Spectra(List<Ms2Spectrum<? extends Peak>> ms2Spectra) {
         this.ms2Spectra = ms2Spectra;
     }
 

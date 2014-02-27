@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
@@ -27,8 +28,8 @@ public class NormalizeToSumPreprocessor implements Preprocessor {
 
     @Override
     public Ms2Experiment process(Ms2Experiment experiment) {
-        List<? extends Ms2Spectrum> specs = experiment.getMs2Spectra();
-        final ArrayList<Ms2Spectrum> spectra = new ArrayList<Ms2Spectrum>(specs.size());
+        List<? extends Ms2Spectrum<? extends Peak>> specs = experiment.getMs2Spectra();
+        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>(specs.size());
         if (onlyForRelativeIntensities && !hasRelativeIntensities(experiment)) return experiment;
         for (Ms2Spectrum spec : specs) {
             final SimpleMutableSpectrum ms = new SimpleMutableSpectrum(spec);
