@@ -36,7 +36,7 @@ public class JenaGCMSExperiment implements Ms2Experiment {
     }
 
     @Override
-    public List<? extends Ms2Spectrum> getMs2Spectra() {
+    public List<? extends Ms2Spectrum<? extends Peak>> getMs2Spectra() {
         return null;
     }
 
