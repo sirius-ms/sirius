@@ -103,9 +103,12 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        epsilon = Deviation.fromString(document.getStringFromDictionary(dictionary, "epsilon"));
-        minNumberOfPeaks = (int)document.getIntFromDictionary(dictionary, "minNumberOfPeaks");
-        threshold = document.getDoubleFromDictionary(dictionary, "threshold");
+        if (document.hasKeyInDictionary(dictionary, "epsilon"))
+            epsilon = Deviation.fromString(document.getStringFromDictionary(dictionary, "epsilon"));
+        if (document.hasKeyInDictionary(dictionary, "minNumberOfPeaks"))
+            minNumberOfPeaks = (int)document.getIntFromDictionary(dictionary, "minNumberOfPeaks");
+        if (document.hasKeyInDictionary(dictionary, "threshold"))
+            threshold = document.getDoubleFromDictionary(dictionary, "threshold");
     }
 
     @Override
