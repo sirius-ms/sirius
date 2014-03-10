@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
@@ -13,10 +14,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.util.*;
 
 public class DynamicTreeSizeScorer implements PeakScorer {
 
@@ -63,9 +63,41 @@ public class DynamicTreeSizeScorer implements PeakScorer {
         for (int x=0; x < peakscores.length; ++x) {
             scores[x] += peakscores[x];
         }
+
+        //printSig(input, spectra, sscores);
         //for (Ms2Spectrum<? extends Peak> s : spectra) System.err.print(s.getCollisionEnergy() + "\t");
         //System.err.println(sscores);
     }
+
+/*
+    static PrintStream printer = null;
+    static HashSet<MolecularFormula> formulas = new HashSet<MolecularFormula>();
+
+    protected void printSig(ProcessedInput input, final ArrayList<Ms2Spectrum<? extends Peak>> spectra, TDoubleArrayList sscores) {
+        if (printer==null) try {
+            printer = new PrintStream(new java.io.File("DEBUGOUT.csv"));
+            printer.print("formula,0eV,10eV,20eV,40eV\n");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        final MolecularFormula f = input.getExperimentInformation().getMolecularFormula();
+        if (formulas.contains(f)) return;
+        formulas.add(f);
+        printer.print(f.toString());
+        final double[] evscores = new double[4];
+        final int[] evs = new int[]{0,10,20,40};
+        for (int x=0; x < sscores.size(); ++x) {
+            final double ev = spectra.get(x).getCollisionEnergy().getMinEnergy();
+            evscores[Math.min(3, Math.abs(Arrays.binarySearch(evs, (int)ev)))] = sscores.get(x);
+        }
+        for (int i=0; i < 4; ++i) {
+            printer.print(',');
+            printer.print(evscores[i]);
+        }
+        printer.print('\n');
+        printer.flush();
+    }
+    */
 
     private double rawSignalPropability(Ms2Spectrum<? extends Peak> s) {
         int peaksAbove = 0;
@@ -76,16 +108,19 @@ public class DynamicTreeSizeScorer implements PeakScorer {
             if (ms.getMzAt(k) >= (s.getPrecursorMz()-0.5)) ms.removePeakAt(k);
             else break;
         }
+        Spectrums.normalize(ms, Normalization.Max(1.0));
+        for (int k=ms.size()-1; k >= 0; --k) if (ms.getIntensityAt(k) < 0.005) ms.removePeakAt(k);
         Spectrums.normalize(ms, Normalization.Sum(1.0));
         for (int k=0; k < ms.size(); ++k) {
-            if (ms.getIntensityAt(k) > 0.01) {
+            if (ms.getIntensityAt(k) > 0.025) {
                 ++peaksAbove;
             } else {
                 ++peaksBelow;
             }
 
         }
-        final double p= Math.max(0.1d, Math.min(0.9d, (double) peaksAbove / (double) (peaksAbove + peaksBelow)));
+        if ((peaksAbove+peaksBelow)<=0) return Math.log(0.2d);
+        final double p= Math.max(0.2d, Math.min(0.8d, (double) peaksAbove / (double) (peaksAbove + peaksBelow)));
         return Math.log(p) - Math.log(1 - p);
     }
 

@@ -27,7 +27,7 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         this.epsilon = epsilon;
         this.minNumberOfPeaks = minNumberOfPeaks;
         this.minIntensity = 0d;
-        this.maxDeviation = new Deviation(10, 5e-4);
+        this.maxDeviation = new Deviation(10, 1e-3);
         this.threshold = threshold;
     }
 
