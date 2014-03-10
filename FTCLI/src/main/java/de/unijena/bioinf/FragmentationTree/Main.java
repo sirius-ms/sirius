@@ -316,6 +316,43 @@ public class Main {
                     input = new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), input.getMergedPeaks(), input.getParentPeak(), list, input.getPeakScores(), input.getPeakPairScores());
                 }
 
+                // DEBUG!!!!! FSTAT
+                /*
+                {
+                    final ArrayList<ScoredMolecularFormula> allowed = new ArrayList<ScoredMolecularFormula>(input.getParentMassDecompositions());
+                    final MolecularFormula correct = correctFormula;
+                    final MolecularFormula bestWrong;
+                    {
+                        final File dir = new File("D:/daten/arbeit/analysis_2014/14", f.getName().substring(0, f.getName().indexOf('.')));
+                        final ArrayList<File> get = new ArrayList<File>();
+                        for (File g : dir.listFiles()) {
+                            if ((g.getName().startsWith("1_") || g.getName().startsWith("2_")) && !g.getName().contains("_correct_")) {
+                                get.add(g);
+                            }
+                        }
+                        if (get.size()>1) {
+                            if (get.get(0).getName().startsWith("2_")) get.remove(0);
+                            else get.remove(1);
+                        }
+                        if (get.size()==0) {
+                            bestWrong=null;
+                        } else {
+                            final File bestWrongFile = get.get(0);
+                            String[] parts = bestWrongFile.getName().split("_");
+                            bestWrong = MolecularFormula.parse(parts[parts.length-1]);
+                        }
+                    }
+                    final Iterator<ScoredMolecularFormula> iter = allowed.iterator();
+                    while (iter.hasNext()) {
+                        final MolecularFormula h = iter.next().getFormula();
+                        if (h.equals(correctFormula) || h.equals(bestWrong)) continue;
+                        else iter.remove();
+                    }
+                    input = new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), input.getMergedPeaks(), input.getParentPeak(), allowed, input.getPeakScores(), input.getPeakPairScores());
+                }
+                */
+
+
                 // First: Compute correct tree
                 // DONT USE LOWERBOUNDS
                 FragmentationTree correctTree = null;
@@ -425,28 +462,32 @@ public class Main {
                     // recalibrate best trees
                     if (!trees.isEmpty() && analyzer.getRecalibrationMethod()!=null) {
 
+                        final double DEVIATION_SCALE = 1d;
+                        final int MIN_NUMBER_OF_PEAKS = 6;
+                        final double MIN_INTENSITY = 0d;
+                        final Deviation EPSILON = new Deviation(2,0.0002d);
                         // only recalibrate if at least one tree has more than 5 nodes
                         boolean doRecalibrate = false;
-                        for (FragmentationTree t : trees) if (t.numberOfVertices() >= 6) doRecalibrate=true;
+                        for (FragmentationTree t : trees) if (t.numberOfVertices() >= MIN_NUMBER_OF_PEAKS) doRecalibrate=true;
                         if (doRecalibrate) {
                             for (int i=0; i < Math.min(TreesToConsider+1, trees.size()); ++i) {
                                 ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
                                 if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
-                                /*
+
                                 {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                    method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(2d/3d));
-                                    method.setMinNumberOfPeaks(5);
-                                    method.setEpsilon(new Deviation(6, 0.001d));
-                                    method.setMinIntensity(0);
+                                    method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(DEVIATION_SCALE));
+                                    method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
+                                    method.setEpsilon(EPSILON);
+                                    method.setMinIntensity(MIN_INTENSITY);
                                 }
-                                */
+
                                 if (trees.get(i)==correctTree) {
                                     correctTree = analyzer.recalibrate(correctTree);
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                    method.setMinNumberOfPeaks(6);
-                                    method.setEpsilon(new Deviation(2, 2e-4));
-                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
+                                    method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
+                                    method.setEpsilon(EPSILON);
+                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(DEVIATION_SCALE);
                                     correctTree = analyzer.recalibrate(correctTree, true);
 
                                     trees.set(i, correctTree);
@@ -454,9 +495,9 @@ public class Main {
                                 } else {
                                     final FragmentationTree t = analyzer.recalibrate(trees.get(i));
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                    method.setMinNumberOfPeaks(6);
-                                    method.setEpsilon(new Deviation(2, 2e-4));
-                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(2d/3d);
+                                    method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
+                                    method.setEpsilon(EPSILON);
+                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(DEVIATION_SCALE);
                                     trees.set(i, analyzer.recalibrate(t, true));
                                 }
                                 if (verbose) {
@@ -486,6 +527,11 @@ public class Main {
                             writeTreeToFile(prettyNameSuboptTree(tree, f, i+1, tree==correctTree), tree, analyzer, isotopeScores.get(tree.getRoot().getFormula()));
                     }
 
+                    // FSTAT
+                    /*
+                    if (trees.size()==1) statistics(f,correctTree,null);
+                    else statistics(f, correctTree, trees.get(0)==correctTree?trees.get(1):trees.get(0));
+                    */
 
                     /*
                    TODO: Push into separate branch "newScores2013"
@@ -637,6 +683,93 @@ public class Main {
             throw new RuntimeException("No parser found for file " + f);
         }
 
+    }
+
+    // treeinformation
+    // file,db,correct,score,optscore,mass, ppmdev, mzdev, recppmdev, recmzdev
+
+    // fragmentstats
+    // file, db, correct, shared, formula, mass, recalibrated, alphabet, ppmdev, mzdev, recppmdev, recmzdev, intensity
+    protected PrintStream treeStat, fragStat,lossStats;
+    protected void statistics(File filename, FragmentationTree correct, FragmentationTree bestWrong) {
+        if (treeStat==null) {
+            try {
+                treeStat = new PrintStream("treestats.csv");
+                openStreams.add(treeStat);
+                treeStat.append("file,db,correct,score,optscore,mass,ppmdev,mzdev,recppmdev,recmzdev\n");
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        double optScore = (bestWrong==null) ? correct.getScore() : Math.max(correct.getScore(),  bestWrong.getScore());
+        treeStat(filename, correct, optScore, true);
+        if (bestWrong!=null) treeStat(filename, bestWrong,optScore, false);
+
+
+        if (fragStat==null) {
+            try {
+                fragStat = new PrintStream("fragstats.csv");
+                openStreams.add(fragStat);
+                fragStat.println("file,db,correct,shared,formula,mass,recalibrated,alphabet,ppmdev,mzdev,recppmdev,recmzdev,intensity");
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        final HashSet<MolecularFormula> shared = new HashSet<MolecularFormula>();
+        for (Fragment f : correct.getFragmentsWithoutRoot()) shared.add(f.getFormula());
+        fragStats(filename, correct, true, shared);
+        if (bestWrong!=null) fragStats(filename, bestWrong, false, shared);
+
+        if (lossStats==null) {
+            try {
+                lossStats = new PrintStream("lossStats.csv");
+                openStreams.add(lossStats);
+                lossStats.println("file,db,correct,formula,mass,common,alphabet");
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        lossStat(filename, correct, true);
+        if (bestWrong!=null) lossStat(filename, bestWrong, false);
+    }
+
+    private void lossStat(File filename, FragmentationTree tree, boolean correct) {
+        final char db = filename.getName().startsWith("mpos") ? 'm' : 'a';
+        final CommonLossEdgeScorer le = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, profile.fragmentationPatternAnalysis.getLossScorers());
+        for (Fragment f : tree.getFragmentsWithoutRoot()) {
+            final Loss l = f.getIncomingEdge();
+            final int common = (le.isCommonLoss(l.getFormula())) ? 1 : (le.isRecombinatedLoss(l.getFormula()) ? 2 : 0);
+            final int isChnops = l.getFormula().isCHNO() ? 0 : (l.getFormula().isCHNOPS() ? 1 : 2);
+            lossStats.append(filename.getName()).append(',').append(db).append(',').append(correct?'1':'0').append(',')
+                    .append(l.getFormula().toString()).append(',').append(Double.toString(l.getFormula().getMass())).append(',')
+                    .append(String.valueOf(common)).append(',').append(String.valueOf(isChnops)).append('\n');
+        }
+    }
+
+    private void fragStats(File filename, FragmentationTree tree, boolean correct, HashSet<MolecularFormula> shared) {
+        final char db = filename.getName().startsWith("mpos") ? 'm' : 'a';
+        for (Fragment f : tree.getFragmentsWithoutRoot()) {
+            final boolean isShared = shared.contains(f.getFormula());
+            final Deviation dev = Deviation.fromMeasurementAndReference(f.getPeak().getOriginalMz(), tree.getIonization().addToMass(f.getFormula().getMass()));
+            final Deviation recdev = Deviation.fromMeasurementAndReference(f.getPeak().getMz(), tree.getIonization().addToMass(f.getFormula().getMass()));
+            final int isChnops = f.getFormula().isCHNO() ? 0 : (f.getFormula().isCHNOPS() ? 1 : 2);
+            fragStat.append(filename.getName()).append(',').append(db).append(',').append(correct?'1':'0').append(',').append(isShared?'1':'0')
+                    .append(',').append(f.getFormula().toString()).append(',').append(String.valueOf(f.getPeak().getOriginalMz())).append(',')
+                    .append(String.valueOf(f.getPeak().getMz())).append(',').append(String.valueOf(isChnops)).append(',')
+                    .append(String.valueOf(dev.getPpm())).append(',').append(String.valueOf(dev.getAbsolute())).append(',').append(String.valueOf(recdev.getPpm())).append(',')
+                    .append(String.valueOf(recdev.getAbsolute())).append(',').append(String.valueOf(f.getPeak().getRelativeIntensity())).append('\n');
+        }
+    }
+
+    private void treeStat(File filename, FragmentationTree tree, double optScore, boolean correct) {
+        final char db = filename.getName().startsWith("mpos") ? 'm' : 'a';
+        final double mass = tree.getRoot().getPeak().getOriginalMz();
+        final Deviation dev = Deviation.fromMeasurementAndReference(tree.getRoot().getPeak().getOriginalMz(), tree.getIonization().addToMass(tree.getRoot().getFormula().getMass()));
+        final Deviation recdev = Deviation.fromMeasurementAndReference(tree.getRoot().getPeak().getMz(), tree.getIonization().addToMass(tree.getRoot().getFormula().getMass()));
+        treeStat.append(filename.getName()).append(',').append(db).append(',').append(correct ? '1' : '0').append(',').append(String.valueOf(tree.getScore())).append(',').append(String.valueOf(optScore)).append(',')
+                .append(String.valueOf(mass)).append(',').append(String.valueOf(dev.getPpm())).append(',').append(String.valueOf(dev.getAbsolute())).append(',')
+                .append(String.valueOf(recdev.getPpm())).append(',').append(String.valueOf(recdev.getAbsolute())).append('\n');
     }
 
     protected void writeTreeToFile(File f, FragmentationTree tree, FragmentationPatternAnalysis pipeline, Double isoScore) {

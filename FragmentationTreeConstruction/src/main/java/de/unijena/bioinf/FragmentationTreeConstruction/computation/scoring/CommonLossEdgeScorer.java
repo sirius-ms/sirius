@@ -98,6 +98,14 @@ public class CommonLossEdgeScorer implements LossScorer{
         return null;
     }
 
+    public boolean isCommonLoss(MolecularFormula f) {
+        return commonLosses.get(f) > 0;
+    }
+
+    public boolean isRecombinatedLoss(MolecularFormula f) {
+        return !isCommonLoss(f) && getRecombinatedList().get(f)>0;
+    }
+
     public void addCommonLoss(MolecularFormula loss, double score) {
         commonLosses.put(loss, score);
         recombinatedList = null;
