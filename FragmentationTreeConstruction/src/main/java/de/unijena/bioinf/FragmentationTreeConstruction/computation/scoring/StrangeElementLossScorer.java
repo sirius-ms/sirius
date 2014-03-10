@@ -59,18 +59,28 @@ public class StrangeElementLossScorer implements LossScorer {
         }
         final HashSet<MolecularFormula> knownLosses = new HashSet<MolecularFormula>(150);
         for (MolecularFormula f : lossList) {
-            if (f.isCHNO()) {
-                if (f.numberOfHydrogens() > 0 && f.numberOfCarbons() > 0) {
-                    final MolecularFormula substitution = f.subtract(hydrogen);
-                    for (MolecularFormula e : specialElements) {
-                        knownLosses.add(substitution.add(e));
-                    }
-                }
-            } else {
-                knownLosses.add(f);
+            addKnownStrangeLoss(specialElements, hydrogen, knownLosses, f);
+            for (MolecularFormula g : lossList) {
+                final MolecularFormula combined = f.add(g);
+                addKnownStrangeLoss(specialElements, hydrogen, knownLosses, combined);
             }
         }
         return knownLosses;
+    }
+
+    protected void addKnownStrangeLoss(ArrayList<MolecularFormula> specialElements, MolecularFormula hydrogen, HashSet<MolecularFormula> knownLosses, MolecularFormula f) {
+        if (f.isCHNO()) {
+            for (int k=1; k <= 2; ++k) {
+                if (f.numberOfHydrogens() >= k && f.numberOfCarbons() > 0) {
+                    final MolecularFormula substitution = f.subtract(hydrogen);
+                    for (MolecularFormula e : specialElements) {
+                        knownLosses.add(substitution.add(e.multiply(k)));
+                    }
+                }
+            }
+        } else {
+            knownLosses.add(f);
+        }
     }
 
     @Override

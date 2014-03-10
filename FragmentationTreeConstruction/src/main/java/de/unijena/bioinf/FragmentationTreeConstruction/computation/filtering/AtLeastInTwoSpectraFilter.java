@@ -50,7 +50,7 @@ public class AtLeastInTwoSpectraFilter implements PostProcessor {
         int removed = 0;
         while (iter.hasNext()) {
             final ProcessedPeak peak = iter.next();
-            if (peak.getMass() >= minMass && peak.getIntensity() <= maxIntensity && peak != parentPeak && peak.getOriginalPeaks().size() == 1) {
+            if (peak.getMass() >= minMass && peak.getRelativeIntensity() <= maxIntensity && peak != parentPeak && peak.getOriginalPeaks().size() == 1) {
                 iter.remove();
                 ++removed;
             }

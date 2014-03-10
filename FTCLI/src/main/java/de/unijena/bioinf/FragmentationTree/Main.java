@@ -644,7 +644,8 @@ public class Main {
         try {
             fw =  new FileWriter(f);
             final TreeAnnotation ano = new TreeAnnotation(tree, pipeline);
-            if (isoScore != null) ano.getAdditionalProperties().put(tree.getRoot(), new ArrayList<String>(Arrays.asList("Isotope: " + isoScore)));
+            ano.getAdditionalProperties().put(tree.getRoot(), new ArrayList<String>(Arrays.asList("CompoundScore: " + tree.getScore())));
+            if (isoScore != null) ano.getAdditionalProperties().get(tree.getRoot()).add("Isotope: " + isoScore);
             if (tree.getRecalibrationBonus()>0d) ano.getAdditionalProperties().put(tree.getRoot(), new ArrayList<String>(Arrays.asList("Rec.Bonus: " + tree.getRecalibrationBonus())));
             new FTDotWriter().writeTree(fw, tree, ano.getAdditionalProperties(), ano.getVertexAnnotations(), ano.getEdgeAnnotations());
         } catch (IOException e) {
