@@ -198,7 +198,7 @@ public class Spectrums {
 		return minIndex;
 	}
     public static <P extends Peak, S extends Spectrum<P>> int getIndexOfPeakWithMaximalMass(S spectrum) {
-        if (spectrum instanceof OrderedSpectrum) return spectrum.size();
+        if (spectrum instanceof OrderedSpectrum) return spectrum.size()-1;
         final int n = spectrum.size();
         double max = Double.NEGATIVE_INFINITY;
         int maxIndex = 0;

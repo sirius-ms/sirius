@@ -435,6 +435,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element> {
      * is multiplied with the given scalar.
      */
     public MolecularFormula multiply(int scalar) {
+        if (scalar==1) return this;
+        if (scalar==0) return emptyFormula();
         final short[] nrs = Arrays.copyOf(buffer(), buffer().length);
         for (int i=0; i < nrs.length; ++i) nrs[i] *= scalar;
         return new ImmutableMolecularFormula(getTableSelection(), nrs);
