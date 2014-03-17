@@ -39,21 +39,7 @@ public class LeastSquare extends AbstractRecalibrationStrategy {
         final double[][] values = MzRecalibration.maxIntervalStabbing(spectrum, refSpectrum, eps, threshold);
         if (values[0].length<minNumberOfPeaks) return new Identity();
 
-        // TEST: Force parent peak to be recalibrated!
-        double parentmz = spectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(spectrum));
-        double refmz = referenceSpectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(referenceSpectrum));
-        boolean found = false;
-        for (int k=0; k < values[0].length; ++k)
-            if (Math.abs(parentmz-values[0][k]) < 1e-5 && Math.abs(refmz - values[1][k]) < 1e-5) {
-                found = true;
-                break;
-            }
-        if (!found) {
-            values[0] = Arrays.copyOf(values[0], values[0].length+1);
-            values[0][values[0].length-1] = parentmz;
-            values[1] = Arrays.copyOf(values[1], values[1].length+1);
-            values[1][values[1].length-1] = refmz;
-        }
+        if (forceParentPeakIn) forceParentPeakInRecalibration(spectrum,referenceSpectrum,values);
 
 
         final UnivariateFunction recalibration = MzRecalibration.getLinearRecalibration(values[0], values[1]);

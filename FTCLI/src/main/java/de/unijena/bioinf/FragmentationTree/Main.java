@@ -462,10 +462,10 @@ public class Main {
                     // recalibrate best trees
                     if (!trees.isEmpty() && analyzer.getRecalibrationMethod()!=null) {
 
-                        final double DEVIATION_SCALE = 1d;
-                        final int MIN_NUMBER_OF_PEAKS = 6;
+                        final double DEVIATION_SCALE = 2/3d;
+                        final int MIN_NUMBER_OF_PEAKS = 8;
                         final double MIN_INTENSITY = 0d;
-                        final Deviation EPSILON = new Deviation(2,0.0002d);
+                        final Deviation EPSILON = new Deviation(4,5e-4d);
                         // only recalibrate if at least one tree has more than 5 nodes
                         boolean doRecalibrate = false;
                         for (FragmentationTree t : trees) if (t.numberOfVertices() >= MIN_NUMBER_OF_PEAKS) doRecalibrate=true;
@@ -473,15 +473,23 @@ public class Main {
                             for (int i=0; i < Math.min(TreesToConsider+1, trees.size()); ++i) {
                                 ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
                                 if (verbose) System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getScore() + ")");
-
+                                /*
                                 {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
-                                    method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(DEVIATION_SCALE));
+                                    //method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(1d));
                                     method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
                                     method.setEpsilon(EPSILON);
                                     method.setMinIntensity(MIN_INTENSITY);
+                                    method.setMaxDeviation(new Deviation(20, 0.1)); // "disable" max deviation
+                                    ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
                                 }
-
+                                */
+                                {
+                                    AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
+                                    method.setMaxDeviation(new Deviation(10, 5e-4d));
+                                    method.setMinNumberOfPeaks(8);
+                                    method.setEpsilon(EPSILON);
+                                }
                                 if (trees.get(i)==correctTree) {
                                     correctTree = analyzer.recalibrate(correctTree);
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
@@ -497,6 +505,7 @@ public class Main {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
                                     method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
                                     method.setEpsilon(EPSILON);
+                                    method.setForceParentPeakIn(true);
                                     ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(DEVIATION_SCALE);
                                     trees.set(i, analyzer.recalibrate(t, true));
                                 }

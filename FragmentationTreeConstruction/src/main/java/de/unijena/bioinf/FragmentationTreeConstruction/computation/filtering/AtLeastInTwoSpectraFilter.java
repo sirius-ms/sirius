@@ -55,6 +55,7 @@ public class AtLeastInTwoSpectraFilter implements PostProcessor {
                 ++removed;
             }
         }
+        System.out.println("REMOVED " + removed + " peaks");
         return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), peaks, input.getParentPeak(), input.getParentMassDecompositions(), input.getPeakScores(), input.getPeakPairScores());
     }
 

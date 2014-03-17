@@ -8,9 +8,12 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.recal.MzRecalibration;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
+
+import java.util.Arrays;
 
 public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Parameterized {
 
@@ -18,6 +21,7 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
     protected int minNumberOfPeaks;
     protected double minIntensity, threshold;
     protected Deviation maxDeviation;
+    protected boolean forceParentPeakIn;
 
     public AbstractRecalibrationStrategy() {
         this(new Deviation(4, 0.001), 10, 0.1);
@@ -27,8 +31,17 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         this.epsilon = epsilon;
         this.minNumberOfPeaks = minNumberOfPeaks;
         this.minIntensity = 0d;
-        this.maxDeviation = new Deviation(10, 1e-3);
+        this.maxDeviation = new Deviation(10,1e-3);
         this.threshold = threshold;
+        this.forceParentPeakIn = false;
+    }
+
+    public boolean isForceParentPeakIn() {
+        return forceParentPeakIn;
+    }
+
+    public void setForceParentPeakIn(boolean forceParentPeakIn) {
+        this.forceParentPeakIn = forceParentPeakIn;
     }
 
     public double getThreshold() {
@@ -93,11 +106,29 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
 
     protected void preprocess(MutableSpectrum<? extends Peak> spectrum, MutableSpectrum<? extends Peak> ref) {
         int i=0;
+        final double parentmz = spectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(spectrum));
         while (i < ref.size()) {
-            if (spectrum.getIntensityAt(i) < minIntensity || !maxDeviation.inErrorWindow(spectrum.getMzAt(i), ref.getMzAt(i))) {
+            if (spectrum.getMzAt(i) < (parentmz-0.5d) && (spectrum.getIntensityAt(i) < minIntensity || !maxDeviation.inErrorWindow(spectrum.getMzAt(i), ref.getMzAt(i)))) {
                 ref.removePeakAt(i);
                 spectrum.removePeakAt(i);
             } else ++i;
+        }
+    }
+
+    protected void forceParentPeakInRecalibration(final Spectrum<Peak> spectrum, final Spectrum<Peak> referenceSpectrum, final double[][] values) {
+        double parentmz = spectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(spectrum));
+        double refmz = referenceSpectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(referenceSpectrum));
+        boolean found = false;
+        for (int k=0; k < values[0].length; ++k)
+            if (Math.abs(parentmz-values[0][k]) < 1e-5 && Math.abs(refmz - values[1][k]) < 1e-5) {
+                found = true;
+                break;
+            }
+        if (!found) {
+            values[0] = Arrays.copyOf(values[0], values[0].length + 1);
+            values[0][values[0].length-1] = parentmz;
+            values[1] = Arrays.copyOf(values[1], values[1].length+1);
+            values[1][values[1].length-1] = refmz;
         }
     }
 
@@ -109,6 +140,8 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
             minNumberOfPeaks = (int)document.getIntFromDictionary(dictionary, "minNumberOfPeaks");
         if (document.hasKeyInDictionary(dictionary, "threshold"))
             threshold = document.getDoubleFromDictionary(dictionary, "threshold");
+        if (document.hasKeyInDictionary(dictionary, "forceParentPeakIn"))
+            forceParentPeakIn = document.getBooleanFromDictionary(dictionary, "forceParentPeakIn");
     }
 
     @Override
@@ -116,6 +149,7 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         document.addToDictionary(dictionary, "epsilon", epsilon.toString());
         document.addToDictionary(dictionary, "minNumberOfPeaks", minNumberOfPeaks);
         document.addToDictionary(dictionary, "threshold", threshold);
+        document.addToDictionary(dictionary, "forceParentPeakIn", forceParentPeakIn);
     }
 
 
