@@ -317,13 +317,13 @@ public class Main {
                 }
 
                 // DEBUG!!!!! FSTAT
-                /*
-                {
+
+                if (DEBUG_MODE) {
                     final ArrayList<ScoredMolecularFormula> allowed = new ArrayList<ScoredMolecularFormula>(input.getParentMassDecompositions());
                     final MolecularFormula correct = correctFormula;
                     final MolecularFormula bestWrong;
                     {
-                        final File dir = new File("D:/daten/arbeit/analysis_2014/14", f.getName().substring(0, f.getName().indexOf('.')));
+                        final File dir = new File("D:/daten/arbeit/analysis_2014/28", f.getName().substring(0, f.getName().indexOf('.')));
                         final ArrayList<File> get = new ArrayList<File>();
                         for (File g : dir.listFiles()) {
                             if ((g.getName().startsWith("1_") || g.getName().startsWith("2_")) && !g.getName().contains("_correct_")) {
@@ -350,7 +350,7 @@ public class Main {
                     }
                     input = new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), input.getMergedPeaks(), input.getParentPeak(), allowed, input.getPeakScores(), input.getPeakPairScores());
                 }
-                */
+
 
 
                 // First: Compute correct tree
@@ -537,10 +537,11 @@ public class Main {
                     }
 
                     // FSTAT
-                    /*
-                    if (trees.size()==1) statistics(f,correctTree,null);
-                    else statistics(f, correctTree, trees.get(0)==correctTree?trees.get(1):trees.get(0));
-                    */
+                    if (DEBUG_MODE) {
+                        if (trees.size()==1) statistics(f,correctTree,null);
+                        else statistics(f, correctTree, trees.get(0)==correctTree?trees.get(1):trees.get(0));
+                    }
+
 
                     /*
                    TODO: Push into separate branch "newScores2013"
