@@ -1,7 +1,5 @@
 package de.unijena.bioinf.babelms.ms;
 
-import com.sun.java.swing.plaf.windows.resources.windows;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;

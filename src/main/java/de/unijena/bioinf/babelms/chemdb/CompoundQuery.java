@@ -1,7 +1,16 @@
 package de.unijena.bioinf.babelms.chemdb;
 
-/**
- * Created by kaidu on 24.03.14.
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+
+import java.util.Set;
+
+/*
+    DON'T USE THIS YET! It's just a draft!
  */
 public interface CompoundQuery {
+
+    public Set<MolecularFormula> findMolecularFormulasByMass(double mass, double absoluteDeviation);
+    public Set<MolecularFormula> findMolecularFormulasByMass(double mass, Deviation allowedDeviation);
+
 }
