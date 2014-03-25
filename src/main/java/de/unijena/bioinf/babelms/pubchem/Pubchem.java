@@ -1,6 +1,7 @@
 package de.unijena.bioinf.babelms.pubchem;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.chemdb.CompoundQuery;
 import de.unijena.bioinf.babelms.chemspider.ChemSpider;
@@ -26,11 +27,12 @@ public class Pubchem implements CompoundQuery {
 
     public static void main(String[] args) {
         final Pubchem pubchem = new Pubchem();
-        final Set<MolecularFormula> formulas = pubchem.findMolecularFormulasByMass(194.080376, new Deviation(5));
+        final Set<MolecularFormula> formulas = pubchem.findMolecularFormulasByMass(
+                PeriodicTable.getInstance().ionByName("[M+H]+").subtractFromMass(314.1364), new Deviation(15, 0.0025));
         System.out.println(formulas.size());
-        formulas.addAll(new ChemSpider().findMolecularFormulasByMass(194.080376, new Deviation(5)));
-        System.out.println(formulas.size());
-        System.out.println(formulas);
+        //formulas.addAll(new ChemSpider().findMolecularFormulasByMass(194.080376, new Deviation(5)));
+        //System.out.println(formulas.size());
+        //System.out.println(formulas);
     }
 
     @Override
@@ -83,6 +85,7 @@ public class Pubchem implements CompoundQuery {
             final String[] row = rows[k].split(",");
             formulas.add(MolecularFormula.parse(row[formulaIndex].substring(1,row[formulaIndex].length()-1)));
         }
+        //System.err.println(); System.err.flush();
         return formulas;
     }
 
@@ -100,23 +103,24 @@ public class Pubchem implements CompoundQuery {
     }
 
     private static String sendPostRequestCSV(String uri, String body) {
-        try {
-            final byte[] bbody = body.getBytes("ASCII");
-            HttpURLConnection connection = (HttpURLConnection) URI.create(uri).toURL().openConnection();
+        HttpURLConnection connection = null;
+        try {;
+            connection = (HttpURLConnection) URI.create(uri).toURL().openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
+            connection.setDoInput(true);
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            connection.setRequestProperty("Content-Length", String.valueOf(bbody.length));
-            connection.getOutputStream().write(bbody);
-            connection.getOutputStream().close();
-            connection.disconnect();
+            connection.setRequestProperty("Content-Length", String.valueOf(body.length()));
+            final OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
+            writer.write(body);
+            writer.flush();
             final InputStream stream;
             try {
                 stream = connection.getInputStream();
             } catch (IOException e) {
                 final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
                 final StringBuilder buffer = new StringBuilder(256);
-                while (reader.ready()) {
+                while (true) {
                     final String line = reader.readLine();
                     if (line==null) break;
                     buffer.append(line).append('\n');
@@ -126,7 +130,7 @@ public class Pubchem implements CompoundQuery {
             }
             final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
             final StringBuilder buffer = new StringBuilder(256);
-            while (reader.ready()) {
+            while (true) {
                 final String line = reader.readLine();
                 if (line==null) break;
                 buffer.append(line).append('\n');
@@ -134,6 +138,8 @@ public class Pubchem implements CompoundQuery {
             return buffer.toString();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (connection!=null) connection.disconnect();
         }
     }
 
