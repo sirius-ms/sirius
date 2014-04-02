@@ -42,7 +42,7 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
         final double[] eps = new double[spectrum.size()];
         for (int k=0; k < eps.length; ++k) eps[k] = this.epsilon.absoluteFor(spectrum.getMzAt(k));
         //final double[][] values = MzRecalibration.maxIntervalStabbing(spectrum, ref, eps, threshold);
-        final double[][] values = getMedianSubsetFairDistributed(spectrum, ref);
+        final double[][] values = getMedianSubset(spectrum, ref);//getMedianSubsetFairDistributed(spectrum, ref);
         // getMedianSubsetFairDistributed(spectrum, ref);
         if (values[0].length<minNumberOfPeaks) return new Identity();
 
@@ -68,7 +68,7 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
         // for each mass range of 100 Da choose the most intensive peaks
         final SimpleSpectrum massOrderedSpectrum = new SimpleSpectrum(measured);
         final double highestMass = massOrderedSpectrum.getMzAt(massOrderedSpectrum.size()-1);
-        final ArrayList<Integer>[] chosenPeaks = new ArrayList[(int)Math.ceil(highestMass/100) + 1];
+        final ArrayList<Integer>[] chosenPeaks = new ArrayList[(int)Math.ceil(highestMass/100)];
         for (int k=0; k< chosenPeaks.length; ++k) chosenPeaks[k] = new ArrayList<Integer>();
         for (int k=0; k< massOrderedSpectrum.size(); ++k) {
             final int bin = (int)Math.floor(massOrderedSpectrum.getMzAt(k)/100);
@@ -81,6 +81,10 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
                     return new Double(measured.getIntensityAt(o2)).compareTo(measured.getIntensityAt(o1));
                 }
             });
+        }
+
+        while (chosenPeaks[chosenPeaks.length-1].size() < 4) {
+            chosenPeaks[chosenPeaks.length-1].add(massOrderedSpectrum.size()-1);
         }
 
         // take median of bin size
