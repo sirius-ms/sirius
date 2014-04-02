@@ -324,7 +324,6 @@ public class CommonLossEdgeScorer implements LossScorer{
                         Double sc = source.get(combination);
                         if (sc == null || sc.doubleValue() < combinatedScore) {
                             recombination.put(combination, combinatedScore);
-                            System.out.println("RECOMB: " + combination + " = " + a + " (" + source.get(a) + ") + " + b + " (" + source.get(b) + ") = " + combinatedScore);
                         }
                     }
                 }

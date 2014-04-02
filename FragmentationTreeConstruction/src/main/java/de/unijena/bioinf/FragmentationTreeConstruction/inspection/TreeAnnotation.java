@@ -115,7 +115,7 @@ public class TreeAnnotation {
         // Formula Scorer
         int j=0;
         for (DecompositionScorer scorer : analysis.getDecompositionScorers()) {
-            final double score = scorer.score(vertex.getFormula(), vertex.getPeak(), input, decompositionInits[j]);
+            final double score = scorer.score(vertex.getFormula(), vertex.getPeak(), input, decompositionInits[j++]);
             vertexAnnotation.put(scorer.getClass(), score);
         }
         // Peak Scorer
