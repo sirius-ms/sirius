@@ -2,6 +2,7 @@ package de.unijena.bioinf.FragmentationTree;
 
 import com.lexicalscope.jewel.cli.Option;
 import com.lexicalscope.jewel.cli.Unparsed;
+import de.unijena.bioinf.babelms.chemdb.Databases;
 import de.unijena.bioinf.sirius.cli.BasicOptions;
 import de.unijena.bioinf.sirius.cli.ProfileOptions;
 import de.unijena.bioinf.siriuscli.OutputOptions;
@@ -38,6 +39,12 @@ public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
 
     @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
+
+    @Option(shortName = "D", description = "use database", defaultValue="NONE")
+    public Databases getDatabase();
+
+    @Option(defaultToNull = true, description = "directory with cache file")
+    public File getCachingDirectory();
 
     @Option(shortName = "F", defaultValue = "0")
     public int getForceExplainedIntensity();

@@ -419,6 +419,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             score += peakPairScores[u.getPeak().getIndex()][v.getPeak().getIndex()]; // TODO: Umdrehen!
             // add the score of the loss
             for (int i=0; i < lossScorers.length; ++i) score += lossScorers[i].score(loss, input, precomputeds[i]);
+            assert !Double.isInfinite(score);
             loss.setWeight(score);
         }
         // set root scores

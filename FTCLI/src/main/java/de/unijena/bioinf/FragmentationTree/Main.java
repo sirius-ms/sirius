@@ -2,10 +2,8 @@ package de.unijena.bioinf.FragmentationTree;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
@@ -14,8 +12,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Lim
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.AbstractRecalibrationStrategy;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.LeastSquare;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.MedianSlope;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
@@ -24,10 +20,13 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.babelms.chemdb.DBMolecularFormulaCache;
+import de.unijena.bioinf.babelms.chemdb.Databases;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.sirius.cli.ProfileOptions;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import joptsimple.OptionSpecBuilder;
 
 import java.io.*;
 import java.util.*;
@@ -47,9 +46,18 @@ public class Main {
     public final static String VERSION_STRING = "FragmentationPatternAnalysis " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
     private static boolean DEBUG = false;
+    private DBMolecularFormulaCache formulaQuery;
+    private File formulaCacheFile;
 
     public static void main(String[] args) {
-        new Main().run(args);
+        try {
+            if (args.length==0) CliFactory.createCli(Options.class).parseArguments("-h");
+            new Main(args).run();
+        } catch (HelpRequestedException h) {
+            System.out.println(VERSION_STRING);
+            System.out.println(h.getMessage());
+            System.exit(0);
+        }
     }
 
     private PrintStream DEBUGSTREAM=null;
@@ -58,24 +66,26 @@ public class Main {
     private boolean verbose;
     private PrintStream rankWriter;
     private Profile profile;
+    private Databases database;
 
     private List<PrintStream> openStreams;
 
-    void run(String[] args) {
-        try {
-            options = CliFactory.createCli(Options.class).parseArguments(args);
-        } catch (HelpRequestedException h) {
-            System.out.println(VERSION_STRING);
-            System.out.println(h.getMessage());
-            System.exit(0);
-        }
+    public Main(Options options) {
+        this.options = options;
+        this.verbose = options.getVerbose();
+        this.database = options.getDatabase();
+    }
 
-        if (options.getCite() || options.getVersion() || args.length==0) {
+    public Main(String[] args) {
+        this(CliFactory.createCli(Options.class).parseArguments(args));
+    }
+
+    void run() {
+
+        if (options.getCite() || options.getVersion()) {
             System.out.println(VERSION_STRING);
             return;
         }
-
-        this.verbose = options.getVerbose();
 
         if (options.getThreads()>1) {
             System.err.println("Multiple threads are currently not supported. Please restart the program without the option -n");
@@ -97,6 +107,8 @@ public class Main {
                 System.exit(1);
             }
         }
+        initializeFormulaCache();
+        int dbchanges = 0;
 
         final List<File> files = getFiles(options);
         final MeasurementProfile defaultProfile = ProfileOptions.Interpret.getMeasurementProfile(options);
@@ -161,6 +173,9 @@ public class Main {
 
         eachFile:
         for (int fnum=0; fnum < files.size(); ++fnum) {
+
+            dbchanges = updateFormulaCache(formulaQuery, formulaCacheFile, dbchanges);
+
             final File f = files.get(fnum);
             try {
                 long computationTime = System.nanoTime();
@@ -193,7 +208,6 @@ public class Main {
                         Ms2ExperimentImpl ms2 = new Ms2ExperimentImpl(experiment);
                         ms2.setMeasurementProfile(profile);
                         experiment = ms2;
-
                     }
                 }
                 analyzer.setValidatorWarning(new Warning(){
@@ -226,6 +240,25 @@ public class Main {
                     DEBUGSTREAM.println(f.getName() + "," + correctFormula.toString() + "," + input.getParentPeak().getMz() + "," + list.size() + "," + (pos+1));
                     if (true) continue eachFile;
 
+                }
+
+                /*
+                    FILTER BY DATABASE (if activated)
+                 */
+                final int decompositionListSize = input.getParentMassDecompositions().size();
+                if (database != Databases.NONE) {
+                    final ArrayList<ScoredMolecularFormula> formulas =
+                            new ArrayList<ScoredMolecularFormula>(input.getParentMassDecompositions());
+                    final Iterator<ScoredMolecularFormula> iter = formulas.iterator();
+                    while (iter.hasNext()) {
+                        if (!formulaQuery.isFormulaExist(iter.next().getFormula())) iter.remove();
+                    }
+
+                    input = new ProcessedInput(input.getExperimentInformation(),
+                            input.getOriginalInput(), input.getMergedPeaks(), input.getParentPeak(), formulas,
+                            input.getPeakScores(), input.getPeakPairScores());
+                    if (verbose) System.out.println("Filter by " + database.name() + " leaving " + formulas.size() + " out of "
+                        + decompositionListSize + " candidates.");
                 }
 
                 /*
@@ -346,7 +379,13 @@ public class Main {
                     while (iter.hasNext()) {
                         final MolecularFormula h = iter.next().getFormula();
                         if (h.equals(correctFormula) || h.equals(bestWrong)) continue;
-                        else iter.remove();
+                        else {
+                            if (h.equals(correctFormula)) {
+                                assert false;
+                                System.err.println("'Correct' is not found in " + database.name() + "!");
+                            }
+                            iter.remove();
+                        }
                     }
                     input = new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), input.getMergedPeaks(), input.getParentPeak(), allowed, input.getPeakScores(), input.getPeakPairScores());
                 }
@@ -620,9 +659,75 @@ public class Main {
                 e.printStackTrace();
             }
         }
+        updateFormulaCache(formulaQuery, formulaCacheFile, -10);
         for (PrintStream writer : openStreams) {
             writer.close();
         }
+    }
+
+    public static File getFormulaCacheFile(File proposedCachingDirectory, Databases database) {
+        if (database == Databases.NONE) return null;
+        final File cache = proposedCachingDirectory != null ? proposedCachingDirectory :
+                new File(System.getProperty("user.home"), ".sirius-cache");
+        return new File(cache, database.name().toLowerCase() + ".db");
+    }
+
+    public static DBMolecularFormulaCache initializeFormulaCache(File cacheFile, Databases database) {
+        if (database == Databases.NONE) return null;
+        final File dir = cacheFile.getParentFile();
+        if (!dir.exists()) dir.mkdirs();
+        DBMolecularFormulaCache formulaQuery;
+        if (cacheFile.exists()) {
+            try {
+                final FileInputStream input = new FileInputStream(cacheFile);
+                formulaQuery = DBMolecularFormulaCache.load(input);
+                // TODO: add timestamp!
+            } catch (IOException e) {
+                System.err.println(e);
+                formulaQuery = new DBMolecularFormulaCache(
+                        new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S",
+                                "Cl", "Br", "I", "F")),
+                        database);
+            }
+        } else {
+            formulaQuery = new DBMolecularFormulaCache(
+                    new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S",
+                            "Cl", "Br", "I", "F")),
+                    database);
+        }
+        return formulaQuery;
+    }
+
+    public static void updateFormulaCache(File cacheFile, DBMolecularFormulaCache cache) {
+        if (cache.getChanges() > 0) {
+            synchronized (cache) {
+                final File backupFile = new File(cacheFile.getAbsolutePath() + ".backup");
+                cacheFile.renameTo(backupFile);
+                final FileOutputStream out;
+                try {
+                    out = new FileOutputStream(cacheFile);
+                    cache.store(out);
+                    out.close();
+                    backupFile.delete();
+                } catch (IOException e) {
+                    cacheFile.delete();
+                    backupFile.renameTo(cacheFile);
+                }
+            }
+        }
+    }
+
+    public void initializeFormulaCache() {
+        this.formulaCacheFile = getFormulaCacheFile(options.getCachingDirectory(), options.getDatabase());
+        this.formulaQuery = initializeFormulaCache(formulaCacheFile, options.getDatabase());
+    }
+
+    private int updateFormulaCache(DBMolecularFormulaCache formulaQuery, File formulaCacheFile, int dbchanges) {
+        if (formulaQuery!=null && (formulaQuery.getChanges()-dbchanges) > 10) {
+            updateFormulaCache(formulaCacheFile, formulaQuery);
+            dbchanges = formulaQuery.getChanges();
+        }
+        return dbchanges;
     }
 
     private static double intensityOfTree(FragmentationTree tree) {
@@ -678,6 +783,11 @@ public class Main {
                 final double ionMass = experiment.getIonMass() - experiment.getMoleculeNeutralMass();
                 final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-3, experiment.getIonization().getCharge());
                 impl.setIonization(ion);
+            } else if (impl.getIonization().getName().equals("[M+H-H2O]X+")) {
+                // TODO: QUICKNDIRTY
+                System.err.println("Warning: Replace Ionization [M+H-H2O]+ to [M+H]+ by subtracting H2O from correct formula");
+                impl.setIonization(PeriodicTable.getInstance().ionByName("[M+H]+"));
+                impl.setMolecularFormula(impl.getMolecularFormula().subtract(MolecularFormula.parse("H2O")));
             }
             if (impl.getMs1Spectra() != null && !impl.getMs1Spectra().isEmpty()) impl.setMergedMs1Spectrum(impl.getMs1Spectra().get(0));
         }
