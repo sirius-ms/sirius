@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *  while (true) {
  *      final long locked = lock.startReading();
  *      // your reading code
- *      if (!lock.needToRetryReading(locked)) break;
+ *      if (!lock.canFinishReading(locked)) break;
  *  }
  *
  *  // writing code
@@ -66,8 +66,12 @@ public class FastReadWriteLock {
         }
     }
 
-    public boolean needToRetryReading(long value) {
+    public boolean canFinishReading(long value) {
         return counter.get()==value;
+    }
+
+    public boolean needToRetryReading(long value) {
+        return !canFinishReading(value);
     }
 
 }

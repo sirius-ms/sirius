@@ -10,11 +10,8 @@ import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.set.hash.TLongHashSet;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
 
@@ -23,8 +20,8 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
     private final MolecularFormulaPacker packer;
     private final FastReadWriteLock lock;
 
-    private final static long MASK = (Long.MIN_VALUE + ((1l<<32)-1l));
-    private final static long ADD_SIGN_FLAG = (1l<<31);
+    private final static long MASK = (Long.MIN_VALUE + ((1l << 32) - 1l));
+    private final static long ADD_SIGN_FLAG = (1l << 31);
     private final static int CLEAR_SIGN_FLAG = Integer.MAX_VALUE;
 
     protected MolecularFormulaSet(MolecularFormulaPacker packer) {
@@ -39,10 +36,16 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
     }
 
     public static MolecularFormulaSet load(InputStream stream) throws IOException {
-        final BufferedInputStream bin;
-        if (stream instanceof BufferedInputStream) bin = (BufferedInputStream)stream;
-        else bin = new BufferedInputStream(stream);
-        final DataInputStream din = new DataInputStream(bin);
+        final DataInputStream din;
+        {
+            if (stream instanceof DataInputStream) din = (DataInputStream) stream;
+            else {
+                final BufferedInputStream bin;
+                if (stream instanceof BufferedInputStream) bin = (BufferedInputStream) stream;
+                else bin = new BufferedInputStream(stream);
+                din = new DataInputStream(bin);
+            }
+        }
 
         // read meta information
         final Charset ASCII = Charset.forName("US-ASCII");
@@ -63,27 +66,27 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
 
         // add compressed formulas
         final MolecularFormulaSet set = new MolecularFormulaSet(packer);
-        for (int k=0; k < num32; ++k) {
+        for (int k = 0; k < num32; ++k) {
             final int value = din.readInt();
-            final long conv = (value >= 0) ? (long)value : ((value & (CLEAR_SIGN_FLAG)) | ADD_SIGN_FLAG);
+            final long conv = (value >= 0) ? (long) value : ((value & (CLEAR_SIGN_FLAG)) | ADD_SIGN_FLAG);
             set.hashset.add(conv);
         }
-        for (int k=0; k < num64; ++k) {
+        for (int k = 0; k < num64; ++k) {
             final long value = din.readLong();
             set.hashset.add(value);
         }
         // add uncompressed formulas
-        final int _128_KILOBYTE = 128*1024;
+        final int _128_KILOBYTE = 128 * 1024;
         final byte[] buffer = new byte[_128_KILOBYTE];
         int offset = 0;
-        for (int k=0; k <= (bytesX/_128_KILOBYTE); ++k) {
-            final int len = din.read(buffer, 0, Math.min(_128_KILOBYTE, bytesX-offset));
+        for (int k = 0; k <= (bytesX / _128_KILOBYTE); ++k) {
+            final int len = din.read(buffer, 0, Math.min(_128_KILOBYTE, bytesX - offset));
             offset += len;
-            int lastSignificantByte = len-1;
-            for (; lastSignificantByte>=0; --lastSignificantByte) {
+            int lastSignificantByte = len - 1;
+            for (; lastSignificantByte >= 0; --lastSignificantByte) {
                 if (buffer[lastSignificantByte] != 0) break;
             }
-            final String str = new String(buffer, 0, lastSignificantByte+1, ASCII);
+            final String str = new String(buffer, 0, lastSignificantByte + 1, ASCII);
             for (String f : str.split(";")) set.uncompressed.add(MolecularFormula.parse(f));
         }
         return set;
@@ -94,11 +97,11 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
         try {
             final BufferedOutputStream bout;
             if (stream instanceof BufferedOutputStream) {
-                bout = (BufferedOutputStream)stream;
+                bout = (BufferedOutputStream) stream;
             } else bout = new BufferedOutputStream(stream);
             final DataOutputStream dout = new DataOutputStream(bout);
-            final TLongArrayList f64 = new TLongArrayList(hashset.size()/4);
-            final TIntArrayList f32 = new TIntArrayList(hashset.size()/4);
+            final TLongArrayList f64 = new TLongArrayList(hashset.size() / 4);
+            final TIntArrayList f32 = new TIntArrayList(hashset.size() / 4);
             final TLongIterator iter = hashset.iterator();
             final TByteArrayList buffer = new TByteArrayList();
             final Charset ASCII = Charset.forName("US-ASCII");
@@ -106,13 +109,14 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
             final byte filler = 0; // whitespace
             int chunks = 0;
             final Iterator<MolecularFormula> fiter = uncompressed.iterator();
-            final int _128_KILOBYTE = 128*1024;
+            final int _128_KILOBYTE = 128 * 1024;
             while (fiter.hasNext()) {
                 final byte[] add = fiter.next().toString().getBytes(ASCII);
-                if (add.length > 64000) throw new RuntimeException("Strange molecular formula format: Molecular Formulas have to be smaller than 64KB");
+                if (add.length > 64000)
+                    throw new RuntimeException("Strange molecular formula format: Molecular Formulas have to be smaller than 64KB");
                 final int toadd = add.length + (fiter.hasNext() ? 1 : 0);
-                if ((buffer.size()+toadd-chunks) > _128_KILOBYTE) {
-                    final int tofill = (_128_KILOBYTE - (buffer.size()-chunks));
+                if ((buffer.size() + toadd - chunks) > _128_KILOBYTE) {
+                    final int tofill = (_128_KILOBYTE - (buffer.size() - chunks));
                     final byte[] fillerbits = new byte[tofill];
                     Arrays.fill(fillerbits, filler);
                     buffer.add(fillerbits);
@@ -125,7 +129,7 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
                 final long value = iter.next();
                 if ((value & MASK) == value) {
                     // clear sign bit
-                    f32.add((int)(value));
+                    f32.add((int) (value));
                 } else {
                     f64.add(value);
                 }
@@ -140,10 +144,10 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
             dout.writeInt(pack.length());
             dout.write(pack.getBytes(ASCII));
             // then store 32 bit formulas
-            for (int k=0; k < f32.size(); ++k)
+            for (int k = 0; k < f32.size(); ++k)
                 dout.writeInt(f32.get(k));
             // then store 64 bit formulas
-            for (int k=0; k < f64.size(); ++k)
+            for (int k = 0; k < f64.size(); ++k)
                 dout.writeLong(f64.get(k));
             // finally store uncompressed formulas
             dout.write(buffer.toArray());
@@ -159,7 +163,7 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
         while (true) {
             final long v = lock.startReading();
             final boolean empty = hashset.isEmpty() && uncompressed.isEmpty();
-            if (!lock.needToRetryReading(v)) return empty;
+            if (lock.canFinishReading(v)) return empty;
         }
     }
 
@@ -189,7 +193,7 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
     @Override
     public boolean remove(Object o) {
         if (o instanceof MolecularFormula) {
-            final MolecularFormula f = (MolecularFormula)o;
+            final MolecularFormula f = (MolecularFormula) o;
             final long value = packer.tryEncode(f);
             lock.startWriting();
             try {
@@ -205,24 +209,25 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
     public boolean contains(MolecularFormula f) {
         final long value = packer.tryEncode(f);
         while (true) {
-            lock.startReading();
+            final long locked = lock.startReading();
             final boolean contained = (value >= 0) ? hashset.contains(value) : uncompressed.contains(f);
-            if (!lock.needToRetryReading(value)) return contained;
+            if (lock.canFinishReading(locked)) return contained;
         }
     }
 
     @Override
     public boolean contains(Object o) {
-        if (o instanceof MolecularFormula) return contains((MolecularFormula)o);
+        if (o instanceof MolecularFormula) return contains((MolecularFormula) o);
         else return false;
     }
 
     @Override
     public Iterator<MolecularFormula> iterator() {
         return new Iterator<MolecularFormula>() {
-            final Iterator<MolecularFormula>  uncompressedIterator = uncompressed.iterator();
+            final Iterator<MolecularFormula> uncompressedIterator = uncompressed.iterator();
             final TLongIterator iterator = hashset.iterator();
             boolean iteratesUncompressed = false;
+
             @Override
             public boolean hasNext() {
                 lock.startReading(); // if some writing operation was done, the iterator should fail
@@ -233,7 +238,7 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
             @Override
             public MolecularFormula next() {
                 if (iterator.hasNext()) return packer.decode(iterator.next());
-                iteratesUncompressed=true;
+                iteratesUncompressed = true;
                 if (uncompressedIterator.hasNext()) return uncompressedIterator.next();
                 throw new NoSuchElementException();
             }
@@ -256,7 +261,7 @@ public class MolecularFormulaSet extends AbstractSet<MolecularFormula> {
         while (true) {
             final long v = lock.startReading();
             final int size = uncompressed.size() + hashset.size();
-            if (!lock.needToRetryReading(v)) return size;
+            if (lock.canFinishReading(v)) return size;
         }
     }
 }
