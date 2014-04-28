@@ -8,10 +8,11 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TObjectDoubleProcedure;
 
 import java.util.*;
 
-public class CommonLossEdgeScorer implements LossScorer{
+public class CommonLossEdgeScorer implements LossScorer {
 
     private final TObjectDoubleHashMap<MolecularFormula> commonLosses;
     private TObjectDoubleHashMap<MolecularFormula> recombinatedList;
@@ -62,21 +63,21 @@ public class CommonLossEdgeScorer implements LossScorer{
      * when adding the loss size score later, both scores are sumed up to 0.
      * Nevertheless: Maybe it is not wrong to say: C6H6 is "nicer" than H2, as it contains more information. Therefore,
      * you can add only e.g. 70% of the negative loss size score to the common loss score.
+     *
      * @param lossSizeScorer
-     * @param compensation multiplicator with loss size score
+     * @param compensation   multiplicator with loss size score
      * @return
      */
     public static CommonLossEdgeScorer getLossSizeCompensationForExpertList(LossSizeScorer lossSizeScorer, double compensation) {
         final CommonLossEdgeScorer scorer = new CommonLossEdgeScorer();
         for (String f : ales_list) {
             final MolecularFormula m = MolecularFormula.parse(f);
-            scorer.addCommonLoss(m, -(lossSizeScorer.score(m)+lossSizeScorer.getNormalization())*compensation);
+            scorer.addCommonLoss(m, -(lossSizeScorer.score(m) + lossSizeScorer.getNormalization()) * compensation);
         }
         return scorer;
     }
 
     /**
-     *
      * @param penalty
      * @return
      */
@@ -103,7 +104,7 @@ public class CommonLossEdgeScorer implements LossScorer{
     }
 
     public boolean isRecombinatedLoss(MolecularFormula f) {
-        return !isCommonLoss(f) && getRecombinatedList().get(f)>0;
+        return !isCommonLoss(f) && getRecombinatedList().get(f) > 0;
     }
 
     public void addCommonLoss(MolecularFormula loss, double score) {
@@ -132,6 +133,7 @@ public class CommonLossEdgeScorer implements LossScorer{
         this.commonLosses.putAll(map);
         recombinatedList = null;
     }
+
     public void merge(TObjectDoubleHashMap<MolecularFormula> map) {
         this.commonLosses.putAll(map);
         recombinatedList = null;
@@ -148,7 +150,7 @@ public class CommonLossEdgeScorer implements LossScorer{
 
     public double score(MolecularFormula formula) {
         final double score = recombinatedList.get(formula);
-        if (score!=0) return score - normalization;
+        if (score != 0) return score - normalization;
         else return commonLosses.get(formula) - normalization;
     }
 
@@ -159,7 +161,7 @@ public class CommonLossEdgeScorer implements LossScorer{
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        final Iterator<Map.Entry<String,G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "losses"));
+        final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "losses"));
         clearLosses();
         while (iter.hasNext()) {
             final Map.Entry<String, G> entry = iter.next();
@@ -167,7 +169,7 @@ public class CommonLossEdgeScorer implements LossScorer{
         }
         this.normalization = document.getDoubleFromDictionary(dictionary, "normalization");
         if (document.hasKeyInDictionary(dictionary, "recombinator"))
-            this.recombinator = (Recombinator)helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
+            this.recombinator = (Recombinator) helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
     }
 
     @Override
@@ -183,8 +185,9 @@ public class CommonLossEdgeScorer implements LossScorer{
     }
 
     TObjectDoubleHashMap<MolecularFormula> getRecombinatedList() {
-        if (recombinatedList==null) recombinatedList = recombinator==null ? new TObjectDoubleHashMap<MolecularFormula>()
-                : recombinator.recombinate(commonLosses, normalization);
+        if (recombinatedList == null)
+            recombinatedList = recombinator == null ? new TObjectDoubleHashMap<MolecularFormula>()
+                    : recombinator.recombinate(commonLosses, normalization);
         return recombinatedList;
     }
 
@@ -200,12 +203,19 @@ public class CommonLossEdgeScorer implements LossScorer{
 
         @Override
         public TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula> source, double normalizationConstant) {
-            final ArrayList<MolecularFormula> losses = new ArrayList<MolecularFormula>(source.keySet());
-            final TObjectDoubleHashMap<MolecularFormula> recs = new TObjectDoubleHashMap<MolecularFormula>(source.size()*source.size()*source.size());
+            final ArrayList<MolecularFormula> losses = new ArrayList<MolecularFormula>(source.keySet().size());
+            source.forEachEntry(new TObjectDoubleProcedure<MolecularFormula>() {
+                @Override
+                public boolean execute(MolecularFormula a, double b) {
+                    if (b >= 0) losses.add(a);
+                    return true;
+                }
+            });
+            final TObjectDoubleHashMap<MolecularFormula> recs = new TObjectDoubleHashMap<MolecularFormula>(source.size() * source.size() * source.size());
             List<MolecularFormula> src = new ArrayList<MolecularFormula>(losses);
-            final double gamma = 1;
-            for (int i=1; i <=3; ++i) {
-                final double score = /*Math.log(*/gamma/i/*)*/;
+            final double gamma = 10;
+            for (int i = 2; i <= 3; ++i) {
+                final double score = Math.log10(gamma / i);
                 final ArrayList<MolecularFormula> newSrc = new ArrayList<MolecularFormula>();
                 for (MolecularFormula f : losses) {
                     for (MolecularFormula g : src) {
@@ -250,20 +260,20 @@ public class CommonLossEdgeScorer implements LossScorer{
 
         @Override
         public TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula> source, double normalizationConstant) {
-            final TObjectDoubleHashMap<MolecularFormula> recombination = new TObjectDoubleHashMap<MolecularFormula>(source.size()*source.size());
+            final TObjectDoubleHashMap<MolecularFormula> recombination = new TObjectDoubleHashMap<MolecularFormula>(source.size() * source.size());
             final List<MolecularFormula> sourceList = new ArrayList<MolecularFormula>(source.keySet());
-            for (int i=0; i < sourceList.size(); ++i) {
+            for (int i = 0; i < sourceList.size(); ++i) {
                 final MolecularFormula a = sourceList.get(i);
                 if (source.get(a) < 0) continue;
-                final double aScore = lossSizeScorer.score(a) + source.get(a) ;
-                for (int j=i; j < sourceList.size(); ++j) {
+                final double aScore = lossSizeScorer.score(a) + source.get(a);
+                for (int j = i; j < sourceList.size(); ++j) {
                     final MolecularFormula b = sourceList.get(j);
                     if (source.get(b) < 0) continue;
                     final double bScore = lossSizeScorer.score(b) + source.get(b);
                     final MolecularFormula combination = a.add(b);
                     final double combinationScore = lossSizeScorer.score(combination) + source.get(combination);
                     final double recombinationScore = Math.min(aScore, bScore) + penalty;
-                    if (recombinationScore > combinationScore ) {
+                    if (recombinationScore > combinationScore) {
                         final double finalScore = recombinationScore - lossSizeScorer.score(combination);
                         recombination.put(combination, finalScore);
                     }
@@ -274,13 +284,13 @@ public class CommonLossEdgeScorer implements LossScorer{
 
         @Override
         public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-            return new MinimalScoreRecombinator((LossSizeScorer)helper.unwrap(document,document.getFromDictionary(dictionary,"lossSize")), document.getDoubleFromDictionary(dictionary,"penalty"));
+            return new MinimalScoreRecombinator((LossSizeScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "lossSize")), document.getDoubleFromDictionary(dictionary, "penalty"));
         }
 
         @Override
         public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
             document.addToDictionary(dictionary, "penalty", penalty);
-            document.addToDictionary(dictionary, "lossSize", helper.wrap(document,lossSizeScorer));
+            document.addToDictionary(dictionary, "lossSize", helper.wrap(document, lossSizeScorer));
         }
     }
 
@@ -289,7 +299,7 @@ public class CommonLossEdgeScorer implements LossScorer{
      * 1. calculate the final score of both common loss (after adding loss size prior and normalizations)
      * 2. use the average of both scores as new common loss score
      * 3. subtract the loss size score from this score, such that the loss size of the resulting loss is not considered
-     *    (as we expect not one loss with this size but two consecutive losses instead)
+     * (as we expect not one loss with this size but two consecutive losses instead)
      * 4. add a small penalty for not observing the intermediate fragment
      */
     public static class LossSizeRecombinator implements Recombinator {
@@ -309,18 +319,18 @@ public class CommonLossEdgeScorer implements LossScorer{
 
         @Override
         public TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula> source, double normalizationConstant) {
-            final TObjectDoubleHashMap<MolecularFormula> recombination = new TObjectDoubleHashMap<MolecularFormula>(source.size()*source.size());
+            final TObjectDoubleHashMap<MolecularFormula> recombination = new TObjectDoubleHashMap<MolecularFormula>(source.size() * source.size());
             final List<MolecularFormula> sourceList = new ArrayList<MolecularFormula>(source.keySet());
-            for (int i=0; i < sourceList.size(); ++i) {
+            for (int i = 0; i < sourceList.size(); ++i) {
                 final MolecularFormula a = sourceList.get(i);
-                final double aScore = lossSizeScorer.score(a) + source.get(a) - normalizationConstant ;
-                for (int j=i; j < sourceList.size(); ++j) {
+                final double aScore = lossSizeScorer.score(a) + source.get(a) - normalizationConstant;
+                for (int j = i; j < sourceList.size(); ++j) {
                     final MolecularFormula b = sourceList.get(j);
                     final double bScore = lossSizeScorer.score(b) + source.get(b) - normalizationConstant;
                     final MolecularFormula combination = a.add(b);
                     final double abScore = lossSizeScorer.score(combination);
-                    final double combinatedScore = (aScore + bScore) -abScore + normalizationConstant + penalty;
-                    if (combinatedScore > 0d ) {
+                    final double combinatedScore = (aScore + bScore) - abScore + normalizationConstant + penalty;
+                    if (combinatedScore > 0d) {
                         Double sc = source.get(combination);
                         if (sc == null || sc.doubleValue() < combinatedScore) {
                             recombination.put(combination, combinatedScore);
@@ -333,13 +343,13 @@ public class CommonLossEdgeScorer implements LossScorer{
 
         @Override
         public <G, D, L> Recombinator readFromParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-            return new LossSizeRecombinator((LossSizeScorer)helper.unwrap(document,document.getFromDictionary(dictionary,"lossSize")), document.getDoubleFromDictionary(dictionary,"penalty"));
+            return new LossSizeRecombinator((LossSizeScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "lossSize")), document.getDoubleFromDictionary(dictionary, "penalty"));
         }
 
         @Override
         public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
             document.addToDictionary(dictionary, "penalty", penalty);
-            document.addToDictionary(dictionary, "lossSize", helper.wrap(document,lossSizeScorer));
+            document.addToDictionary(dictionary, "lossSize", helper.wrap(document, lossSizeScorer));
         }
     }
 

@@ -116,11 +116,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final CommonLossEdgeScorer alesscorer = new CommonLossEdgeScorer();
         alesscorer.setRecombinator(new CommonLossEdgeScorer.LegacyOldSiriusRecombinator());
 
-        final double GAMMA = 1;
+        final double GAMMA = 1d;
 
         for (String s : CommonLossEdgeScorer.ales_list) {
-            alesscorer.addCommonLoss(MolecularFormula.parse(s), /*GAMMA * Math.log(10)*/1);
+            alesscorer.addCommonLoss(MolecularFormula.parse(s), GAMMA);
         }
+
+        alesscorer.addImplausibleLosses(Math.log(0.25));
+
+        lossScorers.add(new ChemicalPriorEdgeScorer(new Hetero2CarbonScorer(Hetero2CarbonScorer.getHeteroToCarbonDistributionFromKEGG()), 0d, 0d));
 
         lossScorers.add(alesscorer);
 
@@ -147,20 +151,21 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.setPeakPairScorers(peakPairScorers);
 
         analysis.setPeakMerger(new HighIntensityMerger(0.01d));
-        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.01d));
+        analysis.getPostProcessors().add(new NoiseThresholdFilter(0.005d));
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
-        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(100));
+        analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
-        profile.setAllowedMassDeviation(new Deviation(11));
+
+        profile.setAllowedMassDeviation(new Deviation(10, 0.002d));
         profile.setStandardMassDifferenceDeviation(new Deviation(2.5d));
-        profile.setStandardMs2MassDeviation(new Deviation(11d/4d));
+        profile.setStandardMs2MassDeviation(new Deviation(10d, 0.002d));
         profile.setStandardMs1MassDeviation(new Deviation(11d / 4d));
         profile.setFormulaConstraints(new FormulaConstraints());
-        profile.setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.04d).getMedian());
+        profile.setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.4d).getMedian());
         profile.setIntensityDeviation(0.02);
         analysis.setDefaultProfile(profile);
 

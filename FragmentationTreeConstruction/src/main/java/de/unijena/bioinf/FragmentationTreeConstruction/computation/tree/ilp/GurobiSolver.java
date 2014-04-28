@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
-import de.unijena.bioinf.functional.iterator.Iterators;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.*;
 
@@ -27,7 +26,7 @@ public class GurobiSolver implements TreeBuilder {
         this.env = env;
         this.feasibleSolver = feasibleSolver;
         this.secondsPerInstance = 5*60*60; // maximal 5 hour per instance
-        this.secondsPerDecomposition = 70*60; // maximal 70 minutes per decomposition
+        this.secondsPerDecomposition = 5 * 60 * 60; // maximal 5 hours per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
     }
