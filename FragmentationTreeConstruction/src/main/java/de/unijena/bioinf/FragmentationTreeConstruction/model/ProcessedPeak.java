@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -11,21 +10,25 @@ import de.unijena.bioinf.functional.iterator.Iterators;
 import java.util.*;
 
 public class ProcessedPeak extends Peak {
+
+    private final static Object[] EMPTY_ARRAY = new Object[0];
+
     private int index;
     private List<MS2Peak> originalPeaks;
     private double localRelativeIntensity, relativeIntensity, globalRelativeIntensity;
     private CollisionEnergy collisionEnergy;
     private Ionization ion;
-    private List<ScoredMolecularFormula> decompositions;
     private double originalMz;
+
+    private Object[] annotations;
 
     public ProcessedPeak() {
         super(0, 0);
+        this.annotations = EMPTY_ARRAY;
         this.index = 0;
         this.originalPeaks = Collections.emptyList();
         this.globalRelativeIntensity = relativeIntensity = localRelativeIntensity = 0d;
         this.ion = null;
-        this.decompositions = Collections.emptyList();
         this.originalMz = getMz();
     }
 
@@ -48,7 +51,6 @@ public class ProcessedPeak extends Peak {
         this.globalRelativeIntensity = peak.getGlobalRelativeIntensity();
         this.relativeIntensity = peak.getRelativeIntensity();
         this.ion = peak.getIon();
-        this.decompositions = peak.getDecompositions();
         this.collisionEnergy = peak.getCollisionEnergy();
         this.originalMz = peak.getOriginalMz();
     }
@@ -105,10 +107,6 @@ public class ProcessedPeak extends Peak {
         this.ion = ion;
     }
 
-    public void setDecompositions(List<ScoredMolecularFormula> decompositions) {
-        this.decompositions = decompositions;
-    }
-
     public Iterator<Ms2Spectrum> originalSpectraIterator() {
         return Iterators.map(originalPeaks.iterator(), new Function<MS2Peak, Ms2Spectrum>() {
             @Override
@@ -162,10 +160,6 @@ public class ProcessedPeak extends Peak {
         return getMz() - originalMz;
     }
 
-    public List<ScoredMolecularFormula> getDecompositions() {
-        return Collections.unmodifiableList(decompositions);
-    }
-
     public String toString() {
         return globalRelativeIntensity + "@" + mass + " Da";
     }
@@ -173,6 +167,19 @@ public class ProcessedPeak extends Peak {
     public double getUnmodifiedOriginalMass() {
         return ion.subtractFromMass(originalMz);
     }
+
+    Object getAnnotation(int id) {
+        if (annotations.length > id) return annotations[id];
+        else return null;
+    }
+
+    void setAnnotation(int id, Object newObj) {
+        if (annotations.length <= id) annotations = Arrays.copyOf(annotations, id+1);
+        annotations[id] = newObj;
+    }
+     void setAnnotationCapacity(int capacity) {
+         if (annotations.length < capacity) annotations = Arrays.copyOf(annotations, capacity+1);
+     }
 
     public static class MassComparator implements Comparator<ProcessedPeak> {
 

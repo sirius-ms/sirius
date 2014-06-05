@@ -399,7 +399,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public MultipleTreeComputation computeTrees(ProcessedInput input) {
-        return new MultipleTreeComputation(this, input, input.getParentMassDecompositions(), 0, Integer.MAX_VALUE, 1, recalibrationMethod!=null,null);
+        return new MultipleTreeComputation(this, input, input.getPeakAnnotationOrThrow(DecompositionList.class).get(input.getParentPeak()).getDecompositions(),
+                0, Integer.MAX_VALUE, 1, recalibrationMethod!=null,null);
     }
 
     public FragmentationGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
@@ -407,8 +408,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final FragmentationGraph graph = graphBuilder.buildGraph(input, candidate);
         // score graph
         final Iterator<Loss> edges = graph.lossIterator();
-        final double[] peakScores = input.getPeakScores();
-        final double[][] peakPairScores = input.getPeakPairScores();
+        final Scoring scoring = input.getAnnotationOrThrow(Scoring.class);
+        final double[] peakScores = scoring.getPeakScores();
+        final double[][] peakPairScores = scoring.getPeakPairScores();
         final LossScorer[] lossScorers = this.lossScorers.toArray(new LossScorer[this.lossScorers.size()]);
         final Object[] precomputeds = new Object[lossScorers.length];
         for (int i=0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input);
@@ -456,13 +458,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // normalize all peaks and merge peaks within the same spectrum
         // put peaks from all spectra together in a flatten list
         List<ProcessedPeak> peaks = normalize(input);
-        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, experiment, peaks, null, null)).getMergedPeaks();
+        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, experiment, peaks, null)).getMergedPeaks();
         // merge peaks from different spectra
         final List<ProcessedPeak> processedPeaks = mergePeaks(input, peaks);
         final ProcessedPeak parentPeak = selectParentPeakAndCleanSpectrum(input, processedPeaks);
         final List<ProcessedPeak> afterMerging =
-                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, experiment, processedPeaks, parentPeak, null)).getMergedPeaks();
-        return new ProcessedInput(input, experiment, afterMerging, parentPeak, null);
+                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, experiment, processedPeaks, parentPeak)).getMergedPeaks();
+        return new ProcessedInput(input, experiment, afterMerging, parentPeak);
     }
 
     /**
@@ -553,20 +555,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 decompositions.set(i, new ArrayList<MolecularFormula>(right));
             }
         }
-        final ProcessedInput preprocessed = new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak, null);
+        final ProcessedInput preprocessed = new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak);
         final int n = processedPeaks.size();
+        preprocessed.getOrCreateAnnotation(Scoring.class).initializeScoring(n);
         // score peak pairs
-        final double[][] peakPairScores = new double[n][n];
+        final double[][] peakPairScores = preprocessed.getAnnotationOrThrow(Scoring.class).getPeakPairScores();
         for (PeakPairScorer scorer : peakPairScorers) {
             scorer.score(processedPeaks, preprocessed, peakPairScores);
         }
         // score fragment peaks
-        final double[] peakScores = new double[n];
+        final double[] peakScores = preprocessed.getAnnotationOrThrow(Scoring.class).getPeakScores();
         for (PeakScorer scorer : fragmentPeakScorers) {
             scorer.score(processedPeaks, preprocessed, peakScores);
         }
         // dont score parent peak
         peakScores[peakScores.length-1]=0d;
+
+        final PeakAnnotation<DecompositionList> decompositionList = preprocessed.getOrCreatePeakAnnotation(DecompositionList.class);
         // score peaks
         {
             final ArrayList<Object> preparations = new ArrayList<Object>(decompositionScorers.size());
@@ -582,7 +587,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     }
                     scored.add(new ScoredMolecularFormula(f, score));
                 }
-                processedPeaks.get(i).setDecompositions(scored);
+                decompositionList.set(processedPeaks.get(i), new DecompositionList(scored));
             }
         }
         // same with root
@@ -600,15 +605,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
             }
             Collections.sort(scored, Collections.reverseOrder());
-            parentPeak.setDecompositions(scored);
+            decompositionList.set(parentPeak, new DecompositionList(scored));
         }
         // set peak indizes
         for (int i=0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
 
-        final ProcessedInput processedInput =
-                new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak, parentPeak.getDecompositions(), peakScores, peakPairScores);
         // final processing
-        return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, processedInput);
+        return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, preprocessed);
     }
 
     /*
