@@ -2,8 +2,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -55,8 +53,8 @@ public class AtLeastInTwoSpectraFilter implements PostProcessor {
                 ++removed;
             }
         }
-        System.out.println("REMOVED " + removed + " peaks");
-        return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), peaks, input.getParentPeak(), input.getParentMassDecompositions(), input.getPeakScores(), input.getPeakPairScores());
+        input.setMergedPeaks(peaks);
+        return input;
     }
 
     @Override
@@ -66,8 +64,10 @@ public class AtLeastInTwoSpectraFilter implements PostProcessor {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        if (document.hasKeyInDictionary(dictionary, "minMass")) this.minMass = document.getDoubleFromDictionary(dictionary, "minMass");
-        if (document.hasKeyInDictionary(dictionary, "maxIntensity")) this.maxIntensity = document.getDoubleFromDictionary(dictionary, "maxIntensity");
+        if (document.hasKeyInDictionary(dictionary, "minMass"))
+            this.minMass = document.getDoubleFromDictionary(dictionary, "minMass");
+        if (document.hasKeyInDictionary(dictionary, "maxIntensity"))
+            this.maxIntensity = document.getDoubleFromDictionary(dictionary, "maxIntensity");
     }
 
     @Override

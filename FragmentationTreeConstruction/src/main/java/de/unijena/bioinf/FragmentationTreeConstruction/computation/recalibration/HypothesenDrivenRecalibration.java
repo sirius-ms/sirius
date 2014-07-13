@@ -7,14 +7,17 @@ import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeFragment;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 
@@ -31,7 +34,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
 
     private RecalibrationStrategy method;
     private double distanceThreshold;
-    private double deviationScale=1d;
+    private double deviationScale = 1d;
 
     public HypothesenDrivenRecalibration() {
         this(new LeastSquare(), 0.00002d);
@@ -46,16 +49,16 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
         return method;
     }
 
+    public void setMethod(RecalibrationStrategy method) {
+        this.method = method;
+    }
+
     public double getDeviationScale() {
         return deviationScale;
     }
 
     public void setDeviationScale(double deviationScale) {
         this.deviationScale = deviationScale;
-    }
-
-    public void setMethod(RecalibrationStrategy method) {
-        this.method = method;
     }
 
     public double getDistanceThreshold() {
@@ -67,27 +70,29 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
     }
 
     @Override
-    public Recalibration recalibrate(final FragmentationTree tree, final MassDeviationVertexScorer scorer, final boolean force) {
+    public Recalibration recalibrate(final FTree tree, final MassDeviationVertexScorer scorer, final boolean force) {
         // get peaks from tree
-        final List<TreeFragment> fragments = new ArrayList<TreeFragment>(tree.getFragments());
-        Collections.sort(fragments, new Comparator<TreeFragment>() {
+        final List<Fragment> fragments = new ArrayList<Fragment>(tree.getFragments());
+        final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        Collections.sort(fragments, new Comparator<Fragment>() {
             @Override
-            public int compare(TreeFragment o1, TreeFragment o2) {
-                return new Double(o1.getPeak().getMz()).compareTo(o2.getPeak().getMz());
+            public int compare(Fragment o1, Fragment o2) {
+                return new Double(peakAno.get(o1).getMz()).compareTo(peakAno.get(o2).getMz());
             }
         });
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
         final SimpleMutableSpectrum ref = new SimpleMutableSpectrum();
-        final Ionization ion = tree.getIonization();
-        for (TreeFragment f : fragments) {
-            spec.addPeak(new Peak(f.getPeak().getOriginalMz(), f.getPeak().getRelativeIntensity()));
-            ref.addPeak(new Peak(ion.addToMass(f.getDecomposition().getFormula().getMass()), f.getPeak().getRelativeIntensity()));
+        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+        for (Fragment f : fragments) {
+            spec.addPeak(new Peak(peakAno.get(f).getOriginalMz(), peakAno.get(f).getRelativeIntensity()));
+            ref.addPeak(new Peak(ion.addToMass(f.getFormula().getMass()), peakAno.get(f).getRelativeIntensity()));
         }
         final UnivariateFunction recalibrationFunction = method.recalibrate(spec, ref);
         return new Recalibration() {
             private double scoreBonus = Double.NaN;
-            private FragmentationTree correctedTree = null;
+            private FTree correctedTree = null;
             private boolean recomputeTree = false;
+
             @Override
             public double getScoreBonus() {
                 if (Double.isNaN(scoreBonus)) {
@@ -97,17 +102,17 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
             }
 
             @Override
-            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer, FragmentationTree oldTree) {
+            public FTree getCorrectedTree(FragmentationPatternAnalysis analyzer, FTree oldTree) {
                 if (correctedTree != null) return correctedTree;
-                else return recomputeTree(analyzer,oldTree);
+                else return recomputeTree(analyzer, oldTree);
             }
 
             @Override
-            public FragmentationTree getCorrectedTree(FragmentationPatternAnalysis analyzer) {
-                return getCorrectedTree(analyzer,null);
+            public FTree getCorrectedTree(FragmentationPatternAnalysis analyzer) {
+                return getCorrectedTree(analyzer, null);
             }
 
-            private FragmentationTree recomputeTree(FragmentationPatternAnalysis analyzer, FragmentationTree oldTree) {
+            private FTree recomputeTree(FragmentationPatternAnalysis analyzer, FTree oldTree) {
                 getScoreBonus();
                 final UnivariateFunction f = recalibrationFunction;
                 if (f instanceof Identity && !force) {
@@ -129,45 +134,49 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 final MutableMeasurementProfile prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
                 exp.setMeasurementProfile(prof);
                 */
-                final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(analyzer.validate(tree.getInput().getOriginalInput()));
+                final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(analyzer.validate(tree.getAnnotationOrThrow(ProcessedInput.class).getOriginalInput()));
                 final MutableMeasurementProfile prof = new MutableMeasurementProfile(impl.getMeasurementProfile());
                 prof.setStandardMs2MassDeviation(prof.getStandardMs2MassDeviation().multiply(deviationScale));
                 impl.setMeasurementProfile(prof);
+                final TreeScoring treeScoring = tree.getAnnotationOrThrow(TreeScoring.class);
                 ProcessedInput pinp = analyzer.preprocessingWithRecalibration(impl, this);
-                MultipleTreeComputation mtc = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : tree.getScore()).withoutRecalibration();
+                MultipleTreeComputation mtc = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : treeScoring.getOverallScore()).withoutRecalibration();
                 if (oldTree != null) mtc = mtc.withBackbones(oldTree);
                 correctedTree = mtc.optimalTree();
                 if (correctedTree == null) {
                     assert !force;
                     correctedTree = tree;
                 }
-                final FragmentationTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().withBackbones(correctedTree).optimalTree();
+                final FTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().withBackbones(correctedTree).optimalTree();
                 if (ft2 == null) return correctedTree;
-                else if (ft2.getScore() > correctedTree.getScore()) return ft2;
+                else if (ft2.getAnnotationOrThrow(TreeScoring.class).getOverallScore() > correctedTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore())
+                    return ft2;
                 return correctedTree;
             }
 
             private void calculateScoreBonus() {
                 if (recalibrationFunction instanceof Identity) {
-                    scoreBonus=0d;
+                    scoreBonus = 0d;
                     return;
                 }
-                final Deviation dev = tree.getInput().getExperimentInformation().getMeasurementProfile().getStandardMs2MassDeviation();
-                final Ionization ion = tree.getIonization();
-                double sc=0d;
+                final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
+                final Deviation dev = input.getExperimentInformation().getMeasurementProfile().getStandardMs2MassDeviation();
+                final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+                double sc = 0d;
                 double distance = 0d;
-                for (TreeFragment f : fragments) {
-                    final double oldMz = f.getPeak().getOriginalMz();
+                final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+                for (Fragment f : fragments) {
+                    final double oldMz = peakAno.get(f).getOriginalMz();
                     final double newMz = recalibrationFunction.value(oldMz);
-                    distance += Math.abs(newMz-oldMz);
-                    final double theoreticalMz = ion.addToMass(f.getDecomposition().getFormula().getMass());
-                    final NormalDistribution dist = scorer.getDistribution(newMz, f.getRelativePeakIntensity(), tree.getInput());
-                    final double newScore = Math.log(dist.getErrorProbability(newMz-theoreticalMz));
-                    final double oldScore = Math.log(dist.getErrorProbability(oldMz-theoreticalMz));
+                    distance += Math.abs(newMz - oldMz);
+                    final double theoreticalMz = ion.addToMass(f.getFormula().getMass());
+                    final NormalDistribution dist = scorer.getDistribution(newMz, peakAno.get(f).getRelativeIntensity(), input);
+                    final double newScore = Math.log(dist.getErrorProbability(newMz - theoreticalMz));
+                    final double oldScore = Math.log(dist.getErrorProbability(oldMz - theoreticalMz));
                     sc += (newScore - oldScore);
                 }
                 this.scoreBonus = sc;
-                final double avgDist = distance/fragments.size();
+                final double avgDist = distance / fragments.size();
                 recomputeTree = (avgDist >= distanceThreshold);
             }
 

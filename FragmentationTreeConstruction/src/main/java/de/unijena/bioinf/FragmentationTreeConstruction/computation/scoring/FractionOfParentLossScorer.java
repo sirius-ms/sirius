@@ -3,7 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -19,13 +19,13 @@ public class FractionOfParentLossScorer implements LossScorer {
     @Override
     public Double prepare(ProcessedInput inputh) {
         //if ion mass known take this
-        double comparableMass = (inputh.getParentPeak()==null ? 0 : inputh.getParentPeak().getMz());
+        double comparableMass = (inputh.getParentPeak() == null ? 0 : inputh.getParentPeak().getMz());
         //else find largest mass, Double.MAX_VALUE means existing dummy node
-        if (comparableMass==0d || comparableMass==Double.MAX_VALUE){
+        if (comparableMass == 0d || comparableMass == Double.MAX_VALUE) {
             comparableMass = 0d;
             final List<ProcessedPeak> peaks = inputh.getMergedPeaks();
             for (ProcessedPeak peak : peaks) {
-                if (peak.getMz()>comparableMass && peak.getMz()<Double.MAX_VALUE) comparableMass = peak.getMz();
+                if (peak.getMz() > comparableMass && peak.getMz() < Double.MAX_VALUE) comparableMass = peak.getMz();
             }
         }
         return comparableMass;
@@ -34,9 +34,9 @@ public class FractionOfParentLossScorer implements LossScorer {
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        double comparableMass = (Double)precomputed;
+        double comparableMass = (Double) precomputed;
         // Score with fraction of the parentmass or largest mass in spectrum.
-        return Math.log(1-(loss.getFormula().getMass()/comparableMass));
+        return Math.log(1 - (loss.getFormula().getMass() / comparableMass));
     }
 
     @Override

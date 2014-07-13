@@ -61,6 +61,10 @@ public class ProcessedInput {
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
     }
 
+    public Ms2Experiment getOriginalInput() {
+        return originalExperiment;
+    }
+
     @SuppressWarnings("unchecked cast")
     public <T> PeakAnnotation<T> getPeakAnnotationOrThrow(Class<T> klass) {
         final PeakAnnotation<T> ano = peakAnnotations.get(klass);
@@ -85,6 +89,10 @@ public class ProcessedInput {
     public <T> void addAnnotation(Class<T> klass, T annotation) {
         if (annotations.containsKey(klass)) throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
         annotations.put(klass, annotation);
+    }
+
+    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
+        return annotations.put(klass, annotation) == annotation;
     }
 
     @SuppressWarnings("unchecked cast")
@@ -113,12 +121,12 @@ public class ProcessedInput {
         return experiment;
     }
 
-    public void setMergedPeaks(List<ProcessedPeak> mergedPeaks) {
-        this.mergedPeaks = mergedPeaks;
-    }
-
     public List<ProcessedPeak> getMergedPeaks() {
         return mergedPeaks;
+    }
+
+    public void setMergedPeaks(List<ProcessedPeak> mergedPeaks) {
+        this.mergedPeaks = mergedPeaks;
     }
 
     public ProcessedPeak getParentPeak() {

@@ -7,13 +7,14 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.Hydrogen2CarbonScorer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.ChemicalPriorScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakIsNoiseScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsExperiment;
@@ -43,15 +44,13 @@ public class TestMS2Analysis {
             analysis.setDefaultProfile(profile);
 
 
-
-
             analysis.getFragmentPeakScorers().clear();
             analysis.getFragmentPeakScorers().add(new PeakIsNoiseScorer());
             analysis.getDecompositionScorers().add(new ChemicalPriorScorer(new Hydrogen2CarbonScorer(), 0d));
             final ProcessedInput processed = analysis.preprocessing(experiment);
-            final FragmentationGraph graph = analysis.buildGraph(processed, new ScoredMolecularFormula(experiment.getMolecularFormula(), 0d));
-            final FragmentationTree tree = analysis.computeTree(graph);
-            System.out.println(tree.getScore());
+            final FGraph graph = analysis.buildGraph(processed, new ScoredMolecularFormula(experiment.getMolecularFormula(), 0d));
+            final FTree tree = analysis.computeTree(graph);
+            System.out.println(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
             final TreeAnnotation annotation = new TreeAnnotation(tree, analysis);
             final FTDotWriter dotWriter = new FTDotWriter();
             dotWriter.writeTree(writer, tree, annotation.getAdditionalProperties(), annotation.getVertexAnnotations(), annotation.getEdgeAnnotations());

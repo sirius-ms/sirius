@@ -2,9 +2,11 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -41,8 +43,8 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
         for (ProcessedPeak p : peaks)
             if (p.getRelativeIntensity() >= threshold || p.isSynthetic() || p == parent)
                 filtered.add(p);
-        return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
-                input.getPeakScores(), input.getPeakPairScores());
+        input.setMergedPeaks(filtered);
+        return input;
     }
 
     @Override
@@ -68,7 +70,9 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
         final Deviation parentWindow = new Deviation(allowedDev.getPpm(), Math.min(allowedDev.getAbsolute(), 0.1d));
         for (Ms2Spectrum<? extends Peak> spec : specs) {
             final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
-            for (Peak p : spec) if (p.getIntensity() > threshold || parentWindow.inErrorWindow(experiment.getIonMass(), p.getMass()) ) ms.addPeak(p);
+            for (Peak p : spec)
+                if (p.getIntensity() > threshold || parentWindow.inErrorWindow(experiment.getIonMass(), p.getMass()))
+                    ms.addPeak(p);
             final Ms2SpectrumImpl ms2 = new Ms2SpectrumImpl(ms, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount());
             spectra.add(ms2);
         }

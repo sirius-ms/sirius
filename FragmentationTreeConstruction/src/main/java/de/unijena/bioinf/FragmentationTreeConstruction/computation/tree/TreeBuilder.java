@@ -1,7 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.List;
@@ -11,15 +11,15 @@ import java.util.List;
  */
 public interface TreeBuilder {
 
-    public Object prepareTreeBuilding(ProcessedInput input, FragmentationGraph graph, double lowerbound);
+    public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound);
 
-    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation);
+    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
 
-    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound);
+    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound);
 
-    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation);
+    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
 
-    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound);
+    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound);
 
 
 }

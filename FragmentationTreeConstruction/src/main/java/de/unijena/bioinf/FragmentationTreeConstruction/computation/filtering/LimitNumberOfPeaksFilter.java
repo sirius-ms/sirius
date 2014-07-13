@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class LimitNumberOfPeaksFilter implements PostProcessor{
+public class LimitNumberOfPeaksFilter implements PostProcessor {
 
     private int limit;
 
@@ -41,11 +41,12 @@ public class LimitNumberOfPeaksFilter implements PostProcessor{
         // window may be wide, but that doesn't matter as other peaks near the parent should be already removed
         final Deviation parentPeakDeviation = new Deviation(1, 0.1);
         final double parentMz = input.getExperimentInformation().getIonMass();
-        for (int i=limit; i < peaks.length; ++i) {
+        for (int i = limit; i < peaks.length; ++i) {
             if (parentPeakDeviation.inErrorWindow(parentMz, peaks[i].getMz())) filtered.add(peaks[i]);
         }
-        return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), filtered, input.getParentPeak(), input.getParentMassDecompositions(),
-                input.getPeakScores(), input.getPeakPairScores());
+
+        input.setMergedPeaks(filtered);
+        return input;
     }
 
     @Override
@@ -55,7 +56,7 @@ public class LimitNumberOfPeaksFilter implements PostProcessor{
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        limit = (int)document.getIntFromDictionary(dictionary, "limit");
+        limit = (int) document.getIntFromDictionary(dictionary, "limit");
     }
 
     @Override

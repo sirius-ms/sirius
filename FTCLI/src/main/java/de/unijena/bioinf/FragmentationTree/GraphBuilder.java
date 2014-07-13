@@ -1,30 +1,10 @@
 package de.unijena.bioinf.FragmentationTree;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.ms.JenaMsParser;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 /**
  *
  */
 public class GraphBuilder {
+    /*
 
     public static void main(String[] args) {
         try {
@@ -130,6 +110,8 @@ public class GraphBuilder {
         graph.prepareForTreeComputation();
         return graph;
     }
+
+    */
 
 
 }

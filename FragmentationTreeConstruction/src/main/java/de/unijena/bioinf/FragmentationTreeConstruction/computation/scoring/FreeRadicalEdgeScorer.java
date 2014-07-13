@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
@@ -22,25 +22,6 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     private double generalRadicalScore;
     private double normalization;
 
-    public static FreeRadicalEdgeScorer getRadicalScorerWithDefaultSet() {
-        return getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1), -0.011626542158820332d);
-    }
-
-    public static FreeRadicalEdgeScorer getRadicalScorerWithDefaultSet(double knownRadicalScore, double generalRadicalScore, double normalization) {
-        final MolecularFormula[] formulas = new MolecularFormula[]{
-        		MolecularFormula.parse("H"), MolecularFormula.parse("O"), MolecularFormula.parse("OH"), 
-        		MolecularFormula.parse("CH3"), MolecularFormula.parse("CH3O"),
-        		MolecularFormula.parse("C3H7"), MolecularFormula.parse("C4H9"), 
-        		MolecularFormula.parse("C6H5O"), MolecularFormula.parse("C6H5"), MolecularFormula.parse("C6H6N"), MolecularFormula.parse("I"),
-                MolecularFormula.parse("NO"), MolecularFormula.parse("NO2"), MolecularFormula.parse("Br"), MolecularFormula.parse("Cl")
-        };
-        final HashMap<MolecularFormula, Double> radicals = new HashMap<MolecularFormula, Double>(formulas.length*2);
-        for (MolecularFormula formula : formulas) {
-            radicals.put(formula, knownRadicalScore);
-        }
-        return new FreeRadicalEdgeScorer(radicals, generalRadicalScore, normalization);
-    }
-
     public FreeRadicalEdgeScorer() {
         this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>();
         this.generalRadicalScore = 0d;
@@ -48,10 +29,29 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     }
 
     public FreeRadicalEdgeScorer(Map<MolecularFormula, Double> freeRadicals, double generalRadicalScore, double normalization) {
-        this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>(freeRadicals.size()*2);
+        this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>(freeRadicals.size() * 2);
         this.freeRadicals.putAll(freeRadicals);
         this.generalRadicalScore = generalRadicalScore;
         this.normalization = normalization;
+    }
+
+    public static FreeRadicalEdgeScorer getRadicalScorerWithDefaultSet() {
+        return getRadicalScorerWithDefaultSet(Math.log(0.9), Math.log(0.1), -0.011626542158820332d);
+    }
+
+    public static FreeRadicalEdgeScorer getRadicalScorerWithDefaultSet(double knownRadicalScore, double generalRadicalScore, double normalization) {
+        final MolecularFormula[] formulas = new MolecularFormula[]{
+                MolecularFormula.parse("H"), MolecularFormula.parse("O"), MolecularFormula.parse("OH"),
+                MolecularFormula.parse("CH3"), MolecularFormula.parse("CH3O"),
+                MolecularFormula.parse("C3H7"), MolecularFormula.parse("C4H9"),
+                MolecularFormula.parse("C6H5O"), MolecularFormula.parse("C6H5"), MolecularFormula.parse("C6H6N"), MolecularFormula.parse("I"),
+                MolecularFormula.parse("NO"), MolecularFormula.parse("NO2"), MolecularFormula.parse("Br"), MolecularFormula.parse("Cl")
+        };
+        final HashMap<MolecularFormula, Double> radicals = new HashMap<MolecularFormula, Double>(formulas.length * 2);
+        for (MolecularFormula formula : formulas) {
+            radicals.put(formula, knownRadicalScore);
+        }
+        return new FreeRadicalEdgeScorer(radicals, generalRadicalScore, normalization);
     }
 
     public double getGeneralRadicalScore() {
@@ -85,7 +85,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object _) {
-        return score(loss.getLoss()) - normalization;
+        return score(loss.getFormula()) - normalization;
     }
 
     @Override
@@ -100,8 +100,8 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "commonRadicals"));
         while (iter.hasNext()) {
-            final Map.Entry<String,G> v = iter.next();
-            addRadical(MolecularFormula.parse(v.getKey()), (Double)v.getValue());
+            final Map.Entry<String, G> v = iter.next();
+            addRadical(MolecularFormula.parse(v.getKey()), (Double) v.getValue());
         }
         setGeneralRadicalScore(document.getDoubleFromDictionary(dictionary, "radicalPenalty"));
         setNormalization(document.getDoubleFromDictionary(dictionary, "normalization"));
@@ -115,7 +115,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
         }
         document.addDictionaryToDictionary(dictionary, "commonRadicals", radicals);
         document.addToDictionary(dictionary, "radicalPenalty", generalRadicalScore);
-        document.addToDictionary(dictionary, "normalization",  normalization);
+        document.addToDictionary(dictionary, "normalization", normalization);
 
     }
 }

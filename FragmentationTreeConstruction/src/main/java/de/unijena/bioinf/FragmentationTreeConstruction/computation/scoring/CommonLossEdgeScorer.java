@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
@@ -13,36 +13,6 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
 import java.util.*;
 
 public class CommonLossEdgeScorer implements LossScorer {
-
-    private final TObjectDoubleHashMap<MolecularFormula> commonLosses;
-    private TObjectDoubleHashMap<MolecularFormula> recombinatedList;
-    private double normalization;
-    private Recombinator recombinator;
-
-    public CommonLossEdgeScorer() {
-        this(Collections.<MolecularFormula, Double>emptyMap(), null);
-    }
-
-    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator, double normalization) {
-        this.commonLosses = convertMap(commonLosses);
-        this.recombinatedList = null;
-        this.normalization = normalization;
-        this.recombinator = recombinator;
-    }
-
-    private static TObjectDoubleHashMap<MolecularFormula> convertMap(Map<MolecularFormula, Double> map) {
-        final TObjectDoubleHashMap newMap = new TObjectDoubleHashMap<MolecularFormula>(map.size());
-        for (Map.Entry<MolecularFormula, Double> entry : map.entrySet()) newMap.put(entry.getKey(), entry.getValue());
-        return newMap;
-    }
-
-
-    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator) {
-        this(commonLosses, recombinator, 0d);
-    }
-
-
-    private final static String[] implausibleLosses = new String[]{"C2O", "C4O", "C3H2", "C5H2", "C7H2", "N", "C"};
 
     public final static String[] ales_list = new String[]{
             "H2", "H2O", "CH4", "C2H4", "C2H2",
@@ -55,6 +25,34 @@ public class CommonLossEdgeScorer implements LossScorer {
             "H3PO3", "H3PO4", "HPO3", "C2H5O4P",
             "H2S", "S", "SO2", "SO3", "H2SO4"
     };
+    private final static String[] implausibleLosses = new String[]{"C2O", "C4O", "C3H2", "C5H2", "C7H2", "N", "C"};
+    private final TObjectDoubleHashMap<MolecularFormula> commonLosses;
+    private TObjectDoubleHashMap<MolecularFormula> recombinatedList;
+    private double normalization;
+    private Recombinator recombinator;
+
+    public CommonLossEdgeScorer() {
+        this(Collections.<MolecularFormula, Double>emptyMap(), null);
+    }
+
+
+    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator, double normalization) {
+        this.commonLosses = convertMap(commonLosses);
+        this.recombinatedList = null;
+        this.normalization = normalization;
+        this.recombinator = recombinator;
+    }
+
+
+    public CommonLossEdgeScorer(Map<MolecularFormula, Double> commonLosses, Recombinator recombinator) {
+        this(commonLosses, recombinator, 0d);
+    }
+
+    private static TObjectDoubleHashMap<MolecularFormula> convertMap(Map<MolecularFormula, Double> map) {
+        final TObjectDoubleHashMap newMap = new TObjectDoubleHashMap<MolecularFormula>(map.size());
+        for (Map.Entry<MolecularFormula, Double> entry : map.entrySet()) newMap.put(entry.getKey(), entry.getValue());
+        return newMap;
+    }
 
     /**
      * If you have no clue about the correct score of your common losses, you can assume that they are all equally distributed.
@@ -121,6 +119,11 @@ public class CommonLossEdgeScorer implements LossScorer {
         return recombinator;
     }
 
+    public void setRecombinator(Recombinator recombinator) {
+        this.recombinator = recombinator;
+        recombinatedList = null;
+    }
+
     public double getNormalization() {
         return normalization;
     }
@@ -141,11 +144,6 @@ public class CommonLossEdgeScorer implements LossScorer {
 
     public void merge(CommonLossEdgeScorer lossScorer) {
         merge(lossScorer.commonLosses);
-    }
-
-    public void setRecombinator(Recombinator recombinator) {
-        this.recombinator = recombinator;
-        recombinatedList = null;
     }
 
     public double score(MolecularFormula formula) {

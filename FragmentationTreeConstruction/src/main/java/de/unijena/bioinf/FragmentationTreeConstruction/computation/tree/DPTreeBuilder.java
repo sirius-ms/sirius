@@ -1,9 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.MaximumColorfulSubtreeAlgorithm;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.List;
@@ -26,27 +26,27 @@ public class DPTreeBuilder implements TreeBuilder {
     }
 
     @Override
-    public Object prepareTreeBuilding(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+    public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
         return null;
     }
 
     @Override
-    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
         return algorithm.compute(graph, maxNumberOfColors);
     }
 
     @Override
-    public FragmentationTree buildTree(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
         return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
     }
 
     @Override
-    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound, Object preparation) {
+    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
         return algorithm.computeMultipleTrees(graph, maxNumberOfColors);
     }
 
     @Override
-    public List<FragmentationTree> buildMultipleTrees(ProcessedInput input, FragmentationGraph graph, double lowerbound) {
+    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
         return buildMultipleTrees(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
     }
 }

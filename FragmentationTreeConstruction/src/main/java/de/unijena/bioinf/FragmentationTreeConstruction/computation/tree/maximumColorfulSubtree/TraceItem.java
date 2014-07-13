@@ -1,16 +1,15 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.model.GraphFragment;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeFragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 
 class TraceItem {
 
     final double accumulatedWeight;
-    final GraphFragment vertex;
-    final TreeFragment treeNode;
+    final Fragment vertex;
+    final Fragment treeNode;
     final int bitset;
 
-    public TraceItem(GraphFragment vertex, TreeFragment treeNode, int bitset, double accumulatedWeight) {
+    public TraceItem(Fragment vertex, Fragment treeNode, int bitset, double accumulatedWeight) {
         this.accumulatedWeight = accumulatedWeight;
         this.treeNode = treeNode;
         this.vertex = vertex;

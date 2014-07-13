@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -34,7 +34,8 @@ public class PhosphorScorer implements DecompositionScorer<Element[]>, LossScore
         final int pnum = formula.numberOf(phosphorAndSulfur[0]);
         if (peak == input.getParentPeak()) {
             // expect 2 oxygen/sulfur for each phosphor losses
-            if ((formula.numberOf(phosphorAndSulfur[1])+formula.numberOfOxygens()) < (pnum*2 + 1)) return Math.log(0.05d);
+            if ((formula.numberOf(phosphorAndSulfur[1]) + formula.numberOfOxygens()) < (pnum * 2 + 1))
+                return Math.log(0.05d);
             else return 0d;
         }
         if (pnum > 0) {

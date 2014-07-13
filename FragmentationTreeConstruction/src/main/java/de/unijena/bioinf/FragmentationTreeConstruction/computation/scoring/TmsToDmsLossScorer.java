@@ -6,7 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 /**
@@ -23,8 +23,8 @@ public class TmsToDmsLossScorer implements LossScorer {
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
         final MolecularFormula lossFormula = loss.getFormula();
-        final MolecularFormula headFormula = loss.getHead().getFormula();
-        final MolecularFormula tailFormula = loss.getTail().getFormula();
+        final MolecularFormula headFormula = loss.getSource().getFormula();
+        final MolecularFormula tailFormula = loss.getTarget().getFormula();
         final PeriodicTable periodicTable = PeriodicTable.getInstance();
 //        int tmsHead = 0;
 //        int tmsTail = 0;
@@ -37,7 +37,7 @@ public class TmsToDmsLossScorer implements LossScorer {
 //            tmsTail = tailFormula.numberOf(tmsElement);
 //        }
         final Element dmsElement = periodicTable.getByName("Dms");
-        if (dmsElement != null){
+        if (dmsElement != null) {
             dmsTail = tailFormula.numberOf(dmsElement);
             dmsHead = headFormula.numberOf(dmsElement);
         }
@@ -45,10 +45,10 @@ public class TmsToDmsLossScorer implements LossScorer {
 
         double score = 0;
         //if (tmsHead>0 && dmsTail>0){
-        if (dmsTail-dmsHead>0){
+        if (dmsTail - dmsHead > 0) {
             score -= 0.1;//todo is it uncommon, that TMS looses its CH3 group? If yes, does this scoring of -0.1 influence anything if CH3 as common loss scores log(100)~=4,6..
             //if loss != CH3 score -10
-            if (lossFormula.elements().size()!=2 || lossFormula.numberOfCarbons()!=1 || lossFormula.numberOfHydrogens()!=3){
+            if (lossFormula.elements().size() != 2 || lossFormula.numberOfCarbons() != 1 || lossFormula.numberOfHydrogens() != 3) {
                 score -= 10;
             }
         }

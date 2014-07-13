@@ -5,9 +5,8 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +25,7 @@ public class StrangeElementLossScorer implements LossScorer {
 
     public StrangeElementLossScorer(Iterable<MolecularFormula> knownLosses, double score) {
         this.lossList = new HashSet<MolecularFormula>(knownLosses instanceof Collection ?
-                (int)(((Collection<MolecularFormula>)knownLosses).size()*1.5) : 150);
+                (int) (((Collection<MolecularFormula>) knownLosses).size() * 1.5) : 150);
         for (MolecularFormula f : knownLosses) this.lossList.add(f);
         this.score = score;
     }
@@ -36,7 +35,7 @@ public class StrangeElementLossScorer implements LossScorer {
     }
 
     public StrangeElementLossScorer(CommonLossEdgeScorer scorer, double score) {
-        final Map<MolecularFormula,Double> map = scorer.getCommonLosses();
+        final Map<MolecularFormula, Double> map = scorer.getCommonLosses();
         this.lossList = new HashSet<MolecularFormula>(150);
         for (MolecularFormula f : map.keySet()) {
             lossList.add(f);
@@ -54,7 +53,7 @@ public class StrangeElementLossScorer implements LossScorer {
         final Element O = t.getByName("O");
         final MolecularFormula hydrogen = MolecularFormula.parse("H");
         for (Element e : input.getExperimentInformation().getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().getElements()) {
-            if (e==C || e==H || e==N || e==O) continue;
+            if (e == C || e == H || e == N || e == O) continue;
             specialElements.add(MolecularFormula.singleElement(e));
         }
         final HashSet<MolecularFormula> knownLosses = new HashSet<MolecularFormula>(150);
@@ -70,7 +69,7 @@ public class StrangeElementLossScorer implements LossScorer {
 
     protected void addKnownStrangeLoss(ArrayList<MolecularFormula> specialElements, MolecularFormula hydrogen, HashSet<MolecularFormula> knownLosses, MolecularFormula f) {
         if (f.isCHNO()) {
-            for (int k=1; k <= 2; ++k) {
+            for (int k = 1; k <= 2; ++k) {
                 if (f.numberOfHydrogens() >= k && f.numberOfCarbons() > 0) {
                     final MolecularFormula substitution = f.subtract(hydrogen);
                     for (MolecularFormula e : specialElements) {
@@ -85,7 +84,7 @@ public class StrangeElementLossScorer implements LossScorer {
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        if (((HashSet<MolecularFormula>)precomputed).contains(loss.getFormula())) return score;
+        if (((HashSet<MolecularFormula>) precomputed).contains(loss.getFormula())) return score;
         else return 0d;
     }
 
@@ -93,8 +92,8 @@ public class StrangeElementLossScorer implements LossScorer {
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         final L list = document.getListFromDictionary(dictionary, "losses");
         final int n = document.sizeOfList(list);
-        this.lossList = new HashSet<MolecularFormula>((int)(n*1.5));
-        for (int i=0; i < n; ++i) addLoss((MolecularFormula.parse(document.getStringFromList(list, i))));
+        this.lossList = new HashSet<MolecularFormula>((int) (n * 1.5));
+        for (int i = 0; i < n; ++i) addLoss((MolecularFormula.parse(document.getStringFromList(list, i))));
         this.score = document.getDoubleFromDictionary(dictionary, "score");
 
     }

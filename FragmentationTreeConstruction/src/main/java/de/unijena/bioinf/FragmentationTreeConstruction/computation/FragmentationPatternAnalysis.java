@@ -10,11 +10,13 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
@@ -55,43 +57,30 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private TreeBuilder treeBuilder;
     private MutableMeasurementProfile defaultProfile;
     private RecalibrationMethod recalibrationMethod;
+    private GraphReduction reduction;
+
+    /**
+     *
+     */
+    public FragmentationPatternAnalysis() {
+        this.decomposers = new DecomposerCache();
+        setInitial();
+    }
 
     public static <G, D, L> FragmentationPatternAnalysis loadFromProfile(DataDocument<G, D, L> document, G value) {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
         final D dict = document.getDictionary(value);
         if (!document.hasKeyInDictionary(dict, "FragmentationPatternAnalysis"))
             throw new IllegalArgumentException("No field 'FragmentationPatternAnalysis' in profile");
-        final FragmentationPatternAnalysis analyzer = (FragmentationPatternAnalysis)helper.unwrap(document,
+        final FragmentationPatternAnalysis analyzer = (FragmentationPatternAnalysis) helper.unwrap(document,
                 document.getFromDictionary(dict, "FragmentationPatternAnalysis"));
         if (document.hasKeyInDictionary(dict, "profile")) {
             final MeasurementProfile prof = ((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile")));
-            if (analyzer.defaultProfile==null) analyzer.defaultProfile=new MutableMeasurementProfile(prof);
-            else analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
+            if (analyzer.defaultProfile == null) analyzer.defaultProfile = new MutableMeasurementProfile(prof);
+            else
+                analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
         }
         return analyzer;
-    }
-
-    public <G, D, L> void writeToProfile(DataDocument<G, D, L> document, G value) {
-        final ParameterHelper helper = ParameterHelper.getParameterHelper();
-        final D dict = document.getDictionary(value);
-        final D fpa = document.newDictionary();
-        exportParameters(helper, document, fpa);
-        document.addToDictionary(fpa, "$name", helper.toClassName(getClass()));
-        document.addDictionaryToDictionary(dict, "FragmentationPatternAnalysis", fpa);
-        if (document.hasKeyInDictionary(dict, "profile")) {
-            final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
-            if (!otherProfile.equals(defaultProfile)) {
-                if (defaultProfile!=null) {
-                    final D profDict = document.newDictionary();
-                    defaultProfile.exportParameters(helper, document, profDict);
-                    document.addDictionaryToDictionary(fpa, "default", profDict);
-                }
-            }
-        } else if (defaultProfile!=null) {
-            final D profDict = document.newDictionary();
-            defaultProfile.exportParameters(helper, document, profDict);
-            document.addDictionaryToDictionary(dict, "profile", profDict);
-        }
     }
 
     /**
@@ -282,13 +271,27 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
     }
 
-
-    /**
-     *
-     */
-    public FragmentationPatternAnalysis() {
-        this.decomposers = new DecomposerCache();
-        setInitial();
+    public <G, D, L> void writeToProfile(DataDocument<G, D, L> document, G value) {
+        final ParameterHelper helper = ParameterHelper.getParameterHelper();
+        final D dict = document.getDictionary(value);
+        final D fpa = document.newDictionary();
+        exportParameters(helper, document, fpa);
+        document.addToDictionary(fpa, "$name", helper.toClassName(getClass()));
+        document.addDictionaryToDictionary(dict, "FragmentationPatternAnalysis", fpa);
+        if (document.hasKeyInDictionary(dict, "profile")) {
+            final MeasurementProfile otherProfile = (MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dict, "profile"));
+            if (!otherProfile.equals(defaultProfile)) {
+                if (defaultProfile != null) {
+                    final D profDict = document.newDictionary();
+                    defaultProfile.exportParameters(helper, document, profDict);
+                    document.addDictionaryToDictionary(fpa, "default", profDict);
+                }
+            }
+        } else if (defaultProfile != null) {
+            final D profDict = document.newDictionary();
+            defaultProfile.exportParameters(helper, document, profDict);
+            document.addDictionaryToDictionary(dict, "profile", profDict);
+        }
     }
 
     /**
@@ -320,7 +323,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param lowerbound minimal score of the tree. Higher lowerbounds may result in better runtime performance
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
-    public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound) {
+    public FTree computeTree(FGraph graph, double lowerbound) {
         return computeTree(graph, lowerbound, recalibrationMethod!=null);
     }
 
@@ -331,22 +334,36 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param recalibration if true, the tree will be recalibrated
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
-    public FragmentationTree computeTree(FragmentationGraph graph, double lowerbound, boolean recalibration) {
-        FragmentationTree tree = treeBuilder.buildTree(graph.getProcessedInput(), graph, lowerbound);
+    public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration) {
+        FTree tree = treeBuilder.buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
+        addTreeAnnotations(tree);
         if (tree != null && recalibration) tree = recalibrate(tree);
+        addTreeAnnotations(tree);
         return tree;
+    }
+
+    private void addTreeAnnotations(FTree tree) {
+        tree.setAnnotation(Ionization.class, tree.getAnnotationOrThrow(ProcessedInput.class).getExperimentInformation().getIonization());
+        FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
+        FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
+        FragmentAnnotation<Peak> p = tree.getOrCreateFragmentAnnotation(Peak.class);
+        for (Fragment f : tree) {
+            final ProcessedPeak peak = pp.get(f);
+            ce.set(f, peak.getCollisionEnergy());
+            p.set(f, peak);
+        }
     }
 
     /**
      * Recalibrates the tree
      * @return Recalibration object containing score bonus and new tree
      */
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree, boolean force) {
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FTree tree, boolean force) {
         if (recalibrationMethod == null || tree == null) return null;
         else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer(), force);
     }
 
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FragmentationTree tree) {
+    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FTree tree) {
         return getRecalibrationFromTree(tree,false);
     }
 
@@ -357,27 +374,29 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param tree
      * @return
      */
-    public FragmentationTree recalibrate(FragmentationTree tree, boolean force) {
+    public FTree recalibrate(FTree tree, boolean force) {
         if (tree == null) return null;
+        final TreeScoring treeScoring = tree.getAnnotationOrThrow(TreeScoring.class);
         RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree, force);
         final UnivariateFunction func = (rec==null) ? null : rec.recalibrationFunction();
         assert (func==null || (!(func instanceof PolynomialFunction) || ((PolynomialFunction)func).degree()>=1) );
         if (rec == null || (!force && rec.getScoreBonus() <= 0)) return tree;
-        double oldScore = tree.getScore();
+        double oldScore = treeScoring.getOverallScore();
         if (force || rec.shouldRecomputeTree()) {
-            final FragmentationTree newTree = rec.getCorrectedTree(this, tree);
-            if (force || newTree.getScore() > tree.getScore()) {
+            final FTree newTree = rec.getCorrectedTree(this, tree);
+            final TreeScoring newTreeScoring = newTree.getAnnotationOrThrow(TreeScoring.class);
+            if (force || newTreeScoring.getOverallScore() > treeScoring.getOverallScore()) {
                 tree = newTree;
-                tree.setRecalibrationBonus(tree.getScore()-oldScore);
+                treeScoring.setRecalibrationBonus(newTreeScoring.getOverallScore() - oldScore);
             }
         } else {
-            tree.setScore(rec.getScoreBonus());
-            tree.setRecalibrationBonus(tree.getScore()-oldScore);
+            treeScoring.setOverallScore(rec.getScoreBonus());
+            treeScoring.setRecalibrationBonus(treeScoring.getOverallScore() - oldScore);
         }
         return tree;
     }
 
-    public FragmentationTree recalibrate(FragmentationTree tree) {
+    public FTree recalibrate(FTree tree) {
         return recalibrate(tree, false);
     }
 
@@ -394,7 +413,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param graph fragmentation graph from which the tree should be built
      * @return an optimal fragmentation tree
      */
-    public FragmentationTree computeTree(FragmentationGraph graph) {
+    public FTree computeTree(FGraph graph) {
         return computeTree(graph, Double.NEGATIVE_INFINITY);
     }
 
@@ -403,35 +422,55 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 0, Integer.MAX_VALUE, 1, recalibrationMethod!=null,null);
     }
 
-    public FragmentationGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
+    public FGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
         // build Graph
-        final FragmentationGraph graph = graphBuilder.buildGraph(input, candidate);
+        final FGraph graph = graphBuilder.fillGraph(
+                graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
+                        input.getParentPeak(), Collections.singletonList(candidate)));
+        return scoreGraph(graph);
+    }
+
+    public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<ScoredMolecularFormula>> candidatesPerParentPeak) {
+        // build Graph
+        FGraph graph = graphBuilder.initializeEmptyGraph(input);
+        for (int i = 0; i < parentPeaks.size(); ++i) {
+            graph = graphBuilder.addRoot(graph, parentPeaks.get(i), candidatesPerParentPeak.get(i));
+        }
+        return scoreGraph(graphBuilder.fillGraph(graph));
+    }
+
+    protected FGraph scoreGraph(FGraph graph) {
         // score graph
         final Iterator<Loss> edges = graph.lossIterator();
+        final ProcessedInput input = graph.getAnnotationOrThrow(ProcessedInput.class);
         final Scoring scoring = input.getAnnotationOrThrow(Scoring.class);
         final double[] peakScores = scoring.getPeakScores();
         final double[][] peakPairScores = scoring.getPeakPairScores();
         final LossScorer[] lossScorers = this.lossScorers.toArray(new LossScorer[this.lossScorers.size()]);
         final Object[] precomputeds = new Object[lossScorers.length];
+        final ScoredFormulaMap map = graph.getAnnotationOrThrow(ScoredFormulaMap.class);
+        final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (int i=0; i < precomputeds.length; ++i) precomputeds[i] = lossScorers[i].prepare(input);
         while (edges.hasNext()) {
             final Loss loss = edges.next();
-            final Fragment u = loss.getHead();
-            final Fragment v = loss.getTail();
+            final Fragment u = loss.getSource();
+            final Fragment v = loss.getTarget();
             // take score of molecular formula
-            double score = v.getDecomposition().getScore();
+            double score = map.get(v.getFormula());
             // add it to score of the peak
-            score += peakScores[v.getPeak().getIndex()];
+            score += peakScores[peakAno.get(v).getIndex()];
             // add it to the score of the peak pairs
-            score += peakPairScores[u.getPeak().getIndex()][v.getPeak().getIndex()]; // TODO: Umdrehen!
+            if (!u.isRoot())
+                score += peakPairScores[peakAno.get(u).getIndex()][peakAno.get(v).getIndex()]; // TODO: Umdrehen!
             // add the score of the loss
-            for (int i=0; i < lossScorers.length; ++i) score += lossScorers[i].score(loss, input, precomputeds[i]);
+            if (!u.isRoot())
+                for (int i = 0; i < lossScorers.length; ++i)
+                    score += lossScorers[i].score(loss, input, precomputeds[i]);
             assert !Double.isInfinite(score);
             loss.setWeight(score);
         }
-        // set root scores
-        graph.setRootScore(candidate.getScore() + peakScores[peakScores.length - 1]);
-        graph.prepareForTreeComputation();
+        if (reduction != null) reduction.reduce(graph, Double.NEGATIVE_INFINITY); // TODO: implement lowerbound
+        assert false;
         return graph;
     }
 

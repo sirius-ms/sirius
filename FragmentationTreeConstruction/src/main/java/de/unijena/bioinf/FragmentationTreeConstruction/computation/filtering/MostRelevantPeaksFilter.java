@@ -2,6 +2,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -15,41 +17,43 @@ public class MostRelevantPeaksFilter implements PostProcessor {
      * only consider peaks with decompositions
      * most relevant peaks are ...
      * "the 2x<limit> most intense peaks\n" +
-       "the <limit> best peaks with mass*log(relIntensity)\n" +
-       "the <limit> best peaks with mass*log(relIntensity) int he upper mass range\n" +
+     * "the <limit> best peaks with mass*log(relIntensity)\n" +
+     * "the <limit> best peaks with mass*log(relIntensity) int he upper mass range\n" +
+     *
      * @param limit
      */
-    public MostRelevantPeaksFilter(int limit){
+    public MostRelevantPeaksFilter(int limit) {
         this.limit = limit;
     }
 
     @Override
     public ProcessedInput process(ProcessedInput input) {
         //for a high limit all peaks will be picked
-        if (2*limit>=input.getMergedPeaks().size()) return input;
+        if (2 * limit >= input.getMergedPeaks().size()) return input;
 
         //sort peaks in descending Intensity order
         //only take those with decompositions
         final List<ProcessedPeak> peaks = new ArrayList<ProcessedPeak>();
+        final PeakAnnotation<DecompositionList> peakDecomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
         for (ProcessedPeak processedPeak : input.getMergedPeaks()) {
-            if (processedPeak.getDecompositions().size()>0) peaks.add(processedPeak);
+            if (peakDecomp.get(processedPeak).getDecompositions().size() > 0) peaks.add(processedPeak);
         }
         Collections.sort(peaks, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
-        final Set<ProcessedPeak> filtered = new HashSet<ProcessedPeak>(Math.min(peaks.size(), 4*limit));
+        final Set<ProcessedPeak> filtered = new HashSet<ProcessedPeak>(Math.min(peaks.size(), 4 * limit));
 
         // x
         int peaksExact = Math.min(peaks.size(), limit);
         // find lowest and highest peak masses
         double highestPeakMass = 0;
-        double lowestPeakMass =Integer.MAX_VALUE;
-        for (ProcessedPeak p : peaks){
-            if (p.getMz()>highestPeakMass) highestPeakMass = p.getMz();
-            if (p.getMz()<lowestPeakMass) lowestPeakMass = p.getMz();
+        double lowestPeakMass = Integer.MAX_VALUE;
+        for (ProcessedPeak p : peaks) {
+            if (p.getMz() > highestPeakMass) highestPeakMass = p.getMz();
+            if (p.getMz() < lowestPeakMass) lowestPeakMass = p.getMz();
         }
 
 
         // 1) choose the 2x most intense peaks
-        int min = Math.min(peaks.size() ,2*peaksExact);
+        int min = Math.min(peaks.size(), 2 * peaksExact);
         filtered.addAll(peaks.subList(0, min));
 
         //todo really upper 20% ?? it only seems to be the upper 10%
@@ -60,11 +64,11 @@ public class MostRelevantPeaksFilter implements PostProcessor {
             public int compare(ProcessedPeak p1, ProcessedPeak p2) {
                 double number1 = 0;
                 double number2 = 0;
-                if (p1.getIntensity()>0){
-                    number1 = Math.log(p1.getRelativeIntensity())*p1.getMass();
+                if (p1.getIntensity() > 0) {
+                    number1 = Math.log(p1.getRelativeIntensity()) * p1.getMass();
                 }
-                if (p2.getIntensity()>0){
-                    number2 = Math.log(p2.getRelativeIntensity())*p2.getMass();
+                if (p2.getIntensity() > 0) {
+                    number2 = Math.log(p2.getRelativeIntensity()) * p2.getMass();
 
                 }
                 if (number1 < number2) return 1;
@@ -74,14 +78,13 @@ public class MostRelevantPeaksFilter implements PostProcessor {
         };
 
 
-
         Collections.sort(peaks, logRelIntensityMultipliedMassComparator);
 
-        double areaStart = highestPeakMass - 0.1*highestPeakMass;
+        double areaStart = highestPeakMass - 0.1 * highestPeakMass;
         int counter = 0;
-        for (ProcessedPeak p : peaks){// peaks are sorted by their relative intensities
-            if (p.getMass()>areaStart){
-                if (!filtered.contains(p) && counter<peaksExact){
+        for (ProcessedPeak p : peaks) {// peaks are sorted by their relative intensities
+            if (p.getMass() > areaStart) {
+                if (!filtered.contains(p) && counter < peaksExact) {
                     counter++;
                     filtered.add(p);
                 }
@@ -89,9 +92,9 @@ public class MostRelevantPeaksFilter implements PostProcessor {
         }
 
         // 3) choose the x best mass*logInt peaks
-        counter =0;
-        while(counter<peaksExact && counter<peaks.size()){
-            if (!filtered.contains(peaks.get(counter))){
+        counter = 0;
+        while (counter < peaksExact && counter < peaks.size()) {
+            if (!filtered.contains(peaks.get(counter))) {
                 filtered.add(peaks.get(counter));
             }
             counter++;
@@ -102,18 +105,18 @@ public class MostRelevantPeaksFilter implements PostProcessor {
         Collections.sort(filteredList, new ProcessedPeak.MassComparator());
         //don't delete parent peak
         ProcessedPeak parentPeak = input.getParentPeak();
-        if (parentPeak != null){
-            if (!filtered.contains(parentPeak)){
+        if (parentPeak != null) {
+            if (!filtered.contains(parentPeak)) {
                 filteredList.add(parentPeak);
             }
         }
 
         for (int i = 0; i < filteredList.size(); i++) {
-             filteredList.get(i).setIndex(i);
+            filteredList.get(i).setIndex(i);
         }
 
-        return new ProcessedInput(input.getExperimentInformation(), input.getOriginalInput(), filteredList, input.getParentPeak(), input.getParentMassDecompositions(),
-                input.getPeakScores(), input.getPeakPairScores());
+        input.setMergedPeaks(filteredList);
+        return input;
     }
 
     @Override

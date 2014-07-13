@@ -1,7 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 import java.util.Iterator;
 
@@ -12,10 +12,12 @@ import java.util.Iterator;
  * Time: 14:23
  * To change this template use File | Settings | File Templates.
  */
-public interface TreeIterator extends Iterator<FragmentationTree> {
+public interface TreeIterator extends Iterator<FTree> {
+
+    public double getLowerbound();
 
     public void setLowerbound(double lowerbound);
-    public double getLowerbound();
-    public FragmentationGraph lastGraph();
+
+    public FGraph lastGraph();
 
 }

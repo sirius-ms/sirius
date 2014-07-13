@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 public class ChemicalPriorEdgeScorer implements LossScorer {
@@ -31,7 +31,7 @@ public class ChemicalPriorEdgeScorer implements LossScorer {
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        return score(loss.getHead().getFormula(), loss.getTail().getFormula());
+        return score(loss.getSource().getFormula(), loss.getTarget().getFormula());
     }
 
     public double score(MolecularFormula parentFormula, MolecularFormula childFormula) {
@@ -67,7 +67,7 @@ public class ChemicalPriorEdgeScorer implements LossScorer {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        this.prior = (MolecularFormulaScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "prior"));
+        this.prior = (MolecularFormulaScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "prior"));
         this.normalization = document.getDoubleFromDictionary(dictionary, "normalization");
         this.minimalMass = document.getDoubleFromDictionary(dictionary, "minimalMass");
     }

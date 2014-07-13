@@ -23,9 +23,10 @@ public class MissingValueValidator implements InputValidator {
     }
 
     @Override
-    public Ms2Experiment validate(Ms2Experiment originalInput,Warning warn, boolean repair) throws InvalidException {
+    public Ms2Experiment validate(Ms2Experiment originalInput, Warning warn, boolean repair) throws InvalidException {
         final Ms2ExperimentImpl input = new Ms2ExperimentImpl(originalInput);
-        if (input.getMs2Spectra() == null || input.getMs2Spectra().isEmpty()) throw new InvalidException("Miss MS2 spectra");
+        if (input.getMs2Spectra() == null || input.getMs2Spectra().isEmpty())
+            throw new InvalidException("Miss MS2 spectra");
         if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
         checkMeasurementProfile(warn, repair, input);
         removeEmptySpectra(warn, input);
@@ -48,15 +49,15 @@ public class MissingValueValidator implements InputValidator {
         if (dev == null) dev = profile.getStandardMs2MassDeviation();
         if (dev == null) dev = profile.getStandardMs1MassDeviation();
         if (profile.getAllowedMassDeviation() == null) {
-            throwOrWarn(warn, repair && dev!=null, "Measurement profile: Maximal allowed Mass deviation is missing");
+            throwOrWarn(warn, repair && dev != null, "Measurement profile: Maximal allowed Mass deviation is missing");
             profile.setAllowedMassDeviation(dev);
         }
         if (profile.getStandardMs2MassDeviation() == null) {
-            throwOrWarn(warn, repair && dev!=null, "Measurement profile: Fragment Mass deviation is missing");
+            throwOrWarn(warn, repair && dev != null, "Measurement profile: GraphFragment Mass deviation is missing");
             profile.setStandardMs2MassDeviation(dev);
         }
         if (profile.getStandardMs1MassDeviation() == null) {
-            throwOrWarn(warn, repair && dev!=null, "Measurement profile: Ion Mass deviation is missing");
+            throwOrWarn(warn, repair && dev != null, "Measurement profile: Ion Mass deviation is missing");
             profile.setStandardMs1MassDeviation(dev);
         }
         checkAlphabet(warn, repair, input, profile);
@@ -99,7 +100,7 @@ public class MissingValueValidator implements InputValidator {
         final Iterator<Ms2Spectrum<? extends Peak>> iter = input.getMs2Spectra().iterator();
         while (iter.hasNext()) {
             final Ms2Spectrum spec = iter.next();
-            if (spec.size()==0) {
+            if (spec.size() == 0) {
                 warn.warn("Empty Spectrum at collision energy: " + spec.getCollisionEnergy());
                 iter.remove();
             }
@@ -109,25 +110,25 @@ public class MissingValueValidator implements InputValidator {
     protected void checkIonization(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getIonization() == null) {
             throwOrWarn(warn, repair, "No ionization is given");
-            if (validDouble(input.getIonMass(), false) && validDouble(input.getMoleculeNeutralMass(), false) ) {
+            if (validDouble(input.getIonMass(), false) && validDouble(input.getMoleculeNeutralMass(), false)) {
                 double modificationMass = input.getIonMass() - input.getMoleculeNeutralMass();
                 Ionization ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
                 if (ion == null && input.getMolecularFormula() != null) {
                     modificationMass = input.getIonMass() - input.getMolecularFormula().getMass();
                     ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2);
                 }
-                if (ion == null)  {
+                if (ion == null) {
                     searchForIon(warn, input);
                 } else {
                     warn.warn("set ion to " + ion);
                     input.setIonization(ion);
                 }
-            } else if (input.getMolecularFormula()!=null || validDouble(input.getMoleculeNeutralMass(), false)) {
+            } else if (input.getMolecularFormula() != null || validDouble(input.getMoleculeNeutralMass(), false)) {
                 searchForIon(warn, input);
             }
         }
-        if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula()!= null ||  validDouble(input.getMoleculeNeutralMass(), false))) {
-            double modificationMass = input.getIonMass() - (input.getMolecularFormula()!= null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
+        if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula() != null || validDouble(input.getMoleculeNeutralMass(), false))) {
+            double modificationMass = input.getIonMass() - (input.getMolecularFormula() != null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
             Ionization ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2, input.getIonization().getCharge());
             if (ion != null) {
                 warn.warn("Set ion to " + ion.toString());
@@ -139,7 +140,7 @@ public class MissingValueValidator implements InputValidator {
     }
 
     private void searchForIon(Warning warn, Ms2ExperimentImpl input) {
-        final double neutral = (input.getMolecularFormula()!=null) ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass();
+        final double neutral = (input.getMolecularFormula() != null) ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass();
         final ArrayList<Spectrum<? extends Peak>> spectra = new ArrayList<Spectrum<? extends Peak>>(input.getMs1Spectra());
         for (Ms2Spectrum<? extends Peak> ms2 : input.getMs2Spectra()) spectra.add(ms2);
         // TODO: negative ions
@@ -174,14 +175,14 @@ public class MissingValueValidator implements InputValidator {
         if (input.getMergedMs1Spectrum() == null && !input.getMs1Spectra().isEmpty()) {
             warn.warn("No merged spectrum is given");
             if (repair) {
-                if (input.getMs1Spectra().size()==1)
+                if (input.getMs1Spectra().size() == 1)
                     input.setMergedMs1Spectrum(input.getMs1Spectra().get(0));
             }
         }
     }
 
     protected void checkIonMass(Warning warn, boolean repair, Ms2ExperimentImpl input) {
-        if (!validDouble(input.getIonMass(), false) || input.getIonMass()==0) {
+        if (!validDouble(input.getIonMass(), false) || input.getIonMass() == 0) {
             throwOrWarn(warn, repair, "No ion mass is given");
             if (input.getMolecularFormula() == null && !validDouble(input.getMoleculeNeutralMass(), false)) {
                 final Spectrum<Peak> ms1 = input.getMergedMs1Spectrum();
@@ -189,13 +190,14 @@ public class MissingValueValidator implements InputValidator {
                 boolean found = true;
                 double mz = input.getMs2Spectra().get(0).getPrecursorMz();
                 for (Ms2Spectrum s : input.getMs2Spectra()) {
-                    if (!validDouble(s.getPrecursorMz(), false) || s.getPrecursorMz()==0) {
-                        found=false;
+                    if (!validDouble(s.getPrecursorMz(), false) || s.getPrecursorMz() == 0) {
+                        found = false;
                         break;
                     }
                     final double newMz = s.getPrecursorMz();
-                    if (Math.abs(mz-newMz) > 1e-3) {
-                        found = false; break;
+                    if (Math.abs(mz - newMz) > 1e-3) {
+                        found = false;
+                        break;
                     }
                 }
                 if (found) {
@@ -210,18 +212,19 @@ public class MissingValueValidator implements InputValidator {
                         }
                         final Spectrum<Peak> normalized = Spectrums.getNormalizedSpectrum(spec, Normalization.Max(1d));
                         Peak parent = normalized.getPeakAt(Spectrums.getIndexOfPeakWithMaximalIntensity(normalized));
-                        for (Peak p : normalized) if (p.getIntensity() > 0.1d) {
-                            if (Math.abs(p.getMass() - parent.getMass()) < 1e-2) {
-                                if (p.getIntensity() > parent.getIntensity()) parent=p;
-                            } else if (p.getMass() > parent.getMass()) parent = p;
-                        }
+                        for (Peak p : normalized)
+                            if (p.getIntensity() > 0.1d) {
+                                if (Math.abs(p.getMass() - parent.getMass()) < 1e-2) {
+                                    if (p.getIntensity() > parent.getIntensity()) parent = p;
+                                } else if (p.getMass() > parent.getMass()) parent = p;
+                            }
                         input.setIonMass(parent.getMass());
                     } else {
                         // take peak with highest intensity
                         int index = Spectrums.getIndexOfPeakWithMaximalIntensity(ms1);
                         // move backward, maybe you are in the middle of an isotope pattern
                         while (index > 0) {
-                            if (Math.abs(ms1.getMzAt(index) - ms1.getMzAt(index-1)) > 1.1d) break;
+                            if (Math.abs(ms1.getMzAt(index) - ms1.getMzAt(index - 1)) > 1.1d) break;
                             --index;
                         }
                         // hopefully, this is the correct isotope peak
@@ -232,10 +235,10 @@ public class MissingValueValidator implements InputValidator {
             } else {
                 final double parentMz = input.getIonization().addToMass(input.getMoleculeNeutralMass());
                 input.setIonMass(parentMz);
-                for (int i=0; i < input.getMs2Spectra().size(); ++i) {
+                for (int i = 0; i < input.getMs2Spectra().size(); ++i) {
                     final Ms2Spectrum s = input.getMs2Spectra().get(i);
                     if (Math.abs(s.getPrecursorMz() - parentMz) > 0.1d) {
-                        final Ms2Spectrum t = new Ms2SpectrumImpl(s, s.getCollisionEnergy(), parentMz, s.getTotalIonCount() );
+                        final Ms2Spectrum t = new Ms2SpectrumImpl(s, s.getCollisionEnergy(), parentMz, s.getTotalIonCount());
                         input.getMs2Spectra().set(i, t);
                     }
                 }

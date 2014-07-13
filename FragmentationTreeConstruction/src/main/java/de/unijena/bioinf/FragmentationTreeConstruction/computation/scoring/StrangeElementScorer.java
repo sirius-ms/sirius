@@ -6,7 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 /**
@@ -32,17 +32,17 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
         this.normalization = normalization;
     }
 
+    public StrangeElementScorer(double penalty) {
+        this.penalty = penalty;
+        this.normalization = 0d;
+    }
+
     public double getPenalty() {
         return penalty;
     }
 
     public double getNormalization() {
         return normalization;
-    }
-
-    public StrangeElementScorer(double penalty) {
-        this.penalty = penalty;
-        this.normalization = 0d;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        return score(loss.getLoss(), (Element[])precomputed);
+        return score(loss.getFormula(), (Element[]) precomputed);
     }
 
     public boolean containsStrangeElement(MolecularFormula formula) {
@@ -67,7 +67,7 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
 
     @Override
     public double score(MolecularFormula formula) {
-        final boolean isChnops =  containsStrangeElement(formula);
+        final boolean isChnops = containsStrangeElement(formula);
         return (isChnops ? 0d : penalty) - normalization;
     }
 

@@ -1,7 +1,8 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree;
 
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,8 +11,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MaximumColorfulSubtreeAlgorithm {
 
-    private volatile long usedCacheMemory;
     private final long maxCacheMemory;
+    private volatile long usedCacheMemory;
     private volatile int[][][] staticKeyPool;
     private ReadWriteLock cacheLock;
 
@@ -25,20 +26,36 @@ public class MaximumColorfulSubtreeAlgorithm {
         this(1024 * 1024l * 1024l);
     }
 
+    private static int[] computeSubsetsFor(int bitset) {
+        final int numberOfBits = Integer.bitCount(bitset);
+        final int[] keys = new int[1 << numberOfBits];
+        keys[0] = 0;
+        if (bitset > 0) {
+            final int minbit = Integer.lowestOneBit(bitset);
+            int k = 0;
+            for (int i = minbit; i <= bitset; ++i) {
+                if ((i & bitset) == i) {
+                    keys[++k] = i;
+                }
+            }
+        }
+        return keys;
+    }
 
-    public FragmentationTree compute(FragmentationGraph graph, int maxColorNumber) {
-        final FragmentationTree tree = new DP(this, graph, maxColorNumber, false).runAlgorithm();
+    public FTree compute(FGraph graph, int maxColorNumber) {
+        final FTree tree = new DP(this, graph, maxColorNumber, false).runAlgorithm();
         cleanupCacheIfFull();
         return tree;
     }
 
-    public List<FragmentationTree> computeMultipleTrees(FragmentationGraph graph, int maxColorNumber) {
+    public List<FTree> computeMultipleTrees(FGraph graph, int maxColorNumber) {
         DP dp = new DP(this, graph, maxColorNumber, false);
         dp.compute();
-        final List<FragmentationTree> trees = dp.backTrackAll();
-        for (FragmentationTree tree : trees) {
+        final List<FTree> trees = dp.backTrackAll();
+        for (FTree tree : trees) {
             final double additionalScore = dp.attachRemainingColors(tree);
-            tree.setScore(tree.getScore()+additionalScore);
+            final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
+            scoring.setOverallScore(scoring.getOverallScore() + additionalScore);
         }
         cleanupCacheIfFull();
         return trees;
@@ -75,26 +92,10 @@ public class MaximumColorfulSubtreeAlgorithm {
 
     private void setSubsets(int size, int bitset, int[] keys) {
         if (staticKeyPool[size] == null) {
-            staticKeyPool[size] = new int[(1<<(32-size))][];
+            staticKeyPool[size] = new int[(1 << (32 - size))][];
         }
         staticKeyPool[size][bitset] = keys;
-        usedCacheMemory += keys.length*4;
-    }
-
-    private static int[] computeSubsetsFor(int bitset) {
-        final int numberOfBits = Integer.bitCount(bitset);
-        final int[] keys = new int[1<<numberOfBits];
-        keys[0] = 0;
-        if (bitset > 0) {
-            final int minbit = Integer.lowestOneBit(bitset);
-            int k=0;
-            for (int i=minbit; i <= bitset; ++i) {
-                if ((i & bitset) == i) {
-                    keys[++k] = i;
-                }
-            }
-        }
-        return keys;
+        usedCacheMemory += keys.length * 4;
     }
 
 }
