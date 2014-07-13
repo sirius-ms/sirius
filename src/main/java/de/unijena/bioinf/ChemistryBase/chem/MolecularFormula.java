@@ -14,31 +14,6 @@ import java.util.*;
 public abstract class MolecularFormula implements Cloneable, Iterable<Element>, Comparable<MolecularFormula> {
 
     /**
-     * returns the table selection which gives information about the memory structure of the formula
-     */
-    public abstract TableSelection getTableSelection();
-
-    /**
-     * the array with the amounts of each element. The mapping between the array indizes and
-     * the element is done by the table selection.
-     */
-    protected abstract short[] buffer();
-
-    /**
-     * returns the monoisotopic mass of the formula. NOT THE AVERAGE MASS!
-     */
-    public double getMass() {
-        return calcMass();
-    }
-
-    /**
-     * rounds the mass to an integer value
-     */
-    public int getIntMass() {
-        return calcIntMass();
-    }
-
-    /**
      * returns a new immutable molecular formula of the given formula
      */
     public static MolecularFormula from(MolecularFormula formula) {
@@ -121,14 +96,29 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return new ImmutableMolecularFormula(sel, buffer);
     }
 
-    private static class Pair {
-        private final Element element;
-        private final int amount;
+    /**
+     * returns the table selection which gives information about the memory structure of the formula
+     */
+    public abstract TableSelection getTableSelection();
 
-        private Pair(Element element, int amount) {
-            this.element = element;
-            this.amount = amount;
-        }
+    /**
+     * the array with the amounts of each element. The mapping between the array indizes and
+     * the element is done by the table selection.
+     */
+    protected abstract short[] buffer();
+
+    /**
+     * returns the monoisotopic mass of the formula. NOT THE AVERAGE MASS!
+     */
+    public double getMass() {
+        return calcMass();
+    }
+
+    /**
+     * rounds the mass to an integer value
+     */
+    public int getIntMass() {
+        return calcIntMass();
     }
 
     protected final int calcIntMass() {
@@ -374,6 +364,40 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return true;
     }
 
+    /*
+        Returns a new formula consisting of the maximum of each element of the single formulas
+     */
+    public MolecularFormula union(MolecularFormula other) {
+        final short[] amounts = buffer();
+        final TableSelection selection = getTableSelection();
+        final short[] otherAmounts = other.buffer();
+        final TableSelection otherSelection = other.getTableSelection();
+        final TableSelection newSelection;
+        final short[] nrs;
+        if (selection != otherSelection) {
+            // TODO: Handle special case where selection is subset of otherSelection
+            final BitSet sel = selection.getBitMask();
+            sel.or(otherSelection.getBitMask());
+            newSelection = selection.getPeriodicTable().getSelectionFor(sel);
+            nrs = new short[newSelection.numberOfElements()];
+            for (int i = 0; i < amounts.length; ++i) {
+                nrs[newSelection.indexOf(selection.get(i))] = amounts[i];
+            }
+            for (int i = 0; i < otherAmounts.length; ++i) {
+                final int k = newSelection.indexOf(otherSelection.get(i));
+                nrs[k] = (short) Math.max(nrs[k], otherAmounts[i]);
+            }
+        } else {
+            newSelection = selection;
+            if (amounts.length < otherAmounts.length) return other.union(this);
+            nrs = Arrays.copyOf(amounts, amounts.length);
+            for (int i = 0; i < otherAmounts.length; ++i) {
+                nrs[i] = (short) Math.max(nrs[i], otherAmounts[i]);
+            }
+        }
+        return new ImmutableMolecularFormula(newSelection, nrs);
+    }
+
     /**
      * returns a new formula containing the atoms of both formulas
      */
@@ -606,5 +630,15 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (equals(o)) return 0;
         if (getMass() < o.getMass()) return -1;
         return 1;
+    }
+
+    private static class Pair {
+        private final Element element;
+        private final int amount;
+
+        private Pair(Element element, int amount) {
+            this.element = element;
+            this.amount = amount;
+        }
     }
 }

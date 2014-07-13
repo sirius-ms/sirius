@@ -38,6 +38,14 @@ public class Loss {
         this.weight = weight;
     }
 
+    public Fragment getSource() {
+        return source;
+    }
+
+    public Fragment getTarget() {
+        return target;
+    }
+
     public MolecularFormula getFormula() {
         return formula;
     }

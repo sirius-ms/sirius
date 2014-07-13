@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.util.*;
 
-public abstract class AbstractFragmentationGraph {
+abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
 
     protected final HashMap<Class<Object>, Object> annotations;
     protected final ArrayList<Fragment> fragments;
@@ -18,6 +18,22 @@ public abstract class AbstractFragmentationGraph {
         this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>();
         this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>();
         edgeNum = 0;
+    }
+
+    /**
+     * maps all vertices from graph1 to graph2. Returns a map (fragment a -> fragment b) where a is a fragment of
+     * graph1 and b is a corresponding fragment from graph 2. Two fragments belong to each other if they have the same
+     * molecular formula.
+     */
+    public static Map<Fragment, Fragment> createFragmentMapping(AbstractFragmentationGraph graph1, AbstractFragmentationGraph graph2) {
+        final HashMap<MolecularFormula, Fragment> formulaMapping = graph1.fragmentsByFormula();
+        final HashMap<Fragment, Fragment> fragmentMapping = new HashMap<Fragment, Fragment>(Math.min(graph1.numberOfVertices(), graph2.numberOfVertices()));
+        for (Fragment f : graph2.getFragmentsWithoutRoot()) {
+            if (formulaMapping.containsKey(f.getFormula())) {
+                fragmentMapping.put(formulaMapping.get(f.getFormula()), f);
+            }
+        }
+        return fragmentMapping;
     }
 
     private static void deleteOutEdgeInternal(Fragment vertex, Loss l) {
@@ -42,7 +58,71 @@ public abstract class AbstractFragmentationGraph {
         }
     }
 
-    protected abstract Fragment getUniqueRoot();
+    public HashMap<MolecularFormula, Fragment> fragmentsByFormula() {
+        final HashMap<MolecularFormula, Fragment> map = new HashMap<MolecularFormula, Fragment>(fragments.size());
+        for (Fragment f : getFragmentsWithoutRoot()) {
+            map.put(f.getFormula(), f);
+        }
+        return map;
+    }
+
+    public Iterable<Fragment> inPostOrder(final Fragment startingRoot) {
+        return new Iterable<Fragment>() {
+            @Override
+            public Iterator<Fragment> iterator() {
+                return postOrderIterator(startingRoot);
+            }
+        };
+    }
+
+    public Iterable<Fragment> inPreOrder(final Fragment startingRoot) {
+        return new Iterable<Fragment>() {
+            @Override
+            public Iterator<Fragment> iterator() {
+                return preOrderIterator(startingRoot);
+            }
+        };
+    }
+
+    public final Iterable<Fragment> inPostOrder() {
+        return inPostOrder(getRoot());
+    }
+
+    public final Iterable<Fragment> inPreOrder() {
+        return inPreOrder(getRoot());
+    }
+
+    public Iterator<Fragment> postOrderIterator() {
+        return postOrderIterator(getRoot());
+    }
+
+    public Iterator<Fragment> preOrderIterator() {
+        return preOrderIterator(getRoot());
+    }
+
+    public abstract Iterator<Fragment> postOrderIterator(Fragment startingRoot);
+
+    public abstract Iterator<Fragment> preOrderIterator(Fragment startingRoot);
+
+    public Loss getLoss(Fragment f, MolecularFormula g) {
+        for (int i = 0; i < f.outDegree; ++i) {
+            if (f.getChildren(i).getFormula().equals(g)) {
+                return f.getOutgoingEdge(i);
+            }
+        }
+        return null;
+    }
+
+    public Loss getLoss(MolecularFormula a, MolecularFormula b) {
+        for (Fragment f : fragments) {
+            if (f.getFormula().equals(a)) {
+                return getLoss(f, b);
+            }
+        }
+        return null;
+    }
+
+    public abstract Fragment getRoot();
 
     public Fragment getFragmentAt(int k) {
         return fragments.get(k);
@@ -95,6 +175,10 @@ public abstract class AbstractFragmentationGraph {
         if (annotations.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
         annotations.put((Class<Object>) klass, (Object) annotation);
+    }
+
+    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
+        return annotations.put((Class<Object>) klass, annotation) == annotation;
     }
 
     @SuppressWarnings("unchecked cast")
@@ -168,6 +252,24 @@ public abstract class AbstractFragmentationGraph {
             deleteInEdgeInternal(l.target, l);
         }
         fragment.vertexId = -1;
+    }
+
+    public List<Fragment> getFragments() {
+        return Collections.unmodifiableList(fragments);
+    }
+
+    public List<Fragment> getFragmentsWithoutRoot() {
+        return new AbstractList<Fragment>() {
+            @Override
+            public Fragment get(int index) {
+                return fragments.get(index + 1);
+            }
+
+            @Override
+            public int size() {
+                return fragments.size() - 1;
+            }
+        };
     }
 
     public abstract Iterator<Loss> lossIterator();

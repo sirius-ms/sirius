@@ -109,6 +109,34 @@ public class Fragment {
         };
     }
 
+    public List<Loss> getOutgoingEdges() {
+        return new AbstractList<Loss>() {
+            @Override
+            public Loss get(int index) {
+                return outgoingEdges[index];
+            }
+
+            @Override
+            public int size() {
+                return outDegree;
+            }
+        };
+    }
+
+    public List<Loss> getIncomingEdges() {
+        return new AbstractList<Loss>() {
+            @Override
+            public Loss get(int index) {
+                return incomingEdges[index];
+            }
+
+            @Override
+            public int size() {
+                return inDegree;
+            }
+        };
+    }
+
     public List<Fragment> getParents() {
         return new AbstractList<Fragment>() {
             @Override
@@ -143,5 +171,9 @@ public class Fragment {
 
     public boolean isRoot() {
         return inDegree == 0;
+    }
+
+    public boolean isLeaf() {
+        return outDegree == 0;
     }
 }

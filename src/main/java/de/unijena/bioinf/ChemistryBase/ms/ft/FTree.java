@@ -2,12 +2,11 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.graphUtils.tree.BackrefTreeAdapter;
+import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import de.unijena.bioinf.graphUtils.tree.PreOrderTraversal;
 import de.unijena.bioinf.graphUtils.tree.TreeCursor;
 
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class FTree extends AbstractFragmentationGraph {
 
@@ -89,7 +88,17 @@ public class FTree extends AbstractFragmentationGraph {
     }
 
     @Override
-    protected Fragment getUniqueRoot() {
+    public Iterator<Fragment> postOrderIterator(Fragment startingRoot) {
+        return new PostOrderTraversal.TreeIterator<Fragment>(TreeCursor.getCursor(startingRoot, FTree.treeAdapter()));
+    }
+
+    @Override
+    public Iterator<Fragment> preOrderIterator(Fragment startingRoot) {
+        return new PreOrderTraversal.TreeIterator<Fragment>(TreeCursor.getCursor(startingRoot, FTree.treeAdapter()));
+    }
+
+    @Override
+    public Fragment getRoot() {
         return root;
     }
 
@@ -144,5 +153,28 @@ public class FTree extends AbstractFragmentationGraph {
 
     public final TreeCursor getCursor() {
         return TreeCursor.getCursor(root, FTree.treeAdapter());
+    }
+
+    @Override
+    public Iterator<Fragment> iterator() {
+        return new Iterator<Fragment>() {
+            int k = 0;
+
+            @Override
+            public boolean hasNext() {
+                return k < fragments.size();
+            }
+
+            @Override
+            public Fragment next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                return fragments.get(k++);
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

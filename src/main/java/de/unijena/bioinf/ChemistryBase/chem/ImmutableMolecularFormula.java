@@ -4,14 +4,14 @@ import java.util.Arrays;
 
 class ImmutableMolecularFormula extends MolecularFormula {
 
-	private final short[] amounts;
-	private final TableSelection selection;
-	private final double mass;
-	private final int hash;
-	
-	public ImmutableMolecularFormula(MolecularFormula formula) {
-		this(formula.getTableSelection(), formula.buffer(), formula.getMass(), formula.hashCode());
-	}
+    private final short[] amounts;
+    private final TableSelection selection;
+    private final double mass;
+    private final int hash;
+
+    public ImmutableMolecularFormula(MolecularFormula formula) {
+        this(formula.getTableSelection(), formula.buffer(), formula.getMass(), formula.hashCode());
+    }
 
     private ImmutableMolecularFormula(TableSelection selection, short[] buffer, double mass, int hash) {
         this.amounts = buffer.clone();
@@ -20,14 +20,14 @@ class ImmutableMolecularFormula extends MolecularFormula {
         this.hash = hash;
     }
 
-	ImmutableMolecularFormula(TableSelection selection, short[] buffer) {
-		int i = buffer.length-1;
-		while (i >= 0 && buffer[i] == 0) --i;
-		this.amounts = Arrays.copyOf(buffer, i+1);
-		this.selection = selection;
-		this.mass = calcMass();
-		this.hash = super.hashCode();
-	}
+    ImmutableMolecularFormula(TableSelection selection, short[] buffer) {
+        int i = buffer.length - 1;
+        while (i >= 0 && buffer[i] == 0) --i;
+        this.amounts = Arrays.copyOf(buffer, i + 1);
+        this.selection = selection;
+        this.mass = calcMass();
+        this.hash = super.hashCode();
+    }
     /*
     protected int calculateHash() {
         final short[] buf = buffer();
@@ -44,28 +44,34 @@ class ImmutableMolecularFormula extends MolecularFormula {
     */
 
     @Override
+    public boolean equals(MolecularFormula formula) {
+        if (hash != formula.hashCode()) return false;
+        return super.equals(formula);
+    }
+
+    @Override
     public int hashCode() {
         return hash;
     }
 
     @Override
-	public double getMass() {
-		return mass;
-	}
-	
-	@Override
-	public int getIntMass() {
-		return calcIntMass();
-	}
-	
-	@Override
-	public TableSelection getTableSelection() {
-		return selection;
-	}
+    public double getMass() {
+        return mass;
+    }
 
-	@Override
-	protected short[] buffer() {
-		return amounts;
-	}
+    @Override
+    public int getIntMass() {
+        return calcIntMass();
+    }
+
+    @Override
+    public TableSelection getTableSelection() {
+        return selection;
+    }
+
+    @Override
+    protected short[] buffer() {
+        return amounts;
+    }
 
 }
