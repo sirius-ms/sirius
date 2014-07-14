@@ -1,17 +1,20 @@
 package de.unijena.bioinf.babelms.dot;
 
+import de.unijena.bioinf.graphUtils.tree.TreeAdapter;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
 public class Graph implements Cloneable {
 
-    private final ArrayList<Vertex> vertices;
-    private final ArrayList<Edge> edges;
+    protected final ArrayList<Vertex> vertices;
+    protected final ArrayList<Edge> edges;
 
     public Graph() {
         this.vertices = new ArrayList<Vertex>();
@@ -94,6 +97,14 @@ public class Graph implements Cloneable {
         return neighbours;
     }
 
+    public List<Vertex> getChildren(String vertex) {
+        final ArrayList<Vertex> neighbours = new ArrayList<Vertex>();
+        for (Edge e : edges) {
+            if (e.getHead().equals(vertex)) neighbours.add(getVertex(e.getTail()));
+        }
+        return neighbours;
+    }
+
     public Edge getEdgeFor(Vertex u, Vertex v) {
         return getEdgeFor(u.getName(), v.getName());
     }
@@ -103,6 +114,26 @@ public class Graph implements Cloneable {
             if (e.getHead().equals(u) && e.getTail().equals(v)) return e;
         }
         return null;
+    }
+
+    public TreeAdapter<Vertex> getTreeAdapter() {
+        final HashMap<String, List<Edge>> adjacencyList = new HashMap<String, List<Edge>>();
+        for (Vertex v : vertices) adjacencyList.put(v.getName(), new ArrayList<Edge>());
+        for (Edge e : edges) adjacencyList.get(e.getHead()).add(e);
+        return new TreeAdapter<Vertex>() {
+            @Override
+            public int getDegreeOf(Vertex vertex) {
+                return adjacencyList.get(vertex.getName()).size();
+            }
+
+            @Override
+            public List<Vertex> getChildrenOf(Vertex vertex) {
+                final List<Edge> adj = adjacencyList.get(vertex.getName());
+                final ArrayList<Vertex> children = new ArrayList<Vertex>(adj.size());
+                for (Edge e : adj) children.add(getVertex(e.getTail()));
+                return children;
+            }
+        };
     }
 
     public ArrayList<Vertex> getVertices() {

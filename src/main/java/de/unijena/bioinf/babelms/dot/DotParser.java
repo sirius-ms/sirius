@@ -3,57 +3,68 @@ package de.unijena.bioinf.babelms.dot;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kai
- * Date: 5/16/13
- * Time: 4:06 PM
- * To change this template use File | Settings | File Templates.
- */
-public class Parser {
+public class DotParser<NodeType, EdgeType> {
     final static Pattern TOKENIZE = Pattern.compile("strict|(?:di)?graph|=|\"|\\|,|->|\\[|\\]|\\{|\\}|#|\n|;", Pattern.MULTILINE);
-
-    private static enum MODE {
-        INITIAL, INGRAPH, INEDGE, INVERTEX, INVERTEXPROPERTY, INEDGEPROPERTY;
-    }
-    private static int NOESCAPE = 0, QUOTED=1, ESCAPED=2;
-
+    private static int NOESCAPE = 0, QUOTED = 1, ESCAPED = 2;
     private MODE m = MODE.INITIAL;
     private Matcher scanner;
     private int lineNumber = 0;
     private int lastMatch;
     private StringBuilder source;
-    private HashMap<String, Vertex> vertices = new HashMap<String, Vertex>();
-    private List<Edge> edges = new ArrayList<Edge>();
-    private Vertex currentVertex;
-    private Edge currentEdge;
+    private HashMap<String, NodeType> vertices = new HashMap<String, NodeType>();
+    private NodeType currentVertex;
+    private EdgeType currentEdge;
     private int escapeStatus = 0;
     private StringBuilder buffer = new StringBuilder();
     private String propertyName;
+    private DotHandler<NodeType, EdgeType> handler;
 
-    private Parser() {
-
+    private DotParser(DotHandler<NodeType, EdgeType> handler) {
+        this.handler = handler;
     }
 
-    public static Graph parse(Reader input) throws IOException {
-        Parser p = new Parser();
+    public static <NodeType, EdgeType> void parse(Reader input, DotHandler<NodeType, EdgeType> handler) throws IOException {
+        DotParser p = new DotParser(handler);
         p.parseIt(input);
-        final Graph g = new Graph();
-        g.getEdges().addAll(p.edges);
-        g.getVertices().addAll(p.vertices.values());
-        return g;
     }
 
+    public static Graph parseGraph(Reader input) throws IOException {
+        final Graph graph = new Graph();
+        final DotHandler<Vertex, Edge> handler = new DotHandler<Vertex, Edge>() {
+            @Override
+            public Vertex addVertex(String name) {
+                final Vertex v = new Vertex(name);
+                graph.vertices.add(v);
+                return v;
+            }
 
+            @Override
+            public void addVertexProperty(Vertex node, String key, String value) {
+                node.getProperties().put(key, value);
+            }
+
+            @Override
+            public Edge addEdge(Vertex u, Vertex v) {
+                final Edge e = new Edge(u.getName(), v.getName());
+                graph.edges.add(e);
+                return e;
+            }
+
+            @Override
+            public void addEdgeProperty(Edge edge, String key, String value) {
+                edge.getProperties().put(key, value);
+            }
+        };
+        parse(input, handler);
+        return graph;
+    }
 
     private void parseIt(Reader input) throws IOException {
-        final BufferedReader r = (input instanceof BufferedReader) ? (BufferedReader)input : new BufferedReader(input);
+        final BufferedReader r = (input instanceof BufferedReader) ? (BufferedReader) input : new BufferedReader(input);
         source = new StringBuilder();
         while (r.ready()) source.append(r.readLine()).append('\n');
         scanner = TOKENIZE.matcher(source);
@@ -67,10 +78,10 @@ public class Parser {
                     int now = scanner.end();
                     scanner.find();
                     int after = scanner.start();
-                    if (after-now == 1) {
+                    if (after - now == 1) {
                         // escape character
                         buffer.append(source.subSequence(now, after));
-                    } else buffer.append(source.subSequence(now-1, after));
+                    } else buffer.append(source.subSequence(now - 1, after));
                 } else if (token.equals("\"")) {
                     escapeStatus = NOESCAPE;
                     buffer.append(before());
@@ -81,9 +92,10 @@ public class Parser {
                     buffer.append(token);
                     lastMatch = scanner.end();
                     continue;
-                };
+                }
+                ;
             } else if (token.equals("\\")) {
-                if (TOKENIZE.matcher(source.subSequence(scanner.end(), scanner.end()+1)).find()) scanner.find();
+                if (TOKENIZE.matcher(source.subSequence(scanner.end(), scanner.end() + 1)).find()) scanner.find();
                 else error("Unexpected '\\'");
 
             }
@@ -106,13 +118,12 @@ public class Parser {
                     String a = before().trim();
                     jumpTo("[");
                     String b = before().trim();
-                    currentEdge = new Edge(a, b);
-                    edges.add(currentEdge);
+                    currentEdge = handler.addEdge(getVertex(a), getVertex(b));
                     m = MODE.INEDGE;
                 } else if (token.equals("[")) {
                     // parse vertex
                     String vertexName = before().trim();
-                    currentVertex = new Vertex(vertexName);
+                    currentVertex = handler.addVertex(vertexName);
                     vertices.put(vertexName, currentVertex);
                     m = MODE.INVERTEX;
                 } else if (token.equals("}")) {
@@ -148,8 +159,8 @@ public class Parser {
                 } else {
                     if (!token.equals(",") && !token.equals("]")) error("Expect ',' or ']' but '" + token + "' given.");
                     String propertyValue;
-                    if (buffer.length()==0) {
-                        if (lastMatch > 0 && source.charAt(lastMatch-1) == '=')
+                    if (buffer.length() == 0) {
+                        if (lastMatch > 0 && source.charAt(lastMatch - 1) == '=')
                             propertyValue = before();
                         else
                             propertyValue = "";
@@ -157,10 +168,10 @@ public class Parser {
                         propertyValue = buffer.toString();
                         clearBuffer();
                     }
-                    if (propertyName.equals("label")) {
-                        if (m == MODE.INEDGEPROPERTY) currentEdge.getProperties().put(propertyName, propertyValue);
-                        else currentVertex.getProperties().put(propertyName, propertyValue);
-                    }
+                    if (m == MODE.INEDGEPROPERTY)
+                        handler.addEdgeProperty(currentEdge, propertyName, propertyValue);
+                    else
+                        handler.addVertexProperty(currentVertex, propertyName, propertyValue);
                     if (token.equals("]")) {
                         m = MODE.INGRAPH;
                     } else {
@@ -170,9 +181,6 @@ public class Parser {
             }
             lastMatch = scanner.end();
         }
-
-
-
     }
 
     private void clearBuffer() {
@@ -183,8 +191,8 @@ public class Parser {
         if (!scanner.group().equals(token)) error("Expected '" + token + "'");
     }
 
-    private Vertex getVertex(String name) {
-        final Vertex av = vertices.get(name);
+    private NodeType getVertex(String name) {
+        final NodeType av = vertices.get(name);
         if (av == null) error("Unknown vertex: '" + name + "'");
         return av;
     }
@@ -201,7 +209,7 @@ public class Parser {
         lastMatch = scanner.end();
         while (scanner.find()) {
             final String tok = scanner.group();
-            if (escapeStatus==0 && tok.equals("#")) commentLine();
+            if (escapeStatus == 0 && tok.equals("#")) commentLine();
             if (tok.equals(token)) break;
             lastMatch = scanner.end();
         }
@@ -213,6 +221,7 @@ public class Parser {
             if (scanner.group().equals("\n")) break;
         }
     }
+
     private String ignoreWhitespaces() throws IOException {
         while (scanner.group().equals("\n")) {
             ++lineNumber;
@@ -221,4 +230,7 @@ public class Parser {
         return scanner.group();
     }
 
+    private static enum MODE {
+        INITIAL, INGRAPH, INEDGE, INVERTEX, INVERTEXPROPERTY, INEDGEPROPERTY;
+    }
 }
