@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
@@ -22,14 +23,18 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
         graph.addAnnotation(ProcessedInput.class, input);
         graph.addFragmentAnnotation(ProcessedPeak.class);
         graph.getOrCreateAnnotation(ScoredFormulaMap.class);
+        graph.addAnnotation(Ionization.class, input.getExperimentInformation().getIonization());
         return graph;
     }
 
     @Override
     public FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<ScoredMolecularFormula> pmds) {
         final ScoredFormulaMap scoring = graph.getOrCreateAnnotation(ScoredFormulaMap.class);
+        final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (ScoredMolecularFormula m : pmds) {
             final Fragment f = graph.addRootVertex(m.getFormula());
+            peakAno.set(f, peak);
+            f.setColor(peak.getIndex());
             scoring.put(f.getFormula(), m.getScore());
         }
         return graph;
@@ -54,21 +59,25 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
 
         final ArrayList<ProcessedPeak> peaks = new ArrayList<ProcessedPeak>(graph.getAnnotationOrThrow(ProcessedInput.class).getMergedPeaks());
         Collections.sort(peaks, new ProcessedPeak.MassComparator());
-        for (int i = peaks.size(); i >= 0; --i) {
+        for (int i = peaks.size() - 1; i >= 0; --i) {
             final ProcessedPeak peak = peaks.get(i);
             final int pi = peak.getIndex();
             for (ScoredMolecularFormula decomposition : decompList.get(peak).getDecompositions()) {
                 final MolecularFormula formula = decomposition.getFormula();
-                final boolean hasEdge = pmd.isSubtractable(formula);
+                final boolean hasEdge = formula.getMass() < pmd.getMass() && pmd.isSubtractable(formula);
                 if (hasEdge) {
-                    final Fragment newFragment = graph.addFragment(decomposition.getFormula());
-                    peakAno.set(newFragment, peak);
-                    scoring.put(decomposition.getFormula(), decomposition.getScore());
+                    Fragment newFragment = null;
                     for (Fragment f : graph) {
-                        if (peakAno.get(f).getIndex() == pi) continue;
+                        if (f.isRoot() || peakAno.get(f).getIndex() == pi) continue;
                         final MolecularFormula fragmentFormula = f.getFormula();
                         assert (peakAno.get(f).getMz() > peak.getMz());
-                        if (fragmentFormula.isSubtractable(formula)) {
+                        if (fragmentFormula.getMass() > formula.getMass() && fragmentFormula.isSubtractable(formula)) {
+                            if (newFragment == null) {
+                                newFragment = graph.addFragment(decomposition.getFormula());
+                                peakAno.set(newFragment, peak);
+                                newFragment.setColor(peak.getIndex());
+                                scoring.put(decomposition.getFormula(), decomposition.getScore());
+                            }
                             graph.addLoss(f, newFragment);
                         }
                     }

@@ -345,11 +345,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private void addTreeAnnotations(FTree tree) {
         tree.setAnnotation(Ionization.class, tree.getAnnotationOrThrow(ProcessedInput.class).getExperimentInformation().getIonization());
         FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
+        FragmentAnnotation<CollisionEnergy[]> ces = tree.getOrCreateFragmentAnnotation(CollisionEnergy[].class);
         FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
         FragmentAnnotation<Peak> p = tree.getOrCreateFragmentAnnotation(Peak.class);
         for (Fragment f : tree) {
             final ProcessedPeak peak = pp.get(f);
             ce.set(f, peak.getCollisionEnergy());
+            final Set<CollisionEnergy> energies = new TreeSet<CollisionEnergy>(CollisionEnergy.getMinEnergyComparator());
+            int k = 0;
+            for (MS2Peak op : peak.getOriginalPeaks()) {
+                energies.add(op.getSpectrum().getCollisionEnergy());
+            }
+            ces.set(f, energies.toArray(new CollisionEnergy[energies.size()]));
             p.set(f, peak);
         }
     }
@@ -470,7 +477,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             loss.setWeight(score);
         }
         if (reduction != null) reduction.reduce(graph, Double.NEGATIVE_INFINITY); // TODO: implement lowerbound
-        assert false;
+        //assert false;
         return graph;
     }
 
@@ -645,6 +652,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
             Collections.sort(scored, Collections.reverseOrder());
             decompositionList.set(parentPeak, new DecompositionList(scored));
+            preprocessed.addAnnotation(DecompositionList.class, decompositionList.get(parentPeak));
         }
         // set peak indizes
         for (int i=0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);

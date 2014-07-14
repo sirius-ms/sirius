@@ -4,6 +4,12 @@ package de.unijena.bioinf.FragmentationTree;
  *
  */
 public class GraphBuilder {
+
+
+    public static void main(String[] args) {
+        // TODO: implement
+    }
+
     /*
 
     public static void main(String[] args) {

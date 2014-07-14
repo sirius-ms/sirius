@@ -2,7 +2,9 @@ package de.unijena.bioinf.FTAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 public class PredictedLoss {
     // formula of the loss
@@ -18,20 +20,20 @@ public class PredictedLoss {
     // maximum of the intensity of the incoming and outgoing fragment
     final double maxIntensity;
 
-    PredictedLoss(Loss l, Ionization ion) {
+    PredictedLoss(FragmentAnnotation<ProcessedPeak> peak, Loss l, Ionization ion) {
         this.lossFormula = l.getFormula();
-        this.fragmentFormula = l.getTail().getFormula();
-        this.fragmentIntensity = l.getTail().getRelativePeakIntensity();
-        this.fragmentMz = l.getTail().getPeak().getOriginalMz();
-        this.maxIntensity = Math.max(l.getTail().getRelativePeakIntensity(), l.getHead().getRelativePeakIntensity());
-        this.fragmentNeutralMass = ion.subtractFromMass(l.getTail().getPeak().getOriginalMz());
-    }
-
-    public String toCSV() {
-        return fragmentFormula.toString() + "," + lossFormula.toString() + "," + fragmentMz + "," + fragmentNeutralMass + "," + (fragmentNeutralMass - fragmentFormula.getMass()) + "," + fragmentIntensity + "," + maxIntensity;
+        this.fragmentFormula = l.getTarget().getFormula();
+        this.fragmentIntensity = peak.get(l.getTarget()).getRelativeIntensity();
+        this.fragmentMz = peak.get(l.getTarget()).getOriginalMz();
+        this.maxIntensity = Math.max(peak.get(l.getTarget()).getRelativeIntensity(), peak.get(l.getSource()).getRelativeIntensity());
+        this.fragmentNeutralMass = ion.subtractFromMass(peak.get(l.getTarget()).getOriginalMz());
     }
 
     public static String csvHeader() {
         return "fragment,loss,mz,neutralMass,massDeviation,intensity,lossIntensity";
+    }
+
+    public String toCSV() {
+        return fragmentFormula.toString() + "," + lossFormula.toString() + "," + fragmentMz + "," + fragmentNeutralMass + "," + (fragmentNeutralMass - fragmentFormula.getMass()) + "," + fragmentIntensity + "," + maxIntensity;
     }
 }

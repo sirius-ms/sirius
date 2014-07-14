@@ -4,20 +4,19 @@ import au.com.bytecode.opencsv.CSVReader;
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.ChemistryBase.data.DoubleDataMatrix;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
-import de.unijena.bioinf.ftblast.Dataset;
-import de.unijena.bioinf.ftblast.ScoreTable;
-import de.unijena.bioinf.spectralign.Main;
 import de.unijena.bioinf.spectralign.SpectralAligner;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
-import javax.swing.border.CompoundBorder;
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
@@ -27,36 +26,35 @@ import java.util.*;
  * dataset/ms
  * dataset/profiles
  * dataset/profiles/profilename/dot
- *
+ * <p/>
  * as well as following files
  * dataset/fingerprints
  * dataset/tanimoto.csv
  * dataset/profiles/profilename/scores.csv
- *
+ * <p/>
  * Usage:
- *
+ * <p/>
  * fteval init dataset
- *
+ * <p/>
  * fteval compute profil.json
- *
+ * <p/>
  * fteval tanimoto x1 x2 x3
  * fteval tanimoto all
- *
+ * <p/>
  * fteval align
- *
+ * <p/>
  * fteval ssps
- *
  */
 public class FTEval {
 
     public static final String VERSION_STRING = "1.0";
 
     public static void main(String[] args) {
-        if (args.length==0 || args[0].equals("-h") || args[0].equals("--help")) {
+        if (args.length == 0 || args[0].equals("-h") || args[0].equals("--help")) {
             printUsage();
             return;
         }
-        final String[] cropped = Arrays.copyOf(args, args.length-1);
+        final String[] cropped = Arrays.copyOf(args, args.length - 1);
         System.arraycopy(args, 1, cropped, 0, cropped.length);
         if (args[0].equals("init")) {
             init(cropped);
@@ -97,9 +95,11 @@ public class FTEval {
             }
         }
         final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
+        /*
         final ScoreTable sc = new ScoreTable("test", matrices.getLayer(0));
         sc.toFingerprints();
         sc.getOrdered();
+        */
         System.out.println("TEST");
     }
 
@@ -135,8 +135,8 @@ public class FTEval {
                     new File(evalDB.profile(profil), opts.getTarget()).getAbsolutePath()));
             if (opts.getXtra() != null) {
                 for (String s : opts.getXtra()) {
-                    if (s.charAt(0)=='"') {
-                        s = s.substring(1,s.length()-1);
+                    if (s.charAt(0) == '"') {
+                        s = s.substring(1, s.length() - 1);
                     }
                     arguments.add(s);
                 }
@@ -157,12 +157,12 @@ public class FTEval {
         final ArrayList<String> toDelete = new ArrayList<String>();
         final int deleteSmallTrees = opts.getEdgeLimit();
         if (deleteSmallTrees > 0) {
-            for (String p : evalDB.profiles() ) {
+            for (String p : evalDB.profiles()) {
                 for (File d : evalDB.dotFiles(p)) {
                     final int cl = countNumberOfLosses(d);
-                    if (cl< deleteSmallTrees) {
+                    if (cl < deleteSmallTrees) {
                         final String name = d.getName().substring(0, d.getName().indexOf('.'));
-                        System.out.println("delete " + name + " due to low loss number " +  cl);
+                        System.out.println("delete " + name + " due to low loss number " + cl);
                         toDelete.add(name);
                     }
                 }
@@ -176,7 +176,8 @@ public class FTEval {
         if (evalDB.fingerprint("MACCS").exists()) fingerprints.add(evalDB.fingerprint("MACCS"));
         if (fingerprints.size() < 2) {
             for (String s : evalDB.fingerprints()) {
-                if (!s.equals("Pubchem") && !s.equals("MACCS") && evalDB.fingerprint(s).exists()) fingerprints.add(evalDB.fingerprint(s));
+                if (!s.equals("Pubchem") && !s.equals("MACCS") && evalDB.fingerprint(s).exists())
+                    fingerprints.add(evalDB.fingerprint(s));
             }
         }
         if (fingerprints.size() < 2) {
@@ -195,8 +196,8 @@ public class FTEval {
             }
         final DoubleDataMatrix matrix = DoubleDataMatrix.overlay(iters, Collections.<Iterator<String[]>>emptyList(), names,
                 null, Double.NEGATIVE_INFINITY);
-        for (int row=0; row < matrix.getRowHeader().length; ++row) {
-            for (int col=row+1; col < matrix.getColHeader().length; ++col) {
+        for (int row = 0; row < matrix.getRowHeader().length; ++row) {
+            for (int col = row + 1; col < matrix.getColHeader().length; ++col) {
                 if (matrix.getValues()[0][row][col] > 0.99999 && matrix.getValues()[1][row][col] > 0.99999) {
                     // entry row/col is a identical compound
                     final String nameOfFirst = matrix.getRowHeader()[row];
@@ -225,8 +226,6 @@ public class FTEval {
         }
 
 
-
-
     }
 
     private static int countNumberOfLosses(File d) {
@@ -235,7 +234,7 @@ public class FTEval {
             int loss = 0;
             while (reader.ready()) {
                 final String line = reader.readLine();
-                if (line==null) break;
+                if (line == null) break;
                 if (line.contains("->")) ++loss;
             }
             return loss;
@@ -266,7 +265,7 @@ public class FTEval {
     private static ArrayList<String> getAlignArguments(AlignOpts opts) {
         final ArrayList<String> arguments = new ArrayList<String>();
         arguments.add("-n");
-        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors()-1));
+        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
         //if (!opts.isNoFingerprints()) arguments.add("-f");
         arguments.add("-z");
         if (opts.isNoMultijoin()) arguments.add("-j");
@@ -285,7 +284,7 @@ public class FTEval {
             try {
                 chem.add(sdf.getName());
             } catch (IOException e) {
-                System.err.println("Can't parse '" + sdf.getName() + "':\n" +e.getMessage());
+                System.err.println("Can't parse '" + sdf.getName() + "':\n" + e.getMessage());
             }
         }
         try {
@@ -299,7 +298,7 @@ public class FTEval {
             throw new RuntimeException(e);
         }
 
-        int i=-1;
+        int i = -1;
         for (File dir : chem.getDirectories()) {
             ++i;
             if (dir.exists()) {
@@ -307,7 +306,7 @@ public class FTEval {
                     try {
                         deleteRecDir(dir);
                     } catch (IOException e) {
-                        System.err.println("Can't delete directory '" + dir + "':\n"+e.getMessage());
+                        System.err.println("Can't delete directory '" + dir + "':\n" + e.getMessage());
                     }
                 } else continue;
             }
@@ -318,15 +317,15 @@ public class FTEval {
                 final BufferedWriter fileWriter = new BufferedWriter(new FileWriter(new File(dir, "tanimoto.csv")));
                 // write header
                 final List<ChemicalSimilarity.Compound> compounds = chem.getCompounds();
-                for (int j=0; j <compounds.size(); ++j) {
+                for (int j = 0; j < compounds.size(); ++j) {
                     fileWriter.append('"').append(compounds.get(j).name).append('"');
-                    if (j+1 < compounds.size()) fileWriter.append(",");
+                    if (j + 1 < compounds.size()) fileWriter.append(",");
                 }
                 fileWriter.newLine();
                 // write rows
-                for (int row=0; row < matrix[i].length; ++row) {
+                for (int row = 0; row < matrix[i].length; ++row) {
                     fileWriter.append('"').append(compounds.get(row).name).append('"');
-                    for (int col=0; col < compounds.size(); ++col) {
+                    for (int col = 0; col < compounds.size(); ++col) {
                         fileWriter.append(',').append(String.valueOf(matrix[i][row][col]));
                     }
                     fileWriter.newLine();
@@ -340,9 +339,9 @@ public class FTEval {
 
     private static void printUsage() {
         System.out.println("FTEval evaluates the performance of SIRIUS on a given dataset.\n" +
-                "Create an evaluation for a dataset with\nfteval init <nameofdataset>\n"+
-                "Then copy all your ms files into the directory dataset/ms\n"+
-                "As well as all sdf files into the directory dataset/sdf\n"+
+                "Create an evaluation for a dataset with\nfteval init <nameofdataset>\n" +
+                "Then copy all your ms files into the directory dataset/ms\n" +
+                "As well as all sdf files into the directory dataset/sdf\n" +
                 "You can then start the analysis with\ncd dataset\nfteval compute profilename.json\nfteval ssps");
     }
 
@@ -395,9 +394,12 @@ public class FTEval {
         }
         System.out.println("Create new dataset '" + opts.getName() + "'");
         if (opts.getMs() != null) System.out.println("Dataset contains " + mss.listFiles().length + " compounds");
-        else System.out.println("Dataset is still empty. Copy ms files into '" + mss.getAbsolutePath() + "' directory to proceede.");
-        if (opts.getSdf() != null) System.out.println("Dataset contains " + mss.listFiles().length + " compound structures");
-        else System.out.println("Chemical Structures are still missing. Copy sdf files into '" + sdfs.getAbsolutePath() + "' directory to proceede.");
+        else
+            System.out.println("Dataset is still empty. Copy ms files into '" + mss.getAbsolutePath() + "' directory to proceede.");
+        if (opts.getSdf() != null)
+            System.out.println("Dataset contains " + mss.listFiles().length + " compound structures");
+        else
+            System.out.println("Chemical Structures are still missing. Copy sdf files into '" + sdfs.getAbsolutePath() + "' directory to proceede.");
         System.out.println("Move into directory '" + opts.getName() + "' and execute fteval compute.");
     }
 
@@ -406,7 +408,7 @@ public class FTEval {
         final ComputeOptions opts = CliFactory.parseArguments(ComputeOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final String name;
-        if (opts.getName()==null) {
+        if (opts.getName() == null) {
             name = evalDB.removeExtName(new File(opts.getProfile()));
         } else name = opts.getName();
         final Profile prof;
@@ -419,7 +421,7 @@ public class FTEval {
         final File target = evalDB.profile(name);
         if (target.exists()) {
             final int choice = I.choice(name + " still exists.", "Replace all", "Compute missing", "Skip");
-            if (choice==2) {
+            if (choice == 2) {
                 I.sayln("Cancel computation.");
                 return;
             } else if (choice == 0) {
@@ -444,7 +446,7 @@ public class FTEval {
         I.sayln("Compute trees for all ms files.");
         for (File f : evalDB.msFiles()) {
             final String n = f.getName();
-            final File treeFile = new File(dot, n.substring(0, n.lastIndexOf('.'))+".dot");
+            final File treeFile = new File(dot, n.substring(0, n.lastIndexOf('.')) + ".dot");
             if (treeFile.exists()) {
                 continue;
             } else {
@@ -458,7 +460,7 @@ public class FTEval {
                     System.err.println("Can't parse '" + f.getName() + "':\n" + e.getMessage());
                     continue;
                 }
-                final FragmentationTree tree = prof.fragmentationPatternAnalysis.computeTrees(prof.fragmentationPatternAnalysis.preprocessing(exp)).withRecalibration().
+                final FTree tree = prof.fragmentationPatternAnalysis.computeTrees(prof.fragmentationPatternAnalysis.preprocessing(exp)).withRecalibration().
                         onlyWith(Arrays.asList(exp.getMolecularFormula())).optimalTree();
                 if (tree == null) {
                     I.sayln("Don't find tree for '" + f.getName() + "'");
@@ -510,6 +512,7 @@ public class FTEval {
         final CSVReader reader = new CSVReader(r);
         return new Iterator<String[]>() {
             String[] row = reader.readNext();
+
             @Override
             public boolean hasNext() {
                 return row != null;
@@ -528,10 +531,11 @@ public class FTEval {
             public void remove() {
                 throw new UnsupportedOperationException();
             }
+
             private void readNext() {
                 try {
                     row = reader.readNext();
-                    if (row==null) reader.close();
+                    if (row == null) reader.close();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -551,7 +555,8 @@ public class FTEval {
             arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "--with", evalDB.decoy(profil).getAbsolutePath(), "-m",
                     new File(evalDB.profile(profil), "decoymatrix.csv").getAbsolutePath()));
             if (opts.getXtra() != null) arguments.addAll(opts.getXtra());
-            if (!(new File(evalDB.profile(profil), "decoymatrix.csv")).exists()) de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
+            if (!(new File(evalDB.profile(profil), "decoymatrix.csv")).exists())
+                de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
             try {
                 calculateQValues(new File(evalDB.profile(profil), "matrix.csv"), new File(evalDB.profile(profil), "decoymatrix.csv"));
             } catch (IOException e) {
@@ -560,70 +565,52 @@ public class FTEval {
         }
     }
 
-    private static class Hit implements Comparable<Hit> {
-        private final boolean decoy;
-        private final double score;
-        private final int left, right;
-
-        private Hit(int left, int right, double score, boolean decoy) {
-            this.left = left;
-            this.right = right;
-            this.score = score;
-            this.decoy = decoy;
-        }
-
-        @Override
-        public int compareTo(Hit o) {
-            return Double.compare(score, o.score);
-        }
-    }
-
     private static void calculateQValues(File query, File decoy) throws IOException {
         final List<Hit> hits = new ArrayList<Hit>();
         final DoubleDataMatrix matrix1 = DoubleDataMatrix.overlay(Arrays.asList(parseMatrix(query)), null, Arrays.asList("query"), null, Double.NEGATIVE_INFINITY);
         final DoubleDataMatrix matrix2 = DoubleDataMatrix.overlay(Arrays.asList(parseMatrix(decoy)), null, Arrays.asList("query"), null, Double.NEGATIVE_INFINITY);
         final TObjectIntHashMap<String> mapper = new TObjectIntHashMap<String>(matrix1.getRowHeader().length);
-        for (int i=0; i < matrix2.getRowHeader().length; ++i) {
+        for (int i = 0; i < matrix2.getRowHeader().length; ++i) {
             mapper.put(matrix2.getRowHeader()[i], i);
         }
         final double[][] m1 = matrix1.getLayer(0);
         final double[][] m2 = matrix2.getLayer(0);
         final double[][] m3 = new double[m1.length][m1[0].length];
-        for (int row=0; row < matrix1.getRowHeader().length; ++row) {
-            for (int col=0; col < matrix1.getColHeader().length; ++col) {
+        for (int row = 0; row < matrix1.getRowHeader().length; ++row) {
+            for (int col = 0; col < matrix1.getColHeader().length; ++col) {
                 hits.add(new Hit(row, col, m1[row][col], false));
             }
             final int decoyRow = mapper.get(matrix1.getRowHeader()[row]);
-            for (int col=0; col < matrix2.getColHeader().length; ++col) {
+            for (int col = 0; col < matrix2.getColHeader().length; ++col) {
                 hits.add(new Hit(decoyRow, col, m2[decoyRow][col], true));
             }
             Collections.sort(hits, Collections.reverseOrder());
-            int decoys=0;
-            int k=0;
-            for (int i=0; i < hits.size(); ++i) {
-                if (hits.get(i).decoy || i+1 == hits.size()) {
+            int decoys = 0;
+            int k = 0;
+            for (int i = 0; i < hits.size(); ++i) {
+                if (hits.get(i).decoy || i + 1 == hits.size()) {
                     // compute q values for all j=k..i
-                    final double qvalue = decoys/((double)i-decoys);
-                    for (int j=k; j <= i; ++j) {
+                    final double qvalue = decoys / ((double) i - decoys);
+                    for (int j = k; j <= i; ++j) {
                         final Hit h = hits.get(j);
-                        if (!h.decoy) m3[h.left][h.right] = -qvalue + m1[h.left][h.right]/100000d;
+                        if (!h.decoy) m3[h.left][h.right] = -qvalue + m1[h.left][h.right] / 100000d;
                     }
-                    if (hits.get(i).decoy ) ++decoys;
-                    k=i+1;
+                    if (hits.get(i).decoy) ++decoys;
+                    k = i + 1;
                 }
             }
             hits.clear();
         }
         final BufferedWriter writer = new BufferedWriter(new FileWriter(new File(query.getParent(), "qvalues.csv")));
         writer.write("scores");
-        for (int j=0; j < matrix1.getColHeader().length; ++j) {
+        for (int j = 0; j < matrix1.getColHeader().length; ++j) {
             writer.write(",");
             writer.write(matrix1.getColHeader()[j]);
         }
         writer.newLine();
-        for (int i=0; i < matrix1.getRowHeader().length; ++i) {
+        for (int i = 0; i < matrix1.getRowHeader().length; ++i) {
             writer.write(matrix1.getRowHeader()[i]);
-            for (int j=0; j < matrix1.getColHeader().length; ++j) {
+            for (int j = 0; j < matrix1.getColHeader().length; ++j) {
                 writer.write(",");
                 writer.write(String.valueOf(m3[i][j]));
             }
@@ -638,43 +625,43 @@ public class FTEval {
         final DoubleDataMatrix matrix2 = DoubleDataMatrix.overlay(Arrays.asList(parseMatrix(decoy)), null, Arrays.asList("query"), null, Double.NEGATIVE_INFINITY);
         final double[][] m1 = matrix1.getLayer(0);
         final double[][] m2 = matrix2.getLayer(0);
-        for (int i=0; i < matrix1.getRowHeader().length; ++i) {
-            for (int j=0; j < matrix1.getColHeader().length; ++j) {
+        for (int i = 0; i < matrix1.getRowHeader().length; ++i) {
+            for (int j = 0; j < matrix1.getColHeader().length; ++j) {
                 hits.add(new Hit(i, j, m1[i][j], false));
             }
         }
-        for (int i=0; i < matrix2.getRowHeader().length; ++i) {
-            for (int j=0; j < matrix2.getColHeader().length; ++j) {
+        for (int i = 0; i < matrix2.getRowHeader().length; ++i) {
+            for (int j = 0; j < matrix2.getColHeader().length; ++j) {
                 hits.add(new Hit(i, j, m2[i][j], true));
             }
         }
         Collections.sort(hits, Collections.reverseOrder());
         final int dbLength = matrix2.getRowHeader().length;
         final int decoyLength = matrix2.getColHeader().length;
-        int decoys=0;
-        int k=0;
-        for (int i=0; i < hits.size(); ++i) {
+        int decoys = 0;
+        int k = 0;
+        for (int i = 0; i < hits.size(); ++i) {
             if (hits.get(i).decoy) {
                 ++decoys;
                 // compute q values for all j=k..i
-                final double qvalue = decoys/((double)i-decoys);
-                for (int j=k; j < i; ++j) {
+                final double qvalue = decoys / ((double) i - decoys);
+                for (int j = k; j < i; ++j) {
                     final Hit h = hits.get(j);
                     if (!h.decoy) m1[h.left][h.right] = qvalue;
                 }
-                k=i+1;
+                k = i + 1;
             }
         }
         final BufferedWriter writer = new BufferedWriter(new FileWriter(new File(query.getParent(), "qvalues.csv")));
         writer.write("scores");
-        for (int j=0; j < matrix1.getColHeader().length; ++j) {
+        for (int j = 0; j < matrix1.getColHeader().length; ++j) {
             writer.write(",");
             writer.write(matrix1.getColHeader()[j]);
         }
         writer.newLine();
-        for (int i=0; i < matrix1.getRowHeader().length; ++i) {
+        for (int i = 0; i < matrix1.getRowHeader().length; ++i) {
             writer.write(matrix1.getRowHeader()[i]);
-            for (int j=0; j < matrix1.getColHeader().length; ++j) {
+            for (int j = 0; j < matrix1.getColHeader().length; ++j) {
                 writer.write(",");
                 writer.write(String.valueOf(m1[i][j]));
             }
@@ -726,7 +713,8 @@ public class FTEval {
             }
         }
         final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
-        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
+        /*
+        final de.unijena.bioinf.ftblast.Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
         for (int i=0; i < matrices.getLayerHeader().length; ++i) {
             final String name = matrices.getLayerHeader()[i];
             if (!name.equals("Pubchem")) {
@@ -739,6 +727,7 @@ public class FTEval {
 
         // filter identical compounds
         dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
+
 
         BufferedWriter writer = null;
         try {
@@ -773,6 +762,25 @@ public class FTEval {
 
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        */
+    }
+
+    private static class Hit implements Comparable<Hit> {
+        private final boolean decoy;
+        private final double score;
+        private final int left, right;
+
+        private Hit(int left, int right, double score, boolean decoy) {
+            this.left = left;
+            this.right = right;
+            this.score = score;
+            this.decoy = decoy;
+        }
+
+        @Override
+        public int compareTo(Hit o) {
+            return Double.compare(score, o.score);
         }
     }
 

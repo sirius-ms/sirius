@@ -17,6 +17,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.Analyzer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
@@ -24,8 +28,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Noi
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.FragmentationTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Loss;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -59,6 +63,40 @@ public class FTLearn {
     public static final String USAGE = "learn -i <iterations> --trees -t <outdir> <directoryWithFiles>";
 
     public final static String VERSION_STRING = "ModelparameterEstimation " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
+    private final static String[] endings = new String[]{"st", "nd", "rd"};
+    private final List<Database> databases;
+    private final boolean USE_INTENSITY_FOR_COUNTING;
+    private FragmentationPatternAnalysis analyzer;
+    private LearnOptions options;
+    private double progress;
+    private double intensityCutoff;
+    private Database db;
+    private RealDistribution noiseDistribution;
+    private NumberFormat PERC = NumberFormat.getPercentInstance(Locale.ENGLISH);
+    private JobScheduler scheduler = new JobScheduler();
+    private InputCache cache = new InputCache();
+    private NumberFormat PERCENT = NumberFormat.getPercentInstance(Locale.ENGLISH);
+    private int toDeleteDigits = 0;
+    private double oldProgress;
+    private boolean inConsole = System.console() != null;
+
+    public FTLearn(FragmentationPatternAnalysis initialAnalyzer, LearnOptions options) {
+        this.analyzer = initialAnalyzer;
+        this.databases = new ArrayList<Database>();
+
+        getScorer(analyzer.getDecompositionScorers(), CommonFragmentsScore.class).setRecombinator(new CommonFragmentsScore.LossCombinator(-1d,
+                getScorer(analyzer.getLossScorers(), CommonLossEdgeScorer.class), getLossSizeScorer()));
+
+        this.options = options;
+        if (options.getPeakLimit() != null) {
+            LimitNumberOfPeaksFilter f = getScorer(analyzer.getPostProcessors(), LimitNumberOfPeaksFilter.class);
+            if (f == null) {
+                analyzer.getPostProcessors().add(new LimitNumberOfPeaksFilter(options.getPeakLimit()));
+            } else f.setLimit(options.getPeakLimit());
+        }
+        PERC.setMaximumFractionDigits(2);
+        USE_INTENSITY_FOR_COUNTING = !options.isFrequencyCounting();
+    }
 
     public static void main(String[] args) {
         final LearnOptions options;
@@ -78,9 +116,9 @@ public class FTLearn {
         }
 
         final FragmentationPatternAnalysis analyzer;
-        if (options.getProfile()!=null) {
+        if (options.getProfile() != null) {
             try {
-                final JSONObject json  =  getJSON(options.getProfile());
+                final JSONObject json = getJSON(options.getProfile());
                 final JSONDocumentType doc = new JSONDocumentType();
                 analyzer = FragmentationPatternAnalysis.loadFromProfile(doc, json);
             } catch (IOException e) {
@@ -122,51 +160,13 @@ public class FTLearn {
         }
     }
 
-    private static class Database {
-        private String name;
-        private Deviation allowedMassDeviation, standardMs2Deviation;
-        private double medianNoiseIntensity;
-        private double noiseCutoff;
-        private final List<File> data;
-        private final List<Compound> compounds;
-
-        private Database(String name) {
-            this.name = name;
-            this.data = new ArrayList<File>();
-            this.compounds = new ArrayList<Compound>();
-            this.allowedMassDeviation = new Deviation(20);
-            this.standardMs2Deviation = new Deviation(5);
+    private static List<ProcessedPeak> getPeaks(FTree tree) {
+        final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        final ArrayList<ProcessedPeak> peaks = new ArrayList<ProcessedPeak>(tree.numberOfVertices());
+        for (Fragment f : tree.getFragments()) {
+            peaks.add(ano.get(f));
         }
-    }
-
-
-    private final List<Database> databases;
-    private FragmentationPatternAnalysis analyzer;
-    private LearnOptions options;
-    private double progress;
-    private double intensityCutoff;
-    private Database db;
-
-    private RealDistribution noiseDistribution;
-    private NumberFormat PERC = NumberFormat.getPercentInstance(Locale.ENGLISH);
-
-
-    public FTLearn(FragmentationPatternAnalysis initialAnalyzer, LearnOptions options) {
-        this.analyzer = initialAnalyzer;
-        this.databases = new ArrayList<Database>();
-
-        getScorer(analyzer.getDecompositionScorers(), CommonFragmentsScore.class).setRecombinator(new CommonFragmentsScore.LossCombinator(-1d,
-                getScorer(analyzer.getLossScorers(), CommonLossEdgeScorer.class), getLossSizeScorer()));
-
-        this.options = options;
-        if (options.getPeakLimit() != null) {
-            LimitNumberOfPeaksFilter f = getScorer(analyzer.getPostProcessors(), LimitNumberOfPeaksFilter.class);
-            if (f == null) {
-                analyzer.getPostProcessors().add(new LimitNumberOfPeaksFilter(options.getPeakLimit()));
-            } else f.setLimit(options.getPeakLimit());
-        }
-        PERC.setMaximumFractionDigits(2);
-        USE_INTENSITY_FOR_COUNTING = !options.isFrequencyCounting();
+        return peaks;
     }
 
     public Database addDatabase(File directory) {
@@ -204,7 +204,7 @@ public class FTLearn {
         }
         System.out.println("Train with " + compounds + " compounds from " + files + " files.");
     }
-    private final static String[] endings = new String[]{"st", "nd", "rd"};
+
     public void iterativeLearning() {
         if (!options.getTarget().exists()) options.getTarget().mkdir();
         if (options.isWriting()) {
@@ -212,16 +212,16 @@ public class FTLearn {
             writeProfile(new File(options.getTarget(), "initial"));
         }
         initialLearning();
-        for (int i=0; i < options.getIterations(); ++i) {
+        for (int i = 0; i < options.getIterations(); ++i) {
             if (getTreeSize() >= 0.25) increaseTreeSize(-0.25d);
-            println((i+1) + (i < endings.length ? endings[i] : "th") + " iteration step");
+            println((i + 1) + (i < endings.length ? endings[i] : "th") + " iteration step");
             boolean done;
             do {
                 done = iterativeLearningStep(i);
             } while (!done);
         }
         for (Database db : databases) {
-            writeProfile(options.getTarget(), db.name+".json");
+            writeProfile(options.getTarget(), db.name + ".json");
         }
 
     }
@@ -244,7 +244,7 @@ public class FTLearn {
             // remove double profile
             try {
                 obj.getJSONObject("IsotopePatternAnalysis").remove("default");
-                final JSONObject profileObj = (JSONObject)obj.getJSONObject("FragmentationPatternAnalysis").remove("default");
+                final JSONObject profileObj = (JSONObject) obj.getJSONObject("FragmentationPatternAnalysis").remove("default");
                 obj.put("profile", profileObj);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -258,9 +258,9 @@ public class FTLearn {
     }
 
     private boolean iterativeLearningStep(int step) {
-        int numberOfExperiments=0;
-        int computedTrees=0;
-        final File rootdir = new File(options.getTarget(), String.valueOf(step+1));
+        int numberOfExperiments = 0;
+        int computedTrees = 0;
+        final File rootdir = new File(options.getTarget(), String.valueOf(step + 1));
         rootdir.mkdir();
         LossSizeScorer originalLossSizeScorer = null;
         if (step == 0 && options.isStartWithExpertLosses()) {
@@ -276,16 +276,16 @@ public class FTLearn {
             analyzer.getLossScorers().add(cl);
         }
         for (Database database : databases) {
-            int m=0;
+            int m = 0;
             println("Compute " + database.name);
             this.progress = 0;
             printProgressFirst();
             int avgIntCount = 0;
             double averageExplainedIntensity = 0d;
-            final ArrayList<XYZ> massDevs=  new ArrayList<XYZ>();
+            final ArrayList<XYZ> massDevs = new ArrayList<XYZ>();
             final TDoubleArrayList noiseIntensities = new TDoubleArrayList(5000);
             setAnalyzer(database);
-            final File dir = new File(new File(options.getTarget(), db.name), String.valueOf(step+1));
+            final File dir = new File(new File(options.getTarget(), db.name), String.valueOf(step + 1));
             if (options.isWriting() && !dir.exists()) dir.mkdirs();
             for (Compound c : db.compounds) {
                 final InputFile in = new InputFile(cache.fetchCopy(c.file), c.file);
@@ -293,7 +293,7 @@ public class FTLearn {
                 final String fileName = in.getFileName().getName().toString();
                 final Ms2Experiment exp = in.getExperiment();
                 try {
-                    progress = (++numberOfExperiments/(double)db.compounds.size());
+                    progress = (++numberOfExperiments / (double) db.compounds.size());
                     double explainedIntensity = 0d;
                     double maxExplainableIntensity = 0d;
                     final MolecularFormula correctFormula = exp.getMolecularFormula();
@@ -301,9 +301,9 @@ public class FTLearn {
                         throw new RuntimeException("Internal error: Selected wrong compound");
                     }
                     final ProcessedInput input = analyzer.preprocessing(exp);
-                    final FragmentationTree tree = analyzer.computeTrees(input).onlyWith(Arrays.asList(input.getExperimentInformation().getMolecularFormula())).optimalTree();
+                    final FTree tree = analyzer.computeTrees(input).onlyWith(Arrays.asList(input.getExperimentInformation().getMolecularFormula())).optimalTree();
                     if (tree == null) {
-                        for (ScoredMolecularFormula f : input.getParentMassDecompositions()) {
+                        for (ScoredMolecularFormula f : input.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
                             if (f.getFormula().equals(correctFormula)) {
                                 error("Can't compute fragmentation tree for " + currentCompound.file + " for unknown reason.");
                                 break;
@@ -313,38 +313,41 @@ public class FTLearn {
                     }
                     ++computedTrees;
                     massDevs.add(new XYZ(
-                            input.getParentPeak().getOriginalMz(),
-                            input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
-                            2d)
+                                    input.getParentPeak().getOriginalMz(),
+                                    input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
+                                    2d)
                     );
                     // get signal peaks
                     {
                         final PredictedLoss[] losses = new PredictedLoss[tree.numberOfEdges()];
-                        int k=0;
+                        int k = 0;
                         final Iterator<Loss> iter = tree.lossIterator();
-                        while (iter.hasNext()) losses[k++] = new PredictedLoss(iter.next(), tree.getIonization());
+                        final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+                        while (iter.hasNext())
+                            losses[k++] = new PredictedLoss(ano, iter.next(), tree.getAnnotationOrThrow(Ionization.class));
                         currentCompound.losses = losses;
                     }
 
                     ///////////////////////////////////////
                     // get noise peaks
                     ///////////////////////////////////////
-                    final List<ProcessedPeak> peaks = tree.getPeaks();
+                    final PeakAnnotation<DecompositionList> peakAno = tree.getAnnotationOrThrow(ProcessedInput.class).getPeakAnnotationOrThrow(DecompositionList.class);
+                    final List<ProcessedPeak> peaks = getPeaks(tree);
                     final double[] minmz = new double[peaks.size()];
                     final double[] maxmz = new double[peaks.size()];
                     Arrays.fill(minmz, Double.POSITIVE_INFINITY);
                     Arrays.fill(maxmz, Double.NEGATIVE_INFINITY);
-                    for (int k=0; k < peaks.size(); ++k) {
+                    for (int k = 0; k < peaks.size(); ++k) {
                         List<? extends Peak> pks = peaks.get(k).getOriginalPeaks();
                         for (Peak p : pks) {
                             minmz[k] = Math.min(minmz[k], p.getMass());
                             maxmz[k] = Math.max(maxmz[k], p.getMass());
                         }
                     }
-                    for (ProcessedPeak peak : tree.getInput().getMergedPeaks()) {
-                        if (peak==input.getParentPeak()) continue;
+                    for (ProcessedPeak peak : tree.getAnnotationOrThrow(ProcessedInput.class).getMergedPeaks()) {
+                        if (peak == input.getParentPeak()) continue;
                         boolean isSignal = false;
-                        for (int k=0; k < minmz.length; ++k) {
+                        for (int k = 0; k < minmz.length; ++k) {
                             if (peak.getOriginalMz() >= minmz[k] && peak.getOriginalMz() <= maxmz[k]) {
                                 isSignal = true;
                                 break;
@@ -353,7 +356,7 @@ public class FTLearn {
                         if (!isSignal) {
                             noiseIntensities.add(peak.getRelativeIntensity());
                             // if explainable
-                            for (ScoredMolecularFormula f : peak.getDecompositions()) {
+                            for (ScoredMolecularFormula f : peakAno.get(peak).getDecompositions()) {
                                 if (f.getScore() > -1d && correctFormula.isSubtractable(f.getFormula())) {
                                     maxExplainableIntensity += peak.getRelativeIntensity();
                                     break;
@@ -364,7 +367,7 @@ public class FTLearn {
                             explainedIntensity += peak.getRelativeIntensity();
                         }
                     }
-                    final double intensityRatio = explainedIntensity/maxExplainableIntensity;
+                    final double intensityRatio = explainedIntensity / maxExplainableIntensity;
                     if (!Double.isNaN(intensityRatio) && !Double.isInfinite(intensityRatio)) {
                         averageExplainedIntensity += intensityRatio;
                         ++avgIntCount;
@@ -382,7 +385,7 @@ public class FTLearn {
             println("");
             averageExplainedIntensity /= avgIntCount;
             println("Average explained intensity: " + perc(averageExplainedIntensity));
-            if (averageExplainedIntensity < (options.getExplain()/100d) && getTreeSize()<5d) {
+            if (averageExplainedIntensity < (options.getExplain() / 100d) && getTreeSize() < 5d) {
                 println("Too low average explained intensity: Increase tree size");
                 increaseTreeSize(0.5d);
                 return false;
@@ -392,7 +395,7 @@ public class FTLearn {
             ///////////////////////////////////////
             if (!options.isSkipPosteriori()) {
                 for (PredictedLoss l : Compound.foreachLoss(db.compounds)) {
-                    massDevs.add(new XYZ(l.fragmentMz, l.fragmentNeutralMass-l.fragmentFormula.getMass(), l.fragmentIntensity));
+                    massDevs.add(new XYZ(l.fragmentMz, l.fragmentNeutralMass - l.fragmentFormula.getMass(), l.fragmentIntensity));
                 }
                 fitMassDevLimit(massDevs);
             }
@@ -442,7 +445,7 @@ public class FTLearn {
         for (Database db : databases) {
             if (options.isWriting()) {
                 setAnalyzer(db);
-                final File dir = new File(new File(options.getTarget(), db.name), String.valueOf(step+1));
+                final File dir = new File(new File(options.getTarget(), db.name), String.valueOf(step + 1));
                 writeProfile(rootdir);
             }
         }
@@ -453,8 +456,18 @@ public class FTLearn {
 
     private double getTreeSize() {
         final TreeSizeScorer s = getScorer(analyzer.getFragmentPeakScorers(), TreeSizeScorer.class);
-        if (s==null) return 0d;
+        if (s == null) return 0d;
         else return s.getTreeSizeScore();
+    }
+
+    private void setTreeSize(double treeSize) {
+        for (PeakScorer p : analyzer.getFragmentPeakScorers()) {
+            if (p instanceof TreeSizeScorer) {
+                ((TreeSizeScorer) p).setTreeSizeScore(treeSize);
+                return;
+            }
+        }
+        analyzer.getFragmentPeakScorers().add(new TreeSizeScorer(treeSize));
     }
 
     private Iterable<PredictedLoss> forEachLoss() {
@@ -463,9 +476,9 @@ public class FTLearn {
             public Iterator<PredictedLoss> iterator() {
                 return new Iterator<PredictedLoss>() {
 
-                    int K=0;
-                    int J=0;
-                    int L=0;
+                    int K = 0;
+                    int J = 0;
+                    int L = 0;
                     PredictedLoss loss = fetchNext();
 
                     @Override
@@ -510,11 +523,9 @@ public class FTLearn {
         };
     }
 
-    private final boolean USE_INTENSITY_FOR_COUNTING;
-
     private void adjustLossDependendScorers() {
         final CommonLossEdgeScorer commonLosses = getScorer(analyzer.getLossScorers(), CommonLossEdgeScorer.class);
-        if (commonLosses==null) return;
+        if (commonLosses == null) return;
 
         final FreeRadicalEdgeScorer radical = getScorer(analyzer.getLossScorers(), FreeRadicalEdgeScorer.class);
         if (radical != null) {
@@ -548,23 +559,23 @@ public class FTLearn {
         }
     }
 
-    private void learnCommonLosses()  {
-        final double MAX_SCORE = (options.getMaximalCommonLossScore()==null) ? Double.POSITIVE_INFINITY : options.getMaximalCommonLossScore();
+    private void learnCommonLosses() {
+        final double MAX_SCORE = (options.getMaximalCommonLossScore() == null) ? Double.POSITIVE_INFINITY : options.getMaximalCommonLossScore();
         final HashMap<MolecularFormula, XY> lossCounter = new HashMap<MolecularFormula, XY>();
         final LossSizeScorer scorer = getLossSizeScorer();
         if (!(scorer.getDistribution() instanceof LogNormalDistribution)) {
             println("Unknown distribution of loss masses. Cannot estimate parameters.");
             return;
         }
-        LogNormalDistribution distribution = (LogNormalDistribution)scorer.getDistribution();
+        LogNormalDistribution distribution = (LogNormalDistribution) scorer.getDistribution();
         println("initial distribution: " + distribution);
-        XY sum = new XY(0,0);
+        XY sum = new XY(0, 0);
         for (PredictedLoss loss : forEachLoss()) {
             final double weight = loss.maxIntensity;
             XY v = lossCounter.get(loss.lossFormula);
-            if (v==null) v = new XY(1,weight);
-            else v = new XY(v.x+1, v.y + weight);
-            lossCounter.put(loss.lossFormula, v );
+            if (v == null) v = new XY(1, weight);
+            else v = new XY(v.x + 1, v.y + weight);
+            lossCounter.put(loss.lossFormula, v);
             sum.x += 1;
             sum.y += weight;
         }
@@ -582,27 +593,26 @@ public class FTLearn {
             }
             return;
         }
-        println("Computed losses: " + (int)sum.x);
+        println("Computed losses: " + (int) sum.x);
         final HashMap<MolecularFormula, Double> commonLosses = new HashMap<MolecularFormula, Double>();
         final HashMap<Element, Integer> nonchno = new HashMap<Element, Integer>();
         final HashMap<Element, Double> nonchnoIntensities = new HashMap<Element, Double>();
         final Element C = PeriodicTable.getInstance().getByName("C"),
                 H = PeriodicTable.getInstance().getByName("H"),
-        N = PeriodicTable.getInstance().getByName("N"),
-        O = PeriodicTable.getInstance().getByName("O");
+                N = PeriodicTable.getInstance().getByName("N"),
+                O = PeriodicTable.getInstance().getByName("O");
         for (Database db : databases) {
             for (Compound compound : db.compounds) {
                 final MolecularFormula f = compound.formula;
                 if (!f.isCHNO()) {
                     for (Element e : f.elements()) {
-                        if (e==C || e == H || e==N || e==O) continue;
+                        if (e == C || e == H || e == N || e == O) continue;
                         double is = 0d;
                         for (PredictedLoss l : compound.losses) is += l.maxIntensity;
                         if (nonchno.containsKey(e)) {
-                            nonchno.put(e, nonchno.get(e)+compound.losses.length);
-                            nonchnoIntensities.put(e, nonchnoIntensities.get(e)+is);
-                        }
-                        else {
+                            nonchno.put(e, nonchno.get(e) + compound.losses.length);
+                            nonchnoIntensities.put(e, nonchnoIntensities.get(e) + is);
+                        } else {
                             nonchno.put(e, compound.losses.length);
                             nonchnoIntensities.put(e, is);
                         }
@@ -611,9 +621,9 @@ public class FTLearn {
             }
         }
         final HashMap<MolecularFormula, XY> originalOne = new HashMap<MolecularFormula, XY>(lossCounter);
-        final int lossSizeIterations = options.getLossSizeIterations()==0 ? 100 : options.getLossSizeIterations();
+        final int lossSizeIterations = options.getLossSizeIterations() == 0 ? 100 : options.getLossSizeIterations();
         int I;
-        for (I=0; I < lossSizeIterations; ++I) {
+        for (I = 0; I < lossSizeIterations; ++I) {
             final int frequencyThreshold = 5;
             final double intensityThreshold = 0.5d;
             boolean changed = false;
@@ -629,15 +639,15 @@ public class FTLearn {
                     numOfCompounds = sum.x;
                     intensityOfCompounds = sum.y;
                 } else {
-                    int n=(int)sum.x;
+                    int n = (int) sum.x;
                     for (Map.Entry<Element, Integer> e : nonchno.entrySet()) {
                         if (entry.getKey().numberOf(e.getKey()) > 0) {
                             n = Math.min(n, e.getValue());
                         }
                     }
-                    assert n>0;
+                    assert n > 0;
                     numOfCompounds = n;
-                    intensityOfCompounds = (numOfCompounds*sum.y)/sum.x;
+                    intensityOfCompounds = (numOfCompounds * sum.y) / sum.x;
 
                 }
 
@@ -648,44 +658,45 @@ public class FTLearn {
                 final double expectedIntensity = OFFSET + intensityOfCompounds * distribution.getDensity(entry.getKey().getMass());
                 final double observedIntensity = OFFSET + entry.getValue().y;
                 final boolean newLoss = !commonLosses.containsKey(entry.getKey());
-                final double LIMIT = (newLoss) ? (5+OFFSET) : 0;
+                final double LIMIT = (newLoss) ? (5 + OFFSET) : 0;
                 final double newLossThreshold = isChno ? 10 : 3;
 
                 //
                 //if  (((!isChno || entry.getKey().getMass() <= 10) && observedFrequency-expectedFrequency >= LIMIT) || observedFrequency-expectedFrequency >= frequencyThreshold &&  observedIntensity-expectedIntensity >= intensityThreshold) {
                 //if (observedFrequency >= LIMIT && (!isChno || entry.getKey().getMass() <= 10d || (observedFrequency-expectedFrequency >= frequencyThreshold) && observedIntensity-expectedIntensity >= intensityThreshold)) {
-                if (observedFrequency >= LIMIT && (observedFrequency-expectedFrequency >= frequencyThreshold && observedIntensity - expectedIntensity >= intensityThreshold)) {
+                if (observedFrequency >= LIMIT && (observedFrequency - expectedFrequency >= frequencyThreshold && observedIntensity - expectedIntensity >= intensityThreshold)) {
                     final double score;
                     if (USE_INTENSITY_FOR_COUNTING) {
-                        score = Math.log(observedIntensity/expectedIntensity);
+                        score = Math.log(observedIntensity / expectedIntensity);
                     } else {
-                        score = Math.log(observedFrequency/expectedFrequency);
+                        score = Math.log(observedFrequency / expectedFrequency);
                     }
                     if (score >= Math.log(1.33333333d)) {
                         changed = true;
-                        if (commonLosses.containsKey(entry.getKey())) commonLosses.put(entry.getKey(), score + commonLosses.get(entry.getKey()));
+                        if (commonLosses.containsKey(entry.getKey()))
+                            commonLosses.put(entry.getKey(), score + commonLosses.get(entry.getKey()));
                         else commonLosses.put(entry.getKey(), score);
                         entry.setValue(new XY(expectedFrequency, expectedIntensity));
                     }
                 }
             }
-            if (I>0 && (I >= (lossSizeIterations-1))) break;
+            if (I > 0 && (I >= (lossSizeIterations - 1))) break;
             // estimate loss size distribution
             double mean = 0d;
-            double ms = 0d, msI=0, msF=0;
+            double ms = 0d, msI = 0, msF = 0;
             for (Map.Entry<MolecularFormula, XY> v : lossCounter.entrySet()) {
                 msI += v.getValue().y;
                 msF += v.getValue().x;
                 final double i = (USE_INTENSITY_FOR_COUNTING ? v.getValue().y : v.getValue().x);
                 ms += i;
-                mean += i*log(v.getKey().getMass());
+                mean += i * log(v.getKey().getMass());
             }
             mean /= ms;
             double var = 0d;
             for (Map.Entry<MolecularFormula, XY> v : lossCounter.entrySet()) {
                 final double i = (USE_INTENSITY_FOR_COUNTING ? v.getValue().y : v.getValue().x);
-                final double x = (log(v.getKey().getMass())-mean);
-                var += i*(x*x);
+                final double x = (log(v.getKey().getMass()) - mean);
+                var += i * (x * x);
             }
             var /= ms;
             sum = new XY(msF, msI);
@@ -743,11 +754,11 @@ public class FTLearn {
             }
         });
         for (MolecularFormula commonLoss : formulas) {
-            final XY orig =  originalOne.get(commonLoss);
-            final int orign = orig==null ? 0 : (int)orig.x;
+            final XY orig = originalOne.get(commonLoss);
+            final int orign = orig == null ? 0 : (int) orig.x;
             print(commonLoss + " (" + (newLossSizeScorer.score(commonLoss) + commonLosses.get(commonLoss)) + " | " + orign + ");  ");
         }
-        println("\n] (" + commonLosses.size() + " common losses, normalization: " + commonNorm + ")" );
+        println("\n] (" + commonLosses.size() + " common losses, normalization: " + commonNorm + ")");
         // new losses
         System.out.print("New Common Losses: ");
         for (Map.Entry<MolecularFormula, Double> commonLoss : commonLosses.entrySet()) {
@@ -763,10 +774,10 @@ public class FTLearn {
         for (Map.Entry<MolecularFormula, Double> commonLoss : oldScorer.entrySet()) {
             if (!commonLosses.containsKey(commonLoss.getKey())) {
                 if (commonLoss.getValue() < 0) continue;
-                final XY orig =  originalOne.get(commonLoss.getKey());
-                final int orign = orig==null ? 0 : (int)orig.x;
+                final XY orig = originalOne.get(commonLoss.getKey());
+                final int orign = orig == null ? 0 : (int) orig.x;
                 System.out.print(commonLoss.getKey());
-                System.out.print(" (" + commonLoss.getValue() + " | " + orign+ " ); ");
+                System.out.print(" (" + commonLoss.getValue() + " | " + orign + " ); ");
             }
         }
         System.out.println("");
@@ -850,11 +861,11 @@ public class FTLearn {
         final LossSizeScorer lossSize = getScorer(analyzer.getPeakPairScorers(), LossSizeScorer.class);
 
         Collections.sort(candidates, Collections.reverseOrder());
-        final double weightOf80th = candidates.get(Math.min(candidates.size(),80)).getScore();
+        final double weightOf80th = candidates.get(Math.min(candidates.size(), 80)).getScore();
         // take first 40 formulas from candidate array
         final List<ScoredMolecularFormula> commonFragments = new ArrayList<ScoredMolecularFormula>(40);
         for (ScoredMolecularFormula f : candidates.subList(0, Math.min(40, candidates.size()))) {
-            commonFragments.add(new ScoredMolecularFormula(f.getFormula(), Math.log(f.getScore()/weightOf80th)));
+            commonFragments.add(new ScoredMolecularFormula(f.getFormula(), Math.log(f.getScore() / weightOf80th)));
         }
 
         // learn normalization constant
@@ -863,7 +874,7 @@ public class FTLearn {
         //scorer.setRecombinator(new CommonFragmentsScore.LossCombinator(-1.5, lossScorer,lossSize ));
         final double normalization = learnCommonFragmentsNormalization(scorer);
         println("learned new common fragments [");
-        int c=0;
+        int c = 0;
         for (ScoredMolecularFormula f : commonFragments) {
             if (!oldMap.containsKey(f.getFormula())) {
                 print(f.getFormula() + " (" + f.getScore() + ")");
@@ -871,7 +882,7 @@ public class FTLearn {
                 ++c;
             }
         }
-        println("\n] (" + c + " new common fragments, normalization: " + normalization + ")\nforget fragments: [" );
+        println("\n] (" + c + " new common fragments, normalization: " + normalization + ")\nforget fragments: [");
 
         for (MolecularFormula f : oldMap.keySet()) {
             if (!scorer.getCommonFragments().containsKey(f)) {
@@ -886,7 +897,7 @@ public class FTLearn {
 
     private double learnCommonFragmentsNormalization(CommonFragmentsScore scorer) {
         double avgScore = 0d;
-        int n=0;
+        int n = 0;
         for (PredictedLoss l : forEachLoss()) {
             avgScore += scorer.score(l.fragmentFormula);
             ++n;
@@ -899,21 +910,10 @@ public class FTLearn {
         return normalization;
     }
 
-
-    private void setTreeSize(double treeSize) {
-        for (PeakScorer p : analyzer.getFragmentPeakScorers()) {
-            if (p instanceof TreeSizeScorer) {
-                ((TreeSizeScorer)p).setTreeSizeScore(treeSize);
-                return;
-            }
-        }
-        analyzer.getFragmentPeakScorers().add(new TreeSizeScorer(treeSize));
-    }
-
     private void increaseTreeSize(double treeSize) {
         for (PeakScorer p : analyzer.getFragmentPeakScorers()) {
             if (p instanceof TreeSizeScorer) {
-                ((TreeSizeScorer)p).setTreeSizeScore(((TreeSizeScorer) p).getTreeSizeScore()+treeSize);
+                ((TreeSizeScorer) p).setTreeSizeScore(((TreeSizeScorer) p).getTreeSizeScore() + treeSize);
                 return;
             }
         }
@@ -921,13 +921,13 @@ public class FTLearn {
     }
 
     private void learnChemicalPrior(final boolean forRoot) {
-        final ChemicalCompoundScorer.DefaultScorer scorer = (ChemicalCompoundScorer.DefaultScorer)ChemicalCompoundScorer.createDefaultCompoundScorer(true);
+        final ChemicalCompoundScorer.DefaultScorer scorer = (ChemicalCompoundScorer.DefaultScorer) ChemicalCompoundScorer.createDefaultCompoundScorer(true);
         DensityFunction distribution = scorer.getHeteroAtom2CarbonScorer().getDistribution();
         if (!(distribution instanceof PartialParetoDistribution)) {
             println("Unknown chemical prior. Don't know how to estimate it. Skip chemical prior estimation.");
             return;
         }
-        PartialParetoDistribution ppareto = (PartialParetoDistribution)distribution;
+        PartialParetoDistribution ppareto = (PartialParetoDistribution) distribution;
         ParetoDistribution pareto = ppareto.getUnderlyingParetoDistribution();
         final RDBEMassScorer rdbeScorer = scorer.getRdbeScorer();
         distribution = rdbeScorer.getDistribution();
@@ -939,63 +939,64 @@ public class FTLearn {
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(1000);
         for (Database db : databases) {
             if (forRoot) {
-                for (Compound c : db.compounds) if (c.formula.getMass()>100) formulas.add(c.formula);
+                for (Compound c : db.compounds) if (c.formula.getMass() > 100) formulas.add(c.formula);
             } else {
-                formulas.ensureCapacity(db.compounds.size()*10);
+                formulas.ensureCapacity(db.compounds.size() * 10);
                 for (Compound c : db.compounds)
                     for (PredictedLoss l : c.losses)
-                        if (l.fragmentFormula.getMass()>100)
+                        if (l.fragmentFormula.getMass() > 100)
                             formulas.add(l.fragmentFormula);
             }
         }
 
-        NormalDistribution normalDistribution = (NormalDistribution)distribution;
+        NormalDistribution normalDistribution = (NormalDistribution) distribution;
         final SpecialMoleculeScorer spec = scorer.getOxygenBackboneScorer();
         final double threshold = ppareto.getDensity(ppareto.getB());
         final double quantile75 = pareto.getQuantile(0.75);
-        final  double quantile90RDBE = normalDistribution.getStandardDeviation()*1.3d;
-        final int allowedOutliers80 = (int)Math.ceil(formulas.size()*0.8d);
-        final int allowedOutliers75 = (int)Math.ceil(formulas.size()*0.05);
-        final int allowedOutliers90RDBE = (int)Math.ceil(formulas.size()*0.9d);
-        int outliers80 = 0, outliers50=0, outliers90RDBE=0;
+        final double quantile90RDBE = normalDistribution.getStandardDeviation() * 1.3d;
+        final int allowedOutliers80 = (int) Math.ceil(formulas.size() * 0.8d);
+        final int allowedOutliers75 = (int) Math.ceil(formulas.size() * 0.05);
+        final int allowedOutliers90RDBE = (int) Math.ceil(formulas.size() * 0.9d);
+        int outliers80 = 0, outliers50 = 0, outliers90RDBE = 0;
         int nonspecialCompounds = 0;
         int numOfCompounds = 0;
         for (MolecularFormula formula : formulas) {
-            if (formula.getMass()<100d) continue;
+            if (formula.getMass() < 100d) continue;
             ++numOfCompounds;
-            if ( (spec.score(formula)-threshold>= 0)) continue;
+            if ((spec.score(formula) - threshold >= 0)) continue;
             ++nonspecialCompounds;
             if (formula.heteroWithoutOxygenToCarbonRatio() > ppareto.getB()) ++outliers80;
-            if (Math.abs(normalDistribution.getMean() - rdbeScorer.getRDBEMassValue(formula)) > quantile90RDBE ) ++outliers90RDBE;
+            if (Math.abs(normalDistribution.getMean() - rdbeScorer.getRDBEMassValue(formula)) > quantile90RDBE)
+                ++outliers90RDBE;
         }
         double[] values = null;
-        println("Number of compounds outside of 80% quantil of chemical prior: " + outliers80 + " of " + numOfCompounds + " (" + perc(outliers80/(double)numOfCompounds) + ")");
+        println("Number of compounds outside of 80% quantil of chemical prior: " + outliers80 + " of " + numOfCompounds + " (" + perc(outliers80 / (double) numOfCompounds) + ")");
         if (outliers80 > allowedOutliers80) {
             values = new double[nonspecialCompounds];
-            int k=0;
+            int k = 0;
             for (MolecularFormula formula : formulas) {
                 if (formula.getMass() < 100d) continue;
-                if ( (spec.score(formula)-threshold>= 0)) continue;
+                if ((spec.score(formula) - threshold >= 0)) continue;
                 values[k++] = formula.heteroWithoutOxygenToCarbonRatio();
             }
             Arrays.sort(values);
             print("Adjust distribution such that 80% quantil matches the reference data: ");
-            final double newB = prettifyValueUp(values[(int)Math.ceil(values.length*0.9d)-1], 0.01);
+            final double newB = prettifyValueUp(values[(int) Math.ceil(values.length * 0.9d) - 1], 0.01);
             println("set parameter b to " + newB);
             ppareto = new PartialParetoDistribution(ppareto.getA(), newB, ppareto.getK());
             pareto = ppareto.getUnderlyingParetoDistribution();
             scorer.setHeteroAtom2CarbonScorer(new ImprovedHetero2CarbonScorer(ppareto));
         }
-        println("Number of compounds outside of 90% quantile of rdbe chemical prior: " + outliers90RDBE + " of " + numOfCompounds + " (" + perc(outliers90RDBE/(double)numOfCompounds) + ")");
+        println("Number of compounds outside of 90% quantile of rdbe chemical prior: " + outliers90RDBE + " of " + numOfCompounds + " (" + perc(outliers90RDBE / (double) numOfCompounds) + ")");
         if (outliers90RDBE > allowedOutliers90RDBE) {
-            double var=0d;
-            int k=0;
+            double var = 0d;
+            int k = 0;
             for (MolecularFormula formula : formulas) {
                 if (formula.getMass() < 100d) continue;
-                if ( (spec.score(formula)-threshold>= 0)) continue;
+                if ((spec.score(formula) - threshold >= 0)) continue;
                 ++k;
                 final double r = rdbeScorer.getRDBEMassValue(formula);
-                var += r*r;
+                var += r * r;
             }
             var /= k;
             if (var > normalDistribution.getVariance()) {
@@ -1009,24 +1010,24 @@ public class FTLearn {
         }
 
         for (MolecularFormula formula : formulas) {
-            if ( (spec.score(formula)-threshold>= 0)) continue;
-            if (formula.heteroWithoutOxygenToCarbonRatio()>quantile75) ++outliers50;
+            if ((spec.score(formula) - threshold >= 0)) continue;
+            if (formula.heteroWithoutOxygenToCarbonRatio() > quantile75) ++outliers50;
         }
-        println("Number of compounds outside of 95% quantile of hetero-atom-to-carbon chemical prior: " + outliers50 + " of " + numOfCompounds + " (" + perc(outliers50/(double)numOfCompounds) + ")");
-        if (outliers50>allowedOutliers75) {
+        println("Number of compounds outside of 95% quantile of hetero-atom-to-carbon chemical prior: " + outliers50 + " of " + numOfCompounds + " (" + perc(outliers50 / (double) numOfCompounds) + ")");
+        if (outliers50 > allowedOutliers75) {
             print("Adjust distribution such that 95% quantil matches the reference data: ");
             values = new double[formulas.size()];
-            int k=0;
+            int k = 0;
             for (MolecularFormula formula : formulas) {
                 if (formula.getMass() < 100d) continue;
-                if ( (spec.score(formula)-threshold>= 0)) continue;
+                if ((spec.score(formula) - threshold >= 0)) continue;
                 final double v = formula.heteroWithoutOxygenToCarbonRatio();
                 if (v >= ppareto.getB())
                     values[k++] = v;
             }
             values = Arrays.copyOf(values, k);
             Arrays.sort(values);
-            final double median = values[values.length/2];
+            final double median = values[values.length / 2];
             ppareto = new PartialParetoDistribution(ppareto.getA(), ppareto.getB(),
                     prettifyValueDown(ParetoDistribution.getMedianEstimator(ppareto.getB()).extimateByMedian(median).getK(), 0.001d));
             scorer.setHeteroAtom2CarbonScorer(new ImprovedHetero2CarbonScorer(ppareto));
@@ -1040,13 +1041,13 @@ public class FTLearn {
         if (forRoot) {
             for (MolecularFormula f : formulas)
                 if (f.getMass() > 100d)
-                        avg += scorer.score(f);
+                    avg += scorer.score(f);
         } else {
             final ChemicalPriorEdgeScorer edgePrior = new ChemicalPriorEdgeScorer(scorer, 0d, 100d);
             for (Database db : databases) {
                 for (Compound c : db.compounds) {
                     for (PredictedLoss l : c.losses) {
-                        if (l.fragmentFormula.getMass()>100d) {
+                        if (l.fragmentFormula.getMass() > 100d) {
                             avg += edgePrior.score(l.fragmentFormula.add(l.lossFormula), l.fragmentFormula);
                         }
                     }
@@ -1074,7 +1075,7 @@ public class FTLearn {
     }
 
     private <T> T getScorer(List<? super T> list, Class<T> klass) {
-        for (Object s : list) if (klass.isInstance(s)) return (T)s;
+        for (Object s : list) if (klass.isInstance(s)) return (T) s;
         return null;
     }
 
@@ -1084,7 +1085,7 @@ public class FTLearn {
             final Object obj = iter.next();
             if (klass.isInstance(obj)) {
                 iter.remove();
-                return (T)obj;
+                return (T) obj;
             }
         }
         return null;
@@ -1098,8 +1099,6 @@ public class FTLearn {
         }
         return false;
     }
-
-    private JobScheduler scheduler = new JobScheduler();
 
     private void collectInputData() {
         final Lock lock = new ReentrantLock();
@@ -1117,12 +1116,12 @@ public class FTLearn {
             public void call(InputFile in) {
                 try {
                     final Ms2Experiment exp = in.getExperiment();
-                    if (exp.getMolecularFormula()==null) return;
+                    if (exp.getMolecularFormula() == null) return;
                     final ProcessedInput input = new Analyzer(analyzer).preprocess(exp);
                     lock.lock();
                     db.compounds.add(new Compound(input.getExperimentInformation().getMolecularFormula(), in.getFileName()));
                     lock.unlock();
-                } catch (Exception e){
+                } catch (Exception e) {
                     lock.lock();
                     error("error while parsing '" + in.getFileName() + "'", e);
                     lock.unlock();
@@ -1135,13 +1134,13 @@ public class FTLearn {
         println("learn mass deviations from precursor peaks");
         progress = 0d;
         final ArrayList<XYZ> values = new ArrayList<XYZ>(db.data.size());
-        final TDoubleArrayList noiseIntensities = new TDoubleArrayList(db.data.size()*20);
-        final TDoubleArrayList signalIntensities = new TDoubleArrayList(db.data.size()*20);
+        final TDoubleArrayList noiseIntensities = new TDoubleArrayList(db.data.size() * 20);
+        final TDoubleArrayList signalIntensities = new TDoubleArrayList(db.data.size() * 20);
         // remove cutoff
         removeScorer(analyzer.getPostProcessors(), NoiseThresholdFilter.class);
         LimitNumberOfPeaksFilter filter = getAndRemoveScorer(analyzer.getPostProcessors(), LimitNumberOfPeaksFilter.class);
         db.compounds.clear();
-        double k=0;
+        double k = 0;
         final Lock lock = new ReentrantLock();
         printProgressFirst();
         scheduler.setProgressObserver(new JobScheduler.ProgressObserver() {
@@ -1156,7 +1155,7 @@ public class FTLearn {
             public void call(InputFile in) {
                 try {
                     final Ms2Experiment exp = in.getExperiment();
-                    if (exp.getMolecularFormula()==null) return;
+                    if (exp.getMolecularFormula() == null) return;
                     final ProcessedInput input = new Analyzer(analyzer).preprocess(exp);
                     lock.lock();
                     db.compounds.add(new Compound(input.getExperimentInformation().getMolecularFormula(), in.getFileName()));
@@ -1170,7 +1169,7 @@ public class FTLearn {
                         double minAbs = Double.MAX_VALUE;
                         for (Spectrum<Peak> spec : input.getExperimentInformation().getMs1Spectra()) {
                             for (Peak p : spec) {
-                                final double abs = Math.abs(p.getMass()-realMz);
+                                final double abs = Math.abs(p.getMass() - realMz);
                                 if (abs < 0.5d && abs < minAbs) {
                                     minAbs = abs;
                                     minP = p;
@@ -1185,7 +1184,7 @@ public class FTLearn {
                     } else {
                         mz = input.getParentPeak().getOriginalMz();
                     }
-                    final double dev = mz-realMz;
+                    final double dev = mz - realMz;
                     lock.lock();
                     values.add(new XYZ(mz, dev, 1d));
                     lock.unlock();
@@ -1198,12 +1197,13 @@ public class FTLearn {
         });
 
         println("");
-        if (db.compounds.isEmpty()) throw new IllegalArgumentException("There are no reference data in the given dataset!");
+        if (db.compounds.isEmpty())
+            throw new IllegalArgumentException("There are no reference data in the given dataset!");
         println("recorded " + values.size() + " m/z values for mass deviation learning");
         fitMassDevLimit(values);
         println("learn noise intensity distribution");
         progress = 0d;
-        k=0d;
+        k = 0d;
         printProgressFirst();
         // for first iteration, use a more tolerant cutoff:
         final Deviation oldDev = analyzer.getDefaultProfile().getAllowedMassDeviation();
@@ -1224,7 +1224,7 @@ public class FTLearn {
                 final TDoubleArrayList noiseInts = new TDoubleArrayList(input.getMergedPeaks().size());
                 final TDoubleArrayList sigInts = new TDoubleArrayList(input.getMergedPeaks().size());
                 for (ProcessedPeak p : input.getMergedPeaks()) {
-                    if (decomposer.decomposeToFormulas(ion.subtractFromMass(p.getMz()), analyzer.getDefaultProfile().getAllowedMassDeviation(), haveToMatchParent, new ValenceFilter()).size()==0) {
+                    if (decomposer.decomposeToFormulas(ion.subtractFromMass(p.getMz()), analyzer.getDefaultProfile().getAllowedMassDeviation(), haveToMatchParent, new ValenceFilter()).size() == 0) {
                         noiseInts.add(Math.max(1e-16, p.getRelativeIntensity()));
                     } else {
                         sigInts.add(Math.max(1e-16, p.getRelativeIntensity()));
@@ -1246,9 +1246,7 @@ public class FTLearn {
 
     }
 
-
-
-    private void fitIntensityDistribution(double[] noiseIntensities,double[] signalIntensities) {
+    private void fitIntensityDistribution(double[] noiseIntensities, double[] signalIntensities) {
         // 1. search for a good cutoff
         // 95% of the signal intensities should be above this cutoff
         Arrays.sort(signalIntensities);
@@ -1288,7 +1286,7 @@ public class FTLearn {
     private void fitParetoNoiseDistribution(double[] noiseIntensities, double cutoff) {
         final double[] intensities;
         {
-            final TDoubleArrayList ys = new TDoubleArrayList(noiseIntensities.length/10);
+            final TDoubleArrayList ys = new TDoubleArrayList(noiseIntensities.length / 10);
             for (double v : noiseIntensities) if (v >= cutoff) ys.add(v);
             intensities = ys.toArray();
         }
@@ -1315,7 +1313,7 @@ public class FTLearn {
 
     public LossSizeScorer getLossSizeScorer() {
         for (PeakPairScorer s : analyzer.getPeakPairScorers()) {
-            if (s instanceof LossSizeScorer) return (LossSizeScorer)s;
+            if (s instanceof LossSizeScorer) return (LossSizeScorer) s;
         }
         final LossSizeScorer ls = new LossSizeScorer(new LogNormalDistribution(4, 0.7), 0d);
         analyzer.getPeakPairScorers().add(ls);
@@ -1323,13 +1321,15 @@ public class FTLearn {
     }
 
     private double prettifyValue(double value, double multiple) {
-        return Math.round(value/multiple) * multiple;
+        return Math.round(value / multiple) * multiple;
     }
+
     private double prettifyValueUp(double value, double multiple) {
-        return (long)Math.ceil(value/multiple) * multiple;
+        return (long) Math.ceil(value / multiple) * multiple;
     }
+
     private double prettifyValueDown(double value, double multiple) {
-        return (long)Math.floor(value / multiple) * multiple;
+        return (long) Math.floor(value / multiple) * multiple;
     }
 
     private String perc(double value) {
@@ -1341,16 +1341,17 @@ public class FTLearn {
         Collections.sort(values);
         Deviation allowedDev = new Deviation(20, 0.02);
         Deviation bestDist = new Deviation(10, 0.01);
-        final int maxMass = (int)values.get(values.size()-1).x;
+        final int maxMass = (int) values.get(values.size() - 1).x;
         double areaUnderTheCurve = areaUnderTheCurve(allowedDev, maxMass);
         final int[] limits = new int[]{100, 150, 200, 250, 300, 1000};
         for (final int limit : limits) {
             // split lists
-            int leftSize=0;
-            for (int i=0; i < values.size(); ++i) if (values.get(i).x > limit) {
-                leftSize = i;
-                break;
-            }
+            int leftSize = 0;
+            for (int i = 0; i < values.size(); ++i)
+                if (values.get(i).x > limit) {
+                    leftSize = i;
+                    break;
+                }
             //if (leftSize <= 0) continue;
             final List<XYZ> left = values.subList(0, leftSize);
             final List<XYZ> right = values.subList(leftSize, values.size());
@@ -1359,34 +1360,34 @@ public class FTLearn {
             double v2 = 0;
             double sum1 = 0d;
             for (XYZ value : right) {
-                final double ppm = value.y*1e6/value.x;
-                v2 += (ppm*ppm);//*value.z;
+                final double ppm = value.y * 1e6 / value.x;
+                v2 += (ppm * ppm);//*value.z;
                 sum1 += 1;//value.z;
             }
-            final double sd2 = sqrt(v2/sum1);
+            final double sd2 = sqrt(v2 / sum1);
 
             double v1 = 0;
             double sum2 = 0d;
             for (XYZ value : left) {
-                v1 += value.z*(value.y*value.y);
+                v1 += value.z * (value.y * value.y);
                 sum2 += value.z;
             }
-            double sd1 = sd2*100d*1e-6;
-            double sd3 = sqrt(v1/sum2);
+            double sd1 = sd2 * 100d * 1e-6;
+            double sd3 = sqrt(v1 / sum2);
             if (!Double.isNaN(sd3) && sd3 > sd1) sd1 = sd3;
 
             // search for a good cutoff
-            final double allowedOutliers = (int)ceil((0.01d) * (sum1+sum2));
+            final double allowedOutliers = (int) ceil((0.01d) * (sum1 + sum2));
             final int[] cutoffs = new int[]{3, 4, 5, 6, 7, 8, 9, 10};
             for (int cutoff1 : cutoffs) {
                 for (int cutoff2 : cutoffs) {
-                    final Deviation dev = new Deviation(sd2*cutoff2, sd1*cutoff1);
+                    final Deviation dev = new Deviation(sd2 * cutoff2, sd1 * cutoff1);
                     double outliers = 0;
                     for (XYZ value : values)
                         if (!dev.inErrorWindow(value.x, value.x + value.y))
                             outliers += value.z;
                     final double newAreaUnderTheCurve = areaUnderTheCurve(dev, maxMass);
-                    if (outliers<=allowedOutliers) {
+                    if (outliers <= allowedOutliers) {
                         if (newAreaUnderTheCurve < areaUnderTheCurve) {
                             areaUnderTheCurve = newAreaUnderTheCurve;
                             allowedDev = dev;
@@ -1411,19 +1412,18 @@ public class FTLearn {
     }
 
     private double areaUnderTheCurve(Deviation dev, int maxMass) {
-        final double linearPart = dev.getAbsolute()*1e6/dev.getPpm();
-        return linearPart*dev.getAbsolute() + (0.5d * dev.getPpm()*1e-6 * maxMass * maxMass) - (0.5d * dev.getPpm()*1e-6 * linearPart * linearPart);
+        final double linearPart = dev.getAbsolute() * 1e6 / dev.getPpm();
+        return linearPart * dev.getAbsolute() + (0.5d * dev.getPpm() * 1e-6 * maxMass * maxMass) - (0.5d * dev.getPpm() * 1e-6 * linearPart * linearPart);
     }
 
-    private InputCache cache = new InputCache();
     private List<InputFile> inTrainingData() {
         return cache.asCopyList(db.data);
     }
 
-    protected void writeTreeToFile(File f, FragmentationTree tree) {
+    protected void writeTreeToFile(File f, FTree tree) {
         FileWriter fw = null;
         try {
-            fw =  new FileWriter(f);
+            fw = new FileWriter(f);
             final TreeAnnotation ano = new TreeAnnotation(tree, analyzer);
             new FTDotWriter().writeTree(fw, tree, ano.getAdditionalProperties(), ano.getVertexAnnotations(), ano.getEdgeAnnotations());
         } catch (IOException e) {
@@ -1454,6 +1454,7 @@ public class FTLearn {
     private void error(String s) {
         System.err.println(s);
     }
+
     private void error(String s, Exception e) {
         System.err.println(s + ": " + e);
         e.printStackTrace();
@@ -1464,15 +1465,13 @@ public class FTLearn {
         if (db != null) db.noiseCutoff = cutoff;
         for (PostProcessor proc : analyzer.getPostProcessors()) {
             if (proc instanceof NoiseThresholdFilter) {
-                ((NoiseThresholdFilter)proc).setThreshold(cutoff);
+                ((NoiseThresholdFilter) proc).setThreshold(cutoff);
                 return;
             }
         }
         analyzer.getPostProcessors().add(new NoiseThresholdFilter(cutoff));
     }
 
-    private NumberFormat PERCENT = NumberFormat.getPercentInstance(Locale.ENGLISH);
-    private int toDeleteDigits = 0;
     private void printProgressFirst() {
         oldProgress = 0d;
         if (inConsole) {
@@ -1483,13 +1482,11 @@ public class FTLearn {
         }
     }
 
-    private double oldProgress;
-
     private void printProgress() {
-        if ((int)Math.round(progress*100) == (int)Math.round(oldProgress*100)) return;
+        if ((int) Math.round(progress * 100) == (int) Math.round(oldProgress * 100)) return;
         oldProgress = progress;
         if (inConsole) {
-            for (;toDeleteDigits>0;--toDeleteDigits) System.out.print('\b');
+            for (; toDeleteDigits > 0; --toDeleteDigits) System.out.print('\b');
             final String v = PERCENT.format(Math.min(1.0d, progress));
             System.out.print(v);
             toDeleteDigits = v.length();
@@ -1497,7 +1494,22 @@ public class FTLearn {
         }
     }
 
-    private boolean inConsole = System.console()!=null;
+    private static class Database {
+        private final List<File> data;
+        private final List<Compound> compounds;
+        private String name;
+        private Deviation allowedMassDeviation, standardMs2Deviation;
+        private double medianNoiseIntensity;
+        private double noiseCutoff;
+
+        private Database(String name) {
+            this.name = name;
+            this.data = new ArrayList<File>();
+            this.compounds = new ArrayList<Compound>();
+            this.allowedMassDeviation = new Deviation(20);
+            this.standardMs2Deviation = new Deviation(5);
+        }
+    }
 
 
 }
