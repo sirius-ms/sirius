@@ -60,8 +60,8 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
 
     public HashMap<MolecularFormula, Fragment> fragmentsByFormula() {
         final HashMap<MolecularFormula, Fragment> map = new HashMap<MolecularFormula, Fragment>(fragments.size());
-        for (Fragment f : getFragmentsWithoutRoot()) {
-            map.put(f.getFormula(), f);
+        for (Fragment f : getFragments()) {
+            if (f.getFormula().getMass() > 0) map.put(f.getFormula(), f);
         }
         return map;
     }
@@ -127,6 +127,19 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     public Fragment getFragmentAt(int k) {
         return fragments.get(k);
     }
+
+    public List<FragmentAnnotation<Object>> getFragmentAnnotations() {
+        return new ArrayList<FragmentAnnotation<Object>>(fragmentAnnotations.values());
+    }
+
+    public Map<Class<Object>, Object> getAnnotations() {
+        return Collections.unmodifiableMap(annotations);
+    }
+
+    public List<LossAnnotation<Object>> getLossAnnotations() {
+        return new ArrayList<LossAnnotation<Object>>(lossAnnotations.values());
+    }
+
 
     @SuppressWarnings("unchecked cast")
     public <T> FragmentAnnotation<T> getFragmentAnnotationOrThrow(Class<T> klass) {
@@ -217,12 +230,18 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return addLoss(u, v, u.formula.subtract(v.formula));
     }
 
-    Loss addLoss(Fragment u, Fragment v, MolecularFormula f) {
+    protected Loss addLoss(Fragment u, Fragment v, MolecularFormula f) {
         final Loss l = getLoss(u, v);
         if (l != null) return l;
         final Loss loss = new Loss(u, v, f, 0d);
+        if (u.outgoingEdges.length <= u.outDegree) {
+            u.outgoingEdges = Arrays.copyOf(u.outgoingEdges, u.outDegree + 1);
+        }
         u.outgoingEdges[u.outDegree] = loss;
         loss.sourceEdgeOffset = u.outDegree++;
+        if (v.incomingEdges.length <= v.inDegree) {
+            v.incomingEdges = Arrays.copyOf(v.incomingEdges, v.inDegree + 1);
+        }
         v.incomingEdges[v.inDegree] = loss;
         loss.targetEdgeOffset = v.inDegree++;
         ++edgeNum;

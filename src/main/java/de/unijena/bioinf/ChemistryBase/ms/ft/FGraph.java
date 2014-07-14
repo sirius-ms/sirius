@@ -9,7 +9,8 @@ public class FGraph extends AbstractFragmentationGraph {
 
     public FGraph() {
         super();
-        this.pseudoRoot = new Fragment(0);
+        this.pseudoRoot = addFragment(MolecularFormula.emptyFormula());
+
     }
 
     @Override

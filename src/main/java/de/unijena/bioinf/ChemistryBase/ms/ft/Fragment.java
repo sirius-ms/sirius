@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Fragment {
@@ -165,7 +166,7 @@ public class Fragment {
     }
 
     final void setAnnotation(int id, int capa, Object o) {
-        if (id >= annotations.length) annotations = new Object[Math.max(capa, id + 1)];
+        if (id >= annotations.length) annotations = Arrays.copyOf(annotations, Math.max(capa, id + 1));
         annotations[id] = o;
     }
 
@@ -175,5 +176,9 @@ public class Fragment {
 
     public boolean isLeaf() {
         return outDegree == 0;
+    }
+
+    public String toString() {
+        return vertexId + "(" + color + "): " + formula.toString();
     }
 }

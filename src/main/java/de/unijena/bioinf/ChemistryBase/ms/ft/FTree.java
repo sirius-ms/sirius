@@ -20,7 +20,7 @@ public class FTree extends AbstractFragmentationGraph {
         return new BackrefTreeAdapter<Fragment>() {
             @Override
             public Fragment getParent(Fragment node) {
-                return node.getParent();
+                return node.inDegree == 0 ? null : node.getParent();
             }
 
             @Override
@@ -176,5 +176,24 @@ public class FTree extends AbstractFragmentationGraph {
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    @Override
+    protected Loss addLoss(Fragment u, Fragment v, MolecularFormula f) {
+        if (v.inDegree > 0 && v.getIncomingEdge().source != u)
+            throw new RuntimeException("Fragment " + v + " already have a parent.");
+        final Loss loss = new Loss(u, v, f, 0d);
+        if (u.outgoingEdges.length <= u.outDegree) {
+            u.outgoingEdges = Arrays.copyOf(u.outgoingEdges, u.outDegree + 1);
+        }
+        u.outgoingEdges[u.outDegree] = loss;
+        loss.sourceEdgeOffset = u.outDegree++;
+        if (v.incomingEdges.length <= v.inDegree) {
+            v.incomingEdges = Arrays.copyOf(v.incomingEdges, v.inDegree + 1);
+        }
+        v.incomingEdges[v.inDegree] = loss;
+        loss.targetEdgeOffset = v.inDegree++;
+        ++edgeNum;
+        return loss;
     }
 }

@@ -16,6 +16,10 @@ public final class LossAnnotation<T> {
         return (T) (loss.getAnnotation(id));
     }
 
+    public Class<T> getAnnotationType() {
+        return klass;
+    }
+
     public T getOrCreate(Loss loss) {
         final T obj = get(loss);
         if (obj == null) {

@@ -2,6 +2,8 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
+import java.util.Arrays;
+
 public class Loss {
 
     private final static Object[] EMPTY_ARRAY = new Object[0];
@@ -60,7 +62,7 @@ public class Loss {
     }
 
     final void setAnnotation(int id, int capa, Object o) {
-        if (id >= annotations.length) annotations = new Object[Math.max(capa, id + 1)];
+        if (id >= annotations.length) annotations = Arrays.copyOf(annotations, Math.max(capa, id + 1));
         annotations[id] = o;
     }
 

@@ -16,6 +16,10 @@ public final class FragmentAnnotation<T> {
         return (T) (vertex.getAnnotation(id));
     }
 
+    public Class<T> getAnnotationType() {
+        return klass;
+    }
+
     public T getOrCreate(Fragment vertex) {
         final T obj = get(vertex);
         if (obj == null) {
