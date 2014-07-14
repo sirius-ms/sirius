@@ -578,7 +578,7 @@ public class Main {
                     if (!verbose && !printGraph) {
                         trees = m.list();
                     } else {
-                        final TreeSet<FTree> bestTrees = new TreeSet<FTree>();
+                        final TreeSet<FTree> bestTrees = new TreeSet<FTree>(TreeScoring.OrderedByscoreAsc());
                         final TreeIterator treeIter = m.iterator();
                         double lb = lowerbound;
                         if (DEBUG_MODE) treeIter.setLowerbound(0d);
@@ -636,7 +636,7 @@ public class Main {
                             return new Double(o2.getAnnotationOrThrow(TreeScoring.class).getOverallScore() +
                                     isotopeScores.get(o2.getRoot().getFormula())).compareTo(o1.getAnnotationOrThrow(TreeScoring.class).getOverallScore() + isotopeScores.get(o1.getRoot().getFormula()));
                         }
-                    } : Collections.<FTree>reverseOrder()));
+                    } : TreeScoring.OrderedByscoreDesc()));
                     trees = new ArrayList<FTree>(trees.subList(0, Math.min(TreesToConsider, trees.size())));
                     if (correctTree != null && !trees.contains(correctTree)) trees.add(correctTree);
                     // recalibrate best trees
@@ -708,7 +708,7 @@ public class Main {
                         }
                     }
 
-                    Collections.sort(trees, Collections.reverseOrder());
+                    Collections.sort(trees, TreeScoring.OrderedByscoreDesc());
                     final boolean correctTreeContained = trees.contains(correctTree);
                     for (int i = 0; i < Math.min(TreesToConsider + 1, trees.size()); ++i) {
                         final FTree tree = trees.get(i);
