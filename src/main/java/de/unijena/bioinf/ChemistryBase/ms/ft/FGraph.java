@@ -10,7 +10,12 @@ public class FGraph extends AbstractFragmentationGraph {
     public FGraph() {
         super();
         this.pseudoRoot = addFragment(MolecularFormula.emptyFormula());
+    }
 
+    public FGraph(FGraph copy) {
+        super(copy);
+        this.pseudoRoot = fragments.get(0);
+        assert pseudoRoot.isRoot();
     }
 
     @Override

@@ -24,6 +24,16 @@ public class Loss {
         this.targetEdgeOffset = 0;
     }
 
+    protected Loss(Loss old, Fragment newFrom, Fragment newTo) {
+        this.source = newFrom;
+        this.target = newTo;
+        this.formula = old.formula;
+        this.weight = old.weight;
+        this.annotations = old.annotations.clone();
+        this.sourceEdgeOffset = old.sourceEdgeOffset;
+        this.targetEdgeOffset = old.targetEdgeOffset;
+    }
+
     public Loss(Fragment from, Fragment to) {
         this(from, to, from.formula.subtract(to.formula), 0d);
     }

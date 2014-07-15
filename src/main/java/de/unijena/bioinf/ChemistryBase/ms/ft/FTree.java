@@ -16,6 +16,12 @@ public class FTree extends AbstractFragmentationGraph {
         this.root = addFragment(rootFormula);
     }
 
+    public FTree(FTree copy) {
+        super(copy);
+        this.root = fragments.get(0);
+        assert root.isRoot();
+    }
+
     public static BackrefTreeAdapter<Fragment> treeAdapter() {
         return new BackrefTreeAdapter<Fragment>() {
             @Override
@@ -153,6 +159,12 @@ public class FTree extends AbstractFragmentationGraph {
 
     public final TreeCursor getCursor() {
         return TreeCursor.getCursor(root, FTree.treeAdapter());
+    }
+
+    public final TreeCursor getCursor(Fragment f) {
+        if (fragments.get(f.vertexId) != f)
+            throw new IllegalArgumentException("vertex " + f + " does not belong to this graph");
+        return TreeCursor.getCursor(f, FTree.treeAdapter());
     }
 
     @Override

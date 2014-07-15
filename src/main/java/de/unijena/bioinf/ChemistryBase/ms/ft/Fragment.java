@@ -35,6 +35,17 @@ public class Fragment {
         this.incomingEdges = EMPTY_EDGES;
     }
 
+    protected Fragment(Fragment other) {
+        this.formula = other.formula;
+        this.color = other.color;
+        this.outDegree = other.outDegree;
+        this.outgoingEdges = other.outgoingEdges.clone();
+        this.annotations = other.annotations.clone();
+        this.vertexId = other.vertexId;
+        this.inDegree = other.inDegree;
+        this.incomingEdges = other.incomingEdges.clone();
+    }
+
     public boolean isDeleted() {
         return vertexId >= 0;
     }

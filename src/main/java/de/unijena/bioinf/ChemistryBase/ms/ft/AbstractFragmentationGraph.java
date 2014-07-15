@@ -20,6 +20,33 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         edgeNum = 0;
     }
 
+    protected AbstractFragmentationGraph(AbstractFragmentationGraph graph) {
+        this.annotations = new HashMap<Class<Object>, Object>(graph.annotations);
+        this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>(graph.fragmentAnnotations);
+        this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>(graph.lossAnnotations);
+        this.edgeNum = graph.edgeNum;
+        this.fragments = new ArrayList<Fragment>(graph.fragments.size());
+        for (Fragment f : graph.fragments) fragments.add(new Fragment(f));
+        for (Fragment f : fragments) {
+            for (int k = 0; k < f.incomingEdges.length; ++k) {
+                final Loss l = f.incomingEdges[k];
+                if (l != null) {
+                    final Loss newl = new Loss(l, fragments.get(l.source.vertexId), fragments.get(l.target.vertexId));
+                    f.incomingEdges[k] = newl;
+                }
+            }
+        }
+        for (Fragment f : fragments) {
+            for (int k = 0; k < f.outgoingEdges.length; ++k) {
+                final Loss l = f.outgoingEdges[k];
+                if (l != null) {
+                    final Loss newl = fragments.get(l.target.vertexId).getIncomingEdge(l.targetEdgeOffset);
+                    f.outgoingEdges[k] = newl;
+                }
+            }
+        }
+    }
+
     /**
      * maps all vertices from graph1 to graph2. Returns a map (fragment a -> fragment b) where a is a fragment of
      * graph1 and b is a corresponding fragment from graph 2. Two fragments belong to each other if they have the same
