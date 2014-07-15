@@ -398,6 +398,32 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return new ImmutableMolecularFormula(newSelection, nrs);
     }
 
+    /*
+        Returns the number of difference non-hydrogen atoms in both molecules
+     */
+    public int numberOfDifferenceHeteroAtoms(MolecularFormula other) {
+        final short[] amounts = buffer();
+        final TableSelection selection = getTableSelection();
+        final short[] otherAmounts = other.buffer();
+        final TableSelection otherSelection = other.getTableSelection();
+        int count = 0;
+        if (selection != otherSelection) {
+            final Counter counter = new Counter(other);
+            visit(counter);
+            return counter.count;
+        } else {
+            final int hydrogenIndex = selection.hydrogenIndex();
+            for (int k = 0; k < Math.min(amounts.length, otherAmounts.length); ++k) {
+                if (k != hydrogenIndex) count += Math.abs(amounts[k] - otherAmounts[k]);
+            }
+            final short[] bigger = amounts.length > otherAmounts.length ? amounts : otherAmounts;
+            for (int k = Math.min(amounts.length, otherAmounts.length) + 1; k < bigger.length; ++k) {
+                if (k != hydrogenIndex) count += bigger[k];
+            }
+            return count;
+        }
+    }
+
     /**
      * returns a new formula containing the atoms of both formulas
      */
@@ -630,6 +656,21 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (equals(o)) return 0;
         if (getMass() < o.getMass()) return -1;
         return 1;
+    }
+
+    private final static class Counter implements FormulaVisitor<Object> {
+        private int count = 0;
+        private MolecularFormula other;
+
+        private Counter(MolecularFormula other) {
+            this.other = other;
+        }
+
+        @Override
+        public Object visit(Element element, int amount) {
+            count += Math.abs(other.numberOf(element) - amount);
+            return null;
+        }
     }
 
     private static class Pair {
