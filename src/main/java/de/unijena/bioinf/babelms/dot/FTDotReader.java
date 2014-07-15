@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.graphUtils.tree.PreOrderTraversal;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,13 +53,14 @@ public class FTDotReader implements Parser<FTree> {
         private MolecularFormula formula;
         private Peak peak;
         private CollisionEnergy[] collisionEnergies;
-        private HashMap<String, Double> scores;
+        private TObjectDoubleHashMap scores;
         private HashMap<String, String> properties;
         private Double score;
         private Double compoundScore;
 
         public FragmentPropertySet(Map<String, String> properties) {
             this.properties = new HashMap<String, String>(properties);
+            this.scores = new TObjectDoubleHashMap();
             final String label = properties.remove("label");
             final String[] infos = label.split("\\\\n");
             this.formula = MolecularFormula.parse(infos[0]);

@@ -58,6 +58,7 @@ public class Graph implements Cloneable {
     }
 
     public Vertex getRoot() {
+        if (vertices.size() == 1) return vertices.get(0);
         final HashSet<String> vertices = new HashSet<String>();
         for (Edge e : edges) {
             vertices.add(e.getHead());
