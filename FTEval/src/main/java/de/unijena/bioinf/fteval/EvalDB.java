@@ -13,19 +13,15 @@ public class EvalDB {
     }
 
     File profile(String name) {
-        return new File(new File(root, "profiles"), name);
+        return new File(new File(root, "dot"), name);
     }
 
-    File profile(File name) {
-        return new File(new File(root, "profiles"), removeExtName(name));
+    File msDir(String dbName) {
+        return new File(new File(root, "ms"), dbName);
     }
 
-    File msDir() {
-        return new File(root, "ms");
-    }
-
-    File[] msFiles() {
-        return msDir().listFiles(new FilenameFilter() {
+    File[] msFiles(String dbName) {
+        return msDir(dbName).listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith(".ms");
@@ -47,7 +43,7 @@ public class EvalDB {
     }
 
     String[] profiles() {
-        final File[] files = new File(root, "profiles").listFiles(new FileFilter() {
+        final File[] files = new File(root, "dot").listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
                 return pathname.isDirectory() && new File(pathname, "dot").exists();
@@ -65,14 +61,14 @@ public class EvalDB {
     }
 
     private void checkPath() {
-        if (!root.exists() || !(new File(root, "profiles").exists()))
+        if (!root.exists() || !(new File(root, "dot").exists()))
             throw new RuntimeException("Path '" + root.getAbsolutePath() + "' is no valid dataset path. Create a new" +
                     " evaluation dataset with\nfteval init <name>");
     }
 
 
-    public File sdf(String name) {
-        return new File(new File(root, "sdf"), removeExtName(new File(name)) + ".sdf");
+    public File sdf(String dbName, String name) {
+        return new File(new File(new File(root, "sdf"), dbName), removeExtName(new File(name)) + ".sdf");
     }
 
     public File fingerprint(String name) {
@@ -90,8 +86,8 @@ public class EvalDB {
         return names;
     }
 
-    public File[] sdfFiles() {
-        return new File(root, "sdf").listFiles(new FilenameFilter() {
+    public File[] sdfFiles(String dbName) {
+        return new File(new File(root, "sdf"), dbName).listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".sdf") && new File(new File(root, "ms"), removeExtName(new File(name)) + ".ms").exists();
             }
@@ -126,6 +122,6 @@ public class EvalDB {
     }
 
     public File dotDir(String prof) {
-        return new File(profile(prof), "dot");
+        return new File("dot", prof);
     }
 }

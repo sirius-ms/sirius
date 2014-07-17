@@ -124,15 +124,34 @@ public class FTEval {
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
 
-        // peak counting
-        //de.unijena.bioinf.spectralign.Main.main(new String[]{evalDB.msDir().getPath(), new File(evalDB.otherScoreDir(), "peakcounting.csv").getPath() });
+        final List<String> names = opts.getNames();
+        if (names.size() < 3) {
+            I.say("Usage:\nfteval align [OPTIONS] <algorithm> <dataset1> <dataset2>");
+            System.exit(1);
+        }
 
-        // tree alignments
-        for (String profil : evalDB.profiles()) {
-            final File dots = new File(evalDB.profile(profil), "dot");
+        final String algorithm = names.get(0);
+        final String left = names.get(1);
+        final String right = names.get(2);
+
+        final AlignAlgorithm algo;
+        try {
+            algo = AlignAlgorithm.valueOf(algorithm.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            I.say("Unknown algorithm '" + algorithm + "'.\nUse one of " + Arrays.toString(AlignAlgorithm.values()));
+            System.exit(1);
+            return;
+        }
+
+        if (algo.getDataSource() == 't') {
+            final File dotsLeft = evalDB.dotDir(left);
             final ArrayList<String> arguments = getAlignArguments(opts);
-            arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "-m",
-                    new File(evalDB.profile(profil), opts.getTarget()).getAbsolutePath()));
+            arguments.add("--align");
+            arguments.add(dotsLeft.getAbsolutePath());
+            if (!left.equals(right)) {
+                arguments.add("--with");
+                arguments.add(evalDB.dotDir(right).getAbsolutePath());
+            }
             if (opts.getXtra() != null) {
                 for (String s : opts.getXtra()) {
                     if (s.charAt(0) == '"') {
@@ -143,6 +162,10 @@ public class FTEval {
             }
             System.err.println(arguments);
             de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
+        } else if (algo.getDataSource() == 'c') {
+
+        } else if (algo.getDataSource() == 'm') {
+
         }
     }
 
@@ -354,15 +377,15 @@ public class FTEval {
             System.exit(1);
         }
         target.mkdir();
-        final File sdfs = new File(target, "sdf");
-        final File mss = new File(target, "ms");
-        final File profiles = new File(target, "profiles");
-        final File fingerprints = new File(target, "fingerprints");
+        final File sdfs = new File(new File(target, "sdf"), opts.getName());
+        final File mss = new File(new File(target, "ms"), opts.getName());
+        final File profiles = new File(target, "dot");
+        final File fingerprints = new File(new File(target, "fingerprints"), opts.getName());
         final File other = new File(target, "scores");
         other.mkdir();
-        sdfs.mkdir();
-        mss.mkdir();
-        fingerprints.mkdir();
+        sdfs.mkdirs();
+        mss.mkdirs();
+        fingerprints.mkdirs();
         profiles.mkdir();
         if (opts.getSdf() != null) {
             final File[] files = opts.getSdf().listFiles(new FilenameFilter() {
@@ -407,10 +430,12 @@ public class FTEval {
         final Interact I = new Shell();
         final ComputeOptions opts = CliFactory.parseArguments(ComputeOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
-        final String name;
-        if (opts.getName() == null) {
-            name = evalDB.removeExtName(new File(opts.getProfile()));
-        } else name = opts.getName();
+        final String name, db;
+        if (opts.getName().size() < 2) {
+            I.say("Usage:\nfteval compute [options] somename database");
+        }
+        name = opts.getName().get(0);
+        db = opts.getName().get(1);
         final Profile prof;
         try {
             prof = new Profile(opts.getProfile());
@@ -418,7 +443,7 @@ public class FTEval {
             System.err.println("Cannot parse profile '" + opts.getProfile() + "':\n" + e.getMessage());
             return;
         }
-        final File target = evalDB.profile(name);
+        final File target = evalDB.dotDir(name);
         if (target.exists()) {
             final int choice = I.choice(name + " still exists.", "Replace all", "Compute missing", "Skip");
             if (choice == 2) {
@@ -433,9 +458,7 @@ public class FTEval {
                 }
             }
         }
-        target.mkdir();
-        final File dot = new File(target, "dot");
-        dot.mkdir();
+        target.mkdirs();
         // write profile
         try {
             prof.writeToFile(new File(target, "profile.json"));
@@ -444,9 +467,9 @@ public class FTEval {
             return;
         }
         I.sayln("Compute trees for all ms files.");
-        for (File f : evalDB.msFiles()) {
+        for (File f : evalDB.msFiles(db)) {
             final String n = f.getName();
-            final File treeFile = new File(dot, n.substring(0, n.lastIndexOf('.')) + ".dot");
+            final File treeFile = new File(target, n.substring(0, n.lastIndexOf('.')) + ".dot");
             if (treeFile.exists()) {
                 continue;
             } else {
