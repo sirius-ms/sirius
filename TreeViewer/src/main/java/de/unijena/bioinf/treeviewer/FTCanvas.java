@@ -1,7 +1,7 @@
 package de.unijena.bioinf.treeviewer;
 
+import de.unijena.bioinf.babelms.dot.DotParser;
 import de.unijena.bioinf.babelms.dot.Graph;
-import de.unijena.bioinf.babelms.dot.Parser;
 import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
 import org.apache.batik.swing.JSVGCanvas;
 import org.apache.batik.util.XMLResourceDescriptor;
@@ -108,13 +108,13 @@ public class FTCanvas extends JSVGCanvas {
     private SVGDocument getSvgFromDot(DotSource treeFile) throws IOException {
         if (activeProfile != null) {
             final Reader fr = treeFile.getContent();
-            final Graph g = Parser.parse(fr);//new Parser().parse(fr);
+            final Graph g = DotParser.parseGraph(fr);//new Parser().parse(fr);
             fr.close();
             this.graph = g;
             return getSvgFromDot(g);
         } else {
             final Reader fr = treeFile.getContent();
-            this.graph = Parser.parse(fr);//new Parser().parse(fr);
+            this.graph = DotParser.parseGraph(fr);//new Parser().parse(fr);
             fr.close();
         }
         final ProcessBuilder builder = new ProcessBuilder(getDotPath().getAbsolutePath(), "-T", "svg");
