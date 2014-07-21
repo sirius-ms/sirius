@@ -9,6 +9,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.ftblast.Dataset;
+import de.unijena.bioinf.ftblast.ScoreTable;
 import de.unijena.bioinf.spectralign.SpectralAligner;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -95,11 +97,9 @@ public class FTEval {
             }
         }
         final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
-        /*
         final ScoreTable sc = new ScoreTable("test", matrices.getLayer(0));
         sc.toFingerprints();
         sc.getOrdered();
-        */
         System.out.println("TEST");
     }
 
@@ -124,34 +124,15 @@ public class FTEval {
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
 
-        final List<String> names = opts.getNames();
-        if (names.size() < 3) {
-            I.say("Usage:\nfteval align [OPTIONS] <algorithm> <dataset1> <dataset2>");
-            System.exit(1);
-        }
+        // peak counting
+        //de.unijena.bioinf.spectralign.Main.main(new String[]{evalDB.msDir().getPath(), new File(evalDB.otherScoreDir(), "peakcounting.csv").getPath() });
 
-        final String algorithm = names.get(0);
-        final String left = names.get(1);
-        final String right = names.get(2);
-
-        final AlignAlgorithm algo;
-        try {
-            algo = AlignAlgorithm.valueOf(algorithm.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            I.say("Unknown algorithm '" + algorithm + "'.\nUse one of " + Arrays.toString(AlignAlgorithm.values()));
-            System.exit(1);
-            return;
-        }
-
-        if (algo.getDataSource() == 't') {
-            final File dotsLeft = evalDB.dotDir(left);
+        // tree alignments
+        for (String profil : evalDB.profiles()) {
+            final File dots = new File(evalDB.profile(profil), "dot");
             final ArrayList<String> arguments = getAlignArguments(opts);
-            arguments.add("--align");
-            arguments.add(dotsLeft.getAbsolutePath());
-            if (!left.equals(right)) {
-                arguments.add("--with");
-                arguments.add(evalDB.dotDir(right).getAbsolutePath());
-            }
+            arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "-m",
+                    new File(evalDB.profile(profil), opts.getTarget()).getAbsolutePath()));
             if (opts.getXtra() != null) {
                 for (String s : opts.getXtra()) {
                     if (s.charAt(0) == '"') {
@@ -162,10 +143,6 @@ public class FTEval {
             }
             System.err.println(arguments);
             de.unijena.bioinf.ftalign.Main.main(arguments.toArray(new String[arguments.size()]));
-        } else if (algo.getDataSource() == 'c') {
-
-        } else if (algo.getDataSource() == 'm') {
-
         }
     }
 
@@ -377,15 +354,15 @@ public class FTEval {
             System.exit(1);
         }
         target.mkdir();
-        final File sdfs = new File(new File(target, "sdf"), opts.getName());
-        final File mss = new File(new File(target, "ms"), opts.getName());
-        final File profiles = new File(target, "dot");
-        final File fingerprints = new File(new File(target, "fingerprints"), opts.getName());
+        final File sdfs = new File(target, "sdf");
+        final File mss = new File(target, "ms");
+        final File profiles = new File(target, "profiles");
+        final File fingerprints = new File(target, "fingerprints");
         final File other = new File(target, "scores");
         other.mkdir();
-        sdfs.mkdirs();
-        mss.mkdirs();
-        fingerprints.mkdirs();
+        sdfs.mkdir();
+        mss.mkdir();
+        fingerprints.mkdir();
         profiles.mkdir();
         if (opts.getSdf() != null) {
             final File[] files = opts.getSdf().listFiles(new FilenameFilter() {
@@ -430,12 +407,10 @@ public class FTEval {
         final Interact I = new Shell();
         final ComputeOptions opts = CliFactory.parseArguments(ComputeOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
-        final String name, db;
-        if (opts.getName().size() < 2) {
-            I.say("Usage:\nfteval compute [options] somename database");
-        }
-        name = opts.getName().get(0);
-        db = opts.getName().get(1);
+        final String name;
+        if (opts.getName() == null) {
+            name = evalDB.removeExtName(new File(opts.getProfile()));
+        } else name = opts.getName();
         final Profile prof;
         try {
             prof = new Profile(opts.getProfile());
@@ -443,7 +418,7 @@ public class FTEval {
             System.err.println("Cannot parse profile '" + opts.getProfile() + "':\n" + e.getMessage());
             return;
         }
-        final File target = evalDB.dotDir(name);
+        final File target = evalDB.profile(name);
         if (target.exists()) {
             final int choice = I.choice(name + " still exists.", "Replace all", "Compute missing", "Skip");
             if (choice == 2) {
@@ -458,7 +433,9 @@ public class FTEval {
                 }
             }
         }
-        target.mkdirs();
+        target.mkdir();
+        final File dot = new File(target, "dot");
+        dot.mkdir();
         // write profile
         try {
             prof.writeToFile(new File(target, "profile.json"));
@@ -467,9 +444,9 @@ public class FTEval {
             return;
         }
         I.sayln("Compute trees for all ms files.");
-        for (File f : evalDB.msFiles(db)) {
+        for (File f : evalDB.msFiles()) {
             final String n = f.getName();
-            final File treeFile = new File(target, n.substring(0, n.lastIndexOf('.')) + ".dot");
+            final File treeFile = new File(dot, n.substring(0, n.lastIndexOf('.')) + ".dot");
             if (treeFile.exists()) {
                 continue;
             } else {
@@ -585,6 +562,24 @@ public class FTEval {
             } catch (IOException e) {
                 System.err.println(e.getMessage());
             }
+        }
+    }
+
+    private static class Hit implements Comparable<Hit> {
+        private final boolean decoy;
+        private final double score;
+        private final int left, right;
+
+        private Hit(int left, int right, double score, boolean decoy) {
+            this.left = left;
+            this.right = right;
+            this.score = score;
+            this.decoy = decoy;
+        }
+
+        @Override
+        public int compareTo(Hit o) {
+            return Double.compare(score, o.score);
         }
     }
 
@@ -736,9 +731,8 @@ public class FTEval {
             }
         }
         final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
-        /*
-        final de.unijena.bioinf.ftblast.Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
-        for (int i=0; i < matrices.getLayerHeader().length; ++i) {
+        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
+        for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
             final String name = matrices.getLayerHeader()[i];
             if (!name.equals("Pubchem")) {
                 final ScoreTable sc = new ScoreTable(name, matrices.getLayer(i));
@@ -751,27 +745,26 @@ public class FTEval {
         // filter identical compounds
         dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
 
-
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(
                     new FileWriter(opts.getTarget()));
             writer.append("k,opt,rand");
-            for (int i=0; i < matrices.getLayerHeader().length; ++i) {
+            for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
                 if (!matrices.getLayerHeader()[i].equals("Pubchem")) {
                     writer.append(",");
                     writer.append(matrices.getLayerHeader()[i]);
                 }
             }
             writer.newLine();
-            for (int k=1; k <= 300; ++k) {
-                final float K = k/10f;
+            for (int k = 1; k <= 300; ++k) {
+                final float K = k / 10f;
                 writer.append(String.valueOf(K));
                 writer.append(",");
                 writer.append(String.valueOf(dataset.sspsOpt(K)));
                 writer.append(",");
                 writer.append(String.valueOf(dataset.sspsAverageRandom()));
-                for (int i=0; i < matrices.getLayerHeader().length; ++i) {
+                for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
                     if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
                     else {
                         writer.append(",");
@@ -785,25 +778,6 @@ public class FTEval {
 
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-        */
-    }
-
-    private static class Hit implements Comparable<Hit> {
-        private final boolean decoy;
-        private final double score;
-        private final int left, right;
-
-        private Hit(int left, int right, double score, boolean decoy) {
-            this.left = left;
-            this.right = right;
-            this.score = score;
-            this.decoy = decoy;
-        }
-
-        @Override
-        public int compareTo(Hit o) {
-            return Double.compare(score, o.score);
         }
     }
 

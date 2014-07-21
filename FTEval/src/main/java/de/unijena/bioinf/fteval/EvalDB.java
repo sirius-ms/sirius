@@ -1,4 +1,5 @@
 package de.unijena.bioinf.fteval;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
@@ -13,15 +14,19 @@ public class EvalDB {
     }
 
     File profile(String name) {
-        return new File(new File(root, "dot"), name);
+        return new File(new File(root, "profiles"), name);
     }
 
-    File msDir(String dbName) {
-        return new File(new File(root, "ms"), dbName);
+    File profile(File name) {
+        return new File(new File(root, "profiles"), removeExtName(name));
     }
 
-    File[] msFiles(String dbName) {
-        return msDir(dbName).listFiles(new FilenameFilter() {
+    File msDir() {
+        return new File(root, "ms");
+    }
+
+    File[] msFiles() {
+        return msDir().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith(".ms");
@@ -39,18 +44,18 @@ public class EvalDB {
     }
 
     File scoreMatrix(String profile) {
-        return new File(profile(profile),"matrix.csv");
+        return new File(profile(profile), "matrix.csv");
     }
 
     String[] profiles() {
-        final File[] files = new File(root, "dot").listFiles(new FileFilter() {
+        final File[] files = new File(root, "profiles").listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
                 return pathname.isDirectory() && new File(pathname, "dot").exists();
             }
         });
         final String[] names = new String[files.length];
-        for (int i=0; i < names.length; ++i) {
+        for (int i = 0; i < names.length; ++i) {
             names[i] = files[i].getName();
         }
         return names;
@@ -61,19 +66,20 @@ public class EvalDB {
     }
 
     private void checkPath() {
-        if (!root.exists() || !(new File(root, "dot").exists()))
+        if (!root.exists() || !(new File(root, "profiles").exists()))
             throw new RuntimeException("Path '" + root.getAbsolutePath() + "' is no valid dataset path. Create a new" +
                     " evaluation dataset with\nfteval init <name>");
     }
 
 
-    public File sdf(String dbName, String name) {
-        return new File(new File(new File(root, "sdf"), dbName), removeExtName(new File(name)) + ".sdf");
+    public File sdf(String name) {
+        return new File(new File(root, "sdf"), removeExtName(new File(name)) + ".sdf");
     }
 
     public File fingerprint(String name) {
         return new File(new File(new File(root, "fingerprints"), name), "tanimoto.csv");
     }
+
     public String[] fingerprints() {
         final File[] dirs = new File(root, "fingerprints").listFiles(new FileFilter() {
             @Override
@@ -82,12 +88,12 @@ public class EvalDB {
             }
         });
         final String[] names = new String[dirs.length];
-        for (int i=0; i < names.length; ++i) names[i] = dirs[i].getName();
+        for (int i = 0; i < names.length; ++i) names[i] = dirs[i].getName();
         return names;
     }
 
-    public File[] sdfFiles(String dbName) {
-        return new File(new File(root, "sdf"), dbName).listFiles(new FilenameFilter() {
+    public File[] sdfFiles() {
+        return new File(root, "sdf").listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".sdf") && new File(new File(root, "ms"), removeExtName(new File(name)) + ".ms").exists();
             }
@@ -112,16 +118,16 @@ public class EvalDB {
     }
 
     public File decoy(String profil) {
-        final File d1 = new File(profile(profil), "decoy" );
+        final File d1 = new File(profile(profil), "decoy");
         if (d1.exists()) return d1;
         return new File(root, "decoy");
     }
 
     public File qvalueMatrix(String p) {
-        return new File(profile(p),"qvalues.csv");
+        return new File(profile(p), "qvalues.csv");
     }
 
     public File dotDir(String prof) {
-        return new File("dot", prof);
+        return new File(profile(prof), "dot");
     }
 }

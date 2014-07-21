@@ -1,7 +1,6 @@
 package de.unijena.bioinf.fteval;
 
 import com.lexicalscope.jewel.cli.Option;
-import com.lexicalscope.jewel.cli.Unparsed;
 
 import java.util.List;
 
@@ -12,10 +11,7 @@ import java.util.List;
  * Time: 1:48 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface AlignOpts extends EvalBasicOptions{
-
-    @Unparsed
-    public List<String> getNames();
+public interface AlignOpts extends EvalBasicOptions {
 
     @Option(shortName = "J")
     public boolean isNoMultijoin();
