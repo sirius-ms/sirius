@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fteval;
 
 import com.lexicalscope.jewel.cli.Option;
+import com.lexicalscope.jewel.cli.Unparsed;
 
 import java.util.List;
 
@@ -12,6 +13,9 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface AlignOpts extends EvalBasicOptions {
+
+    @Unparsed
+    public List<String> names();
 
     @Option(shortName = "J")
     public boolean isNoMultijoin();

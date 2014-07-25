@@ -123,12 +123,16 @@ public class FTEval {
         final Interact I = new Shell();
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
+        final ArrayList<String> profiles = new ArrayList<String>(Arrays.asList(evalDB.profiles()));
+        if (!opts.names().isEmpty()) {
+            profiles.retainAll(opts.names());
+        }
 
         // peak counting
         //de.unijena.bioinf.spectralign.Main.main(new String[]{evalDB.msDir().getPath(), new File(evalDB.otherScoreDir(), "peakcounting.csv").getPath() });
 
         // tree alignments
-        for (String profil : evalDB.profiles()) {
+        for (String profil : profiles) {
             final File dots = new File(evalDB.profile(profil), "dot");
             final ArrayList<String> arguments = getAlignArguments(opts);
             arguments.addAll(Arrays.asList("--align", dots.getAbsolutePath(), "-m",
@@ -695,6 +699,7 @@ public class FTEval {
         final List<Iterator<String[]>> templates = new ArrayList<Iterator<String[]>>();
         final List<Iterator<String[]>> others = new ArrayList<Iterator<String[]>>();
         final List<String> names = new ArrayList<String>();
+        I.sayln("Reading matrices");
         for (String p : evalDB.profiles()) {
             try {
                 for (File f : evalDB.scoreMatrix(p).getParentFile().listFiles(new FilenameFilter() {
@@ -730,8 +735,10 @@ public class FTEval {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
         }
-        final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
-        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")));
+        System.out.println("Rearrange matrices");
+        templates.addAll(others);
+        final DoubleDataMatrix matrices = DoubleDataMatrix.overlayIntersection(templates, names, null);
+        final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")), opts.getK());
         for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
             final String name = matrices.getLayerHeader()[i];
             if (!name.equals("Pubchem")) {
@@ -743,8 +750,10 @@ public class FTEval {
         }
 
         // filter identical compounds
+        I.sayln("Filterint identical compounds");
         dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
 
+        I.sayln("Calculating SSPS");
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(
@@ -757,7 +766,10 @@ public class FTEval {
                 }
             }
             writer.newLine();
-            for (int k = 1; k <= 300; ++k) {
+            final int MAXK = opts.getK() * 10;
+            for (int k = 1; k <= MAXK; ++k) {
+                I.say(".");
+                System.out.flush();
                 final float K = k / 10f;
                 writer.append(String.valueOf(K));
                 writer.append(",");
@@ -773,6 +785,7 @@ public class FTEval {
                     }
                 }
                 writer.newLine();
+                I.sayln("");
             }
             writer.close();
 

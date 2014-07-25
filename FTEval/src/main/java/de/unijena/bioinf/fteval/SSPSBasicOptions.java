@@ -13,13 +13,16 @@ import java.util.List;
  * Time: 01:29
  * To change this template use File | Settings | File Templates.
  */
-public interface SSPSBasicOptions extends EvalBasicOptions{
+public interface SSPSBasicOptions extends EvalBasicOptions {
 
     @Option(shortName = "F")
     public boolean isNoFingerprint();
 
     @Option(shortName = "t", defaultValue = "ssps.csv")
     public File getTarget();
+
+    @Option(shortName = "k", defaultValue = "10")
+    public int getK();
 
     @Unparsed()
     public List<File> getInput();
