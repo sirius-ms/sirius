@@ -135,12 +135,12 @@ public class FTree extends AbstractFragmentationGraph {
         return new AbstractList<Loss>() {
             @Override
             public Loss get(int index) {
-                return getFragmentAt(index).getIncomingEdge();
+                return getFragmentAt(index + 1).getIncomingEdge();
             }
 
             @Override
             public int size() {
-                return fragments.size();
+                return fragments.size() - 1;
             }
         };
     }

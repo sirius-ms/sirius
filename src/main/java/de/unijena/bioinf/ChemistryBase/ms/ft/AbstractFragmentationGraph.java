@@ -191,6 +191,10 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return ano;
     }
 
+    public boolean removeAnnotation(Class<?> klass) {
+        return annotations.remove(klass) != null;
+    }
+
     public <T> FragmentAnnotation<T> addFragmentAnnotation(Class<T> klass) {
         if (fragmentAnnotations.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
