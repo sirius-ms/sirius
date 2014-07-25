@@ -67,7 +67,7 @@ public class FTDotReader implements Parser<FTree> {
             {
                 final Matcher m = PEAK_PATTERN.matcher(infos[1]);
                 m.find();
-                this.peak = new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)));
+                this.peak = new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
             }
             for (int x = 2; x < infos.length; ++x) {
                 final String info = infos[x];
