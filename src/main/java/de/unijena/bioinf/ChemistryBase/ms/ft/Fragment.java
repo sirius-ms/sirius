@@ -190,6 +190,6 @@ public class Fragment {
     }
 
     public String toString() {
-        return vertexId + "(" + color + "): " + formula.toString();
+        return formula + " <- (" + Arrays.toString(incomingEdges) + ")";
     }
 }

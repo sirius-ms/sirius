@@ -76,4 +76,8 @@ public class Loss {
         annotations[id] = o;
     }
 
+    public String toString() {
+        return formula.toString();
+    }
+
 }
