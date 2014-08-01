@@ -17,12 +17,14 @@ public class SInEdgesToColor {
 	/*
 	 * to keep up the current performance, i do only use this for the strengthened version of seb-vertex-ubs
 	 */
-	final static Fragment zeroVertex = createNullVertex();
-	final static Loss zeroEdge = new Loss( zeroVertex, zeroVertex );
-	final static Loss infinityEdge = new Loss( zeroVertex, zeroVertex );
+	final static Fragment ZERO_VERTEX = createNullVertex();
+	final static Loss ZERO_EDGE = new Loss( ZERO_VERTEX, ZERO_VERTEX );
+	final static Loss INFINITY_EDGE = new Loss( ZERO_VERTEX, ZERO_VERTEX );
 
-	Loss besLoss = SInEdgesToColor.zeroEdge;
-	Loss secondBesLoss = SInEdgesToColor.infinityEdge;
+	static boolean isInitiated = false;
+
+	Loss besLoss = SInEdgesToColor.ZERO_EDGE;
+	Loss secondBesLoss = SInEdgesToColor.INFINITY_EDGE;
 	double maxInEdge = Double.NEGATIVE_INFINITY;
 
 	protected static Fragment createNullVertex() {
@@ -33,9 +35,9 @@ public class SInEdgesToColor {
 		return f;
 	}
 
-	protected static void init() {
-		zeroEdge.setWeight( 0.0 );
-		infinityEdge.setWeight( Double.NEGATIVE_INFINITY );
+	protected static void initiate() {
+		ZERO_EDGE.setWeight( 0.0 );
+		INFINITY_EDGE.setWeight( Double.NEGATIVE_INFINITY );
 	}
 
 	/**
@@ -60,6 +62,6 @@ public class SInEdgesToColor {
 			bestInEdgeToColor.secondBesLoss = newEdge; // We don't record any maxInEdge for the 2nd-best edge
 		}
 
-		assert( bestInEdgeToColor.besLoss == SInEdgesToColor.zeroEdge || bestInEdgeToColor.besLoss != bestInEdgeToColor.secondBesLoss ) : "Assert-ERROR! Seb vertex ubs merge allocated the same edge as best and second best!";
+		assert( bestInEdgeToColor.besLoss == SInEdgesToColor.ZERO_EDGE || bestInEdgeToColor.besLoss != bestInEdgeToColor.secondBesLoss ) : "Assert-ERROR! Seb vertex ubs merge allocated the same edge as best and second best!";
 	}
 }

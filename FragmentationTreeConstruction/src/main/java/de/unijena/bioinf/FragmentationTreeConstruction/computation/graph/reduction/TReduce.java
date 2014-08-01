@@ -20,7 +20,9 @@ public class TReduce {
 
     final FGraph gGraph;
 	// the vertex array is now accessed by every reduction methods that needs it
-    // protected List<Fragment> vertices;
+	// it will be top sorted and it should allow us to keep up with the necessary reduction conditions, even if we do
+	// not have direct access to the inner graph structure
+    final protected ArrayList<Fragment> VERTS;
 
     // traverse related
     protected BitSet gTraversedVertex;
@@ -33,18 +35,376 @@ public class TReduce {
     protected boolean shouldCheckPreconds = false;	// If true, various actions will perform tests of various preconditions (e.g. to check that vertices are numbered in topological order)
     protected boolean shouldMaximizeSpeed = false;
 
+	protected boolean doDebug = true;
+
     ////////////////////////////
     /// --- CONSTRUCTORS --- ///
 
-    public TReduce ( FGraph G ) {
+    public TReduce ( final FGraph G ) {
 
-        // vertices = G.getFragments();
         gTraversedVertex = new BitSet( G.numberOfVertices() );
         gGraph = G;
+		VERTS = new ArrayList<Fragment>( G.numberOfVertices() );
+		calcNewVertexIds( doDebug );
     }
 
-    //--//////////////////////////////
-//--//--- REDUCTION METHODS ---///
+
+/////
+	///////////////////////////////
+///////--- RENUMBER VERTICES ---///////
+	///////////////////////////////
+////
+
+
+	private ArrayList<Integer> newColFor;
+	private ArrayList<Integer> newIdFor;
+	private LinkedList<Fragment>[] topSortColorToVertex;  // HACK: This is used only by topSort(), though it could in fact be used elsewhere and this might save time.
+	private BitSet[] topSortColourToColour;  // topSortColourEdgesToColour[i][j] is the jth colour (in no particular order) that has an edge to colour i.
+	private int gNextColorID = 0;
+	private int gNexFragmentID = 0;
+
+	// The (only?) right way is to actually forget about topologically sorting vertices, and topologically sort colours instead.
+	// To store these colour-edges, we *could* use a flat array plus indexes into it a la startOfEdgesTo[], but it's easier and still
+	// fast enough to just use an array of set<>s.
+	// Much simpler than the previous approach!  :)
+	// TODO: check for correctness
+	private void topSort( int col ) {
+
+		if( newColFor.get( col ) == -1 ) {
+
+			// Haven't visited this colour yet.
+			// Find the colours of all its parents (a colour x is a parent of a colour y if there is an edge from any x-coloured vertex to any y-coloured vertex)
+			// and recurse to process them first.
+
+			BitSet B = topSortColourToColour[col];
+			for ( int i=0; i<gGraph.maxColor()+1; i++ ) {
+				if( B.get( i ) ) // this color
+					topSort(i);
+			}
+
+			newColFor.set( col, gNextColorID-- );
+
+			// Now renumber all vertices of this colour.  It's safe to just assign consecutive integers,
+			// since we know that no two vertices of the same colour can have any edges between each other.
+			for( Fragment v : topSortColorToVertex[col] ) {
+				newIdFor.set( v.getVertexId(), gNexFragmentID-- );  // assign new array positions
+			}
+		}
+	}
+
+	/**
+	 * Now both renames vertices using newIdFor[] AND (if calcInvert is true) turns newIdFor[] into its inverse (for a later call to revertVertices()).
+	 * TODO: check for correctness
+	 * TODO: IMPORTANT
+	 */
+	private void renameVertices( boolean calcInvert, boolean doReCheck, boolean rememberIDs ) {
+
+		List<Fragment> vertices = gGraph.getFragments();
+		ArrayList<Fragment> newVertexArray = new ArrayList<Fragment>(  gGraph.numberOfVertices() );
+
+		// renumber by re-positioning the vertices in a new array, so that:
+		// (u,v) => u < v  and (u,v) => c(u) < c(v)
+		int p;
+		int i=0;
+		if ( rememberIDs ) {
+			for ( Fragment v : gGraph.getFragments() ) {
+
+				assert ( i == v.getVertexId() ) : "Asynchronous vertex indices in original graph!";
+
+				p = newIdFor.get( v.getVertexId() );
+				newVertexArray.set( p, v ); // getVertexId() and getColor() are not changed here yet!
+
+				// remember the original values here, so we can use them later, eventually
+				gOriginal_Colors_And_IDs[p][TReduce.POS] = v.getVertexId();
+				gOriginal_Colors_And_IDs[p][TReduce.COL] = v.getColor();
+
+				vertices[i].getVertexId() = p;
+				i++;
+			}
+		} else {
+			for (int i = 0; i < gGraph.numberOfVertices(); i++) {
+
+				p = newIdFor.get(i);
+				newVertexArray[p] = vertices[i]; // getVertexId() and getColor() are not changed here yet!
+
+				// remember the original values here, so we can use them later, eventually
+				gOriginal_Colors_And_IDs[p][TReduce.POS] = vertices[i].getVertexId();
+				gOriginal_Colors_And_IDs[p][TReduce.COL] = vertices[i].getColor();
+
+				vertices[i].getVertexId() = p;
+			}
+		}
+
+		//fixing up colors
+		for( int c=0; c<gGraph.maxColor()+1; c++ ) {
+			int newCol = newColFor.get( c );
+			for( Fragment v : topSortColorToVertex[c] ) {
+				v.getColor() = newCol;
+			}
+		}
+
+		//apply array
+		vertices = newVertexArray;
+		gGraph.setVertices( newVertexArray );
+
+		// THAT SHOULD ONLY BE USED IN CASE OF DEBUGGING
+		// HAPPENS WHEN TRYING TO RENUMBER A GRAPH WITH VERTICES, THAT DOESN'T HAVE ANY IN OR OUT-GOING EDGES
+		if ( !newVertexArray[0].hasTarget() ) {
+
+			for ( Fragment v : newVertexArray )
+				if ( v.hasTarget() ) {
+					gGraph.setRootByForce( v );
+					break;
+				}
+		}
+
+		// doReCheck is true, by default, unless you call it like this: 'renumber-verts false'
+		if ( shouldCheckPreconds && doReCheck ) {
+			DoCheckVerticesAreTopSorted("Somehow the vertices are not top-sorted, even though renameVertices(calcInvert=true) was called!");		//HACK: We only check this if we are forward-converting, which usually corresponds to calcInvert == true.
+			System.out.println(" *~* Top sort check successfully finished.");
+		}
+
+		if ( calcInvert ) {
+			calcFirstVertOfSameColor();
+		}
+	}
+
+	// Actually renumber vertices.
+	int[][] gOriginal_Colors_And_IDs;
+	private final static int POS = 0;
+	private final static int COL = 1;
+
+	/**
+	 * cmd: renumber-verts
+	 * BASICALLY:
+	 *  - gId is the original position a vertex has had in the original graph
+	 *  - getVertexId() is the place inside vertices, where it is repositioned by renumber-verts
+	 *  - knowing that
+	 * @param doReCheck
+	 * TODO: check for correctness
+	 */
+	public void calcNewVertexIds( boolean doReCheck ) {
+
+		// remember original vertex entry IDs and colors
+		gOriginal_Colors_And_IDs = new int[gGraph.numberOfVertices()][2];
+
+		// initiate
+		this.newColFor = new ArrayList<Integer>( gGraph.maxColor()+1 );
+		for( int i=0; i<gGraph.maxColor()+1; i++ )
+			newColFor.add( -1 );
+
+
+		topSortColourToColour = new BitSet[gGraph.maxColor()+1];
+		for( int x=0; x<gGraph.maxColor()+1; x++ )
+			topSortColourToColour[x] = new BitSet( gGraph.maxColor()+1 );
+
+		topSortColorToVertex = new LinkedList[gGraph.maxColor()+1];
+		for( int x=0; x<gGraph.maxColor()+1; x++ )
+			topSortColorToVertex[x] = new LinkedList<Fragment>();
+
+		// calculate, which color x can be reached by color y
+		// remember the color each vertex has
+
+		for(Fragment v : gGraph.getFragments() ) {
+
+			topSortColorToVertex[v.getColor()].add( v ); // remember vertex color
+
+			for( Loss e : v.getOutgoingEdges() ) {
+				if( e == null )
+					break;
+				topSortColourToColour[e.getSource().getColor()].set( e.getTarget().getColor(), true );
+			}
+		}
+
+		gNextColorID = gGraph.maxColor();
+		gNexFragmentID = gGraph.numberOfVertices()-1;
+
+		//initiate
+		newIdFor = new ArrayList<Integer>( gGraph.numberOfVertices() );
+		for( int i=0; i<gGraph.numberOfVertices(); i++)
+			newIdFor.add( -1 );
+
+		// go in
+		for ( int i=0; i<gGraph.maxColor()+1; i++ )
+			topSort( i );
+
+		assert( gNextColorID == -1 ) : "Assert-ERROR: renumber-vertices. nextColorID: " + gNextColorID + " is not " + (-1);
+		assert( gNexFragmentID == -1 ) : "Assert-ERROR: renumber-vertices. nexFragmentID: " + gNexFragmentID + " is not " + (-1);
+
+		renameVertices( true, doReCheck, gRememberVertexIDs );
+	}
+
+	/**
+	 * - is called when --checkPreconds is enabled
+	 * - this method will terminate this program when the is at least 1 edge, that doesn't confirm the following
+	 *   conditions, even though renumbering has been applied on the graph:
+	 *   (i) e = edge ( u, v ) => u.ArrayIndex < v.ArrayIndex
+	 *   (ii) u < v => u.color <= v.color
+	 * @param errMsg : massage, that will be printed if above conditions are not fulfilled
+	 * TODO: check for correctness, but probably working
+	 */
+	private void DoCheckVerticesAreTopSorted( java.lang.String errMsg ) {
+
+		gTraversedVertex = new BitSet( gGraph.numberOfVertices() );
+		if ( !checkVerticesAreTopSorted( gGraph.getRoot() ) ) {
+			System.err.println(errMsg);
+			System.exit( 1 );
+		}
+	}
+
+
+	/**
+	 * recursion to check topological sort property of edges
+	 * @param v
+	 * @return
+	 * TODO: check for correctness, but probably working
+	 */
+	private boolean checkVerticesAreTopSorted( Fragment v ) {
+
+		if( !gTraversedVertex.get( v.getVertexId() ) ) {
+
+			gTraversedVertex.set( v.getVertexId(), true );
+
+			for ( Loss e : v.getOutgoingEdges() ) {
+
+				if( e == null )
+					break;
+
+				if ( e.getSource().getVertexId() >= e.getTarget().getVertexId() ) {
+					System.out.println( "Edge (" + e.getSource().getVertexId() + ", " + e.getTarget().getVertexId() + ") exists from a higher-numbered vertex to a lower-numbered vertex!\n");
+					return false;
+				}
+
+				// Also check colours.
+				if ( e.getSource().getColor() >= e.getTarget().getColor() ) {
+					System.out.println( "Edge (" + e.getSource().getVertexId() + ", " + e.getTarget().getVertexId() + ") exists from a higher-numbered colour (" + e.getSource().getColor() + ") to a lower-numbered colour (" + e.getTarget().getColor() + ")!\n" );
+					return false;
+				}
+
+				return checkVerticesAreTopSorted( e.getTarget() );
+			}
+
+		}
+
+		return true;
+	}
+
+
+	/*
+	// The (only?) right way is to actually forget about topologically sorting vertices, and topologically sort colours instead.
+	// To store these colour-edges, we *could* use a flat array plus indexes into it a la startOfEdgesTo[], but it's easier and still
+	// fast enough to just use an array of set<>s.
+	// Much simpler than the previous approach!  :)
+	// TODO: postponed
+	private void topSort2( int col ) {
+
+		if( newColFor.get( col ) == -1 ) {
+
+			// Haven't visited this colour yet.
+			// Find the colours of all its parents (a colour x is a parent of a colour y if there is an edge from any x-coloured vertex to any y-coloured vertex)
+			// and recurse to process them first.
+
+			BitSet B = topSortColourToColour[col];
+			for ( int i=0; i<gGraph.maxColor()+1; i++ ) {
+				if( B.get( i ) ) // this color
+					topSort2( i );
+			}
+
+			newColFor.set( col, gNextColorID-- );
+
+			// Now renumber all vertices of this colour.  It's safe to just assign consecutive integers,
+			// since we know that no two vertices of the same colour can have any edges between each other.
+			if ( topSortColorToVertex[col].size() <= 1 ) {
+
+				if ( topSortColorToVertex[col].size() > 0 ) {
+					newIdFor.set( topSortColorToVertex[col].getFirst().getVertexId(), gNexFragmentID-- );  // assign new array positions
+				}
+			} else {
+
+				ListIterator<Fragment> it = topSortColorToVertex[col].listIterator( topSortColorToVertex[col].size()-1 );
+				Fragment v = topSortColorToVertex[col].getLast();
+				do {
+					newIdFor.set( v.getVertexId(), gNexFragmentID-- );  // assign new array positions
+					v = it.previous();
+				} while( it.hasPrevious() );
+				newIdFor.set( v.getVertexId(), gNexFragmentID-- );  // i will get the last one this way
+			}
+		}
+	}
+
+	*/
+
+	/**
+	 * CMD: renumber-verts-2
+	 * - inverted recursion
+	 * - still bottom up, but the arrays will be iterated from the last to the first entry
+	 * TODO: posteponed
+	 public void calcNewVertexIds2( boolean doReCheck ) {
+
+	 // remember original vertex entry IDs and colors
+	 gOriginal_Colors_And_IDs = new int[gGraph.numberOfVertices()][2];
+
+	 // initiate
+	 this.newColFor = new ArrayList<Integer>( gGraph.maxColor()+1 );
+	 for( int i=0; i<gGraph.maxColor()+1; i++ )
+	 newColFor.add( -1 );
+
+
+	 topSortColourToColour = new BitSet[gGraph.maxColor()+1];
+	 for( int x=0; x<gGraph.maxColor()+1; x++ )
+	 topSortColourToColour[x] = new BitSet( gGraph.maxColor()+1 );
+
+	 topSortColorToVertex = new LinkedList[gGraph.maxColor()+1];
+	 for( int x=0; x<gGraph.maxColor()+1; x++ )
+	 topSortColorToVertex[x] = new LinkedList<Fragment>(  );
+
+	 // calculate, which color x can be reached by color y
+	 // remember the color each vertex has
+
+	 for(Fragment v : gGraph.getFragments() ) {
+
+	 topSortColorToVertex[v.getColor()].add( v ); // remember vertex color
+
+	 List<Loss> edges = v.getOutgoingEdges();
+	 edge.ite
+	 for( int i= v.gTELastEntry; i>=0; i-- ) {
+	 topSortColourToColour[edges[i].getSource().getColor()].set( edges[i].gTargeFragment.getColor(), true );
+	 }
+	 }
+
+	 gNextColorID = gGraph.maxColor()+1-1;
+	 gNexFragmentID = gGraph.numberOfVertices()-1;
+
+	 //initiate
+	 newIdFor = new ArrayList<Integer>( gGraph.numberOfVertices() );
+	 for( int i=0; i<gGraph.numberOfVertices(); i++)
+	 newIdFor.add( -1 );
+
+	 // go in
+	 for ( int i=0; i<gGraph.maxColor()+1; i++ )
+	 topSort2( i );
+
+	 assert( gNextColorID == -1 ) : "Assert-ERROR: renumber-vertices. nextColorID: " + gNextColorID+" is not " + (-1);
+	 assert( gNexFragmentID == -1 ) : "Assert-ERROR: renumber-vertices. nexFragmentID: " + gNexFragmentID+" is not " + (-1);
+
+	 renameVertices( true, doReCheck, gRememberVertexIDs );
+	 }
+
+	 */
+
+
+	//////////////////////////////
+//////                          ///////
+//  //////////////////////////////   //
+//////--- REDUCTION METHODS ---////////
+//  //////////////////////////////   //
+//////                          ///////
+	//////////////////////////////
+
+
+	////////////////////////////////////////
+	///--- colorful subtree advantage ---///
+	////////////////////////////////////////
 
 	int reduceColSubtreeAdvantageNEdgesIgnored;
 	int reduceColSubtreeAdvantageNBetterEdgesNorth;
@@ -54,6 +414,7 @@ public class TReduce {
 	/**
      * CMD: reduce-colsubtree-adv
      * @return: TRUE, if at least 1 edge has been deleted within this call
+	 * TODO: check for correctness
      */
     public boolean doReduceColorsubtreeAdvantage() {
 
@@ -67,7 +428,7 @@ public class TReduce {
 
         if ( gLB == null || gLB.length == 0 || gLB.length != gGraph.numberOfVertices() ) {
 
-            // TODO: TMain.getCMDParser().terminateCommandChain( "You need to calculate 'gLB' lower bounds ( using DEBUG-calc-anchor-lbs ) before using 'reduce-dompath'! abort." );
+            // || TMain.getCMDParser().terminateCommandChain( "You need to calculate 'gLB' lower bounds ( using DEBUG-calc-anchor-lbs ) before using 'reduce-dompath'! abort." );
             return false;
         }
 
@@ -94,6 +455,7 @@ public class TReduce {
 
 	/**
 	 * - part of 'reduce-colsubtree-adv'
+	 * TODO: check for correctness
 	 * @param u
 	 * @return
 	 */
@@ -146,6 +508,7 @@ public class TReduce {
 
 	/**
 	 * - part of 'reduce-colsubtree-adv'
+	 * TODO: check correctness
 	 * @param x
 	 * @param u
 	 * @param besLosss
@@ -207,150 +570,10 @@ public class TReduce {
 		}
 	}
 
-	/**
-	 * CMD: reduce-dompath
-	 * @return
-	 */
-	public boolean reduceDominatingPath() {
+	/////////////////////////////////////////
+	///--- reduce: vertex upper bounds ---///
+	/////////////////////////////////////////
 
-		// check pre-conditions
-
-		System.out.println("><>  Reducing edges using dominating path...");
-		if( (this.gUB == null ) || (this.gUB.length == 0) || (this.gUB.length != gGraph.numberOfVertices() ) ) {
-			// || TMain.getCMDParser().terminateCommandChain( "You need to calculate upper bounds ( using tim-vertex-ubs or seb-vertex-ubs ) before using 'reduce-dompath'! abort." );
-			return false;
-		}
-
-		if ( m_ == null || m_.length == 0 || m_.length != gGraph.numberOfVertices() ) {
-			// || TMain.getCMDParser().terminateCommandChain( "You need to calculate 'm_' lower bounds ( using calc-rec-slide-lbs ) before using 'reduce-dompath'! abort." );
-			return false;
-		}
-
-		if ( gLB == null || gLB.length == 0 || gLB.length != gGraph.numberOfVertices() ) {
-			// || TMain.getCMDParser().terminateCommandChain( "You need to calculate 'gLB' lower bounds ( using DEBUG-calc-anchor-lbs ) before using 'reduce-dompath'! abort." );
-			return false;
-		}
-		
-		List<Fragment> vertices = gGraph.getFragments();
-
-		// calculate maximum weight on a source edge to a specific vertex...
-		System.out.println("... Calculate max source-edges to each vertex ...");
-		double[] maxInEdgeWeightTo = new double[vertices.size()];
-		for ( Fragment v : vertices ) {
-
-			if ( v.getOutgoingEdges().size() > 0 ) {
-
-				double wBuf = v.getOutgoingEdge(0).getWeight(); // we know that there is at least 1
-				for ( Loss e : v.getOutgoingEdges() ) {
-					if ( e == null )
-						break;
-
-					if ( e.getWeight() > wBuf )
-						wBuf = e.getWeight();
-				}
-
-				maxInEdgeWeightTo[v.getVertexId()] = wBuf;
-			} else
-				maxInEdgeWeightTo[v.getVertexId()] = Double.NEGATIVE_INFINITY;
-		}
-
-		// severAndSlideTo[u][v - firstVertOfSameColourAs[v]] is the maximum it could cost to delete an in-edge to any other vertex u of that colour and slide the subtree below u to being below v.
-		// The indexing system drops us from O(V^2) space to O(VD), where D is the maximum number of vertices of any colour.
-		// (Note: we require u and v to be of the same colour, so firstVertOfSameColourAs[v] == firstVertOfSameColourAs[u].)
-		double[] severAndSlideTo = new double[vertices.size()];  // "max cost" = "min score change", and we record the latter.
-		System.out.println("... Calculating max sever-and-slide costs for each vertex ...");
-		for ( int v=0; v < gGraph.numberOfVertices(); v++ )
-			severAndSlideTo[v] = Double.POSITIVE_INFINITY;
-
-		for ( int v=0; v < gGraph.numberOfVertices(); v++ ) {
-			for ( int u=firstVertIDOfSameColorAs[v]; u < firstVertIDOfNextColor[v]; u++ ) {
-				severAndSlideTo[v] = Math.min( severAndSlideTo[v], slideLb( u, v ) - maxInEdgeWeightTo[u] );
-			}
-		}
-
-
-		System.out.println("... Reducing edges ...");
-		int edgesDeleted = 0;
-		for ( Fragment y : vertices ) {
-
-			int yi = y.getVertexId();
-
-			// Lazily calculate dplb[a] for all a, given that y is in the solution tree.
-			double[] dplb = new double[gGraph.numberOfVertices()]; // dplb[i] is the minimum cost to force vertex i into the solution, given that y is already in it
-			int nextVertToProcess = firstVertIDOfNextColor[y.getVertexId()];
-
-			int iyex = 0; // index of e from x to y
-			while ( iyex <= y.getOutgoingEdges().size() ) {
-				// we only get valid edges ( no NULL entries ) here! :)
-				Loss yex = y.getOutgoingEdge( iyex ); // edge from y to x :)
-
-				int x = yex.getTarget().getVertexId();              // x-vertex-index
-
-				// Lazily calculate dplb[] up to what we need to handle x.
-				for ( ; nextVertToProcess < firstVertIDOfSameColorAs[x]; nextVertToProcess++ ) {
-					// calculate best connection bestConn(a , y)
-					// The next line gets executed O(v^2) times
-					double bestConn = gLB[nextVertToProcess][yi];
-					for ( Loss ep : vertices.get( nextVertToProcess ).getOutgoingEdges() ) {
-						if ( ep == null )
-							break;
-
-						// We're only allowed to try forcing in vertices that could not force y out of the graph (e.g. by removing all paths from the root to it).
-						// Vertices of colours greater than c[y] is a safe set of vertices to play with.
-						// (Actually that's not true -- we could try forcing in vertices of colours <= c[y] if we calculated lb[v][u] for all pairs of vertices instead of
-						// only for pairs with u < v.  In fact we could even try forcing in a different vertex of colour c[y], and this would be *cheaper*
-						// in general because we know which c[y]-coloured vertex is already in the graph (it's y!) -- but in this case we can still hope that all in-edges
-						// to y to get killed later on anyway, which will lead to (y, x) being deleted by reduce-unreach.)
-						if ( ep.getSource().getColor() > y.getColor() ) {
-							bestConn = Math.max( bestConn, dplb[ep.getSource().getVertexId()] + ep.getWeight() );
-						}
-					}
-
-					dplb[nextVertToProcess] = Math.min( 0.0, Math.min( bestConn, bestConn + severAndSlideTo[nextVertToProcess] ) );
-					assert ( dplb[nextVertToProcess] != Double.NaN ) : "Set value to NotANumber?!";
-
-				}
-
-				// For each vertex z of the same color as x:
-				boolean yexDeleted = false;
-				assert ( vertices.get(  firstVertIDOfSameColorAs[x] ).getColor() > vertices.get( firstVertIDOfSameColorAs[x]-1 ).getColor() ) : "FirstVertIDOfSameColorAs is not correctly managed! c[x] index color: " + vertices.get( firstVertIDOfSameColorAs[x] ).getColor() + " , c[x] index -1 color: " + vertices.get( firstVertIDOfSameColorAs[x]-1 ).getColor();
-				OuterLoop:
-				for ( int zi=firstVertIDOfSameColorAs[x]; zi < firstVertIDOfNextColor[x]; zi++ ) {
-
-					for ( Loss vez : vertices.get( zi ).getOutgoingEdges() ) { // save to use here. If an edge is deleted, we will jump out
-						if ( vez == null )
-							break;
-
-						Fragment v = vez.getSource();
-						// We're only allowed to mess with vertices that could not force y out of the graph.
-						if ( v.getColor() > y.getColor() ) {
-
-							double oc = vez.getWeight() + dplb[v.getVertexId()];
-							if ( oc + slideLb( x, zi ) > yex.getWeight() ) {
-							 	// edge yex dies
-								gGraph.deleteLoss( yex );
-								yexDeleted = true;
-								edgesDeleted++;
-
-								break OuterLoop; // make sure we do not ONLY break the inner, but the first outer loop to!
-							}
-						}
-					}
-				}
-
-				if ( !yexDeleted )
-					iyex++;
-				// else: yex is swapped duo to the deletion-process
-			}
-		}
-
-		gDeletedEdges += edgesDeleted;
-		// || gGraph.numberOfEdges() -= edgesDeleted; // I should check that for accuracy!
-
-		System.out.println( "  ... deleted " + edgesDeleted + " new edges. Edges deleted " + gDeletedEdges );
-
-		return edgesDeleted > 0;
-	}
 
     /**
      * CMD: reduce-vub
@@ -358,6 +581,7 @@ public class TReduce {
      * - reduce edges by using a previously calculated ub score
      * - it terminate the program in case of getting called before ubs have been calculated
      * return: TRUE, if new edges have been deleted ( compared to prior reduction )
+	 * TODO: check for correctness, probably working
      */
     public boolean reduceEdgesByVertexUpperBound() {
 
@@ -377,21 +601,26 @@ public class TReduce {
 				~ edge delete <=> swaping current edge with last ^ setting last edge to NULL
 			 */
             List<Loss> edges = v.getOutgoingEdges();
-            //Loss e;
+			ListIterator<Loss> it = edges.listIterator( 0 );
+            Loss e;
             int i=0;
-            // || while( (i< edges.length) && ( (e = edges[i]) != null ) ) {
-			for ( Loss e : edges ) {
+
+			while ( it.hasNext() ) {
+
+				e = it.next();
+
                 // check if the edge should be deleted
                 if( e.getWeight() + this.gUB[e.getTarget().getVertexId()] > 0 ) {
                     // this edge will survive
                     gScaredEdge = Math.min( gScaredEdge, e.getWeight() + this.gUB[e.getTarget().getVertexId()] );
                     i++; // proceed to next edge
                 } else {
-                    //System.out.println( e + " deleted!"); //TESTING
                     gGraph.deleteLoss( e ); // save & fast deletion procedure
 					edgesDeleted++;
-
-                    // we don't increase i here; edge delete swapped with the last element that has to be checked yet!
+					// must do that to evade iterator-access violation
+					// even i points onto the last element, it.hasNext() will return true, since it didn't return
+					// anything yet
+					it = edges.listIterator( i );
                 }
             }
         }
@@ -410,6 +639,7 @@ public class TReduce {
 	 * CMD: reduce-slide-strong
 	 * Like reduce-slide, except we require lb[][] to be populated, and we allow edges to *any* vertex of the same colour as the
 	 * endpoint, and it can begin at an ancestor of the start point.
+	 * TODO: check for correctness, probably working when slide methods work
 	 */
 	public boolean reduceWithSlideStrong() {
 
@@ -471,7 +701,8 @@ public class TReduce {
      * reduces edges by the following principle:
      * - if there is a vertex with no source edges (inedges) that is not the root, delete its edges
      * - we can do that, basically cause we can not build up a solution starting at the root
-     */
+     * TODO: check for correctness
+	 */
     public boolean reduceUnreachableEdges() {
 
         System.out.println("><>  Reducing edges using unreachable edges...");
@@ -516,8 +747,9 @@ public class TReduce {
 	/**
 	 * CMD: reduce-negpend
 	 * @return: true, if at least 1 edge has been deleted
+	 * TODO: check for correctness
 	 */
-	public boolean reduceNegativePendanLosss() {
+	public boolean reduceNegativePendantEdges() {
 
 		System.out.println("><>  Reduce using negative pendant edges...");
 		List<Fragment> vertices = gGraph.getFragments();
@@ -552,329 +784,168 @@ public class TReduce {
 		return EdgesDeleted > 0;
 	}
 
-    ////////////////////////////////
-    ///	--- RENUMBER VERTICES ---///
-
-    private ArrayList<Integer> newColFor;
-    private ArrayList<Integer> newIdFor;
-    private LinkedList<Fragment>[] topSortColorToVertex;  // HACK: This is used only by topSort(), though it could in fact be used elsewhere and this might save time.
-    private BitSet[] topSortColourToColour;  // topSortColourEdgesToColour[i][j] is the jth colour (in no particular order) that has an edge to colour i.
-    private int gNextColorID = 0;
-    private int gNexFragmentID = 0;
-
-    // The (only?) right way is to actually forget about topologically sorting vertices, and topologically sort colours instead.
-    // To store these colour-edges, we *could* use a flat array plus indexes into it a la startOfEdgesTo[], but it's easier and still
-    // fast enough to just use an array of set<>s.
-    // Much simpler than the previous approach!  :)
-    private void topSort( int col ) {
-
-        if( newColFor.get( col ) == -1 ) {
-
-            // Haven't visited this colour yet.
-            // Find the colours of all its parents (a colour x is a parent of a colour y if there is an edge from any x-coloured vertex to any y-coloured vertex)
-            // and recurse to process them first.
-
-            BitSet B = topSortColourToColour[col];
-            for ( int i=0; i<gGraph.maxColor()+1; i++ ) {
-                if( B.get( i ) ) // this color
-                    topSort(i);
-            }
-
-            newColFor.set( col, gNextColorID-- );
-
-            // Now renumber all vertices of this colour.  It's safe to just assign consecutive integers,
-            // since we know that no two vertices of the same colour can have any edges between each other.
-            for( Fragment v : topSortColorToVertex[col] ) {
-                newIdFor.set( v.getVertexId(), gNexFragmentID-- );  // assign new array positions
-            }
-        }
-    }
-
-    // The (only?) right way is to actually forget about topologically sorting vertices, and topologically sort colours instead.
-    // To store these colour-edges, we *could* use a flat array plus indexes into it a la startOfEdgesTo[], but it's easier and still
-    // fast enough to just use an array of set<>s.
-    // Much simpler than the previous approach!  :)
-    private void topSort2( int col ) {
-
-        if( newColFor.get( col ) == -1 ) {
-
-            // Haven't visited this colour yet.
-            // Find the colours of all its parents (a colour x is a parent of a colour y if there is an edge from any x-coloured vertex to any y-coloured vertex)
-            // and recurse to process them first.
-
-            BitSet B = topSortColourToColour[col];
-            for ( int i=0; i<gGraph.maxColor()+1; i++ ) {
-                if( B.get( i ) ) // this color
-                    topSort2( i );
-            }
-
-            newColFor.set( col, gNextColorID-- );
-
-            // Now renumber all vertices of this colour.  It's safe to just assign consecutive integers,
-            // since we know that no two vertices of the same colour can have any edges between each other.
-            if ( topSortColorToVertex[col].size() <= 1 ) {
-
-                if ( topSortColorToVertex[col].size() > 0 ) {
-                    newIdFor.set( topSortColorToVertex[col].getFirst().getVertexId(), gNexFragmentID-- );  // assign new array positions
-                }
-            } else {
-
-                ListIterator<Fragment> it = topSortColorToVertex[col].listIterator( topSortColorToVertex[col].size()-1 );
-                Fragment v = topSortColorToVertex[col].getLast();
-                do {
-                    newIdFor.set( v.getVertexId(), gNexFragmentID-- );  // assign new array positions
-                    v = it.previous();
-                } while( it.hasPrevious() );
-                newIdFor.set( v.getVertexId(), gNexFragmentID-- );  // i will get the last one this way
-            }
-        }
-    }
-
-    // Now both renames vertices using newIdFor[] AND (if calcInvert is true) turns newIdFor[] into its inverse (for a later call to revertVertices()).
-    private void renameVertices( boolean calcInvert, boolean doReCheck, boolean rememberIDs ) {
-
-		List<Fragment> vertices = gGraph.getFragments();
-        List<Fragment> newVertexArray = new Fragment[gGraph.numberOfVertices()];
-
-        // renumber by re-positioning the vertices in a new array, so that:
-        // (u,v) => u < v  and (u,v) => c(u) < c(v)
-        int p;
-        if ( rememberIDs ) {
-            for (int i = 0; i < gGraph.numberOfVertices(); i++) {
-
-                p = newIdFor.get(i);
-                newVertexArray[p] = vertices[i]; // getVertexId() and getColor() are not changed here yet!
-
-                // remember the original values here, so we can use them later, eventually
-                gOriginal_Colors_And_IDs[p][TReduce.POS] = vertices[i].gId;
-                gOriginal_Colors_And_IDs[p][TReduce.COL] = vertices[i].getColor();
-
-                vertices[i].getVertexId() = p;
-            }
-        } else {
-            for (int i = 0; i < gGraph.numberOfVertices(); i++) {
-
-                p = newIdFor.get(i);
-                newVertexArray[p] = vertices[i]; // getVertexId() and getColor() are not changed here yet!
-
-                // remember the original values here, so we can use them later, eventually
-                gOriginal_Colors_And_IDs[p][TReduce.POS] = vertices[i].getVertexId();
-                gOriginal_Colors_And_IDs[p][TReduce.COL] = vertices[i].getColor();
-
-                vertices[i].getVertexId() = p;
-            }
-        }
-
-        //fixing up colors
-        for( int c=0; c<gGraph.maxColor()+1; c++ ) {
-            int newCol = newColFor.get( c );
-            for( Fragment v : topSortColorToVertex[c] ) {
-                v.getColor() = newCol;
-            }
-        }
-
-        //apply array
-        vertices = newVertexArray;
-		gGraph.setVertices( newVertexArray );
-
-		// THAT SHOULD ONLY BE USED IN CASE OF DEBUGGING
-		// HAPPENS WHEN TRYING TO RENUMBER A GRAPH WITH VERTICES, THAT DOESN'T HAVE ANY IN OR OUT-GOING EDGES
-		if ( !newVertexArray[0].hasTarget() ) {
-
-			for ( Fragment v : newVertexArray )
-				if ( v.hasTarget() ) {
-					gGraph.setRootByForce( v );
-					break;
-				}
-		}
-
-        // doReCheck is true, by default, unless you call it like this: 'renumber-verts false'
-        if ( shouldCheckPreconds && doReCheck ) {
-            DoCheckVerticesAreTopSorted("Somehow the vertices are not top-sorted, even though renameVertices(calcInvert=true) was called!");		//HACK: We only check this if we are forward-converting, which usually corresponds to calcInvert == true.
-            System.out.println(" *~* Top sort check successfully finished.");
-        }
-
-        if ( calcInvert ) {
-            calcFirstVertOfSameColor();
-        }
-    }
-
-    // Actually renumber vertices.
-    int[][] gOriginal_Colors_And_IDs;
-    private final static int POS = 0;
-    private final static int COL = 1;
-
-    /**
-     * cmd: renumber-verts
-     * BASICALLY:
-     *  - gId is the original position a vertex has had in the original graph
-     *  - getVertexId() is the place inside vertices, where it is repositioned by renumber-verts
-     *  - knowing that
-     * @param doReCheck
-     */
-    public void calcNewVertexIds( boolean doReCheck ) {
-
-        // remember original vertex entry IDs and colors
-        gOriginal_Colors_And_IDs = new int[gGraph.numberOfVertices()][2];
-
-        // initiate
-        this.newColFor = new ArrayList<Integer>( gGraph.maxColor()+1 );
-        for( int i=0; i<gGraph.maxColor()+1; i++ )
-            newColFor.add( -1 );
-
-
-        topSortColourToColour = new BitSet[gGraph.maxColor()+1];
-        for( int x=0; x<gGraph.maxColor()+1; x++ )
-            topSortColourToColour[x] = new BitSet( gGraph.maxColor()+1 );
-
-        topSortColorToVertex = new LinkedList[gGraph.maxColor()+1];
-        for( int x=0; x<gGraph.maxColor()+1; x++ )
-            topSortColorToVertex[x] = new LinkedList<Fragment>();
-
-        // calculate, which color x can be reached by color y
-        // remember the color each vertex has
-
-        for(Fragment v : gGraph.getFragments() ) {
-
-            topSortColorToVertex[v.getColor()].add( v ); // remember vertex color
-
-            for( Loss e : v.getOutgoingEdges() ) {
-                if( e == null )
-                    break;
-                topSortColourToColour[e.getSource().getColor()].set( e.getTarget().getColor(), true );
-            }
-        }
-
-        gNextColorID = gGraph.maxColor()+1-1;
-        gNexFragmentID = gGraph.numberOfVertices()-1;
-
-        //initiate
-        newIdFor = new ArrayList<Integer>( gGraph.numberOfVertices() );
-        for( int i=0; i<gGraph.numberOfVertices(); i++)
-            newIdFor.add( -1 );
-
-        // go in
-        for ( int i=0; i<gGraph.maxColor()+1; i++ )
-            topSort( i );
-
-        assert( gNextColorID == -1 ) : "Assert-ERROR: renumber-vertices. nextColorID: " + gNextColorID + " is not " + (-1);
-        assert( gNexFragmentID == -1 ) : "Assert-ERROR: renumber-vertices. nexFragmentID: " + gNexFragmentID + " is not " + (-1);
-
-        renameVertices( true, doReCheck, gRememberVertexIDs );
-    }
-
-    /**
-     * CMD: renumber-verts-2
-     * - inverted recursion
-     * - still bottom up, but the arrays will be iterated from the last to the first entry
-     *
-    public void calcNewVertexIds2( boolean doReCheck ) {
 
-        // remember original vertex entry IDs and colors
-        gOriginal_Colors_And_IDs = new int[gGraph.numberOfVertices()][2];
+	/**
+	 * CMD: reduce-dompath
+	 * TODO: delayed, not completely working!
+	 * @return
+	 *
+	public boolean reduceDominatingPath() {
+
+	// check pre-conditions
+
+	System.out.println("><>  Reducing edges using dominating path...");
+	if( (this.gUB == null ) || (this.gUB.length == 0) || (this.gUB.length != gGraph.numberOfVertices() ) ) {
+	// || TMain.getCMDParser().terminateCommandChain( "You need to calculate upper bounds ( using tim-vertex-ubs or seb-vertex-ubs ) before using 'reduce-dompath'! abort." );
+	return false;
+	}
+
+	if ( m_ == null || m_.length == 0 || m_.length != gGraph.numberOfVertices() ) {
+	// || TMain.getCMDParser().terminateCommandChain( "You need to calculate 'm_' lower bounds ( using calc-rec-slide-lbs ) before using 'reduce-dompath'! abort." );
+	return false;
+	}
+
+	if ( gLB == null || gLB.length == 0 || gLB.length != gGraph.numberOfVertices() ) {
+	// || TMain.getCMDParser().terminateCommandChain( "You need to calculate 'gLB' lower bounds ( using DEBUG-calc-anchor-lbs ) before using 'reduce-dompath'! abort." );
+	return false;
+	}
+
+	List<Fragment> vertices = gGraph.getFragments();
+
+	// calculate maximum weight on a source edge to a specific vertex...
+	System.out.println("... Calculate max source-edges to each vertex ...");
+	double[] maxInEdgeWeightTo = new double[vertices.size()];
+	for ( Fragment v : vertices ) {
+
+	if ( v.getOutgoingEdges().size() > 0 ) {
+
+	double wBuf = v.getOutgoingEdge(0).getWeight(); // we know that there is at least 1
+	for ( Loss e : v.getOutgoingEdges() ) {
+	if ( e == null )
+	break;
+
+	if ( e.getWeight() > wBuf )
+	wBuf = e.getWeight();
+	}
+
+	maxInEdgeWeightTo[v.getVertexId()] = wBuf;
+	} else
+	maxInEdgeWeightTo[v.getVertexId()] = Double.NEGATIVE_INFINITY;
+	}
+
+	// severAndSlideTo[u][v - firstVertOfSameColourAs[v]] is the maximum it could cost to delete an in-edge to any other vertex u of that colour and slide the subtree below u to being below v.
+	// The indexing system drops us from O(V^2) space to O(VD), where D is the maximum number of vertices of any colour.
+	// (Note: we require u and v to be of the same colour, so firstVertOfSameColourAs[v] == firstVertOfSameColourAs[u].)
+	double[] severAndSlideTo = new double[vertices.size()];  // "max cost" = "min score change", and we record the latter.
+	System.out.println("... Calculating max sever-and-slide costs for each vertex ...");
+	for ( int v=0; v < gGraph.numberOfVertices(); v++ )
+	severAndSlideTo[v] = Double.POSITIVE_INFINITY;
+
+	for ( int v=0; v < gGraph.numberOfVertices(); v++ ) {
+	for ( int u=firstVertIDOfSameColorAs[v]; u < firstVertIDOfNextColor[v]; u++ ) {
+	severAndSlideTo[v] = Math.min( severAndSlideTo[v], slideLb( u, v ) - maxInEdgeWeightTo[u] );
+	}
+	}
+
+
+	System.out.println("... Reducing edges ...");
+	int edgesDeleted = 0;
+	for ( Fragment y : vertices ) {
+
+	int yi = y.getVertexId();
+
+	// Lazily calculate dplb[a] for all a, given that y is in the solution tree.
+	double[] dplb = new double[gGraph.numberOfVertices()]; // dplb[i] is the minimum cost to force vertex i into the solution, given that y is already in it
+	int nextVertToProcess = firstVertIDOfNextColor[y.getVertexId()];
+
+	int iyex = 0; // index of e from x to y
+	while ( iyex <= y.getOutgoingEdges().size() ) {
+	// we only get valid edges ( no NULL entries ) here! :)
+	Loss yex = y.getOutgoingEdge( iyex ); // edge from y to x :)
+
+	int x = yex.getTarget().getVertexId();              // x-vertex-index
+
+	// Lazily calculate dplb[] up to what we need to handle x.
+	for ( ; nextVertToProcess < firstVertIDOfSameColorAs[x]; nextVertToProcess++ ) {
+	// calculate best connection bestConn(a , y)
+	// The next line gets executed O(v^2) times
+	double bestConn = gLB[nextVertToProcess][yi];
+	for ( Loss ep : vertices.get( nextVertToProcess ).getOutgoingEdges() ) {
+	if ( ep == null )
+	break;
+
+	// We're only allowed to try forcing in vertices that could not force y out of the graph (e.g. by removing all paths from the root to it).
+	// Vertices of colours greater than c[y] is a safe set of vertices to play with.
+	// (Actually that's not true -- we could try forcing in vertices of colours <= c[y] if we calculated lb[v][u] for all pairs of vertices instead of
+	// only for pairs with u < v.  In fact we could even try forcing in a different vertex of colour c[y], and this would be *cheaper*
+	// in general because we know which c[y]-coloured vertex is already in the graph (it's y!) -- but in this case we can still hope that all in-edges
+	// to y to get killed later on anyway, which will lead to (y, x) being deleted by reduce-unreach.)
+	if ( ep.getSource().getColor() > y.getColor() ) {
+	bestConn = Math.max( bestConn, dplb[ep.getSource().getVertexId()] + ep.getWeight() );
+	}
+	}
+
+	dplb[nextVertToProcess] = Math.min( 0.0, Math.min( bestConn, bestConn + severAndSlideTo[nextVertToProcess] ) );
+	assert ( dplb[nextVertToProcess] != Double.NaN ) : "Set value to NotANumber?!";
 
-        // initiate
-        this.newColFor = new ArrayList<Integer>( gGraph.maxColor()+1 );
-        for( int i=0; i<gGraph.maxColor()+1; i++ )
-            newColFor.add( -1 );
+	}
 
+	// For each vertex z of the same color as x:
+	boolean yexDeleted = false;
+	assert ( vertices.get(  firstVertIDOfSameColorAs[x] ).getColor() > vertices.get( firstVertIDOfSameColorAs[x]-1 ).getColor() ) : "FirstVertIDOfSameColorAs is not correctly managed! c[x] index color: " + vertices.get( firstVertIDOfSameColorAs[x] ).getColor() + " , c[x] index -1 color: " + vertices.get( firstVertIDOfSameColorAs[x]-1 ).getColor();
+	OuterLoop:
+	for ( int zi=firstVertIDOfSameColorAs[x]; zi < firstVertIDOfNextColor[x]; zi++ ) {
 
-        topSortColourToColour = new BitSet[gGraph.maxColor()+1];
-        for( int x=0; x<gGraph.maxColor()+1; x++ )
-            topSortColourToColour[x] = new BitSet( gGraph.maxColor()+1 );
+	for ( Loss vez : vertices.get( zi ).getOutgoingEdges() ) { // save to use here. If an edge is deleted, we will jump out
+	if ( vez == null )
+	break;
 
-        topSortColorToVertex = new LinkedList[gGraph.maxColor()+1];
-        for( int x=0; x<gGraph.maxColor()+1; x++ )
-            topSortColorToVertex[x] = new LinkedList<Fragment>(  );
+	Fragment v = vez.getSource();
+	// We're only allowed to mess with vertices that could not force y out of the graph.
+	if ( v.getColor() > y.getColor() ) {
 
-        // calculate, which color x can be reached by color y
-        // remember the color each vertex has
+	double oc = vez.getWeight() + dplb[v.getVertexId()];
+	if ( oc + slideLb( x, zi ) > yex.getWeight() ) {
+	// edge yex dies
+	gGraph.deleteLoss( yex );
+	yexDeleted = true;
+	edgesDeleted++;
 
-        for(Fragment v : gGraph.getFragments() ) {
+	break OuterLoop; // make sure we do not ONLY break the inner, but the first outer loop to!
+	}
+	}
+	}
+	}
 
-            topSortColorToVertex[v.getColor()].add( v ); // remember vertex color
+	if ( !yexDeleted )
+	iyex++;
+	// else: yex is swapped duo to the deletion-process
+	}
+	}
 
-            List<Loss> edges = v.getOutgoingEdges();
-			edge.ite
-            for( int i= v.gTELastEntry; i>=0; i-- ) {
-                topSortColourToColour[edges[i].getSource().getColor()].set( edges[i].gTargeFragment.getColor(), true );
-            }
-        }
+	gDeletedEdges += edgesDeleted;
+	// || gGraph.numberOfEdges() -= edgesDeleted; // I should check that for accuracy!
 
-        gNextColorID = gGraph.maxColor()+1-1;
-        gNexFragmentID = gGraph.numberOfVertices()-1;
+	System.out.println( "  ... deleted " + edgesDeleted + " new edges. Edges deleted " + gDeletedEdges );
 
-        //initiate
-        newIdFor = new ArrayList<Integer>( gGraph.numberOfVertices() );
-        for( int i=0; i<gGraph.numberOfVertices(); i++)
-            newIdFor.add( -1 );
+	return edgesDeleted > 0;
+	}
+	 */
 
-        // go in
-        for ( int i=0; i<gGraph.maxColor()+1; i++ )
-            topSort2( i );
 
-        assert( gNextColorID == -1 ) : "Assert-ERROR: renumber-vertices. nextColorID: " + gNextColorID+" is not " + (-1);
-        assert( gNexFragmentID == -1 ) : "Assert-ERROR: renumber-vertices. nexFragmentID: " + gNexFragmentID+" is not " + (-1);
-
-        renameVertices( true, doReCheck, gRememberVertexIDs );
-    }
-
-	*/
-
-    /**
-     * - is called when --checkPreconds is enabled
-     * - this method will terminate this program when the is at least 1 edge, that doesn't confirm the following
-     *   conditions, even though renumbering has been applied on the graph:
-     *   (i) e = edge ( u, v ) => u.ArrayIndex < v.ArrayIndex
-     *   (ii) u < v => u.color <= v.color
-     * @param errMsg : massage, that will be printed if above conditions are not fulfilled
-     */
-    private void DoCheckVerticesAreTopSorted( java.lang.String errMsg ) {
-
-        gTraversedVertex = new BitSet( gGraph.numberOfVertices() );
-        if ( !checkVerticesAreTopSorted( gGraph.getRoot() ) ) {
-            System.err.println(errMsg);
-            System.exit( 1 );
-        }
-    }
-
-    private boolean checkVerticesAreTopSorted( Fragment v ) {
-
-        if( !gTraversedVertex.get( v.getVertexId() ) ) {
-
-            gTraversedVertex.set( v.getVertexId(), true );
-
-            for ( Loss e : v.getOutgoingEdges() ) {
-
-                if( e == null )
-                    break;
-
-                if ( e.getSource().getVertexId() >= e.getTarget().getVertexId() ) {
-                    System.out.println( "Edge (" + e.getSource().getVertexId() + ", " + e.getTarget().getVertexId() + ") exists from a higher-numbered vertex to a lower-numbered vertex!\n");
-                    return false;
-                }
-
-                // Also check colours.
-                if ( e.getSource().getColor() >= e.getTarget().getColor() ) {
-                    System.out.println( "Edge (" + e.getSource().getVertexId() + ", " + e.getTarget().getVertexId() + ") exists from a higher-numbered colour (" + e.getSource().getColor() + ") to a lower-numbered colour (" + e.getTarget().getColor() + ")!\n" );
-                    return false;
-                }
-
-                return checkVerticesAreTopSorted( e.getTarget() );
-            }
-
-        }
-
-        return true;
-    }
-
+/////
     //////////////////////////////
-    ///--- Unrenumber Verts ---///
+///////--- Unrenumber Verts ---///////
+	//////////////////////////////
+/////
+
 
     /**
      * CMD: unrenumber-verts
      * -  restores the original positions and colors of vertices, when renumber-verts is used
-     */
+     * TODO: check for correctness
+	 * TODO: postponed?
+	 */
     public void unrenumberVerts() {
 
         if( gOriginal_Colors_And_IDs != null ) {
@@ -906,55 +977,19 @@ public class TReduce {
         }
     }
 
-    /**
-     * DEBUGING ONLY
-     * - swaps the entries inside gUB and gLB to fit the unrenembered-vertices
-     * CMD: --unrenumber-verts
-     * -  restores the original positions and colors of vertices, when renumber-verts is used
-     */
-    public void DEBUGunrenumberVerts() {
 
-        if( gOriginal_Colors_And_IDs != null ) {
+/////
+    ////////////////////////////////
+///////--- CALC-IMPLIED-EDGES ---///////
+	////////////////////////////////
+/////
 
-			List<Fragment> vertices = gGraph.getFragments();
-            int maxVertID = 0;
-            for ( int i=0; i<gOriginal_Colors_And_IDs.length; i++ )
-                if ( maxVertID < gOriginal_Colors_And_IDs[i][TReduce.POS] )
-                    maxVertID = gOriginal_Colors_And_IDs[i][TReduce.POS];
-
-            final int  nVerts = maxVertID - ( vertices.length - 1 );
-            List<Fragment> newArray = new Fragment[vertices.length];
-
-            // do the usual
-            for( int v=0; v< gGraph.numberOfVertices(); v++ ) {
-                vertices[v].getVertexId() = gOriginal_Colors_And_IDs[v][TReduce.POS] - nVerts;
-                vertices[v].getColor() = gOriginal_Colors_And_IDs[v][TReduce.COL];
-                newArray[vertices[v].getVertexId()] = vertices[v];
-            }
-
-            if ( shouldCheckPreconds ) {
-                System.out.println(" ... unrenumber-verts: checking for empty entries or wrong positioned entries ");
-                for ( int v=0; v<newArray.length; v++ ) {
-                    if ( newArray[v] == null || newArray[v].getVertexId() != v ) {
-                        System.err.println(" ... unrenumber-verts has errors! pos: ( " + v + " ) ,with entry: " + newArray[v] );
-                        System.exit(1);
-                    }
-                }
-            }
-
-            vertices = newArray;
-        } else {
-            System.err.println(" Use unrenumber ONLY, when you renumbered the graph. ");
-            return;
-        }
-    }
-
-    //////////////////////////////////
-    /// --- CALC-IMPLIED-EDGES --- ///
 
     /**
      * CMD: calc-implied-edges
      * return TRUE, if at least 1 edge has been deleted
+	 * TODO: check for correctness
+	 * TODO: postponed
      */
     ArrayList<Loss>[][] impliedEdges;       // impliedEdges[i][j].get[k] is the k-th descendant edge implied by edge of edge-array[i] at [j] position. Edge array i is 'targeLosss' of vertex at entry i.  Edges are not stored in any particular order.
     ArrayList<Integer>[][] colorsImpliedByEdge; // coloursImpliedByEdge[i] is a list of colours (in ascending order) that are implied by edge edgesBySource[i].
@@ -1238,11 +1273,17 @@ public class TReduce {
     }
 
 
-    /////////////////////////////////
-    /// --- SLIDE LOWER BOUND --- ///
+/////
+    ///////////////////////////////
+///////--- SLIDE LOWER BOUND ---///////
+	///////////////////////////////
+/////
+
 
     /*
      * runtime: O ( | edges | )
+     * TODO: check for correctness
+     * TODO: postponed
      */
     protected void recalculateEdgeEntryPositions() {
 
@@ -1299,8 +1340,10 @@ public class TReduce {
      * runtime: O( |targeLosss(v)| )
      * - set the attribute 'SvPos' of every target edge in v to the correct value
      * - this will be needed when the edge array has been sorted in any way
+     * TODO: check for correctness
+     * TODO: postponed
      */
-    protected void recalculateTargeLossEntryPositionsOfVertex( Fragment v ) {
+    protected void recalculateTargetEdgeEntryPositionsOfVertex( Fragment v ) {
 
         int i=0;
         for ( Loss e : v.getOutgoingEdges() )
@@ -1309,13 +1352,15 @@ public class TReduce {
 
     /*
      * runtime: O ( | edges | ) ? probably, maybe less, thanks to java
+     * TODO: check for correctness
+     * TODO: postponed
      */
-    protected void truncateTargeLossArraysOfVertices() {
+    protected void truncateTargetEdgeArraysOfVertices() {
 
 		List<Fragment> vertices = gGraph.getFragments();
         System.out.println(" TRUNCATING TARGET EDGE ARRAYS! ");
         for ( Fragment v : vertices ) {
-            v.truncateTargeLosssArray();
+            v.truncateTargetEdgeArray();
         }
 
         if ( shouldCheckPreconds ) {
@@ -1324,7 +1369,7 @@ public class TReduce {
             // in that case, i screwed up... somewhere
             int sum = 0;
             for ( Fragment v : vertices ) {
-                sum += v.gTargeLosss.length;
+                sum += v.getOutgoingEdges().size();
             }
 
             if ( sum != gGraph.numberOfEdges() ) {
@@ -1341,6 +1386,8 @@ public class TReduce {
     /**
      * Calculates 'firstVertIDOfSameColorAs' and 'firstVertIDOfNextColor'
      * - is called by 'renameVerts', when using it with 'calcInvert == true'
+	 * TODO: check for correctness
+	 * TODO: postponed
      */
     protected void calcFirstVertOfSameColor() {
 
@@ -1351,12 +1398,9 @@ public class TReduce {
         int firstVert = gGraph.getRoot().getVertexId();
         for ( int i=1; i< gGraph.numberOfVertices(); i++ ) {
 
-			if ( i == 663 )
-				System.err.println();
+            if ( vertices.get( i-1 ).getColor() != vertices.get( i ).getColor() ) {
 
-            if ( vertices[i-1].getColor() != vertices[i].getColor() ) {
-
-                assert ( vertices[i].getColor() == vertices[i-1].getColor() + 1 ); //DEBUG: We depend on this I think...
+                assert ( vertices.get( i ).getColor() == vertices.get( i-1 ).getColor() + 1 ); //DEBUG: We depend on this I think...
                 for ( int j = firstVert; j < i; j++ )
                     firstVertIDOfNextColor[j] = i;
 
@@ -1368,15 +1412,18 @@ public class TReduce {
 
 		// don't forget the last vertex!
 		// and yes, that vertex ID doesn't exist.
-		firstVertIDOfNextColor[vertices.length-1] = vertices.length;
+		firstVertIDOfNextColor[vertices.size()-1] = vertices.size();
     }
 
 	/**
 	 * calculates the slide-lower-bound
+	 * IS SPEED UP BY TRUNCATING TARGET EDGE ARRAYS!
 	 * needs 'firstVertIDOfSameColorAs' to be calculated. That is done while using 'renumber-verts', by default
 	 * @param u
 	 * @param v
 	 * @return
+	 * TODO: check for correctness
+	 * TODO: postponed
 	 */
     final double slideLb ( int u, int v ) {
 			return m_[u][v - firstVertIDOfSameColorAs[v]];
@@ -1406,27 +1453,27 @@ public class TReduce {
 
         if ( gUB == null || gUB.length <= 0 ) {
             System.err.println(" You must compute vertex upper bounds for using rec-slide-lbs! ");
-            TMain.getCMDParser().bTerminateCurrentCommands = true;
+            // || TMain.getCMDParser().bTerminateCurrentCommands = true;
             return;
         }
 
 		if ( lbCol == null || lbCol.length <= 0 ) {
 			System.err.println( " You must compute anchor to color lower bounds ( using calc-anc-col-lbs ) before using rec-slide-lbs!");
-			TMain.getCMDParser().bTerminateCurrentCommands = true;
+			// || TMain.getCMDParser().bTerminateCurrentCommands = true;
 			return;
 		}
 
 		List<Fragment> vertices = gGraph.getFragments();
         CEdgeColorEndpointComperator comp = new CEdgeColorEndpointComperator();
         // make sure, there are no more null-edge entries!
-        truncateTargeLossArraysOfVertices();
+        truncateTargetEdgeArraysOfVertices();
 
         ArrayList<Fragment>[] vertsOfColor = new ArrayList[gGraph.maxColor()+1];
         for ( int i=0; i<gGraph.maxColor()+1; i++ )
             vertsOfColor[i] = new ArrayList<Fragment>(  );
 
         for( int i=0; i< gGraph.numberOfVertices(); i++ ) {
-            vertsOfColor[vertices[i].getColor()].add( vertices[i] );
+            vertsOfColor[vertices.get( i ).getColor()].add( vertices.get( i ) );
         }
 
         int[] colorOrder = new int[gGraph.maxColor()+1];
@@ -1434,9 +1481,9 @@ public class TReduce {
         int c = 0;
         for ( int i = gGraph.numberOfVertices()-1; i >= 0; i-- ) {
 
-            if ( !seenColor[ vertices[i].getColor() ] ) {
-                colorOrder[c++] = vertices[i].getColor();
-                seenColor[ vertices[i].getColor() ] = true;
+            if ( !seenColor[ vertices.get( i ).getColor() ] ) {
+                colorOrder[c++] = vertices.get( i ).getColor();
+                seenColor[ vertices.get( i ).getColor() ] = true;
             }
         }
 
@@ -1446,7 +1493,7 @@ public class TReduce {
         m_ = new double[gGraph.numberOfVertices()][];
         for ( int i=0; i< gGraph.numberOfVertices(); i++ ) {
 
-            m_[i] = new double[ vertsOfColor[ vertices[i].getColor() ].size() ];
+            m_[i] = new double[ vertsOfColor[ vertices.get( i ).getColor() ].size() ];
             for ( int j=0; j<m_[i].length; j++ )
                 m_[i][j] = Double.NEGATIVE_INFINITY;
         }
@@ -1464,8 +1511,8 @@ public class TReduce {
             // First, for each vertex of this colour, sort all its out-edges by colour.  We'll undo this at the end.
             for ( Fragment u : vertsOfColor[col] ) {
                 // the sorting is slightly faster duo to the decreased array sizes ( so decreasing the size & sorting is faster )
-                Arrays.sort( u.gTargeLosss, comp );
-                recalculateTargeLossEntryPositionsOfVertex( u );
+                Collections.sort( u.getOutgoingEdges(), comp );
+                recalculateTargetEdgeEntryPositionsOfVertex( u );
             }
 
 			// System.out.println( " <> Calculating recursive slide bound for the " + vertsOfColor[col].size() + " vertices of colour " + col );
@@ -1480,33 +1527,43 @@ public class TReduce {
                         best = 0.0;
                     } else {
 
-                        Loss[] vEdges = v.gTargeLosss;
-                        int startIndex = 0; // start Index in vEdges!
+                        List<Loss> vEdges = v.getOutgoingEdges();
+						ListIterator<Loss> it = vEdges.listIterator( 0 );
+						Loss lastLoss = it.next();
+
+                        //int startIndex = 0; // start Index in vEdges!
                         double worstForColor = 0.0;
                         double total = 0.0;
-                        for ( Loss ue : u.gTargeLosss ) {  // vertex us edge == ue
+                        for ( Loss ue : u.getOutgoingEdges() ) {  // vertex us edge == ue
 							// ue cannot be null here; we truncated EVERY target edge array of every vertex :)
 
                             // Skip any v-children of irrelevant colours
-                            while ( ( startIndex <= v.gTELastEntry ) && ( ue.gTargeFragment.getColor() > vEdges[startIndex].gTargeFragment.getColor() ) ) {
-                                startIndex++;
+                            while ( ( it.hasNext() ) && ( ue.getTarget().getColor() > lastLoss.getTarget().getColor() ) ) {
+                                // startIndex++;
+								lastLoss = it.next();
                             }
 
                             // Always try just deleting this edge and any subtree under it.
                             // We have to also consider that the edge may not be present at all, in which case the best is 0, so we take the minimum of this and 0.
-                            double bestForChild = -gUB[ue.gTargeFragment.getVertexId()];
-							if ( startIndex > v.gTELastEntry || ue.gTargeFragment.getColor() < vEdges[startIndex].gTargeFragment.getColor() ) {
+                            double bestForChild = -gUB[ue.getTarget().getVertexId()];
+							if ( !it.hasNext() || ue.getTarget().getColor() < lastLoss.getTarget().getColor() ) {
 								// There are no more children of v to consider for the current color
 							} else {
 								// v has children of the same colour as this child of u.  Try all of them.
-							 	bestForChild += Math.max( 0.0, lbCol[vi][vEdges[startIndex].gTargeFragment.getColor()] );
-								bestForChild = Math.max( bestForChild, lbCol[vi][vEdges[startIndex].gTargeFragment.getColor()] + worstSlideLb[ue.gTargeFragment.getVertexId()] );
+							 	bestForChild += Math.max( 0.0, lbCol[vi][lastLoss.getTarget().getColor()] );
+								bestForChild = Math.max( bestForChild, lbCol[vi][lastLoss.getTarget().getColor()] + worstSlideLb[ue.getTarget().getVertexId()] );
 
-								for ( int e = startIndex; e < vEdges.length; e++ ) {
-									if ( vEdges[e].gTargeFragment.getColor() != ue.gTargeFragment.getColor() )
+								// it is ugly, but i need to make sure I get the last edge checked, too
+								for ( ;; ) {
+									if ( lastLoss.getTarget().getColor() != ue.getTarget().getColor() )
 										break;
 
-									bestForChild = Math.max( bestForChild, vEdges[e].getWeight() + slideLb( ue.gTargeFragment.getVertexId(), vEdges[e].gTargeFragment.getVertexId() ) );
+									bestForChild = Math.max( bestForChild, lastLoss.getWeight() + slideLb( ue.getTarget().getVertexId(), lastLoss.getTarget().getVertexId() ) );
+
+									if ( it.hasNext() )
+										lastLoss = it.next();
+									else
+										break;
 								}
 							}
 
@@ -1514,7 +1571,7 @@ public class TReduce {
                             worstForColor = Math.min( worstForColor, bestForChild - ue.getWeight() );
 
                             // Have we finished processing this color?      || get the edge from UEs parent, that comes after UE
-                            if ( ue.gSvPos == u.gTELastEntry || u.gTargeLosss[ue.gSvPos+1].gTargeFragment.getColor() > ue.gTargeFragment.getColor() ) {
+                            if ( ue.gSvPos == u.getOutgoingEdges().size()-1 || u.getOutgoingEdge( ue.gSvPos+1 ).getTarget().getColor() > ue.getTarget().getColor() ) {
                                 // yes we have.
                                 total += worstForColor;
                                 worstForColor = 0.0;
@@ -1553,6 +1610,8 @@ public class TReduce {
 
 	/**
 	 * CMD: calc-anc-col-lbs
+	 * TODO: check for correctness
+	 * TODO: postponed
 	 */
 	public void calcAnchorToColorLowerBounds() {
 
@@ -1562,9 +1621,9 @@ public class TReduce {
 			// assure, that reduce-unreach has been run. Meaning, that there cannot be edges without source edges but target edges!
 			// remember: that is true for the root, though.
 			for ( int v=1; v<gGraph.numberOfVertices(); v++ ) {
-				if ( !vertices[v].hasSource() && vertices[v].hasTarget() ) {
+				if ( ( vertices.get( v ).getIncomingEdges().size() == 0 ) && ( vertices.get( v ).getOutgoingEdges().size() > 0 ) ) {
 					System.err.println(" You MUST run reduce-unreach to calculate AnchorToColorLowerbounds!");
-					TMain.getCMDParser().bTerminateCurrentCommands = true;
+					// || TMain.getCMDParser().bTerminateCurrentCommands = true;
 					return;
 				}
 			}
@@ -1582,16 +1641,16 @@ public class TReduce {
 		for ( int ui=0; ui<gGraph.numberOfVertices(); ui++ ) {
 			// The only unreachable vertices we handle correctly are the "directly" unreachable ones -- those having no in-edges.
 			// So ensure that reduce-unreach has been called beforehand!
-			Fragment uv = vertices[ui];
-			 if ( uv.hasSource() ) {
+			Fragment uv = vertices.get( ui );
+			 if ( uv.getIncomingEdges().size() > 0 ) {
 				 lbCol[ui][uv.getColor()] = 0.0; // Not sure if this is ever useful but it might be here
 
 				 // Update scores for each colour using all outgoing edges
-				 for ( Loss ue : uv.gTargeLosss ) {
+				 for ( Loss ue : uv.getOutgoingEdges() ) {
 					 if ( ue == null )
 						 break;
 
-					 lbCol[ui][ue.gTargeFragment.getColor()] = Math.max( lbCol[ui][ue.gTargeFragment.getColor()], ue.getWeight() );
+					 lbCol[ui][ue.getTarget().getColor()] = Math.max( lbCol[ui][ue.getTarget().getColor()], ue.getWeight() );
 				 }
 
 				 // For each colour, see whether we can do better by connecting to it from some vertex on every path from the root to u.
@@ -1612,8 +1671,12 @@ public class TReduce {
 	}
 
 
-    ////////////////////////////////////////
-    ///	--- TIM - VERTEX UPPER BOUNDS ---///
+/////
+    ///////////////////////////////////////
+///////--- TIM - VERTEX UPPER BOUNDS ---///////
+	///////////////////////////////////////
+/////
+
 
     protected int gVerticesZeroUpperBoundCount = 0;
     protected int gEdgesDeletedByZeroUpperBounds = 0;
@@ -1628,6 +1691,7 @@ public class TReduce {
      * - calculate the upper bound score of every vertex using tims-method
      * ~ sum up values by calculating the highest score reachable from a vertex by only using the highest edge+vertex score of 1 color,
      *   but for every color reachable from that vertex
+	 *   TODO: check for correctness, but certainly working
      */
     public void doTimVertexUpperBounds() {
 
@@ -1660,6 +1724,7 @@ public class TReduce {
     /**
      * recursive upper bound calculation based on tims-method
      * @param v: vertex to start/proceed from
+	 * TODO: check for correctness, but certainly working
      */
     private void timVertexUpperBound( Fragment v ) {
 
@@ -1667,7 +1732,7 @@ public class TReduce {
             // not visited yet
 
 			/* Make sure, that every vertex 'below' / after the current vertex has a upper bound value applied */
-            Loss[] edges = v.getTargeLosss();
+            List<Loss> edges = v.getOutgoingEdges();
 
             TIntDoubleHashMap VertexColors = new TIntDoubleHashMap( (int)( gGraph.maxColor()+1*1.5 ) );
 
@@ -1678,14 +1743,14 @@ public class TReduce {
                     break;
 
                 // get down to leafs/ lower vertices first
-                timVertexUpperBound( e.gTargeFragment );
+                timVertexUpperBound( e.getTarget() );
 
-                if( ( buffer = VertexColors.get( e.gTargeFragment.getColor() ) ) != null ) {
+                if( ( buffer = VertexColors.get( e.getTarget().getColor() ) ) != null ) {
                     // i can kick out any higher value on a color! so there is no need to keep old values
-                    VertexColors.put( e.gTargeFragment.getColor(), Math.max( buffer, e.getWeight() + gUB[e.gTargeFragment.getVertexId()] ) );
+                    VertexColors.put( e.getTarget().getColor(), Math.max( buffer, e.getWeight() + gUB[e.getTarget().getVertexId()] ) );
                 } else {
                     // System.out.println(" tim vertex double buffer got NULL");
-					VertexColors.put( e.gTargeFragment.getColor(), e.getWeight() + gUB[e.gTargeFragment.getVertexId()] );
+					VertexColors.put( e.getTarget().getColor(), e.getWeight() + gUB[e.getTarget().getVertexId()] );
                 }
             }
 
@@ -1702,9 +1767,9 @@ public class TReduce {
             x = Math.min( x, this.gUB[v.getVertexId()] );
 
             // Compute some interesting stats
-            if( (x == 0.0) && (v.getTargeLosssLength() > 0) ) {
+            if( (x == 0.0) && (v.getOutgoingEdges().size() > 0) ) {
                 this.gVerticesZeroUpperBoundCount++;
-                this.gEdgesDeletedByZeroUpperBounds += v.getTargeLosssLength();
+                this.gEdgesDeletedByZeroUpperBounds += v.getOutgoingEdges().size();
             }
 
             this.gHighestUpperBoundScore = Math.max( this.gHighestUpperBoundScore, x );
@@ -1714,8 +1779,13 @@ public class TReduce {
         }
     }
 
+
+/////
     //////////////////////////////////
-    ///--- SEBASTIAN-VERTEX-UBS ---///
+///////--- SEBASTIAN-VERTEX-UBS ---///////
+	//////////////////////////////////
+/////
+
 
     // reachableEdges[vertex.APos].get(x)[y]
     // are the vertex v's reachable edges of a vertex x ( x reachable from v, x's target edges ), the y one of those edges
@@ -1728,6 +1798,7 @@ public class TReduce {
      * CMD: seb-vertex-ubs
      * starter function
      * - upper bound scoreing procedure for solving he maximum colorful subtree problem
+	 * TODO: check for correctness
      */
     public void doSebastianVertexUpperBounds() {
 
@@ -1736,6 +1807,9 @@ public class TReduce {
         this.gEdgesDeletedByZeroUpperBounds = 0;
         totalStrengtheningSebUpperBound = 0.0;
         totalSneakyStrengtheningSebUpperBound = 0.0;
+
+		if ( !SInEdgesToColor.isInitiated )
+			SInEdgesToColor.initiate();
 
         /*
         // ~ recreate that array. That way, we don't need any other structure watching whether a vertex has been accessed
@@ -1755,12 +1829,18 @@ public class TReduce {
      * processing function
      * may only be called from doSebastianVertexUpperBounds()
      * - iterates of every vertex of graph g
+	 * TODO: check for correctness, but probably working
      */
     private void sebastianVertexUpperBounds() {
 
         // i create a new edge that is just right know to initiate null-pointers!
 		List<Fragment> vertices = gGraph.getFragments();
-        final Loss nullEdge = new Loss( new Fragment( gGraph.numberOfVertices(), gGraph.maxColor()+1+1, 1 ), new Fragment( gGraph.numberOfVertices(), gGraph.maxColor()+1+1, 1 ), 0.0 );
+
+		Fragment nonExistingVertex = new Fragment( gGraph.numberOfVertices() );
+		nonExistingVertex.setColor( gGraph.maxColor()+1 +1 ); // number of colors + 1
+
+        final Loss nullEdge = new Loss( nonExistingVertex, nonExistingVertex );
+		nullEdge.setWeight( 0.0 );
 
         Loss[][] bestInEdge = new Loss[gGraph.numberOfVertices()][]; // i will create the 2. dimension, if v is not a leaf
 
@@ -1770,7 +1850,7 @@ public class TReduce {
         // for every vertex of graph g
         for( int vi =  gGraph.numberOfVertices()-1; vi >= 0; vi-- ) {
 
-            Fragment v = vertices[vi];
+            Fragment v = vertices.get( vi );
             double x = 0.0;
             bestColorInEdgeToV = bestInEdge[vi];
 
@@ -1802,12 +1882,12 @@ public class TReduce {
             gUB[vi] = Math.min( gUB[vi], x );
 
             if ( ( x == 0.0 ) && (!v.isLeaf()) ) {
-                this.gEdgesDeletedByZeroUpperBounds += v.gTELastEntry+1;
+                this.gEdgesDeletedByZeroUpperBounds += v.getOutgoingEdges().size();
             }
             gHighestSebUpperBoundScoreEver = Math.max(gHighestSebUpperBoundScoreEver, x);
 
             // for each parent u of v, reached by using v's source edges...
-            for( Loss e : v.getSourceEdges() ) {
+            for( Loss e : v.getIncomingEdges() ) {
 
                 if( e == null )
                     break;
@@ -1834,7 +1914,7 @@ public class TReduce {
                         if( bestColorInEdgeToV[c].getWeight() > bestColorInEdgeToU[c].getWeight())
                             bestColorInEdgeToU[c] = bestColorInEdgeToV[c];
 
-                        if ( bestColorInEdgeToU[c].gTargeFragment == v ) {
+                        if ( bestColorInEdgeToU[c].getTarget() == v ) {
                             // The best in-edge for colour k is actually the one from v's child u -- so update the maxInEdge for this edge.
                             // This is (the only place) where we calculate new values for maxInEdge.
                             if ( bestColorInEdgeToU[c].getWeight() <= e.getWeight() )
@@ -1858,6 +1938,7 @@ public class TReduce {
      * strengtened version of sebastian vertex upper bounds
      * altough it is possible to combine both methods into 1 single method, the unstrengthend will be 5 times faster
      * duo to some access optimizations. Therefore, it is wise to let them independent
+	 * TODO: check for correctness, but probably working
      */
     private void strengthenedSebastianVertexUpperBounds() {
 
@@ -1872,7 +1953,7 @@ public class TReduce {
         // for every vertex of graph g
         for( int vi =  gGraph.numberOfVertices()-1; vi >= 0; vi-- ) {
 
-            Fragment v = vertices[vi];
+            Fragment v = vertices.get( vi );
             double x = 0.0;
             bestColorInEdgeToV = bestInEdgeToColor[vi];
 
@@ -1902,12 +1983,12 @@ public class TReduce {
             gUB[vi] = Math.min( gUB[vi], x );
 
             if ( ( x == 0.0 ) && (!v.isLeaf()) ) {
-                this.gEdgesDeletedByZeroUpperBounds += v.gTELastEntry+1;
+                this.gEdgesDeletedByZeroUpperBounds += v.getOutgoingEdges().size();
             }
             gHighestSebUpperBoundScoreEver = Math.max(gHighestSebUpperBoundScoreEver, x);
 
             // for each parent u of v, reached by using v's source edges...
-            for( Loss e : v.getSourceEdges() ) {
+            for( Loss e : v.getIncomingEdges() ) {
 
                 if( e == null )
                     break;
@@ -1955,11 +2036,14 @@ public class TReduce {
     double totalSneakyStrengtheningSebUpperBound = 0.0;
     double totalStrengtheningSebUpperBound = 0.0;
 
-    // Tims' strengthening of Sebastian's original bound.
+    /* Tims' strengthening of Sebastian's original bound.
     // The idea is that if the graph we have is not a subtree, then we can find a bound
     // on how many edges need to be changed, and from that, find a bound on how much we can safely reduce the score by.
-    //TOD: The only way we refer to sebUbBestInEdges[] is via sebUbBestInEdges[v], so we could avoid a layer of indirection by
-    // passing a ref to sebUbBestInEdges[v] directly.
+    // TODO: The only way we refer to sebUbBestInEdges[] is via sebUbBestInEdges[v], so we could avoid a layer of indirection by
+    // TODO: passing a ref to sebUbBestInEdges[v] directly.
+    *
+    *  TODO: check for correctness, but probably working
+    */
     private double calcSebVubStrengthFor(Fragment v, SInEdgesToColor[] bestInEdgeToColor) {
 
         // calculate tentative UB ( same as unstrengthend )
@@ -1978,7 +2062,7 @@ public class TReduce {
             colorsFromColor[i] = new ArrayList<Integer>( gGraph.maxColor()+1 ); // to eliminate reallocation!
 
         for( int i=0; i<gGraph.maxColor()+1; i++ ) {
-            if ( bestInEdgeToColor[i] != null && bestInEdgeToColor[i].besLoss.getSource() != SInEdgesToColor.zeroVertex ) {
+            if ( bestInEdgeToColor[i] != null && bestInEdgeToColor[i].besLoss.getSource() != SInEdgesToColor.ZERO_VERTEX ) {
                 colorsFromColor[ bestInEdgeToColor[i].besLoss.getSource().getColor() ].add( i );
             }
         }
@@ -2020,7 +2104,7 @@ public class TReduce {
                 double inEdgeRepairCost;
                 double maxInEdge = bestInEdgeToColor[colorsFromColor[i].get( j )].maxInEdge; //HACK: maybe get rid of this var altogether.
 
-                if ( ( i > v.getColor() ) && ( bestInEdgeToColor[i].besLoss.getSource() == SInEdgesToColor.zeroVertex ) && ( !colorsFromColor[i].isEmpty() ) ) {
+                if ( ( i > v.getColor() ) && ( bestInEdgeToColor[i].besLoss.getSource() == SInEdgesToColor.ZERO_VERTEX ) && ( !colorsFromColor[i].isEmpty() ) ) {
                     // We have no in-edges to this colour so far but at least one out-edge, so we can add in the best edge to this vertex (which will be negative, since otherwise it would already be present)
                     //HACK: We no longer compute this exactly because it's too expensive -- instead we just take
                     // the second-best edge to this colour, which is a UB.
@@ -2029,7 +2113,7 @@ public class TReduce {
 
                     inEdgeRepairCost = -maxInEdge;
                 } else {
-                    if ( ( i > v.getColor() ) && ( bestInEdgeToColor[i].besLoss.getSource() != SInEdgesToColor.zeroVertex ) && ( bestInEdgeToColor[i].besLoss.gTargeFragment != u ) && ( !colorsFromColor[i].isEmpty() ) && safeToMessWithInEdgeToColour[i] ) {
+                    if ( ( i > v.getColor() ) && ( bestInEdgeToColor[i].besLoss.getSource() != SInEdgesToColor.ZERO_VERTEX ) && ( bestInEdgeToColor[i].besLoss.getTarget() != u ) && ( !colorsFromColor[i].isEmpty() ) && safeToMessWithInEdgeToColour[i] ) {
 
                         inEdgeRepairCost = bestInEdgeToColor[i].besLoss.getWeight() - maxInEdge;
                         totalSneakyStrengtheningSebUpperBound += inEdgeRepairCost;
@@ -2062,6 +2146,7 @@ public class TReduce {
      * resize ubs array to proper size while keeping already applied values
      * @param size: array size
      * @param val: initial value applied to new entries
+	 * WORKING
      */
     private void resizeUpperBounds( int size, double val ) {
 
@@ -2083,11 +2168,18 @@ public class TReduce {
         this.gUB = buffer;
     }
 
+
+/////
     ////////////////////////
-    ///--- ANCHOR-LBS ---///
+///////--- ANCHOR-LBS ---///////
+	////////////////////////
+/////
+
 
 	/**
 	 * CMD: DEBUG-calc-anchor-lbs
+	 * TODO: check for correctness
+	 * TODO: postponed
 	 */
     public void DoDEBUGcalcAnchorLowerBounds() {
 
@@ -2109,6 +2201,16 @@ public class TReduce {
         }
     }
 
+	/**
+	 *
+	 * @param u
+	 * @param v
+	 * @param memo
+	 * @param seen
+	 * @return
+	 * TODO: check for correctness
+	 * TODO: postponed
+	 */
     private double DEBUGanchorLowerBound( int u, int v, double[] memo, boolean[] seen ) {
 
         if ( u > v )
@@ -2119,8 +2221,8 @@ public class TReduce {
             // We require that there be no unreachable edges in the graph.
             //// This is assured if every vertex is either (a) the root, (b) has at least 1 in-edge, or
             //// (c) has no in-edges and no out-edges.  The following assert checks this.
-            Fragment uv = vertices[u];
-            assert( uv.hasSource() || ( !uv.hasSource() && ( !uv.hasTarget() || ( uv.getVertexId() == 0 ) ) ) );
+            Fragment uv = vertices.get( u );
+            assert( uv.getIncomingEdges().size() > 0 || ( uv.getIncomingEdges().size() == 0 && ( uv.getOutgoingEdges().size() == 0 || ( uv.getVertexId() == 0 ) ) ) );
 
             double x; // it will be set in any case.
 
@@ -2129,7 +2231,7 @@ public class TReduce {
             } else {
 
                 double north;
-                if( !uv.hasSource() ) {
+                if( uv.getIncomingEdges().size() == 0 ) {
                     // This vertex has no in-edges: Either it's the root, or it has no out-edges either.
                     // Either way, there's no possibility to connect v north of it.
                     north = Double.NEGATIVE_INFINITY;
@@ -2151,7 +2253,7 @@ public class TReduce {
                 double direct = Double.NEGATIVE_INFINITY;
                 // And is there actually an edge directly from u to v?  We could also choose that.
                 // We do this the hard way...
-                for( Loss e : vertices[v].getOutgoingEdges() ) {
+                for( Loss e : vertices.get( v ).getOutgoingEdges() ) {
                     if ( e == null )
                         break;
 
@@ -2162,7 +2264,7 @@ public class TReduce {
                 }
 
                 // If u is root-reachable and v == u, then we trivially can force v in for 0.
-                if ( u == v && vertices[v].hasSource() )
+                if ( u == v && vertices.get( v ).getIncomingEdges().size() > 0 )
                     direct = 0.0;
 
                 x = ( north > direct ) ? north : direct;
@@ -2175,8 +2277,13 @@ public class TReduce {
         return memo[u];
     }
 
+
+/////
     ///////////////////////////////
-    /// --- GETTER & SETTER --- ///
+/////// --- GETTER & SETTER --- ///////
+	///////////////////////////////
+/////
+
 
     public void enableSebVertexUbsStrengthening() {
 
@@ -2205,347 +2312,8 @@ public class TReduce {
     ///////////////////////
     /// --- TESTING --- ///
 
-	public TReduce keepGraphBelowDeepCopy( final int vID ) {
 
-		System.out.println(" ->| keeping graph below as deep copy " + vID + " |<- ");
-		List<Fragment> vertices = gGraph.getFragments();
-
-		if ( vID < 0 || vID >= gGraph.numberOfVertices() )
-			throw new IndexOutOfBoundsException( "Cannot keep graph below " + vID + ": out of bounds!" );
-
-		DoCheckVerticesAreTopSorted( "Somehow the vertices are not top-sorted!" );
-
-		// create new vertex array
-		// we checked, that our vertices are top sorted. Therefore, there can only be vertices below vId in the graph below!
-		HashSet<Fragment> reachableVerts = doGetReachableVerticesBelowAsHashTable( vertices[vID], vertices );
-		HashSet<Integer> reachableVertsId = new HashSet<Integer>(  );
-		for ( Fragment v : reachableVerts ) {
-			reachableVertsId.add( v.getVertexId() );
-		}
-
-		// we create a new vertex array. Instead of copying the old one, we re-create every vertex as
-		// new instance to be used as deep-copy in the return-graph
-		List<Fragment> vertsBelow = new Fragment[vertices.length - vID ];
-		for ( int i=0; i<( vertices.length - vID); i++ ) {
-			vertsBelow[i] = vertices[i+vID].deepCopy();
-		}
-
-		LinkedList<Fragment> vertsToDislink = new LinkedList<Fragment>();
-
-		// vertsBelow and reachableVerts are both topsorted.
-		// therefore, i will find vertices in vertsBelow, that are not in reachableverts
-		// by skipping
-
-		int ui = vertsBelow.length;  // just for debugging
-		for ( int i=0; i<vertsBelow.length; i++ ) {
-
-			if ( reachableVertsId.contains( vertsBelow[i].getVertexId() ) == false ) {
-				ui--;
-				vertsToDislink.add( vertsBelow[i] );
-			}
-		}
-
-		assert ( reachableVerts.size() == ui ) : " you must have compared every reachable vertex. compared: " + ui + ", of " + reachableVerts.size();
-		HashSet<Fragment> vertsToDislinkSet = new HashSet<Fragment>( vertsToDislink );
-
-		// if there is a vertex in 'vertsToDislink', then i don't have to copy edges from that vertex :)
-		// we do now create deep-copies of all edges that are relevant
-		int i=0;
-		for ( Fragment v : vertsBelow ) {
-
-			if ( !vertsToDislinkSet.contains( v ) ) {
-				for ( Loss e : vertices[i+vID].gTargeLosss ) {
-					if ( e == null )
-						break;
-
-					// this will create a new edge inside the new graph with its new vertices
-					new Loss( vertsBelow[ e.getSource().getVertexId() - vID ], vertsBelow[ e.gTargeFragment.getVertexId() - vID ], e.getWeight() );
-				}
-			}
-
-			i++;
-		}
-
-		// now correct the array-position value
-		for ( i=0; i<vertsBelow.length; i++ )
-			vertsBelow[i].getVertexId() = i;
-
-		// get the correct edge count of the remaining vertices
-		int newEdgeCount = 0;
-		for ( Fragment v : vertsBelow )
-			newEdgeCount += v.gTELastEntry + 1;
-
-		// now correct the getVertexId() values of the vertices
-		i=0;
-		for ( Fragment v : vertsBelow ) {
-			v.getVertexId() = i++;
-		}
-
-		FGraph graph = new FGraph( vertsBelow, newEdgeCount );
-		graph.setColorCount( vertsBelow[vertsBelow.length-1].getColor()+1 );
-		TReduce red = new TReduce( graph );
-
-		System.out.println(" ->| the new graph contains " + vertsBelow.length + " vertices with " + newEdgeCount + " edges. |<- ");
-		System.out.println(" ->| the new graph has " + reachableVerts.size() + " reachable vertices from root");
-
-		return red;
-	}
-
-    /**
-     * CMD: --keep-vertices-below
-     * @param vID
-     */
-	public void keepGraphBelow( int vID ) {
-
-		System.out.println(" ->| keeping graph below " + vID + " |<- ");
-		List<Fragment> vertices = gGraph.getFragments();
-
-		if ( vID < 0 || vID > gGraph.numberOfVertices() )
-			throw new IndexOutOfBoundsException( "Cannot keep graph below " + vID + ": out of bounds!" );
-
-		if ( vertices[vID].isLeaf() ) {
-			TMain.getCMDParser().terminateCommandChain( "Cannot keep graph below a leaf! No edges!" );
-			System.out.println(" ABORTED ");
-			return;
-		}
-
-		DoCheckVerticesAreTopSorted( "Somehow the vertices are not top-sorted!" );
-
-		// create new vertex array
-		// we checked, that our vertices are top sorted. Therefore, there can only be vertices below vId in the graph below!
-		Set<Fragment> reachableVerts = doGetReachableVerticesBelowAsHashTable( vertices[vID], vertices );
-
-        List<Fragment> vertsBelow = new Fragment[vertices.length - vID ];
-        System.arraycopy( vertices, vID, vertsBelow, 0, vertices.length - vID );
-
-        LinkedList<Fragment> vertsToDislink = new LinkedList<Fragment>();
-
-        // vertsBelow and reachableVerts are both topsorted.
-        // therefore, i will find vertices in vertsBelow, that are not in reachableverts
-        // by skipping
-
-        int ui = vertsBelow.length;  // just for debugging
-        for ( int i=0; i<vertsBelow.length; i++ ) {
-
-            if ( reachableVerts.contains( vertsBelow[i] ) == false ) {
-                ui--;
-                vertsToDislink.add( vertsBelow[i] );
-            }
-        }
-
-        assert ( reachableVerts.size() == ui ) : " you must have compared every reachable vertex. compared: " + ui + ", of " + reachableVerts.size();
-
-        // get rit of every edge
-        for ( Fragment v : vertsToDislink ) {
-
-            Loss[] edges = v.getOutgoingEdges();
-            while ( v.gSELastEntry >= 0 )
-                edges[0].delete();
-
-            edges = v.gTargeLosss;
-            while ( v.gTELastEntry >= 0 )
-                edges[0].delete();
-
-            assert ( v.gTELastEntry == -1 && v.gSELastEntry == -1 ) : "v still has edges";
-        }
-
-		// now, throw out edges that lead to vertices of the old graph
-		for ( Fragment v : vertsBelow ) {
-
-			// i only have to check source edges, cause they are the only ones that can get higher than our new root vertex
-			Loss[] edges = v.getOutgoingEdges();
-			int last = v.gSELastEntry;
-			for ( int i=0; i<=last; ) {
-				if ( edges[i].getSource().getVertexId() < vID ) {
-					edges[i].delete();
-					last--;
-				} else
-					i++;
-			}
-		}
-
-		// get the correct edge count of the remaining vertices
-		int newEdgeCount = 0;
-		for ( Fragment v : vertsBelow )
-				newEdgeCount += v.gTELastEntry + 1;
-
-		// now correct the getVertexId() values of the vertices
-		int i=0;
-		for ( Fragment v : vertsBelow ) {
-			v.getVertexId() = i++;
-		}
-
-		// fix the graph, so that it will work again
-		gGraph.setVertices( vertsBelow ); // the root is corrected here, too
-		gGraph.seLossCount( newEdgeCount );
-
-		System.out.println(" ->| the new graph contains " + vertsBelow.length + " vertices with " + newEdgeCount + " edges. |<- ");
-        System.out.println(" ->| the new graph has " + reachableVerts.size() + " reachable vertices from root");
-		System.err.println(" REMEMBER: you cannot use UNRENUMBER anymore! ");
-	}
-
-	/**
-	 * CMD: --keep-vertices-above
-	 * @param vID
-	 */
-	public void keepGraphAbove( int vID ) {
-
-		System.out.println(" ->| keeping graph above " + vID + " |<- ");
-		List<Fragment> vertices = gGraph.getFragments();
-
-		if ( vID < 0 || vID > gGraph.numberOfVertices() )
-			throw new IndexOutOfBoundsException( "Cannot keep graph above " + vID + ": out of bounds!" );
-
-		if ( !vertices[vID].hasSource() ) {
-			TMain.getCMDParser().terminateCommandChain( "Cannot keep graph above a unreachable vertex! No edges!" );
-			System.out.println(" ABORTED ");
-			return;
-		}
-
-		DoCheckVerticesAreTopSorted( "Somehow the vertices are not top-sorted!" );
-
-		// create new vertex array
-		// we checked, that our vertices are top sorted. Therefore, there can only be vertices below vId in the graph below!
-		Set<Fragment> reachableVerts = doGetReachableVerticesAboveAsHashTable( vertices[vID], vertices );
-
-		List<Fragment> vertsBelow = new Fragment[ vID + 1 ];
-		System.arraycopy( vertices, 0, vertsBelow, 0, vID + 1 );
-
-		LinkedList<Fragment> vertsToDislink = new LinkedList<Fragment>();
-
-		// vertsBelow and reachableVerts are both topsorted.
-		// therefore, i will find vertices in vertsBelow, that are not in reachableverts
-		// by skipping
-		int ui = vertsBelow.length;
-		for ( int i=0; i<vertsBelow.length; i++ )
-			if ( reachableVerts.contains( vertsBelow[i] ) == false ) {
-				vertsToDislink.add( vertsBelow[i] );
-				ui--;
-			}
-
-		assert ( ui == reachableVerts.size() ) : " you must have compared every reachable vertex. compared: " + ui + ", of " + reachableVerts.size();
-
-		// get rit of every edge of dislinked vertices
-		for ( Fragment v : vertsToDislink ) {
-
-			Loss[] edges = v.getOutgoingEdges();
-			while ( v.gSELastEntry >= 0 )
-				edges[0].delete();
-
-			edges = v.gTargeLosss;
-			while ( v.gTELastEntry >= 0 )
-				edges[0].delete();
-
-			assert ( v.gTELastEntry == -1 && v.gSELastEntry == -1 ) : "v still has edges";
-		}
-
-		// now, throw out edges that lead to vertices of the old graph
-		// we only need to check the reachable vertices; the rest is dislinked already, anyway
-		for ( Fragment v : reachableVerts ) {
-
-			// i only have to check source edges, cause they are the only ones that can get higher than our new root vertex
-			Loss[] edges = v.gTargeLosss;
-			int last = v.gTELastEntry;
-			for ( int i=0; i<=last; ) {
-				if ( edges[i].gTargeFragment.getVertexId() > vID ) {
-					edges[i].delete();
-					last--;
-				} else
-					i++;
-			}
-		}
-
-
-		// get the correct edge count of the remaining vertices
-		int newEdgeCount = 0;
-		for ( Fragment v : vertsBelow )
-			newEdgeCount += v.gTELastEntry + 1;
-
-		// now correct the getVertexId() values of the vertices
-		int i=0;
-		for ( Fragment v : vertsBelow ) {
-			v.getVertexId() = i++;
-		}
-
-		// fix the graph, so that it will work again
-		gGraph.setVertices( vertsBelow ); // the root is corrected here, too
-		gGraph.seLossCount( newEdgeCount );
-
-		System.out.println(" ->| the new graph contains " + vertsBelow.length + " vertices with " + newEdgeCount + " edges. |<- ");
-		System.err.println(" REMEMBER: you cannot use UNRENUMBER anymore! ");
-	}
-
-	public HashSet<Fragment> doGetReachableVerticesAboveAsHashTable( Fragment root, List<Fragment> vertices ) {
-
-		BitSet bs = new BitSet( vertices.length );
-		return getReachableVerticesAboveRecursion( root, bs );
-	}
-
-	private HashSet<Fragment> getReachableVerticesAboveRecursion( Fragment u, BitSet bs ) {
-
-		HashSet<Fragment> hsu = new HashSet<Fragment>(  );
-
-		if ( bs.get( u.getVertexId() ) != true ) {
-			if ( u.hasSource() ) {
-
-				// this is the only case where further vertices can be found/reached
-				for ( Loss e : u.getOutgoingEdges() ) {
-					if ( e == null )
-						break;
-
-					// get entries from below and combine them with current list
-					HashSet<Fragment> hsv = getReachableVerticesAboveRecursion( e.getSource(), bs );
-					if ( hsv.size() > 0 ) {
-
-						for ( Fragment v : hsv )
-							hsu.add( v );
-					}
-				}
-			}
-
-			hsu.add( u );
-			bs.set( u.getVertexId(), true );
-		}
-
-		return hsu;
-	}
-
-	public HashSet<Fragment> doGetReachableVerticesBelowAsHashTable( Fragment root, List<Fragment> vertices ) {
-
-		BitSet bs = new BitSet( vertices.length );
-		return getReachableVerticesBelowRecursion( root, bs );
-	}
-
-	private HashSet<Fragment> getReachableVerticesBelowRecursion( Fragment u, BitSet bs ) {
-
-		HashSet<Fragment> hsu = new HashSet<Fragment>(  );
-
-		if ( bs.get( u.getVertexId() ) != true ) {
-			if ( !u.isLeaf() ) {
-
-				// this is the only case where further vertices can be found/reached
-				for ( Loss e : u.gTargeLosss ) {
-					if ( e == null )
-						break;
-
-					// get entries from below and combine them with current list
-					HashSet<Fragment> hsv = getReachableVerticesBelowRecursion( e.gTargeFragment, bs );
-					if ( hsv.size() > 0 ) {
-
-						for ( Fragment v : hsv )
-							hsu.add( v );
-					}
-				}
-			}
-
-			hsu.add( u );
-			bs.set( u.getVertexId(), true );
-		}
-
-		return hsu;
-	}
-
-    public void prinFragmentUpperBounds() {
+    public void printVertexUpperBounds() {
 
         System.out.println( "||---------------------------------" );
         System.out.println( "||--- Printing Vertex Upper Bounds " );
@@ -2553,7 +2321,7 @@ public class TReduce {
 		List<Fragment> vertices = gGraph.getFragments();
 
         for(int i=0; i<this.gUB.length; i++) {
-            System.out.println("ub["+i+"] = "+this.gUB[i]+" @ Vertex with ID: "+vertices[i].gId);
+            System.out.println("ub["+i+"] = "+this.gUB[i]+" @ Vertex with ID: "+vertices.get( i ).getVertexId() );
         }
 
         System.out.println( "||--- finished " );
