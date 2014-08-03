@@ -22,7 +22,8 @@ public class TReduce {
 	// the vertex array is now accessed by every reduction methods that needs it
 	// it will be top sorted and it should allow us to keep up with the necessary reduction conditions, even if we do
 	// not have direct access to the inner graph structure
-    final protected ArrayList<Fragment> VERTS;
+    final protected Fragment[] VERT_BY_HASH;
+	final protected int[] VERT_ID_HASH;
 
     // traverse related
     protected BitSet gTraversedVertex;
@@ -40,11 +41,16 @@ public class TReduce {
     ////////////////////////////
     /// --- CONSTRUCTORS --- ///
 
+	/**
+	 * - creates instance of TReduce and top-sorts vertices, internally
+	 * @param G
+	 */
     public TReduce ( final FGraph G ) {
 
         gTraversedVertex = new BitSet( G.numberOfVertices() );
         gGraph = G;
-		VERTS = new ArrayList<Fragment>( G.numberOfVertices() );
+		VERT_BY_HASH = new Fragment[ G.numberOfVertices() ];
+		VERT_ID_HASH = new int[ G.numberOfVertices() ];
 		calcNewVertexIds( doDebug );
     }
 
@@ -97,41 +103,43 @@ public class TReduce {
 	 * TODO: check for correctness
 	 * TODO: IMPORTANT
 	 */
+	private int[] original_colors;
+
 	private void renameVertices( boolean calcInvert, boolean doReCheck, boolean rememberIDs ) {
 
 		List<Fragment> vertices = gGraph.getFragments();
-		ArrayList<Fragment> newVertexArray = new ArrayList<Fragment>(  gGraph.numberOfVertices() );
+		original_colors = new int[gGraph.maxColor()+1];
 
 		// renumber by re-positioning the vertices in a new array, so that:
 		// (u,v) => u < v  and (u,v) => c(u) < c(v)
-		int p;
-		int i=0;
+		int newPos;
 		if ( rememberIDs ) {
+
+			int i=0;
 			for ( Fragment v : gGraph.getFragments() ) {
 
 				assert ( i == v.getVertexId() ) : "Asynchronous vertex indices in original graph!";
 
-				p = newIdFor.get( v.getVertexId() );
-				newVertexArray.set( p, v ); // getVertexId() and getColor() are not changed here yet!
+				newPos = newIdFor.get( v.getVertexId() );
+				VERT_ID_HASH[v.getVertexId()] = newPos;
+				VERT_BY_HASH [newPos] = v; // getVertexId() and getColor() are not changed here yet!
 
 				// remember the original values here, so we can use them later, eventually
-				gOriginal_Colors_And_IDs[p][TReduce.POS] = v.getVertexId();
-				gOriginal_Colors_And_IDs[p][TReduce.COL] = v.getColor();
-
-				vertices[i].getVertexId() = p;
+				original_colors[v.getVertexId()] = v.getColor();
 				i++;
 			}
 		} else {
-			for (int i = 0; i < gGraph.numberOfVertices(); i++) {
 
-				p = newIdFor.get(i);
-				newVertexArray[p] = vertices[i]; // getVertexId() and getColor() are not changed here yet!
+			int i=0;
+			for ( Fragment v : gGraph.getFragments() ) {
 
-				// remember the original values here, so we can use them later, eventually
-				gOriginal_Colors_And_IDs[p][TReduce.POS] = vertices[i].getVertexId();
-				gOriginal_Colors_And_IDs[p][TReduce.COL] = vertices[i].getColor();
+				assert ( i == v.getVertexId() ) : "Asynchronous vertex indices in original graph!";
 
-				vertices[i].getVertexId() = p;
+				newPos = newIdFor.get( v.getVertexId() );
+				VERT_ID_HASH[v.getVertexId()] = newPos;
+				VERT_BY_HASH [newPos] = v; // getVertexId() and getColor() are not changed here yet!
+
+				i++;
 			}
 		}
 
@@ -139,16 +147,16 @@ public class TReduce {
 		for( int c=0; c<gGraph.maxColor()+1; c++ ) {
 			int newCol = newColFor.get( c );
 			for( Fragment v : topSortColorToVertex[c] ) {
-				v.getColor() = newCol;
+				v.setColor( newCol );
 			}
 		}
 
-		//apply array
-		vertices = newVertexArray;
-		gGraph.setVertices( newVertexArray );
 
 		// THAT SHOULD ONLY BE USED IN CASE OF DEBUGGING
 		// HAPPENS WHEN TRYING TO RENUMBER A GRAPH WITH VERTICES, THAT DOESN'T HAVE ANY IN OR OUT-GOING EDGES
+		// IT SHALL FORCE THE GRAPH TO ACQUIRE A NEW ROOT, WHICH IS THE FIRST VERTEX WITH OUTGOING EDGES
+
+		/*
 		if ( !newVertexArray[0].hasTarget() ) {
 
 			for ( Fragment v : newVertexArray )
@@ -157,6 +165,7 @@ public class TReduce {
 					break;
 				}
 		}
+		*/
 
 		// doReCheck is true, by default, unless you call it like this: 'renumber-verts false'
 		if ( shouldCheckPreconds && doReCheck ) {
@@ -169,10 +178,6 @@ public class TReduce {
 		}
 	}
 
-	// Actually renumber vertices.
-	int[][] gOriginal_Colors_And_IDs;
-	private final static int POS = 0;
-	private final static int COL = 1;
 
 	/**
 	 * cmd: renumber-verts
@@ -184,9 +189,6 @@ public class TReduce {
 	 * TODO: check for correctness
 	 */
 	public void calcNewVertexIds( boolean doReCheck ) {
-
-		// remember original vertex entry IDs and colors
-		gOriginal_Colors_And_IDs = new int[gGraph.numberOfVertices()][2];
 
 		// initiate
 		this.newColFor = new ArrayList<Integer>( gGraph.maxColor()+1 );

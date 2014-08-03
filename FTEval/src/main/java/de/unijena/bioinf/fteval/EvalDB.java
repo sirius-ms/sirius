@@ -68,7 +68,7 @@ public class EvalDB {
     private void checkPath() {
         if (!root.exists() || !(new File(root, "profiles").exists()))
             throw new RuntimeException("Path '" + root.getAbsolutePath() + "' is no valid dataset path. Create a new" +
-                    " evaluation dataset with\nfteval init <name>");
+                    " evaluation dataset with\nfteval initiate <name>");
     }
 
 
