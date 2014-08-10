@@ -6,7 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
-import java.lang.Double;import java.lang.IndexOutOfBoundsException;
+import java.lang.Double;
 import java.lang.Integer;
 import java.lang.Math;
 import java.lang.String;
@@ -18,7 +18,9 @@ import java.util.*;
  */
 public class TReduce {
 
-    final FGraph gGraph;
+	final static TController controller = new TController();
+
+    final protected FGraph gGraph;
 	// the vertex array is now accessed by every reduction methods that needs it
 	// it will be top sorted and it should allow us to keep up with the necessary reduction conditions, even if we do
 	// not have direct access to the inner graph structure
@@ -969,7 +971,7 @@ public class TReduce {
      * return TRUE, if at least 1 edge has been deleted
 	 * TODO: check for correctness, rewritten
 	 * TODO: postponed
-     */
+     * TODODODO
     ArrayList<Loss>[][] impliedEdges;       // impliedEdges[i][j].get[k] is the k-th descendant edge implied by edge of edge-array[i] at [j] position. Edge array i is 'targeLosss' of vertex at entry i.  Edges are not stored in any particular order.
     ArrayList<Integer>[][] colorsImpliedByEdge; // coloursImpliedByEdge[i] is a list of colours (in ascending order) that are implied by edge edgesBySource[i].
     public boolean calcReduceImpliedEdges() {
@@ -992,7 +994,7 @@ public class TReduce {
 
 		/*
 		 * Part 1 - Get implied color of each leaf vertex
-		 */
+		 *
 
         // initiate delete and implied edges to use the minimum space necessary
         // Need to do this to get the single colour "implied" by each leaf vertex!
@@ -1024,7 +1026,7 @@ public class TReduce {
 
 		/*
 		 * Part 2 - process edges in reversed order
-		 */
+		 *
 
         // Process edges in modified "postorder" -- i.e. when an edge (u, v) is processed, all edges (v, w) will have already been processed.
         for( int uID =  gGraph.numberOfVertices()-1; uID>=0; uID-- ) {
@@ -1045,7 +1047,7 @@ public class TReduce {
 
 						/*
 						 * Part 2.1 Gather the upper bounds scores of every edge leading down from vertex v
-						 */
+						 *
                         double allEdgesUB = 0.0;
 
                         int vEdgeEntry=0; // this is an iterator index for the current edge; vID + edgeEntry = j
@@ -1068,7 +1070,7 @@ public class TReduce {
 						/*
 						 * part 3 - reduction steps
 						 * part 3.1 UB payoff implies edges
-						 */
+						 *
 
                         ArrayList<Integer> colorsImpliedBySpecificEdge = new ArrayList<Integer>();
                         colorsImpliedBySpecificEdge.add( VERT_BY_HASH[ vID ].getColor() ); // Note that colors are NOT ordered!
@@ -1117,7 +1119,7 @@ public class TReduce {
 						/*
 						 * Part 4 - check the colors
 						 * Part 4.1 - mark every edge that implied 2 edges leading to the same color!
-						 */
+						 *
                         Collections.sort(colorsImpliedBySpecificEdge);
                         // this will remove blocks of dublicated entries and returns the last valid entry
                         // if there
@@ -1132,7 +1134,7 @@ public class TReduce {
 
 							/*
 							 * Part 5 - go for implied edges by the need of combinations of edges
-							 */
+							 *
 
                             // We can still consider colours that are implied by *combinations* of the remaining children.
 
@@ -1155,7 +1157,7 @@ public class TReduce {
 
 							/*
 							 * Part 5.2 - finding implied edges based on the remaining edges
-							 */
+							 *
 
                             ArrayList<Integer> colors = new ArrayList<Integer>();
                             if( ue.getWeight() + forcedInEdgesUB < 0.0 ) {
@@ -1170,7 +1172,7 @@ public class TReduce {
 
 									/*
 									 * Part 6 - Do the tricky part
-									 */
+									 *
 
                                     Collections.sort( remainingEdges, new CEdgeUBComperator( this.gUB) );
 
@@ -1249,6 +1251,7 @@ public class TReduce {
 
         return deleteList.size() > 0;
     }
+	*/
 
 
 /////
@@ -1262,7 +1265,7 @@ public class TReduce {
      * runtime: O ( | edges | )
      * TODO: check for correctness, rewritten
      * TODO: postponed
-     */
+     * TODODODO
     protected void recalculateEdgeEntryPositions() {
 
         for ( Fragment v : VERT_BY_HASH ) {
@@ -1312,6 +1315,7 @@ public class TReduce {
             }
         }
     }
+    */
 
     /*
      * runtime: O( |targeLosss(v)| )
@@ -1319,19 +1323,20 @@ public class TReduce {
      * - this will be needed when the edge array has been sorted in any way
      * TODO: check for correctness
      * TODO: postponed
-     */
+     * TODODODO
     protected void recalculateTargetEdgeEntryPositionsOfVertex( Fragment v ) {
 
         int i=0;
         for ( Loss e : v.getOutgoingEdges() )
             e.gSvPos = i++; // the source of edge e is the vertex v
     }
+    */
 
     /*
      * runtime: O ( | edges | ) ? probably, maybe less, thanks to java
      * TODO: check for correctness
      * TODO: postponed
-     */
+     * TODODODO
     protected void truncateTargetEdgeArraysOfVertices() {
 
         System.out.println(" TRUNCATING TARGET EDGE ARRAYS! ");
@@ -1354,6 +1359,7 @@ public class TReduce {
             }
         }
     }
+    */
 
     // Here we rely on the fact that all vertices of the same colour form a contiguous block.
     int[] firstVertIDOfSameColorAs;
@@ -1416,7 +1422,8 @@ public class TReduce {
      *   any nullpointer values anymore
 	 *   TODO: check for correctness, rewritten
 	 *   TODO: postponed
-     */
+	 *   TODODODO
+     *
     public void calcRecursiveSlideLowerBound() {
 
 		if ( firstVertIDOfSameColorAs == null || firstVertIDOfSameColorAs.length != gGraph.numberOfVertices() ) {
@@ -2268,14 +2275,26 @@ public class TReduce {
         this.shouldCheckPreconds = !shouldCheckPreconds;
     }
 
-    public double[][] getgLB() { return gLB; }
-    public void setgLB(double[][] gLB) {
+    protected double[][] getLB() { return gLB; }
+    protected void setLB(double[][] gLB) {
         this.gLB = gLB;
     }
-    public double[] getgUB() { return gUB; }
-    public void setgUB(double[] gUB) { this.gUB = gUB; }
+    protected double[] getUB() { return gUB; }
+    protected void setUB(double[] gUB) { this.gUB = gUB; }
 
-    public FGraph getgGraph() { return this.gGraph; };
+    protected FGraph getGraph() { return this.gGraph; };
+
+	protected Fragment[] getVerticesByHash() {
+		return this.VERT_BY_HASH;
+	}
+
+	protected int[] getVertexToHash() {
+		return this.VERT_ID_HASH;
+	}
+
+	protected static TController getController() {
+		return TReduce.controller;
+	}
 
     ///////////////////////
     /// --- TESTING --- ///
