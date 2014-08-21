@@ -147,7 +147,12 @@ public class MultipleTreeComputation {
     }
 
     public List<FTree> list() {
-        final NavigableSet<FTree> trees = new TreeSet<FTree>();
+        final NavigableSet<FTree> trees = new TreeSet<FTree>(new Comparator<FTree>() {
+            @Override
+            public int compare(FTree o1, FTree o2) {
+                return new Double(o1.getAnnotationOrThrow(TreeScoring.class).getOverallScore()).compareTo(o2.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+            }
+        });
         double lb = lowerbound;
         final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
         while (queue.hasNext()) {

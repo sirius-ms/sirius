@@ -533,9 +533,11 @@ public class Main {
                 // DONT USE LOWERBOUNDS
                 FTree correctTree = null;
                 int correctRankInPmds = 0;
-                for (ScoredMolecularFormula pmd : input.getAnnotationOrThrow(DecompositionList.class).getDecompositions())
-                    if (pmd.getFormula().equals(correctFormula)) break;
-                    else ++correctRankInPmds;
+                if (correctFormula != null) {
+                    for (ScoredMolecularFormula pmd : input.getAnnotationOrThrow(DecompositionList.class).getDecompositions())
+                        if (pmd.getFormula().equals(correctFormula)) break;
+                        else ++correctRankInPmds;
+                }
                 //if (correctRankInPmds >= options.getTrees()) System.err.println("Correct formula not in top " + options.getTrees());
                 double lowerbound = options.getLowerbound() == null ? 0d : options.getLowerbound();
 
