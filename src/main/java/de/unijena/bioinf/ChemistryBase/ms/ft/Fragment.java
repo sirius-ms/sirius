@@ -47,7 +47,7 @@ public class Fragment {
     }
 
     public boolean isDeleted() {
-        return vertexId >= 0;
+        return vertexId < 0;
     }
 
     public int getVertexId() {

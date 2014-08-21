@@ -419,7 +419,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
                 if (k != hydrogenIndex) count += Math.abs(amounts[k] - otherAmounts[k]);
             }
             final short[] bigger = amounts.length > otherAmounts.length ? amounts : otherAmounts;
-            for (int k = Math.min(amounts.length, otherAmounts.length) + 1; k < bigger.length; ++k) {
+            for (int k = Math.min(amounts.length, otherAmounts.length); k < bigger.length; ++k) {
                 if (k != hydrogenIndex) count += bigger[k];
             }
             return count;
