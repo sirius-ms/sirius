@@ -19,7 +19,7 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
  * Molecules with higher rdbe are "rare/strange" and are penalized using a Pareto Distribution. The parameter
  * xmin=0.75 is the 95% quantile of the rdbe/sqrt(mass) values in kegg. The parameter k=9 is chosen by an educated
  * guess. While it fits the rdbe/sqrt(mass) distribution in kegg very well, it is not optimized using e.g. least-square.
- *
+ * <p/>
  * The main idea behind this scorer is to filter out molecular formulas that do not exist due to their strange elemental
  * composition. For example: C54H18OP2 which has so much carbon that it have to consists of many rings and double bonds.
  * It is not the idea of this scorer to score the frequency of a formula in a database. Therefore, the RDBENormalScorer
@@ -32,12 +32,6 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
     private final static PartialParetoDistribution keggParetoDistribution = new PartialParetoDistribution(-0.5, 0.75, 9);
 
     private final static NormalDistribution keggNormalDistribution = new NormalDistribution(0.1481998, 0.07341486);
-
-
-    public static PartialParetoDistribution getRDBEDistributionFromKEGG() {
-        return keggParetoDistribution;
-    }
-
     private DensityFunction distribution;
 
     public RDBEMassScorer(@Parameter("distribution") DensityFunction distribution) {
@@ -48,11 +42,20 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
         this(keggNormalDistribution);
     }
 
+    public static NormalDistribution getRDBEDistributionFromPubchemSubset() {
+        return new NormalDistribution(0.4712924, Math.pow(0.2245154, 2));
+    }
+
+    public static PartialParetoDistribution getRDBEDistributionFromKEGG() {
+        return keggParetoDistribution;
+    }
+
     public final double getRDBEMassValue(MolecularFormula formula) {
         return getRDBEMassValue(formula.rdbe(), formula.getMass());
     }
+
     public final double getRDBEMassValue(double rdbe, double mass) {
-        return rdbe/Math.pow(mass, 2d / 3d);
+        return rdbe / Math.sqrt(mass);
     }
 
     @Override
