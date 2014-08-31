@@ -158,6 +158,7 @@ public class TController {
 		}
 	}
 
+    /*
 	protected class CmdCalcImpliedEdges extends ACommandable {
 
 
@@ -201,6 +202,7 @@ public class TController {
 					" ~ ";
 		}
 	}
+	*/
 
 	protected class CmdClearVertexUpperBounds extends ACommandable {
 
@@ -1635,8 +1637,8 @@ public class TController {
 		this.CMD.put( "--test-divide-and-compare", new CmdTestDivideAndCompare() );
 
 		this.CMD.put( "calc-anc-col-lbs", new CmdCalcAnchorToColorLowerBound() );
-		this.CMD.put( "calc-implied-edges", new CmdCalcImpliedEdges() );
-		this.CMD.put( "calc-rec-slide-lbs", new CmdCalcRecursiveSlideLowerBound() );
+		//this.CMD.put( "calc-implied-edges", new CmdCalcImpliedEdges() );
+		//this.CMD.put( "calc-rec-slide-lbs", new CmdCalcRecursiveSlideLowerBound() );
 		this.CMD.put( "clear-vertex-ubs", new CmdClearVertexUpperBounds() );
 		this.CMD.put( "cmd", new CmdCmd() );
         this.CMD.put( "DEBUG-calc-anchor-lbs", new CmdDebugCalcAnchorlbs() );
