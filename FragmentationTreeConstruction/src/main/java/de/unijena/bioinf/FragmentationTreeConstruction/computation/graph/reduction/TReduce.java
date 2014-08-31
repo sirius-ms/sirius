@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class TReduce {
 
-	final static TController controller = new TController();
+	final static TReductionController controller = new TReductionController();
 
     final protected FGraph gGraph;
 	// the vertex array is now accessed by every reduction methods that needs it
@@ -2292,7 +2292,7 @@ public class TReduce {
 		return this.VERT_ID_HASH;
 	}
 
-	protected static TController getController() {
+	protected static TReductionController getController() {
 		return TReduce.controller;
 	}
 
@@ -2353,4 +2353,5 @@ public class TReduce {
 		System.out.println( "||--- finished " );
 		System.out.println( "||---------------------------------" );
 	}
+
 }

@@ -1,9 +1,9 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction;
 
-import com.sun.org.apache.xpath.internal.functions.FunctionOneArg;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import sun.security.provider.certpath.Vertex;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 
 import java.util.*;
 
@@ -16,7 +16,60 @@ import java.util.*;
  * *
  */
 
-public class TController {
+/**
+ * USAGE AND IMPLEMENTATION INFO:
+ * - the Reduction controller was coded to ease readability of the performed reduction methods and to make it easier
+ *   for new reductions to be implemented
+ * - use 'cmd getall' to see the full list of implemented commands
+ * - use 'cmd <cmd>' or 'help <cmd>' to see the description of the command 'cmd'
+ *
+ * CLASS: ACOMMANDABLE
+ * - the class "ACommandable" is used like an interface, but it will automatically allow measuring times for each
+ *   class it was derived from. In that case, the new derived class needs to call the ACommandable constructure with
+ *   'super(true)'
+ * - deriving from 'ACommandable' will force you to implement "executeMethod" and "Description".
+ * - Description is self-explanatory and will only be used for debugging or if "help" was used
+ *
+ * METHOD: EXECUTE_METHODS
+ * - executeMethods is the body that will be executed by the time the command parser has reached the command
+ * - it will get a list of commands ( which are ALL commands between two round braces or all, if no braces used ) and
+ *   an int value "cmdIndex", that will tell you the current index inside that array
+ * - that way, the parser allows you to pull entries from that array, which will be used for additional arguments
+ *
+ * CUSTOM COMMAND ARGUMENTS
+ * - what these arguments are is up to you as long as you pull them. I currently either had a fixed set of arguments
+ *   to pull from ( and assured that they are present ) or let my methods look for braces behind my command
+ * - in case of braces, there is a function to automatically split that into a command array
+ *
+ * - IF YOU USE ARGUMENTS, YOU NEED TO TELL THEM HOW MANY!
+ *   And that is simple: return cmdIndex + 'number of arguments used from the array'.
+ *   If you didn't need any, just return cmdIndex.
+ *   Simple :)
+ *
+ * COMMAND PARSER
+ * - the parser works on an array of strings. Each string is a space-free command and usually written as lowercase
+ * - the parser will not brake if you mistype something, be careful. It will tell you, though.
+ * - You can call the parser with a String 'executeCommands', an array of String 'executeCommands'
+ * - The parser works iterative and recursively, meaning that it will iterate from the first to the last command by
+ *   default, unless you use multiplications. In that case, it will copy the braces commands and perform them in a
+ *   separate "executeCommands" methods with independent cmdIndex values. Therefore, you cannot simple terminate them.
+ *
+ * REPEATED COMMANDS, BRACES AND FULL TERMINATION
+ * - you can make the parser repeat commands a certain time by using round braces around the commands you want to repeat
+ * - YOU NEED TO TELL THEM HOW OFTEN!
+ * - 1. You can write numbers before the left brace ( with space! )
+ * - 2. You can use '*' as a special repeat operator. It will cause the braced commands to be repeated, until no edge
+ *      has been removed. Can be handy, but be careful with that
+ *
+ * - So, how to terminate that stuff - easy: call 'terminateCommandChain'.
+ * - terminateCommandChain wants to have a simple error message that will display the reason for the termination and
+ *   will cause each instance of the parser to collapse clean and without braking anything. But remember: it terminates
+ *   ALL commands, regardless of the depth it was called.
+ * - if you want a certain braces command chain to collapse before its complete execution, use 'exit' as command.
+ * - exit will exit the current command-execution and causes the parser to go "one level up".
+ */
+
+public class TReductionController implements GraphReduction {
 
 	final static int EXECUTE_LOOP = 2;
 	final static int EXIT_LOOP = -2;
@@ -24,30 +77,37 @@ public class TController {
 	public boolean bTerminateCurrentCommands = false;
 	boolean comparisonFailed = false;
 
-    static TReduce gReduce;
+    TReduce gReduce;
 	ArrayList<TReduce> gReduces = new ArrayList<TReduce>(  );
 	LinkedList<String> cmdNames = new LinkedList<String>(  );
 	HashMap<String,ACommandable> CMD = new HashMap<String, ACommandable>(  );
 
     String[] rememberedCommand = new String[0];
 
-	String[] fileList = new String[]{
-		"pos44247C16H41N11O11P", "pos44247C17H45N11O6PS2", "pos44247C18H43N8O12P", "pos44247C19H47N8O7PS2",
-		"pos44247C20H45N5O13P", "pos44247C20H48N6O8P2S", "pos44247C21H42N10O6S2", "pos44247C22H40N7O12",
-		"pos44247C22H43N8O7PS", "pos44247C22H48N3O11S2", "pos44247C22H50N3O9P2S", "pos44247C23H44N7O7S2",
-		"pos44247C24H45N5O8PS", "pos44247C24H47N5O6P3", "pos44247C25H41N9O4PS", "pos44247C25H49N5O3PS3",
-		"pos44247C26H42N7O5P2", "pos44247C27H43N6O5PS"
-	};
-
-	String[] fileList2 = new String[]{
-			"pos44247C16H41N11O11P_t", "pos44247C17H45N11O6PS2_t", "pos44247C18H43N8O12P_t", "pos44247C19H47N8O7PS2_t",
-			"pos44247C20H45N5O13P_t", "pos44247C20H48N6O8P2S_t", "pos44247C21H42N10O6S2_t", "pos44247C22H40N7O12_t",
-			"pos44247C22H43N8O7PS_t", "pos44247C22H48N3O11S2_t", "pos44247C22H50N3O9P2S_t", "pos44247C23H44N7O7S2_t",
-			"pos44247C24H45N5O8PS_t", "pos44247C24H47N5O6P3_t", "pos44247C25H41N9O4PS_t", "pos44247C25H49N5O3PS3_t",
-			"pos44247C26H42N7O5P2_t", "pos44247C27H43N6O5PS_t"
-	};
-
 	boolean gDebug = false;
+
+    @Override
+    public FGraph reduce(FGraph graph, double lowerbound) {
+
+        if ( graph == null )
+        {
+            System.err.println("Cannot reduce graph: given graph is 'NULL'!");
+        } else {
+
+            // create new reduction instance
+            this.gReduce = new TReduce( graph );
+            this.gReduces.add(gReduce);
+
+            executeCommands("reduce");
+        }
+
+        return graph;
+    }
+
+    @Override
+    public void command(String cmd) {
+        executeCommands(cmd);
+    }
 
     /**
      * - this will try to parse arguments as type integer
@@ -89,36 +149,6 @@ public class TController {
         }
     }
 
-	/**
-	 * use the hash value here!
-	 * @param V_ID
-	 */
-	public void printVerticesFromVertex( final int V_ID ) {
-
-		if ( gReduce != null ) {
-
-			System.out.println("< Printing edges from " + V_ID +" >" );
-
-			Fragment[] Vertex_By_Hash = gReduce.getVerticesByHash();
-			int[] VertexToHash = gReduce.getVertexToHash();
-
-			final Iterator<Fragment> IT  = gReduce.gGraph.postOrderIterator( Vertex_By_Hash[V_ID] );
-			Fragment frag;
-			while ( IT.hasNext() ) {
-				frag = IT.next();
-				System.out.println( " - HashID: " + VertexToHash[frag.getVertexId()] + ", Vertex: " + frag );
-			}
-
-			System.out.println("< finished >");
-		} else {
-			System.out.println("Cannot load edges: no graph loaded!");
-			bTerminateCurrentCommands = true;
-			return;
-		}
-
-
-	}
-
 	protected int terminateCommandChain( String termMsg ) {
 
 		if ( termMsg == null )
@@ -129,7 +159,7 @@ public class TController {
 		return 0;
 	}
 
-	//////////////////////
+    //////////////////////
 	///--- COMMANDS ---///
 
 	/**
@@ -139,11 +169,11 @@ public class TController {
 	protected class CmdCalcAnchorToColorLowerBound extends ACommandable {
 
 
-		public CmdCalcAnchorToColorLowerBound() {
+		protected CmdCalcAnchorToColorLowerBound() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println(" ~~~ CMD: calc-anc-col-lbs ");
 			gReduce.calcAnchorToColorLowerBounds();
@@ -151,7 +181,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ calc-anc-col-lbs \n" +
 					" ~ no arguments expected ";
@@ -162,11 +192,11 @@ public class TController {
 	protected class CmdCalcImpliedEdges extends ACommandable {
 
 
-		public CmdCalcImpliedEdges() {
+		protected CmdCalcImpliedEdges() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println( " ~~~ CMD: calc-implied-edges " );
 			gHasDeletedEdgeLastTime = gReduce.calcReduceImpliedEdges();
@@ -174,7 +204,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ calc-implied \n" +
 					" ~ no arguments";
@@ -184,11 +214,11 @@ public class TController {
 	protected class CmdCalcRecursiveSlideLowerBound extends ACommandable {
 
 
-		public CmdCalcRecursiveSlideLowerBound() {
+		protected CmdCalcRecursiveSlideLowerBound() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println( " ~~~ CMD: calc-rec-slide-lbs " );
 			gReduce.calcRecursiveSlideLowerBound();
@@ -196,7 +226,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ calc-rec-slide-lbs" +
 					" ~ ";
@@ -207,11 +237,11 @@ public class TController {
 	protected class CmdClearVertexUpperBounds extends ACommandable {
 
 
-		public CmdClearVertexUpperBounds() {
+		protected CmdClearVertexUpperBounds() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println(" ~~~ CMD: clear-vertex-ubs");
 			gReduce.clearVertexUpperBounds(Double.POSITIVE_INFINITY);
@@ -219,7 +249,7 @@ public class TController {
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ clear-vertex-ubs \n" +
 					" ~ no arguments expected \n" +
@@ -239,7 +269,7 @@ public class TController {
 		}
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if( Ci >= arg.length ) {
 				// there are no more commends!
@@ -284,7 +314,7 @@ public class TController {
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ Command Parser. Type \"cmd getall\" to get a list of possible commands\n" +
 					" ~ Type \"cmd help [command]\" to get a description of the given command\n";
@@ -294,7 +324,7 @@ public class TController {
 	protected class CmdCompareEdges extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if ( ( Ci+3 < arg.length ) && ( arg[Ci].matches("\\(") ) && ( arg[Ci+3].matches( "\\)" )) ) {
 
@@ -313,7 +343,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ compareEdges ( name1 name2 ) \n" +
 					" ~ searches name1 and name2 for missing and unequal weighted edges";
@@ -323,7 +353,7 @@ public class TController {
 	protected class CmdCompareEdges_alt extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if ( ( Ci+3 < arg.length ) && ( arg[Ci].matches("\\(") ) && ( arg[Ci+3].matches( "\\)" )) ) {
 
@@ -364,7 +394,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ compareEdges ( <int> <int> ) \n" +
 					" ~ searches the graphs save at entry 1 and 2 for missing and unequal weighted edges";
@@ -374,7 +404,7 @@ public class TController {
     protected class CmdCompareLbs extends ACommandable {
 
         
-        public int executeMethod( String[] arg, int Ci ) {
+        protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println(" ~~~ CMD: --compareLbs");
             // i want the ids of the graphs loaded using read-alt
@@ -393,7 +423,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ --compareLbs ( ID1 ID2 )" +
                     " ~ tries to compare lower bounds of graphs loaded using read-alt at array entry ID1, ID2";
         }
@@ -403,7 +433,7 @@ public class TController {
 	protected class CmdCompareStats extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if ( ( Ci+3 < arg.length ) && ( arg[Ci].matches("\\(") ) && ( arg[Ci+3].matches( "\\)" )) ) {
 
@@ -428,7 +458,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --compareStats [ ( file1 file 2 ) ]" +
 					" ~ compares to header for unequal values" +
@@ -440,7 +470,7 @@ public class TController {
 	protected class CmdCompareStats_alt extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if ( ( Ci+3 < arg.length ) && ( arg[Ci].matches("\\(") ) && ( arg[Ci+3].matches( "\\)" )) ) {
 
@@ -477,7 +507,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --compareStats [ ( file1 file 2 ) ]" +
 					" ~ compares to header for unequal values" +
@@ -490,7 +520,7 @@ public class TController {
 	protected class CmdCompareUbs extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println(" ~~~ CMD: --compareUbs");
             int[] ints = parseIntArguments( Arrays.copyOfRange( arg, Ci, Ci+4 ), true );
@@ -506,7 +536,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --compareUbs [ ( file1 file2 ) ] \n" +
 					" ~ compares given ub tables for differences \n" +
@@ -521,7 +551,7 @@ public class TController {
 	 */
 	protected class CmdTestDivideAndCompare extends ACommandable {
 
-		public CmdTestDivideAndCompare() { super(true); }
+		protected CmdTestDivideAndCompare() { super(true); }
 
 		@Override
 		protected int executeMethod( String[] arg, int Ci ) {
@@ -548,9 +578,9 @@ public class TController {
 			System.out.println("   <><><> CMD-LINE: " + cmdString );
 			System.out.println("   <><><> apply commands on both graphs. The first does not use 'renumber-verts' ");
 
-			extractCommands( "read-alt 0 fl2 " + flid + " " + cmdString ); // executes too
-			extractCommands( "read-alt 1 fl2 " + flid + " renumber-verts " + cmdString + " unrenumber-verts" );
-			extractCommands( "--select 0" );
+			executeCommands("read-alt 0 fl2 " + flid + " " + cmdString); // executes too
+			executeCommands("read-alt 1 fl2 " + flid + " renumber-verts " + cmdString + " unrenumber-verts");
+			executeCommands("--select 0");
 
 			System.out.println("   <><><> START OF DIVISION...: " + cmdString );
 
@@ -561,15 +591,15 @@ public class TController {
 			// renumbering and on the 2. on with 'renumber-verts' + cmdString + 'unrenumber-verts'
 			for ( int i=nVerts-1; i>0; i-- ) {
 
-				extractCommands( "--select 0" );
-				extractCommands( "--keep-vertices-below-deepcopy " + i + " 2" );
-				extractCommands( "--select 1" );
-				extractCommands( "--keep-vertices-below-deepcopy " + i + " 3" );
-				extractCommands( "--compareEdges-alt ( 2 3 )" );
+				executeCommands("--select 0");
+				executeCommands("--keep-vertices-below-deepcopy " + i + " 2");
+				executeCommands("--select 1");
+				executeCommands("--keep-vertices-below-deepcopy " + i + " 3");
+				executeCommands("--compareEdges-alt ( 2 3 )");
 
 				if ( comparisonFailed ) {
-					extractCommands( "--select 2 write name G" + flid + "_SUB_GRAPH_" + i );
-					extractCommands( "--select 3 write name G" + flid + "_SUB_GRAPH_" + i + "_REN" );
+					executeCommands("--select 2 write name G" + flid + "_SUB_GRAPH_" + i);
+					executeCommands("--select 3 write name G" + flid + "_SUB_GRAPH_" + i + "_REN");
 					comparisonFailed = false;
 				}
 			}
@@ -592,11 +622,11 @@ public class TController {
     protected class CmdDebugCalcAnchorlbs extends ACommandable {
 
 
-		public CmdDebugCalcAnchorlbs() {
+		protected CmdDebugCalcAnchorlbs() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println(" ~~~ CMD: DEBUGcalc-anchor-lbs");
             gReduce.DoDEBUGcalcAnchorLowerBounds();
@@ -604,7 +634,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ DEBUGcalc-anchor-lbs " +
                     " ~ no arguments expected ";
         }
@@ -617,7 +647,7 @@ public class TController {
     protected class CmdDeleteVertices extends ACommandable {
 
         
-        public int executeMethod( String[] arg, int Ci ) {
+        protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println("\n  ~~~ CMD: Delete vertices");
             while( Ci < arg.length ) {
@@ -637,7 +667,7 @@ public class TController {
         }
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ delVert \n" +
 					" ~ [a b c ...] \n" +
@@ -647,11 +677,11 @@ public class TController {
 
 	protected class CmdDrawGraph extends ACommandable {
 
-		public CmdDrawGraph() {
+		protected CmdDrawGraph() {
 			super(true);
 		}
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			String name = "";
 
@@ -673,7 +703,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return  " drawGraph ( name ) \n" +
 					" ~ 'name' for the output file \n" +
@@ -684,7 +714,7 @@ public class TController {
 	protected class CmdEnableSebVubStrength extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println(" ~~~ CMD: enable seb vub strength ");
 			gReduce.enableSebVertexUbsStrengthening();
@@ -692,7 +722,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 			return null;  //To change body of implemented methods use File | Settings | File Templates.
 		}
 	}
@@ -703,13 +733,13 @@ public class TController {
 	protected class CmdExit extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			return terminateCommandChain( " ~~~ CMD: Exit called. Terminate further commands. (Why did you even get here?)" );
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ Exit \n"+
 					" ~ no arguments expected \n" +
@@ -720,7 +750,7 @@ public class TController {
 	protected class CmdHelp extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if( Ci < arg.length ) {
 
@@ -740,7 +770,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ help. Use it like: 'help' 'cmd', where 'cmd' is any valid command \n" +
 					" ~ you can use 'help' or '?' \n";
@@ -751,7 +781,7 @@ public class TController {
     protected class CmdMaximizeSpeed extends ACommandable {
 
         
-        public int executeMethod( String[] arg, int Ci ) {
+        protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println(" ~~~ CMD: maximize speed");
             gReduce.enableMaximumSpeed();
@@ -759,7 +789,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ MaximizeSpeed. This can turn on some improvements with the cost of memory \n"
 					+ " ~ this currently has no valid implementation";  //To change body of implemented methods use File | Settings | File Templates.
         }
@@ -802,6 +832,32 @@ public class TController {
 		}
 	}
 
+    /**
+     * predefined reduce chain with an array of commands.
+     * Use "CmdTest" before changing stuff here.
+     */
+    protected class CmdReduce extends ACommandable {
+
+        protected String cmdChain = "renumber-verts enable-seb-vub-strength tim-vertex-ubs reduce-vub * ( * ( clear-vertex-ubs seb-vertex-ubs tim-vertex-ubs reduce-vub reduce-unreach ) )";
+
+        protected CmdReduce() { super(true); } // enable time measuring for command "reduce"
+
+        @Override
+        protected int executeMethod(String[] arg, int Ci) {
+
+            System.out.println("\n  ~~~ Cmd: reduce \n");
+            ACommandable.resetRuntime();
+            executeCommands(cmdChain);
+            return Ci; // no additional parameters used!
+        }
+
+        @Override
+        protected String description() {
+            return "~ CmdReduce: \n" +
+                    " ~ a predefined list of reductions will be used on the given graph to remove unnecessary edges. ";
+        }
+    }
+
 	/**
 	 * give some output through the command console
 	 * Arguments:
@@ -823,7 +879,6 @@ public class TController {
 		protected CmdPrint() {
 
 			arg.put( "edges", CmdPrint.EDGES );
-			arg.put( "filelist", CmdPrint.FILELIST );
 			arg.put( "leafs", CmdPrint.LEAFS );
 			arg.put( "lbs", CmdPrint.LOWER_BOUNDS );
 			arg.put( "m_", CmdPrint.M_ );
@@ -832,7 +887,7 @@ public class TController {
 			arg.put( "vertices", CmdPrint.VERTICES );
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if( Ci < arg.length ) {
 
@@ -845,16 +900,6 @@ public class TController {
 							for ( Loss e : gReduce.gGraph.losses() ) {
 								System.out.println("e:   " + e );
 							}
-							break;
-						case CmdPrint.FILELIST:
-							System.out.print( "\n  ~~~ CMD: print <filelist> \n" );
-							int i = 0;
-							for( String s : fileList ) {
-								System.out.println(" -[" + i + "] : " + s);
-								i++;
-							}
-
-							System.out.println();
 							break;
 						case CmdPrint.LEAFS:
 							System.out.print( "\n ~~~ CMD: print <leafs> \n" );
@@ -907,7 +952,7 @@ public class TController {
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return  " ~ print [edges|leafs|ubs|vertices] \n" +
 					" ~ print some graph related values to the command console\n" +
@@ -917,11 +962,11 @@ public class TController {
 
 	protected class CmdReachableEdges extends ACommandable {
 
-		public CmdReachableEdges() {
+		protected CmdReachableEdges() {
 			super(true);
 		}
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if ( Ci < arg.length ) {
 				try {
@@ -942,7 +987,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --reachableEdges <int> \n" +
 					" ~ print every vertex reachable from vertex at position <int> \n" +
@@ -954,7 +999,7 @@ public class TController {
     protected class CmdRemember extends ACommandable {
 
         
-        public int executeMethod( String[] arg, int Ci ) {
+        protected int executeMethod( String[] arg, int Ci ) {
 
             rememberedCommand = new String[arg.length - (Ci)];
             System.arraycopy(arg,Ci,rememberedCommand,0,rememberedCommand.length);
@@ -962,7 +1007,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ remember \n" +
 					" ~ saves the commands comming after 'remember', that can be reused and executed using 'repeat'. \n";
         }
@@ -989,7 +1034,7 @@ public class TController {
     protected class CmdRepeat extends ACommandable {
 
         
-        public int executeMethod( String[] arg, int Ci ) {
+        protected int executeMethod( String[] arg, int Ci ) {
 
             if( (Ci + 2 < arg.length) && (arg[Ci].matches("\\(")) && (arg[Ci+2].matches("\\)")) ) {
 
@@ -1026,7 +1071,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ repeat \n" +
 					" ~ executes the commands saved after calling 'remember' ";
         }
@@ -1034,7 +1079,7 @@ public class TController {
 
 	protected class CmdReduceColorSubtreeAdvantage extends ACommandable {
 
-		public CmdReduceColorSubtreeAdvantage() {
+		protected CmdReduceColorSubtreeAdvantage() {
 			super(true);
 		}
 
@@ -1061,7 +1106,7 @@ public class TController {
 	 *
 	protected class CmdReduceDominatingPath extends ACommandable {
 
-		public CmdReduceDominatingPath() {
+		protected CmdReduceDominatingPath() {
 			super(true);
 		}
 
@@ -1085,7 +1130,7 @@ public class TController {
 
 	protected class CmdReduceNegativePendantEdges extends ACommandable {
 
-		public CmdReduceNegativePendantEdges() {
+		protected CmdReduceNegativePendantEdges() {
 			super(true);
 		}
 
@@ -1108,7 +1153,7 @@ public class TController {
 
 	protected class CmdReduceSlideStrong extends ACommandable {
 
-		public CmdReduceSlideStrong() {
+		protected CmdReduceSlideStrong() {
 			super(true);
 		}
 
@@ -1132,11 +1177,11 @@ public class TController {
 
 	protected class CmdReduceUnreachable extends ACommandable {
 
-		public CmdReduceUnreachable() {
+		protected CmdReduceUnreachable() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println(" ~~~ reduce-unreach ");
 			gHasDeletedEdgeLastTime = gReduce.reduceUnreachableEdges();
@@ -1144,7 +1189,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ reduce-unreach \n" +
 					" ~ delete edges from vertices, which have no source edges!" +
@@ -1158,11 +1203,11 @@ public class TController {
 	 */
 	protected class CmdReduceVub extends ACommandable {
 
-		public CmdReduceVub() {
+		protected CmdReduceVub() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println( " ~~~ CMD: reduce-vub" );
 			gHasDeletedEdgeLastTime = gReduce.reduceEdgesByVertexUpperBound();
@@ -1170,7 +1215,7 @@ public class TController {
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ Reduce vertex upper bounds\n" +
 					" ~ no arguments expected\n" +
@@ -1185,11 +1230,11 @@ public class TController {
 	 */
 	protected class CmdRenumberVerts extends ACommandable {
 
-		public CmdRenumberVerts() {
+		protected CmdRenumberVerts() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			String s = "";
 
@@ -1218,7 +1263,7 @@ public class TController {
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ Renumber vertices \n" +
 				    " ~ { [ true | false ] } \n" +
@@ -1267,11 +1312,11 @@ public class TController {
     protected class CmdSebastianVertexUpperBounds extends ACommandable {
 
 
-		public CmdSebastianVertexUpperBounds() {
+		protected CmdSebastianVertexUpperBounds() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println(" ~~~ CMD: seb-vertex-ubs");
             // make the possibility to let the user choose, if he wants to use strengthening or not
@@ -1281,7 +1326,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ seb-vertex-ubs\n" + "" +
                     " ~ no params expected \n" +
                     " ~ calculate upper bounds score with sebastians sub-tree method\n";  //To change body of implemented methods use File | Settings | File Templates.
@@ -1291,7 +1336,7 @@ public class TController {
 	protected class CmdSelect extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			if ( Ci < arg.length ) {
 
@@ -1317,7 +1362,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --select <ID> " +
 					" ~ this will select the graph from 'gReduces', if ID is within the boundaries" +
@@ -1337,7 +1382,7 @@ public class TController {
     protected class CmdShouldCheckPreconds extends ACommandable {
 
         
-        public int executeMethod( String[] arg, int Ci ) {
+        protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println(" ~~~ CMD: should check preconditions");
 			ACommandable.setDebugging( !ACommandable.isbDebugging() ); // toggle
@@ -1346,7 +1391,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ --preconds \n" +
 					" ~ only used for debugging. This will cause some function to do expensive checkups for checking \n" +
 					"   assuring correctness ";
@@ -1356,7 +1401,7 @@ public class TController {
 	protected class CmdSourceEdges extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println("~~~ CMD: --se");
 			if ( Ci < arg.length ) {
@@ -1387,7 +1432,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --sourceEdges <Int> \n" +
 					" ~ prints down all source edges of the vertex at position <int> inside the graphs array \n" +
@@ -1398,7 +1443,7 @@ public class TController {
 	protected class CmdTargeLosss extends ACommandable {
 
 		
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println("~~~ CMD: --te");
 			if ( Ci < arg.length ) {
@@ -1429,7 +1474,7 @@ public class TController {
 		}
 
 		
-		public String description() {
+		protected String description() {
 
 			return " ~ --targeLosss <Int> \n" +
 					" ~ prints down all target edges of the vertex at position <int> inside the graphs array \n" +
@@ -1444,11 +1489,11 @@ public class TController {
 	protected class CmdTimVertexUpperBounds extends ACommandable {
 
 
-		public CmdTimVertexUpperBounds() {
+		protected CmdTimVertexUpperBounds() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println(" ~~~ CMD: tim-vertex-ubs");
 			gReduce.doTimVertexUpperBounds();
@@ -1456,7 +1501,7 @@ public class TController {
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return " ~ tim-vertex-ubs \n" +
 					" ~ no arguments expected \n" +
@@ -1473,114 +1518,41 @@ public class TController {
 
         private int current=0;
 
-		public CmdTest() {
+		protected CmdTest() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
-            String TestString = "--test-                extractCommands( \"--select 0\" );\n-and-compare 1";
+            String TestString = "--test-                executeCommands( \"--select 0\" );\n-and-compare 1";
 			String FullTestCommands[] = new String[]{"0 READFL2 renumber-verts enable-seb-vub-strength tim-vertex-ubs reduce-vub * ( * ( clear-vertex-ubs seb-vertex-ubs tim-vertex-ubs reduce-vub reduce-unreach ) calc-implied-edges ) calc-anc-col-lbs calc-rec-slide-lbs print stats"};
 
             if( (Ci < arg.length) && (arg[Ci].matches("full") ) ) {
-
-				int start_index = 0;
-				if( Ci < arg.length ) {
-					try {
-						int c = Integer.parseInt( arg[Ci] );
-						start_index = c;
-					} catch ( Exception e ) {
-						// well, nothing to do anyway.
-					}
-				}
-
-				/**
-				 * CORE
-				 * - for every file that is in 'filelist'
-				 *  - apply every commandline in 'FullTestCommands'
-				 *  - do always use 'read-alt'
-				 */
-
-                System.out.println(" STARTING FULL TEST: . . . ");
-
-                // gain valid command blocks from string commands
-				/*
-				 * this block is a bit complicated. Basically, it should determine, if a graph should be stored inside an
-				 * index different from zero, and if there should be any kind of reading ( to make independent command lines easier to read )
-				 */
-				String[] ca;
-                String[][] cmds = new String[FullTestCommands.length][]; // cmds[i][j] is the jth command of the ith command line setup!
-				for( int i=0; i<FullTestCommands.length; i++ ) {
-					if( FullTestCommands[i].startsWith( "NOREAD " ))
-						cmds[i] = onlyExtractCommands( FullTestCommands[i].substring( "NOREAD ".length() ) );
-					else if ( ( ca = onlyExtractCommands( FullTestCommands[i] ) )[1].matches( "READFL2" ) )
-						cmds[i] = onlyExtractCommands( "read-alt " + ca[0] + " fl2 ID " + FullTestCommands[i].substring( ca[0].length() + 1 + "READFL2 ".length() ) );
-					else if ( ca[1].matches( "READFL1" ) )
-						cmds[i] = onlyExtractCommands( "read-alt " + ca[0] + " fl ID " + FullTestCommands[i].substring( ca[0].length() + 1 + "READFL1 ".length() ) ); // ID is a placeholder, that will be replaced later
-				    else
-						return terminateCommandChain( "Full test aborted. Wrong usage of commands!" );
-
-				}
-
-
-				// apply every command line on every file of the filelist
-                for( int i=start_index; i<fileList.length; i++ ) {
-
-					for( int j=0; j<FullTestCommands.length; j++ ) {
-						if( cmds[j][0].matches( "read-alt" ) && ( cmds[j][2].matches( "fl" ) || cmds[j][2].matches( "fl2" ) ) )
-							cmds[j][3] = Integer.toString( i ); // change the file entry to correct value
-					 	executeCommands( cmds[j] );
-					}
-				}
-
-                return Ci+1; // has been increased before! so it's initial Ci+1, effectively
-            } else if( ( Ci < arg.length ) && arg[Ci].matches("next") ) {
-
-				// split single String into its commando parts
-                if( (rememberedCommand == null) || (rememberedCommand.length <= 0) )
-                    rememberedCommand = onlyExtractCommands(TestString);
-
-				// change list entry
-				if ( rememberedCommand != null && rememberedCommand.length > 3 ) {
-
-					if ( rememberedCommand[0].matches( "read" ) && rememberedCommand[1].matches( "file" ) ) {
-						rememberedCommand[2] = fileList[current];
-					} else if ( rememberedCommand[0].matches( "read-alt" ) && ( rememberedCommand[2].matches( "fl" ) || rememberedCommand[2].matches( "fl2" ) ) ) {
-						rememberedCommand[3] = Integer.toString( current );
-					}
-				}
-
-                // repeat testing with the next file
-                current++;
-                if ( current >= fileList.length )
-                    current = 0;
-
-                executeCommands( rememberedCommand );
 
                 return Ci+1; // has been increased before! so it's initial Ci+1, effectively
             } else {
 
                 // just a normal testing then. Boring :p
-                extractCommands( TestString );
+                executeCommands(TestString);
                 return Ci;
             }
 
 		}
 
 		
-		public String description( ) {
+		protected String description( ) {
 
 			return "";
 		}
 	}
 
-    public class CmdUnrenumberVerts extends ACommandable {
+    protected class CmdUnrenumberVerts extends ACommandable {
 
-		public CmdUnrenumberVerts() {
+		protected CmdUnrenumberVerts() {
 			super(true);
 		}
 
-		public int executeMethod( String[] arg, int Ci ) {
+		protected int executeMethod( String[] arg, int Ci ) {
 
             System.out.println(" ~~~ CMD: unrenumber-verts ");
             gReduce.unrenumberVerts();
@@ -1588,7 +1560,7 @@ public class TController {
         }
 
         
-        public String description() {
+        protected String description() {
             return " ~ unrenumber-verts" +
                     " ~ after using 'renumber-verts', this will restore the vertices to their original ids and colors";
         }
@@ -1598,7 +1570,7 @@ public class TController {
 	//////////////////////////
 	///--- CONSTRUCTORS ---///
 
-	public TController() {
+	public TReductionController() {
 
 		System.out.println();
 		setCommands();
@@ -1705,12 +1677,41 @@ public class TController {
 		return buf;
 	}
 
+    /**
+     * use the hash value here!
+     * @param V_ID
+     */
+    protected void printVerticesFromVertex( final int V_ID ) {
+
+        if ( gReduce != null ) {
+
+            System.out.println("< Printing edges from " + V_ID +" >" );
+
+            Fragment[] Vertex_By_Hash = gReduce.getVerticesByHash();
+            int[] VertexToHash = gReduce.getVertexToHash();
+
+            final Iterator<Fragment> IT  = gReduce.gGraph.postOrderIterator( Vertex_By_Hash[V_ID] );
+            Fragment frag;
+            while ( IT.hasNext() ) {
+                frag = IT.next();
+                System.out.println( " - HashID: " + VertexToHash[frag.getVertexId()] + ", Vertex: " + frag );
+            }
+
+            System.out.println("< finished >");
+        } else {
+            System.out.println("Cannot load edges: no graph loaded!");
+            bTerminateCurrentCommands = true;
+            return;
+        }
+
+    }
+
 	/**
 	 * - split 'str' between spaces and copy its parts into a linked list
 	 * - executeMethod the newly created linked list
 	 * @param str: valid command line
 	 */
-    public void extractCommands( String str ) {
+    protected void executeCommands(String str) {
 
         LinkedList<String> cmd = new LinkedList<String>();
         Scanner scanner = new Scanner(str);
@@ -1725,7 +1726,7 @@ public class TController {
         executeCommands(buf);
     }
 
-    public String[] onlyExtractCommands(String str) {
+    protected String[] extractCommands(String str) {
 
         LinkedList<String> cmd = new LinkedList<String>();
         Scanner scanner = new Scanner(str);
@@ -1747,7 +1748,7 @@ public class TController {
 	 * @param cmds: valid command line input
 	 * @return: TRUE, if there has been no TERMINATION command: "exit"
 	 */
-	public int executeCommands( String[] cmds ) {
+	protected int executeCommands( String[] cmds ) {
 
 		String sBuf = "";
 		boolean HasDeletedEdgeLastTime = false;
@@ -1781,7 +1782,7 @@ public class TController {
 					System.out.println(" Executing: " + StringArrayToArray( partialCommand ) + " | as long as edges will not be deleted anymore.");
 
 					int c = 1;
-					while( executeCommands( partialCommand ) == TController.EXECUTE_LOOP )
+					while( executeCommands( partialCommand ) == TReductionController.EXECUTE_LOOP )
 						c++; // the command parser will notify to executeMethod again if edges has been deleted
 					System.out.println(" ~ executed " + c + " times ");
 
@@ -1827,7 +1828,7 @@ public class TController {
 		if ( bTerminateCurrentCommands )
 			System.err.println(" Commands terminated. ");
 
-		return ( HasDeletedEdgeLastTime ) ? TController.EXECUTE_LOOP : TController.EXIT_LOOP; // only necessary for "*"
+		return ( HasDeletedEdgeLastTime ) ? TReductionController.EXECUTE_LOOP : TReductionController.EXIT_LOOP; // only necessary for "*"
 	}
 
 	////////////////////////
