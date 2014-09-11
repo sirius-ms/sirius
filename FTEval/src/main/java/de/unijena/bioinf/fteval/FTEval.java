@@ -36,7 +36,7 @@ import java.util.*;
  * <p/>
  * Usage:
  * <p/>
- * fteval init dataset
+ * fteval initiate dataset
  * <p/>
  * fteval compute profil.json
  * <p/>
@@ -58,7 +58,7 @@ public class FTEval {
         }
         final String[] cropped = Arrays.copyOf(args, args.length - 1);
         System.arraycopy(args, 1, cropped, 0, cropped.length);
-        if (args[0].equals("init")) {
+        if (args[0].equals("initiate")) {
             init(cropped);
         } else if (args[0].equals("cleanup")) {
             removeIdenticalCompounds(cropped);
@@ -77,7 +77,7 @@ public class FTEval {
         } else if (args[0].equals("test")) {
             test(cropped);
         } else {
-            System.err.println("Unknown command '" + args[0] + "'. Allowed are 'init', 'compute', 'align', 'decoy' and 'ssps'");
+            System.err.println("Unknown command '" + args[0] + "'. Allowed are 'initiate', 'compute', 'align', 'decoy' and 'ssps'");
         }
     }
 
@@ -343,7 +343,7 @@ public class FTEval {
 
     private static void printUsage() {
         System.out.println("FTEval evaluates the performance of SIRIUS on a given dataset.\n" +
-                "Create an evaluation for a dataset with\nfteval init <nameofdataset>\n" +
+                "Create an evaluation for a dataset with\nfteval initiate <nameofdataset>\n" +
                 "Then copy all your ms files into the directory dataset/ms\n" +
                 "As well as all sdf files into the directory dataset/sdf\n" +
                 "You can then start the analysis with\ncd dataset\nfteval compute profilename.json\nfteval ssps");
