@@ -55,7 +55,7 @@ public class RDBEMassScorer implements MolecularFormulaScorer {
     }
 
     public final double getRDBEMassValue(double rdbe, double mass) {
-        return rdbe / Math.sqrt(mass);
+        return rdbe / Math.pow(mass, 2d / 3d);
     }
 
     @Override
