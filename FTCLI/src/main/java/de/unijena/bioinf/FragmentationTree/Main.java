@@ -622,6 +622,9 @@ public class Main {
                                     }
                                     treeIter.setLowerbound(DEBUG_MODE ? 0d : lb);
                                     if (verbose) System.out.println("Increase lowerbound to " + lb);
+                                    if (bestScoring.getOverallScore() > correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
+                                        break treeIteration;
+                                    }
                                 }
                             }
                             if (DEBUG_MODE) treeIter.setLowerbound(0d);
