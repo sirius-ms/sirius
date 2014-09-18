@@ -52,6 +52,8 @@ public class Main {
 
     public final static String VERSION_STRING = "FragmentationPatternAnalysis " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
+    private static boolean DEBUG_ONLY_INT = true;
+
     private static boolean DEBUG = false;
     // fragmentstats
     // file, db, correct, shared, formula, mass, recalibrated, alphabet, ppmdev, mzdev, recppmdev, recmzdev, intensity
@@ -330,6 +332,12 @@ public class Main {
                 MeasurementProfile profile = defaultProfile;
 
                 Ms2Experiment experiment = parseFile(f, profile);
+
+                if (options.isNaive()) {
+                    useNaiveApproach(analyzer, profile, experiment);
+                    continue eachFile;
+                }
+
                 final MolecularFormula correctFormula = experiment.getMolecularFormula(); // TODO: charge
                 if (correctFormula != null) {
                     if (verbose) System.out.println("correct formula is given: " + correctFormula);
@@ -615,14 +623,14 @@ public class Main {
                                 bestTrees.add(tree);
                                 if (bestTrees.size() > NumberOfTreesToCompute) {
                                     bestTrees.pollFirst();
-                                    final TreeScoring bestScoring = bestTrees.first().getAnnotationOrThrow(TreeScoring.class);
-                                    lb = bestScoring.getOverallScore() - bestScoring.getRecalibrationBonus();
-                                    if (DEBUG && bestScoring.getOverallScore() > correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
+                                    final TreeScoring worstScoring = bestTrees.first().getAnnotationOrThrow(TreeScoring.class);
+                                    lb = worstScoring.getOverallScore() - worstScoring.getRecalibrationBonus();
+                                    if (DEBUG_ONLY_INT && worstScoring.getOverallScore() >= correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
                                         break treeIteration;
                                     }
                                     treeIter.setLowerbound(DEBUG_MODE ? 0d : lb);
                                     if (verbose) System.out.println("Increase lowerbound to " + lb);
-                                    if (bestScoring.getOverallScore() > correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
+                                    if (worstScoring.getOverallScore() > correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
                                         break treeIteration;
                                     }
                                 }
@@ -829,6 +837,30 @@ public class Main {
             dbchanges = formulaQuery.getChanges();
         }
         return dbchanges;
+    }
+
+    private void useNaiveApproach(FragmentationPatternAnalysis analyzer, MeasurementProfile profile, Ms2Experiment experiment) {
+        experiment = analyzer.validate(experiment);
+        final ProcessedInput pinput = analyzer.preprocessing(experiment);
+        final DecompositionList list = pinput.getAnnotationOrThrow(DecompositionList.class);
+        final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>();
+        for (ScoredMolecularFormula f : list.getDecompositions()) formulas.add(f.getFormula());
+        final Ionization ion = experiment.getIonization();
+        final double pm = ion.subtractFromMass(pinput.getParentPeak().getMass());
+        Collections.sort(formulas, new Comparator<MolecularFormula>() {
+            @Override
+            public int compare(MolecularFormula elements, MolecularFormula elements2) {
+                final double d1 = Math.abs(elements.getMass() - pm);
+                final double d2 = Math.abs(elements2.getMass() - pm);
+                return Double.compare(d1, d2);
+            }
+        });
+        int rank = 1;
+        for (int i = 0; i < formulas.size(); ++i) {
+            if (formulas.get(i).equals(experiment.getMolecularFormula())) break;
+            else ++rank;
+        }
+        System.out.println("RANK " + rank);
     }
 
     private void printResult(FTree tree) {
