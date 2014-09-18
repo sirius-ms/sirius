@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fteval;
 
 import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.ChemistryBase.data.DoubleDataMatrix;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -13,6 +14,13 @@ import de.unijena.bioinf.ftblast.Dataset;
 import de.unijena.bioinf.ftblast.ScoreTable;
 import de.unijena.bioinf.spectralign.SpectralAligner;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import net.sf.jniinchi.INCHI_RET;
+import org.openscience.cdk.Molecule;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.inchi.InChIGenerator;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
+import org.openscience.cdk.io.ISimpleChemObjectReader;
+import org.openscience.cdk.io.ReaderFactory;
 
 import java.io.*;
 import java.nio.file.FileVisitResult;
@@ -21,6 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * fteval gets a dataset and creates following directories
@@ -68,10 +78,14 @@ public class FTEval {
             tanimoto(cropped);
         } else if (args[0].equals("align")) {
             align(cropped);
+        } else if (args[0].equals("filter")) {
+            filter(cropped);
         } else if (args[0].equals("peaks")) {
             peakcounting(cropped);
         } else if (args[0].equals("decoy")) {
             decoy(cropped);
+        } else if (args[0].equals("standardize")) {
+            standardize(cropped);
         } else if (args[0].equals("ssps")) {
             ssps(cropped);
         } else if (args[0].equals("test")) {
@@ -79,6 +93,94 @@ public class FTEval {
         } else {
             System.err.println("Unknown command '" + args[0] + "'. Allowed are 'initiate', 'compute', 'align', 'decoy' and 'ssps'");
         }
+    }
+
+    private static void filter(String[] cropped) {
+        final Interact I = new Shell();
+        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, cropped);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+        // delete all identical compounds
+        final HashSet<String> inchis2d = new HashSet<String>();
+        final List<File> toDelete = new ArrayList<File>();
+        final Pattern split2D = Pattern.compile("/[btmsifr]");
+        I.sayln("Search for duplicates");
+        for (File sdf : evalDB.sdfFiles()) {
+            try {
+                InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
+                final BufferedReader reader = new BufferedReader(new FileReader(sdf));
+                final ISimpleChemObjectReader chemReader = new ReaderFactory().createReader(reader);
+                final Molecule mol = chemReader.read(new Molecule());
+                final InChIGenerator gen = factory.getInChIGenerator(mol);
+                if (gen.getReturnStatus() != INCHI_RET.OKAY) {
+                    System.err.println(gen.getMessage());
+                    toDelete.add(sdf);
+                }
+                String inchi = gen.getInchi();
+                // to 2D
+                final Matcher m = split2D.matcher(inchi);
+                if (m.find()) {
+                    inchi = inchi.substring(0, m.start());
+                }
+                if (inchis2d.contains(inchi)) toDelete.add(sdf);
+                else inchis2d.add(inchi);
+            } catch (CDKException e) {
+                throw new RuntimeException(e);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        for (File f : toDelete) {
+            I.sayln("delete " + f.getName());
+            f.delete();
+        }
+    }
+
+    private static void standardize(String[] cropped) {
+        final Interact I = new Shell();
+        final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, cropped);
+        final EvalDB evalDB = new EvalDB(opts.getDataset());
+        final Standardize std = new Standardize();
+        final List<File> files = new ArrayList<File>();
+        for (String p : evalDB.profiles()) {
+            for (File f : evalDB.scoreMatrix(p).getParentFile().listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".csv") && !name.equalsIgnoreCase("decoymatrix.csv");
+                }
+            })) {
+                files.add(f);
+            }
+        }
+        for (String tanimoto : evalDB.fingerprints()) {
+            files.add(evalDB.fingerprint(tanimoto));
+        }
+        for (File score : evalDB.otherScores()) {
+            files.add(score);
+        }
+        I.sayln("Reading matrices");
+        for (File f : files) {
+            try {
+                std.merge(f);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        I.sayln("Reordering matrices");
+        for (File f : files) {
+            try {
+                writeMatrix(new File(f.getAbsolutePath() + ".std"), std.reorderFile(f));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void writeMatrix(File f, String[][] strings) throws IOException {
+        final CSVWriter writer = new CSVWriter(new FileWriter(f));
+        writer.writeAll(Arrays.asList(strings));
+        writer.close();
     }
 
     private static void test(String[] args) {
@@ -100,7 +202,6 @@ public class FTEval {
         final ScoreTable sc = new ScoreTable("test", matrices.getLayer(0));
         sc.toFingerprints();
         sc.getOrdered();
-        System.out.println("TEST");
     }
 
     private static void peakcounting(String[] args) {
@@ -316,14 +417,15 @@ public class FTEval {
             }
             dir.mkdir();
             float[][][] matrix = chem.computeTanimoto();
+
             I.sayln("Compute " + dir.getName());
             try {
                 final BufferedWriter fileWriter = new BufferedWriter(new FileWriter(new File(dir, "tanimoto.csv")));
                 // write header
                 final List<ChemicalSimilarity.Compound> compounds = chem.getCompounds();
+                fileWriter.write("\"scores\"");
                 for (int j = 0; j < compounds.size(); ++j) {
-                    fileWriter.append('"').append(compounds.get(j).name).append('"');
-                    if (j + 1 < compounds.size()) fileWriter.append(",");
+                    fileWriter.append(",\"").append(compounds.get(j).name).append('"');
                 }
                 fileWriter.newLine();
                 // write rows
@@ -708,7 +810,8 @@ public class FTEval {
                         return name.endsWith(".csv") && !name.equalsIgnoreCase("decoymatrix.csv");
                     }
                 })) {
-                    templates.add(parseMatrix(f));
+                    final File ff = new File(f.getAbsoluteFile() + ".std");
+                    templates.add(parseMatrix(ff.exists() ? ff : f));
                     if (f.getName().equals("matrix.csv")) names.add(p);
                     else {
                         final String suffix = f.getName().substring(0, f.getName().indexOf('.'));
@@ -721,7 +824,9 @@ public class FTEval {
         }
         for (String tanimoto : evalDB.fingerprints()) {
             try {
-                others.add(parseMatrix(evalDB.fingerprint(tanimoto)));
+                final File f = evalDB.fingerprint(tanimoto);
+                final File ff = new File(f.getAbsoluteFile() + ".std");
+                others.add(parseMatrix(ff.exists() ? ff : f));
                 names.add(tanimoto);
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -729,7 +834,8 @@ public class FTEval {
         }
         for (File score : evalDB.otherScores()) {
             try {
-                others.add(parseMatrix(score));
+                final File ff = new File(score.getAbsoluteFile() + ".std");
+                others.add(parseMatrix(ff.exists() ? ff : score));
                 names.add(score.getName().substring(0, score.getName().indexOf('.')));
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.

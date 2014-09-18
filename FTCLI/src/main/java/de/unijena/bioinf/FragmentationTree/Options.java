@@ -26,7 +26,7 @@ import java.util.List;
    ftc --profile qTof file.ms
 
 */
-public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
+public interface Options extends BasicOptions, ProfileOptions, OutputOptions {
 
     @Unparsed
     public List<File> getFiles();
@@ -40,7 +40,7 @@ public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
     @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 
-    @Option(shortName = "D", description = "use database", defaultValue="NONE")
+    @Option(shortName = "D", description = "use database", defaultValue = "NONE")
     public Databases getDatabase();
 
     @Option(defaultToNull = true, description = "directory with cache file")
@@ -72,4 +72,7 @@ public interface Options extends BasicOptions, ProfileOptions,OutputOptions {
 
     @Option(shortName = "i", description = "enable isotope pattern analysis")
     public boolean getMs1();
+
+    @Option()
+    boolean isNaive();
 }
