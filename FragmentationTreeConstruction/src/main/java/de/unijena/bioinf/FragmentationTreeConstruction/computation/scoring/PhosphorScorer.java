@@ -34,7 +34,7 @@ public class PhosphorScorer implements DecompositionScorer<Element[]>, LossScore
         final int pnum = formula.numberOf(phosphorAndSulfur[0]);
         if (peak == input.getParentPeak()) {
             // expect 2 oxygen/sulfur for each phosphor losses
-            if ((formula.numberOf(phosphorAndSulfur[1]) + formula.numberOfOxygens()) < (pnum * 2 + 1))
+            if ((formula.numberOf(phosphorAndSulfur[1]) + formula.numberOfOxygens()) < (pnum * 2))
                 return Math.log(0.05d);
             else return 0d;
         }
