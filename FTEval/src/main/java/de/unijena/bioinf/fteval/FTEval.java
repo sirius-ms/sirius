@@ -15,7 +15,7 @@ import de.unijena.bioinf.ftblast.ScoreTable;
 import de.unijena.bioinf.spectralign.SpectralAligner;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import net.sf.jniinchi.INCHI_RET;
-import org.openscience.cdk.Molecule;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
@@ -96,7 +96,7 @@ public class FTEval {
     }
 
     private static void filter(String[] cropped) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, cropped);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         // delete all identical compounds
@@ -109,7 +109,7 @@ public class FTEval {
                 InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
                 final BufferedReader reader = new BufferedReader(new FileReader(sdf));
                 final ISimpleChemObjectReader chemReader = new ReaderFactory().createReader(reader);
-                final Molecule mol = chemReader.read(new Molecule());
+                final AtomContainer mol = chemReader.read(new AtomContainer());
                 final InChIGenerator gen = factory.getInChIGenerator(mol);
                 if (gen.getReturnStatus() != INCHI_RET.OKAY) {
                     System.err.println(gen.getMessage());
@@ -138,7 +138,7 @@ public class FTEval {
     }
 
     private static void standardize(String[] cropped) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, cropped);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final Standardize std = new Standardize();
@@ -184,7 +184,7 @@ public class FTEval {
     }
 
     private static void test(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final SSPSBasicOptions opts = CliFactory.parseArguments(SSPSBasicOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final List<Iterator<String[]>> templates = new ArrayList<Iterator<String[]>>();
@@ -205,7 +205,7 @@ public class FTEval {
     }
 
     private static void peakcounting(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final PeakcountingOptions opts = CliFactory.parseArguments(PeakcountingOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         // peak counting
@@ -221,7 +221,7 @@ public class FTEval {
     }
 
     private static void align(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final ArrayList<String> profiles = new ArrayList<String>(Arrays.asList(evalDB.profiles()));
@@ -254,7 +254,7 @@ public class FTEval {
     // if two compounds are identical, remove one of them
     // if the tree of two compounds contains less than 5 losses, remove it
     private static void removeIdenticalCompounds(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final CleanupOpts opts = CliFactory.parseArguments(CleanupOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
 
@@ -381,15 +381,30 @@ public class FTEval {
 
     private static void tanimoto(String[] args) {
         // TODO: parameters
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final EvalBasicOptions opts = CliFactory.parseArguments(EvalBasicOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final ChemicalSimilarity chem = new ChemicalSimilarity(evalDB);
-        for (File sdf : evalDB.sdfFiles()) {
-            try {
-                chem.add(sdf.getName());
-            } catch (IOException e) {
-                System.err.println("Can't parse '" + sdf.getName() + "':\n" + e.getMessage());
+        if (evalDB.inchiDir().exists()) {
+            I.sayln("parse inchi files");
+            for (File inchi : evalDB.inchiFiles()) {
+                try {
+                    final BufferedReader reader = new BufferedReader(new FileReader(inchi));
+                    final String inchiStr = reader.readLine();
+                    reader.close();
+                    chem.addInchi(inchi.getName(), inchiStr);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            I.sayln("parse sdf files");
+            for (File sdf : evalDB.sdfFiles()) {
+                try {
+                    chem.add(sdf.getName());
+                } catch (IOException e) {
+                    System.err.println("Can't parse '" + sdf.getName() + "':\n" + e.getMessage());
+                }
             }
         }
         try {
@@ -510,7 +525,7 @@ public class FTEval {
     }
 
     public static void compute(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final ComputeOptions opts = CliFactory.parseArguments(ComputeOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final String name;
@@ -651,7 +666,7 @@ public class FTEval {
     }
 
     public static void decoy(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         for (String profil : evalDB.profiles()) {
@@ -668,24 +683,6 @@ public class FTEval {
             } catch (IOException e) {
                 System.err.println(e.getMessage());
             }
-        }
-    }
-
-    private static class Hit implements Comparable<Hit> {
-        private final boolean decoy;
-        private final double score;
-        private final int left, right;
-
-        private Hit(int left, int right, double score, boolean decoy) {
-            this.left = left;
-            this.right = right;
-            this.score = score;
-            this.decoy = decoy;
-        }
-
-        @Override
-        public int compareTo(Hit o) {
-            return Double.compare(score, o.score);
         }
     }
 
@@ -795,12 +792,13 @@ public class FTEval {
     }
 
     public static void ssps(String[] args) {
-        final Interact I = new Shell();
+        final Interact I = Shell.withAlternative();
         final SSPSBasicOptions opts = CliFactory.parseArguments(SSPSBasicOptions.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final List<Iterator<String[]>> templates = new ArrayList<Iterator<String[]>>();
         final List<Iterator<String[]>> others = new ArrayList<Iterator<String[]>>();
         final List<String> names = new ArrayList<String>();
+        boolean std = true;
         I.sayln("Reading matrices");
         for (String p : evalDB.profiles()) {
             try {
@@ -817,6 +815,7 @@ public class FTEval {
                         final String suffix = f.getName().substring(0, f.getName().indexOf('.'));
                         names.add(p + "_" + suffix);
                     }
+                    std &= ff.exists();
                 }
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -826,6 +825,7 @@ public class FTEval {
             try {
                 final File f = evalDB.fingerprint(tanimoto);
                 final File ff = new File(f.getAbsoluteFile() + ".std");
+                std &= ff.exists();
                 others.add(parseMatrix(ff.exists() ? ff : f));
                 names.add(tanimoto);
             } catch (IOException e) {
@@ -835,31 +835,63 @@ public class FTEval {
         for (File score : evalDB.otherScores()) {
             try {
                 final File ff = new File(score.getAbsoluteFile() + ".std");
+                std &= ff.exists();
                 others.add(parseMatrix(ff.exists() ? ff : score));
                 names.add(score.getName().substring(0, score.getName().indexOf('.')));
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
         }
-        System.out.println("Rearrange matrices");
         templates.addAll(others);
-        final DoubleDataMatrix matrices = DoubleDataMatrix.overlayIntersection(templates, names, null);
+        final DoubleDataMatrix matrices;
+        if (std) {
+            System.out.println("Matrices already rearranged");
+            matrices = DoubleDataMatrix.overlay(templates, null, names, null, Double.NaN);
+            for (int i = 0; i < matrices.getValues().length; ++i) {
+                final double[][] row = matrices.getValues()[i];
+                for (int j = 0; j < row.length; ++j) {
+                    for (int k = 0; k < row[j].length; ++k) {
+                        if (Double.isNaN(row[j][k])) {
+                            throw new RuntimeException("NaN in (" + i + "," + j + "," + k + ") " + names.get(i) + " : " + matrices.getRowHeader()[j] + matrices.getColHeader()[k]);
+                        }
+                    }
+                }
+            }
+        } else {
+            System.out.println("Rearrange matrices");
+            matrices = DoubleDataMatrix.overlayIntersection(templates, names, null);
+        }
+
         final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")), opts.getK());
+
+        I.sayln("Only allow compounds from different databases");
+        int splitpoint = 0;
+        char firstchar = matrices.getRowHeader()[0].charAt(0);
+        for (String s : matrices.getRowHeader()) {
+            if (s.charAt(0) != firstchar) break;
+            ++splitpoint;
+        }
+
         for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
             final String name = matrices.getLayerHeader()[i];
             if (!name.equals("Pubchem")) {
                 final ScoreTable sc = new ScoreTable(name, matrices.getLayer(i));
                 if (!opts.isNoFingerprint() && !name.equalsIgnoreCase("Pubchem") && !name.equalsIgnoreCase("MACCS") &&
-                        !name.equalsIgnoreCase("Extended")) sc.toFingerprints();
+                        !name.equalsIgnoreCase("Extended") && !name.equals("KlekotaRoth"))
+                    sc.toFingerprints(splitpoint);
                 dataset.add(sc);
             }
         }
+        if (!opts.isNoSSPS()) {
+            // filter identical compounds
+            I.sayln("Filterint identical compounds");
+            dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
 
-        // filter identical compounds
-        I.sayln("Filterint identical compounds");
-        dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
+            dataset.allowOnlyCompoundsFromDifferentDatasets(splitpoint);
 
-        I.sayln("Calculating SSPS");
+            I.sayln("Calculating SSPS");
+        } else I.sayln("Calculating Correlation");
+
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(
@@ -872,31 +904,76 @@ public class FTEval {
                 }
             }
             writer.newLine();
-            final int MAXK = opts.getK() * 10;
-            for (int k = 1; k <= MAXK; ++k) {
-                I.say(".");
-                System.out.flush();
-                final float K = k / 10f;
-                writer.append(String.valueOf(K));
-                writer.append(",");
-                writer.append(String.valueOf(dataset.sspsOpt(K)));
-                writer.append(",");
-                writer.append(String.valueOf(dataset.sspsAverageRandom()));
+            if (opts.isNoSSPS()) {
+                int pubchemId = 0;
+                final int MAXK = opts.getK();
+                final double[][] results = new double[matrices.getLayerHeader().length][];
                 for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
-                    if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
-                    else {
-                        writer.append(",");
-                        final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);//new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
-                        writer.append(String.valueOf(dataset.ssps(tab, K)));
-                    }
+                    if (matrices.getLayerHeader()[i].equals("Pubchem")) pubchemId = i;
+                    final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);//new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
+                    results[i] = dataset.averageChemicalSimilarityCrossDB(tab, MAXK, splitpoint);
                 }
-                writer.newLine();
-                I.sayln("");
+                for (int k = 0; k < MAXK; ++k) {
+                    writer.append(String.valueOf(k + 1));
+                    writer.append(',');
+                    writer.append(String.valueOf(results[pubchemId][k]));
+                    writer.append(',');
+                    writer.append(String.valueOf(dataset.sspsAverageRandom()));
+                    for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
+                        if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
+                        else {
+                            writer.append(",");
+                            writer.append(String.valueOf(results[i][k]));
+                        }
+                    }
+                    writer.newLine();
+                    ;
+                }
+            } else {
+                final int MAXK = opts.getK() * 10;
+                for (int k = 1; k <= MAXK; ++k) {
+                    I.say(".");
+                    System.out.flush();
+                    final float K = k / 10f;
+                    writer.append(String.valueOf(K));
+                    writer.append(",");
+                    writer.append(String.valueOf(dataset.sspsOpt(K)));
+                    writer.append(",");
+                    writer.append(String.valueOf(dataset.sspsAverageRandom()));
+                    for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
+                        if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
+                        else {
+                            writer.append(",");
+                            final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);//new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
+                            writer.append(String.valueOf(dataset.ssps(tab, K)));
+                        }
+                    }
+                    writer.newLine();
+                    I.sayln("");
+                }
             }
             writer.close();
 
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
+    private static class Hit implements Comparable<Hit> {
+        private final boolean decoy;
+        private final double score;
+        private final int left, right;
+
+        private Hit(int left, int right, double score, boolean decoy) {
+            this.left = left;
+            this.right = right;
+            this.score = score;
+            this.decoy = decoy;
+        }
+
+        @Override
+        public int compareTo(Hit o) {
+            return Double.compare(score, o.score);
         }
     }
 

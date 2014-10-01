@@ -18,6 +18,9 @@ public interface SSPSBasicOptions extends EvalBasicOptions {
     @Option(shortName = "F")
     public boolean isNoFingerprint();
 
+    @Option(shortName = "S")
+    public boolean isNoSSPS();
+
     @Option(shortName = "t", defaultValue = "ssps.csv")
     public File getTarget();
 

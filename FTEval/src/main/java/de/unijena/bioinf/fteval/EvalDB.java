@@ -100,6 +100,18 @@ public class EvalDB {
         });
     }
 
+    public File inchiDir() {
+        return new File(root, "inchis");
+    }
+
+    public File[] inchiFiles() {
+        return inchiDir().listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".inchi") && new File(new File(root, "ms"), removeExtName(new File(name)) + ".ms").exists();
+            }
+        });
+    }
+
     public File garbageDir() {
         return new File(root, "garbage");
     }

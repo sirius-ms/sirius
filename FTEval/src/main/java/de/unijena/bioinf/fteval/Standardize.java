@@ -26,6 +26,50 @@ public class Standardize {
         this.colNames = new TreeSet<String>();
     }
 
+    private static String[][] parseMatrixComplete(File file) throws IOException {
+        final Iterator<String[]> iter = parseMatrix(file);
+        final ArrayList<String[]> lines = new ArrayList<String[]>();
+        while (iter.hasNext()) lines.add(iter.next());
+        return lines.toArray(new String[lines.size()][]);
+    }
+
+    private static Iterator<String[]> parseMatrix(File file) throws IOException {
+        final BufferedReader r = new BufferedReader(new FileReader(file));
+        final CSVReader reader = new CSVReader(r);
+        return new Iterator<String[]>() {
+            String[] row = reader.readNext();
+
+            @Override
+            public boolean hasNext() {
+                return row != null;
+            }
+
+            @Override
+            public String[] next() {
+                if (hasNext()) {
+                    final String[] r = row;
+                    readNext();
+                    return r;
+                } else throw new NoSuchElementException();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+            private void readNext() {
+                try {
+                    row = reader.readNext();
+                    if (row == null) reader.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+    }
+
     public void merge(File f) throws IOException {
         if (rowNames.isEmpty()) mergeByUnion(f);
         else mergeByIntersection(f);
@@ -81,7 +125,7 @@ public class Standardize {
         for (int i = 1; i < matrix.length; ++i) {
             rowMapping[i] = rowIndizes.get(matrix[i][0]);
         }
-        final String[][] newMatrix = new String[rowNames.size()][colNames.size()];
+        final String[][] newMatrix = new String[rowNames.size() + 1][colNames.size() + 1];
         // reorder rows
         for (int i = 0; i < matrix.length; ++i) {
             if (rowMapping[i] < 0) continue;
@@ -89,60 +133,16 @@ public class Standardize {
         }
         matrix = null;
         // reorder cols
-        final String[] buffer = new String[newMatrix[1].length];
-        for (int i = 1; i < newMatrix.length; ++i) {
+        final String[] buffer = new String[colNames.size() + 1];
+        for (int i = 0; i < newMatrix.length; ++i) {
             final String[] row = newMatrix[i];
             for (int j = 0; j < colMapping.length; ++j) {
-                if (colMapping[i] < 0) continue;
+                if (colMapping[j] < 0) continue;
                 buffer[colMapping[j]] = row[j];
             }
             newMatrix[i] = buffer.clone();
         }
         return newMatrix;
-    }
-
-    private static String[][] parseMatrixComplete(File file) throws IOException {
-        final Iterator<String[]> iter = parseMatrix(file);
-        final ArrayList<String[]> lines = new ArrayList<String[]>();
-        while (iter.hasNext()) lines.add(iter.next());
-        return lines.toArray(new String[lines.size()][]);
-    }
-
-    private static Iterator<String[]> parseMatrix(File file) throws IOException {
-        final BufferedReader r = new BufferedReader(new FileReader(file));
-        final CSVReader reader = new CSVReader(r);
-        return new Iterator<String[]>() {
-            String[] row = reader.readNext();
-
-            @Override
-            public boolean hasNext() {
-                return row != null;
-            }
-
-            @Override
-            public String[] next() {
-                if (hasNext()) {
-                    final String[] r = row;
-                    readNext();
-                    return r;
-                } else throw new NoSuchElementException();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-            private void readNext() {
-                try {
-                    row = reader.readNext();
-                    if (row == null) reader.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-
     }
 
 }

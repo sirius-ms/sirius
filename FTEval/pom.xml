@@ -59,21 +59,30 @@
             <artifactId>SpectralAlignment</artifactId>
             <version>2.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-fingerprint</artifactId>
-            <version>1.4.9</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-io</artifactId>
-            <version>1.4.9</version>
+            <version>1.5.6</version>
         </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-inchi</artifactId>
-            <version>1.4.9</version>
+            <version>1.5.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openscience.cdk</groupId>
+            <artifactId>cdk-core</artifactId>
+            <version>1.5.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openscience.cdk</groupId>
+            <artifactId>cdk-io</artifactId>
+            <version>1.5.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openscience.cdk</groupId>
+            <artifactId>cdk-data</artifactId>
+            <version>1.5.6</version>
         </dependency>
 
 
@@ -108,6 +117,20 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+        </repository>
+        <repository>
+            <id>ebi-repo</id>
+            <url>http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>ebi-repo-snapshots</id>
+            <url>http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
         </repository>
 
     </repositories>
