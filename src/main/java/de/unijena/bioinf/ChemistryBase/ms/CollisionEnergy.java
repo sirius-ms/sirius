@@ -13,6 +13,7 @@ public class CollisionEnergy {
     }
 
     public static CollisionEnergy mergeAll(CollisionEnergy... others) {
+        if (others == null || others.length == 0) return new CollisionEnergy(0, 0);
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
         for (int k = 0; k < others.length; ++k) {
