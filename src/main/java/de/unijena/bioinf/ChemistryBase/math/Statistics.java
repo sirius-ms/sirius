@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Random;
 
 /**
@@ -27,25 +28,34 @@ public class Statistics {
 
     private static double[] toRank(double[] xs, double delta) {
         final double[] rxs = xs.clone();
-        Arrays.sort(rxs);
+        final Integer[] stupid = new Integer[xs.length];
+        for (int i = 0; i < stupid.length; ++i) stupid[i] = i;
+        Arrays.sort(stupid, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer i, Integer j) {
+                return Double.compare(rxs[i], rxs[j]);
+            }
+        });
         for (int i = 0; i < rxs.length; ++i) {
             int j = i + 1;
-            for (; j < rxs.length && (rxs[j] - rxs[i]) < delta; ++j) {
+            for (; j < rxs.length && (xs[stupid[j]] - xs[stupid[i]]) < delta; ++j) {
             }
             --j;
             for (int l = i; l <= j; ++l) {
-                rxs[l] = i + (j - i) / 2;
+                rxs[stupid[l]] = i + (j - i) / 2d;
             }
+            i = j;
         }
         return rxs;
     }
+
 
     /**
      * Computes mean of xs
      */
     public static double expectation(double[] xs) {
         double sum = 0d;
-        for (int i=0; i < xs.length; ++i) {
+        for (int i = 0; i < xs.length; ++i) {
             sum += xs[i];
         }
         sum /= xs.length;
@@ -64,9 +74,9 @@ public class Statistics {
      */
     public static double variance(double[] xs, double expectation) {
         double sum = 0d;
-        for (int i=0; i < xs.length; ++i) {
+        for (int i = 0; i < xs.length; ++i) {
             final double d = xs[i] - expectation;
-            sum += (d*d);
+            sum += (d * d);
         }
         return sum / xs.length;
     }
@@ -81,7 +91,7 @@ public class Statistics {
     public static double covariance(double[] xs, double[] ys, double expectation_x, double expectation_y) {
         if (xs.length != ys.length) throw new IllegalArgumentException("Both arrays should have the same length!");
         double sum = 0d;
-        for (int i=0; i < xs.length; ++i) {
+        for (int i = 0; i < xs.length; ++i) {
             sum += (xs[i] - expectation_x) * (ys[i] - expectation_y);
         }
         return sum / xs.length;
@@ -100,8 +110,8 @@ public class Statistics {
     public static void shuffle(double[] array, int number, int offset, int length) {
         if (number > length) throw new IndexOutOfBoundsException("number cannot be smaller than length");
         final Random r = new Random();
-        for (int i=offset; i < number; ++i) {
-            final int k = r.nextInt(length-i)+i;
+        for (int i = offset; i < number; ++i) {
+            final int k = r.nextInt(length - i) + i;
             final double mem = array[i];
             array[i] = array[k];
             array[k] = mem;
@@ -121,8 +131,8 @@ public class Statistics {
     public static void shuffle(Object[] array, int number, int offset, int length) {
         if (number > length) throw new IndexOutOfBoundsException("number cannot be smaller than length");
         final Random r = new Random();
-        for (int i=offset; i < number; ++i) {
-            final int k = r.nextInt(length-i)+i;
+        for (int i = offset; i < number; ++i) {
+            final int k = r.nextInt(length - i) + i;
             final Object mem = array[i];
             array[i] = array[k];
             array[k] = mem;
@@ -134,12 +144,12 @@ public class Statistics {
      * This is done WITHOUT repition
      */
     public static void sample(double[] source, int srcPos, int srcLength, double[] dest, int destPos, int destLength) {
-        if (srcLength+srcPos > source.length)
-            throw new IndexOutOfBoundsException("["+srcPos+"..."+(srcPos+srcLength)+
-                    "] are out of bounds <"+source.length+">");
-        if (destPos+destLength > dest.length)
-            throw new IndexOutOfBoundsException("["+destPos+"..."+(destPos+destLength)+
-                    "] are out of bounds <"+dest.length+">");
+        if (srcLength + srcPos > source.length)
+            throw new IndexOutOfBoundsException("[" + srcPos + "..." + (srcPos + srcLength) +
+                    "] are out of bounds <" + source.length + ">");
+        if (destPos + destLength > dest.length)
+            throw new IndexOutOfBoundsException("[" + destPos + "..." + (destPos + destLength) +
+                    "] are out of bounds <" + dest.length + ">");
         if (srcLength < destLength)
             throw new IndexOutOfBoundsException("too few elements in src array");
         if (destPos + destLength == srcPos + srcLength) {
@@ -164,8 +174,8 @@ public class Statistics {
     public static void shuffle(int[] array, int number, int offset, int length) {
         if (number > length) throw new IndexOutOfBoundsException("number cannot be smaller than length");
         final Random r = new Random();
-        for (int i=offset; i < number; ++i) {
-            final int k = r.nextInt(length-i)+i;
+        for (int i = offset; i < number; ++i) {
+            final int k = r.nextInt(length - i) + i;
             final int mem = array[i];
             array[i] = array[k];
             array[k] = mem;
@@ -173,12 +183,12 @@ public class Statistics {
     }
 
     public static void sample(int[] source, int srcPos, int srcLength, int[] dest, int destPos, int destLength) {
-        if (srcLength+srcPos > source.length)
-            throw new IndexOutOfBoundsException("["+srcPos+"..."+(srcPos+srcLength)+
-                    "] are out of bounds <"+source.length+">");
-        if (destPos+destLength > dest.length)
-            throw new IndexOutOfBoundsException("["+destPos+"..."+(destPos+destLength)+
-                    "] are out of bounds <"+dest.length+">");
+        if (srcLength + srcPos > source.length)
+            throw new IndexOutOfBoundsException("[" + srcPos + "..." + (srcPos + srcLength) +
+                    "] are out of bounds <" + source.length + ">");
+        if (destPos + destLength > dest.length)
+            throw new IndexOutOfBoundsException("[" + destPos + "..." + (destPos + destLength) +
+                    "] are out of bounds <" + dest.length + ">");
         if (srcLength < destLength)
             throw new IndexOutOfBoundsException("too few elements in src array");
         if (destPos + destLength == srcPos + srcLength) {
