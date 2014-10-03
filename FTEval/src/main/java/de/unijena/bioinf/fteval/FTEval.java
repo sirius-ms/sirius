@@ -200,7 +200,7 @@ public class FTEval {
         }
         final DoubleDataMatrix matrices = DoubleDataMatrix.overlay(templates, others, names, null, 0d);
         final ScoreTable sc = new ScoreTable("test", matrices.getLayer(0));
-        sc.toFingerprints();
+        sc.toFingerprints(false);
         sc.getOrdered();
     }
 
@@ -880,7 +880,7 @@ public class FTEval {
                 final ScoreTable sc = new ScoreTable(name, matrices.getLayer(i));
                 if (!opts.isNoFingerprint() && !name.equalsIgnoreCase("Pubchem") && !name.equalsIgnoreCase("MACCS") &&
                         !name.equalsIgnoreCase("Extended") && !name.equals("KlekotaRoth"))
-                    sc.toFingerprints();
+                    sc.toFingerprints(opts.isSpearman());
                 dataset.add(sc);
             }
         }
