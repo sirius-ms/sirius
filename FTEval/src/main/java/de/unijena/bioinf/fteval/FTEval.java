@@ -225,7 +225,7 @@ public class FTEval {
         final AlignOpts opts = CliFactory.parseArguments(AlignOpts.class, args);
         final EvalDB evalDB = new EvalDB(opts.getDataset());
         final ArrayList<String> profiles = new ArrayList<String>(Arrays.asList(evalDB.profiles()));
-        if (!opts.names().isEmpty()) {
+        if (opts.names() != null && !opts.names().isEmpty()) {
             profiles.retainAll(opts.names());
         }
 
@@ -370,9 +370,10 @@ public class FTEval {
     private static ArrayList<String> getAlignArguments(AlignOpts opts) {
         final ArrayList<String> arguments = new ArrayList<String>();
         arguments.add("-n");
-        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors() - 1));
+        arguments.add(String.valueOf(Runtime.getRuntime().availableProcessors()));
         //if (!opts.isNoFingerprints()) arguments.add("-f");
-        arguments.add("-z");
+        if (!opts.isNoNormalizing())
+            arguments.add("-z");
         if (opts.isNoMultijoin()) arguments.add("-j");
         else arguments.addAll(Arrays.asList("-j", "3"));
         arguments.add("-x");
@@ -863,7 +864,7 @@ public class FTEval {
         }
 
         final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")), opts.getK());
-
+        /*
         I.sayln("Only allow compounds from different databases");
         int splitpoint = 0;
         char firstchar = matrices.getRowHeader()[0].charAt(0);
@@ -871,6 +872,7 @@ public class FTEval {
             if (s.charAt(0) != firstchar) break;
             ++splitpoint;
         }
+        */
 
         for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
             final String name = matrices.getLayerHeader()[i];
@@ -878,7 +880,7 @@ public class FTEval {
                 final ScoreTable sc = new ScoreTable(name, matrices.getLayer(i));
                 if (!opts.isNoFingerprint() && !name.equalsIgnoreCase("Pubchem") && !name.equalsIgnoreCase("MACCS") &&
                         !name.equalsIgnoreCase("Extended") && !name.equals("KlekotaRoth"))
-                    sc.toFingerprints(splitpoint);
+                    sc.toFingerprints();
                 dataset.add(sc);
             }
         }
@@ -887,7 +889,7 @@ public class FTEval {
             I.sayln("Filterint identical compounds");
             dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
 
-            dataset.allowOnlyCompoundsFromDifferentDatasets(splitpoint);
+            //dataset.allowOnlyCompoundsFromDifferentDatasets();
 
             I.sayln("Calculating SSPS");
         } else I.sayln("Calculating Correlation");
@@ -911,7 +913,7 @@ public class FTEval {
                 for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
                     if (matrices.getLayerHeader()[i].equals("Pubchem")) pubchemId = i;
                     final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);//new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
-                    results[i] = dataset.averageChemicalSimilarityCrossDB(tab, MAXK, splitpoint);
+                    results[i] = dataset.averageChemicalSimilarity(tab, MAXK);//dataset.averageChemicalSimilarityCrossDB(tab, MAXK, splitpoint);
                 }
                 for (int k = 0; k < MAXK; ++k) {
                     writer.append(String.valueOf(k + 1));

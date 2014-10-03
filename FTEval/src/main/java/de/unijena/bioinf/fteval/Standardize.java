@@ -104,6 +104,7 @@ public class Standardize {
     }
 
     public String[][] reorderFile(File f) throws IOException {
+        System.out.println("REORDER " + f);
         final TObjectIntHashMap<String> rowIndizes = new TObjectIntHashMap<String>(rowNames.size(), 0.75f, -1);
         {
             int i = 1;

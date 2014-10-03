@@ -26,4 +26,6 @@ public interface AlignOpts extends EvalBasicOptions {
     @Option(shortName = "x", defaultToNull = true)
     public List<String> getXtra();
 
+    @Option(shortName = "Z")
+    boolean isNoNormalizing();
 }
