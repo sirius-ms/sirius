@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.math;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -15,6 +16,28 @@ public class Statistics {
         final double Eys = expectation(ys);
         final double n = (Math.sqrt(variance(xs, Exs)) * Math.sqrt(variance(ys, Eys)));
         return (covariance(xs, ys, Exs, Eys) / n);
+    }
+
+    public static double spearman(double[] xs, double[] ys, double delta) {
+        final double[] rxs = toRank(xs, delta);
+        final double[] rys = toRank(ys, delta);
+        return pearson(rxs, rys);
+
+    }
+
+    private static double[] toRank(double[] xs, double delta) {
+        final double[] rxs = xs.clone();
+        Arrays.sort(rxs);
+        for (int i = 0; i < rxs.length; ++i) {
+            int j = i + 1;
+            for (; j < rxs.length && (rxs[j] - rxs[i]) < delta; ++j) {
+            }
+            --j;
+            for (int l = i; l <= j; ++l) {
+                rxs[l] = i + (j - i) / 2;
+            }
+        }
+        return rxs;
     }
 
     /**
