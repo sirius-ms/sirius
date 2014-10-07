@@ -4,7 +4,9 @@ import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.fingerprint.*;
+import org.openscience.cdk.fingerprint.IFingerprinter;
+import org.openscience.cdk.fingerprint.MACCSFingerprinter;
+import org.openscience.cdk.fingerprint.PubchemFingerprinter;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
@@ -26,7 +28,7 @@ public class ChemicalSimilarity {
     private final EvalDB db;
 
     public ChemicalSimilarity(EvalDB db) {
-        this(db, new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance()), new MACCSFingerprinter(), new EStateFingerprinter(), new KlekotaRothFingerprinter());
+        this(db, new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance()), new MACCSFingerprinter());
     }
 
     public ChemicalSimilarity(EvalDB db, IFingerprinter... fingerprinter) {

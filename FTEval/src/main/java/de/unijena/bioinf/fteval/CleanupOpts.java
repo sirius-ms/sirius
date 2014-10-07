@@ -14,4 +14,7 @@ public interface CleanupOpts extends EvalBasicOptions {
     @Option(shortName = "d", description = "delete files which tree contains less than <n> nodes", defaultValue = "0")
     public int getEdgeLimit();
 
+    @Option(shortName = "I", description = "use InChi for identity test")
+    public boolean useInchi();
+
 }

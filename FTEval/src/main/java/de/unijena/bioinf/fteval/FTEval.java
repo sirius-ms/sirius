@@ -78,7 +78,7 @@ public class FTEval {
             tanimoto(cropped);
         } else if (args[0].equals("align")) {
             align(cropped);
-        } else if (args[0].equals("filter")) {
+        } else if (args[0].equals("accept")) {
             filter(cropped);
         } else if (args[0].equals("peaks")) {
             peakcounting(cropped);
@@ -161,12 +161,48 @@ public class FTEval {
         }
         I.sayln("Reading matrices");
         for (File f : files) {
+            System.out.println(f);
             try {
                 std.merge(f);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        I.sayln("Remove identical compounds");
+        final File[] inchifiles = evalDB.inchiFiles();
+        final Set<String> identical = new HashSet<String>();
+        final Set<String> known = new HashSet<String>(inchifiles.length + 50);
+        for (File f : inchifiles) {
+            try {
+                final BufferedReader reader = new BufferedReader(new FileReader(f));
+                try {
+                    final String line = reader.readLine().trim();
+                    if (known.contains(line)) {
+                        final String name = f.getName();
+                        identical.add(name.substring(0, name.lastIndexOf('.')));
+                    } else known.add(line);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println(identical.size() + " compounds were removed due to identical compounds in set");
+        std.filter(new Standardize.Predicate() {
+            @Override
+            public boolean accept(String name) {
+                return !identical.contains(name);
+            }
+        });
+
         I.sayln("Reordering matrices");
         for (File f : files) {
             try {
@@ -274,6 +310,11 @@ public class FTEval {
             }
         }
         for (String s : toDelete) deleteInstance(evalDB, s);
+
+        if (opts.useInchi()) {
+
+            return;
+        }
 
         // get two fingerprints
         final ArrayList<File> fingerprints = new ArrayList<File>();
@@ -864,7 +905,8 @@ public class FTEval {
         }
 
         final Dataset dataset = new Dataset(new ScoreTable("Pubchem", matrices.getLayer("Pubchem")), opts.getK());
-        /*
+
+
         I.sayln("Only allow compounds from different databases");
         int splitpoint = 0;
         char firstchar = matrices.getRowHeader()[0].charAt(0);
@@ -872,7 +914,7 @@ public class FTEval {
             if (s.charAt(0) != firstchar) break;
             ++splitpoint;
         }
-        */
+
 
         for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
             final String name = matrices.getLayerHeader()[i];
@@ -880,16 +922,17 @@ public class FTEval {
                 final ScoreTable sc = new ScoreTable(name, matrices.getLayer(i));
                 if (!opts.isNoFingerprint() && !name.equalsIgnoreCase("Pubchem") && !name.equalsIgnoreCase("MACCS") &&
                         !name.equalsIgnoreCase("Extended") && !name.equals("KlekotaRoth"))
-                    sc.toFingerprints(opts.isSpearman());
+                    //sc.toFingerprints(opts.isSpearman())
+                    sc.toFingerprints(splitpoint);
                 dataset.add(sc);
             }
         }
         if (!opts.isNoSSPS()) {
-            // filter identical compounds
-            I.sayln("Filterint identical compounds");
-            dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
+            // accept identical compounds
+            //I.sayln("Filter identical compounds");
+            //dataset.filterOutIdenticalCompounds("Pubchem", "MACCS");
 
-            //dataset.allowOnlyCompoundsFromDifferentDatasets();
+            dataset.allowOnlyCompoundsFromDifferentDatasets(splitpoint);
 
             I.sayln("Calculating SSPS");
         } else I.sayln("Calculating Correlation");
@@ -913,7 +956,8 @@ public class FTEval {
                 for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
                     if (matrices.getLayerHeader()[i].equals("Pubchem")) pubchemId = i;
                     final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);//new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
-                    results[i] = dataset.averageChemicalSimilarity(tab, MAXK);//dataset.averageChemicalSimilarityCrossDB(tab, MAXK, splitpoint);
+                    results[i] = //dataset.averageChemicalSimilarity(tab, MAXK);
+                            dataset.averageChemicalSimilarityCrossDB(tab, MAXK, splitpoint);
                 }
                 for (int k = 0; k < MAXK; ++k) {
                     writer.append(String.valueOf(k + 1));
@@ -946,7 +990,8 @@ public class FTEval {
                         if (matrices.getLayerHeader()[i].equals("Pubchem")) continue;
                         else {
                             writer.append(",");
-                            final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);//new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
+                            final ScoreTable tab = dataset.getTable(matrices.getLayerHeader()[i]);
+                            //new ScoreTable(matrices.getLayerHeader()[i], matrices.getLayer(i));
                             writer.append(String.valueOf(dataset.ssps(tab, K)));
                         }
                     }

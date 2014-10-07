@@ -29,8 +29,8 @@ import java.util.*;
 
 /**
  * cleanup
- * cleanup --recalibrate --filter=explained
- * cleanup --recalibrate --filter=explainable
+ * cleanup --recalibrate --accept=explained
+ * cleanup --recalibrate --accept=explainable
  */
 public class CleanupSpectrum {
 

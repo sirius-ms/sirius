@@ -4,6 +4,7 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -336,6 +337,13 @@ public class Main {
                 if (options.isNaive()) {
                     useNaiveApproach(analyzer, profile, experiment);
                     continue eachFile;
+                }
+
+                if (true) {
+
+                    measureMzDiff(analyzer, profile, experiment);
+                    continue eachFile;
+
                 }
 
                 final MolecularFormula correctFormula = experiment.getMolecularFormula(); // TODO: charge
@@ -823,6 +831,66 @@ public class Main {
         updateFormulaCache(formulaQuery, formulaCacheFile, -10);
         for (PrintStream writer : openStreams) {
             writer.close();
+        }
+    }
+
+
+    PrintStream measureMZDIFFSTREAM;
+    PrintStream measureIsoSTREAM;
+
+    private void measureMzDiff(FragmentationPatternAnalysis analyzer, MeasurementProfile profile, Ms2Experiment experiment) {
+
+
+        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02));
+        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02).getDensity(0.005));
+        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02).getDensity(0.1));
+        System.exit(1);
+
+        if (measureMZDIFFSTREAM == null) try {
+            measureMZDIFFSTREAM = new PrintStream(new File("mzdiff.csv"));
+            measureIsoSTREAM = new PrintStream(new File("intensity.csv"));
+            openStreams.add(measureMZDIFFSTREAM);
+            openStreams.add(measureIsoSTREAM);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        final ProcessedInput input = analyzer.preprocessing(experiment);
+        final FTree tree = analyzer.computeTrees(input).onlyWith(Arrays.asList(experiment.getMolecularFormula())).optimalTree();
+        FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+        for (Fragment f : tree.getFragments()) {
+            final double mz = ano.get(f).getOriginalMz();
+            final double hypo = ion.addToMass(f.getFormula().getMass());
+            measureMZDIFFSTREAM.print(String.valueOf(mz));
+            measureMZDIFFSTREAM.print("\t");
+            measureMZDIFFSTREAM.print(String.valueOf(hypo));
+            measureMZDIFFSTREAM.print("\t");
+            measureMZDIFFSTREAM.print(String.valueOf(mz - hypo));
+            measureMZDIFFSTREAM.print("\t");
+            measureMZDIFFSTREAM.print(String.valueOf((mz - hypo) * 1e6 / (mz)));
+            measureMZDIFFSTREAM.print("\n");
+        }
+
+        // find noise
+        final Deviation dev = analyzer.getDefaultProfile().getAllowedMassDeviation();
+        final double[] usedMzs = new double[tree.getFragments().size()];
+        int k = 0;
+        for (Fragment f : tree.getFragments()) usedMzs[k++] = ano.get(f).getOriginalMz();
+        Arrays.sort(usedMzs);
+        for (ProcessedPeak peak : input.getMergedPeaks()) {
+            int j = Arrays.binarySearch(usedMzs, peak.getOriginalMz());
+            if (j < 0) {
+                j = -(j + 1);
+                if (j < usedMzs.length && (dev.inErrorWindow(usedMzs[j], peak.getOriginalMz()) || dev.inErrorWindow(peak.getOriginalMz(), usedMzs[j]))) {
+                    continue;
+                }
+                --j;
+                if (j >= 0 && (dev.inErrorWindow(usedMzs[j], peak.getOriginalMz()) || dev.inErrorWindow(peak.getOriginalMz(), usedMzs[j]))) {
+                    continue;
+                }
+
+                measureIsoSTREAM.println(peak.getGlobalRelativeIntensity());
+            }
         }
     }
 

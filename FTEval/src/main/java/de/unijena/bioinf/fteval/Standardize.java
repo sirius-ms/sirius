@@ -21,9 +21,24 @@ public class Standardize {
     private TreeSet<String> colNames;
 
 
+    public static interface Predicate {
+        public boolean accept(String name);
+    }
+
     public Standardize() {
         this.rowNames = new TreeSet<String>();
         this.colNames = new TreeSet<String>();
+    }
+
+    public void filter(Predicate pred) {
+        final Iterator<String> r = rowNames.iterator();
+        while (r.hasNext()) {
+            if (!pred.accept(r.next())) r.remove();
+        }
+        final Iterator<String> r2 = colNames.iterator();
+        while (r2.hasNext()) {
+            if (!pred.accept(r2.next())) r2.remove();
+        }
     }
 
     private static String[][] parseMatrixComplete(File file) throws IOException {
