@@ -189,35 +189,59 @@ public class FGraph extends AbstractFragmentationGraph {
             this(graph, root, null);
         }
 
-        private void goToFirstLeaf() {
-            current = root;
+        /*
+        go to lowest unvisited descendant beginning in the given vertex
+         */
+        private void goToFirstLeaf(Fragment startVertex) {
+            current = startVertex;
+            visitedNodes.set(startVertex.getVertexId());
+            eachPathNode:
             while (!current.isLeaf()) {
-                Loss l = current.getOutgoingEdge(0);
+                Loss l = null;
+                boolean foundOne = false;
+                for (int i = 0; i < current.outDegree; ++i) {
+                    l = current.getOutgoingEdge(i);
+                    if (!visitedNodes.get(l.getTarget().getVertexId()) && (allowedColors == null || allowedColors.get(l.getTarget().getColor()))) {
+                        foundOne = true;
+                        break;
+                    }
+                }
+                if (!foundOne) {
+                    // it seems that you are the last descendant
+                    break eachPathNode;
+                }
                 stack.add(l);
+                visitedNodes.set(l.target.getVertexId());
                 current = l.target;
             }
         }
 
         void fetchNext() {
-            if (stack.isEmpty()) {
+            if (!stack.isEmpty()) {
+                final Loss l = stack.get(stack.size() - 1);
+                // search for sibling
+                int nextLossId;
+                boolean found = false;
+                for (nextLossId = l.sourceEdgeOffset + 1; nextLossId < l.getSource().outDegree; ++nextLossId) {
+                    final Fragment f = l.source.outgoingEdges[nextLossId].target;
+                    if (!visitedNodes.get(f.vertexId) && (allowedColors == null || allowedColors.get(f.color))) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    goToFirstLeaf(l.source.getChildren(nextLossId));
+                    return;
+                } else {
+                    stack.remove(stack.size() - 1);
+                    current = l.getSource();
+                    if (current == root) state = 3;
+                    return;
+                }
+            } else {
                 current = root;
                 state = 3;
-            } else {
-                final Loss l = stack.remove(stack.size() - 1);
-                int nextLossId;
-                for (nextLossId = l.sourceEdgeOffset + 1; nextLossId < l.sourceEdgeOffset; ++nextLossId) {
-                    final Fragment f = l.source.outgoingEdges[nextLossId].target;
-                    if ((allowedColors == null || allowedColors.get(f.color)) && (!visitedNodes.get(f.vertexId))) break;
-                }
-                if (nextLossId >= l.source.outDegree) {
-                    current = l.source;
-                } else {
-                    final Loss newLoss = l.source.getOutgoingEdge(nextLossId);
-                    stack.add(newLoss);
-                    current = newLoss.target;
-                }
             }
-            visitedNodes.set(current.vertexId);
         }
 
         @Override
@@ -229,7 +253,7 @@ public class FGraph extends AbstractFragmentationGraph {
         public Fragment next() {
             switch (state) {
                 case 0:
-                    goToFirstLeaf();
+                    goToFirstLeaf(root);
                     state = (byte) ((current == root) ? 3 : 1);
                     return current;
                 case 1:

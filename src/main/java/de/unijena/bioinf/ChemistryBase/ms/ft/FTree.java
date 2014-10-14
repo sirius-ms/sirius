@@ -110,8 +110,9 @@ public class FTree extends AbstractFragmentationGraph {
 
     @Override
     public Iterator<Loss> lossIterator() {
+        final Iterator<Fragment> fiter = fragments.iterator();
+        fiter.next(); // ignore root
         return new Iterator<Loss>() {
-            final Iterator<Fragment> fiter = fragments.iterator();
 
             @Override
             public boolean hasNext() {
@@ -208,4 +209,23 @@ public class FTree extends AbstractFragmentationGraph {
         ++edgeNum;
         return loss;
     }
+
+    public void normalizeStructure() {
+        for (Fragment f : fragments) {
+            final List<Loss> childs = new ArrayList<Loss>(f.getOutgoingEdges());
+            Collections.sort(childs, new Comparator<Loss>() {
+                @Override
+                public int compare(Loss loss, Loss loss2) {
+                    return loss.getTarget().getFormula().compareTo(loss2.getTarget().getFormula());
+                }
+            });
+            int i = 0;
+            for (Loss l : childs) {
+                f.outgoingEdges[i] = l;
+                l.sourceEdgeOffset = i;
+                ++i;
+            }
+        }
+    }
+
 }

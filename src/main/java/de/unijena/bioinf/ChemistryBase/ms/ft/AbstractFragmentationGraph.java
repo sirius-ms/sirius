@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.util.*;
@@ -52,15 +54,23 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
      * graph1 and b is a corresponding fragment from graph 2. Two fragments belong to each other if they have the same
      * molecular formula.
      */
-    public static Map<Fragment, Fragment> createFragmentMapping(AbstractFragmentationGraph graph1, AbstractFragmentationGraph graph2) {
-        final HashMap<MolecularFormula, Fragment> formulaMapping = graph1.fragmentsByFormula();
-        final HashMap<Fragment, Fragment> fragmentMapping = new HashMap<Fragment, Fragment>(Math.min(graph1.numberOfVertices(), graph2.numberOfVertices()));
+    public static BiMap<Fragment, Fragment> createFragmentMapping(AbstractFragmentationGraph graph1, AbstractFragmentationGraph graph2) {
+
+        if (graph1.numberOfVertices() > graph2.numberOfVertices())
+            return createFragmentMapping(graph2, graph1).inverse();
+        final HashMap<MolecularFormula, Fragment> formulas = new HashMap<MolecularFormula, Fragment>(graph1.numberOfVertices());
+        final BiMap<Fragment, Fragment> bimap = HashBiMap.create(Math.min(graph1.numberOfVertices(), graph2.numberOfVertices()));
+
+        for (Fragment f : graph1.getFragments()) {
+            formulas.put(f.getFormula(), f);
+        }
+
         for (Fragment f : graph2.getFragmentsWithoutRoot()) {
-            if (formulaMapping.containsKey(f.getFormula())) {
-                fragmentMapping.put(formulaMapping.get(f.getFormula()), f);
+            if (formulas.containsKey(f.getFormula())) {
+                bimap.put(formulas.get(f.getFormula()), f);
             }
         }
-        return fragmentMapping;
+        return bimap;
     }
 
     private static void deleteOutEdgeInternal(Fragment vertex, Loss l) {
