@@ -37,6 +37,9 @@ public interface Options extends BasicOptions, ProfileOptions, OutputOptions {
     @Option(shortName = "n", defaultValue = "1", description = "number of threads that should be used for computation")
     public int getThreads();
 
+    @Option(description = "use DP for tree computation")
+    public boolean isDp();
+
     @Option(shortName = "w", description = "If set, the first <value> trees are written on disk.", defaultValue = "0")
     public int getTrees();
 

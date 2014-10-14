@@ -22,6 +22,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -291,6 +292,11 @@ public class Main {
             FragmentationPatternAnalysis.getOrCreateByClassName(LimitNumberOfPeaksFilter.class, analyzer.getPostProcessors()).setLimit(options.getPeakLimit().intValue());
         }
 
+        if (options.isDp()) {
+            System.out.println("Use DP for tree computation");
+            analyzer.setTreeBuilder(new DPTreeBuilder(15));
+        }
+
 
         analyzer.setRepairInput(true);
         final IsotopePatternAnalysis deIsotope = (profile.isotopePatternAnalysis != null) ? profile.isotopePatternAnalysis : IsotopePatternAnalysis.defaultAnalyzer();
@@ -339,7 +345,7 @@ public class Main {
                     continue eachFile;
                 }
 
-                if (true) {
+                if (false) {
 
                     measureMzDiff(analyzer, profile, experiment);
                     continue eachFile;
@@ -1049,6 +1055,7 @@ public class Main {
     }
 
     protected void writeTreeToFile(File f, FTree tree, FragmentationPatternAnalysis pipeline, Double isoScore) {
+        tree.normalizeStructure();
         FileWriter fw = null;
         try {
             fw = new FileWriter(f);

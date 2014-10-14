@@ -1,9 +1,10 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree;
 
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import com.google.common.collect.BiMap;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 import de.unijena.bioinf.functional.iterator.Iterators;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
@@ -20,19 +21,41 @@ class DP {
     private final int maxNumberOfColors;
     private final double epsilon;
     private final MaximumColorfulSubtreeAlgorithm algo;
+    private Ano ano;
 
     public DP(MaximumColorfulSubtreeAlgorithm algo, FGraph graph, int k, boolean transitiveClosure) {
         this.algo = algo;
         this.graph = graph;
-        this.vertices = new ArrayList<Fragment>();
-        final BitSet colorBitSet = new BitSet(graph.maxColor() + 1);
-        for (int i = 0; i <= k; ++i) colorBitSet.set(i);
-        final Iterator<Fragment> fiter = graph.postOrderIterator(graph.getRoot(), colorBitSet);
-        while (fiter.hasNext()) vertices.add(fiter.next());
+        //this.vertices = new ArrayList<Fragment>();
+        //while (fiter.hasNext()) vertices.add(fiter.next());
+
+
+        // order vertices by intensity
+        final FragmentAnnotation<ProcessedPeak> ano = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        vertices = new ArrayList<Fragment>(graph.getFragmentsWithoutRoot());
+        Collections.sort(vertices, new Comparator<Fragment>() {
+            @Override
+            public int compare(Fragment fragment, Fragment fragment2) {
+                return Double.compare(ano.get(fragment2).getRelativeIntensity(), ano.get(fragment).getRelativeIntensity());
+            }
+        });
+        for (int i = 0; i < vertices.size(); ++i) {
+            vertices.get(i).setColor(i);
+        }
+
+
         this.tables = new DPTable[graph.numberOfVertices()];
         this.maxNumberOfColors = k;
         double epsilon = 1e-6;
         this.transitiveClosure = transitiveClosure;
+
+        final BitSet colorBitSet = new BitSet(graph.maxColor() + 1);
+        for (int i = 0; i <= k; ++i) colorBitSet.set(i);
+        final Iterator<Fragment> fiter = graph.postOrderIterator(graph.getRoot().getChildren(0), colorBitSet);
+
+        this.vertices.clear();
+        while (fiter.hasNext()) vertices.add(fiter.next());
+
         for (Fragment vertex : vertices) {
             for (int i = 0; i < vertex.getInDegree(); ++i) {
                 final Loss l = vertex.getIncomingEdge(i);
@@ -50,12 +73,32 @@ class DP {
 
     public FTree runAlgorithm() {
         double score = compute();
-        final FTree tree = backtrack();
+        final FTree tree = newTree(graph, backtrack());
         final double additionalScore = attachRemainingColors(tree);
+        final Fragment graphRoot = graph.getRoot().getChildren(0);
         final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
         scoring.setOverallScore(scoring.getOverallScore() + additionalScore);
+
         assert computationIsCorrect(tree, graph);
         return tree;
+    }
+
+    protected static FTree newTree(FGraph graph, FTree tree) {
+        tree.addAnnotation(ProcessedInput.class, graph.getAnnotationOrThrow(ProcessedInput.class));
+        tree.addAnnotation(Ionization.class, graph.getAnnotationOrThrow(Ionization.class));
+        for (Map.Entry<Class<Object>, Object> entry : graph.getAnnotations().entrySet()) {
+            tree.setAnnotation(entry.getKey(), entry.getValue());
+        }
+        return tree;
+    }
+
+    protected Ano getAno(FTree tree) {
+        if (ano != null && ano.tree == tree) return ano;
+        else {
+            final Ano newAno = new Ano(graph, tree);
+            this.ano = newAno;
+            return ano;
+        }
     }
 
     protected double compute() {
@@ -69,7 +112,7 @@ class DP {
                 W.update(S | W.vertexBit, distributeColors(u, S));
             }
         }
-        return Math.max(0, tables[graph.getRoot().getVertexId()].bestScore());
+        return Math.max(0, tables[graph.getRoot().getChildren(0).getVertexId()].bestScore());
     }
 
     /**
@@ -78,7 +121,7 @@ class DP {
      * @return
      */
     protected FTree backtrack() {
-        return backtrack(graph.getRoot());
+        return backtrack(graph.getRoot().getChildren(0));
     }
 
     /**
@@ -95,6 +138,44 @@ class DP {
         return Collections.unmodifiableList(fragmentationTrees);
     }
 
+    private static class Ano {
+        private List<FragmentAnnotation<Object>> graphFragmentAnos;
+        private List<FragmentAnnotation<Object>> treeFragmentAnos;
+        private List<LossAnnotation<Object>> graphLossAnos;
+        private List<LossAnnotation<Object>> treeLossAnos;
+        private FTree tree;
+
+        private Ano(FGraph graph, FTree tree) {
+            this.tree = tree;
+            graphFragmentAnos = graph.getFragmentAnnotations();
+            graphLossAnos = graph.getLossAnnotations();
+            treeFragmentAnos = new ArrayList<FragmentAnnotation<Object>>();
+            treeLossAnos = new ArrayList<LossAnnotation<Object>>();
+            for (FragmentAnnotation<Object> fa : graphFragmentAnos) {
+                treeFragmentAnos.add(tree.addFragmentAnnotation(fa.getAnnotationType()));
+            }
+            for (LossAnnotation<Object> fa : graphLossAnos) {
+                treeLossAnos.add(tree.addLossAnnotation(fa.getAnnotationType()));
+            }
+        }
+
+        public void set(Fragment treeVertex, Fragment graphVertex) {
+            for (int i = 0; i < graphFragmentAnos.size(); ++i) {
+                treeFragmentAnos.get(i).set(treeVertex, graphFragmentAnos.get(i).get(graphVertex));
+            }
+            treeVertex.setColor(graphVertex.getColor());
+        }
+
+        public void set(Loss treeLoss, Loss graphLoss) {
+            for (int i = 0; i < graphLossAnos.size(); ++i) {
+                treeLossAnos.get(i).set(treeLoss, graphLossAnos.get(i).get(graphLoss));
+            }
+            set(treeLoss.getTarget(), graphLoss.getTarget());
+            treeLoss.setWeight(graphLoss.getWeight());
+        }
+
+    }
+
     protected FTree backtrack(Fragment vertex) {
         double scoreSum = 0d;
         final int vertexId = vertex.getVertexId();
@@ -104,7 +185,10 @@ class DP {
         tree.addAnnotation(TreeScoring.class, treeScoring);
 
         treeScoring.setRootScore(vertex.getIncomingEdge().getWeight());
-        treeScoring.setOverallScore(optScore);
+        treeScoring.setOverallScore(Math.max(0, optScore) + treeScoring.getRootScore());
+
+        Ano ano = getAno(tree);
+        ano.set(tree.getRoot(), vertex);
 
         final TraceItem root = new TraceItem(vertex, tree.getRoot(), tables[vertexId].bitset & ~tables[vertexId].vertexBit,
                 optScore);
@@ -140,7 +224,7 @@ class DP {
                 }
             }
             if (stackSize >= stack.size()) { // if no further decomposition is found, look into subtrees
-                final double subtreeWeight = backtrackChild(tree, stack, node);
+                final double subtreeWeight = backtrackChild(tree, stack, node, ano);
                 assert !Double.isInfinite(subtreeWeight);
                 scoreSum += subtreeWeight;
             }
@@ -152,7 +236,7 @@ class DP {
         return tree;
     }
 
-    protected double backtrackChild(final FTree tree, Deque<TraceItem> stack, TraceItem node) {
+    protected double backtrackChild(final FTree tree, Deque<TraceItem> stack, TraceItem node, Ano ano) {
         for (int li = 0; li < node.vertex.getOutDegree(); ++li) {
             final Loss l = node.vertex.getOutgoingEdge(li);
             final Fragment v = l.getTarget();
@@ -165,6 +249,7 @@ class DP {
                 final double weight = l.getWeight();
                 if (isEqual(subtreeWeight + weight, node.accumulatedWeight)) {
                     final Fragment childNode = tree.addFragment(node.treeNode, l.getTarget().getFormula());
+                    ano.set(childNode.getIncomingEdge(), l);
                     if (!isLeq(subtreeWeight, 0)) {
                         final TraceItem childItem = new TraceItem(v, childNode, childBitset,
                                 subtreeWeight);
@@ -179,6 +264,7 @@ class DP {
     }
 
     protected double attachRemainingColors(FTree tree) {
+        Ano ano = getAno(tree);
         final int NColors = graph.maxColor() + 1;
         final double scoreOfTree;
         {
@@ -189,7 +275,8 @@ class DP {
             scoreOfTree = s;
         }
 
-        final Map<Fragment, Fragment> tree2GraphMapping = FTree.createFragmentMapping(tree, graph);
+        final BiMap<Fragment, Fragment> tree2GraphMapping = FTree.createFragmentMapping(tree, graph);
+        final Map<Fragment, Fragment> graph2treeMapping = tree2GraphMapping.inverse();
 
         final int remainingColors = NColors - (maxNumberOfColors + 1);
         if (remainingColors <= 0) return 0d;
@@ -199,7 +286,7 @@ class DP {
         for (int c = maxNumberOfColors + 1; c < NColors; ++c) {
             remainings[c - (maxNumberOfColors + 1)] = new ArrayList<Fragment>();
         }
-        for (int i = 0; i < graph.numberOfVertices(); ++i) {
+        for (int i = 1; i < graph.numberOfVertices(); ++i) {
             final int c = graph.getFragmentAt(i).getColor() - (maxNumberOfColors + 1);
             if (c >= 0) {
                 remainings[c].add(graph.getFragmentAt(i));
@@ -215,8 +302,9 @@ class DP {
             Loss bestEdge = null;
             for (int i = 0; i < remainings[colorIndex].size(); ++i) {
                 final Fragment v = remainings[colorIndex].get(i);
+                assert tree2GraphMapping.get(v) == null;
                 for (Fragment treeNode : nodes) {
-                    final Fragment u = graph.getFragmentAt(treeNode.getVertexId());
+                    final Fragment u = tree2GraphMapping.get(treeNode);
                     assert u.getFormula().equals(treeNode.getFormula());
                     final Loss uv = graph.getLoss(u, v);
                     if (uv == null) continue;
@@ -245,6 +333,8 @@ class DP {
                 final double scoreBefore = scoreOfChildren(bestCandidate);
 
                 final Fragment v = tree.addFragment(bestCandidate, bestEdge.getTarget().getFormula());
+                v.getIncomingEdge().setWeight(bestEdge.getWeight());
+                ano.set(v, bestEdge.getTarget());
                 tree2GraphMapping.put(v, bestEdge.getTarget());
                 final Iterator<Loss> iterator = bestCandidate.getOutgoingEdges().iterator();
                 final Fragment u = bestCandidate;
@@ -265,7 +355,16 @@ class DP {
                 ;
                 for (Loss vw : improvementEdges) {
                     assert tree.getLoss(u, vw.getTarget().getFormula()) != null;
-                    tree.swapLoss(vw.getTarget(), v);
+                    Fragment improvementChild = null;
+                    for (int i = 0; i < u.getOutDegree(); ++i) {
+                        if (u.getChildren(i).getFormula().equals(vw.getTarget().getFormula())) {
+                            improvementChild = u.getChildren(i);
+                            break;
+                        }
+                    }
+                    final Loss newLoss = tree.swapLoss(improvementChild, v);
+                    newLoss.setWeight(vw.getWeight());
+                    ano.set(newLoss, vw);
                 }
 
                 nodes.add(v);
@@ -384,9 +483,13 @@ class DP {
         while (nodes.hasNext()) {
             final Fragment node = nodes.next();
             final int color = node.getColor();
-            if (colors.get(color)) return false;
+            if (colors.get(color))
+                return false;
             colors.set(color, true);
             if (!node.isRoot()) score += node.getIncomingEdge().getWeight();
+        }
+        if (!isEqual(score, result.getAnnotationOrThrow(TreeScoring.class).getOverallScore())) {
+            System.err.println(")/");
         }
         return isEqual(score, result.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
     }

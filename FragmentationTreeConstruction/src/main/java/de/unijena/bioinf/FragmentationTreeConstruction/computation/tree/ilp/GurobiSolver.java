@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import com.google.common.collect.BiMap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
@@ -241,7 +242,7 @@ public class GurobiSolver implements TreeBuilder {
 
         protected static boolean isComputationCorrect(FTree tree, FGraph graph) {
             double score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-            final Map<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
+            final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
             for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
                 final Fragment t = e.getKey();
                 final Fragment g = e.getValue();
