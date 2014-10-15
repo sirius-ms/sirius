@@ -60,16 +60,16 @@ public class Main {
     // fragmentstats
     // file, db, correct, shared, formula, mass, recalibrated, alphabet, ppmdev, mzdev, recppmdev, recmzdev, intensity
     protected PrintStream treeStat, fragStat, lossStats;
+    PrintStream measureMZDIFFSTREAM;
+    PrintStream measureIsoSTREAM;
     private DBMolecularFormulaCache formulaQuery;
     private File formulaCacheFile;
     private PrintStream DEBUGSTREAM = null;
-
     private Options options;
     private boolean verbose;
     private PrintStream rankWriter;
     private Profile profile;
     private Databases database;
-
     private List<PrintStream> openStreams;
     private PrintStream DEBUGWRITER;
 
@@ -639,6 +639,8 @@ public class Main {
                                     bestTrees.pollFirst();
                                     final TreeScoring worstScoring = bestTrees.first().getAnnotationOrThrow(TreeScoring.class);
                                     lb = worstScoring.getOverallScore() - worstScoring.getRecalibrationBonus();
+                                    if (correctTree == null || worstScoring == null || correctTree.getAnnotationOrThrow(TreeScoring.class) == null)
+                                        System.err.println("=/");
                                     if (DEBUG_ONLY_INT && worstScoring.getOverallScore() >= correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
                                         break treeIteration;
                                     }
@@ -839,10 +841,6 @@ public class Main {
             writer.close();
         }
     }
-
-
-    PrintStream measureMZDIFFSTREAM;
-    PrintStream measureIsoSTREAM;
 
     private void measureMzDiff(FragmentationPatternAnalysis analyzer, MeasurementProfile profile, Ms2Experiment experiment) {
 
