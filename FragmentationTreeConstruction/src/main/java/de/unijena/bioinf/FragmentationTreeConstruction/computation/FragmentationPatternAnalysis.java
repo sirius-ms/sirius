@@ -400,7 +400,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final TreeScoring newTreeScoring = newTree.getAnnotationOrThrow(TreeScoring.class);
             if (force || newTreeScoring.getOverallScore() > treeScoring.getOverallScore()) {
                 tree = newTree;
-                treeScoring.setRecalibrationBonus(newTreeScoring.getOverallScore() - oldScore);
+                newTreeScoring.setRecalibrationBonus(newTreeScoring.getOverallScore() - oldScore);
             }
         } else {
             treeScoring.setOverallScore(rec.getScoreBonus());
@@ -689,9 +689,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param peaklists  a peaklist for each spectrum
      * @return a list of merged peaks
      */
-    ArrayList<ProcessedPeak> mergePeaks(Ms2Experiment experiment, List<ProcessedPeak> peaklists) {
+    public ArrayList<ProcessedPeak> mergePeaks(Ms2Experiment experiment, List<ProcessedPeak> peaklists) {
         final ArrayList<ProcessedPeak> mergedPeaks = new ArrayList<ProcessedPeak>(peaklists.size());
-        peakMerger.mergePeaks(peaklists, experiment, experiment.getMeasurementProfile().getAllowedMassDeviation(), new Merger() {
+        peakMerger.mergePeaks(peaklists, experiment, experiment.getMeasurementProfile().getAllowedMassDeviation().multiply(2), new Merger() {
             @Override
             public ProcessedPeak merge(List<ProcessedPeak> peaks, int index, double newMz) {
                 final ProcessedPeak newPeak = peaks.get(index);
@@ -716,7 +716,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return mergedPeaks;
     }
 
-    ArrayList<ProcessedPeak> normalize(Ms2Experiment experiment) {
+    public ArrayList<ProcessedPeak> normalize(Ms2Experiment experiment) {
         final double parentMass = experiment.getIonMass();
         final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
         final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation().divide(2d);

@@ -31,7 +31,7 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         this.epsilon = epsilon;
         this.minNumberOfPeaks = minNumberOfPeaks;
         this.minIntensity = 0d;
-        this.maxDeviation = new Deviation(10,1e-3);
+        this.maxDeviation = new Deviation(10, 1e-3);
         this.threshold = threshold;
         this.forceParentPeakIn = false;
     }
@@ -85,7 +85,6 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
     }
 
 
-
     @Override
     public UnivariateFunction recalibrate(MutableSpectrum<Peak> spectrum, Spectrum<Peak> referenceSpectrum) {
         spectrum = new SimpleMutableSpectrum(spectrum);
@@ -97,18 +96,18 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
             public double value(double x) {
                 return epsilon.absoluteFor(x);
             }
-        });
-        if (values[0].length<minNumberOfPeaks) return new Identity();
+        }, threshold);
+        if (values[0].length < minNumberOfPeaks) return new Identity();
         final UnivariateFunction recalibration = MzRecalibration.getMedianLinearRecalibration(values[0], values[1]);
         MzRecalibration.recalibrate(spectrum, recalibration);
         return recalibration;
     }
 
     protected void preprocess(MutableSpectrum<? extends Peak> spectrum, MutableSpectrum<? extends Peak> ref) {
-        int i=0;
+        int i = 0;
         final double parentmz = spectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(spectrum));
         while (i < ref.size()) {
-            if (spectrum.getMzAt(i) < (parentmz-0.5d) && (spectrum.getIntensityAt(i) < minIntensity || !maxDeviation.inErrorWindow(spectrum.getMzAt(i), ref.getMzAt(i)))) {
+            if ((spectrum.getMzAt(i) < (parentmz - 0.5d)) && (spectrum.getIntensityAt(i) < minIntensity || !maxDeviation.inErrorWindow(spectrum.getMzAt(i), ref.getMzAt(i)))) {
                 ref.removePeakAt(i);
                 spectrum.removePeakAt(i);
             } else ++i;
@@ -119,16 +118,16 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         double parentmz = spectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(spectrum));
         double refmz = referenceSpectrum.getMzAt(Spectrums.getIndexOfPeakWithMaximalMass(referenceSpectrum));
         boolean found = false;
-        for (int k=0; k < values[0].length; ++k)
-            if (Math.abs(parentmz-values[0][k]) < 1e-5 && Math.abs(refmz - values[1][k]) < 1e-5) {
+        for (int k = 0; k < values[0].length; ++k)
+            if (Math.abs(parentmz - values[0][k]) < 1e-5 && Math.abs(refmz - values[1][k]) < 1e-5) {
                 found = true;
                 break;
             }
         if (!found) {
             values[0] = Arrays.copyOf(values[0], values[0].length + 1);
-            values[0][values[0].length-1] = parentmz;
-            values[1] = Arrays.copyOf(values[1], values[1].length+1);
-            values[1][values[1].length-1] = refmz;
+            values[0][values[0].length - 1] = parentmz;
+            values[1] = Arrays.copyOf(values[1], values[1].length + 1);
+            values[1][values[1].length - 1] = refmz;
         }
     }
 
@@ -137,11 +136,13 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         if (document.hasKeyInDictionary(dictionary, "epsilon"))
             epsilon = Deviation.fromString(document.getStringFromDictionary(dictionary, "epsilon"));
         if (document.hasKeyInDictionary(dictionary, "minNumberOfPeaks"))
-            minNumberOfPeaks = (int)document.getIntFromDictionary(dictionary, "minNumberOfPeaks");
+            minNumberOfPeaks = (int) document.getIntFromDictionary(dictionary, "minNumberOfPeaks");
         if (document.hasKeyInDictionary(dictionary, "threshold"))
             threshold = document.getDoubleFromDictionary(dictionary, "threshold");
         if (document.hasKeyInDictionary(dictionary, "forceParentPeakIn"))
             forceParentPeakIn = document.getBooleanFromDictionary(dictionary, "forceParentPeakIn");
+        if (document.hasKeyInDictionary(dictionary, "maxDeviation"))
+            maxDeviation = Deviation.fromString(document.getStringFromDictionary(dictionary, "maxDeviation"));
     }
 
     @Override
@@ -150,8 +151,8 @@ public class AbstractRecalibrationStrategy implements RecalibrationStrategy, Par
         document.addToDictionary(dictionary, "minNumberOfPeaks", minNumberOfPeaks);
         document.addToDictionary(dictionary, "threshold", threshold);
         document.addToDictionary(dictionary, "forceParentPeakIn", forceParentPeakIn);
+        document.addToDictionary(dictionary, "maxDeviation", maxDeviation.toString());
     }
-
 
 
 }
