@@ -51,7 +51,7 @@ public class Main {
 
     public final static String VERSION_STRING = "FragmentationPatternAnalysis " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
-    private static boolean DEBUG_ONLY_INT = false;
+    private static boolean DEBUG_ONLY_INT = true;
 
     private static boolean DEBUG = false;
     // fragmentstats
@@ -673,10 +673,10 @@ public class Main {
                     // recalibrate best trees
                     if (!trees.isEmpty() && analyzer.getRecalibrationMethod() != null) {
 
-                        final double DEVIATION_SCALE = 3 / 3d;
-                        final int MIN_NUMBER_OF_PEAKS = 3;
+                        final double DEVIATION_SCALE = 2 / 3d;
+                        final int MIN_NUMBER_OF_PEAKS = 8;
                         final double MIN_INTENSITY = 0d;
-                        final Deviation EPSILON = new Deviation(5, 0.0005);
+                        final Deviation EPSILON = new Deviation(4, 5e-4d);
                         // only recalibrate if at least one tree has more than 5 nodes
                         boolean doRecalibrate = false;
                         for (FTree t : trees)
@@ -699,7 +699,7 @@ public class Main {
                                 */
                                 {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
-                                    //method.setMaxDeviation(new Deviation(10, 5e-4d));
+                                    method.setMaxDeviation(new Deviation(10, 5e-4d));
                                     method.setMinNumberOfPeaks(8);
                                     method.setEpsilon(EPSILON);
                                 }
@@ -708,7 +708,6 @@ public class Main {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
                                     method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
                                     method.setEpsilon(EPSILON);
-                                    method.setForceParentPeakIn(false);
                                     ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).setDeviationScale(DEVIATION_SCALE);
                                     correctTree = analyzer.recalibrate(correctTree, true);
 
@@ -719,7 +718,7 @@ public class Main {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
                                     method.setMinNumberOfPeaks(MIN_NUMBER_OF_PEAKS);
                                     method.setEpsilon(EPSILON);
-                                    method.setForceParentPeakIn(false);
+                                    method.setForceParentPeakIn(true);
                                     ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).setDeviationScale(DEVIATION_SCALE);
                                     trees.set(i, analyzer.recalibrate(t, true));
                                 }
@@ -850,20 +849,59 @@ public class Main {
     PrintStream measureIsoSTREAM;
 
     private void measureMzDiff(FragmentationPatternAnalysis analyzer, MeasurementProfile profile, Ms2Experiment experiment) {
+
+
+        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02));
+        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02).getDensity(0.005));
+        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02).getDensity(0.1));
+        System.exit(1);
+
         if (measureMZDIFFSTREAM == null) try {
-            measureMZDIFFSTREAM = new PrintStream(new File("mzdiffPrecursor.csv"));
-            measureMZDIFFSTREAM.println("mass,mz,ppm");
+            measureMZDIFFSTREAM = new PrintStream(new File("mzdiff.csv"));
+            measureIsoSTREAM = new PrintStream(new File("intensity.csv"));
             openStreams.add(measureMZDIFFSTREAM);
+            openStreams.add(measureIsoSTREAM);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         final ProcessedInput input = analyzer.preprocessing(experiment);
-        final double mz = input.getParentPeak().getOriginalMz();
-        final double theoreticalMz = input.getExperimentInformation().getIonization().addToMass(
-                input.getExperimentInformation().getMolecularFormula().getMass());
-        final double diff = mz - theoreticalMz;
-        final double ppm = diff * 1e6 / mz;
-        measureMZDIFFSTREAM.printf(Locale.US, "%.8f,%.8f,%.8f\n", mz, diff, ppm);
+        final FTree tree = analyzer.computeTrees(input).onlyWith(Arrays.asList(experiment.getMolecularFormula())).optimalTree();
+        FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+        for (Fragment f : tree.getFragments()) {
+            final double mz = ano.get(f).getOriginalMz();
+            final double hypo = ion.addToMass(f.getFormula().getMass());
+            measureMZDIFFSTREAM.print(String.valueOf(mz));
+            measureMZDIFFSTREAM.print("\t");
+            measureMZDIFFSTREAM.print(String.valueOf(hypo));
+            measureMZDIFFSTREAM.print("\t");
+            measureMZDIFFSTREAM.print(String.valueOf(mz - hypo));
+            measureMZDIFFSTREAM.print("\t");
+            measureMZDIFFSTREAM.print(String.valueOf((mz - hypo) * 1e6 / (mz)));
+            measureMZDIFFSTREAM.print("\n");
+        }
+
+        // find noise
+        final Deviation dev = analyzer.getDefaultProfile().getAllowedMassDeviation();
+        final double[] usedMzs = new double[tree.getFragments().size()];
+        int k = 0;
+        for (Fragment f : tree.getFragments()) usedMzs[k++] = ano.get(f).getOriginalMz();
+        Arrays.sort(usedMzs);
+        for (ProcessedPeak peak : input.getMergedPeaks()) {
+            int j = Arrays.binarySearch(usedMzs, peak.getOriginalMz());
+            if (j < 0) {
+                j = -(j + 1);
+                if (j < usedMzs.length && (dev.inErrorWindow(usedMzs[j], peak.getOriginalMz()) || dev.inErrorWindow(peak.getOriginalMz(), usedMzs[j]))) {
+                    continue;
+                }
+                --j;
+                if (j >= 0 && (dev.inErrorWindow(usedMzs[j], peak.getOriginalMz()) || dev.inErrorWindow(peak.getOriginalMz(), usedMzs[j]))) {
+                    continue;
+                }
+
+                measureIsoSTREAM.println(peak.getGlobalRelativeIntensity());
+            }
+        }
     }
 
     public void initializeFormulaCache() {

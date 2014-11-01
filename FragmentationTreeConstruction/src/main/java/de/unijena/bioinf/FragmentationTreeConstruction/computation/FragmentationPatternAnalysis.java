@@ -471,11 +471,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final Fragment v = loss.getTarget();
             // take score of molecular formula
             double score = map.get(v.getFormula());
+            assert !Double.isInfinite(score);
             // add it to score of the peak
             score += peakScores[peakAno.get(v).getIndex()];
+            assert !Double.isInfinite(score);
             // add it to the score of the peak pairs
             if (!u.isRoot())
                 score += peakPairScores[peakAno.get(u).getIndex()][peakAno.get(v).getIndex()]; // TODO: Umdrehen!
+            assert !Double.isInfinite(score);
             // add the score of the loss
             if (!u.isRoot())
                 for (int i = 0; i < lossScorers.length; ++i)

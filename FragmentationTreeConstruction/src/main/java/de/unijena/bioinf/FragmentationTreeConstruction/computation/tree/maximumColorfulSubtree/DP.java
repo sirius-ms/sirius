@@ -40,8 +40,9 @@ class DP {
             }
         });
         for (int i = 0; i < vertices.size(); ++i) {
-            vertices.get(i).setColor(i);
+            vertices.get(i).setColor(i + 1);
         }
+        graph.getRoot().getOutgoingEdge(0).getTarget().setColor(0);
 
 
         this.tables = new DPTable[graph.numberOfVertices()];
@@ -71,6 +72,15 @@ class DP {
         Computation
      */
 
+    protected static FTree newTree(FGraph graph, FTree tree) {
+        tree.addAnnotation(ProcessedInput.class, graph.getAnnotationOrThrow(ProcessedInput.class));
+        tree.addAnnotation(Ionization.class, graph.getAnnotationOrThrow(Ionization.class));
+        for (Map.Entry<Class<Object>, Object> entry : graph.getAnnotations().entrySet()) {
+            tree.setAnnotation(entry.getKey(), entry.getValue());
+        }
+        return tree;
+    }
+
     public FTree runAlgorithm() {
         double score = compute();
         final FTree tree = newTree(graph, backtrack());
@@ -80,15 +90,6 @@ class DP {
         scoring.setOverallScore(scoring.getOverallScore() + additionalScore);
 
         assert computationIsCorrect(tree, graph);
-        return tree;
-    }
-
-    protected static FTree newTree(FGraph graph, FTree tree) {
-        tree.addAnnotation(ProcessedInput.class, graph.getAnnotationOrThrow(ProcessedInput.class));
-        tree.addAnnotation(Ionization.class, graph.getAnnotationOrThrow(Ionization.class));
-        for (Map.Entry<Class<Object>, Object> entry : graph.getAnnotations().entrySet()) {
-            tree.setAnnotation(entry.getKey(), entry.getValue());
-        }
         return tree;
     }
 
@@ -136,44 +137,6 @@ class DP {
             fragmentationTrees.add(tree);
         }
         return Collections.unmodifiableList(fragmentationTrees);
-    }
-
-    private static class Ano {
-        private List<FragmentAnnotation<Object>> graphFragmentAnos;
-        private List<FragmentAnnotation<Object>> treeFragmentAnos;
-        private List<LossAnnotation<Object>> graphLossAnos;
-        private List<LossAnnotation<Object>> treeLossAnos;
-        private FTree tree;
-
-        private Ano(FGraph graph, FTree tree) {
-            this.tree = tree;
-            graphFragmentAnos = graph.getFragmentAnnotations();
-            graphLossAnos = graph.getLossAnnotations();
-            treeFragmentAnos = new ArrayList<FragmentAnnotation<Object>>();
-            treeLossAnos = new ArrayList<LossAnnotation<Object>>();
-            for (FragmentAnnotation<Object> fa : graphFragmentAnos) {
-                treeFragmentAnos.add(tree.addFragmentAnnotation(fa.getAnnotationType()));
-            }
-            for (LossAnnotation<Object> fa : graphLossAnos) {
-                treeLossAnos.add(tree.addLossAnnotation(fa.getAnnotationType()));
-            }
-        }
-
-        public void set(Fragment treeVertex, Fragment graphVertex) {
-            for (int i = 0; i < graphFragmentAnos.size(); ++i) {
-                treeFragmentAnos.get(i).set(treeVertex, graphFragmentAnos.get(i).get(graphVertex));
-            }
-            treeVertex.setColor(graphVertex.getColor());
-        }
-
-        public void set(Loss treeLoss, Loss graphLoss) {
-            for (int i = 0; i < graphLossAnos.size(); ++i) {
-                treeLossAnos.get(i).set(treeLoss, graphLossAnos.get(i).get(graphLoss));
-            }
-            set(treeLoss.getTarget(), graphLoss.getTarget());
-            treeLoss.setWeight(graphLoss.getWeight());
-        }
-
     }
 
     protected FTree backtrack(Fragment vertex) {
@@ -399,7 +362,6 @@ class DP {
         return score;
     }
 
-
     protected void pullAllFromChildren(Fragment u) {
         final DPTable W_u = tables[u.getVertexId()];
         final int colorOfU = W_u.color;
@@ -450,12 +412,6 @@ class DP {
         //final int[] usedColors = new int[]
     }
 
-    /*
-        1. Lösche Knoten deren Farbe nur einmal im Graphen vorkommt. Kontrahiere deren Kanten
-        2. Speichere die gelöschten knoten ab, so dass sie später wieder eingefügt werden können
-     */
-
-
     protected int colorsetFor(Fragment u) {
         int color = (1 << u.getColor());
         for (Fragment v : u.getChildren()) {
@@ -466,6 +422,11 @@ class DP {
         }
         return color;
     }
+
+    /*
+        1. Lösche Knoten deren Farbe nur einmal im Graphen vorkommt. Kontrahiere deren Kanten
+        2. Speichere die gelöschten knoten ab, so dass sie später wieder eingefügt werden können
+     */
 
     private boolean isEqual(double a, double b) {
         return Math.abs(a - b) <= epsilon;
@@ -504,6 +465,44 @@ class DP {
             colors.set(color, true);
         }
         return true;
+    }
+
+    private static class Ano {
+        private List<FragmentAnnotation<Object>> graphFragmentAnos;
+        private List<FragmentAnnotation<Object>> treeFragmentAnos;
+        private List<LossAnnotation<Object>> graphLossAnos;
+        private List<LossAnnotation<Object>> treeLossAnos;
+        private FTree tree;
+
+        private Ano(FGraph graph, FTree tree) {
+            this.tree = tree;
+            graphFragmentAnos = graph.getFragmentAnnotations();
+            graphLossAnos = graph.getLossAnnotations();
+            treeFragmentAnos = new ArrayList<FragmentAnnotation<Object>>();
+            treeLossAnos = new ArrayList<LossAnnotation<Object>>();
+            for (FragmentAnnotation<Object> fa : graphFragmentAnos) {
+                treeFragmentAnos.add(tree.addFragmentAnnotation(fa.getAnnotationType()));
+            }
+            for (LossAnnotation<Object> fa : graphLossAnos) {
+                treeLossAnos.add(tree.addLossAnnotation(fa.getAnnotationType()));
+            }
+        }
+
+        public void set(Fragment treeVertex, Fragment graphVertex) {
+            for (int i = 0; i < graphFragmentAnos.size(); ++i) {
+                treeFragmentAnos.get(i).set(treeVertex, graphFragmentAnos.get(i).get(graphVertex));
+            }
+            treeVertex.setColor(graphVertex.getColor());
+        }
+
+        public void set(Loss treeLoss, Loss graphLoss) {
+            for (int i = 0; i < graphLossAnos.size(); ++i) {
+                treeLossAnos.get(i).set(treeLoss, graphLossAnos.get(i).get(graphLoss));
+            }
+            set(treeLoss.getTarget(), graphLoss.getTarget());
+            treeLoss.setWeight(graphLoss.getWeight());
+        }
+
     }
 
 
