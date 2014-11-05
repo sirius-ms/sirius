@@ -655,7 +655,7 @@ public class TReductionController implements GraphReduction {
                     int id = Integer.parseInt( arg[Ci] );
                     // went smoothly. Proceed with deletion
                     Ci++;
-                    gReduce.gGraph.deleteFragment( gReduce.getVerticesByHash()[id] );
+                    gReduce.gGraph.deleteFragment(gReduce.gGraph.getFragmentAt(id));
 
                 } catch( Exception e ) {
                     break;
@@ -777,23 +777,6 @@ public class TReductionController implements GraphReduction {
 		}
 	}
 
-
-    protected class CmdMaximizeSpeed extends ACommandable {
-
-        
-        protected int executeMethod( String[] arg, int Ci ) {
-
-            System.out.println(" ~~~ CMD: maximize speed");
-            gReduce.enableMaximumSpeed();
-            return Ci;
-        }
-
-        
-        protected String description() {
-            return " ~ MaximizeSpeed. This can turn on some improvements with the cost of memory \n"
-					+ " ~ this currently has no valid implementation";  //To change body of implemented methods use File | Settings | File Templates.
-        }
-    }
 
 	/**
 	 * CMD: --alpha
@@ -1013,23 +996,6 @@ public class TReductionController implements GraphReduction {
         }
     }
 
-    protected class CmdRememberApos extends ACommandable {
-
-        @Override
-        protected int executeMethod(String[] arg, int Ci) {
-
-            System.out.println(" ~~~ CMD: --remember-apos");
-            gReduce.gRememberVertexIDs = false;
-
-            return Ci;
-        }
-
-        @Override
-        protected String description() {
-            return " ~ --remember-apos INT \n" +
-                    " ~ no arguments expected";
-        }
-    }
 
     protected class CmdRepeat extends ACommandable {
 
@@ -1224,54 +1190,6 @@ public class TReductionController implements GraphReduction {
 		}
 	}
 
-	/**
-	 *	graph optimization by re-indexing vertices
-	 *	{ [ true | false ] }
-	 */
-	protected class CmdRenumberVerts extends ACommandable {
-
-		protected CmdRenumberVerts() {
-			super(true);
-		}
-
-		protected int executeMethod( String[] arg, int Ci ) {
-
-			String s = "";
-
-			if( Ci < arg.length ) {
-				s = arg[Ci];
-			}
-
-			if( s.matches( "true" ) ) {
-
-				Ci++;
-				System.out.println(" ~~~ CMD: renumber vertices <true>");
-				gReduce.calcNewVertexIds(true);
-			} else if ( s.matches( "false" ) ) {
-
-				Ci++;
-				System.out.println(" ~~~ CMD: renumber vertices <false>");
-				gReduce.calcNewVertexIds(false);
-			} else {
-
-				System.out.println(" ~~~ CMD: renumber vertices");
-				gReduce.calcNewVertexIds(true);
-			}
-
-
-			return Ci;
-		}
-
-		
-		protected String description( ) {
-
-			return " ~ Renumber vertices \n" +
-				    " ~ { [ true | false ] } \n" +
-					" ~ topological sort of the graph, to make the following condition true:" +
-					" ~ if there are two vertices u,v : if (u,v) exists => u < v & c(u) < c(v)";
-		}
-	}
-
 
 	protected class CmdRuntime extends ACommandable {
 
@@ -1379,24 +1297,6 @@ public class TReductionController implements GraphReduction {
 		}
 	}
 
-    protected class CmdShouldCheckPreconds extends ACommandable {
-
-        
-        protected int executeMethod( String[] arg, int Ci ) {
-
-            System.out.println(" ~~~ CMD: should check preconditions");
-			ACommandable.setDebugging( !ACommandable.isbDebugging() ); // toggle
-            gReduce.toggleShouldCheckPreConditions();
-            return Ci;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        
-        protected String description() {
-            return " ~ --preconds \n" +
-					" ~ only used for debugging. This will cause some function to do expensive checkups for checking \n" +
-					"   assuring correctness ";
-        }
-    }
 
 	protected class CmdSourceEdges extends ACommandable {
 
@@ -1546,26 +1446,6 @@ public class TReductionController implements GraphReduction {
 		}
 	}
 
-    protected class CmdUnrenumberVerts extends ACommandable {
-
-		protected CmdUnrenumberVerts() {
-			super(true);
-		}
-
-		protected int executeMethod( String[] arg, int Ci ) {
-
-            System.out.println(" ~~~ CMD: unrenumber-verts ");
-            gReduce.unrenumberVerts();
-            return Ci;
-        }
-
-        
-        protected String description() {
-            return " ~ unrenumber-verts" +
-                    " ~ after using 'renumber-verts', this will restore the vertices to their original ids and colors";
-        }
-    }
-
 
 	//////////////////////////
 	///--- CONSTRUCTORS ---///
@@ -1595,11 +1475,8 @@ public class TReductionController implements GraphReduction {
 		this.CMD.put( "--delVert", new CmdDeleteVertices() );
 		this.CMD.put( "--drawGraph", new CmdDrawGraph() );
 		this.CMD.put( "--dg", new CmdDrawGraph() );
-		this.CMD.put( "--maximizeSpeed", new CmdMaximizeSpeed() );
-		this.CMD.put( "--preconds", new CmdShouldCheckPreconds() );
 		this.CMD.put( "--reachableEdges", new CmdReachableEdges() );
 		this.CMD.put( "--re", new CmdReachableEdges() );
-        this.CMD.put( "--remember-apos", new CmdRememberApos() );
 		this.CMD.put( "--runtime", new CmdRuntime() );
 		this.CMD.put( "--sourceEdges", new CmdSourceEdges() );
 		this.CMD.put( "--se", new CmdSourceEdges() );
@@ -1627,9 +1504,7 @@ public class TReductionController implements GraphReduction {
         this.CMD.put( "seb-vertex-ubs", new CmdSebastianVertexUpperBounds() );
         this.CMD.put( "enable-seb-vub-strength", new CmdEnableSebVubStrength() );
 		this.CMD.put( "tim-vertex-ubs", new CmdTimVertexUpperBounds() );
-		this.CMD.put( "renumber-verts", new CmdRenumberVerts() );
 		this.CMD.put( "test", new CmdTest() );
-        this.CMD.put( "unrenumber-verts", new CmdUnrenumberVerts() );
 
 		for ( String s : CMD.keySet() ) {
 			this.cmdNames.add( s );
@@ -1687,14 +1562,11 @@ public class TReductionController implements GraphReduction {
 
             System.out.println("< Printing edges from " + V_ID +" >" );
 
-            Fragment[] Vertex_By_Hash = gReduce.getVerticesByHash();
-            int[] VertexToHash = gReduce.getVertexToHash();
-
-            final Iterator<Fragment> IT  = gReduce.gGraph.postOrderIterator( Vertex_By_Hash[V_ID] );
+            final Iterator<Fragment> IT  = gReduce.gGraph.postOrderIterator( gReduce.gGraph.getFragmentAt(V_ID) );
             Fragment frag;
             while ( IT.hasNext() ) {
                 frag = IT.next();
-                System.out.println( " - HashID: " + VertexToHash[frag.getVertexId()] + ", Vertex: " + frag );
+                System.out.println( " - HashID: " + frag.getVertexId() + ", Vertex: " + frag );
             }
 
             System.out.println("< finished >");
