@@ -18,6 +18,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction.TReductionController;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
@@ -313,6 +314,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.fragmentPeakScorers = new ArrayList<PeakScorer>();
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
+
+        this.reduction = new TReductionController();
+
         final TreeBuilder solver = loadTreeBuilder();
         setTreeBuilder(solver);
 
@@ -441,7 +445,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
-        return scoreGraph(graph);
+        return reduceGraph(scoreGraph(graph));
+    }
+
+    private FGraph reduceGraph(FGraph fragments, double lowerbound) {
+        if (reduction == null) return fragments;
+        return reduction.reduce(fragments, lowerbound);
+    }
+
+    private FGraph reduceGraph(FGraph fragments) {
+        return reduceGraph(fragments, 0d);
     }
 
     public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<ScoredMolecularFormula>> candidatesPerParentPeak) {
@@ -450,7 +463,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (int i = 0; i < parentPeaks.size(); ++i) {
             graph = graphBuilder.addRoot(graph, parentPeaks.get(i), candidatesPerParentPeak.get(i));
         }
-        return scoreGraph(graphBuilder.fillGraph(graph));
+        return reduceGraph(scoreGraph(graphBuilder.fillGraph(graph)));
     }
 
     protected FGraph scoreGraph(FGraph graph) {

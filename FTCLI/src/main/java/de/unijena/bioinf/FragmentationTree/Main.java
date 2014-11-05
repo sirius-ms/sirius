@@ -4,6 +4,7 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
