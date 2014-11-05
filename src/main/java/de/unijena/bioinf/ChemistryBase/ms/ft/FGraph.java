@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
 import java.util.*;
 
@@ -40,6 +41,27 @@ public class FGraph extends AbstractFragmentationGraph {
                 deleteFragment(fragments.get(k - 1));
             }
         };
+    }
+
+    public void sortTopological() {
+        final FragmentAnnotation<Peak> peak = getFragmentAnnotationOrThrow(Peak.class);
+        Collections.sort(fragments, new Comparator<Fragment>() {
+            @Override
+            public int compare(Fragment fragment, Fragment fragment2) {
+                return Double.compare(peak.get(fragment2).getMass(), peak.get(fragment).getMass());
+            }
+        });
+        int id = 0;
+        int color = 0;
+        int previousColor = -2;
+        for (Fragment f : fragments) {
+            f.setVertexId(id++);
+            if (f.color != previousColor) {
+                previousColor = f.color;
+                ++color;
+            }
+            f.setColor(color);
+        }
     }
 
     @Override
