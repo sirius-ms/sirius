@@ -48,7 +48,9 @@ public class FGraph extends AbstractFragmentationGraph {
         Collections.sort(fragments, new Comparator<Fragment>() {
             @Override
             public int compare(Fragment fragment, Fragment fragment2) {
-                return Double.compare(peak.get(fragment2).getMass(), peak.get(fragment).getMass());
+                if (fragment == pseudoRoot) return -1;
+                else if (fragment2 == pseudoRoot) return 1;
+                else return Double.compare(peak.get(fragment2).getMass(), peak.get(fragment).getMass());
             }
         });
         int id = 0;

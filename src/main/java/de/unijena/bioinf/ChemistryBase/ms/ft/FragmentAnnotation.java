@@ -2,8 +2,8 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 public final class FragmentAnnotation<T> {
 
-    private final int id;
-    private final Class<T> klass;
+    protected final int id;
+    protected final Class<T> klass;
     int capa;
 
     FragmentAnnotation(int id, int capa, Class<T> klass) {

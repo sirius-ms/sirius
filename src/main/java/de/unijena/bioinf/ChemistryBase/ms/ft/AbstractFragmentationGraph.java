@@ -225,6 +225,13 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return ano;
     }
 
+    @SuppressWarnings("unchecked cast")
+    public <S, T extends S> void addAliasForFragmentAnnotation(Class<T> previous, Class<S> newOne) {
+        final FragmentAnnotation<T> ano = getFragmentAnnotationOrThrow(previous);
+        final FragmentAnnotation<S> newAno = new FragmentAnnotation<S>(ano.id, ano.capa, newOne);
+        fragmentAnnotations.put((Class<Object>) newOne, (FragmentAnnotation<Object>) newAno);
+    }
+
     public <T> void addAnnotation(Class<T> klass, T annotation) {
         if (annotations.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
