@@ -11,7 +11,12 @@ public class TMinimalController implements GraphReduction {
     @Override
     public FGraph reduce(FGraph graph, double lowerbound) {
 
+        graph.sortTopological();
+
+
         TReduce reduceInstance = new TReduce(graph);
+
+        reduceInstance.DoCheckVerticesAreTopSorted("FOO");
 
         // this applies to the following reduction code:
         // enable-seb-vub-strength tim-vertex-ubs reduce-vub * ( clear-vertex-ubs seb-vertex-ubs tim-vertex-ubs reduce-vub reduce-unreach )

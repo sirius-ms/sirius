@@ -18,7 +18,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction.TReductionController;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction.TMinimalController;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
@@ -315,7 +315,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
 
-        this.reduction = new TReductionController();
+        this.reduction = new TMinimalController();
 
         final TreeBuilder solver = loadTreeBuilder();
         setTreeBuilder(solver);
@@ -445,6 +445,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
+        graph.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
         return reduceGraph(scoreGraph(graph));
     }
 
@@ -454,7 +455,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     private FGraph reduceGraph(FGraph fragments) {
-        return reduceGraph(fragments, 0d);
+        return fragments;
+        //return reduceGraph(fragments, 0d);
     }
 
     public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<ScoredMolecularFormula>> candidatesPerParentPeak) {
