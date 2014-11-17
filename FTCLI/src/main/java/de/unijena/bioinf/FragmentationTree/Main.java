@@ -9,7 +9,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
@@ -58,16 +61,16 @@ public class Main {
     // fragmentstats
     // file, db, correct, shared, formula, mass, recalibrated, alphabet, ppmdev, mzdev, recppmdev, recmzdev, intensity
     protected PrintStream treeStat, fragStat, lossStats;
+    PrintStream measureMZDIFFSTREAM;
+    PrintStream measureIsoSTREAM;
     private DBMolecularFormulaCache formulaQuery;
     private File formulaCacheFile;
     private PrintStream DEBUGSTREAM = null;
-
     private Options options;
     private boolean verbose;
     private PrintStream rankWriter;
     private Profile profile;
     private Databases database;
-
     private List<PrintStream> openStreams;
     private PrintStream DEBUGWRITER;
 
@@ -219,6 +222,44 @@ public class Main {
             }
         }
         return fs;
+    }
+
+    private static void TESTKEGG() throws IOException {
+        final MolecularFormula[] formulas;
+        {
+            final ArrayList<MolecularFormula> keggFormula = new ArrayList<MolecularFormula>();
+            final BufferedReader keggFormulas = new BufferedReader(new FileReader("keggformulas.csv"));
+            String line = null;
+            while ((line = keggFormulas.readLine()) != null) {
+                final MolecularFormula m = MolecularFormula.parse(line);
+                if (m.isCHNOPS() && m.getMass() < 1000d)
+                    keggFormula.add(m);
+            }
+            formulas = keggFormula.toArray(new MolecularFormula[keggFormula.size()]);
+        }
+
+        {
+            final BufferedWriter writer = new BufferedWriter(new FileWriter("KEGG_real.csv"));
+            for (MolecularFormula f : formulas) {
+                writer.write(f.getMass() + "," + f.rdbe() + "," + f.heteroWithoutOxygenToCarbonRatio() + "," + f.hydrogen2CarbonRatio() + "," + (f.rdbe() / Math.pow(f.getMass(), 2d / 3d)));
+                writer.newLine();
+            }
+            writer.close();
+        }
+        {
+            final BufferedWriter writer = new BufferedWriter(new FileWriter("KEGG_alldecomps.csv"));
+            final ChemicalAlphabet alphabet = ChemicalAlphabet.alphabetFor(MolecularFormula.parse("CHNOPS"));
+            final MassToFormulaDecomposer dec = new MassToFormulaDecomposer(alphabet);
+            final FormulaConstraints constr = new FormulaConstraints(alphabet);
+            for (MolecularFormula g : formulas) {
+                final List<MolecularFormula> xs = dec.decomposeToFormulas(g.getMass(), new Deviation(10), constr);
+                for (MolecularFormula f : xs) {
+                    writer.write(f.getMass() + "," + f.rdbe() + "," + f.heteroWithoutOxygenToCarbonRatio() + "," + f.hydrogen2CarbonRatio() + "," + (f.rdbe() / Math.pow(f.getMass(), 2d / 3d)));
+                    writer.newLine();
+                }
+            }
+            writer.close();
+        }
     }
 
     void run() {
@@ -565,16 +606,20 @@ public class Main {
 
                 if (experiment.getMolecularFormula() != null /*&& correctRankInPmds < 1000*/ /* TODO: What does this mean? */) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
+                    /*
                     if (correctTree != null) {
                         final TreeScoring scoring = correctTree.getAnnotationOrThrow(TreeScoring.class);
                         if (options.getWrongPositive() && correctTree != null)
                             lowerbound = Math.max(lowerbound, scoring.getOverallScore() - scoring.getRecalibrationBonus());
                         final TreeIterator iter = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().iterator();
                         iter.next();
+
                         final FGraph g = iter.lastGraph();
                         new GraphOutput().printToFile(iter.lastGraph(), scoring.getOverallScore() - scoring.getRootScore(),
                                 new File("graph.txt"));
+
                     }
+                    */
                     if (verbose) {
                         if (correctTree != null) {
                             printResult(correctTree);
@@ -589,6 +634,9 @@ public class Main {
                     System.out.println(input.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() + " further candidate formulas.");
                     System.out.flush();
                 }
+
+                TreeSizeScorer origScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
+                double origScore = origScorer == null ? 0d : origScorer.getTreeSizeScore();
 
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
                 if (correctFormula != null) blacklist.add(correctFormula);
@@ -793,31 +841,29 @@ public class Main {
                                 .without(blacklist).withRecalibration().optimalTree();
                         if (verbose) printResult(tree);
                     } else if (analyzer.getRecalibrationMethod() != null) {
-                        TreeSizeScorer origScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
-                        double origScore = origScorer == null ? 0d : origScorer.getTreeSizeScore();
                         if (options.getForceExplainedIntensity() > 0) {
                             while (true) {
-                                final double intensity = intensityOfTree(correctTree);
+                                final FTree t = analyzer.recalibrate(correctTree);
+                                AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
+                                ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).setDeviationScale(2d / 3d);
+                                correctTree = analyzer.recalibrate(t, true);
+                                final double intensity = intensityOfTree(correctTree) * 100d;
                                 final TreeSizeScorer scorer = FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
-                                if (intensity < options.getForceExplainedIntensity() && scorer.getTreeSizeScore() < 4) {
+                                if (intensity < options.getForceExplainedIntensity() && scorer.getTreeSizeScore() <= 5) {
                                     scorer.setTreeSizeScore(scorer.getTreeSizeScore() + 0.5d);
+                                    input = analyzer.preprocessing(experiment);
                                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
                                 } else break;
                             }
                         }
-                        final FTree t = analyzer.recalibrate(correctTree);
-                        AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
-                        //method.setMinNumberOfPeaks(5);
-                        //method.setEpsilon(new Deviation(2, 2e-4));
-                        ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).setDeviationScale(2d / 3d);
-                        FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(origScore);
-                        tree = analyzer.recalibrate(t, true);
+                        tree = correctTree;
                     } else tree = correctTree;
                     if (tree == null) {
                         System.err.println("Can't find any tree");
                     } else {
                         writeTreeToFile(prettyNameOptTree(tree, f), tree, analyzer, isotopeScores.get(tree.getRoot().getFormula()));
                     }
+                    FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers()).setTreeSizeScore(origScore);
                 }
                 computationTime = System.nanoTime() - computationTime;
                 computationTime /= 1000000;
@@ -844,10 +890,6 @@ public class Main {
             writer.close();
         }
     }
-
-
-    PrintStream measureMZDIFFSTREAM;
-    PrintStream measureIsoSTREAM;
 
     private void measureMzDiff(FragmentationPatternAnalysis analyzer, MeasurementProfile profile, Ms2Experiment experiment) {
 
@@ -951,12 +993,12 @@ public class Main {
         System.out.println(") explaining " + tree.getFragments().size() + " peaks");
     }
 
+    // treeinformation
+    // file,db,correct,score,optscore,mass, ppmdev, mzdev, recppmdev, recmzdev
+
     private File prettyNameOptTree(FTree tree, File fileName, String suffix) {
         return new File(options.getTarget(), removeExtname(fileName) + suffix);
     }
-
-    // treeinformation
-    // file,db,correct,score,optscore,mass, ppmdev, mzdev, recppmdev, recmzdev
 
     private File prettyNameOptTree(FTree tree, File fileName) {
         return prettyNameOptTree(tree, fileName, ".dot");
@@ -1081,44 +1123,6 @@ public class Main {
                 System.err.println("Error while writing in " + f + " for input ");
                 e.printStackTrace();
             }
-        }
-    }
-
-    private static void TESTKEGG() throws IOException {
-        final MolecularFormula[] formulas;
-        {
-            final ArrayList<MolecularFormula> keggFormula = new ArrayList<MolecularFormula>();
-            final BufferedReader keggFormulas = new BufferedReader(new FileReader("keggformulas.csv"));
-            String line = null;
-            while ((line = keggFormulas.readLine()) != null) {
-                final MolecularFormula m = MolecularFormula.parse(line);
-                if (m.isCHNOPS() && m.getMass() < 1000d)
-                    keggFormula.add(m);
-            }
-            formulas = keggFormula.toArray(new MolecularFormula[keggFormula.size()]);
-        }
-
-        {
-            final BufferedWriter writer = new BufferedWriter(new FileWriter("KEGG_real.csv"));
-            for (MolecularFormula f : formulas) {
-                writer.write(f.getMass() + "," + f.rdbe() + "," + f.heteroWithoutOxygenToCarbonRatio() + "," + f.hydrogen2CarbonRatio() + "," + (f.rdbe() / Math.pow(f.getMass(), 2d / 3d)));
-                writer.newLine();
-            }
-            writer.close();
-        }
-        {
-            final BufferedWriter writer = new BufferedWriter(new FileWriter("KEGG_alldecomps.csv"));
-            final ChemicalAlphabet alphabet = ChemicalAlphabet.alphabetFor(MolecularFormula.parse("CHNOPS"));
-            final MassToFormulaDecomposer dec = new MassToFormulaDecomposer(alphabet);
-            final FormulaConstraints constr = new FormulaConstraints(alphabet);
-            for (MolecularFormula g : formulas) {
-                final List<MolecularFormula> xs = dec.decomposeToFormulas(g.getMass(), new Deviation(10), constr);
-                for (MolecularFormula f : xs) {
-                    writer.write(f.getMass() + "," + f.rdbe() + "," + f.heteroWithoutOxygenToCarbonRatio() + "," + f.hydrogen2CarbonRatio() + "," + (f.rdbe() / Math.pow(f.getMass(), 2d / 3d)));
-                    writer.newLine();
-                }
-            }
-            writer.close();
         }
     }
 
