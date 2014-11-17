@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 
@@ -18,41 +19,12 @@ import java.util.*;
  * elements are internally always ordered by mass. But there are other
  * use-cases for this class. In general: Whenever you want the user to submit a subset of the periodic table, use this class.
  */
-public class ChemicalAlphabet {
+public class ChemicalAlphabet implements Iterable<Element> {
 
     private final TableSelection selection;
     private final Element[] allowedElements;
     private final int[] orderOfElements;
     private final int maxLen;
-
-    public static ChemicalAlphabet getExtendedAlphabet() {
-        return new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl", "Br", "I", "F", "Na", "Si"));
-    }
-
-    public static ChemicalAlphabet alphabetFor(Iterable<MolecularFormula> formulas) {
-        final PeriodicTable table = PeriodicTable.getInstance();
-        final BitSet set = new BitSet(table.numberOfElements() + 1);
-        final ArrayList<Element> elements = new ArrayList<Element>();
-        for (MolecularFormula f : formulas) {
-            f.visit(new FormulaVisitor<Object>() {
-                @Override
-                public Object visit(Element element, int amount) {
-                    if (amount > 0) set.set(element.getId());
-                    return null;
-                }
-            });
-        }
-        int k = 0;
-        while ((k = set.nextSetBit(k)) >= 0) {
-            elements.add(table.get(k++));
-        }
-        return new ChemicalAlphabet(table.getSelectionFor(set), elements.toArray(new Element[elements.size()]));
-
-    }
-
-    public static ChemicalAlphabet alphabetFor(MolecularFormula... formulas) {
-        return alphabetFor(Arrays.asList(formulas));
-    }
 
     /**
      * Construct a chemical alphabet containing the CHNOPS alphabet.
@@ -96,6 +68,35 @@ public class ChemicalAlphabet {
     */
     public ChemicalAlphabet(Element... elements) {
         this(PeriodicTable.getInstance().getSelectionFor(elements), elements);
+    }
+
+    public static ChemicalAlphabet getExtendedAlphabet() {
+        return new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl", "Br", "I", "F", "Na", "Si"));
+    }
+
+    public static ChemicalAlphabet alphabetFor(Iterable<MolecularFormula> formulas) {
+        final PeriodicTable table = PeriodicTable.getInstance();
+        final BitSet set = new BitSet(table.numberOfElements() + 1);
+        final ArrayList<Element> elements = new ArrayList<Element>();
+        for (MolecularFormula f : formulas) {
+            f.visit(new FormulaVisitor<Object>() {
+                @Override
+                public Object visit(Element element, int amount) {
+                    if (amount > 0) set.set(element.getId());
+                    return null;
+                }
+            });
+        }
+        int k = 0;
+        while ((k = set.nextSetBit(k)) >= 0) {
+            elements.add(table.get(k++));
+        }
+        return new ChemicalAlphabet(table.getSelectionFor(set), elements.toArray(new Element[elements.size()]));
+
+    }
+
+    public static ChemicalAlphabet alphabetFor(MolecularFormula... formulas) {
+        return alphabetFor(Arrays.asList(formulas));
     }
 
     /**
@@ -173,5 +174,10 @@ public class ChemicalAlphabet {
         final short[] buffer = new short[maxLen];
         for (Element e : allowedElements) buffer[selection.indexOf(e)] = 1;
         return MolecularFormula.fromCompomer(selection, buffer).formatByHill();
+    }
+
+    @Override
+    public Iterator<Element> iterator() {
+        return Iterators.forArray(allowedElements);
     }
 }
