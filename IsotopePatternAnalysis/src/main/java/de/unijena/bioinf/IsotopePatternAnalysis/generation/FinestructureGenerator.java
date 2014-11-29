@@ -7,9 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.NormalizationMode;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
-import java.util.ArrayList;
-import java.util.NoSuchElementException;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class FinestructureGenerator {
 
@@ -32,20 +30,152 @@ public class FinestructureGenerator {
     }
 
     public static void main(String[] args) {
-        final FinestructureGenerator gen = new FinestructureGenerator(PeriodicTable.getInstance().getDistribution(), PeriodicTable.getInstance().ionByName("[M]+"),
-                Normalization.Sum(100d));
-        final Iterator iter = gen.iterator(MolecularFormula.parse("C6H12O6"));
-        while (iter.hasNext()) {
-            iter.next();
-            System.out.println(iter.getPeak());
+        final Ionization ion = PeriodicTable.getInstance().ionByName("[M]+");
+        final MolecularFormula formula = MolecularFormula.parse("C1000H22NO16");
+        final FinestructureGenerator gen = new FinestructureGenerator(PeriodicTable.getInstance().getDistribution(), ion,
+                Normalization.Sum(1d));
+        {
+            final java.util.Iterator<Peak> piter = gen.iterator(formula).toPeakIterator();
+            double sz = 0.0d;
+            while (piter.hasNext()) {
+                final Peak p = piter.next();
+                sz += p.getIntensity();
+            }
+        }
+        System.exit(0);
+        final Iterator iter = gen.iteratorSumingUpTo(formula, 0.99d);
+        final double[] mzs = new FineStructureMerger(6500).mergeMasses(iter, ion.addToMass(formula.getMass()));
+        System.out.println(Arrays.toString(mzs));
+    }
+
+    public RawIterator iterator(MolecularFormula formula) {
+        return new RawIterator(cache, formula, ion, mode, distribution);
+    }
+
+    public Iterator iteratorWithPeakLimit(MolecularFormula formula, final int maxNumberOfPeaks) {
+        return new PredicatedIterator(iterator(formula)) {
+            int counter = 0;
+
+            @Override
+            protected boolean shouldStop() {
+                return ++counter >= maxNumberOfPeaks;
+            }
+        };
+    }
+
+    public Iterator iteratorWithIntensityThreshold(MolecularFormula formula, final double intensity) {
+        final double logIntensity = Math.log(intensity);
+        return new PredicatedIterator(iterator(formula)) {
+            @Override
+            protected boolean shouldStop() {
+                return getLogAbundance() < logIntensity;
+            }
+        };
+    }
+
+    public Iterator iteratorSumingUpTo(MolecularFormula formula, double sumIntensity) {
+        final double threshold = mode.getBase() - sumIntensity;
+        return new PredicatedIterator(iterator(formula)) {
+            double intensitySum = mode.getBase();
+
+            @Override
+            protected boolean shouldStop() {
+                intensitySum -= getAbundance();
+                return intensitySum <= threshold;
+            }
+        };
+    }
+
+
+    public abstract static class Iterator {
+
+        public abstract void next();
+
+        public abstract boolean hasNext();
+
+        public abstract double getMass();
+
+        public abstract double getAbundance();
+
+        public abstract double getLogAbundance();
+
+        public abstract double getProbability();
+
+        public abstract double getLogProbability();
+
+        public java.util.Iterator<Peak> toPeakIterator() {
+            return new java.util.Iterator<Peak>() {
+
+                @Override
+                public boolean hasNext() {
+                    return Iterator.this.hasNext();
+                }
+
+                @Override
+                public Peak next() {
+                    Iterator.this.next();
+                    return new Peak(getMass(), getAbundance());
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
         }
     }
 
-    public Iterator iterator(MolecularFormula formula) {
-        return new Iterator(cache, formula, ion, mode);
+    abstract static class PredicatedIterator extends Iterator {
+
+        private final RawIterator iterator;
+        private boolean stop;
+
+        PredicatedIterator(RawIterator iterator) {
+            this.iterator = iterator;
+            this.stop = false;
+        }
+
+        @Override
+        public void next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            iterator.next();
+            this.stop = shouldStop();
+        }
+
+        protected abstract boolean shouldStop();
+
+        @Override
+        public double getProbability() {
+            return iterator.getProbability();
+        }
+
+        @Override
+        public double getLogProbability() {
+            return iterator.getLogProbability();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !stop && iterator.hasNext();
+        }
+
+        @Override
+        public double getMass() {
+            return iterator.getMass();
+        }
+
+        @Override
+        public double getAbundance() {
+            return iterator.getAbundance();
+        }
+
+        @Override
+        public double getLogAbundance() {
+            return iterator.getLogAbundance();
+        }
     }
 
-    public final class Iterator {
+    final static class RawIterator extends Iterator {
 
         private final MolecularFormula formula;
         private final Normalization mode;
@@ -56,7 +186,7 @@ public class FinestructureGenerator {
         private Isotopologues[] isotopologues;
         private Isotopologue currentIsotopologue;
 
-        protected Iterator(final CachedIsoTable cache, MolecularFormula formula, Ionization ion, Normalization mode) {
+        protected RawIterator(final CachedIsoTable cache, MolecularFormula formula, Ionization ion, Normalization mode, final IsotopicDistribution distribution) {
             final MolecularFormula adduct = ion.getAtoms();
             if (adduct != null) {
                 this.formula = formula.add(adduct);
@@ -65,7 +195,7 @@ public class FinestructureGenerator {
                 this.formula = formula;
             }
             this.mode = mode;
-            this.heap = new PriorityQueue<Isotopologue>();
+            this.heap = new PriorityQueue<Isotopologue>(10, Collections.reverseOrder());
             final ArrayList<Element> isoEls = new ArrayList<Element>();
             final ArrayList<Isotopologues> isoL = new ArrayList<Isotopologues>();
             this.baseMass = ion.getMass();
@@ -94,8 +224,8 @@ public class FinestructureGenerator {
             addZeroVector();
             if (mode.getMode() == NormalizationMode.MAX) {
                 final Isotopologue basePeak = heap.peek();
-                logScale = basePeak.logAbundance + Math.log(mode.getBase());
-                scale = Math.exp(basePeak.logAbundance) * mode.getBase();
+                logScale = Math.log(mode.getBase()) - basePeak.logAbundance;
+                scale = mode.getBase() / Math.exp(basePeak.logAbundance);
             } else {
                 logScale = Math.log(mode.getBase());
                 scale = mode.getBase();
@@ -144,12 +274,20 @@ public class FinestructureGenerator {
             return currentIsotopologue.mass;
         }
 
-        public double getLogAbundance() {
+        public double getProbability() {
+            return Math.exp(currentIsotopologue.logAbundance);
+        }
+
+        public double getLogProbability() {
             return currentIsotopologue.logAbundance;
         }
 
+        public double getLogAbundance() {
+            return currentIsotopologue.logAbundance + logScale;
+        }
+
         public double getAbundance() {
-            return Math.exp(currentIsotopologue.logAbundance);
+            return Math.exp(currentIsotopologue.logAbundance) * scale;
         }
 
     }

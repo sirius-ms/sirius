@@ -23,25 +23,21 @@ public class IsotopologueTable implements Isotopologues {
         final int numberOfIsotopologues = binomialCoefficient(numberOfAtoms + k, k);
         this.sortedIsotopologues = new Isotopologue[numberOfIsotopologues];
         // fill array
-        final short[] vector = new short[k];
-        final double[] masses = new double[k];
-        final double[] logAbundances = new double[k];
+        final short[] vector = new short[k + 1];
+        final double[] masses = new double[k + 1];
+        final double[] logAbundances = new double[k + 1];
 
-        final double monoMass = isotopes.getMass(0);
-        final int N = isotopes.getNumberOfIsotopes() - 1;
-
-        final double monoAbundance = log(isotopes.getAbundance(0));
-
-        for (int i = 0; i < k; ++i) {
-            logAbundances[i] = log(isotopes.getAbundance(i + 1)) - monoAbundance;
-            masses[i] = isotopes.getMass(i + 1) - monoMass;
+        for (int i = 0; i <= k; ++i) {
+            logAbundances[i] = log(isotopes.getAbundance(i));
+            masses[i] = isotopes.getMassDifference(i);
         }
-        final double baseMass = monoMass * numberOfAtoms;
-        final double baseProbability = monoAbundance * numberOfAtoms;
-        sortedIsotopologues[0] = new Isotopologue(vector.clone(), baseMass, baseProbability);
-        final int c = generateIsotopologues(element, sortedIsotopologues, 1, vector, numberOfAtoms, masses, logAbundances, baseMass, baseProbability);
+        final int c = generateIsotopologues(numberOfAtoms, sortedIsotopologues, 0, vector, numberOfAtoms, masses, logAbundances, 0d, element.getMass() * numberOfAtoms, 0);
         assert c == sortedIsotopologues.length : "expect " + sortedIsotopologues.length + " but " + c + " given";
         Arrays.sort(sortedIsotopologues, Collections.reverseOrder());
+        double x = 0.0d;
+        for (int i = 0; i < sortedIsotopologues.length; ++i) {
+            x += Math.exp(sortedIsotopologues[i].logAbundance);
+        }
     }
 
     /*
@@ -68,7 +64,7 @@ public class IsotopologueTable implements Isotopologues {
             return x;
         }
     }
-
+    /*
     private static int generateIsotopologues(Element element, Isotopologue[] list, int c, short[] vector, int maximalAmount, double[] isoMasses, double[] isoProbabilities, double currentMass, double currentProbability) {
         for (int i = vector.length - 1; i >= 0; --i) {
             // increase vector[i]
@@ -90,6 +86,36 @@ public class IsotopologueTable implements Isotopologues {
             if (vector[i] != 0) break;
         }
         return c;
+    }
+    */
+
+    private static int generateIsotopologues(final int N, Isotopologue[] list, int c, short[] vector, int maximalAmount, double[] isoMasses, double[] isoProbabilities, double currentProb, double currentMass, int k) {
+        ;
+        final int nextK = k + 1;
+        while (maximalAmount > 0) {
+            if (nextK < isoMasses.length && maximalAmount > 0) {
+                c = generateIsotopologues(N, list, c, vector, maximalAmount, isoMasses, isoProbabilities, currentProb, currentMass, nextK);
+            }
+            --maximalAmount;
+            ++vector[k];
+            currentProb += isoProbabilities[k] + Math.log(N - maximalAmount) - Math.log(vector[k]);
+            currentMass += isoMasses[k];
+        }
+        list[c++] = new Isotopologue(vector.clone(), currentMass, currentProb);
+        //check(list[c-1], isoProbabilities);
+        vector[k] = 0;
+        return c;
+    }
+
+    private static void check(Isotopologue isotopologue, double[] isoProbabilities/*, int atomNumber*/) {
+        double x = 0d;
+        int c = 0;
+        for (int i = 0; i < isoProbabilities.length; ++i) {
+            x += isotopologue.amounts[i] * isoProbabilities[i];
+            c += isotopologue.amounts[i];
+        }
+        //assert c == atomNumber : "expect " + atomNumber + " atoms but " + c + " is given";
+        assert Math.abs(x - isotopologue.logAbundance) < 1e-14 : "expect " + x + " but " + isotopologue.logAbundance + " given";
     }
 
     @Override
