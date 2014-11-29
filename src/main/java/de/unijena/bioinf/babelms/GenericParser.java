@@ -26,6 +26,9 @@ public class GenericParser<T> implements Parser<T> {
         try {
             reader = new BufferedReader(new FileReader(file));
             return parse(reader);
+        } catch (IOException e) {
+            final IOException newOne = new IOException("Error while parsing " + file.getName(), e);
+            throw newOne;
         } finally {
             if (reader != null) reader.close();
         }
