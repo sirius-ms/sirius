@@ -18,7 +18,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction.TMinimalController;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
@@ -315,7 +314,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
 
-        this.reduction = new TMinimalController();
+        this.reduction = null;//new TMinimalController();
 
         final TreeBuilder solver = loadTreeBuilder();
         setTreeBuilder(solver);
