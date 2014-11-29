@@ -20,11 +20,15 @@ public class Isotopes implements ImmutableParameterized<Isotopes> {
     }
 
     public int getIntegerMass(int index) {
-        return (int)(Math.round(masses[index]));
+        return (int) (Math.round(masses[index]));
     }
 
     public double getMass(int index) {
         return masses[index];
+    }
+
+    public double getMassDifference(int index) {
+        return masses[index] - masses[0];
     }
 
     public double getAbundance(int index) {
@@ -37,9 +41,9 @@ public class Isotopes implements ImmutableParameterized<Isotopes> {
 
     private static void reorder(double[] ms, double[] is) {
         // insertion-sort, because the arrays are usually very small
-        for (int i=0; i < ms.length; ++i) {
+        for (int i = 0; i < ms.length; ++i) {
             int mindex = i;
-            for (int j=i+1; j < ms.length; ++j) {
+            for (int j = i + 1; j < ms.length; ++j) {
                 if (ms[j] < ms[mindex]) {
                     mindex = j;
                 }
@@ -57,8 +61,8 @@ public class Isotopes implements ImmutableParameterized<Isotopes> {
     }
 
     private static boolean isOrdered(double[] ms, double[] is) {
-        for (int i=1; i < ms.length; ++i) {
-            if (ms[i] <= ms[i-1]) {
+        for (int i = 1; i < ms.length; ++i) {
+            if (ms[i] <= ms[i - 1]) {
                 return false;
             }
         }
@@ -72,10 +76,11 @@ public class Isotopes implements ImmutableParameterized<Isotopes> {
         final L abu = document.getListFromDictionary(dictionary, "abundances");
         final L ms = document.getListFromDictionary(dictionary, "masses");
         final int n = document.sizeOfList(abu);
-        if (n != document.sizeOfList(ms)) throw new RuntimeException("Number of masses and abundances have to be equal!");
+        if (n != document.sizeOfList(ms))
+            throw new RuntimeException("Number of masses and abundances have to be equal!");
         final double[] ab = new double[n];
         final double[] mas = new double[n];
-        for (int i=0; i < n; ++i) {
+        for (int i = 0; i < n; ++i) {
             ab[i] = document.getDoubleFromList(abu, i);
             mas[i] = document.getDoubleFromList(ms, i);
         }
