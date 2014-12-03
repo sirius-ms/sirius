@@ -19,24 +19,22 @@ import java.util.List;
 public class NewGurobiSolver extends AbstractSolver {
 
     //TODO: Timelimit?
-
-    protected final long envNative;
     final protected TreeBuilder feasibleSolver;
 
     protected final long model;
-    protected final GRBVar[] variables;
+    protected final long envNative;
 
+    protected int NumberOfVariables;
+    protected long variablesNative;
 
     public NewGurobiSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) throws GRBException {
         super(graph, input, lowerbound, feasibleSolver, timeLimit);
 
-        //this.envNative = env;
         this.envNative = getDefaultEnv(null);
 
         int[] error = new int[1];
         this.model = GurobiJni.newmodel(error, this.envNative, null, 0, null, null, null, null, null);
-        this.variables = new GRBVar[this.losses.size()];
-        GurobiJniAccess.set( this.model, GRB.DoubleParam.TimeLimit, 0);
+        GurobiJniAccess.set( this.envNative, GRB.DoubleParam.TimeLimit, 0);
 
         this.feasibleSolver = feasibleSolver;
     }
@@ -84,11 +82,13 @@ public class NewGurobiSolver extends AbstractSolver {
             throw new GRBException("Model not loaded", 20003);
         }
 
-        double[] valarr = new double[losses.size()];
-        double[] lbs = new double[losses.size()];
-        double[] ubs = new double[losses.size()];
-        int[] beg = new int[losses.size()];
-        int[] ind = null;
+        this.NumberOfVariables = losses.size();
+
+        double[] valarr = new double[this.NumberOfVariables];
+        double[] lbs = new double[this.NumberOfVariables];
+        double[] ubs = new double[this.NumberOfVariables];
+        int[] beg = new int[this.NumberOfVariables];
+        int[] ind = null; //TODO: check, if that is going to case trouble. If, find its use!
         char[] types = new char[1]; // this may have to be bigger
         String[] names = new String[1]; // this may have to to be bigger
 
@@ -98,10 +98,11 @@ public class NewGurobiSolver extends AbstractSolver {
             valarr[i] = -losses.get(i).getWeight();
         }
 
-        int error = GurobiJni.addvars(this.model, losses.size(), 0, beg, ind, null, valarr, lbs, ubs, types, names);
+        int error = GurobiJni.addvars(this.model, this.NumberOfVariables, 0, beg, ind, null, valarr, lbs, ubs, types, names);
         if (error != 0) {
-            throw new GRBException(GurobiJni.geterrormsg(GurobiJni.getenv(this.model)), error);
+            throw new GRBException(GurobiJni.geterrormsg(this.envNative), error);
         }
+
         //update model?
     }
 
@@ -292,10 +293,16 @@ public class NewGurobiSolver extends AbstractSolver {
         throw new RuntimeException("Can't find a feasible solution: " + cause);
     }
 
-
+    /**
+     * - check, whether or not some edges can be ignored by the given lower bound
+     * - return an array of values {0,1}, where 0 is a non-existent edge and 1 does exist
+     * @return
+     * @throws GRBException
+     */
     protected boolean[] getVariableAssignment() throws GRBException {
-        final double[] edgesAreUsed = GurobiJniAccess.get(this.model, GRB.DoubleAttr.X, variables);
-        final boolean[] assignments = new boolean[variables.length];
+
+        final double[] edgesAreUsed = GurobiJniAccess.getVariableAssignment(model, this.NumberOfVariables);
+        final boolean[] assignments = new boolean[this.NumberOfVariables];
         final double tolerance = GurobiJniAccess.get(this.model, GRB.DoubleAttr.IntVio);
         for (int i = 0; i < assignments.length; ++i) {
             assert edgesAreUsed[i] > -0.5 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];
@@ -303,6 +310,7 @@ public class NewGurobiSolver extends AbstractSolver {
             ;
             assignments[i] = (Math.round(edgesAreUsed[i]) == 1);
         }
+
         return assignments;
     }
 
