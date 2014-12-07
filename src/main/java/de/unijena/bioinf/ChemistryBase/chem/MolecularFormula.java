@@ -98,6 +98,46 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return new ImmutableMolecularFormula(sel, buffer);
     }
 
+    public static void Test() {
+
+        MolecularFormula f = MolecularFormula.parse("C6H12O6");
+        f.visit(new FormulaVisitor<Object>() {
+            @Override
+            public Object visit(Element element, int amount) {
+                return null;
+            }
+        });
+
+        Element[] elements = f.elementArray();
+        for (Element e : elements) {
+            int amount = f.numberOf(e);
+
+        }
+
+        PeriodicTable T = PeriodicTable.getInstance();
+        IsotopicDistribution distribution = T.getDistribution();
+
+        Element C = T.getByName("C");
+        Element H = T.getByName("H");
+
+        Isotopes isotopes = distribution.getIsotopesFor(C);
+
+        isotopes.getAbundance(1);
+
+
+        TDoubleArrayList mzs = new TDoubleArrayList();
+        TDoubleArrayList ints = new TDoubleArrayList();
+
+        mzs.add(131.21);
+        ints.add(0.00023);
+        // ...
+
+
+        int amountOfC = f.numberOf(C);
+
+
+    }
+
     /**
      * returns the table selection which gives information about the memory structure of the formula
      */
@@ -311,6 +351,10 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] amounts = buffer();
         if (buffer.length - offset < amounts.length) throw new IndexOutOfBoundsException("buffer is to small");
         System.arraycopy(amounts, 0, buffer, offset, amounts.length);
+    }
+
+    public short[] copyToBuffer() {
+        return buffer().clone();
     }
 
     /**
@@ -613,46 +657,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         for (int i = 0; i < buffer.length; ++i) {
             if (buffer[i] > 0) visitor.visit(sel.get(i), buffer[i]);
         }
-    }
-
-    public static void Test() {
-
-        MolecularFormula f = MolecularFormula.parse("C6H12O6");
-        f.visit(new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                return null;
-            }
-        });
-
-        Element[] elements = f.elementArray();
-        for (Element e : elements) {
-            int amount = f.numberOf(e);
-
-        }
-
-        PeriodicTable T = PeriodicTable.getInstance();
-        IsotopicDistribution distribution = T.getDistribution();
-
-        Element C = T.getByName("C");
-        Element H = T.getByName("H");
-
-        Isotopes isotopes = distribution.getIsotopesFor(C);
-
-        isotopes.getAbundance(1);
-
-
-        TDoubleArrayList mzs = new TDoubleArrayList();
-        TDoubleArrayList ints = new TDoubleArrayList();
-
-        mzs.add(131.21);
-        ints.add(0.00023);
-        // ...
-
-
-        int amountOfC = f.numberOf(C);
-
-
     }
 
     @Override
