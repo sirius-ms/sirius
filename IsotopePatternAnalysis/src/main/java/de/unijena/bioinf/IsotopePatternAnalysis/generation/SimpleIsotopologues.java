@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * Created by kaidu on 17.11.2014.
  */
-public class SimpleIsotopologues implements Isotopologues {
+class SimpleIsotopologues implements Isotopologues {
 
     private final SimpleIsotopologue[] isotopologues;
     private final int size;

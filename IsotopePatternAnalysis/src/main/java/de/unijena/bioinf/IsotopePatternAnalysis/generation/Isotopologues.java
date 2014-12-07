@@ -1,6 +1,6 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.generation;
 
-public interface Isotopologues {
+interface Isotopologues {
 
     public double logAbundance(int i);
 

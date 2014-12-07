@@ -9,7 +9,7 @@ import java.util.Collections;
 
 import static java.lang.Math.log;
 
-public class IsotopologueTable implements Isotopologues {
+class IsotopologueTable implements Isotopologues {
 
     private final Element element;
     private final int numberOfAtoms;

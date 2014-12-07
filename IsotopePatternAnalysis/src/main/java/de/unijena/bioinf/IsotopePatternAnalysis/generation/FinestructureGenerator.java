@@ -1,59 +1,44 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.generation;
 
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.NormalizationMode;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.NoSuchElementException;
+import java.util.PriorityQueue;
 
 public class FinestructureGenerator {
 
     private final IsotopicDistribution distribution;
     private final CachedIsoTable cache;
     private final Normalization mode;
-    private final Ionization ion;
 
-    public FinestructureGenerator(IsotopicDistribution dist, Ionization ion, Normalization mode) {
-        this(dist, ion, mode, new CachedIsoTable(dist));
+    public FinestructureGenerator(IsotopicDistribution dist, Normalization mode) {
+        this(dist, mode, new CachedIsoTable(dist));
     }
 
-    FinestructureGenerator(IsotopicDistribution dist, Ionization ion, Normalization mode, CachedIsoTable cache) {
+    FinestructureGenerator(IsotopicDistribution dist, Normalization mode, CachedIsoTable cache) {
         this.distribution = dist;
-        this.ion = ion;
         this.mode = mode;
         this.cache = cache;
-        if (ion == null || mode == null || distribution == null)
+        if (mode == null || distribution == null)
             throw new NullPointerException("Expect non null parameters");
     }
 
-    public static void main(String[] args) {
-        final Ionization ion = PeriodicTable.getInstance().ionByName("[M]+");
-        final MolecularFormula formula = MolecularFormula.parse("C1000H22NO16");
-        final FinestructureGenerator gen = new FinestructureGenerator(PeriodicTable.getInstance().getDistribution(), ion,
-                Normalization.Sum(1d));
-        {
-            final java.util.Iterator<Peak> piter = gen.iterator(formula).toPeakIterator();
-            double sz = 0.0d;
-            while (piter.hasNext()) {
-                final Peak p = piter.next();
-                sz += p.getIntensity();
-            }
-        }
-        System.exit(0);
-        final Iterator iter = gen.iteratorSumingUpTo(formula, 0.99d);
-        final double[] mzs = new FineStructureMerger(6500).mergeMasses(iter, ion.addToMass(formula.getMass()));
-        System.out.println(Arrays.toString(mzs));
-    }
-
-    public RawIterator iterator(MolecularFormula formula) {
+    public RawIterator iterator(MolecularFormula formula, Ionization ion) {
         return new RawIterator(cache, formula, ion, mode, distribution);
     }
 
-    public Iterator iteratorWithPeakLimit(MolecularFormula formula, final int maxNumberOfPeaks) {
-        return new PredicatedIterator(iterator(formula)) {
+    public Iterator iteratorWithPeakLimit(MolecularFormula formula, Ionization ion, final int maxNumberOfPeaks) {
+        return new PredicatedIterator(iterator(formula, ion)) {
             int counter = 0;
 
             @Override
@@ -63,9 +48,9 @@ public class FinestructureGenerator {
         };
     }
 
-    public Iterator iteratorWithIntensityThreshold(MolecularFormula formula, final double intensity) {
+    public Iterator iteratorWithIntensityThreshold(MolecularFormula formula, Ionization ion, final double intensity) {
         final double logIntensity = Math.log(intensity);
-        return new PredicatedIterator(iterator(formula)) {
+        return new PredicatedIterator(iterator(formula, ion)) {
             @Override
             protected boolean shouldStop() {
                 return getLogAbundance() < logIntensity;
@@ -73,9 +58,9 @@ public class FinestructureGenerator {
         };
     }
 
-    public Iterator iteratorSumingUpTo(MolecularFormula formula, double sumIntensity) {
+    public Iterator iteratorSumingUpTo(MolecularFormula formula, Ionization ion, double sumIntensity) {
         final double threshold = mode.getBase() - sumIntensity;
-        return new PredicatedIterator(iterator(formula)) {
+        return new PredicatedIterator(iterator(formula, ion)) {
             double intensitySum = mode.getBase();
 
             @Override
