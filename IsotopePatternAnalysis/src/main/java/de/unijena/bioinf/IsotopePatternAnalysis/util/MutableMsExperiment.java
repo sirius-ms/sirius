@@ -22,11 +22,11 @@ public class MutableMsExperiment implements MsExperiment {
         this.ionization = ionization;
         this.ms1Spectra = new ArrayList<Spectrum<Peak>>();
         for (Spectrum<? extends Peak> s : ms1Spectra) this.ms1Spectra.add(new SimpleMutableSpectrum(s));
-        this.mergedMs1Spectrum = new SimpleMutableSpectrum(mergedMs1Spectrum);
+        this.mergedMs1Spectrum = mergedMs1Spectrum == null ? null : new SimpleMutableSpectrum(mergedMs1Spectrum);
     }
 
     public MutableMsExperiment(MsExperiment experiment) {
-        this(new MutableMeasurementProfile(experiment.getMeasurementProfile()), experiment.getIonization(), experiment.getMs1Spectra(), experiment.getMergedMs1Spectrum() );
+        this(experiment.getMeasurementProfile() == null ? null : new MutableMeasurementProfile(experiment.getMeasurementProfile()), experiment.getIonization(), experiment.getMs1Spectra(), experiment.getMergedMs1Spectrum());
     }
 
     public MeasurementProfile getMeasurementProfile() {

@@ -7,11 +7,12 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.IsotopePatternAnalysis.extraction.AlreadyExtracted;
 import de.unijena.bioinf.IsotopePatternAnalysis.extraction.PatternExtractor;
+import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
+import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.IsotopePatternScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.LogNormDistributedIntensityScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.MassDeviationScorer;
@@ -34,6 +35,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     private DecomposerCache decomposer;
     private PatternExtractor patternExtractor;
     private IsotopicDistribution isotopicDistribution;
+    private IsotopePatternGenerator patternGenerator;
     private MeasurementProfile defaultProfile;
 
     @Override
@@ -126,14 +128,15 @@ public class IsotopePatternAnalysis implements Parameterized {
         this.isotopicDistribution = PeriodicTable.getInstance().getDistribution();
         this.cutoff = 0.01d;
         this.intensityOffset = 0d;
+        this.patternGenerator = new FastIsotopePatternGenerator(isotopicDistribution, Normalization.Sum(1d));
     }
 
     public static IsotopePatternAnalysis defaultAnalyzer() {
         final PeriodicTable T = PeriodicTable.getInstance();
         final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
         double offset = 1.323d;
-        analyzer.intensityOffset = 0.178/100d;
-        analyzer.isotopePatternScorers.add(new MassDeviationScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{0.15, 0.1}, new double[]{
+        analyzer.intensityOffset = 0d;
+        analyzer.isotopePatternScorers.add(new MassDeviationScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{0.15, 0.05}, new double[]{
                 1.0, 1.5
         })));
         analyzer.isotopePatternScorers.add(new LogNormDistributedIntensityScorer(new PiecewiseLinearFunctionIntensityDependency(new double[]{1.0, 0.3, 0.15, 0.03}, new double[]{
@@ -160,8 +163,19 @@ public class IsotopePatternAnalysis implements Parameterized {
         this.intensityOffset = intensityOffset;
     }
 
+    public IsotopePatternGenerator getPatternGenerator() {
+        return patternGenerator;
+    }
+
+    public void setPatternGenerator(IsotopePatternGenerator patternGenerator) {
+        this.patternGenerator = patternGenerator;
+    }
+
     public List<IsotopePattern> deisotope(MsExperiment experiment) {
-        final List<IsotopePattern> patterns = patternExtractor.extractPattern(experiment.getMergedMs1Spectrum()); // TODO: Extra class IsotopePattern
+        final List<IsotopePattern> patterns = new ArrayList<IsotopePattern>();
+        for (Spectrum spec : experiment.getMs1Spectra()) {
+            patterns.addAll(patternExtractor.extractPattern(spec));
+        }
         final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>();
         for (IsotopePattern pattern : patterns) {
             candidates.add(deisotope(experiment, pattern));
@@ -171,14 +185,16 @@ public class IsotopePatternAnalysis implements Parameterized {
 
     public IsotopePattern deisotope(MsExperiment experiment, IsotopePattern pattern) {
         final MutableMsExperiment mexperiment = new MutableMsExperiment(experiment);
-        mexperiment.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, experiment.getMeasurementProfile()));
+        if (experiment.getMeasurementProfile() != null)
+            mexperiment.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, experiment.getMeasurementProfile()));
+        else mexperiment.setMeasurementProfile(defaultProfile);
         experiment = mexperiment;
         final Ionization ion = experiment.getIonization();
         final ArrayList<ScoredMolecularFormula> result = new ArrayList<ScoredMolecularFormula>();
         final List<MolecularFormula> molecules = decomposer.getDecomposer(experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(
                 ion.subtractFromMass(pattern.getMonoisotopicMass()), experiment.getMeasurementProfile().getAllowedMassDeviation(), experiment.getMeasurementProfile().getFormulaConstraints()
         ); // TODO: Fix
-        final double[] scores = scoreFormulas(new ChargedSpectrum(pattern.getPattern(), ion), molecules, experiment);
+        final double[] scores = scoreFormulas(pattern.getPattern(), molecules, experiment);
         for (int i=0; i < scores.length; ++i) {
             result.add(new ScoredMolecularFormula(molecules.get(i), scores[i]));
         }
@@ -186,7 +202,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         return new IsotopePattern(pattern.getPattern(), result);
     }
 
-    public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, double summedUpIntensities, List<MolecularFormula> formulas, MsExperiment experiment){
+    public double[] scoreFormulas(SimpleSpectrum extractedSpectrum, double summedUpIntensities, List<MolecularFormula> formulas, MsExperiment experiment) {
         //if summedUpIntensities <= 0 use intensity sum of pattern to normalize
         if (summedUpIntensities<=0) {
             summedUpIntensities = 0;
@@ -194,15 +210,14 @@ public class IsotopePatternAnalysis implements Parameterized {
                 summedUpIntensities += extractedSpectrum.getIntensityAt(i);
             }
         }
-        final PatternGenerator generator = new PatternGenerator(isotopicDistribution, extractedSpectrum.getIonization(), Normalization.Sum(summedUpIntensities));
-        final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(extractedSpectrum.getNeutralMassSpectrum());
+        //final PatternGenerator generator = new PatternGenerator(isotopicDistribution, extractedSpectrum.getIonization(), Normalization.Sum(summedUpIntensities));
+        final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(extractedSpectrum);
 
         normalize(spec, Normalization.Sum(summedUpIntensities));
         if (intensityOffset != 0d) {
             addOffset(spec, 0d, intensityOffset);
+            normalize(spec, Normalization.Sum(summedUpIntensities));
         }
-
-        normalize(spec, Normalization.Sum(summedUpIntensities));
 
         if (spec.getIntensityAt(0) < cutoff){
             //intensity of first peak is below cutoff, cannot score
@@ -216,7 +231,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         final double[] scores = new double[formulas.size()];
         int k=0;
         for (MolecularFormula f : formulas) {
-            final Spectrum<Peak> theoreticalSpectrum= generator.generatePattern(f, spec.size()+1).getNeutralMassSpectrum();
+            final Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, experiment.getIonization());
             if (theoreticalSpectrum.size() < spec.size()) {
                 // TODO: Just a Workaround!!! Find something better
                 final SimpleMutableSpectrum workaround = new SimpleMutableSpectrum(measuredSpectrum);
@@ -246,7 +261,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         return scores;
     }
 
-    public double[] scoreFormulas(ChargedSpectrum extractedSpectrum, List<MolecularFormula> formulas, MsExperiment experiment) {
+    public double[] scoreFormulas(SimpleSpectrum extractedSpectrum, List<MolecularFormula> formulas, MsExperiment experiment) {
         return scoreFormulas(extractedSpectrum, 1, formulas, experiment);
     }
 

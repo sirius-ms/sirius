@@ -29,7 +29,6 @@ public class Main {
 
     }
 
-
     public static void test() throws IOException {
         final File f = new File("D:/daten/arbeit/sessions/iso/ms1IsotopePatterns.txt");
         final BufferedReader r = new BufferedReader(new FileReader(f));

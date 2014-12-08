@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -13,7 +14,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 public class FinestructurePatternGenerator extends IsotopePatternGenerator {
 
     protected final CachedIsoTable cache;
-    protected double resolution = 7500d;
+    protected double resolution = 75000d;
 
 
     public FinestructurePatternGenerator(IsotopicDistribution distribution, Normalization mode) {
@@ -34,8 +35,17 @@ public class FinestructurePatternGenerator extends IsotopePatternGenerator {
     @Override
     public SimpleSpectrum simulatePattern(MolecularFormula formula, Ionization ionization) {
         final FineStructureMerger merger = new FineStructureMerger(resolution);
-        final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iteratorSumingUpTo(formula, ionization, 1.0d - minimalProbabilityThreshold), ionization.addToMass(formula.getMass()));
-        return Spectrums.getNormalizedSpectrum(spectrum, mode);
+        final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iteratorSumingUpTo(formula, ionization, 0.999d), ionization.addToMass(formula.getMass()));
+        //final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iterator(formula, ionization), ionization.addToMass(formula.getMass()));
+        //final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iteratorWithIntensityThreshold(formula, ionization, 0.0001), ionization.addToMass(formula.getMass()));
+        // cut spectrum to allow only maxNumber peaks
+        if (spectrum.size() <= maximalNumberOfPeaks) return Spectrums.getNormalizedSpectrum(spectrum, mode);
+        final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(spectrum);
+        for (int k = spec.size() - 1; k >= maximalNumberOfPeaks; --k) {
+            spec.removePeakAt(k);
+        }
+        Spectrums.normalize(spec, mode);
+        return new SimpleSpectrum(spec);
     }
 
     public double getResolution() {
