@@ -24,8 +24,12 @@ public class NewGurobiSolver extends AbstractSolver {
     protected final long model;
     protected final long envNative;
 
-    protected int NumberOfVariables;
-    protected long variablesNative;
+    protected int NumOfVariables;
+    protected int NumOfVertices;
+    protected int[] variables;
+    protected double[] coefs;
+    protected double[] constants;
+    protected char[] signs;
 
     public NewGurobiSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) throws GRBException {
         super(graph, input, lowerbound, feasibleSolver, timeLimit);
@@ -37,6 +41,8 @@ public class NewGurobiSolver extends AbstractSolver {
         GurobiJniAccess.set( this.envNative, GRB.DoubleParam.TimeLimit, 0);
 
         this.feasibleSolver = feasibleSolver;
+
+        NumOfVertices = graph.numberOfVertices();
     }
 
 
@@ -76,38 +82,6 @@ public class NewGurobiSolver extends AbstractSolver {
 
 
     @Override
-    protected void defineVariables() throws GRBException {
-
-        if (this.model == 0L) {
-            throw new GRBException("Model not loaded", 20003);
-        }
-
-        this.NumberOfVariables = losses.size();
-
-        double[] valarr = new double[this.NumberOfVariables];
-        double[] lbs = new double[this.NumberOfVariables];
-        double[] ubs = new double[this.NumberOfVariables];
-        int[] beg = new int[this.NumberOfVariables];
-        int[] ind = null; //TODO: check, if that is going to case trouble. If, find its use!
-        char[] types = new char[1]; // this may have to be bigger
-        String[] names = new String[1]; // this may have to to be bigger
-
-        for(int i=0; i < losses.size(); i++) {
-            //lbs[i] = 0.0; // redundant
-            ubs[i] = 1.0;
-            valarr[i] = -losses.get(i).getWeight();
-        }
-
-        int error = GurobiJni.addvars(this.model, this.NumberOfVariables, 0, beg, ind, null, valarr, lbs, ubs, types, names);
-        if (error != 0) {
-            throw new GRBException(GurobiJni.geterrormsg(this.envNative), error);
-        }
-
-        //update model?
-    }
-
-
-    @Override
     protected void setStartValues(FTree presolvedTree) throws GRBException {
 
         final TObjectIntHashMap<MolecularFormula> map = new TObjectIntHashMap<MolecularFormula>(presolvedTree.numberOfVertices() * 3, 0.5f, -1);
@@ -141,20 +115,29 @@ public class NewGurobiSolver extends AbstractSolver {
 
 
     @Override
+    /**
+     * for each constraint i in array 'offsets': offsets[i] is the first index, where the constraint i is located
+     * (inside 'var' and 'coefs')
+     */
     protected void computeOffsets() {
 
         for (int k = 1; k < offsets.length; ++k)
             offsets[k] = offsets[k - 1] + graph.getFragmentAt(k - 1).getOutDegree();
 
-        // why do that here?
+        /*
+         * for each edge: give it some unique id based on its source vertex id and its offset
+         * therefor, the i-th edge of some vertex u will have the id: offsets[u] + i - 1, if i=1 is the first edge.
+         * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
+          */
         for (int k = 0; k < losses.size(); ++k) {
             final int u = losses.get(k).getSource().getVertexId();
             edgeIds[offsets[u]++] = k;
         }
 
-        // this seems to be needed because of the questioned code above
+        // by using the loop-code above -> offsets[k] = 2*OutEdgesOf(k), so subtract that 2 away
         for (int k = 0; k < offsets.length; ++k)
             offsets[k] -= graph.getFragmentAt(k).getOutDegree();
+            //TODO: optimize: offsets[k] /= 2;
     }
 
 
@@ -167,8 +150,79 @@ public class NewGurobiSolver extends AbstractSolver {
 
 
     @Override
+    /**
+     * variables are edges as {0.0, 1.0} and their weight as coefficients
+     */
+    protected void defineVariables() throws GRBException {
+        // cannot really do sth. here
+        NumOfVariables = this.losses.size();
+        this.variables = new int[NumOfVariables];
+    }
+
+
+    @Override
+    /**
+     * this will add all necessary variables through the gurobi jni interface to be used later
+     */
+    protected void setVariablesWithOffset() throws GRBException {
+
+        if (this.model == 0L) {
+            throw new GRBException("Model not loaded", 20003);
+        }
+
+        // a variable is basically the existence of an edge {0.0, 1.0} multiplied with some coefficient {weight of edge}
+        // In our case, many edges will not be present. It is sufficient enough to just store those existing ones
+        // and remember their ids. That way, everything is stored in individual arrays, that are accessible through
+        // 'offsets' and 'edgeIds'.
+
+        double[] vals = new double[this.NumOfVariables];
+        double[] ubs = new double[this.NumOfVariables];
+        double[] lbs = null; // this will cause lbs to be 0.0 by default
+        double[] obj = null; // arguments will have objective coefficients of 0.0 TODO: is that right?
+        char[] vtypes = null; // arguments will be assumed to be continuous
+        String[] names = null; // arguments will have default names.
+
+        for(int i=0; i < losses.size(); i++) {
+            ubs[i] = 1.0;
+            vals[i] = -losses.get(i).getWeight();
+        }
+
+        int error = GurobiJni.addvars(model, NumOfVariables, 0, offsets, edgeIds, vals, obj , lbs, ubs, vtypes, names);
+        if (error != 0) {
+            throw new GRBException(GurobiJni.geterrormsg(this.envNative), error);
+        }
+
+    }
+
+
+    @Override
     protected void setTreeConstraint() {
 
+        // a variable is basically the existence of an edge {0.0, 1.0} multiplied with some coefficient {weight of edge}
+        // In our case, many edges will not be present. It is sufficient enough to just store those existing ones
+        // and remember their ids. That way, everything is stored in individual arrays, that are accessible through
+        // 'offsets' and 'edgeIds'.
+
+        // prepare arrays
+        this.coefs = new double[NumOfVariables];
+        this.signs = new char[NumOfVariables];
+        this.constants = new double[NumOfVariables];
+
+        for (int k=0; k<this.NumOfVertices; k++) {
+            // NumOfVariables is NumOfEdges!
+            final int LAST_INDEX = (k == this.NumOfVariables-1) ? NumOfVariables -1 : offsets[k+1] -1;
+
+            for (int i=offsets[k]; i<LAST_INDEX; i++) {
+                coefs[i] = losses.get(i).getWeight();
+            }
+
+            // we want to only use 1 edge from any vertex at max
+            signs[k] = GRB.LESS_EQUAL;
+            constants[k] = 1.0d;
+        }
+
+        //TODO: determine the second last double array! (last one is an array of constraint names)
+        GurobiJni.addconstrs(model, offsets.length, coefs.length, offsets, edgeIds, coefs, signs, constants, null ,null);
     }
 
 
@@ -301,8 +355,8 @@ public class NewGurobiSolver extends AbstractSolver {
      */
     protected boolean[] getVariableAssignment() throws GRBException {
 
-        final double[] edgesAreUsed = GurobiJniAccess.getVariableAssignment(model, this.NumberOfVariables);
-        final boolean[] assignments = new boolean[this.NumberOfVariables];
+        final double[] edgesAreUsed = GurobiJniAccess.getVariableAssignment(model, this.NumOfVariables);
+        final boolean[] assignments = new boolean[this.NumOfVariables];
         final double tolerance = GurobiJniAccess.get(this.model, GRB.DoubleAttr.IntVio);
         for (int i = 0; i < assignments.length; ++i) {
             assert edgesAreUsed[i] > -0.5 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];

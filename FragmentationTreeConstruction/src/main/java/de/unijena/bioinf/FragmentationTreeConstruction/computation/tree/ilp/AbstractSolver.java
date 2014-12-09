@@ -85,7 +85,10 @@ abstract public class AbstractSolver {
                 final FTree presolvedTree = feasibleSolver.buildTree(input, graph, lowerbound);
                 setStartValues(presolvedTree);
             }
+
             computeOffsets();
+            setVariablesWithOffset();
+
             setConstraints();
             setLowerbound();
             built = true;
@@ -137,6 +140,8 @@ abstract public class AbstractSolver {
     abstract protected void setStartValues(FTree presolvedTree) throws Exception;
     abstract protected void computeOffsets() throws Exception;
     abstract protected void setLowerbound() throws Exception;
+
+    abstract protected void setVariablesWithOffset() throws Exception;
 
     // functions used within 'setConstrains'
     abstract protected void setTreeConstraint() throws Exception;
