@@ -15,6 +15,6 @@ repositories {
 }
 
 dependencies() {
-    compile     "de.unijena.bioinf:ChemistryBase:4.+"      // basic interfaces and data structures
+    compile     "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT"      // basic interfaces and data structures
     testCompile "junit:junit:4.+"                           // testing framework
 }
