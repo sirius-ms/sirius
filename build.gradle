@@ -2,7 +2,6 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group = 'de.unijena.bioinf'
-artifactId "babelms"
 
 sourceCompatibility = "1.7"
 version = '1.0-SNAPSHOT'
