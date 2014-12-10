@@ -1,6 +1,7 @@
 dependencies() {
     compile project(":FragmentationTreeConstruction"),
             "de.unijena.bioinf:BabelMs:1.0-SNAPSHOT",
-            "com.lexicalscope.jewelcli:jewelcli:0.8.+"
+            "com.lexicalscope.jewelcli:jewelcli:0.8.+",
+            "com.google.guava:guava:18.+" // should be already contained in ChemistryBase. Error in Hudson?
 
 }
