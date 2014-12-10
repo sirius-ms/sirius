@@ -1,3 +1,17 @@
+
+repositories {
+    maven {
+        url "http://ambit.uni-plovdiv.bg:8083/nexus/content/repositories/thirdparty"
+    }
+    maven {
+        url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/"
+    }
+    maven {
+        url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo-snapshots/"
+    }
+} // ?????????
+
+
 dependencies() {
     compile project(":FTEval"),
             "de.unijena.bioinf:DecompCLI:1.21-SNAPSHOT",
