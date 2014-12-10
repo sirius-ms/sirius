@@ -2,7 +2,7 @@ String jena(String str, String v) {
     return "de.unijena.bioinf:${str}:${v}"
 }
 String cdk(str) {
-    CDK_VERSION = "1.5.6"
+    String CDK_VERSION = "1.5.6"
     return "org.openscience.cdk:${str}:${CDK_VERSION}"
 }
 

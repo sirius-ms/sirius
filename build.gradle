@@ -1,0 +1,21 @@
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    group = 'de.unijena.bioinf'
+    version = '1.21-SNAPSHOT'
+}
+
+subprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "http://bio.informatik.uni-jena.de/artifactory/repo"
+        }
+    }
+
+    dependencies {
+        compile     "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT"
+        testCompile 'junit:junit:4.+'
+    }
+}
