@@ -18,12 +18,9 @@ abstract public class AbstractSolver {
     final static int DO_NOTHING = 0;
     final static int SHALL_RETURN_NULL = 1;
 
-    protected final int[] offsets;
-    protected final int[] edgeIds;
     protected boolean built;
 
     protected final FGraph graph;
-    protected final ArrayList<Loss> losses;
 
     protected final ProcessedInput input;
     protected final TreeBuilder feasibleSolver;
@@ -50,20 +47,11 @@ abstract public class AbstractSolver {
     protected AbstractSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit)
     {
         this.graph = graph;
-        this.losses = new ArrayList<Loss>(graph.numberOfEdges() + 1);
-
-        // get all edges from the graph as single list
-        for (Fragment f : graph.getFragments())
-            for (Loss e : f.getIncomingEdges())
-                this.losses.add(e);
-
         this.lowerbound = lowerbound;
 
         this.input = input;
         this.feasibleSolver = feasibleSolver;
 
-        this.offsets = new int[graph.numberOfVertices()];
-        this.edgeIds = new int[this.losses.size()];
         this.timelimit = (timeLimit >= 0) ? timeLimit : 0;
 
         this.built = false;

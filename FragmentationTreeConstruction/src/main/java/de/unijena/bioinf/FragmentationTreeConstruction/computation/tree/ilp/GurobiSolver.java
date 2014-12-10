@@ -463,7 +463,7 @@ public class GurobiSolver implements TreeBuilder {
                 final GRBLinExpr lowerboundExpression = new GRBLinExpr();
                 for (int i=0; i < losses.size(); ++i) {
                     assert !Double.isInfinite(-losses.get(i).getWeight()) && !Double.isNaN(-losses.get(i).getWeight());
-                    lowerboundExpression.addTerm(-losses.get(i).getWeight(), variables[i]);
+                    lowerboundExpression.addTerm(-losses.get(i).getWeight(), vars[i]);
                 }
                 assert !Double.isInfinite(-lowerbound) && !Double.isNaN(-lowerbound);
                 model.addConstr(lowerboundExpression, GRB.LESS_EQUAL, -lowerbound, null);//String.valueOf(++identifier));
