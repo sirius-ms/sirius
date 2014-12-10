@@ -22,6 +22,14 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+
+            MolecularFormula f = MolecularFormula.parse("C37H67NO13");
+            Ionization ion = PeriodicTable.getInstance().ionByName("[M+H]+");
+            final FinestructurePatternGenerator gen = new FinestructurePatternGenerator();
+            gen.setResolution(7500);
+            gen.setMaximalNumberOfPeaks(4);
+            System.out.println(gen.simulatePattern(f, ion));
+            System.exit(0);
             test();
         } catch (IOException e) {
             e.printStackTrace();
