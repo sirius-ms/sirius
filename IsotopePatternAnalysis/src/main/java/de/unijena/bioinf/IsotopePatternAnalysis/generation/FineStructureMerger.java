@@ -92,7 +92,7 @@ public class FineStructureMerger {
                 basePeak = k;
             }
         }
-        final double sd = 2.35482 * (normalDistributions[basePeak] / resolution);
+        final double sd = (normalDistributions[basePeak] / (2.35482*resolution));
         double x = normalDistributions[basePeak];
         for (int i = 0; i < 100; ++i) {
             final double x2 = step(x, normalDistributions, intensities, sd);
