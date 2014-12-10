@@ -1,11 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.functional.Function;
-import de.unijena.bioinf.functional.iterator.Iterators;
 
 import java.util.*;
 
@@ -108,10 +108,10 @@ public class ProcessedPeak extends Peak {
     }
 
     public Iterator<Ms2Spectrum> originalSpectraIterator() {
-        return Iterators.map(originalPeaks.iterator(), new Function<MS2Peak, Ms2Spectrum>() {
+        return Iterators.transform(originalPeaks.iterator(), new Function<MS2Peak, Ms2Spectrum>() {
             @Override
-            public Ms2Spectrum apply(MS2Peak arg) {
-                return arg.getSpectrum();
+            public Ms2Spectrum apply(MS2Peak input) {
+                return input.getSpectrum();
             }
         });
     }
@@ -121,7 +121,9 @@ public class ProcessedPeak extends Peak {
     }
 
     public List<Ms2Spectrum> getOriginalSpectra() {
-        return Iterators.appendTo(new ArrayList<Ms2Spectrum>(originalPeaks.size()), originalSpectraIterator());
+        final List<Ms2Spectrum> spectrum =  new ArrayList<Ms2Spectrum>(originalPeaks.size());
+        Iterators.addAll(spectrum, originalSpectraIterator());
+        return spectrum;
     }
 
     public double getUnmodifiedMass() {

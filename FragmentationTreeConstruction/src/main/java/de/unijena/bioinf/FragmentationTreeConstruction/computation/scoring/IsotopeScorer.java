@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -163,7 +164,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
                     for (int i = 0; i < peakList.size(); i++) {
                         final Pattern pattern = new Pattern(peakList.subList(0, i+1));
 
-                        final double[] scores = patternScorer.scoreFormulas(pattern.createChargedSpectrum(), decompositions, experiment);
+                        final double[] scores = patternScorer.scoreFormulas(new SimpleSpectrum(pattern.createChargedSpectrum()), decompositions, experiment);
                         if (VERBOSE) System.out.println("scores: "+Arrays.toString(scores));
                         final int scorePos = bestScorePos(scores);
                         if (scorePos >= 0){
@@ -265,7 +266,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
             if (pattern.getBestDecomposition().equals(formula)) return pattern.getScore();
             //todo how to score formulas which had not the best score to the isotope pattern?
             //todo recalculate vs. storing all?
-            return Math.max(patternScorer.scoreFormulas(pattern.createChargedSpectrum(), Collections.singletonList(formula), input.getExperimentInformation())[0], penalty); //max to avoid -Infinity score
+            return Math.max(patternScorer.scoreFormulas(new SimpleSpectrum(pattern.createChargedSpectrum()), Collections.singletonList(formula), input.getExperimentInformation())[0], penalty); //max to avoid -Infinity score
         }
 
         return penalty; //todo how to score peaks, which weren't rated as mono isotopic according to indepentent set solver

@@ -23,11 +23,11 @@
         <dependency><groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
             <version>3.0</version></dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FunctionalProgramming</artifactId>
             <version>1.0</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>GraphUtils</artifactId>

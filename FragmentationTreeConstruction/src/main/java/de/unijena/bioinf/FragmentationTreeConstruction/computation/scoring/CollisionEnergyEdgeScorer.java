@@ -1,5 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -8,8 +10,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
-import de.unijena.bioinf.functional.Predicate;
-import de.unijena.bioinf.functional.list.ListOperations;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Arrays;
@@ -166,15 +166,14 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         final List<ProcessedPeak>[] peaksPerSpectra = new List[spectra.size()];
         for (int i=0; i < peaksPerSpectra.length; ++i) {
             final int k = i;
-            peaksPerSpectra[i] = ListOperations.singleton().filter(input.getMergedPeaks(), new Predicate<ProcessedPeak>() {
-                @Override
-                public boolean apply(ProcessedPeak value) {
-                    for (MS2Peak p : value.getOriginalPeaks()) {
-                        if (p.getSpectrum().getCollisionEnergy().equals(spectra.get(k).getCollisionEnergy())) return true;
+            for (ProcessedPeak value : input.getMergedPeaks()) {
+                for (MS2Peak p : value.getOriginalPeaks()) {
+                    if (p.getSpectrum().getCollisionEnergy().equals(spectra.get(k).getCollisionEnergy())) {
+                        peaksPerSpectra[i].add(value);
+                        break;
                     }
-                    return false;
                 }
-            });
+            }
         }
         for (int i=0; i < spectra.size(); ++i) {
             for (ProcessedPeak peak : peaksPerSpectra[i]) {

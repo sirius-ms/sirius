@@ -1,12 +1,12 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
-import de.unijena.bioinf.functional.iterator.Iterators;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 
 import java.util.*;
@@ -232,8 +232,9 @@ class DP {
         final double scoreOfTree;
         {
             double s = 0d;
-            for (Loss l : Iterators.asIterable(tree.lossIterator())) {
-                s += l.getWeight();
+            final Iterator<Loss> liter = tree.lossIterator();
+            while (liter.hasNext()) {
+                s += liter.next().getWeight();
             }
             scoreOfTree = s;
         }
@@ -255,7 +256,7 @@ class DP {
                 remainings[c].add(graph.getFragmentAt(i));
             }
         }
-        final List<Fragment> nodes = Iterators.toList(
+        final List<Fragment> nodes = Lists.newArrayList(
                 new PostOrderTraversal<Fragment>(tree.getRoot(), FTree.treeAdapter()).iterator()
         );
         for (int colorIndex = 0; colorIndex < remainings.length; ++colorIndex) {
@@ -344,8 +345,9 @@ class DP {
         final double newScoreOfTree;
         {
             double s = 0d;
-            for (Loss l : Iterators.asIterable(tree.lossIterator())) {
-                s += l.getWeight();
+            final Iterator<Loss> liter = tree.lossIterator();
+            while (liter.hasNext()) {
+                s += liter.next().getWeight();
             }
             newScoreOfTree = s;
         }
