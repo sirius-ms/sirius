@@ -1,16 +1,11 @@
 allprojects {
-    task hello << { task -> println "I'm $task.project.name" }
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    group = 'de.unijena.bioinf'
+    version = '1.21-SNAPSHOT'
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'maven'
-
-    group = 'de.unijena.bioinf'
-
-    sourceCompatibility = "1.7"
-    version = '1.21-SNAPSHOT'
-
     repositories {
         mavenLocal()
         mavenCentral()
