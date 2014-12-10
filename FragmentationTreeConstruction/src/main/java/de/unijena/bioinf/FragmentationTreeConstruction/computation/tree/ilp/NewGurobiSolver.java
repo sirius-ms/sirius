@@ -294,7 +294,21 @@ public class NewGurobiSolver extends AbstractSolver {
 
     @Override
     protected void setMinimalTreeSizeConstraint() {
+        final Fragment localRoot = graph.getRoot();
+        final int fromIndex = offsets[localRoot.getVertexId()];
+        final int toIndex = fromIndex + localRoot.getOutDegree();
 
+        final int[] indices = new int[toIndex-fromIndex+1];
+        final double[] coefs = new double[toIndex-fromIndex+1];
+
+        for (int i=fromIndex; i<=toIndex; i++) {
+            indices[i-fromIndex] = i; // add variable indices
+            coefs[i-fromIndex] = 1.0d;
+        }
+
+        assert (indices[toIndex] != 0) : "The Last value shouldn't be zero?!";
+
+        GurobiJni.addconstrs(model, 1, coefs.length, new int[]{fromIndex}, indices, coefs, new char[]{GRB.GREATER_EQUAL}, new double[]{1.0d}, null, null);
     }
 
 
