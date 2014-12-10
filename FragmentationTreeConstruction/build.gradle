@@ -2,7 +2,7 @@
 dependencies() {
     compile "de.unijena.bioinf:MassDecomposer:1.21-SNAPSHOT",
             "org.apache.commons:commons-math3:3.+", 
-            "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT", 
+            "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT",
             "de.unijena.bioinf:IsotopePatternAnalysis:1.21-SNAPSHOT",
             "de.unijena.bioinf:Recalibration:1.+",
             "gurobi:gurobi-linux64:5.6.0"
