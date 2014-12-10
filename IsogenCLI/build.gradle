@@ -1,0 +1,5 @@
+dependencies() {
+    compile "com.lexicalscope.jewelcli:jewelcli:0.8.+",
+            "de.unijena.bioinf:babelms:1.0-SNAPSHOT",
+            project(":IsotopePatternAnalysis")
+}
