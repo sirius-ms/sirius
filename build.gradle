@@ -1,0 +1,23 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'de.unijena.bioinf'
+
+sourceCompatibility = "1.7"
+version = '4-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "http://bio.informatik.uni-jena.de/artifactory/repo"
+    }
+}
+
+dependencies() {
+    compile "org.json:json:1.+",                    // parse JSON configuration files
+            "net.sf.trove4j:trove4j:3.+",           // primitive collection types
+            "com.google.guava:guava:17.+",          // collection utilities
+            "de.unijena.bioinf:GraphUtils:1.+"      // tree algorithms
+    testCompile "junit:junit:4.+"                   // testing framework
+}
