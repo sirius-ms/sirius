@@ -15,7 +15,7 @@ repositories {
 dependencies() {
     compile project(":FTEval"),
             "de.unijena.bioinf:DecompCLI:1.21-SNAPSHOT",
-            "de.unijena.bioinf:IsogenCLI:2.11-SNAPSHOT",
+            "de.unijena.bioinf:IsogenCLI:1.21-SNAPSHOT",
             "de.unijena.bioinf:CLIBase:1-SNAPSHOT"
 
 }
