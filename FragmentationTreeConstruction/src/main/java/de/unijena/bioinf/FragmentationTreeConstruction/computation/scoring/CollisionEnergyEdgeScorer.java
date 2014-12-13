@@ -12,6 +12,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -165,6 +166,7 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
         Arrays.fill(minEnergy, Integer.MAX_VALUE); Arrays.fill(maxEnergy, Integer.MIN_VALUE);
         final List<ProcessedPeak>[] peaksPerSpectra = new List[spectra.size()];
         for (int i=0; i < peaksPerSpectra.length; ++i) {
+            peaksPerSpectra[i] = new ArrayList<ProcessedPeak>();
             final int k = i;
             for (ProcessedPeak value : input.getMergedPeaks()) {
                 for (MS2Peak p : value.getOriginalPeaks()) {
