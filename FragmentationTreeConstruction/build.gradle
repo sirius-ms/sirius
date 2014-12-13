@@ -7,6 +7,6 @@ dependencies() {
             "de.unijena.bioinf:Recalibration:1.+",
             "gurobi:gurobi-linux64:5.6.0"
 
-    testCompile "de.unijena.bioinf:babelms:1.+"
+    testCompile "de.unijena.bioinf:BabelMs:1.0-SNAPSHOT"
 
 }
