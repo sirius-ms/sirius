@@ -21,3 +21,10 @@ dependencies() {
             "de.unijena.bioinf:GraphUtils:1.+"      // tree algorithms
     testCompile "junit:junit:4.+"                   // testing framework
 }
+
+task createPom  {
+    pom {
+        project {
+        }
+    }.writeTo("pom.xml")
+}
