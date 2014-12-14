@@ -18,3 +18,10 @@ dependencies() {
     compile     "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT"      // basic interfaces and data structures
     testCompile "junit:junit:4.+"                           // testing framework
 }
+
+task createPom  {
+    pom {
+        project {
+        }
+    }.writeTo("pom.xml")
+}
