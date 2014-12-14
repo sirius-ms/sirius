@@ -18,4 +18,10 @@ subprojects {
         compile     "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT"
         testCompile 'junit:junit:4.+'
     }
+    task createPom  {
+    pom {
+        project {
+        }
+    }.writeTo("pom.xml")
+}
 }
