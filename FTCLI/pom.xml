@@ -23,7 +23,7 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsotopePatternAnalysis</artifactId>
-            <version>2.11-SNAPSHOT</version>
+            <version>1.21-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
@@ -37,13 +37,8 @@
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
-            <artifactId>IsotopePatternAnalysis</artifactId>
-            <version>2.11-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsogenCLI</artifactId>
-            <version>2.11-SNAPSHOT</version>
+            <version>1.21-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>

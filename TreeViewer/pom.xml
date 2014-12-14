@@ -41,7 +41,7 @@
     </dependency>
       <dependency>
           <groupId>de.unijena.bioinf</groupId>
-          <artifactId>babelms</artifactId>
+          <artifactId>BabelMs</artifactId>
           <version>1.0-SNAPSHOT</version>
       </dependency>
   </dependencies>
