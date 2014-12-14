@@ -19,4 +19,10 @@ subprojects {
                     "de.unijena.bioinf:MassDecomposer:1.21-SNAPSHOT"
         testCompile 'junit:junit:4.+'
     }
+    task createPom  {
+    pom {
+        project {
+        }
+    }.writeTo("pom.xml")
+}
 }
