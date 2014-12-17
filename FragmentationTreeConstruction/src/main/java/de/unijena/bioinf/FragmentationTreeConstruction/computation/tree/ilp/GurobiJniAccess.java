@@ -10,33 +10,12 @@ import gurobi.GurobiJni;
  */
 public class GurobiJniAccess {
 
-    static double[] getVariableAssignment(long model, int NumOfVar) {
-        GRB.DoubleAttr attr = GRB.DoubleAttr.X;
-        double[] values = new double[NumOfVar];
-
-        // new GRBVar is initialized with GRBVar.col_no = -1
-        // since I'm not able to create instances of GRBVar or access col_no, I might try it that way
-        // TODO: There seems to be no way to access GRBVar.col_no currently. In that case, I'm not able
-        // TODO: to use that. Appearently, an array of -1 is not working, since the condition
-        // TODO: "GRB.col_no >= 0" must be fulfilled.
-
-        // TODO: => try just getting all columns by a simple index i. Hope that works...
-        int[] ind = new int[NumOfVar];
-        for (int i=0; i<NumOfVar; i++)
-            ind[i] = i;
-
-        GurobiJni.getdblattrlist(model, attr.toString(), NumOfVar, -1, ind, values);
-
-        return values;
-    }
-
-
     ////////////////////////
     ///--- PARAMETERS ---///
     ////////////////////////
 
 
-    public static int get(long env, GRB.IntParam param) throws GRBException {
+    final static int get(long env, GRB.IntParam param) throws GRBException {
         int[] value = new int[1];
         int error = GurobiJni.getintparam(env, param.toString(), value);
         if(error != 0)
@@ -46,7 +25,7 @@ public class GurobiJniAccess {
     }
 
 
-    public double get(long env, GRB.DoubleParam param) throws GRBException {
+    final double get(long env, GRB.DoubleParam param) throws GRBException {
         double[] value = new double[1];
         int error = GurobiJni.getdblparam(env, param.toString(), value);
         if(error != 0) {
@@ -57,7 +36,7 @@ public class GurobiJniAccess {
     }
 
 
-    public String get(long env, GRB.StringParam param) throws GRBException {
+    final String get(long env, GRB.StringParam param) throws GRBException {
         String[] value = new String[1];
         int error = GurobiJni.getstrparam(env, param.toString(), value);
         if(error != 0) {
@@ -68,21 +47,21 @@ public class GurobiJniAccess {
     }
 
 
-    static void set(long env, GRB.IntParam param, int newvalue) throws GRBException {
+    final static void set(long env, GRB.IntParam param, int newvalue) throws GRBException {
         int error = GurobiJni.setintparam(env, param.toString(), newvalue);
         if (error != 0)
             throw new GRBException(GurobiJni.geterrormsg(env), error);
     }
 
 
-    static void set(long env, GRB.DoubleParam param, double newvalue) throws GRBException {
+    final static void set(long env, GRB.DoubleParam param, double newvalue) throws GRBException {
         int error = GurobiJni.setdblparam(env, param.toString(), newvalue);
         if (error != 0)
             throw new GRBException(GurobiJni.geterrormsg(env), error);
     }
 
 
-    static void set(long env,GRB.StringParam param, String newvalue) throws GRBException {
+    final static void set(long env,GRB.StringParam param, String newvalue) throws GRBException {
         int error = GurobiJni.setstrparam(env, param.toString(), newvalue);
         if (error != 0)
             throw new GRBException(GurobiJni.geterrormsg(env), error);
@@ -94,7 +73,7 @@ public class GurobiJniAccess {
     ////////////////////////
 
 
-    static int get(long model, GRB.IntAttr attr) throws GRBException {
+    final static int get(long model, GRB.IntAttr attr) throws GRBException {
         if (model == 0L)
             throw new GRBException("Model not loaded", 20003);
 
@@ -108,7 +87,7 @@ public class GurobiJniAccess {
     }
 
 
-    static double get(long model, GRB.DoubleAttr attr) throws GRBException {
+    final static double get(long model, GRB.DoubleAttr attr) throws GRBException {
         if(model == 0L)
             throw new GRBException("Model not loaded", 20003);
 
@@ -123,7 +102,7 @@ public class GurobiJniAccess {
     }
 
 
-    static String get(long model, GRB.StringAttr attr) throws GRBException {
+    final static String get(long model, GRB.StringAttr attr) throws GRBException {
         if(model == 0L) {
             throw new GRBException("Model not loaded", 20003);
         } else {
@@ -139,7 +118,7 @@ public class GurobiJniAccess {
     }
 
 
-    static void set(long model, GRB.IntAttr attr, int newvalue)
+    final static void set(long model, GRB.IntAttr attr, int newvalue)
             throws GRBException
     {
         if (model == 0L) {
@@ -155,7 +134,7 @@ public class GurobiJniAccess {
     }
 
 
-    static void set(long model, GRB.DoubleAttr attr, double newvalue) throws GRBException {
+    final static void set(long model, GRB.DoubleAttr attr, double newvalue) throws GRBException {
         if(model == 0L) {
             throw new GRBException("Model not loaded", 20003);
         } else {
@@ -169,7 +148,7 @@ public class GurobiJniAccess {
     }
 
 
-    static void set(long model, GRB.StringAttr attr, String newvalue) throws GRBException {
+    final static void set(long model, GRB.StringAttr attr, String newvalue) throws GRBException {
         if(model == 0L) {
             throw new GRBException("Model not loaded", 20003);
         } else {
@@ -181,9 +160,5 @@ public class GurobiJniAccess {
             }
         }
     }
-
-    /*
-     Outdated, but working.
-     */
 
 }

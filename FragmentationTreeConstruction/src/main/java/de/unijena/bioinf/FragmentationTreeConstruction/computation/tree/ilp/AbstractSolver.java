@@ -8,6 +8,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,6 +22,9 @@ abstract public class AbstractSolver {
     protected boolean built;
 
     protected final FGraph graph;
+    protected List<Loss> losses;
+    protected final int[] edgeIds; // contains variable indices (after 'computeoffsets')
+    protected final int[] offsets; // contains: the first index j of edges starting from a given vertex i
 
     protected final ProcessedInput input;
     protected final TreeBuilder feasibleSolver;
@@ -46,13 +50,17 @@ abstract public class AbstractSolver {
 
     protected AbstractSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit)
     {
+        if (graph == null) throw new NullPointerException("Cannot solve graph: graph is NULL!");
+
         this.graph = graph;
+        this.edgeIds = new int[graph.numberOfEdges()];
+        this.offsets = new int[graph.numberOfVertices()];
+
         this.lowerbound = lowerbound;
+        this.timelimit = (timeLimit >= 0) ? timeLimit : 0;
 
         this.input = input;
         this.feasibleSolver = feasibleSolver;
-
-        this.timelimit = (timeLimit >= 0) ? timeLimit : 0;
 
         this.built = false;
     }
@@ -68,17 +76,17 @@ abstract public class AbstractSolver {
      */
     public void build() {
         try {
-            defineVariables();
+            computeOffsets();
+
             if (feasibleSolver != null) {
                 final FTree presolvedTree = feasibleSolver.buildTree(input, graph, lowerbound);
-                setStartValues(presolvedTree);
+                defineVariablesWithStartValues(presolvedTree);
+            } else {
+                defineVariables();
             }
 
-            computeOffsets();
-            setVariablesWithOffset();
-
             setConstraints();
-            setLowerbound();
+            applyLowerBounds();
             built = true;
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
@@ -125,11 +133,8 @@ abstract public class AbstractSolver {
 
     // functions used within 'build'
     abstract protected void defineVariables() throws Exception;
-    abstract protected void setStartValues(FTree presolvedTree) throws Exception;
-    abstract protected void computeOffsets() throws Exception;
-    abstract protected void setLowerbound() throws Exception;
-
-    abstract protected void setVariablesWithOffset() throws Exception;
+    abstract protected void defineVariablesWithStartValues( FTree presolvedTree) throws Exception;
+    abstract protected void applyLowerBounds() throws Exception;
 
     // functions used within 'setConstrains'
     abstract protected void setTreeConstraint() throws Exception;
@@ -142,9 +147,43 @@ abstract public class AbstractSolver {
     abstract protected FTree buildSolution() throws Exception;
 
 
+
     ///////////////////////////
     ///--- CLASS-METHODS ---///
     ///////////////////////////
+
+
+
+    /**
+     * for each constraint i in array 'offsets': offsets[i] is the first index, where the constraint i is located
+     * (inside 'var' and 'coefs')
+     * Additionally, a new loss array will be computed
+     */
+    final void computeOffsets() {
+
+        for (int k = 1; k < offsets.length; ++k)
+            offsets[k] = offsets[k - 1] + graph.getFragmentAt(k - 1).getOutDegree();
+
+        /*
+         * for each edge: give it some unique id based on its source vertex id and its offset
+         * therefor, the i-th edge of some vertex u will have the id: offsets[u] + i - 1, if i=1 is the first edge.
+         * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
+          */
+        ArrayList<Loss> newLossArr = new ArrayList<Loss>(this.losses.size()+1);
+
+        for (int k = 0; k < losses.size(); ++k) {
+            final int u = losses.get(k).getSource().getVertexId();
+            edgeIds[offsets[u]++] = k;
+            newLossArr.set(offsets[u]-1, losses.get(k)); // TODO: check, if that is necessary!
+        }
+
+        this.losses = newLossArr;
+
+        // by using the loop-code above -> offsets[k] = 2*OutEdgesOf(k), so subtract that 2 away
+        for (int k = 0; k < offsets.length; ++k)
+            offsets[k] -= graph.getFragmentAt(k).getOutDegree();
+        //TODO: optimize: offsets[k] /= 2;
+    }
 
     protected static FTree newTree(FGraph graph, FTree tree, double rootScore) {
         return newTree(graph, tree, rootScore, rootScore);
