@@ -18,7 +18,10 @@ public class FineStructureMerger {
     }
 
     private static final double step(double x, double[] xs, double[] ints, double sigma) {
-        return f1(x, xs, ints, sigma) / f2(x, xs, ints, sigma);
+        final double y1 = f1(x, xs, ints, sigma);
+        final double y2 = f2(x, xs, ints, sigma);
+        if (y1==0 && y2==0) return 0d;
+        else return y1/y2;
     }
 
     private static final double f0(double x, double[] xs, double[] ints, double sigma) {

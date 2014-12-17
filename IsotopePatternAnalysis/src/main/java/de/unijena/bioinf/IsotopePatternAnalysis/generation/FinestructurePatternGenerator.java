@@ -36,8 +36,8 @@ public class FinestructurePatternGenerator extends IsotopePatternGenerator {
     public SimpleSpectrum simulatePattern(MolecularFormula formula, Ionization ionization) {
         final FineStructureMerger merger = new FineStructureMerger(resolution);
         //final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iteratorSumingUpTo(formula, ionization, 0.999d), ionization.addToMass(formula.getMass()));
-        final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iterator(formula, ionization), ionization.addToMass(formula.getMass()));
-        //final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iteratorWithIntensityThreshold(formula, ionization, 0.0001), ionization.addToMass(formula.getMass()));
+        //final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iterator(formula, ionization), ionization.addToMass(formula.getMass()));
+        final SimpleSpectrum spectrum = merger.merge(new FinestructureGenerator(distribution, mode, cache).iteratorWithIntensityThreshold(formula, ionization, 0.00001), ionization.addToMass(formula.getMass()));
         // cut spectrum to allow only maxNumber peaks
         if (spectrum.size() <= maximalNumberOfPeaks) return Spectrums.getNormalizedSpectrum(spectrum, mode);
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(spectrum);

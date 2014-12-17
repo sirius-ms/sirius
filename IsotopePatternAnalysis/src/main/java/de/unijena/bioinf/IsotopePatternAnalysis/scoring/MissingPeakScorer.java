@@ -3,6 +3,7 @@ package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import org.apache.commons.math3.special.Erf;
 
 public class MissingPeakScorer implements IsotopePatternScorer {
 
@@ -34,10 +35,11 @@ public class MissingPeakScorer implements IsotopePatternScorer {
             theoretical = theoreticalSpectrum;
         }
         double score = 0;
+        final double standardDeviation = 0.04;
         for (int i=measured.size(); i < theoretical.size(); ++i) {
             final double diff = theoretical.getIntensityAt(i);
-            //score += Erf.erf(diff/(sqrt2*standardDeviation));
-            score -=  lambda*theoretical.getIntensityAt(i);
+            score += Math.log(Erf.erfc(diff / (sqrt2 * standardDeviation)));
+            //score -=  lambda*theoretical.getIntensityAt(i);
         }
         return score;
     }
