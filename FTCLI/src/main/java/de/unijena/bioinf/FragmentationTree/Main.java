@@ -625,7 +625,7 @@ public class Main {
                             printResult(correctTree);
                         } else {
                             System.out.println("correct tree not found. Please increase allowed mass deviation.");
-                            if (options.getWrongPositive()) continue eachFile;
+                            if (options.getWrongPositive() || options.getTrees()==0) continue eachFile;
                         }
                     }
                 }
