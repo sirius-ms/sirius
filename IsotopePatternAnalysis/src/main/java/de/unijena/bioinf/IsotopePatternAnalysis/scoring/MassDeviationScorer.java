@@ -29,7 +29,8 @@ public class MassDeviationScorer implements IsotopePatternScorer {
 
     @Override
     public double score(Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, MsExperiment experiment) {
-        if (measured.size() > theoretical.size()) throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
+        if (measured.size() > theoretical.size())
+            throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
         // remove peaks from theoretical pattern until the length of both spectra is equal
         final MutableSpectrum<Peak> theoreticalSpectrum = new SimpleMutableSpectrum(theoretical);
         while (measured.size() < theoreticalSpectrum.size()) {

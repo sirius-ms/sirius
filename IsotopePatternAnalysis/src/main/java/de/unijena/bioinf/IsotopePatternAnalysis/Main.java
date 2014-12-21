@@ -23,13 +23,15 @@ public class Main {
     public static void main(String[] args) {
         try {
 
-            MolecularFormula f = MolecularFormula.parse("C37H67NO13");
+            MolecularFormula f = MolecularFormula.parse("C37H55N5O8S");
             Ionization ion = PeriodicTable.getInstance().ionByName("[M+H]+");
             final FinestructurePatternGenerator gen = new FinestructurePatternGenerator();
-            gen.setResolution(7500);
+            gen.setResolution(1000);
             gen.setMaximalNumberOfPeaks(4);
             System.out.println(gen.simulatePattern(f, ion));
             System.exit(0);
+
+
             test();
         } catch (IOException e) {
             e.printStackTrace();
@@ -38,7 +40,7 @@ public class Main {
     }
 
     public static void test() throws IOException {
-        final File f = new File("D:/daten/arbeit/sessions/iso/ms1IsotopePatterns.txt");
+        final File f = new File("/home/kaidu/data/ms/saarbruecken/spectra.txt");
         final BufferedReader r = new BufferedReader(new FileReader(f));
         String line = null;
         final List<MolecularFormula> formulas = new ArrayList<MolecularFormula>();
@@ -62,7 +64,7 @@ public class Main {
         final FinestructurePatternGenerator gen2 = new FinestructurePatternGenerator();
         gen2.setMaximalNumberOfPeaks(8);
         gen2.setMinimalProbabilityThreshold(1e-8);
-        gen2.setResolution(7500);
+        gen2.setResolution(1000);
         final Ionization hplus = PeriodicTable.getInstance().ionByName("[M+H]+");
 
         double[] avg1sum = new double[3];
