@@ -328,8 +328,12 @@ public class FTLearn {
                         int k = 0;
                         final Iterator<Loss> iter = tree.lossIterator();
                         final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-                        while (iter.hasNext())
+                        while (iter.hasNext()) {
                             losses[k++] = new PredictedLoss(ano, iter.next(), tree.getAnnotationOrThrow(Ionization.class));
+                            if (losses[k-1].fragmentFormula==null) {
+                                System.err.println("????");
+                            }
+                        }
                         currentCompound.losses = losses;
                     }
 
@@ -962,10 +966,17 @@ public class FTLearn {
                 for (Compound c : db.compounds) if (c.formula.getMass() > 100) formulas.add(c.formula);
             } else {
                 formulas.ensureCapacity(db.compounds.size() * 10);
-                for (Compound c : db.compounds)
-                    for (PredictedLoss l : c.losses)
-                        if (l.fragmentFormula.getMass() > 100)
+                for (Compound c : db.compounds) {
+                    for (PredictedLoss l : c.losses) {
+                        if (l==null)
+                            System.err.println("??");
+                        if (l.fragmentFormula==null)
+                            System.err.println("??");
+                        if (l.fragmentFormula.getMass() > 100) {
                             formulas.add(l.fragmentFormula);
+                        }
+                    }
+                }
             }
         }
 

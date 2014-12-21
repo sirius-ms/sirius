@@ -559,14 +559,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             if (!parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
                 if (processedPeaks.get(i).getMz() < parentmass) {
                     // parent peak is not contained. Create a synthetic one
-                    final ProcessedPeak syntheticParent = new ProcessedPeak();
-                    syntheticParent.setIon(experiment.getIonization());
-                    syntheticParent.setMz(parentmass);
-                    syntheticParent.setOriginalMz(parentmass);
-                    processedPeaks.add(syntheticParent);
+                    addSyntheticParent(experiment, processedPeaks, parentmass);
                     break;
                 } else processedPeaks.remove(i);
             } else break;
+        }
+        if (processedPeaks.isEmpty()) {
+            addSyntheticParent(experiment, processedPeaks, parentmass);
         }
         assert parentDeviation.inErrorWindow(parentmass, processedPeaks.get(processedPeaks.size() - 1).getMz()) : "heaviest peak is parent peak";
         // the heaviest fragment that is possible is M - H
@@ -580,6 +579,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             processedPeaks.remove(processedPeaks.size() - 1);
         }
         return parentPeak;
+    }
+
+    private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
+        final ProcessedPeak syntheticParent = new ProcessedPeak();
+        syntheticParent.setIon(experiment.getIonization());
+        syntheticParent.setMz(parentmass);
+        syntheticParent.setOriginalMz(parentmass);
+        processedPeaks.add(syntheticParent);
     }
 
     ProcessedInput decomposeAndScore(Ms2Experiment experiment, Ms2Experiment originalExperiment, List<ProcessedPeak> processedPeaks) {
