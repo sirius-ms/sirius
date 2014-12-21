@@ -273,6 +273,9 @@ public class FTLearn {
             for (String ales : CommonLossEdgeScorer.ales_list) {
                 cl.addCommonLoss(MolecularFormula.parse(ales), 2d);
             }
+            for (String ales : CommonLossEdgeScorer.literature_list) {
+                cl.addCommonLoss(MolecularFormula.parse(ales), 2d);
+            }
             cl.addImplausibleLosses(Math.log(0.01));
             analyzer.getPeakPairScorers().add(new RelativeLossSizeScorer());
             analyzer.getLossScorers().add(cl);
@@ -756,7 +759,7 @@ public class FTLearn {
                 score += newLossSizeScorer.score(commonLoss);
                 score -= commonNorm;
                 if (score < 0) {
-                    commonLosses.put(commonLoss, -newLossSizeScorer.score(commonLoss) - 0.5*commonNorm);
+                    commonLosses.put(commonLoss, -newLossSizeScorer.score(commonLoss) - 0.25*commonNorm);
                 }
             }
         }
