@@ -25,6 +25,16 @@ public class CommonLossEdgeScorer implements LossScorer {
             "H3PO3", "H3PO4", "HPO3", "C2H5O4P",
             "H2S", "S", "SO2", "SO3", "H2SO4"
     };
+
+    /**
+     * list from literature collected by Ma et al in
+     MS2Analyzer: A Software for Small Molecule Substructure Annotations from Accurate Tandem Mass Spectra
+     Anal Chem, 2014
+     */
+    public final static String[] literature_list = new String[]{
+            "H2", "CH3", "NH2", "OH", "NH3", "H2O", "HCN", "CO", "NO", "CH2O", "CH3O", "CH5N", "CH4O", "H2S", "HCl", "C2H2O", "C3H6", "CHNO", "C3H7", "CO2", "CHO2", "CH3NO", "C2H7N", "NO2", "CH2O2", "CH4S", "H2NO2", "H3PO4", "CH3Cl", "C2HNO", "C2O2", "C2HO2", "C2H3NO", "CNO2", "C2H2O2", "C3H9N", "C2H4O2", "CH3NO2", "CH4OS", "CF3", "C3H5NO", "C2O3", "CNO3", "C3H6S", "C6H5", "CH3N2Cl", "C6H6", "SO3", "HPO3", "HSO3", "H2SO3","CN2O3", "C3H6O3", "H3PO4", "C3O4", "C5H10O2", "CN2O4", "C3H7NOS", "C7H8O", "C6H5S", "C4O4", "CN2O5", "C4H8O4", "C3H7NO2S", "HI", "C5H7NO3", "C6H10O3", "C5H8O4", "C2H8O4NP", "C6H10O4", "C5H10N2O3", "C3H7O5P", "C9H16O2", "C6H11NO4", "C6H10O5", "C5H9NO3S", "C3H9O6P", "C6H8O6", "C5H10N2O3S", "C6H13NO5", "C3H8NO6P", "C3H12NO6P", "C6H10O7", "C8H13NO5", "C8H15NO6", "C9H12O8", "C8H14N2O5S", "C6H13O9P", "C6H13O9S", "C9H14O9", "C10H15N3O6", "C10H17N3O6", "C6H16NO9P", "C10H17N3O6S", "C12H23NO10"
+    };
+
     private final static String[] implausibleLosses = new String[]{"C2O", "C4O", "C3H2", "C5H2", "C7H2", "N", "C"};
     private final TObjectDoubleHashMap<MolecularFormula> commonLosses;
     private TObjectDoubleHashMap<MolecularFormula> recombinatedList;

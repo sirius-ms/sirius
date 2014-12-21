@@ -80,6 +80,8 @@ public class FTLearn {
     private double oldProgress;
     private boolean inConsole = System.console() != null;
 
+    private static boolean KEEP_LITERATURE_LOSS_LIST = true;
+
     public FTLearn(FragmentationPatternAnalysis initialAnalyzer, LearnOptions options) {
         this.analyzer = initialAnalyzer;
         this.databases = new ArrayList<Database>();
@@ -721,7 +723,7 @@ public class FTLearn {
         }
 
         /*
-       MANUALLY CORRECT H and H2
+       MANUALLY CORRECT H and H2 as well as all common losses from literature
         */
         for (String s : Arrays.asList("H", "H2")) {
             final MolecularFormula f = MolecularFormula.parse(s);
@@ -733,7 +735,6 @@ public class FTLearn {
             }
         }
 
-
         final Map<MolecularFormula, Double> oldScorer = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, analyzer.getLossScorers()).getCommonLosses();
 
         removeScorer(analyzer.getLossScorers(), CommonLossEdgeScorer.class);
@@ -743,6 +744,22 @@ public class FTLearn {
         final CommonLossEdgeScorer newCommonLossEdgeScorer = new CommonLossEdgeScorer(commonLosses, recombinator, 0d).addImplausibleLosses(Math.log(0.01d));
         analyzer.getLossScorers().add(newCommonLossEdgeScorer);
         double commonNorm = learnCommonLossesNormalization(newCommonLossEdgeScorer);
+
+        if (KEEP_LITERATURE_LOSS_LIST) {
+            final HashSet<MolecularFormula> specialFormulas = new HashSet<MolecularFormula>();
+            specialFormulas.add(MolecularFormula.parse("H")); specialFormulas.add(MolecularFormula.parse("H2"));
+            for (String s : CommonLossEdgeScorer.ales_list) specialFormulas.add(MolecularFormula.parse(s));
+            for (String s : CommonLossEdgeScorer.literature_list) specialFormulas.add(MolecularFormula.parse(s));
+            for (MolecularFormula commonLoss : specialFormulas) {
+                Double score = commonLosses.get(commonLoss);
+                if (score == null) score = 0d;
+                score += newLossSizeScorer.score(commonLoss);
+                score -= commonNorm;
+                if (score < 0) {
+                    commonLosses.put(commonLoss, -newLossSizeScorer.score(commonLoss) - 0.5*commonNorm);
+                }
+            }
+        }
 
         println("Estimate distribution: " + resultingDist);
         println("Learned common losses (corrected scores): [");
