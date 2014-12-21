@@ -410,12 +410,12 @@ public class FTLearn {
             if (!options.isSkipPosteriori()) {
                 fitIntensityDistribution(noiseIntensities.toArray(), db.noiseCutoff);
             }
-            ///////////////////////////////////////
-            // learn chemical priors
-            ///////////////////////////////////////
-            learnChemicalPrior(false);
         }
         println("Computed trees: " + computedTrees + " of " + numberOfExperiments);
+        ///////////////////////////////////////
+        // learn chemical priors
+        ///////////////////////////////////////
+        learnChemicalPrior(false);
         ///////////////////////////////////////
         // get common losses
         ///////////////////////////////////////
@@ -1138,6 +1138,7 @@ public class FTLearn {
                     final Ms2Experiment exp = in.getExperiment();
                     if (exp.getMolecularFormula() == null) return;
                     final ProcessedInput input = new Analyzer(analyzer).preprocess(exp);
+                    if (input.getMergedPeaks().size() < 5) return;
                     lock.lock();
                     db.compounds.add(new Compound(input.getExperimentInformation().getMolecularFormula(), in.getFileName()));
                     lock.unlock();
@@ -1359,8 +1360,8 @@ public class FTLearn {
     private void fitMassDevLimit(ArrayList<XYZ> values) {
         // sort values by their mass
         Collections.sort(values);
-        Deviation allowedDev = new Deviation(20, 0.02);
-        Deviation bestDist = new Deviation(10, 0.01);
+        Deviation allowedDev = new Deviation(12, 0.0025);
+        Deviation bestDist = new Deviation(10, 0.001);
         final int maxMass = (int) values.get(values.size() - 1).x;
         double areaUnderTheCurve = areaUnderTheCurve(allowedDev, maxMass);
         final int[] limits = new int[]{100, 150, 200, 250, 300, 1000};
