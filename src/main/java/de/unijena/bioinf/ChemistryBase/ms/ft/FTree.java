@@ -148,7 +148,7 @@ public class FTree extends AbstractFragmentationGraph {
 
     @Override
     public int numberOfEdges() {
-        return fragments.size();
+        return fragments.size()-1;
     }
 
     @Override
