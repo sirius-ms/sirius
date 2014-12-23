@@ -7,7 +7,11 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import junit.framework.TestCase;
 import org.junit.Test;
 
+import java.util.Random;
+
 public class SpectrumTest extends TestCase {
+
+	final static long seed = 1077;
 
 	@Test
 	public void testSort() {
@@ -22,15 +26,50 @@ public class SpectrumTest extends TestCase {
 				assertTrue(p.mass>last.mass);
 			}
 		}
-		
-		SimpleSpectrum sp = new SimpleSpectrum(new double[]{5,3,1,2,8,4,11,2,10,1}, new double[]{2,3,4,5,2,1,1,2,1,3});
-		assertTrue(sp instanceof OrderedSpectrum);
-		last = null;
-		for (Peak p : sp) {
-			if (last != null) {
-				assertTrue(p.mass>last.mass);
+		// test small spectrum
+		{
+			SimpleSpectrum sp = new SimpleSpectrum(new double[]{5, 3, 1, 2, 8, 4, 11, 2, 10, 1}, new double[]{2, 3, 4, 5, 2, 1, 1, 2, 1, 3});
+			assertTrue(sp instanceof OrderedSpectrum);
+			last = null;
+			for (Peak p : sp) {
+				if (last != null) {
+					assertTrue(p.mass > last.mass);
+				}
 			}
 		}
+		// test large spectrum
+		{
+			final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
+			final Random r = new Random(seed);
+			for (int i=0; i < 5000; ++i) {
+				spec.addPeak(Math.abs(r.nextDouble()), Math.abs(r.nextDouble()));
+			}
+			Spectrums.sortSpectrumByMass(spec);
+			boolean isSorted = true;
+			for (int i=1; i < spec.size(); ++i) {
+				if (spec.getMzAt(i) < spec.getMzAt(i-1)) isSorted = false;
+			}
+			assertTrue("spectrum should be sorted", isSorted);
+		}
+
+		// test large spectrum with a lot of zeros
+		{
+			final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
+			final Random r = new Random(seed);
+			for (int i=0; i < 5000; ++i) {
+				spec.addPeak(0, Math.abs(r.nextDouble()));
+			}
+			for (int i=0; i <= 50; ++i) {
+				spec.setMzAt(r.nextInt(spec.size()), Math.abs(r.nextDouble()));
+			}
+			Spectrums.sortSpectrumByMass(spec);
+			boolean isSorted = true;
+			for (int i=1; i < spec.size(); ++i) {
+				if (spec.getMzAt(i) < spec.getMzAt(i-1)) isSorted = false;
+			}
+			assertTrue("spectrum should be sorted", isSorted);
+		}
+
 	}
 	
 	@Test

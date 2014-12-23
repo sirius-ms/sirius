@@ -7,7 +7,6 @@ import gnu.trove.list.array.TDoubleArrayList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 
 public class Spectrums {
 
@@ -512,10 +511,12 @@ public class Spectrums {
             for (; i < n; ++i) {
                 if (comp.compare(spectrum, spectrum, i, i - 1) < 0) break;
             }
-            if (i < n) __quickSort__(spectrum, comp, 0, n - 1);
+            if (i < n) __quickSort__(spectrum, comp, 0, n - 1, 0);
         }
+
     }
 
+    private static final short[] ALMOST_RANDOM = new short[]{9205, 23823, 4568, 17548, 15556, 31788, 3, 580, 17648, 22647, 17439, 24971, 10767, 9388, 6174, 21774, 4527, 19015, 22379, 12727, 23433, 11160, 15808, 27189, 17833, 7758, 32619, 12980, 31234, 31103, 5140, 571, 4439};
     /**
      * http://en.wikipedia.org/wiki/Quicksort#In-place_version
      *
@@ -523,26 +524,55 @@ public class Spectrums {
      * @param high
      */
     private static <T extends Peak, S extends MutableSpectrum<T>>
-    void __quickSort__(S s, PeakComparator<T, S> comp, int low, int high) {
+    void __quickSort__(S s, PeakComparator<T, S> comp, int low, int high, int depth) {
         int n = high - low + 1;
-        if (n >= 20) {
+        if (n >= 20 && depth <= 32) {
             if (low < high) {
-                int pivot = RANDOM.nextInt(high - low) + low;
+                int pivot=ALMOST_RANDOM[depth]%n + low;
                 pivot = __partition__(s, comp, low, high, pivot);
-                __quickSort__(s, comp, low, pivot - 1);
-                __quickSort__(s, comp, pivot + 1, high);
+                __quickSort__(s, comp, low, pivot - 1, depth+1);
+                __quickSort__(s, comp, pivot + 1, high, depth+1);
             }
-        } else if (n > 0) {
+        } else if (n < 40) {
             for (int i = low; i <= high; i++) {
                 for (int j = i; j > low && comp.compare(s, s, j, j - 1) < 0; j--) {
                     s.swap(j, j - 1);
                 }
             }
             return;
-        }
+        } else heap_sort(s, comp, low, n);
     }
 
-    private static Random RANDOM = new Random();
+    private static <T extends Peak, S extends MutableSpectrum<T>> void heap_sort(S s, PeakComparator<T, S> comp, int offset, int length) {
+        heap_build(s, comp, offset, length);
+        int n = length;
+        while (n > 1) {
+            s.swap(offset, offset + n - 1);
+            heap_heapify(s, comp, offset, --n, 0);
+        }
+
+    }
+
+    private static <T extends Peak, S extends MutableSpectrum<T>> void heap_heapify(S s, PeakComparator<T, S> comp, int offset, int length, int i) {
+        do {
+            int max = i;
+            final int right_i = 2*i + 2;
+            final int left_i = right_i-1;
+            if (left_i < length && comp.compare(s, s, offset + left_i, offset + max) > 0)
+                max = left_i;
+            if (right_i < length && comp.compare(s, s, offset + right_i, offset + max) > 0)
+                max = right_i;
+            if (max == i)
+                break;
+            s.swap(offset + i, offset + max);
+            i = max;
+        } while(true);
+    }
+    private static <T extends Peak, S extends MutableSpectrum<T>> void heap_build(S s, PeakComparator<T, S> comp, int offset, int length) {
+        if (length==0) return;
+        for (int i = (length>>1)-1; i>=0; --i)
+            heap_heapify(s, comp, offset, length, i);
+    }
 
     /**
      * http://en.wikipedia.org/wiki/Quicksort#In-place_version
