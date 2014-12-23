@@ -330,9 +330,6 @@ public class FTLearn {
                         final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
                         while (iter.hasNext()) {
                             losses[k++] = new PredictedLoss(ano, iter.next(), tree.getAnnotationOrThrow(Ionization.class));
-                            if (losses[k-1].fragmentFormula==null) {
-                                System.err.println("????");
-                            }
                         }
                         currentCompound.losses = losses;
                     }

@@ -5,10 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Kai Dührkop
@@ -28,6 +25,7 @@ public class Ms2SpectrumImpl implements Ms2Spectrum<MS2Peak> {
         for (Peak p : s) {
             peaks.add(new MS2Peak(this, p.getMass(), p.getIntensity()));
         }
+        Collections.sort(peaks);
         this.totalIonCount = totalIonCount;
     }
 
@@ -36,6 +34,10 @@ public class Ms2SpectrumImpl implements Ms2Spectrum<MS2Peak> {
         this.parentMass = parentMass;
         this.peaks = new ArrayList<MS2Peak>();
         this.totalIonCount = Double.NaN;
+    }
+
+    public Ms2SpectrumImpl(Ms2Spectrum<? extends Peak> spec) {
+        this((Spectrum<Peak>) spec, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount());
     }
 
     public static Comparator<Ms2SpectrumImpl> getEnergyComparator() {

@@ -154,8 +154,18 @@ public class Main {
         final FragmentAnnotation<ProcessedPeak> pp = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (Fragment f : tree.getFragmentsWithoutRoot()) treeIntensity += pp.get(f).getRelativeIntensity();
         final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
+        final PeakAnnotation<DecompositionList> decomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
+        final MolecularFormula parent = tree.getRoot().getFormula();
+        eachPeak:
         for (ProcessedPeak p : input.getMergedPeaks())
-            if (p != input.getParentPeak()) maxIntensity += p.getRelativeIntensity();
+            if (p != input.getParentPeak()) {
+                for (ScoredMolecularFormula f : decomp.get(p).getDecompositions()) {
+                    if (parent.isSubtractable(f.getFormula())) {
+                        maxIntensity += p.getRelativeIntensity();
+                        continue eachPeak;
+                    }
+                }
+            }
         return treeIntensity / maxIntensity;
     }
 

@@ -737,6 +737,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 return newPeak;
             }
         });
+        {
+            // DEBUGGING
+            Collections.sort(mergedPeaks);
+        }
         return mergedPeaks;
     }
 
