@@ -982,10 +982,6 @@ public class FTLearn {
                 formulas.ensureCapacity(db.compounds.size() * 10);
                 for (Compound c : db.compounds) {
                     for (PredictedLoss l : c.losses) {
-                        if (l==null)
-                            System.err.println("??");
-                        if (l.fragmentFormula==null)
-                            System.err.println("??");
                         if (l.fragmentFormula.getMass() > 100) {
                             formulas.add(l.fragmentFormula);
                         }
