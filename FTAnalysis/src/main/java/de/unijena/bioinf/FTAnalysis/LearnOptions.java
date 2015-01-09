@@ -35,8 +35,11 @@ public interface LearnOptions {
     @Option(shortName = "l", defaultToNull = true, description = "limit number of peaks to the n-th most intensive peaks. This makes computation much faster")
     public Integer getPeakLimit();
 
-    @Option(shortName = "P", description = "if set, posteriori parameters (mass deviation and noise distribution) are not learned from data")
+    @Option(shortName = "P", longName = "skipAllPosteriori", description = "if set, posteriori parameters (mass deviation and noise distribution) are not learned from data")
     public boolean isSkipPosteriori();
+
+    @Option(shortName = "S", defaultValue = "BOTH", description = "which posteriori methods should be used: MASSDEV, NOISE, BOTH or NONE")
+    public PosteriorMethod getPosteriori();
 
     @Option(shortName = "L", description = "common loss analysis. Available options: SKIP (analysis), " +
             "REPLACE (previous common losses), ADD (losses to previous common losses), " +
@@ -53,6 +56,9 @@ public interface LearnOptions {
 
     @Option(shortName = "X", description = "start with expert loss annotations and old sirius 2 loss size distribution instead of using the scorers given in the profile")
     public boolean isStartWithExpertLosses();
+
+    @Option(shortName = "x", description = "like -X but expert losses are kept as common losses")
+    public boolean isKeepExpertLosses();
 
     @Option
     public boolean isExponentialDistribution();

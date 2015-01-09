@@ -62,6 +62,8 @@ public class FTLearn {
 
     public static final String USAGE = "learn -i <iterations> --trees -t <outdir> <directoryWithFiles>";
 
+    private static boolean DEBUGMODE = true;
+
     public final static String VERSION_STRING = "ModelparameterEstimation " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
     private final static String[] endings = new String[]{"st", "nd", "rd"};
     private final List<Database> databases;
@@ -80,11 +82,12 @@ public class FTLearn {
     private double oldProgress;
     private boolean inConsole = System.console() != null;
 
-    private static boolean KEEP_LITERATURE_LOSS_LIST = true;
+    private boolean KEEP_LITERATURE_LOSS_LIST;
 
     public FTLearn(FragmentationPatternAnalysis initialAnalyzer, LearnOptions options) {
         this.analyzer = initialAnalyzer;
         this.databases = new ArrayList<Database>();
+        this.KEEP_LITERATURE_LOSS_LIST = options.isKeepExpertLosses();
 
         getScorer(analyzer.getDecompositionScorers(), CommonFragmentsScore.class).setRecombinator(new CommonFragmentsScore.LossCombinator(-1d,
                 getScorer(analyzer.getLossScorers(), CommonLossEdgeScorer.class), getLossSizeScorer()));
@@ -258,14 +261,16 @@ public class FTLearn {
             error("Error while writing profile", e);
         }
     }
+    private File currentRootDir;
 
     private boolean iterativeLearningStep(int step) {
         int numberOfExperiments = 0;
         int computedTrees = 0;
         final File rootdir = new File(options.getTarget(), String.valueOf(step + 1));
         rootdir.mkdir();
+        currentRootDir= rootdir;
         LossSizeScorer originalLossSizeScorer = null;
-        if (step == 0 && options.isStartWithExpertLosses()) {
+        if (step == 0 && (options.isStartWithExpertLosses() || options.isKeepExpertLosses())) {
             originalLossSizeScorer = getScorer(analyzer.getPeakPairScorers(), LossSizeScorer.class);
             getAndRemoveScorer(analyzer.getLossScorers(), CommonLossEdgeScorer.class);
             getAndRemoveScorer(analyzer.getPeakPairScorers(), LossSizeScorer.class);
@@ -420,7 +425,7 @@ public class FTLearn {
         ///////////////////////////////////////
         // get common losses
         ///////////////////////////////////////
-        if (step == 0 && options.isStartWithExpertLosses()) {
+        if (step == 0 && (options.isStartWithExpertLosses() || options.isKeepExpertLosses())) {
             removeScorer(analyzer.getPeakPairScorers(), RelativeLossSizeScorer.class);
             analyzer.getPeakPairScorers().add(originalLossSizeScorer);
         }
@@ -729,12 +734,14 @@ public class FTLearn {
         /*
        MANUALLY CORRECT H and H2 as well as all common losses from literature
         */
+        final HashSet<MolecularFormula> syntheticallyAdded = new HashSet<MolecularFormula>();
         for (String s : Arrays.asList("H", "H2")) {
             final MolecularFormula f = MolecularFormula.parse(s);
             Double score = commonLosses.get(f);
             if (score == null) score = 0d;
             score += newLossSizeScorer.score(f);
             if (score < 0) {
+                syntheticallyAdded.add(f);
                 commonLosses.put(f, -newLossSizeScorer.score(f));
             }
         }
@@ -760,6 +767,7 @@ public class FTLearn {
                 score += newLossSizeScorer.score(commonLoss);
                 score -= commonNorm;
                 if (score < 0) {
+                    syntheticallyAdded.add(commonLoss);
                     commonLosses.put(commonLoss, -newLossSizeScorer.score(commonLoss) - 0.25*commonNorm);
                 }
             }
@@ -777,6 +785,7 @@ public class FTLearn {
         for (MolecularFormula commonLoss : formulas) {
             final XY orig = originalOne.get(commonLoss);
             final int orign = orig == null ? 0 : (int) orig.x;
+            if (syntheticallyAdded.contains(commonLoss)) continue;
             print(commonLoss + " (" + (newLossSizeScorer.score(commonLoss) + commonLosses.get(commonLoss)) + " | " + orign + ");  ");
         }
         println("\n] (" + commonLosses.size() + " common losses, normalization: " + commonNorm + ")");
@@ -784,7 +793,7 @@ public class FTLearn {
         System.out.print("New Common Losses: ");
         for (Map.Entry<MolecularFormula, Double> commonLoss : commonLosses.entrySet()) {
             if (commonLoss.getValue() < 0) continue;
-            if (!oldScorer.containsKey(commonLoss.getKey())) {
+            if (!syntheticallyAdded.contains(commonLoss.getKey()) && !oldScorer.containsKey(commonLoss.getKey())) {
                 System.out.print(commonLoss.getKey());
                 System.out.print("; ");
             }
@@ -802,6 +811,14 @@ public class FTLearn {
             }
         }
         System.out.println("");
+        System.out.println("Synthetically added losses: [");
+        for (MolecularFormula commonLoss : formulas) {
+            if (!syntheticallyAdded.contains(commonLoss)) continue;
+            final XY orig = originalOne.get(commonLoss);
+            final int orign = orig == null ? 0 : (int) orig.x;
+            print(commonLoss + " (" + (newLossSizeScorer.score(commonLoss) + commonLosses.get(commonLoss)) + " | " + orign + ");  ");
+        }
+        System.out.println("]");
 
     }
 
@@ -1279,11 +1296,29 @@ public class FTLearn {
         // 1. search for a good cutoff
         // 95% of the signal intensities should be above this cutoff
         Arrays.sort(signalIntensities);
-        final double cutoff = prettifyValueDown(Math.max(0.005, signalIntensities[(int) Math.floor(signalIntensities.length * 0.05)]), 0.005);
+        if (DEBUGMODE) {
+            if (currentRootDir==null) currentRootDir = options.getTarget();
+            printInts("signal", signalIntensities);
+            printInts("noise", noiseIntensities);
+        }
+        final double cutoff = prettifyValueDown(Math.max(0.001, signalIntensities[(int) Math.floor(signalIntensities.length * 0.05)]), 0.001);
         println("intensity cutoff: " + perc(cutoff));
         setIntensityCutoff(cutoff);
         // 2. estimate ParetoDistribution for intensities
         fitIntensityDistribution(noiseIntensities, cutoff);
+    }
+
+    private void printInts(String suffix, double[] signalIntensities) {
+        final File f = new File(currentRootDir, db.name + "_" + suffix + ".csv");
+        try {
+            final BufferedWriter w = new BufferedWriter(new FileWriter(f));
+            for (double d : signalIntensities) {
+                w.append(String.valueOf(d)).append('\n');
+            }
+            w.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void fitIntensityDistribution(double[] noiseIntensities, double cutoff) {
@@ -1306,10 +1341,14 @@ public class FTLearn {
         final ExponentialDistribution dist = ExponentialDistribution.fromMean(avg);
         println("intensity distribution: " + dist);
         println("average noise intensity: " + perc(avg));
-        this.noiseDistribution = dist;
-        removeScorer(analyzer.getFragmentPeakScorers(), PeakIsNoiseScorer.class);
-        analyzer.getFragmentPeakScorers().add(new PeakIsNoiseScorer(ExponentialDistribution.getMedianEstimator()));
-        analyzer.getDefaultProfile().setMedianNoiseIntensity(dist.getMedian());
+        if (options.getPosteriori()==PosteriorMethod.BOTH || options.getPosteriori()==PosteriorMethod.NOISE) {
+            this.noiseDistribution = dist;
+            removeScorer(analyzer.getFragmentPeakScorers(), PeakIsNoiseScorer.class);
+            analyzer.getFragmentPeakScorers().add(new PeakIsNoiseScorer(ExponentialDistribution.getMedianEstimator()));
+            analyzer.getDefaultProfile().setMedianNoiseIntensity(dist.getMedian());
+        } else {
+            println("But default values for intensitites are used in further analysis");
+        }
     }
 
     private void fitParetoNoiseDistribution(double[] noiseIntensities, double cutoff) {
@@ -1319,15 +1358,6 @@ public class FTLearn {
             for (double v : noiseIntensities) if (v >= cutoff) ys.add(v);
             intensities = ys.toArray();
         }
-        final ParetoDistribution dist = ParetoDistribution.learnFromData(cutoff, intensities);
-        println("intensity distribution: " + dist);
-
-        noiseDistribution = dist;
-        removeScorer(analyzer.getFragmentPeakScorers(), PeakIsNoiseScorer.class);
-        analyzer.getFragmentPeakScorers().add(new PeakIsNoiseScorer(ParetoDistribution.getMedianEstimator(cutoff)));
-        analyzer.getDefaultProfile().setMedianNoiseIntensity(dist.getMedian());
-        db.medianNoiseIntensity = dist.getMedian();
-        println("median noise intensity: " + perc(analyzer.getDefaultProfile().getMedianNoiseIntensity()));
         double avg = 0d;
         int count = 0;
         for (double y : intensities) {
@@ -1337,7 +1367,20 @@ public class FTLearn {
             }
         }
         avg /= count;
-        println("average noise intensity: " + perc(avg));
+        final ParetoDistribution dist = ParetoDistribution.learnFromData(cutoff, intensities);
+        println("intensity distribution: " + dist);
+        println("median noise intensity: " + dist.getMedian());
+        println("average noise intensity " + avg + " (distribution says: " + dist.getMean() + ")");
+
+        if (options.getPosteriori()==PosteriorMethod.BOTH || options.getPosteriori()==PosteriorMethod.NOISE) {
+            noiseDistribution = dist;
+            removeScorer(analyzer.getFragmentPeakScorers(), PeakIsNoiseScorer.class);
+            analyzer.getFragmentPeakScorers().add(new PeakIsNoiseScorer(ParetoDistribution.getMedianEstimator(cutoff)));
+            analyzer.getDefaultProfile().setMedianNoiseIntensity(dist.getMedian());
+            db.medianNoiseIntensity = dist.getMedian();
+        } else {
+            println("But use default values for further analysis");
+        }
     }
 
     public LossSizeScorer getLossSizeScorer() {
@@ -1431,13 +1474,16 @@ public class FTLearn {
         allowedDev = new Deviation(prettifyValueUp(allowedDev.getPpm(), 0.5), prettifyValueUp(allowedDev.getAbsolute(), 1e-4));
         bestDist = new Deviation(prettifyValueUp(bestDist.getPpm(), 0.1), prettifyValueUp(bestDist.getAbsolute(), 1e-5));
 
-        analyzer.getDefaultProfile().setAllowedMassDeviation(allowedDev);
-        analyzer.getDefaultProfile().setStandardMs2MassDeviation(bestDist);
-        println("learned mass deviation cutoff: " + analyzer.getDefaultProfile().getAllowedMassDeviation());
-        println("learned mass standard deviation: " + analyzer.getDefaultProfile().getStandardMs2MassDeviation());
-        db.standardMs2Deviation = bestDist;
-        db.allowedMassDeviation = allowedDev;
-
+        println("learned mass deviation cutoff: " + allowedDev);
+        println("learned mass standard deviation: " + bestDist);
+        if (options.getPosteriori()==PosteriorMethod.BOTH || options.getPosteriori()==PosteriorMethod.MASSDEV) {
+            analyzer.getDefaultProfile().setAllowedMassDeviation(allowedDev);
+            analyzer.getDefaultProfile().setStandardMs2MassDeviation(bestDist);
+            db.standardMs2Deviation = bestDist;
+            db.allowedMassDeviation = allowedDev;
+        } else {
+            println("For further tree computation default values for massdev are used instead of learned one");
+        }
     }
 
     private double areaUnderTheCurve(Deviation dev, int maxMass) {
