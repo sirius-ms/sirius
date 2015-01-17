@@ -11,6 +11,7 @@ public final class ParetoDistribution extends RealDistribution {
     private final double k, xmin, kdivxmin;
 
     public ParetoDistribution(@Parameter("k") double k, @Parameter("xmin") double xmin) {
+        if (k < 0) throw new IllegalArgumentException("Expect positive parameter k but " + k + " given");
         this.k = k;
         this.xmin = xmin;
         this.kdivxmin = k/xmin;
