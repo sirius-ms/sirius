@@ -6,21 +6,17 @@ import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
 
 
 public class DynamicBaselineFilter implements Preprocessor {
 
     private double standardDeviation = 0.05d;
-    private double threshold = 0.5d;
+    private double threshold = 0.25d;
 
 
     @Override
@@ -77,7 +73,7 @@ public class DynamicBaselineFilter implements Preprocessor {
                 }
             }
         }
-        System.out.println(counter + " (" + ((double)counter/spec.size()) + " %)");
+        //System.out.println(counter + " (" + ((double)counter/spec.size()) + " %)");
         return counter;
     }
 

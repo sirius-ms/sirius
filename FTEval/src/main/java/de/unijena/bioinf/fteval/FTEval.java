@@ -177,7 +177,7 @@ public class FTEval {
             try {
                 final BufferedReader reader = new BufferedReader(new FileReader(f));
                 try {
-                    final String line = reader.readLine().trim();
+                    final String line = inchi2d(reader.readLine().trim());
                     if (known.contains(line)) {
                         final String name = f.getName();
                         identical.add(name.substring(0, name.lastIndexOf('.')));
@@ -421,6 +421,7 @@ public class FTEval {
         return arguments;
     }
 
+    private final static Pattern Inchi2D = Pattern.compile("/[btmrs]");
     private static void tanimoto(String[] args) {
         // TODO: parameters
         final Interact I = Shell.withAlternative();
@@ -430,11 +431,14 @@ public class FTEval {
         if (evalDB.inchiDir().exists()) {
             I.sayln("parse inchi files");
             for (File inchi : evalDB.inchiFiles()) {
+                System.out.println(inchi.toString()); System.out.flush();
                 try {
                     final BufferedReader reader = new BufferedReader(new FileReader(inchi));
                     final String inchiStr = reader.readLine();
                     reader.close();
-                    chem.addInchi(inchi.getName(), inchiStr);
+                    // to 2D inchi
+                    final String inchiStr2d = inchi2d(inchiStr);
+                    chem.addInchi(inchi.getName(), inchiStr2d);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -498,6 +502,17 @@ public class FTEval {
                 System.err.println("Error while writing in '" + new File(dir, "tanimoto.csv") + "':\n" + e.getMessage());
             }
         }
+    }
+
+    private static String inchi2d(String inchiStr) {
+        final String inchiStr2d;
+        {
+            final Matcher m = Inchi2D.matcher(inchiStr);
+            if (m.find())
+                inchiStr2d = inchiStr.substring(0, m.start());
+            else inchiStr2d = inchiStr;
+        }
+        return inchiStr2d;
     }
 
     private static void printUsage() {
@@ -914,6 +929,7 @@ public class FTEval {
             if (s.charAt(0) != firstchar) break;
             ++splitpoint;
         }
+        System.out.println("Splitpoint at " + splitpoint);
 
 
         for (int i = 0; i < matrices.getLayerHeader().length; ++i) {
@@ -922,7 +938,7 @@ public class FTEval {
                 final ScoreTable sc = new ScoreTable(name, matrices.getLayer(i));
                 if (!opts.isNoFingerprint() && !name.equalsIgnoreCase("Pubchem") && !name.equalsIgnoreCase("MACCS") &&
                         !name.equalsIgnoreCase("Extended") && !name.equals("KlekotaRoth"))
-                    //sc.toFingerprints(opts.isSpearman())
+                    //sc.toFingerprints(opts.isSpearman());
                     sc.toFingerprints(splitpoint);
                 dataset.add(sc);
             }

@@ -4,7 +4,6 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -649,6 +648,15 @@ public class Main {
                 double origScore = origScorer == null ? 0d : origScorer.getTreeSizeScore();
 
                 final ArrayList<MolecularFormula> blacklist = new ArrayList<MolecularFormula>();
+                if (options.isIsotopeFilteringCheat()) {
+                    final int consider = input.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
+                    final int co20 = (int)Math.ceil(consider*0.2);
+                    for (ScoredMolecularFormula scf : input.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
+                        if (isoRankingMap.get(scf.getFormula()) > co20) {
+                            blacklist.add(scf.getFormula());
+                        }
+                    }
+                }
                 if (correctFormula != null) blacklist.add(correctFormula);
                 final int NumberOfTreesToCompute = (/*options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() :*/ options.getTrees());
                 final int TreesToConsider = options.getTrees();
@@ -902,13 +910,6 @@ public class Main {
     }
 
     private void measureMzDiff(FragmentationPatternAnalysis analyzer, MeasurementProfile profile, Ms2Experiment experiment) {
-
-
-        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02));
-        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02).getDensity(0.005));
-        System.out.println(ParetoDistribution.getMedianEstimator(0.005).extimateByMedian(0.02).getDensity(0.1));
-        System.exit(1);
-
         if (measureMZDIFFSTREAM == null) try {
             measureMZDIFFSTREAM = new PrintStream(new File("mzdiff.csv"));
             measureIsoSTREAM = new PrintStream(new File("intensity.csv"));

@@ -23,6 +23,12 @@ public interface LearnOptions {
     @Option(shortName = "i", defaultValue = "4", description = "number of iterations")
     public int getIterations();
 
+    @Option(defaultToNull = true)
+    public String getMedianNoiseIntensity();
+
+    @Option(defaultToNull = true)
+    public String getIntensityCutoff();
+
     @Option(shortName = "I", defaultValue = "3", description = "number of iterations for common loss detection and loss size distribution estimation")
     public int getLossSizeIterations();
 

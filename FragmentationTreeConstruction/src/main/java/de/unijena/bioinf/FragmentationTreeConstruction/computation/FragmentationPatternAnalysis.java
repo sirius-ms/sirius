@@ -105,7 +105,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final CommonLossEdgeScorer alesscorer = new CommonLossEdgeScorer();
         alesscorer.setRecombinator(new CommonLossEdgeScorer.LegacyOldSiriusRecombinator());
 
-        final double GAMMA = 1d;
+        final double GAMMA = 2d;
 
         for (String s : CommonLossEdgeScorer.ales_list) {
             alesscorer.addCommonLoss(MolecularFormula.parse(s), GAMMA);

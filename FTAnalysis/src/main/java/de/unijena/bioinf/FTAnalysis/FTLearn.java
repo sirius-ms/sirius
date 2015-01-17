@@ -49,6 +49,8 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Math.*;
 
@@ -62,7 +64,7 @@ public class FTLearn {
 
     public static final String USAGE = "learn -i <iterations> --trees -t <outdir> <directoryWithFiles>";
 
-    private static boolean DEBUGMODE = true;
+    private static boolean DEBUGMODE = false;
 
     public final static String VERSION_STRING = "ModelparameterEstimation " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
     private final static String[] endings = new String[]{"st", "nd", "rd"};
@@ -203,6 +205,7 @@ public class FTLearn {
             setAnalyzer(db);
             if (options.isSkipPosteriori()) collectInputData();
             else learnPosteriorParameters();
+            db.readOptions(options);
             learnChemicalPrior(true);
             compounds += db.compounds.size();
             files += db.data.size();
@@ -1540,6 +1543,15 @@ public class FTLearn {
                 return;
             }
         }
+        for (PeakScorer scorer : analyzer.getFragmentPeakScorers()) {
+            if (scorer instanceof PeakIsNoiseScorer) {
+                if (options.isExponentialDistribution()) {
+                    // does not matter
+                } else {
+                    ((PeakIsNoiseScorer)scorer).setDistribution(ParetoDistribution.getMedianEstimator(cutoff));
+                }
+            }
+        }
         analyzer.getPostProcessors().add(new NoiseThresholdFilter(cutoff));
     }
 
@@ -1579,6 +1591,32 @@ public class FTLearn {
             this.compounds = new ArrayList<Compound>();
             this.allowedMassDeviation = new Deviation(20);
             this.standardMs2Deviation = new Deviation(5);
+        }
+
+        private final static Pattern MEDNOISEINT = Pattern.compile("(\\w+)=(\\d+(?:\\.\\d+)?)");
+
+        void readOptions(LearnOptions opts) {
+            System.out.println("read options...");
+            if (opts.getMedianNoiseIntensity() != null) {
+                final Matcher m = MEDNOISEINT.matcher(opts.getMedianNoiseIntensity());
+                while (m.find()) {
+                    String dbName = m.group(1);
+                    if (dbName.toLowerCase().equals(name)) {
+                        System.out.println("Read median noise intensity from input: " + m.group(2));
+                        this.medianNoiseIntensity = Double.parseDouble(m.group(2));
+                    }
+                }
+            }
+            if (opts.getIntensityCutoff() != null) {
+                final Matcher m = MEDNOISEINT.matcher(opts.getIntensityCutoff());
+                while (m.find()) {
+                    String dbName = m.group(1);
+                    if (dbName.toLowerCase().equals(name)) {
+                        System.out.println("Read noise cutoff from input: " + m.group(2));
+                        this.noiseCutoff = Double.parseDouble(m.group(2));
+                    }
+                }
+            }
         }
     }
 
