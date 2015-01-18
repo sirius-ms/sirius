@@ -28,7 +28,10 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Noi
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
@@ -141,8 +144,39 @@ public class FTLearn {
         for (File f : dirs) {
             learner.addDatabase(f);
         }
-        learner.adjustLosses();
+        //learner.adjustLosses();
+        learner.addLiteratureLosses();
         //learner.iterativeLearning();
+    }
+
+    protected void addLiteratureLosses() {
+        setAnalyzer(databases.get(0));
+        final CommonLossEdgeScorer commonLossScorer = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, analyzer.getLossScorers());
+        final LossSizeScorer sizeScorer = FragmentationPatternAnalysis.getByClassName(LossSizeScorer.class, analyzer.getPeakPairScorers());
+        commonLossScorer.prepare(null);
+        final TObjectDoubleHashMap<MolecularFormula> newLosses = new TObjectDoubleHashMap<MolecularFormula>();
+        for (String s : CommonLossEdgeScorer.literature_list) {
+            final MolecularFormula f = MolecularFormula.parse(s);
+            final double size = sizeScorer.score(f);
+            final double com = commonLossScorer.score(f);
+            final double combined = size+com;
+            final double adj = combined*0.15;
+            if (combined < 0) {
+                System.out.println(s + " => " + combined + "\t" + adj );
+                final double newScore = -combined + adj;
+                newLosses.put(f, newScore);
+            }
+        }
+        newLosses.forEachEntry(new TObjectDoubleProcedure<MolecularFormula>() {
+            @Override
+            public boolean execute(MolecularFormula a, double b) {
+                commonLossScorer.addCommonLoss(a, b);
+                return true;
+            }
+        });
+        adjustLossDependendScorers();
+        writeProfile(new File("."), "adjustedScoring");
+
     }
 
     protected void adjustLosses() {
@@ -754,16 +788,9 @@ public class FTLearn {
             println("Added radicals: " + added.toString() + " with score " + x);
         }
 
-        final StrangeElementLossScorer strangeElement = getScorer(analyzer.getLossScorers(), StrangeElementLossScorer.class);
-        if (strangeElement != null) {
-            final ArrayList<MolecularFormula> added = new ArrayList<MolecularFormula>();
-            for (Map.Entry<MolecularFormula, Double> entry : commonLosses.getCommonLosses().entrySet()) {
-                if (entry.getValue() > 0 && strangeElement.addLoss(entry.getKey())) {
-                    added.add(entry.getKey());
-                }
-            }
-            println("Added to strange element scorer: " + added.toString());
-        }
+        final StrangeElementLossScorer strangeElement = new StrangeElementLossScorer(commonLosses);
+        removeScorer(analyzer.getLossScorers(), StrangeElementLossScorer.class);
+        analyzer.getLossScorers().add(strangeElement);
     }
 
     private void learnCommonLosses() {

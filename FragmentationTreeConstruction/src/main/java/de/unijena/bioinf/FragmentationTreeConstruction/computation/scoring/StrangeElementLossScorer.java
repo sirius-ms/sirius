@@ -38,7 +38,8 @@ public class StrangeElementLossScorer implements LossScorer {
         final Map<MolecularFormula, Double> map = scorer.getCommonLosses();
         this.lossList = new HashSet<MolecularFormula>(150);
         for (MolecularFormula f : map.keySet()) {
-            lossList.add(f);
+            if (!f.isCHNO())
+                lossList.add(f);
         }
         this.score = score;
     }
