@@ -28,10 +28,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.Noi
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.PostProcessor;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
@@ -144,7 +141,203 @@ public class FTLearn {
         for (File f : dirs) {
             learner.addDatabase(f);
         }
-        learner.iterativeLearning();
+        learner.adjustLosses();
+        //learner.iterativeLearning();
+    }
+
+    protected void adjustLosses() {
+        for (Database db : databases) {
+            setAnalyzer(db);
+            collectInputData();
+            db.readOptions(options);
+        }
+        int numberOfExperiments = 0;
+        int computedTrees = 0;
+        final File rootdir = new File("learned");
+        rootdir.mkdir();
+        currentRootDir= rootdir;
+        LossSizeScorer originalLossSizeScorer = null;
+        for (Database database : databases) {
+            int m = 0;
+            println("Compute " + database.name);
+            this.progress = 0;
+            printProgressFirst();
+            int avgIntCount = 0;
+            double averageExplainedIntensity = 0d;
+            final ArrayList<XYZ> massDevs = new ArrayList<XYZ>();
+            final TDoubleArrayList noiseIntensities = new TDoubleArrayList(5000);
+            setAnalyzer(database);
+            final File dir = rootdir;
+            if (options.isWriting() && !dir.exists()) dir.mkdirs();
+            for (Compound c : db.compounds) {
+                final InputFile in = new InputFile(cache.fetchCopy(c.file), c.file);
+                final Compound currentCompound = db.compounds.get(m++);
+                final String fileName = in.getFileName().getName().toString();
+                final Ms2Experiment exp = in.getExperiment();
+                final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
+                final double initialScoreBonus = treeSizeScorer.getTreeSizeScore();
+                try {
+                    progress = (++numberOfExperiments / (double) db.compounds.size());
+                    final MolecularFormula correctFormula = exp.getMolecularFormula();
+                    if (!currentCompound.formula.equals(correctFormula)) {
+                        throw new RuntimeException("Internal error: Selected wrong compound");
+                    }
+                    FTree tree = null;
+                    double intensityRatio = 0;
+                    final ProcessedInput input = analyzer.preprocessing(exp);
+                    final TDoubleArrayList noiseInts = new TDoubleArrayList();
+                    for (int TRY=0; TRY < 6; ++TRY) {
+                        noiseInts.clear();
+                        tree = analyzer.computeTrees(input).onlyWith(Arrays.asList(input.getExperimentInformation().getMolecularFormula())).optimalTree();
+                        if (tree == null) {
+                            for (ScoredMolecularFormula f : input.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
+                                if (f.getFormula().equals(correctFormula)) {
+                                    error("Can't compute fragmentation tree for " + currentCompound.file + " for unknown reason.");
+                                    break;
+                                }
+                            }
+                            continue;
+                        }
+                        ///////////////////////////////////////
+                        // get noise peaks
+                        ///////////////////////////////////////
+                        double explainedIntensity = 0d;
+                        double maxExplainableIntensity = 0d;
+                        final PeakAnnotation<DecompositionList> peakAno = tree.getAnnotationOrThrow(ProcessedInput.class).getPeakAnnotationOrThrow(DecompositionList.class);
+                        final List<ProcessedPeak> peaks = getPeaks(tree);
+                        final double[] minmz = new double[peaks.size()];
+                        final double[] maxmz = new double[peaks.size()];
+                        Arrays.fill(minmz, Double.POSITIVE_INFINITY);
+                        Arrays.fill(maxmz, Double.NEGATIVE_INFINITY);
+                        for (int k = 0; k < peaks.size(); ++k) {
+                            List<? extends Peak> pks = peaks.get(k).getOriginalPeaks();
+                            for (Peak p : pks) {
+                                minmz[k] = Math.min(minmz[k], p.getMass());
+                                maxmz[k] = Math.max(maxmz[k], p.getMass());
+                            }
+                        }
+                        for (ProcessedPeak peak : tree.getAnnotationOrThrow(ProcessedInput.class).getMergedPeaks()) {
+                            if (peak == input.getParentPeak()) continue;
+                            boolean isSignal = false;
+                            for (int k = 0; k < minmz.length; ++k) {
+                                if (peak.getOriginalMz() >= minmz[k] && peak.getOriginalMz() <= maxmz[k]) {
+                                    isSignal = true;
+                                    break;
+                                }
+                            }
+                            if (!isSignal) {
+                                noiseInts.add(peak.getRelativeIntensity());
+                                // if explainable
+                                for (ScoredMolecularFormula f : peakAno.get(peak).getDecompositions()) {
+                                    if (f.getScore() > -1d && correctFormula.isSubtractable(f.getFormula()) && peak.getGlobalRelativeIntensity()>=0.01) {
+                                        maxExplainableIntensity += peak.getRelativeIntensity();
+                                        break;
+                                    }
+                                }
+                            } else {
+                                maxExplainableIntensity += peak.getRelativeIntensity();
+                                explainedIntensity += peak.getRelativeIntensity();
+                            }
+                        }
+                        intensityRatio = explainedIntensity / maxExplainableIntensity;
+                        if (intensityRatio >= 0.9d) {
+                            break;
+                        } else {
+                            treeSizeScorer.setTreeSizeScore(treeSizeScorer.getTreeSizeScore() + 0.5d);
+                        }
+                    }
+                    noiseIntensities.addAll(noiseInts);
+                    ++computedTrees;
+                    massDevs.add(new XYZ(
+                                    input.getParentPeak().getOriginalMz(),
+                                    input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
+                                    2d)
+                    );
+                    // get signal peaks
+                    {
+                        final PredictedLoss[] losses = new PredictedLoss[tree.numberOfEdges()];
+                        int k = 0;
+                        final Iterator<Loss> iter = tree.lossIterator();
+                        final FragmentAnnotation<ProcessedPeak> ano = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+                        while (iter.hasNext()) {
+                            losses[k++] = new PredictedLoss(ano, iter.next(), tree.getAnnotationOrThrow(Ionization.class));
+                        }
+                        currentCompound.losses = losses;
+                    }
+                    if (!Double.isNaN(intensityRatio) && !Double.isInfinite(intensityRatio)) {
+                        averageExplainedIntensity += intensityRatio;
+                        ++avgIntCount;
+                    }
+                    if (options.isWriting()) {
+                        final String name = fileName.substring(0, fileName.lastIndexOf('.')) + ".dot";
+                        dir.mkdir();
+                        writeTreeToFile(new File(dir, name), tree);
+                    }
+                    printProgress();
+                } catch (Exception e) {
+                    error("Error while computing '" + in.getFileName().getName() + "'", e);
+                } finally {
+                    treeSizeScorer.setTreeSizeScore(initialScoreBonus);
+                }
+            }
+            println("");
+            averageExplainedIntensity /= avgIntCount;
+            println("Average explained intensity: " + perc(averageExplainedIntensity));
+            ///////////////////////////////////////
+            // get mass deviation
+            ///////////////////////////////////////
+            if (!options.isSkipPosteriori()) {
+                for (PredictedLoss l : Compound.foreachLoss(db.compounds)) {
+                    massDevs.add(new XYZ(l.fragmentMz, l.fragmentNeutralMass - l.fragmentFormula.getMass(), l.fragmentIntensity));
+                }
+                fitMassDevLimit(massDevs);
+            }
+            ///////////////////////////////////////
+            // get noise distribution
+            ///////////////////////////////////////
+            if (!options.isSkipPosteriori()) {
+                fitIntensityDistribution(noiseIntensities.toArray(), db.noiseCutoff);
+            }
+        }
+        println("Computed trees: " + computedTrees + " of " + numberOfExperiments);
+        ///////////////////////////////////////
+        // learn chemical priors
+        ///////////////////////////////////////
+        learnChemicalPrior(false);
+        ///////////////////////////////////////
+        // get common losses
+        ///////////////////////////////////////
+        learnCommonLosses();
+        adjustLossDependendScorers();
+        ///////////////////////////////////////
+        // get common fragments
+        ///////////////////////////////////////
+        learnCommonFragments();
+        if (options.isWriting()) {
+            try {
+                final PrintStream ps = new PrintStream(new File(rootdir, "learnedProfile.csv"));
+                ps.println(PredictedLoss.csvHeader());
+                for (Database db : databases) {
+                    for (PredictedLoss l : Compound.foreachLoss(db.compounds)) {
+                        ps.println(l.toCSV());
+                    }
+                }
+                ps.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+
+        }
+        /*
+        If -w given, write profile
+         */
+        for (Database db : databases) {
+            if (options.isWriting()) {
+                setAnalyzer(db);
+                final File dir = new File(options.getTarget(), db.name);
+                writeProfile(rootdir);
+            }
+        }
     }
 
     /*
