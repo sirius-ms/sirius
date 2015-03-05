@@ -53,6 +53,11 @@
             <artifactId>Recalibration</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.gnu.glpk</groupId>
+            <artifactId>glpk-java</artifactId>
+            <version>1.0.37</version>
+        </dependency>
 
 
         <!-- test dependencies -->
