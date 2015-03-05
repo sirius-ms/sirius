@@ -16,7 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Spectar on 13.11.2014.
+ * New gurobi solver using the java JNI only
+ * Created by Xentrics on 13.11.2014.
  */
 public class NewGurobiSolver extends AbstractSolver {
 
@@ -50,6 +51,8 @@ public class NewGurobiSolver extends AbstractSolver {
 
         losses = graph.losses();
         assert (losses != null);
+
+        computeOffsets();
     }
 
 
@@ -87,11 +90,42 @@ public class NewGurobiSolver extends AbstractSolver {
     //////////////////////////////
 
 
+    /**
+     * for each constraint i in array 'offsets': offsets[i] is the first index, where the constraint i is located
+     * (inside 'var' and 'coefs')
+     * Additionally, a new loss array will be computed
+     */
+    final void computeOffsets() {
+
+        for (int k = 1; k < offsets.length; ++k)
+            offsets[k] = offsets[k - 1] + graph.getFragmentAt(k - 1).getOutDegree();
+
+        /*
+         * for each edge: give it some unique id based on its source vertex id and its offset
+         * therefor, the i-th edge of some vertex u will have the id: offsets[u] + i - 1, if i=1 is the first edge.
+         * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
+          */
+        ArrayList<Loss> newLossArr = new ArrayList<Loss>(this.losses.size()+1);
+
+        for (int k = 0; k < losses.size(); ++k) {
+            final int u = losses.get(k).getSource().getVertexId();
+            edgeIds[offsets[u]++] = k;
+            newLossArr.set(offsets[u]-1, losses.get(k)); // TODO: check, if that is necessary!
+        }
+
+        this.losses = newLossArr;
+
+        // by using the loop-code above -> offsets[k] = 2*OutEdgesOf(k), so subtract that 2 away
+        for (int k = 0; k < offsets.length; ++k)
+            offsets[k] -= graph.getFragmentAt(k).getOutDegree();
+        //TODO: optimize: offsets[k] /= 2;
+    }
+
 
     @Override
     public void build() {
-
         super.build();
+
         try {
             assert GurobiJniAccess.get(this.model, GRB.IntAttr.IsMIP) != 0;
             built = true;
@@ -297,6 +331,11 @@ public class NewGurobiSolver extends AbstractSolver {
         assert (indices[toIndex] != 0) : "The Last value shouldn't be zero?!";
 
         GurobiJni.addconstrs(model, 1, coefs.length, new int[]{fromIndex}, indices, coefs, new char[]{GRB.GREATER_EQUAL}, new double[]{1.0d}, null, null);
+    }
+
+    @Override
+    protected void setObjective() throws Exception {
+        // nothing to do here
     }
 
 

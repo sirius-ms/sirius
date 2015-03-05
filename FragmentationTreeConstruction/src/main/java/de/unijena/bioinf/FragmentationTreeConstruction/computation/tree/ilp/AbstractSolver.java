@@ -38,16 +38,42 @@ abstract public class AbstractSolver {
     ////////////////////////
 
 
+    /**
+     * Minimal constructor
+     * - initiate solver with given graph
+     * - lower bound will be negative infinity
+     * - no maximum computation time will be set
+     * @param graph
+     */
     public AbstractSolver(FGraph graph)
     {
         this(graph, null, Double.NEGATIVE_INFINITY, null, -1);
     }
 
+
+    /**
+     * optimal constructor
+     * - initiate solver with given graph
+     * - initiate solver with given lower bound
+     * - no maximum computation time will be set
+     * @param graph
+     * @param lowerbound
+     */
     public AbstractSolver(FGraph graph, double lowerbound)
     {
         this(graph, null, lowerbound, null, -1);
     }
 
+
+    /**
+     * Maximum constructor. May be used to test the correctness of any implemented solver
+     *
+     * @param graph
+     * @param input
+     * @param lowerbound
+     * @param feasibleSolver
+     * @param timeLimit
+     */
     protected AbstractSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit)
     {
         if (graph == null) throw new NullPointerException("Cannot solve graph: graph is NULL!");
@@ -76,7 +102,6 @@ abstract public class AbstractSolver {
      */
     public void build() {
         try {
-            computeOffsets();
 
             if (feasibleSolver != null) {
                 final FTree presolvedTree = feasibleSolver.buildTree(input, graph, lowerbound);
@@ -87,6 +112,7 @@ abstract public class AbstractSolver {
 
             setConstraints();
             applyLowerBounds();
+            setObjective();
             built = true;
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
@@ -104,6 +130,11 @@ abstract public class AbstractSolver {
     }
 
 
+    /**
+     * Solve the optimal colorful subtree problem, using the chosen solver
+     * Need constraints, variables, etc. to be set up
+     * @return
+     */
     public FTree solve() {
         try {
             if(!this.built)
@@ -142,6 +173,7 @@ abstract public class AbstractSolver {
     abstract protected void setMinimalTreeSizeConstraint() throws Exception;
 
     // functions used within 'solve'
+    abstract protected void setObjective() throws Exception;
     abstract protected int preBuildSolution() throws Exception;
     abstract protected int pastBuildSolution() throws Exception;
     abstract protected FTree buildSolution() throws Exception;
@@ -154,36 +186,7 @@ abstract public class AbstractSolver {
 
 
 
-    /**
-     * for each constraint i in array 'offsets': offsets[i] is the first index, where the constraint i is located
-     * (inside 'var' and 'coefs')
-     * Additionally, a new loss array will be computed
-     */
-    final void computeOffsets() {
 
-        for (int k = 1; k < offsets.length; ++k)
-            offsets[k] = offsets[k - 1] + graph.getFragmentAt(k - 1).getOutDegree();
-
-        /*
-         * for each edge: give it some unique id based on its source vertex id and its offset
-         * therefor, the i-th edge of some vertex u will have the id: offsets[u] + i - 1, if i=1 is the first edge.
-         * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
-          */
-        ArrayList<Loss> newLossArr = new ArrayList<Loss>(this.losses.size()+1);
-
-        for (int k = 0; k < losses.size(); ++k) {
-            final int u = losses.get(k).getSource().getVertexId();
-            edgeIds[offsets[u]++] = k;
-            newLossArr.set(offsets[u]-1, losses.get(k)); // TODO: check, if that is necessary!
-        }
-
-        this.losses = newLossArr;
-
-        // by using the loop-code above -> offsets[k] = 2*OutEdgesOf(k), so subtract that 2 away
-        for (int k = 0; k < offsets.length; ++k)
-            offsets[k] -= graph.getFragmentAt(k).getOutDegree();
-        //TODO: optimize: offsets[k] /= 2;
-    }
 
     protected static FTree newTree(FGraph graph, FTree tree, double rootScore) {
         return newTree(graph, tree, rootScore, rootScore);
@@ -212,6 +215,13 @@ abstract public class AbstractSolver {
         return tree;
     }
 
+    /**
+     * Check, whether or not the given tree 'tree' is the optimal solution for the optimal colorful
+     * subtree problem of the given graph 'graph'
+     * @param tree
+     * @param graph
+     * @return
+     */
     protected static boolean isComputationCorrect(FTree tree, FGraph graph) {
         double score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
         final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
