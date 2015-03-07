@@ -24,13 +24,15 @@ abstract public class AbstractSolver {
     protected final FGraph graph;
     protected List<Loss> losses;
     protected final int[] edgeIds; // contains variable indices (after 'computeoffsets')
-    protected final int[] offsets; // contains: the first index j of edges starting from a given vertex i
+    protected final int[] edgeOffsets; // contains: the first index j of edges starting from a given vertex i
 
     protected final ProcessedInput input;
     protected final TreeBuilder feasibleSolver;
 
-    protected final double lowerbound;
-    protected final int timelimit;
+    protected final double LP_LOWERBOUND;
+    protected final int LP_TIMELIMIT;
+    protected final int LP_NUM_OF_VARIABLES;
+    protected final int LP_NUM_OF_VERTICES;
 
 
     ////////////////////////
@@ -80,13 +82,16 @@ abstract public class AbstractSolver {
 
         this.graph = graph;
         this.edgeIds = new int[graph.numberOfEdges()];
-        this.offsets = new int[graph.numberOfVertices()];
+        this.edgeOffsets = new int[graph.numberOfVertices()];
 
-        this.lowerbound = lowerbound;
-        this.timelimit = (timeLimit >= 0) ? timeLimit : 0;
+        this.LP_LOWERBOUND = lowerbound;
+        this.LP_TIMELIMIT = (timeLimit >= 0) ? timeLimit : 0;
 
         this.input = input;
         this.feasibleSolver = feasibleSolver;
+
+        this.LP_NUM_OF_VERTICES = graph.numberOfVertices();
+        this.LP_NUM_OF_VARIABLES = this.losses.size();
 
         this.built = false;
     }
@@ -102,9 +107,11 @@ abstract public class AbstractSolver {
      */
     public void build() {
         try {
+            computeOffsets();
+            assert (edgeOffsets == null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
 
             if (feasibleSolver != null) {
-                final FTree presolvedTree = feasibleSolver.buildTree(input, graph, lowerbound);
+                final FTree presolvedTree = feasibleSolver.buildTree(input, graph, LP_LOWERBOUND);
                 defineVariablesWithStartValues(presolvedTree);
             } else {
                 defineVariables();
@@ -117,6 +124,39 @@ abstract public class AbstractSolver {
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
         }
+    }
+
+
+    /**
+     * - edgeOffsets will be used to access edges more efficiently
+     * for each constraint i in array 'edgeOffsets': edgeOffsets[i] is the first index, where the constraint i is located
+     * (inside 'var' and 'coefs')
+     * Additionally, a new loss array will be computed
+     */
+    final void computeOffsets() {
+
+        for (int k = 1; k < edgeOffsets.length; ++k)
+            edgeOffsets[k] = edgeOffsets[k - 1] + graph.getFragmentAt(k - 1).getOutDegree();
+
+        /*
+         * for each edge: give it some unique id based on its source vertex id and its offset
+         * therefor, the i-th edge of some vertex u will have the id: edgeOffsets[u] + i - 1, if i=1 is the first edge.
+         * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
+          */
+        ArrayList<Loss> newLossArr = new ArrayList<Loss>(this.losses.size()+1);
+
+        for (int k = 0; k < losses.size(); ++k) {
+            final int u = losses.get(k).getSource().getVertexId();
+            edgeIds[edgeOffsets[u]++] = k;
+            newLossArr.set(edgeOffsets[u]-1, losses.get(k)); // TODO: check, if that is necessary!
+        }
+
+        this.losses = newLossArr;
+
+        // by using the loop-code above -> edgeOffsets[k] = 2*OutEdgesOf(k), so subtract that 2 away
+        for (int k = 0; k < edgeOffsets.length; ++k)
+            edgeOffsets[k] -= graph.getFragmentAt(k).getOutDegree();
+        //TODO: optimize: edgeOffsets[k] /= 2;
     }
 
 

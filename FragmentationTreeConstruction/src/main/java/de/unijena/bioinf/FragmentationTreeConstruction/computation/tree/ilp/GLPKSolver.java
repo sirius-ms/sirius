@@ -6,10 +6,14 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import org.gnu.glpk.GLPK;
 import org.gnu.glpk.GLPKConstants;
 import org.gnu.glpk.glp_prob;
+import org.gnu.glpk.SWIGTYPE_p_int;
+import org.gnu.glpk.SWIGTYPE_p_double;
 
 /**
  * NOTES:
+ * - GLPK indices start with 1, not zero !!!
  * - GLPK is not thread safe
+ * - GLPK uses an index array of type 'SWIGTYPE_p_int' to set up constraints
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver extends AbstractSolver {
@@ -18,10 +22,7 @@ public class GLPKSolver extends AbstractSolver {
 
     final glp_prob LP;
 
-    protected int NumOfVariables;
-    protected int NumOfVertices;
-
-    protected int[] vars;
+    final SWIGTYPE_p_int GLP_INDEX_ARRAY;
 
 
     ///////////////////////////
@@ -39,10 +40,26 @@ public class GLPKSolver extends AbstractSolver {
     protected GLPKSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) {
         super(graph, input, lowerbound, feasibleSolver, timeLimit);
 
+        System.out.printf("Using: GLPK solver...");
         // loadGLPKlibrary()
         this.LP = GLPK.glp_create_prob();
         GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
-        System.out.println("GLPK: Problem created");
+        GLPK.glp_set_obj_dir(this.LP, GLPKConstants.GLP_MAX);
+        System.out.println("GLPK: Problem created...");
+
+        this.GLP_INDEX_ARRAY = prepareIndexArray();
+        System.out.println("Matrix prepared...");
+    }
+
+
+    final SWIGTYPE_p_int prepareIndexArray() {
+
+        final SWIGTYPE_p_int INDEX_ARR = GLPK.new_intArray(LP_NUM_OF_VARIABLES + 1); // + 1 for the right-hand-side column
+
+        for (int i=1; i<=LP_NUM_OF_VARIABLES; i++)
+            GLPK.intArray_setitem(INDEX_ARR, i, i);
+
+        return INDEX_ARR;
     }
 
 
@@ -84,7 +101,7 @@ public class GLPKSolver extends AbstractSolver {
         for (int i=1; i<=N; i++) {
             GLPK.glp_set_col_name(LP, i, "loss"+i);
             GLPK.glp_set_col_kind(LP, i, GLPKConstants.GLP_CV); //TODO: check
-            //constraints: GLPK.glp_set_col_bnd(LP, i, ...)
+            GLPK.glp_set_col_bnds(LP, i, GLPKConstants.GLP_DB, 0.0d, 1.0d); // either zero or one!
         }
     }
 
@@ -101,16 +118,43 @@ public class GLPKSolver extends AbstractSolver {
     @Override
     protected void setTreeConstraint() throws Exception {
 
+        // returns the index of the first newly created row
+        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES);
+
+        // create auxiliary variables first
+        for (int k=1; k<=this.LP_NUM_OF_VERTICES; k++) {
+            GLPK.glp_set_row_name(this.LP, k, "r"+k);
+            GLPK.glp_set_row_bnds(this.LP, k, GLPKConstants.GLP_IV, 0.0, 1.0); // right-hand-side | maximum one edge!
+        }
+
+        // set up row entries
+        for (int k=1; k<=this.LP_NUM_OF_VERTICES; k++) {
+
+            SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(this.LP_NUM_OF_VARIABLES + 1);
+            final int LAST_INDEX = (k == this.LP_NUM_OF_VARIABLES -1) ? LP_NUM_OF_VARIABLES -1 : edgeOffsets[k+1] -1;
+
+            for (int i= edgeOffsets[k]+1; i<=LAST_INDEX; i++)
+                GLPK.doubleArray_setitem(rowValues, i, 1.0); // each edge is weighted equally here
+
+            GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + k, this.LP_NUM_OF_VARIABLES + 1, this.GLP_INDEX_ARRAY, rowValues);
+
+            // TODO: check - other entries zero by default?
+            GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
+        }
     }
 
     @Override
     protected void setColorConstraint() throws Exception {
 
+        // returns the index of the first newly created row
+        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES);
     }
 
     @Override
     protected void setMinimalTreeSizeConstraint() throws Exception {
 
+        // returns the index of the first newly created row
+        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES);
     }
 
     @Override

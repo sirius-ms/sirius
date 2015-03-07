@@ -619,7 +619,7 @@ public class Main {
                     if (correctTree != null) {
                         final TreeScoring scoring = correctTree.getAnnotationOrThrow(TreeScoring.class);
                         if (options.getWrongPositive() && correctTree != null)
-                            lowerbound = Math.max(lowerbound, scoring.getOverallScore() - scoring.getRecalibrationBonus());
+                            LP_LOWERBOUND = Math.max(LP_LOWERBOUND, scoring.getOverallScore() - scoring.getRecalibrationBonus());
                         final TreeIterator iter = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().iterator();
                         iter.next();
 
@@ -663,7 +663,7 @@ public class Main {
                 int rank = 1;
                 double optScore = Double.NEGATIVE_INFINITY;//(correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
                 final boolean printGraph = options.isWriteGraphInstances();
-                lowerbound = 0d; // don't use correct tree as lowerbound! This crashs with the recalibration
+                lowerbound = 0d; // don't use correct tree as LP_LOWERBOUND! This crashs with the recalibration
                 if (NumberOfTreesToCompute > 0) {
                     List<FTree> trees;
                     final MultipleTreeComputation m = analyzer.computeTrees(input).withRoots(input.getAnnotationOrThrow(DecompositionList.class).getDecompositions()).inParallel(options.getThreads()).computeMaximal(NumberOfTreesToCompute).withLowerbound(lowerbound)
@@ -712,7 +712,7 @@ public class Main {
                                             break treeIteration;
                                         }
                                         treeIter.setLowerbound(DEBUG_MODE ? 0d : lb);
-                                        if (verbose) System.out.println("Increase lowerbound to " + lb);
+                                        if (verbose) System.out.println("Increase LP_LOWERBOUND to " + lb);
                                         if (worstScoring.getOverallScore() > correctTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) {
                                             break treeIteration;
                                         }
