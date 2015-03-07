@@ -14,6 +14,9 @@ import org.gnu.glpk.SWIGTYPE_p_double;
  * - GLPK indices start with 1, not zero !!!
  * - GLPK is not thread safe
  * - GLPK uses an index array of type 'SWIGTYPE_p_int' to set up constraints
+ * - GLPKConstants.IV: Integer Variable, x € Int
+ * - GLPKConstants.CV: Continuous Variable, x € R
+ * - GLPKConstants.DB: Double bound, lb < x < ub
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver extends AbstractSolver {
@@ -98,10 +101,11 @@ public class GLPKSolver extends AbstractSolver {
         final int N = this.losses.size();
         GLPK.glp_add_cols(this.LP, N);
 
+        // for GLPK: structure variables
         for (int i=1; i<=N; i++) {
             GLPK.glp_set_col_name(LP, i, "loss"+i);
-            GLPK.glp_set_col_kind(LP, i, GLPKConstants.GLP_CV); //TODO: check
-            GLPK.glp_set_col_bnds(LP, i, GLPKConstants.GLP_DB, 0.0d, 1.0d); // either zero or one!
+            GLPK.glp_set_col_kind(LP, i, GLPKConstants.GLP_IV); //Integer Variable
+            GLPK.glp_set_col_bnds(LP, i, GLPKConstants.GLP_DB, 0.0, 1.0); // double-bound | either zero or one!
         }
     }
 
