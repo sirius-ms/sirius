@@ -1,8 +1,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import gnu.trove.list.array.TIntArrayList;
 import org.gnu.glpk.GLPK;
 import org.gnu.glpk.GLPKConstants;
 import org.gnu.glpk.glp_prob;
@@ -17,6 +20,8 @@ import org.gnu.glpk.SWIGTYPE_p_double;
  * - GLPKConstants.IV: Integer Variable, x € Int
  * - GLPKConstants.CV: Continuous Variable, x € R
  * - GLPKConstants.DB: Double bound, lb < x < ub
+ * TODO: TreeConstraint: is integer problem?
+ * TODO: ColorConstraint: is integer problem?
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver extends AbstractSolver {
@@ -132,7 +137,7 @@ public class GLPKSolver extends AbstractSolver {
         }
 
         // set up row entries
-        for (int k=1; k<=this.LP_NUM_OF_VERTICES; k++) {
+        for (int k=0; k<this.LP_NUM_OF_VERTICES; k++) {
 
             SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(this.LP_NUM_OF_VARIABLES + 1);
             final int LAST_INDEX = (k == this.LP_NUM_OF_VARIABLES -1) ? LP_NUM_OF_VARIABLES -1 : edgeOffsets[k+1] -1;
@@ -151,14 +156,59 @@ public class GLPKSolver extends AbstractSolver {
     protected void setColorConstraint() throws Exception {
 
         // returns the index of the first newly created row
-        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES);
+        final int COLOR_NUM = this.graph.maxColor()+1;
+        final boolean[] colorInUse = new boolean[COLOR_NUM];
+
+        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, COLOR_NUM);
+        for (int c=1; c<=COLOR_NUM; c++) {
+            GLPK.glp_set_row_name(this.LP, c, "c" + c);
+            GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_IV, 0.0, 1.0);
+        }
+
+        // get all edges of each color first. We can add each color-constraint afterwards + saving much memory!
+        final TIntArrayList[] edgesOfColors = new TIntArrayList[COLOR_NUM];
+        for (int c=0; c<COLOR_NUM; c++)
+            edgesOfColors[c] = new TIntArrayList();
+
+        int k=0;
+        for (Loss l : this.losses) {
+            final int c = l.getTarget().getColor();
+            edgesOfColors[c].add(k);
+            k++;
+        }
+
+        // add constraints. Maximum one edge per color.
+        for (int c=0; c<COLOR_NUM; c++) {
+            SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(this.LP_NUM_OF_VARIABLES + 1); // alloc memory
+            final TIntArrayList COL_ENTRIES = edgesOfColors[c];
+            for (int i=0; i<COL_ENTRIES.size(); i++)
+                GLPK.doubleArray_setitem(rowValues, COL_ENTRIES.get(i), 1.0);
+
+            GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + c, this.LP_NUM_OF_VARIABLES + 1, this.GLP_INDEX_ARRAY, rowValues);
+
+            GLPK.delete_doubleArray(rowValues); // free memory
+        }
     }
 
     @Override
     protected void setMinimalTreeSizeConstraint() throws Exception {
+        System.out.println("GLPK: SetMinimalTreeSize...");
 
         // returns the index of the first newly created row
-        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES);
+        final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
+        GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, "MinTree");
+        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_IV, 0.0, 1.0);
+
+        final Fragment localRoot = graph.getRoot();
+        final int fromIndex = edgeOffsets[localRoot.getVertexId()];
+        final int toIndex = fromIndex + localRoot.getOutDegree();
+
+        SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(this.LP_NUM_OF_VARIABLES + 1);
+        for (int k=fromIndex; k<toIndex; k++)
+            GLPK.doubleArray_setitem(rowValues, k, 1.0);
+
+        GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX, this.LP_NUM_OF_VARIABLES+1, this.GLP_INDEX_ARRAY, rowValues);
+        GLPK.delete_doubleArray(rowValues); // free memory
     }
 
     @Override

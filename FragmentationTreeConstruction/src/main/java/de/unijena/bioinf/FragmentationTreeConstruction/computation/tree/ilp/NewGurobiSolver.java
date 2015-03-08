@@ -17,6 +17,9 @@ import java.util.List;
 
 /**
  * New gurobi solver using the java JNI only
+ * NOTES:
+ * - gurobi jni uses sparse matrices. Therefore, we set coefs + vars, to say: tuple (coef, var-index).
+ *   Remember that when reading the code!
  * Created by Xentrics on 13.11.2014.
  */
 public class NewGurobiSolver extends AbstractSolver {
