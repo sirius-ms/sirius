@@ -237,21 +237,29 @@ public class NewGurobiSolver extends AbstractSolver {
     protected void setColorConstraint() {
 
         final boolean[] colorInUse = new boolean[graph.maxColor()+1];
+        final int COLOR_NUM = graph.maxColor()+1;
 
         /* Concept:
          * - each color has a given amount of incoming edges
          * - we already defined those edges as variables ( 'defineVariables()' )
          * - we already applied the tree constraint
-         * - know, we gather all edges of 1 color and make a second constraint, that the maximum
+         * - now, we gather all edges of each color and make a second constraint, that the maximum
          *   amount of edges used to reach that color is 1 edge
          */
 
         // prepare arrays
-        TDoubleArrayList[] coefs = new TDoubleArrayList[graph.maxColor()+1]; // hey are all 1
+        TDoubleArrayList[] coefs = new TDoubleArrayList[COLOR_NUM]; // hey are all 1
         TIntArrayList[] vars = new TIntArrayList[this.LP_NUM_OF_VARIABLES]; // I do not know how many edges are going into on color :/
         double[] constants = new double[]{1.0d}; // they are all 1
         char[] signs = new char[]{GRB.LESS_EQUAL}; // the are all GRB.LESS_EQUAL
 
+        // init
+        for (int c=0; c<COLOR_NUM; c++) {
+            coefs[c] = new TDoubleArrayList();
+            vars[c] = new TIntArrayList();
+        }
+
+        // make constraint. Remember: sparse matrices!
         for (int e : this.edgeIds) { // edgeIds are equal to the index of an edge
             final int color = losses.get(e).getTarget().getColor();
             colorInUse[color] = true; // we may skip colors we did not use, later
@@ -261,7 +269,7 @@ public class NewGurobiSolver extends AbstractSolver {
 
 
         // add our constraints
-        for (int c=0; c<graph.maxColor()+1; c++) {
+        for (int c=0; c<COLOR_NUM; c++) {
             if (colorInUse[c]) {
                 GurobiJni.addconstrs(model, 1, coefs[c].size(), new int[]{0}, vars[c].toArray(), coefs[c].toArray(), signs, constants, null, null);
             }
