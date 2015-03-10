@@ -418,8 +418,8 @@ public class NewGurobiSolver extends AbstractSolver {
     }
 
     /**
-     * - check, whether or not some edges can be ignored by the given lower bound
-     * - return an array of values {0,1}, where 0 is a non-existent edge and 1 does exist
+     * we need to retrieve the edges being kept in the optimal solution
+     * if an edge has a value greater 0.5, we keep it
      * @return
      * @throws GRBException
      */
