@@ -321,14 +321,14 @@ public class NewGurobiSolver extends AbstractSolver {
             }
         }
 
-        return AbstractSolver.DO_NOTHING;
+        return AbstractSolver.SHALL_BUILD_SOLUTION;
     }
 
 
     @Override
     protected int pastBuildSolution() {
         GurobiJni.freemodel(this.model); // free memory
-        return AbstractSolver.DO_NOTHING;
+        return AbstractSolver.FINISHED;
     }
 
 

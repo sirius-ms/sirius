@@ -9,8 +9,11 @@ import gnu.trove.list.array.TIntArrayList;
 import org.gnu.glpk.GLPK;
 import org.gnu.glpk.GLPKConstants;
 import org.gnu.glpk.glp_prob;
+import org.gnu.glpk.glp_smcp;
 import org.gnu.glpk.SWIGTYPE_p_int;
 import org.gnu.glpk.SWIGTYPE_p_double;
+
+import java.util.InvalidPropertiesFormatException;
 
 /**
  * NOTES:
@@ -32,6 +35,32 @@ public class GLPKSolver extends AbstractSolver {
 
     final SWIGTYPE_p_int GLP_INDEX_ARRAY;
 
+    /*********************************************************************
+     * try to load the jni interface for glpk from the glpk library      *
+     * will be loaded the moment an instance of 'GLPKSolver' is created  *
+     *********************************************************************/
+    static {
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            // try to load Windows library
+            try {
+                System.loadLibrary("glpk_" + GLPKSolver.GLPK_VERSION);
+                System.out.println("Using system glpk \nVersion: " + GLPK.glp_version());
+            } catch (UnsatisfiedLinkError e) {
+                System.err.println("Could not load glpk_4.55 library from windows! Make sure to have the correct" +
+                        " version of glpk installed on your system!");
+                throw e;
+            }
+        } else {
+            try {
+                System.loadLibrary("glpk_java");
+                System.out.println("Using java glpk \nVersion: " + GLPK.glp_version());
+            } catch (UnsatisfiedLinkError e) {
+                System.err.println("The dynamic link library for GLPK for java could not be loaded. \n" +
+                        "Consider using \njava -Djava.library.path=");
+                throw e;
+            }
+        }
+    }
 
     ///////////////////////////
     ///     CONSTRUCTORS    ///
@@ -52,7 +81,6 @@ public class GLPKSolver extends AbstractSolver {
         // loadGLPKlibrary()
         this.LP = GLPK.glp_create_prob();
         GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
-        GLPK.glp_set_obj_dir(this.LP, GLPKConstants.GLP_MAX);
         System.out.println("GLPK: Problem created...");
 
         this.GLP_INDEX_ARRAY = prepareIndexArray();
@@ -68,31 +96,6 @@ public class GLPKSolver extends AbstractSolver {
             GLPK.intArray_setitem(INDEX_ARR, i, i);
 
         return INDEX_ARR;
-    }
-
-
-    /**
-     * try to load the jni interface for glpk from the glpk library
-     */
-    static {
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            // try to load Windows library
-            try {
-                System.loadLibrary("glpk_" + GLPKSolver.GLPK_VERSION);
-            } catch (UnsatisfiedLinkError e) {
-                System.err.println("Could not load glpk_4.55 library from windows! Make sure to have the correct" +
-                        " version of glpk installed on your system!");
-                throw e;
-            }
-        } else {
-            try {
-                System.loadLibrary("glpk_java");
-            } catch (UnsatisfiedLinkError e) {
-                System.err.println("The dynamic link library for GLPK for java could not be loaded. \n" +
-                        "Consider using \njava -Djava.library.path=");
-                throw e;
-            }
-        }
     }
 
 
@@ -213,12 +216,73 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected void setObjective() throws Exception {
-        // nothing to do yet? TODO: check
+        // nothing to do yet?
+        GLPK.glp_set_obj_dir(this.LP, GLPKConstants.GLP_MAX);
+        GLPK.glp_set_obj_name(this.LP, "z");
+
+        GLPK.glp_set_obj_coef(this.LP, 0, 0.0); // non-variables constant of function
+
+        final int N = losses.size();
+        int k=1;
+        for (Loss l : losses ) {
+            GLPK.glp_set_obj_coef(this.LP, k, l.getWeight());
+            k++;
+        }
+
+        assert (k == this.LP_NUM_OF_VARIABLES) : "the objective function should contain the same amount of coefs as the number of variables just!";
     }
 
     @Override
     protected int preBuildSolution() throws Exception {
-        return 0;
+
+        glp_smcp parm = new glp_smcp();
+        GLPK.glp_init_smcp(parm);
+
+        int result = GLPK.glp_simplex(this.LP, parm);
+
+        int status = GLPK.glp_get_status(this.LP);
+        if (status == GLPKConstants.GLP_OPT) {
+            System.out.println("The solution is optimal.");
+        } else if (status == GLPKConstants.GLP_FEAS) {
+            System.out.println("The solution is feasible.");
+        } else if (status == GLPKConstants.GLP_INFEAS) {
+            System.out.println("The solution is infeasible!");
+        } else if (status == GLPKConstants.GLP_NOFEAS) {
+            System.out.println("The problem has no feasible solution!");
+        } else if (status == GLPKConstants.GLP_UNBND) {
+            System.out.println("The problem has unbound solution!");
+        } else if (status == GLPKConstants.GLP_UNDEF) {
+            System.out.println("The solution is undefined!");
+        }
+
+        if (result == 0)
+            return AbstractSolver.SHALL_BUILD_SOLUTION;
+        else if (result == GLPKConstants.GLP_EBADB) {
+            System.err.println("Unable to start the search, because the initial basis speci\fed in the problem object\n" +
+                    "is invalid|the number of basic (auxiliary and structural) variables is not the same\n" +
+                    "as the number of rows in the problem object.");
+            throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
+        } else if (result == GLPKConstants.GLP_ESING) {
+            System.err.println("Unable to start the search, because the basis matrix corresponding to the initial\n" +
+                    "basis is exactly singular.");
+            throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
+        } else if (result == GLPKConstants.GLP_EBOUND) {
+            System.err.println("Unable to start the search, because some double-bounded (auxiliary or structural)\n" +
+                    "variables have incorrect bounds.");
+            throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
+        } else if (result == GLPKConstants.GLP_EFAIL) {
+            System.out.println("The problem does not have variables or conditions!");
+            return AbstractSolver.SHALL_RETURN_NULL;
+        } else if (result == GLPKConstants.GLP_EITLIM) {
+            System.err.println("GLPK reached iteration limit! Prematurely termination.");
+            return AbstractSolver.SHALL_RETURN_NULL;
+        } else if (result == GLPKConstants.GLP_ETMLIM) {
+            System.err.println("GLPK reached time limit! Prematurely termination.");
+            return AbstractSolver.SHALL_RETURN_NULL;
+        } else {
+            System.err.println("Unrecognized return value from simplex. Abort!");
+            return AbstractSolver.SHALL_RETURN_NULL;
+        }
     }
 
     @Override
@@ -228,6 +292,8 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected FTree buildSolution() throws Exception {
+
+
         return null;
     }
 }

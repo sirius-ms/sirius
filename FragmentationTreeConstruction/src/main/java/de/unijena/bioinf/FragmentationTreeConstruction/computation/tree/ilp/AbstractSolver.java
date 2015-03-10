@@ -16,8 +16,9 @@ import java.util.Map;
  */
 abstract public class AbstractSolver {
 
-    final static int DO_NOTHING = 0;
-    final static int SHALL_RETURN_NULL = 1;
+    final static int FINISHED = 0;
+    final static int SHALL_RETURN_NULL = 0;
+    final static int SHALL_BUILD_SOLUTION = 1;
 
     protected boolean built;
 
