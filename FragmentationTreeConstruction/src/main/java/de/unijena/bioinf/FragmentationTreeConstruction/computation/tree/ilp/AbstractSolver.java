@@ -6,7 +6,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
+import sun.reflect.generics.tree.Tree;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,22 +16,35 @@ import java.util.Map;
 /**
  * Created by Spectar on 13.11.2014.
  */
-abstract public class AbstractSolver {
+abstract public class AbstractSolver implements TreeBuilder {
+
+    final static int SOLVER_TYPE_GUROBI = 0;
+    final static int SOLVER_TYPE_NEWGUROBI = 1;
+    final static int SOLVER_TYPE_GLPK = 2;
 
     final static int FINISHED = 0;
     final static int SHALL_RETURN_NULL = 0;
     final static int SHALL_BUILD_SOLUTION = 1;
 
     protected boolean built;
+    protected int solverType = 0;
 
+    // graph information
     protected final FGraph graph;
     protected List<Loss> losses;
     protected final int[] edgeIds; // contains variable indices (after 'computeoffsets')
     protected final int[] edgeOffsets; // contains: the first index j of edges starting from a given vertex i
 
+    protected int lastInput;
+    protected int secondsPerInstance;
+    protected int secondsPerDecomposition;
+    protected long timeout;
+    protected int numberOfCPUs;
+
     protected final ProcessedInput input;
     protected final TreeBuilder feasibleSolver;
 
+    // linear program parameters
     protected final double LP_LOWERBOUND;
     protected final int LP_TIMELIMIT;
     protected final int LP_NUM_OF_VARIABLES;
@@ -280,6 +295,100 @@ abstract public class AbstractSolver {
             }
         }
         return Math.abs(score) < 1e-9d;
+    }
+
+    @Override
+    public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
+        if (lastInput != input.getExperimentInformation().hashCode()) {
+            // reset time limit
+            resetTimeLimit();
+            lastInput = input.getExperimentInformation().hashCode();
+        }
+        try {
+            if (graph.numberOfVertices() <= 2) {
+                return newTree(graph, new FTree(graph.getRoot().getChildren(0).getFormula()), graph.getRoot().getOutgoingEdge(0).getWeight());
+            }
+            final long timeToCompute = Math.max(0l, Math.min((long) secondsPerDecomposition, timeout - System.currentTimeMillis()));
+
+            final AbstractSolver solver;
+
+            /*
+            try {
+                // create instance of solver of type 'SolverType'
+                Class[] constructorArgs = new Class[5];
+                constructorArgs[0] = FGraph.class;
+                constructorArgs[1] = ProcessedInput.class;
+                constructorArgs[2] = int.class; // lowerbound
+                constructorArgs[3] = TreeBuilder.class;
+                constructorArgs[4] = int.class; // timelimit
+
+                Constructor<? extends AbstractSolver> ctor = SolverType.getDeclaredConstructor(constructorArgs);
+                solver = ctor.newInstance(graph, input, lowerbound, feasibleSolver,
+                        (int) Math.min(Integer.MAX_VALUE, timeToCompute));
+            } catch (NoSuchMethodException e) {
+                System.err.println("Could not create instance of solver '" + SolverType.toString() + "', constructor not found?!");
+                throw e;
+            } catch (SecurityException e) {
+                System.err.println(e.toString());
+                throw e;
+            }
+            */
+
+            switch (this.solverType) {
+                case AbstractSolver.SOLVER_TYPE_GUROBI:
+                    //solver = new GurobiSolver(graph, input, lowerbound, feasibleSolver,
+                    //        (int) Math.min(Integer.MAX_VALUE, timeToCompute));
+                    throw new UnsupportedOperationException("Normal gurobi solver not usable yet!");
+                case AbstractSolver.SOLVER_TYPE_NEWGUROBI:
+                    solver = new NewGurobiSolver(graph, input, lowerbound, feasibleSolver,
+                            (int) Math.min(Integer.MAX_VALUE, timeToCompute));
+                    break;
+                case AbstractSolver.SOLVER_TYPE_GLPK:
+                    solver = new GLPKSolver(graph, input, lowerbound, feasibleSolver,
+                            (int) Math.min(Integer.MAX_VALUE, timeToCompute));
+                    break;
+                default:
+                    System.err.println("Invalid solver id: " + this.solverType + ". Please check code!");
+                    throw new Exception("Invalid solver Id.");
+            }
+
+            solver.build();
+            return solver;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void resetTimeLimit() {
+        timeout = System.currentTimeMillis() + secondsPerDecomposition * 1000l;
+    }
+
+    @Override
+    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
+        if (graph.numberOfVertices() <= 2)
+            return newTree(graph, new FTree(graph.getRoot().getChildren(0).getFormula()), graph.getRoot().getOutgoingEdge(0).getWeight());
+
+        if (prepared instanceof AbstractSolver) {
+            final AbstractSolver solver = (AbstractSolver) prepared;
+            return solver.solve();
+        } else {
+            throw new IllegalArgumentException("Expected solver to be instance of AbstractSolver, but " + prepared.getClass() + " given.");
+        }
+    }
+
+    @Override
+    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
+        return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
+    }
+
+    @Override
+    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
+        return null;
+    }
+
+    @Override
+    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
+        return null;
     }
 
 
