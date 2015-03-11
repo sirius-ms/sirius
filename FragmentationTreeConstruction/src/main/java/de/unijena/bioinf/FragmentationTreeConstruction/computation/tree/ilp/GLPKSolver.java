@@ -26,6 +26,8 @@ import java.util.List;
  * - GLPKConstants.DB: Double bound, lb < x < ub
  * TODO: TreeConstraint: is integer problem?
  * TODO: ColorConstraint: is integer problem?
+ * TODO: timlimit?
+ * TODO: global lower bound?
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver extends AbstractSolver {
@@ -290,66 +292,7 @@ public class GLPKSolver extends AbstractSolver {
     protected int pastBuildSolution() throws Exception {
         GLPK.glp_delete_prob(this.LP); // free memory
         System.out.println("GLPK solver finished.");
-        return 0;
-    }
-
-    @Override
-    protected FTree buildSolution() throws Exception {
-
-        final double score = GLPK.glp_get_obj_val(this.LP);
-
-        final boolean[] edesAreUsed = getVariableAssignment();
-        Fragment graphRoot = null;
-        final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();
-        final List<LossAnnotation<Object>> lAnos = graph.getLossAnnotations();
-        final List<FragmentAnnotation<Object>> fTrees = new ArrayList<FragmentAnnotation<Object>>();
-        final List<LossAnnotation<Object>> lTrees = new ArrayList<LossAnnotation<Object>>();
-        double rootScore = 0d;
-        // get root
-        {
-            int offset = edgeOffsets[graph.getRoot().getVertexId()];
-            for (int j = 0; j < graph.getRoot().getOutDegree(); ++j) {
-                if (edesAreUsed[edgeIds[offset]]) {
-                    final Loss l = losses.get(edgeIds[offset]);
-                    graphRoot = l.getTarget();
-                    rootScore = l.getWeight();
-                    break;
-                }
-                ++offset;
-            }
-        }
-        assert graphRoot != null;
-        if (graphRoot == null) return null;
-
-        final FTree tree = newTree(graph, new FTree(graphRoot.getFormula()), rootScore, rootScore);
-        for (FragmentAnnotation<Object> x : fAnos) fTrees.add(tree.addFragmentAnnotation(x.getAnnotationType()));
-        for (LossAnnotation<Object> x : lAnos) lTrees.add(tree.addLossAnnotation(x.getAnnotationType()));
-        final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
-        for (int k = 0; k < fAnos.size(); ++k) fTrees.get(k).set(tree.getRoot(), fAnos.get(k).get(graphRoot));
-
-        final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
-        stack.push(new Stackitem(tree.getRoot(), graphRoot));
-        while (!stack.isEmpty()) {
-            final Stackitem item = stack.pop();
-            final int u = item.graphNode.getVertexId();
-            int offset = edgeOffsets[u];
-            for (int j = 0; j < item.graphNode.getOutDegree(); ++j) {
-                if (edesAreUsed[edgeIds[offset]]) {
-                    final Loss l = losses.get(edgeIds[offset]);
-                    final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
-                    for (int k = 0; k < fAnos.size(); ++k)
-                        fTrees.get(k).set(child, fAnos.get(k).get(l.getTarget()));
-                    for (int k = 0; k < lAnos.size(); ++k)
-                        lTrees.get(k).set(child.getIncomingEdge(), lAnos.get(k).get(l));
-
-                    child.getIncomingEdge().setWeight(l.getWeight());
-                    stack.push(new Stackitem(child, l.getTarget()));
-                    scoring.setOverallScore(scoring.getOverallScore() + l.getWeight());
-                }
-                ++offset;
-            }
-        }
-        return tree;
+        return AbstractSolver.FINISHED;
     }
 
 
@@ -358,7 +301,7 @@ public class GLPKSolver extends AbstractSolver {
      * if an edge has a value greater 0.5, we keep it
      * @return
      */
-    final private boolean[] getVariableAssignment() {
+    final protected boolean[] getVariableAssignment() {
         final boolean[] assignments = new boolean[this.LP_NUM_OF_VARIABLES];
 
         final int N = GLPK.glp_get_num_cols(this.LP);
@@ -370,5 +313,10 @@ public class GLPKSolver extends AbstractSolver {
         }
 
         return assignments;
+    }
+
+    @Override
+    protected double getSolverScore() throws Exception {
+        return GLPK.glp_get_obj_val(this.LP);
     }
 }
