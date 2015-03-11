@@ -7,6 +7,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -217,7 +218,65 @@ abstract public class AbstractSolver {
     abstract protected void setObjective() throws Exception;
     abstract protected int preBuildSolution() throws Exception;
     abstract protected int pastBuildSolution() throws Exception;
-    abstract protected FTree buildSolution() throws Exception;
+    abstract protected boolean[] getVariableAssignment() throws Exception;
+    abstract protected double getSolverScore() throws Exception;
+
+    protected FTree buildSolution() throws Exception {
+        final double score = getSolverScore();
+
+        final boolean[] edesAreUsed = getVariableAssignment();
+        Fragment graphRoot = null;
+        final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();
+        final List<LossAnnotation<Object>> lAnos = graph.getLossAnnotations();
+        final List<FragmentAnnotation<Object>> fTrees = new ArrayList<FragmentAnnotation<Object>>();
+        final List<LossAnnotation<Object>> lTrees = new ArrayList<LossAnnotation<Object>>();
+        double rootScore = 0d;
+        // get root
+        {
+            int offset = edgeOffsets[graph.getRoot().getVertexId()];
+            for (int j = 0; j < graph.getRoot().getOutDegree(); ++j) {
+                if (edesAreUsed[edgeIds[offset]]) {
+                    final Loss l = losses.get(edgeIds[offset]);
+                    graphRoot = l.getTarget();
+                    rootScore = l.getWeight();
+                    break;
+                }
+                ++offset;
+            }
+        }
+        assert graphRoot != null;
+        if (graphRoot == null) return null;
+
+        final FTree tree = newTree(graph, new FTree(graphRoot.getFormula()), rootScore, rootScore);
+        for (FragmentAnnotation<Object> x : fAnos) fTrees.add(tree.addFragmentAnnotation(x.getAnnotationType()));
+        for (LossAnnotation<Object> x : lAnos) lTrees.add(tree.addLossAnnotation(x.getAnnotationType()));
+        final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
+        for (int k = 0; k < fAnos.size(); ++k) fTrees.get(k).set(tree.getRoot(), fAnos.get(k).get(graphRoot));
+
+        final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
+        stack.push(new Stackitem(tree.getRoot(), graphRoot));
+        while (!stack.isEmpty()) {
+            final Stackitem item = stack.pop();
+            final int u = item.graphNode.getVertexId();
+            int offset = edgeOffsets[u];
+            for (int j = 0; j < item.graphNode.getOutDegree(); ++j) {
+                if (edesAreUsed[edgeIds[offset]]) {
+                    final Loss l = losses.get(edgeIds[offset]);
+                    final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
+                    for (int k = 0; k < fAnos.size(); ++k)
+                        fTrees.get(k).set(child, fAnos.get(k).get(l.getTarget()));
+                    for (int k = 0; k < lAnos.size(); ++k)
+                        lTrees.get(k).set(child.getIncomingEdge(), lAnos.get(k).get(l));
+
+                    child.getIncomingEdge().setWeight(l.getWeight());
+                    stack.push(new Stackitem(child, l.getTarget()));
+                    scoring.setOverallScore(scoring.getOverallScore() + l.getWeight());
+                }
+                ++offset;
+            }
+        }
+        return tree;
+    }
 
 
 
