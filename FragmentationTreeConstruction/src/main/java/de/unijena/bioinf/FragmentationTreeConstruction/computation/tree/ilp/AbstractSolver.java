@@ -6,9 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
-import sun.reflect.generics.tree.Tree;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -198,7 +196,7 @@ abstract public class AbstractSolver implements TreeBuilder {
                 build();
 
             // pre-optimization, if needed (e.g. lower bounds)
-            int signal = preBuildSolution();
+            int signal = solveMIP();
             if(signal == AbstractSolver.SHALL_RETURN_NULL)
                 return null;
 
@@ -273,7 +271,7 @@ abstract public class AbstractSolver implements TreeBuilder {
      * @return
      * @throws Exception
      */
-    abstract protected int preBuildSolution() throws Exception;
+    abstract protected int solveMIP() throws Exception;
 
     /**
      * - a specific solver might need to do more (or release memory) after the solving process
@@ -284,7 +282,7 @@ abstract public class AbstractSolver implements TreeBuilder {
     abstract protected int pastBuildSolution() throws Exception;
 
     /**
-     * - having found a solution using 'preBuildSolution' this function shall return a boolean list representing
+     * - having found a solution using 'solveMIP' this function shall return a boolean list representing
      *   those edges being kept in the solution.
      * - result[i] == TRUE means the i-th edge is included in the solution, FALSE otherwise
      * @return
@@ -293,7 +291,7 @@ abstract public class AbstractSolver implements TreeBuilder {
     abstract protected boolean[] getVariableAssignment() throws Exception;
 
     /**
-     * - having found a solution using 'preBuildSolution' this function shall return the score of that solution
+     * - having found a solution using 'solveMIP' this function shall return the score of that solution
      *   (basically, the accumulated weight at the root of the resulting tree or the value of the maximized objective
      *    function, respectively)
      * @return

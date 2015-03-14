@@ -309,7 +309,7 @@ public class NewGurobiSolver extends AbstractSolver {
 
 
     @Override
-    protected int preBuildSolution() throws Exception {
+    protected int solveMIP() throws Exception {
         GurobiJni.tunemodel(this.model); //TODO: check: is this optimizing?
 
         if (GurobiJniAccess.get(this.model, GRB.IntAttr.Status) != GRB.OPTIMAL) {

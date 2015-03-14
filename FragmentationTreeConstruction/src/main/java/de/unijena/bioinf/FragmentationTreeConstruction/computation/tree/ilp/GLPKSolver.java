@@ -255,7 +255,7 @@ public class GLPKSolver extends AbstractSolver {
 
 
     @Override
-    protected int preBuildSolution() throws Exception {
+    protected int solveMIP() throws Exception {
 
         glp_smcp parm = new glp_smcp();
         GLPK.glp_init_smcp(parm);
