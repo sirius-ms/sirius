@@ -220,20 +220,85 @@ abstract public class AbstractSolver implements TreeBuilder {
 
 
     // functions used within 'build'
+
+    /**
+     * Variables in our problem are the edges of the given graph.
+     * In the solution, 0.0 means: edge is not used, while 1.0 means: edge is used
+     * @throws Exception
+     */
     abstract protected void defineVariables() throws Exception;
     abstract protected void defineVariablesWithStartValues( FTree presolvedTree) throws Exception;
+
+    /**
+     * - The sum of all edges kept in the solution (if existing) should be at least as high as the given lower bound
+     * - This information might be used by a solver to stop the calculation, when it is obviously not possible to
+     *   reach that condition.
+     * @throws Exception
+     */
     abstract protected void applyLowerBounds() throws Exception;
 
-    // functions used within 'setConstrains'
+    /**
+     * - for each vertex, take only one out-going edge at most
+     * => the sum of all variables as edges going away from v is equal or less 1
+     * @throws Exception
+     */
     abstract protected void setTreeConstraint() throws Exception;
+
+    /**
+     * - for each color, take only one incoming edge
+     * - the sum of all edges going into color c is equal or less than 1
+     * @throws Exception
+     */
     abstract protected void setColorConstraint() throws Exception;
+
+    /**
+     * - there should be at least one edge leading away from the root
+     * @throws Exception
+     */
     abstract protected void setMinimalTreeSizeConstraint() throws Exception;
 
     // functions used within 'solve'
+
+    /**
+     * maximize a function z, where z is the sum of edges (as integer) multiplied by their weights
+     * thus, this is a MIP problem, where the existence of edges in the solution is to be determined
+     * @throws Exception
+     */
     abstract protected void setObjective() throws Exception;
+
+    /**
+     * - in here, the implemented solver should solve the problem, so that the result can be build afterwards
+     * - a specific solver might need to set up more before starting the solving process
+     * - this is called after all constraints are applied
+     * @return
+     * @throws Exception
+     */
     abstract protected int preBuildSolution() throws Exception;
+
+    /**
+     * - a specific solver might need to do more (or release memory) after the solving process
+     * - this is called after the solver() has been executed
+     * @return
+     * @throws Exception
+     */
     abstract protected int pastBuildSolution() throws Exception;
+
+    /**
+     * - having found a solution using 'preBuildSolution' this function shall return a boolean list representing
+     *   those edges being kept in the solution.
+     * - result[i] == TRUE means the i-th edge is included in the solution, FALSE otherwise
+     * @return
+     * @throws Exception
+     */
     abstract protected boolean[] getVariableAssignment() throws Exception;
+
+    /**
+     * - having found a solution using 'preBuildSolution' this function shall return the score of that solution
+     *   (basically, the accumulated weight at the root of the resulting tree or the value of the maximized objective
+     *    function, respectively)
+     * @return
+     * @throws Exception
+     */
     abstract protected double getSolverScore() throws Exception;
 
     protected FTree buildSolution() throws Exception {
@@ -299,13 +364,10 @@ abstract public class AbstractSolver implements TreeBuilder {
     ///--- CLASS-METHODS ---///
     ///////////////////////////
 
-
-
-
-
     protected static FTree newTree(FGraph graph, FTree tree, double rootScore) {
         return newTree(graph, tree, rootScore, rootScore);
     }
+
 
     protected static FTree newTree(FGraph graph, FTree tree, double rootScore, double scoring) {
         tree.addAnnotation(ProcessedInput.class, graph.getAnnotationOrThrow(ProcessedInput.class));
@@ -329,6 +391,7 @@ abstract public class AbstractSolver implements TreeBuilder {
         }
         return tree;
     }
+
 
     /**
      * Check, whether or not the given tree 'tree' is the optimal solution for the optimal colorful
@@ -355,6 +418,7 @@ abstract public class AbstractSolver implements TreeBuilder {
         }
         return Math.abs(score) < 1e-9d;
     }
+
 
     @Override
     public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
@@ -418,9 +482,11 @@ abstract public class AbstractSolver implements TreeBuilder {
         }
     }
 
+
     protected void resetTimeLimit() {
         timeout = System.currentTimeMillis() + secondsPerDecomposition * 1000l;
     }
+
 
     @Override
     public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
@@ -435,15 +501,18 @@ abstract public class AbstractSolver implements TreeBuilder {
         }
     }
 
+
     @Override
     public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
         return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
     }
 
+
     @Override
     public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
         return null;
     }
+
 
     @Override
     public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {

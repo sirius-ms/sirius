@@ -159,7 +159,7 @@ public class NewGurobiSolver extends AbstractSolver {
 
     @Override
     protected void applyLowerBounds() throws GRBException {
-        if (LP_LOWERBOUND != 0) GurobiJniAccess.set(this.model, GRB.DoubleParam.Cutoff, 0.0);
+        if (LP_LOWERBOUND != 0) GurobiJniAccess.set(this.model, GRB.DoubleParam.Cutoff, LP_LOWERBOUND);
     }
 
 

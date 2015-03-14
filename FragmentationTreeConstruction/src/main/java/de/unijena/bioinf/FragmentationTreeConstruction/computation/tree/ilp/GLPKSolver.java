@@ -2,7 +2,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 import gnu.trove.list.array.TIntArrayList;
 import org.gnu.glpk.GLPK;
 import org.gnu.glpk.GLPKConstants;
@@ -10,24 +9,23 @@ import org.gnu.glpk.glp_prob;
 import org.gnu.glpk.glp_smcp;
 import org.gnu.glpk.SWIGTYPE_p_int;
 import org.gnu.glpk.SWIGTYPE_p_double;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
-import java.util.List;
 
 /**
  * NOTES:
- * - GLPK indices start with 1, not zero !!!
+ * - GLPK arrays have Num_Of_Variables + 1 entries, because the entry at index 0 is reserved for non-variable constants
  * - GLPK is not thread safe
  * - GLPK uses an index array of type 'SWIGTYPE_p_int' to set up constraints
- * - GLPKConstants.IV: Integer Variable, x € Int
+ * - GLPKConstants.IV: Integer Variable, x € Z
  * - GLPKConstants.CV: Continuous Variable, x € R
  * - GLPKConstants.DB: Double bound, lb < x < ub
+ * - GLPKConstants.LO: Only Lower Bound, lb < x < infinity
+ * TODO: GLPK is said to only allow structural variables to be integer!
  * TODO: TreeConstraint: is integer problem?
  * TODO: ColorConstraint: is integer problem?
  * TODO: timlimit?
  * TODO: global lower bound?
+ * TODO: row names are obsolete?
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver extends AbstractSolver {
@@ -127,8 +125,25 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected void applyLowerBounds() throws Exception {
+        // TODO: is this right?
 
+        // the sum of all edges kept in the solution should be higher than the given lower bound
+        if (LP_LOWERBOUND != 0) {
+            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VARIABLES);
+            GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, "low_bnd");
+            GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_LO, this.LP_LOWERBOUND, Double.POSITIVE_INFINITY);
+            SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(this.LP_NUM_OF_VARIABLES + 1);
+
+            int k = 1;
+            for (Loss l : this.losses) {
+                GLPK.doubleArray_setitem(rowValues, k, l.getWeight());
+                k++;
+            }
+
+            GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX, this.LP_NUM_OF_VARIABLES + 1, this.GLP_INDEX_ARRAY, rowValues);
+        }
     }
+
 
     @Override
     protected void setTreeConstraint() throws Exception {
@@ -137,9 +152,9 @@ public class GLPKSolver extends AbstractSolver {
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES);
 
         // create auxiliary variables first
-        for (int k=1; k<=this.LP_NUM_OF_VERTICES; k++) {
-            GLPK.glp_set_row_name(this.LP, k, "r"+k);
-            GLPK.glp_set_row_bnds(this.LP, k, GLPKConstants.GLP_IV, 0.0, 1.0); // right-hand-side | maximum one edge!
+        for (int r=CONSTR_START_INDEX; r <= CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES; r++) {
+            GLPK.glp_set_row_name(this.LP, r, "r"+r);
+            GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_DB, 0.0, 1.0); // right-hand-side | maximum one edge!
         }
 
         // set up row entries
@@ -151,12 +166,15 @@ public class GLPKSolver extends AbstractSolver {
             for (int i= edgeOffsets[k]+1; i<=LAST_INDEX; i++)
                 GLPK.doubleArray_setitem(rowValues, i, 1.0); // each edge is weighted equally here
 
+            GLPK.doubleArray_setitem(rowValues, LP_NUM_OF_VARIABLES + 1, 1.0); // right-hand side
+
             GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + k, this.LP_NUM_OF_VARIABLES + 1, this.GLP_INDEX_ARRAY, rowValues);
 
             // TODO: check - other entries zero by default?
             GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
         }
     }
+
 
     @Override
     protected void setColorConstraint() throws Exception {
@@ -166,9 +184,9 @@ public class GLPKSolver extends AbstractSolver {
         final boolean[] colorInUse = new boolean[COLOR_NUM];
 
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, COLOR_NUM);
-        for (int c=1; c<=COLOR_NUM; c++) {
+        for (int c=CONSTR_START_INDEX; c <= CONSTR_START_INDEX + COLOR_NUM; c++) {
             GLPK.glp_set_row_name(this.LP, c, "c" + c);
-            GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_IV, 0.0, 1.0);
+            GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_DB, 0.0, 1.0);
         }
 
         // get all edges of each color first. We can add each color-constraint afterwards + saving much memory!
@@ -184,17 +202,16 @@ public class GLPKSolver extends AbstractSolver {
         }
 
         // add constraints. Maximum one edge per color.
-        for (int c=0; c<COLOR_NUM; c++) {
+        for (int c=0; c < COLOR_NUM; c++) {
             SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(this.LP_NUM_OF_VARIABLES + 1); // alloc memory
             final TIntArrayList COL_ENTRIES = edgesOfColors[c];
             for (int i=0; i<COL_ENTRIES.size(); i++)
                 GLPK.doubleArray_setitem(rowValues, COL_ENTRIES.get(i), 1.0);
 
-            GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + c, this.LP_NUM_OF_VARIABLES + 1, this.GLP_INDEX_ARRAY, rowValues);
-
             GLPK.delete_doubleArray(rowValues); // free memory
         }
     }
+
 
     @Override
     protected void setMinimalTreeSizeConstraint() throws Exception {
@@ -203,7 +220,7 @@ public class GLPKSolver extends AbstractSolver {
         // returns the index of the first newly created row
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
         GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, "MinTree");
-        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_IV, 0.0, 1.0);
+        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_DB, 0.0, 1.0);
 
         final Fragment localRoot = graph.getRoot();
         final int fromIndex = edgeOffsets[localRoot.getVertexId()];
@@ -216,6 +233,7 @@ public class GLPKSolver extends AbstractSolver {
         GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX, this.LP_NUM_OF_VARIABLES+1, this.GLP_INDEX_ARRAY, rowValues);
         GLPK.delete_doubleArray(rowValues); // free memory
     }
+
 
     @Override
     protected void setObjective() throws Exception {
@@ -234,6 +252,7 @@ public class GLPKSolver extends AbstractSolver {
 
         assert (k == this.LP_NUM_OF_VARIABLES) : "the objective function should contain the same amount of coefs as the number of variables just!";
     }
+
 
     @Override
     protected int preBuildSolution() throws Exception {
@@ -288,6 +307,7 @@ public class GLPKSolver extends AbstractSolver {
         }
     }
 
+
     @Override
     protected int pastBuildSolution() throws Exception {
         GLPK.glp_delete_prob(this.LP); // free memory
@@ -314,6 +334,7 @@ public class GLPKSolver extends AbstractSolver {
 
         return assignments;
     }
+
 
     @Override
     protected double getSolverScore() throws Exception {
