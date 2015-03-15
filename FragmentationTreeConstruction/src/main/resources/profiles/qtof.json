@@ -215,10 +215,11 @@
     }, {
       "$name": "LossSizeScorer",
       "normalization": -5.310349962255842,
+      "adjustNormalizationBasedOnData": false,
       "distribution": {
         "$name": "LogNormalDistribution",
         "mean": 4.022526672023266,
-        "variance": 0.3124649410213113
+        "variance": 0.3124649410213113,
       }
     }],
     "lossScorers": [{

@@ -52,6 +52,9 @@ public interface Options extends BasicOptions, ProfileOptions, OutputOptions {
     @Option(shortName = "F", defaultValue = "0")
     public int getForceExplainedIntensity();
 
+    @Option(shortName="N", defaultValue = "0")
+    public int getForceExplainedPeaks();
+
     @Option(hidden = true, shortName = "C")
     public boolean isIsotopeFilteringCheat();
 

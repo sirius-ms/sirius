@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
     private DensityFunction distribution;
     private double normalization;
 
+    private boolean adjustNormalizationBasedOnData;
+
     public LossSizeScorer() {
         this(LEARNED_DISTRIBUTION, LEARNED_NORMALIZATION);
     }
@@ -26,6 +29,15 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
     public LossSizeScorer(DensityFunction distribution, double normalization) {
         this.distribution = distribution;
         this.normalization = normalization;
+        this.adjustNormalizationBasedOnData = false;
+    }
+
+    public boolean isAdjustNormalizationBasedOnData() {
+        return adjustNormalizationBasedOnData;
+    }
+
+    public void setAdjustNormalizationBasedOnData(boolean adjustNormalizationBasedOnData) {
+        this.adjustNormalizationBasedOnData = adjustNormalizationBasedOnData;
     }
 
     public double getNormalization() {
@@ -45,7 +57,7 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
     }
 
     private final double scoring(double mass) {
-        return Math.log(distribution.getDensity(mass)) - normalization;
+        return Math.log(Math.max(1e-12, distribution.getDensity(mass))) - normalization;
     }
 
     @Override
@@ -55,11 +67,31 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores) {
+        final TDoubleArrayList lossSizeScores = adjustNormalizationBasedOnData ? new TDoubleArrayList() : null;
         for (int fragment=0; fragment < peaks.size(); ++fragment) {
             final double fragmentMass = peaks.get(fragment).getMass();
+            double bestScore = Double.NEGATIVE_INFINITY;
             for (int parent=fragment+1; parent < peaks.size(); ++parent) {
                 final double parentMass = peaks.get(parent).getMass();
-                scores[parent][fragment] += scoring(parentMass-fragmentMass);
+                final double score = scoring(parentMass-fragmentMass);
+                scores[parent][fragment] += score;
+                if (adjustNormalizationBasedOnData) {
+                    bestScore = Math.max(bestScore, score);
+                }
+            }
+            if (adjustNormalizationBasedOnData && !Double.isInfinite(bestScore)) {
+                lossSizeScores.add(bestScore);
+            }
+        }
+        if (adjustNormalizationBasedOnData && lossSizeScores.size() > 0) {
+            final double avgScore = lossSizeScores.sum()/((double)lossSizeScores.size());
+            System.out.println(avgScore);
+            if (avgScore < 0 && !Double.isInfinite(avgScore)) {
+                for (int fragment=0; fragment < peaks.size(); ++fragment) {
+                    for (int parent=fragment+1; parent < peaks.size(); ++parent) {
+                        scores[parent][fragment] += -avgScore;
+                    }
+                }
             }
         }
     }
@@ -68,11 +100,14 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         this.distribution = (DensityFunction)helper.unwrap(document, document.getFromDictionary(dictionary, "distribution"));
         this.normalization = document.getDoubleFromDictionary(dictionary, "normalization");
+        if (document.hasKeyInDictionary(dictionary, "adjustNormalizationBasedOnData"))
+            this.adjustNormalizationBasedOnData = document.getBooleanFromDictionary(dictionary, "adjustNormalizationBasedOnData");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "distribution", helper.wrap(document, distribution));
         document.addToDictionary(dictionary, "normalization", normalization);
+        document.addToDictionary(dictionary, "adjustNormalizationBasedOnData", adjustNormalizationBasedOnData);
     }
 }

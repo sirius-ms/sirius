@@ -859,7 +859,7 @@ public class Main {
                                 .without(blacklist).withRecalibration().optimalTree();
                         if (verbose) printResult(tree);
                     } else if (analyzer.getRecalibrationMethod() != null) {
-                        if (options.getForceExplainedIntensity() > 0) {
+                        if (options.getForceExplainedIntensity() > 0 || options.getForceExplainedPeaks() > 0) {
                             while (true) {
                                 final FTree t = analyzer.recalibrate(correctTree);
                                 AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
@@ -867,11 +867,13 @@ public class Main {
                                 correctTree = analyzer.recalibrate(t, true);
                                 final double intensity = intensityOfTree(correctTree) * 100d;
                                 final TreeSizeScorer scorer = FragmentationPatternAnalysis.getOrCreateByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
-                                if (intensity < options.getForceExplainedIntensity() && scorer.getTreeSizeScore() <= 5) {
+                                if ((intensity < options.getForceExplainedIntensity() || (t.numberOfVertices() < options.getForceExplainedPeaks() && input.getMergedPeaks().size() > options.getForceExplainedPeaks())) && scorer.getTreeSizeScore() <= 5) {
                                     scorer.setTreeSizeScore(scorer.getTreeSizeScore() + 0.5d);
                                     input = analyzer.preprocessing(experiment);
                                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
-                                } else break;
+                                } else {
+                                    break;
+                                }
                             }
                         }
                         tree = correctTree;
@@ -1119,7 +1121,7 @@ public class Main {
             fw = new FileWriter(f);
             final TreeAnnotation ano = new TreeAnnotation(tree, pipeline);
             final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
-            ano.getAdditionalProperties().put(tree.getRoot(), new ArrayList<String>(Arrays.asList("CompoundScore: " + scoring.getOverallScore())));
+            ano.getAdditionalProperties().put(tree.getRoot(), new ArrayList<String>(Arrays.asList("CompoundScore: " + scoring.getOverallScore(), "Explained: " + (int)Math.round(intensityOfTree(tree)*100) + " %")));
             if (isoScore != null) ano.getAdditionalProperties().get(tree.getRoot()).add("Isotope: " + isoScore);
             if (scoring.getRecalibrationBonus() > 0d)
                 ano.getAdditionalProperties().put(tree.getRoot(), new ArrayList<String>(Arrays.asList("Rec.Bonus: " + scoring.getRecalibrationBonus())));
@@ -1136,6 +1138,5 @@ public class Main {
             }
         }
     }
-
 
 }
