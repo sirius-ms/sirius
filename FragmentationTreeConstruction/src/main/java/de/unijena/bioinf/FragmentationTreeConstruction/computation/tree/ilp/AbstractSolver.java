@@ -17,16 +17,18 @@ import java.util.Map;
  */
 abstract public class AbstractSolver implements TreeBuilder {
 
-    final static int SOLVER_TYPE_GUROBI = 0;
-    final static int SOLVER_TYPE_NEWGUROBI = 1;
-    final static int SOLVER_TYPE_GLPK = 2;
+    enum SolverType {
+        SOLVER_TYPE_GUROBI,
+        SOLVER_TYPE_NEWGUROBI,
+        SOLVER_TYPE_GLPK
+    }
 
     final static int FINISHED = 0;
     final static int SHALL_RETURN_NULL = 0;
     final static int SHALL_BUILD_SOLUTION = 1;
 
     protected boolean built;
-    protected int solverType = 0;
+    protected SolverType solverType = SolverType.SOLVER_TYPE_NEWGUROBI;
 
     // graph information
     protected final FGraph graph;
@@ -456,15 +458,15 @@ abstract public class AbstractSolver implements TreeBuilder {
             */
 
             switch (this.solverType) {
-                case AbstractSolver.SOLVER_TYPE_GUROBI:
+                case SOLVER_TYPE_GUROBI:
                     //solver = new GurobiSolver(graph, input, lowerbound, feasibleSolver,
                     //        (int) Math.min(Integer.MAX_VALUE, timeToCompute));
                     throw new UnsupportedOperationException("Normal gurobi solver not usable yet!");
-                case AbstractSolver.SOLVER_TYPE_NEWGUROBI:
+                case SOLVER_TYPE_NEWGUROBI:
                     solver = new NewGurobiSolver(graph, input, lowerbound, feasibleSolver,
                             (int) Math.min(Integer.MAX_VALUE, timeToCompute));
                     break;
-                case AbstractSolver.SOLVER_TYPE_GLPK:
+                case SOLVER_TYPE_GLPK:
                     solver = new GLPKSolver(graph, input, lowerbound, feasibleSolver,
                             (int) Math.min(Integer.MAX_VALUE, timeToCompute));
                     break;
@@ -526,5 +528,10 @@ abstract public class AbstractSolver implements TreeBuilder {
             this.treeNode = treeNode;
             this.graphNode = graphNode;
         }
+    }
+
+
+    protected void setSolverType(SolverType newType) {
+        this.solverType = newType;
     }
 }
