@@ -321,7 +321,7 @@ abstract public class AbstractSolver implements TreeBuilder {
                 ++offset;
             }
         }
-        //assert graphRoot != null;
+        assert graphRoot != null;
         if (graphRoot == null) return null;
 
         final FTree tree = newTree(graph, new FTree(graphRoot.getFormula()), rootScore, rootScore);

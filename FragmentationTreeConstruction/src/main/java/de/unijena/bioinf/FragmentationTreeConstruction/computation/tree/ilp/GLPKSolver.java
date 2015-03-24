@@ -269,7 +269,7 @@ public class GLPKSolver extends AbstractSolver {
         // returns the index of the first newly created row
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
         GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
-        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_DB, 0.0, 1.0);
+        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_DB, 1.0, 1.0);
 
         final Fragment localRoot = graph.getRoot();
         final int fromIndex = edgeOffsets[localRoot.getVertexId()];
