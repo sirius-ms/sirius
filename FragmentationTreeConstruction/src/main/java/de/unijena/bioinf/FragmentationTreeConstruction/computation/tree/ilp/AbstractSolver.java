@@ -201,8 +201,7 @@ abstract public class AbstractSolver implements TreeBuilder {
                 return null;
 
             final FTree TREE = buildSolution();
-
-            if(!isComputationCorrect(TREE, this.graph))
+            if(TREE != null && !isComputationCorrect(TREE, this.graph))
                 throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
 
             // free any memory, if necessary
@@ -322,7 +321,7 @@ abstract public class AbstractSolver implements TreeBuilder {
                 ++offset;
             }
         }
-        assert graphRoot != null;
+        //assert graphRoot != null;
         if (graphRoot == null) return null;
 
         final FTree tree = newTree(graph, new FTree(graphRoot.getFormula()), rootScore, rootScore);
