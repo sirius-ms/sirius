@@ -503,7 +503,7 @@ public class Main {
                 assert experiment.getIonization() != null;
 
                 // isotope pattern analysis
-                final List<IsotopePattern> patterns = useIsotopes(options) ? deIsotope.getPatternExtractor().extractPattern(experiment.getMergedMs1Spectrum())
+                final List<IsotopePattern> patterns = useIsotopes(options) ? deIsotope.getPatternExtractor().extractPattern(experiment.getMeasurementProfile(), experiment.getMergedMs1Spectrum())
                         : new ArrayList<IsotopePattern>();
                 IsotopePattern pattern = null;
                 for (IsotopePattern iso : patterns) {
@@ -1119,6 +1119,12 @@ public class Main {
         tree.normalizeStructure();
         FileWriter fw = null;
         try {
+
+            //
+            pipeline.recalculateScores(tree);
+            System.out.println(tree);
+            //
+
             fw = new FileWriter(f);
             final TreeAnnotation ano = new TreeAnnotation(tree, pipeline);
             final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);

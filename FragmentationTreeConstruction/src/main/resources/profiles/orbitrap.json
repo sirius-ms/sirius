@@ -106,7 +106,7 @@
     },
     "cutoff": 0.01,
     "patternExtractor": {
-      "$name": "extraction.AlreadyExtracted"
+      "$name": "extraction.ExtractAll"
     },
     "intensityOffset": 0.01
   },

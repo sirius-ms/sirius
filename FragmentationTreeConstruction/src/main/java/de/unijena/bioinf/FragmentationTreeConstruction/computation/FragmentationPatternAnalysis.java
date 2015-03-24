@@ -472,11 +472,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * As the single scores are forgotten during tree computation, they have to be computed again.
      * @param tree
      */
-    public void recalculateScores(FTree tree) {
+    public boolean recalculateScores(FTree tree) {
         final Iterator<Loss> edges = tree.lossIterator();
         final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-        final ScoredFormulaMap map = tree.getAnnotationOrThrow(ScoredFormulaMap.class);
 
         final Object[] preparedLoss = new Object[lossScorers.size()];
         final Object[] preparedFrag = new Object[decompositionScorers.size()];
@@ -492,9 +491,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             int i=0;
             for (DecompositionScorer peakScorer : this.decompositionScorers) {
                 fragScores.add(peakScorer.getClass().getSimpleName());
-                decompositionScorers.get(i).prepare(input);
+                preparedFrag[i++] = peakScorer.prepare(input);
             }
-            fragScores.add("user"); // user submitted scores
             fragmentScores = fragScores.toArray(new String[fragScores.size()]);
         }
         {
@@ -529,8 +527,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final Score lscore = new Score(lossScores);
             int k=0;
             for (int i=0; i < peakPairScorers.size(); ++i) {
-                peakPairScorers.get(i).score(Arrays.asList(peakAno.get(u), peakAno.get(v)), input,pseudoMatrix);
-                lscore.set(k++, pseudoMatrix[0][1]);
+                pseudoMatrix[0][0]=pseudoMatrix[0][1]=pseudoMatrix[1][0]=pseudoMatrix[1][1]=0.0d;
+                peakPairScorers.get(i).score(Arrays.asList(peakAno.get(v), peakAno.get(u)), input,pseudoMatrix);
+                lscore.set(k++, pseudoMatrix[1][0]);
             }
             for (int i=0; i < lossScorers.size(); ++i) {
                 lscore.set(k++, lossScorers.get(i).score(loss, input, preparedLoss[i]));
@@ -541,13 +540,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final Score fscore = new Score(fragmentScores);
             k=0;
             for (int i=0; i < fragmentPeakScorers.size(); ++i) {
+                pseudoMatrix[0][0]=pseudoMatrix[0][1]=pseudoMatrix[1][0]=pseudoMatrix[1][1]=0.0d;
                 fragmentPeakScorers.get(i).score(Arrays.asList(peakAno.get(v)), input,pseudoMatrix[0]);
                 fscore.set(k++, pseudoMatrix[0][0]);
             }
             for (int i=0; i < decompositionScorers.size(); ++i) {
-                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(), peakAno.get(u), input, preparedFrag[i]));
+                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(), peakAno.get(v), input, preparedFrag[i]));
             }
-            fscore.set(k, map.get(v.getFormula()));
+            fAno.set(v, fscore);
         }
         // set root
         final Fragment root = tree.getRoot();
@@ -558,6 +558,21 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             rootScore.set(k, score);
         }
         fAno.set(root, rootScore);
+
+        // check scoreSum
+        double scoreSum = 0d;
+        for (Loss l : tree.losses()) {
+            Score s = lAno.get(l);
+            scoreSum += s.sum();
+            s = fAno.get(l.getTarget());
+            scoreSum += s.sum();
+        }
+        scoreSum += fAno.get(tree.getRoot()).sum();
+        System.out.println(scoreSum);
+        System.out.println(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+        System.out.println("--");
+        return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
+
     }
 
     protected FGraph scoreGraph(FGraph graph) {
