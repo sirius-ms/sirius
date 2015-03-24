@@ -32,7 +32,7 @@ public interface RecalibrationMethod extends Parameterized {
 
         /**
          * @return a hint if it is necessary to recompute the tree. Recomputing takes additional time (but not much,
-         * as there is a strict lowerbound) but may give you more score bonus.
+         * as there is a strict LP_LOWERBOUND) but may give you more score bonus.
          */
         public boolean shouldRecomputeTree();
 

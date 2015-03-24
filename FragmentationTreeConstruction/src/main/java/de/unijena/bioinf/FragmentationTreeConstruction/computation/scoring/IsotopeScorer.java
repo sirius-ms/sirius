@@ -497,8 +497,8 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
             final boolean[] assignments = new boolean[variables.length];
             //final double tolerance = model.get(GRB.DoubleAttr.IntVio);
             for (int i=0; i < assignments.length; ++i) {
-                assert usedPatterns[i] > -0.5 : "lowerbound violation for var " + i + " with value " + usedPatterns[i];
-                assert usedPatterns[i] < 1.5 : "lowerbound violation for var " + i + " with value " + usedPatterns[i];;
+                assert usedPatterns[i] > -0.5 : "LP_LOWERBOUND violation for var " + i + " with value " + usedPatterns[i];
+                assert usedPatterns[i] < 1.5 : "LP_LOWERBOUND violation for var " + i + " with value " + usedPatterns[i];;
                 assignments[i] = (Math.round(usedPatterns[i]) == 1);
             }
             return assignments;
