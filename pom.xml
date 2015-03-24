@@ -39,6 +39,25 @@
             <version>4.6</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.pride.tools</groupId>
+            <artifactId>jmzreader</artifactId>
+            <version>1.2.0</version>
+            <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>uk.ac.ebi.pride.tools</groupId>
+            <artifactId>mzxml-parser</artifactId>
+            <version>1.3.3</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.pride.tools</groupId>
+            <artifactId>mzml-wrapper</artifactId>
+            <version>1.3.3</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <!--                                                               -->
@@ -56,6 +75,11 @@
             <id>bioinf-jena</id>
             <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
             <name>Bioinf Jena</name>
+        </repository>
+        <repository>
+            <id>ebi-repo</id>
+            <name>The EBI internal repository</name>
+            <url>http://www.ebi.ac.uk/~maven/m2repo</url>
         </repository>
     </repositories>
 

@@ -46,6 +46,11 @@ public class JenaGCMSExperiment implements Ms2Experiment {
     }
 
     @Override
+    public double getRetentionTime() {
+        return 0;
+    }
+
+    @Override
     public double getMoleculeNeutralMass() {
         return compoundFormula != null ? compoundFormula.getMass() : Double.NaN;
     }

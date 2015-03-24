@@ -29,8 +29,7 @@ public class JenaMsExperiment implements Ms2Experiment {
         this.ms2Spectra = ms2Spectra;
     }
 
-
-public String getCompoundName() {
+    public String getCompoundName() {
         return compoundName;
     }
 
@@ -56,6 +55,11 @@ public String getCompoundName() {
     @Override
     public double getIonMass() {
         return ionMass;
+    }
+
+    @Override
+    public double getRetentionTime() {
+        return 0;
     }
 
     public void setMeasurementProfile(MeasurementProfile measurementProfile) {
