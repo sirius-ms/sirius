@@ -383,9 +383,12 @@ class DP {
                 final int S = subsetsInChild[j] | W.vertexBit;
                 assert ((S & ~W.vertexBit) & W.bitset) == (S & ~W.vertexBit);
                 if ((S & bitU) != 0) continue;
-                final double score = W.getDirect(j) + edgeWeight;
-                if (score > 0) {
-                    W_u.update(S | bitU, score);
+                final double subscore = W.get(subsetsInChild[j]);
+                if (subscore > 0) {
+                    final double score = subscore/*W.getDirect(j)*/ + edgeWeight;
+                    if (score > 0) {
+                        W_u.update(S | bitU, score);
+                    }
                 }
             }
         }

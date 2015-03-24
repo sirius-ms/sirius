@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.BoundedDoubleQueue;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
@@ -102,10 +103,27 @@ public class MultipleTreeComputation {
         return opt;
     }
 
+    /**
+     * @see de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation#iterator(boolean)
+     */
     public TreeIterator iterator() {
+        return iterator(false);
+    }
+
+    /**
+     * returns an iterator over all trees. The tree computation is done in each iteration step.
+     * The iteration is not in order of the score. To find the optimal tree, all trees have to be iterated.
+     * However, if a maximum number of trees is given (for example: 1), a lowerbound will be increased to speed up
+     * tree computation. Computation of trees with too low scores will be aborted early. The iterator will then return
+     * null values.
+     * @param oncePerNext if true, only one tree is computed with each invocation of next(). This tree might be null, if it's score is less than the lowerbound. If false, null values are skipped. However, the last invocation of next() might lead to a null value, as hasNext() does not know if the next value will be null.
+     * @return
+     */
+    public TreeIterator iterator(final boolean oncePerNext) {
         return new TreeIterator() {
             private final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
             private double lb = lowerbound;
+            private BoundedDoubleQueue scores = maximalNumber < formulas.size() ? new BoundedDoubleQueue(maximalNumber) : null;
             private FGraph lastGraph;
 
             @Override
@@ -118,7 +136,14 @@ public class MultipleTreeComputation {
                 while (hasNext()) {
                     lastGraph = queue.next();
                     FTree tree = computeTree(lastGraph, lb, recalibration);
-                    if (tree != null) return tree;
+                    if (tree != null) {
+                        if (scores != null) {
+                            scores.add(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+                            setLowerbound(Math.max(scores.min(), getLowerbound()));
+                        }
+                        return tree;
+                    }
+                    if (oncePerNext) return tree;
                 }
                 lastGraph = null;
                 return null;

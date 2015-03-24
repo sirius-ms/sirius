@@ -64,6 +64,11 @@ public class Ms2ExperimentImpl implements Ms2Experiment {
         return ionMass;
     }
 
+    @Override
+    public double getRetentionTime() {
+        return 0;
+    }
+
     public void setIonMass(double ionMass) {
         this.ionMass = ionMass;
     }

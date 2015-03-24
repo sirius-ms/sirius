@@ -467,6 +467,99 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return reduceGraph(scoreGraph(graphBuilder.fillGraph(graph)));
     }
 
+    /**
+     * Adds Score annotations to vertices and losses of the tree for every scoring method.
+     * As the single scores are forgotten during tree computation, they have to be computed again.
+     * @param tree
+     */
+    public void recalculateScores(FTree tree) {
+        final Iterator<Loss> edges = tree.lossIterator();
+        final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
+        final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        final ScoredFormulaMap map = tree.getAnnotationOrThrow(ScoredFormulaMap.class);
+
+        final Object[] preparedLoss = new Object[lossScorers.size()];
+        final Object[] preparedFrag = new Object[decompositionScorers.size()];
+
+        final String[] fragmentScores;
+        final String[] lossScores;
+        final String[] rootScores;
+        {
+            final ArrayList<String> fragScores = new ArrayList<String>();
+            for (PeakScorer peakScorer : this.fragmentPeakScorers) {
+                fragScores.add(peakScorer.getClass().getSimpleName());
+            }
+            int i=0;
+            for (DecompositionScorer peakScorer : this.decompositionScorers) {
+                fragScores.add(peakScorer.getClass().getSimpleName());
+                decompositionScorers.get(i).prepare(input);
+            }
+            fragScores.add("user"); // user submitted scores
+            fragmentScores = fragScores.toArray(new String[fragScores.size()]);
+        }
+        {
+            final ArrayList<String> lScores = new ArrayList<String>();
+            for (PeakPairScorer lossScorer : this.peakPairScorers) {
+                lScores.add(lossScorer.getClass().getSimpleName());
+            }
+            int i=0;
+            for (LossScorer lossScorer : this.lossScorers) {
+                lScores.add(lossScorer.getClass().getSimpleName());
+                preparedLoss[i++] = lossScorer.prepare(input);
+            }
+            lossScores = lScores.toArray(new String[lScores.size()]);
+        }
+        {
+            final ArrayList<String> fragScores = new ArrayList<String>();
+            for (DecompositionScorer peakScorer : this.rootScorers) {
+                fragScores.add(peakScorer.getClass().getSimpleName());
+            }
+            rootScores = fragScores.toArray(new String[fragScores.size()]);
+        }
+
+        final FragmentAnnotation<Score> fAno = tree.getOrCreateFragmentAnnotation(Score.class);
+        final LossAnnotation<Score> lAno = tree.getOrCreateLossAnnotation(Score.class);
+        final double[][] pseudoMatrix = new double[2][2];
+        while (edges.hasNext()) {
+            final Loss loss = edges.next();
+            final Fragment u = loss.getSource();
+            final Fragment v = loss.getTarget();
+
+            // add loss scores
+            final Score lscore = new Score(lossScores);
+            int k=0;
+            for (int i=0; i < peakPairScorers.size(); ++i) {
+                peakPairScorers.get(i).score(Arrays.asList(peakAno.get(u), peakAno.get(v)), input,pseudoMatrix);
+                lscore.set(k++, pseudoMatrix[0][1]);
+            }
+            for (int i=0; i < lossScorers.size(); ++i) {
+                lscore.set(k++, lossScorers.get(i).score(loss, input, preparedLoss[i]));
+            }
+            lAno.set(loss, lscore);
+
+            // add fragment scores
+            final Score fscore = new Score(fragmentScores);
+            k=0;
+            for (int i=0; i < fragmentPeakScorers.size(); ++i) {
+                fragmentPeakScorers.get(i).score(Arrays.asList(peakAno.get(v)), input,pseudoMatrix[0]);
+                fscore.set(k++, pseudoMatrix[0][0]);
+            }
+            for (int i=0; i < decompositionScorers.size(); ++i) {
+                fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(), peakAno.get(u), input, preparedFrag[i]));
+            }
+            fscore.set(k, map.get(v.getFormula()));
+        }
+        // set root
+        final Fragment root = tree.getRoot();
+        final Score rootScore = new Score(rootScores);
+        for (int k=0; k < rootScorers.size(); ++k) {
+            final Object prepared = rootScorers.get(k).prepare(input);
+            final double score = ((DecompositionScorer<Object>)rootScorers.get(k)).score(root.getFormula(), peakAno.get(root), input, prepared);
+            rootScore.set(k, score);
+        }
+        fAno.set(root, rootScore);
+    }
+
     protected FGraph scoreGraph(FGraph graph) {
         // score graph
         final Iterator<Loss> edges = graph.lossIterator();

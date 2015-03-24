@@ -342,7 +342,7 @@ public class Main {
 
         if (options.isDp()) {
             System.out.println("Use DP for tree computation");
-            analyzer.setTreeBuilder(new DPTreeBuilder(15));
+            analyzer.setTreeBuilder(new DPTreeBuilder(17));
         }
 
 
@@ -887,6 +887,7 @@ public class Main {
                 }
                 computationTime = System.nanoTime() - computationTime;
                 computationTime /= 1000000;
+                System.out.println("Computation time: " + computationTime + " ms");
                 if (correctTree != null && rankWriter != null) {
                     rankWriter.print(escapeCSV(f.getName()) + "," + correctTree.getRoot().getFormula() + "," + correctTree.getRoot().getFormula().getMass() + "," + input.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() + "," +
                             rank +

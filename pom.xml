@@ -11,6 +11,7 @@
         <module>FTCLI</module>
         <module>FTAnalysis</module>
         <module>TreeViewer</module>
+        <module>FTSVM</module>
         <!--<module>GCMSAnalysis</module>-->
         <module>FTEval</module>
     </modules>
