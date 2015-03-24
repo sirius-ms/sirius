@@ -8,10 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
@@ -22,6 +19,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -364,6 +364,37 @@ public class Main {
             } catch (IOException e) {
                 System.err.println("Cannot create profile file: " + e);
             }
+        }
+
+        {
+            analyzer.setTreeBuilder(new TreeBuilder() {
+                @Override
+                public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
+                    return null;
+                }
+
+                @Override
+                public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
+                    return buildTree(input, graph, lowerbound);
+                }
+
+                @Override
+                public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
+                    //return new GurobiSolver().buildTree(input, graph, lowerbound);
+                    System.out.println(graph.getRoot().getChildren().get(0).getFormula());
+                    return new GLPKSolver(graph, lowerbound).buildTree(input, graph, lowerbound);
+                }
+
+                @Override
+                public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
+                    return null;
+                }
+
+                @Override
+                public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
+                    return null;
+                }
+            });
         }
 
 

@@ -7,10 +7,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Spectar on 13.11.2014.
@@ -24,11 +21,11 @@ abstract public class AbstractSolver implements TreeBuilder {
     }
 
     final static int FINISHED = 0;
-    final static int SHALL_RETURN_NULL = 0;
-    final static int SHALL_BUILD_SOLUTION = 1;
+    final static int SHALL_RETURN_NULL = 1;
+    final static int SHALL_BUILD_SOLUTION = 2;
 
     protected boolean built;
-    protected SolverType solverType = SolverType.SOLVER_TYPE_NEWGUROBI;
+    protected SolverType solverType = SolverType.SOLVER_TYPE_GLPK;
 
     // graph information
     protected final FGraph graph;
@@ -98,6 +95,12 @@ abstract public class AbstractSolver implements TreeBuilder {
         if (graph == null) throw new NullPointerException("Cannot solve graph: graph is NULL!");
 
         this.graph = graph;
+        this.losses = new ArrayList<Loss>(graph.numberOfEdges());
+        for (Fragment f : graph) {
+            for (int k=0; k < f.getInDegree(); ++k) {
+                losses.add(f.getIncomingEdge(k));
+            }
+        }
         this.edgeIds = new int[graph.numberOfEdges()];
         this.edgeOffsets = new int[graph.numberOfVertices()];
 
@@ -125,7 +128,7 @@ abstract public class AbstractSolver implements TreeBuilder {
     public void build() {
         try {
             computeOffsets();
-            assert (edgeOffsets == null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
+            assert (edgeOffsets != null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
 
             if (feasibleSolver != null) {
                 final FTree presolvedTree = feasibleSolver.buildTree(input, graph, LP_LOWERBOUND);
@@ -160,15 +163,10 @@ abstract public class AbstractSolver implements TreeBuilder {
          * therefor, the i-th edge of some vertex u will have the id: edgeOffsets[u] + i - 1, if i=1 is the first edge.
          * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
           */
-        ArrayList<Loss> newLossArr = new ArrayList<Loss>(this.losses.size()+1);
-
         for (int k = 0; k < losses.size(); ++k) {
             final int u = losses.get(k).getSource().getVertexId();
             edgeIds[edgeOffsets[u]++] = k;
-            newLossArr.set(edgeOffsets[u]-1, losses.get(k)); // TODO: check, if that is necessary!
         }
-
-        this.losses = newLossArr;
 
         // by using the loop-code above -> edgeOffsets[k] = 2*OutEdgesOf(k), so subtract that 2 away
         for (int k = 0; k < edgeOffsets.length; ++k)

@@ -242,6 +242,9 @@ public class GurobiSolver implements TreeBuilder {
 
         protected static boolean isComputationCorrect(FTree tree, FGraph graph) {
             double score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+
+           // System.out.println("SCORE = " + score);
+
             final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
             for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
                 final Fragment t = e.getKey();
@@ -269,7 +272,7 @@ public class GurobiSolver implements TreeBuilder {
                 }
                 computeOffsets();
                 setConstraints();
-                setLowerbound();
+                //setLowerbound();
                 assert model.get(GRB.IntAttr.IsMIP) != 0;
                 built = true;
             } catch (GRBException e) {
@@ -289,6 +292,9 @@ public class GurobiSolver implements TreeBuilder {
                         return null;
                     }
                 }
+
+                System.out.println(-model.get(GRB.DoubleAttr.ObjVal));
+
                 final FTree tree = buildSolution();
                 if (!isComputationCorrect(tree, graph)) {
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
@@ -303,7 +309,7 @@ public class GurobiSolver implements TreeBuilder {
         protected void setConstraints() throws GRBException {
             setTreeConstraint();
             setColorConstraint();
-            setMinimalTreeSizeConstraint();
+            //setMinimalTreeSizeConstraint();
 
 
             // HACK!
