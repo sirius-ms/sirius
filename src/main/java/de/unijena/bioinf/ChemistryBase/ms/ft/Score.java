@@ -79,4 +79,11 @@ public class Score extends AbstractMap<String, Double> {
             }
         };
     }
+
+    public double sum() {
+        double s=0d;
+        for (int k=0; k < values.length; ++k)
+            s += values[k];
+        return s;
+    }
 }
