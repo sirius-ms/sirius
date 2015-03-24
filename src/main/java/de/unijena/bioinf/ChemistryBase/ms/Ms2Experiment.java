@@ -20,6 +20,12 @@ public interface Ms2Experiment extends MsExperiment{
      */
     public double getIonMass();
 
+    /**
+     * for LCMS runs only
+     * @return retention time of current spectrum
+     */
+    public double getRetentionTime();
+
     /***
      * The further methods provide information which is OPTIONAL. The algorithm should be able to handle cases in
      * which this methods return NULL.

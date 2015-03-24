@@ -2,10 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.utils.ChargedPeak;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -48,6 +45,11 @@ public class MutableMs2Experiment implements Ms2Experiment {
     @Override
     public double getIonMass() {
         return ionMass;
+    }
+
+    @Override
+    public double getRetentionTime() {
+        return 0;
     }
 
     @Override
