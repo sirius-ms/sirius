@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.IsotopePatternAnalysis.extraction.AlreadyExtracted;
+import de.unijena.bioinf.IsotopePatternAnalysis.extraction.ExtractAll;
 import de.unijena.bioinf.IsotopePatternAnalysis.extraction.PatternExtractor;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
@@ -124,7 +124,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     public IsotopePatternAnalysis() {
         this.isotopePatternScorers = new ArrayList<IsotopePatternScorer>();
         this.decomposer = new DecomposerCache();
-        this.patternExtractor = new AlreadyExtracted();
+        this.patternExtractor = new ExtractAll();
         this.isotopicDistribution = PeriodicTable.getInstance().getDistribution();
         this.cutoff = 0.01d;
         this.intensityOffset = 0d;
@@ -171,10 +171,27 @@ public class IsotopePatternAnalysis implements Parameterized {
         this.patternGenerator = patternGenerator;
     }
 
+    public List<IsotopePattern> extractPatterns(MsExperiment experiment, double targetMz, boolean allowAdducts) {
+        final List<IsotopePattern> patterns = new ArrayList<IsotopePattern>();
+        for (Spectrum spec : experiment.getMs1Spectra()) {
+            patterns.addAll(patternExtractor.extractPattern(experiment.getMeasurementProfile(), spec, targetMz, allowAdducts));
+        }
+        return patterns;
+    }
+
+    public List<IsotopePattern> deisotope(MsExperiment experiment, double targetMz, boolean allowAdducts) {
+        final List<IsotopePattern> patterns = extractPatterns(experiment, targetMz, allowAdducts);
+        final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>();
+        for (IsotopePattern pattern : patterns) {
+            candidates.add(deisotope(experiment, pattern));
+        }
+        return candidates;
+    }
+
     public List<IsotopePattern> deisotope(MsExperiment experiment) {
         final List<IsotopePattern> patterns = new ArrayList<IsotopePattern>();
         for (Spectrum spec : experiment.getMs1Spectra()) {
-            patterns.addAll(patternExtractor.extractPattern(spec));
+            patterns.addAll(patternExtractor.extractPattern(experiment.getMeasurementProfile(), spec));
         }
         final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>();
         for (IsotopePattern pattern : patterns) {
