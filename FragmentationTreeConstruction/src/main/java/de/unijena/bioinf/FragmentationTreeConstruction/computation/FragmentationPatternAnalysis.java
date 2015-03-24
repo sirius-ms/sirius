@@ -439,6 +439,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 0, Integer.MAX_VALUE, 1, recalibrationMethod != null, null);
     }
 
+    public GraphReduction getReduction() {
+        return reduction;
+    }
+
+    public void setReduction(GraphReduction reduction) {
+        this.reduction = reduction;
+    }
+
     public FGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
         // build Graph
         final FGraph graph = graphBuilder.fillGraph(
@@ -454,8 +462,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     private FGraph reduceGraph(FGraph fragments) {
-        return fragments;
-        //return reduceGraph(fragments, 0d);
+        if (reduction == null) return fragments;
+        return reduction.reduce(fragments, 0d);
     }
 
     public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<ScoredMolecularFormula>> candidatesPerParentPeak) {

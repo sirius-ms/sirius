@@ -13,6 +13,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction.TMinimalController;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.AbstractRecalibrationStrategy;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
@@ -367,6 +368,7 @@ public class Main {
         }
 
         {
+            analyzer.setReduction(new TMinimalController());
             analyzer.setTreeBuilder(new TreeBuilder() {
                 @Override
                 public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
