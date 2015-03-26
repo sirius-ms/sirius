@@ -9,11 +9,13 @@ import java.util.List;
  */
 public class IdentificationResult {
 
+    Instance instance;
     List<FTree> optTrees;
     FTree optTree;
 
-    public IdentificationResult(List<FTree> optTrees) {
+    public IdentificationResult(Instance instance, List<FTree> optTrees) {
         this.optTrees = optTrees;
         this.optTree = optTrees.isEmpty() ? null : optTrees.get(0);
+        this.instance = instance;
     }
 }
