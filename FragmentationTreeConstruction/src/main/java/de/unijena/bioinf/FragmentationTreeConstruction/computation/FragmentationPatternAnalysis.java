@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
@@ -494,11 +495,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         {
             final ArrayList<String> fragScores = new ArrayList<String>();
             for (PeakScorer peakScorer : this.fragmentPeakScorers) {
-                fragScores.add(peakScorer.getClass().getSimpleName());
+                fragScores.add(getScoringMethodName(peakScorer));
             }
             int i=0;
             for (DecompositionScorer peakScorer : this.decompositionScorers) {
-                fragScores.add(peakScorer.getClass().getSimpleName());
+                fragScores.add(getScoringMethodName(peakScorer));
                 preparedFrag[i++] = peakScorer.prepare(input);
             }
             fragmentScores = fragScores.toArray(new String[fragScores.size()]);
@@ -506,11 +507,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         {
             final ArrayList<String> lScores = new ArrayList<String>();
             for (PeakPairScorer lossScorer : this.peakPairScorers) {
-                lScores.add(lossScorer.getClass().getSimpleName());
+                lScores.add(getScoringMethodName(lossScorer));
             }
             int i=0;
             for (LossScorer lossScorer : this.lossScorers) {
-                lScores.add(lossScorer.getClass().getSimpleName());
+                lScores.add(getScoringMethodName(lossScorer));
                 preparedLoss[i++] = lossScorer.prepare(input);
             }
             lossScores = lScores.toArray(new String[lScores.size()]);
@@ -518,7 +519,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         {
             final ArrayList<String> fragScores = new ArrayList<String>();
             for (DecompositionScorer peakScorer : this.rootScorers) {
-                fragScores.add(peakScorer.getClass().getSimpleName());
+                fragScores.add(getScoringMethodName(peakScorer));
             }
             rootScores = fragScores.toArray(new String[fragScores.size()]);
         }
@@ -581,6 +582,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         System.out.println("--");
         return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
 
+    }
+
+    private static String getScoringMethodName(Object instance) {
+        Class<? extends Object> someClass = instance.getClass();
+        if (someClass.isAnnotationPresent(Called.class)) {
+            return someClass.getAnnotation(Called.class).value();
+        } else return someClass.getName();
     }
 
     protected FGraph scoreGraph(FGraph graph) {

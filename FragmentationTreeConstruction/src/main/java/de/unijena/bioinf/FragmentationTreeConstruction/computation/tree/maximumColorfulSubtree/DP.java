@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 
 import java.util.*;

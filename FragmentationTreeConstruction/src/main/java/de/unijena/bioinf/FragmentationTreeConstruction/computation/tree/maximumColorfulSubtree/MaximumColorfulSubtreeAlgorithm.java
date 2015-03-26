@@ -2,7 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 
 import java.util.Arrays;
 import java.util.List;
