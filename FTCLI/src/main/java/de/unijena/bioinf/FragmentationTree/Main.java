@@ -23,6 +23,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBu
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.NewGurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -367,36 +368,12 @@ public class Main {
             }
         }
 
+
+        // choose TreeBuilder
         {
             analyzer.setReduction(new TMinimalController());
-            analyzer.setTreeBuilder(new TreeBuilder() {
-                @Override
-                public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
-                    return null;
-                }
-
-                @Override
-                public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
-                    return buildTree(input, graph, lowerbound);
-                }
-
-                @Override
-                public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
-                    //return new GurobiSolver().buildTree(input, graph, lowerbound);
-                    System.out.println(graph.getRoot().getChildren().get(0).getFormula());
-                    return new GLPKSolver(graph, lowerbound).buildTree(input, graph, lowerbound);
-                }
-
-                @Override
-                public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
-                    return null;
-                }
-
-                @Override
-                public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
-                    return null;
-                }
-            });
+            analyzer.setTreeBuilder(new GLPKSolver());
+            //analyzer.setTreeBuilder(new NewGurobiSolver());
         }
 
 
