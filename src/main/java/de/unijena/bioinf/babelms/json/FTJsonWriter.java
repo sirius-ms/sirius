@@ -1,5 +1,8 @@
 package de.unijena.bioinf.babelms.json;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.WriteIntoDataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 public class FTJsonWriter {
+
+    private ParameterHelper helper = ParameterHelper.getParameterHelper();
 
     public void writeTree(Writer writer, FTree tree) throws IOException {
         if (!(writer instanceof BufferedWriter)) writer=new BufferedWriter(writer);
@@ -51,15 +56,16 @@ public class FTJsonWriter {
         {
             writer.object();
             for (Map.Entry<Class<Object>, Object> entry : graph.getAnnotations().entrySet()) {
+                if (graph.isAliasAnnotation(entry.getKey())) continue;
                 if (!FTSpecials.writeSpecialAnnotation(writer, entry.getKey(), entry.getValue())) {
-                    writer.key(entry.getKey().getName());
-                    writer.value(new JSONObject(entry.getValue()));
+                    writeAnotationValue(writer, entry.getKey(), entry.getValue());
                 }
             }
             writer.endObject();
         }
 
         final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();
+        final List<LossAnnotation<Object>> lAnos = graph.getLossAnnotations();
 
         writer.key("fragments");
         writer.array();
@@ -69,7 +75,9 @@ public class FTJsonWriter {
         writer.endArray();
         writer.key("losses");
         writer.array();
-
+        for (Loss l : graph.losses()) {
+            writeLoss(writer, l, lAnos);
+        }
         writer.endArray();
         writer.endObject();
     }
@@ -89,18 +97,17 @@ public class FTJsonWriter {
 
         final ArrayList<LossAnnotation<Object>> custom = new ArrayList<LossAnnotation<Object>>();
         for (LossAnnotation<Object> t : lAnos) {
+            if (t.isAlias()) continue;
             if (!FTSpecials.writeSpecialAnnotation(writer, t.getAnnotationType(), t.get(l))) {
                 custom.add(t);
             }
         }
         if (custom.size() > 0) {
-            writer.key("annotations");
-            writer.object();
             for (LossAnnotation<Object> t : custom) {
-                writer.key(t.getAnnotationType().getName());
-                writer.value(new JSONObject(t.get(l)));
+                final Object v = t.get(l);
+                if (v!=null)
+                    writeAnotationValue(writer, (Class<Object>)v.getClass(), v);
             }
-            writer.endObject();
         }
         writer.endObject();
     }
@@ -118,20 +125,41 @@ public class FTJsonWriter {
         writer.value(f.getFormula().toString());
         final ArrayList<FragmentAnnotation<Object>> custom = new ArrayList<FragmentAnnotation<Object>>();
         for (FragmentAnnotation<Object> t : fAnos) {
+            if (t.isAlias()) continue;
             if (!FTSpecials.writeSpecialAnnotation(writer, t.getAnnotationType(), t.get(f))) {
                 custom.add(t);
             }
         }
         if (custom.size() > 0) {
-            writer.key("annotations");
-            writer.object();
             for (FragmentAnnotation<Object> t : custom) {
-                writer.key(t.getAnnotationType().getName());
-                writer.value(new JSONObject(t.get(f)));
+                final Object v = t.get(f);
+                if (v!=null)
+                    writeAnotationValue(writer, (Class<Object>)v.getClass(), v);
             }
-            writer.endObject();
         }
         writer.endObject();
+    }
+
+    protected <T> void writeAnotationValue(JSONWriter writer, Class<T> anoClass, T ano) throws JSONException {
+        if (helper.isConvertable(ano)) {
+            final JSONDocumentType jsonDocumentType = new JSONDocumentType();
+            writer.key(getAnotationName(anoClass, ano));
+            writer.value(helper.wrap(jsonDocumentType, ano));
+        } else if (ano instanceof WriteIntoDataDocument) {
+            final JSONDocumentType jsonDocumentType = new JSONDocumentType();
+            final JSONObject dict = jsonDocumentType.newDictionary();
+            ((WriteIntoDataDocument)ano).writeIntoDataDocument(jsonDocumentType, dict);
+            for (String name : JSONObject.getNames(dict)) {
+                writer.key(name);
+                writer.value(dict.get(name));
+            }
+        }
+    }
+
+    protected <T> String getAnotationName(Class<T> anoClass, T ano) {
+        if (anoClass.isAnnotationPresent(Called.class)) {
+            return anoClass.getAnnotation(Called.class).value();
+        } else return helper.toClassName(anoClass);
     }
 
 }
