@@ -9,6 +9,7 @@ import java.util.*;
 abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
 
     protected final HashMap<Class<Object>, Object> annotations;
+    protected final HashSet<Class<Object>> aliases;
     protected final ArrayList<Fragment> fragments;
     protected final HashMap<Class<Object>, FragmentAnnotation<Object>> fragmentAnnotations;
     protected final HashMap<Class<Object>, LossAnnotation<Object>> lossAnnotations;
@@ -19,11 +20,13 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         this.fragments = new ArrayList<Fragment>();
         this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>();
         this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>();
+        this.aliases = new HashSet<Class<Object>>();
         edgeNum = 0;
     }
 
     protected AbstractFragmentationGraph(AbstractFragmentationGraph graph) {
         this.annotations = new HashMap<Class<Object>, Object>(graph.annotations);
+        this.aliases = new HashSet<Class<Object>>();
         this.fragmentAnnotations = new HashMap<Class<Object>, FragmentAnnotation<Object>>(graph.fragmentAnnotations);
         this.lossAnnotations = new HashMap<Class<Object>, LossAnnotation<Object>>(graph.lossAnnotations);
         this.edgeNum = graph.edgeNum;
@@ -226,10 +229,19 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     }
 
     @SuppressWarnings("unchecked cast")
-    public <S, T extends S> void addAliasForFragmentAnnotation(Class<T> previous, Class<S> newOne) {
+    public <S, T extends S> FragmentAnnotation<S> addAliasForFragmentAnnotation(Class<T> previous, Class<S> newOne) {
         final FragmentAnnotation<T> ano = getFragmentAnnotationOrThrow(previous);
-        final FragmentAnnotation<S> newAno = new FragmentAnnotation<S>(ano.id, ano.capa, newOne);
+        final FragmentAnnotation<S> newAno = new FragmentAnnotation<S>(ano, newOne);
         fragmentAnnotations.put((Class<Object>) newOne, (FragmentAnnotation<Object>) newAno);
+        return newAno;
+    }
+
+    @SuppressWarnings("unchecked cast")
+    public <S, T extends S> LossAnnotation<S> addAliasForLossAnnotation(Class<T> previous, Class<S> newOne) {
+        final LossAnnotation<T> ano = getLossAnnotationOrThrow(previous);
+        final LossAnnotation<S> newAno = new LossAnnotation<S>(ano, newOne);
+        lossAnnotations.put((Class<Object>) newOne, (LossAnnotation<Object>) newAno);
+        return newAno;
     }
 
     public <T> void addAnnotation(Class<T> klass, T annotation) {
@@ -238,7 +250,18 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         annotations.put((Class<Object>) klass, (Object) annotation);
     }
 
+    public <S, T extends S> void addAliasForAnnotation(Class<T> previous, Class<S> newOne) {
+        if (!annotations.containsKey(previous)) throw new RuntimeException("Cannot find annotation of class " + previous.getName());
+        annotations.put((Class<Object>) newOne, annotations.get(previous));
+        aliases.add((Class<Object>) newOne);
+    }
+
+    public boolean isAliasAnnotation(Class<?> klass) {
+        return aliases.contains(klass);
+    }
+
     public <T> boolean setAnnotation(Class<T> klass, T annotation) {
+        if (aliases.contains(klass)) throw new IllegalArgumentException("Cannot change value for alias annotation");
         return annotations.put((Class<Object>) klass, annotation) == annotation;
     }
 

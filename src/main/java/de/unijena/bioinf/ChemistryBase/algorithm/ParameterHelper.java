@@ -116,6 +116,13 @@ public class ParameterHelper {
         return o==null || o instanceof Number || supportedClasses.contains(o.getClass());
     }
 
+    public boolean isConvertableOrWrapable(Object o) {
+        if (isConvertable(o)) return true;
+        if (o instanceof Parameterized || o instanceof ImmutableParameterized) return true;
+        if (o.getClass().isAnnotationPresent(HasParameters.class)) return true;
+        return false;
+    }
+
     public <G,D,L> Object unwrap(DataDocument<G,D,L> document, G value) {
         if (document.isNull(value)) return null;
         if (document.isDictionary(value)) {
