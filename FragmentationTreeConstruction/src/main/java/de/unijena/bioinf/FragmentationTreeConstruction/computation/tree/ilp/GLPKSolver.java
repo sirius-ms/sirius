@@ -150,7 +150,6 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected void setTreeConstraint() {
-        System.out.println("GLPK: tree constraint...");
         // returns the index of the first newly created row
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES + this.LP_NUM_OF_VARIABLES);
 
@@ -165,9 +164,6 @@ public class GLPKSolver extends AbstractSolver {
         // set up row entries
         int lossId = 0;
         for (int k=0; k<this.LP_NUM_OF_VERTICES; k++) {
-
-            System.out.println(LP_NUM_OF_VERTICES-k);
-
             final Fragment f = graph.getFragmentAt(k);
 
             {
@@ -221,7 +217,6 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected void setColorConstraint() {
-        System.out.println("GLPK: Color constraint...");
         // returns the index of the first newly created row
         final int COLOR_NUM = this.graph.maxColor()+1;
         final boolean[] colorInUse = new boolean[COLOR_NUM];
@@ -264,8 +259,7 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected void setMinimalTreeSizeConstraint() {
-        System.out.println("GLPK: SetMinimalTreeSize...");
-
+        if (true) return;
         // returns the index of the first newly created row
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
         GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
@@ -321,7 +315,6 @@ public class GLPKSolver extends AbstractSolver {
         int result = GLPK.glp_simplex(this.LP, parm);
 
         try {
-            System.out.println("SCORE = " + getSolverScore());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -374,8 +367,8 @@ public class GLPKSolver extends AbstractSolver {
 
     @Override
     protected int pastBuildSolution() throws Exception {
+        System.out.println("GLPK solver finished. Score is " + getSolverScore());
         GLPK.glp_delete_prob(this.LP); // free memory
-        System.out.println("GLPK solver finished.");
         return AbstractSolver.FINISHED;
     }
 

@@ -60,6 +60,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private RecalibrationMethod recalibrationMethod;
     private GraphReduction reduction;
 
+    private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
+
     /**
      *
      */
@@ -355,7 +357,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
         FragmentAnnotation<CollisionEnergy[]> ces = tree.getOrCreateFragmentAnnotation(CollisionEnergy[].class);
         FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
-        FragmentAnnotation<Peak> p = tree.getOrCreateFragmentAnnotation(Peak.class);
+        FragmentAnnotation<Peak> p = tree.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
         for (Fragment f : tree) {
             final ProcessedPeak peak = pp.get(f);
             ce.set(f, peak.getCollisionEnergy());
@@ -365,7 +367,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 energies.add(op.getSpectrum().getCollisionEnergy());
             }
             ces.set(f, energies.toArray(new CollisionEnergy[energies.size()]));
-            p.set(f, new Peak(peak.getMz(), peak.getRelativeIntensity()));
         }
     }
 
@@ -588,7 +589,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         Class<? extends Object> someClass = instance.getClass();
         if (someClass.isAnnotationPresent(Called.class)) {
             return someClass.getAnnotation(Called.class).value();
-        } else return someClass.getName();
+        } else return parameterHelper.toClassName(someClass);
     }
 
     protected FGraph scoreGraph(FGraph graph) {

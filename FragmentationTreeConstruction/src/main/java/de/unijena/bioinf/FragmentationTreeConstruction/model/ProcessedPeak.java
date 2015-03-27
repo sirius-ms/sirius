@@ -2,14 +2,16 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.algorithm.WriteIntoDataDocument;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
 import java.util.*;
 
-public class ProcessedPeak extends Peak {
+public class ProcessedPeak extends Peak implements WriteIntoDataDocument {
 
     private final static Object[] EMPTY_ARRAY = new Object[0];
 
@@ -21,6 +23,21 @@ public class ProcessedPeak extends Peak {
     private double originalMz;
 
     private Object[] annotations;
+
+    @Override
+    public <G, D, L> void writeIntoDataDocument(DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "mz", getMz());
+        document.addToDictionary(dictionary, "intensity", getIntensity());
+        document.addToDictionary(dictionary, "ion", ion.toString());
+        final L peaks = document.newList();
+        for (MS2Peak p : originalPeaks) {
+            final D peak = document.newDictionary();
+            document.addToDictionary(peak, "mz", p.getMz());
+            document.addToDictionary(peak, "int", p.getIntensity());
+            document.addDictionaryToList(peaks, peak);
+        }
+        document.addListToDictionary(dictionary, "peaks", peaks);
+    }
 
     public ProcessedPeak() {
         super(0, 0);

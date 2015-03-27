@@ -15,7 +15,9 @@
         "values": [0.7, 0.6, 0.8, 0.5],
         "bags": [1, 0.3, 0.15, 0.03]
       }
-    }],
+    }, {
+      "$name": "scoring.ScorePerPeak", "scorePerPeak": 5
+      }],
     "isotopes": {
       "$name": "ChemistryBase.chem.utils.IsotopicDistribution",
       "isotopes": {

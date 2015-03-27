@@ -308,7 +308,7 @@ public class GurobiSolver implements TreeBuilder {
         protected void setConstraints() throws GRBException {
             setTreeConstraint();
             setColorConstraint();
-            //setMinimalTreeSizeConstraint();
+            setMinimalTreeSizeConstraint();
 
 
             // HACK!
