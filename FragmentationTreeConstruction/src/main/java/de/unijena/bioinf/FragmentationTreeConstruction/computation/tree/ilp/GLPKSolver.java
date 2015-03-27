@@ -20,21 +20,15 @@ import java.util.InvalidPropertiesFormatException;
  * - GLPKConstants.CV: Continuous Variable, x € R
  * - GLPKConstants.DB: Double bound, lb < x < ub
  * - GLPKConstants.LO: Only Lower Bound, lb < x < infinity
+ * - GLPKConstraints.FX: fixed variables 1 <= x <= 1
  * TODO: GLPK is said to only allow structural variables to be integer!
- * TODO: TreeConstraint: is integer problem?
- * TODO: ColorConstraint: is integer problem?
  * TODO: timlimit?
  * TODO: global lower bound?
- * TODO: row names are obsolete?
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver extends AbstractSolver {
 
-    final static String GLPK_VERSION = "4_55";
-
     final glp_prob LP;
-
-    final SWIGTYPE_p_int GLP_INDEX_ARRAY;
 
     /*********************************************************************
      * try to load the jni interface for glpk from the glpk library      *
@@ -44,10 +38,10 @@ public class GLPKSolver extends AbstractSolver {
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             // try to load Windows library
             try {
-                System.loadLibrary("glpk_" + GLPKSolver.GLPK_VERSION);
+                System.loadLibrary("glpk_" + GLPK.glp_version());
                 System.out.println("Using system glpk \nVersion: " + GLPK.glp_version());
             } catch (UnsatisfiedLinkError e) {
-                System.err.println("Could not load glpk_4.55 library from windows! Make sure to have the correct" +
+                System.err.println("Could not load glpk library from windows! Make sure to have the correct" +
                         " version of glpk installed on your system!");
                 throw e;
             }
@@ -79,24 +73,10 @@ public class GLPKSolver extends AbstractSolver {
         super(graph, input, lowerbound, feasibleSolver, timeLimit);
 
         System.out.printf("Using: GLPK solver...");
-        // loadGLPKlibrary()
+
         this.LP = GLPK.glp_create_prob();
         GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
         System.out.println("GLPK: Problem created...");
-
-        this.GLP_INDEX_ARRAY = prepareIndexArray();
-        System.out.println("Matrix prepared...");
-    }
-
-
-    final SWIGTYPE_p_int prepareIndexArray() {
-
-        final SWIGTYPE_p_int INDEX_ARR = GLPK.new_intArray(LP_NUM_OF_VARIABLES + 1); // + 1 for the right-hand-side column
-
-        for (int i=1; i<=LP_NUM_OF_VARIABLES; i++)
-            GLPK.intArray_setitem(INDEX_ARR, i, i);
-
-        return INDEX_ARR;
     }
 
 
@@ -127,7 +107,7 @@ public class GLPKSolver extends AbstractSolver {
     protected void applyLowerBounds() throws Exception {
         if (true) return;
 
-        // TODO: is this right?
+        // TODO: check increase of speed
         /*
         // the sum of all edges kept in the solution should be higher than the given lower bound
         if (LP_LOWERBOUND != 0) {
@@ -185,8 +165,6 @@ public class GLPKSolver extends AbstractSolver {
                 ++CONSTR_INDEX;
                 GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
                 GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
-                rowIndizes = null;
-                rowValues = null;
             }
 
             {
@@ -211,8 +189,6 @@ public class GLPKSolver extends AbstractSolver {
                 }
                 GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
                 GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
-                rowIndizes = null;
-                rowValues = null;
                 lossId = l;
             }
         }
@@ -256,8 +232,7 @@ public class GLPKSolver extends AbstractSolver {
             GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + c, COL_ENTRIES.size(), rowIndizes, rowValues);
             GLPK.delete_intArray(rowIndizes); // free memory
             GLPK.delete_doubleArray(rowValues); // free memory
-            rowIndizes = null;
-            rowValues = null;
+
         }
     }
 
@@ -269,7 +244,7 @@ public class GLPKSolver extends AbstractSolver {
         // returns the index of the first newly created row
         final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
         GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
-        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_DB, 1.0, 1.0);
+        GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_FX, 1.0, 1.0); // fixed variable! TODO: check!
 
         final Fragment localRoot = graph.getRoot();
         final int fromIndex = edgeOffsets[localRoot.getVertexId()];
@@ -288,8 +263,6 @@ public class GLPKSolver extends AbstractSolver {
         GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX, localRoot.getOutDegree(), rowIndizes, rowValues);
         GLPK.delete_intArray(rowIndizes); // free memory
         GLPK.delete_doubleArray(rowValues); // free memory
-        rowIndizes = null;
-        rowValues = null;
     }
 
 

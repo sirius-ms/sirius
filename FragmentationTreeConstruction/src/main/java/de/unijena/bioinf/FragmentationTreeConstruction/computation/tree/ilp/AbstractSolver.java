@@ -82,7 +82,7 @@ abstract public class AbstractSolver implements TreeBuilder {
 
 
     /**
-     * Maximum constructor. May be used to test the correctness of any implemented solver
+     * Maximum constructor. May be used to ilp_base_construct the correctness of any implemented solver
      *
      * @param graph
      * @param input
