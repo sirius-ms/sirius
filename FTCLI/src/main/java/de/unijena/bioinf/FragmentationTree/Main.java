@@ -13,15 +13,12 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduction.TMinimalController;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.AbstractRecalibrationStrategy;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
@@ -33,6 +30,7 @@ import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.chemdb.DBMolecularFormulaCache;
 import de.unijena.bioinf.babelms.chemdb.Databases;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.sirius.cli.ProfileOptions;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -365,7 +363,7 @@ public class Main {
                 System.err.println("Cannot create profile file: " + e);
             }
         }
-
+        /*
         {
             analyzer.setReduction(new TMinimalController());
             analyzer.setTreeBuilder(new TreeBuilder() {
@@ -397,7 +395,7 @@ public class Main {
                 }
             });
         }
-
+           */
 
         eachFile:
         for (int fnum = 0; fnum < files.size(); ++fnum) {
@@ -1154,6 +1152,7 @@ public class Main {
 
             //
             pipeline.recalculateScores(tree);
+            new FTJsonWriter().writeTreeToFile(new File(f.toString() + ".json"), tree);
             System.out.println(tree);
             //
 
