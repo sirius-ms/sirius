@@ -45,6 +45,14 @@ public class FTDotWriter {
         final TreeCursor<Fragment> cursor = graph.getCursor();
         final FragmentAnnotation<Peak> peakAno = graph.getFragmentAnnotationOrThrow(Peak.class);
         final FragmentAnnotation<CollisionEnergy> ceAno = graph.getFragmentAnnotationOrThrow(CollisionEnergy.class);
+        final double normalization;
+        {
+            double maxInt = 0d;
+            for (Fragment f : graph.getFragments()) {
+                maxInt = Math.max(peakAno.get(f).getIntensity(), maxInt);
+            }
+            normalization = maxInt;
+        }
         int id = 0;
         final ArrayList<Loss> losses = new ArrayList<Loss>();
         for (Fragment f : new PostOrderTraversal<Fragment>(cursor)) {
@@ -52,7 +60,7 @@ public class FTDotWriter {
             ids.put(f, ++id);
             buf.write("v" + id + " [label=\"");
             buf.write(f.getFormula().toString());
-            buf.write(String.format(locale, "\\n%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity() * 100));
+            buf.write(String.format(locale, "\\n%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity()/normalization * 100));
             final double dev = peakAno.get(f).getMass() - graph.getAnnotationOrThrow(Ionization.class).addToMass(f.getFormula().getMass());
             buf.write(String.format(locale, "\\nMassDev: %.4f ppm, %.4f Da", dev * 1e6d / peakAno.get(f).getMass(), dev));
             buf.write("\\ncE: " + ceAno.get(f).toString());
@@ -123,13 +131,21 @@ public class FTDotWriter {
         final FragmentAnnotation<CollisionEnergy[]> ceAnos = graph.getFragmentAnnotationOrThrow(CollisionEnergy[].class);
         int id = 0;
         final ArrayList<Loss> losses = new ArrayList<Loss>();
+        final double normalization;
+        {
+            double maxInt = 0d;
+            for (Fragment f : graph.getFragments()) {
+                maxInt = Math.max(peakAno.get(f).getIntensity(), maxInt);
+            }
+            normalization = maxInt;
+        }
         for (Fragment f : new PostOrderTraversal<Fragment>(cursor)) {
             ids.put(f, ++id);
             buf.write("v" + id + " [label=");
             buf.write(htmlStart());
             buf.write(htmlFormula(f.getFormula()));
             buf.write(htmlNewline());
-            buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity() * 100));
+            buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity()/normalization * 100));
             buf.write(htmlSmall());
             final double dev = peakAno.get(f).getMass() - graph.getAnnotationOrThrow(Ionization.class).addToMass(f.getFormula().getMass());
             buf.write(htmlNewline());
