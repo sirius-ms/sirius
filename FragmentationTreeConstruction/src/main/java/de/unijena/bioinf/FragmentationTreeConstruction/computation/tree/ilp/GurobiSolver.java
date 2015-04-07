@@ -547,7 +547,6 @@ public class GurobiSolver implements TreeBuilder {
             for (int i = 0; i < assignments.length; ++i) {
                 assert edgesAreUsed[i] > -0.5 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];
                 assert edgesAreUsed[i] < 1.5 : "lowerbound violation for var " + i + " with value " + edgesAreUsed[i];
-                ;
                 assignments[i] = (Math.round(edgesAreUsed[i]) == 1);
             }
             return assignments;

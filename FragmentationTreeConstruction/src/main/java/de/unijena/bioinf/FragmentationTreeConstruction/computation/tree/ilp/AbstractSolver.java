@@ -14,20 +14,15 @@ import java.util.Map;
 /**
  * Created by Spectar on 13.11.2014.
  */
-abstract public class AbstractSolver implements TreeBuilder {
+abstract public class AbstractSolver {
 
-    enum SolverType {
-        SOLVER_TYPE_GUROBI,
-        SOLVER_TYPE_NEWGUROBI,
-        SOLVER_TYPE_GLPK
+    public enum SolverState {
+        FINISHED,
+        SHALL_RETURN_NULL,
+        SHALL_BUILD_SOLUTION
     }
 
-    final static int FINISHED = 0;
-    final static int SHALL_RETURN_NULL = 1;
-    final static int SHALL_BUILD_SOLUTION = 2;
-
     protected boolean built;
-    protected SolverType solverType = SolverType.SOLVER_TYPE_GLPK;
 
     // graph information
     protected final FGraph graph;
@@ -84,7 +79,7 @@ abstract public class AbstractSolver implements TreeBuilder {
 
 
     /**
-     * Maximum constructor. May be used to test the correctness of any implemented solver
+     * Maximum constructor. May be used to ilp_base_construct the correctness of any implemented solver
      *
      * @param graph
      * @param input
@@ -194,21 +189,22 @@ abstract public class AbstractSolver implements TreeBuilder {
      */
     public FTree solve() {
         try {
-            if(!this.built)
-                build();
+            // set up constraints etc.
+            build();
 
             // pre-optimization, if needed (e.g. lower bounds)
-            int signal = solveMIP();
-            if(signal == AbstractSolver.SHALL_RETURN_NULL)
+            AbstractSolver.SolverState signal = solveMIP();
+            if(signal == SolverState.SHALL_RETURN_NULL)
                 return null;
 
+            // reconstruct tree after having determined the (possible) optimal solution
             final FTree TREE = buildSolution();
             if(TREE != null && !isComputationCorrect(TREE, this.graph))
                 throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
 
             // free any memory, if necessary
             signal = pastBuildSolution();
-            if(signal == AbstractSolver.SHALL_RETURN_NULL)
+            if(signal == SolverState.SHALL_RETURN_NULL)
                 return null;
 
             return TREE;
@@ -272,7 +268,7 @@ abstract public class AbstractSolver implements TreeBuilder {
      * @return
      * @throws Exception
      */
-    abstract protected int solveMIP() throws Exception;
+    abstract protected SolverState solveMIP() throws Exception;
 
     /**
      * - a specific solver might need to do more (or release memory) after the solving process
@@ -280,7 +276,7 @@ abstract public class AbstractSolver implements TreeBuilder {
      * @return
      * @throws Exception
      */
-    abstract protected int pastBuildSolution() throws Exception;
+    abstract protected SolverState pastBuildSolution() throws Exception;
 
     /**
      * - having found a solution using 'solveMIP' this function shall return a boolean list representing
@@ -419,103 +415,8 @@ abstract public class AbstractSolver implements TreeBuilder {
     }
 
 
-    @Override
-    public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
-        if (lastInput != input.getExperimentInformation().hashCode()) {
-            // reset time limit
-            resetTimeLimit();
-            lastInput = input.getExperimentInformation().hashCode();
-        }
-        try {
-            if (graph.numberOfVertices() <= 2) {
-                return newTree(graph, new FTree(graph.getRoot().getChildren(0).getFormula()), graph.getRoot().getOutgoingEdge(0).getWeight());
-            }
-            final long timeToCompute = Math.max(0l, Math.min((long) secondsPerDecomposition, timeout - System.currentTimeMillis()));
-
-            final AbstractSolver solver;
-
-            /*
-            try {
-                // create instance of solver of type 'SolverType'
-                Class[] constructorArgs = new Class[5];
-                constructorArgs[0] = FGraph.class;
-                constructorArgs[1] = ProcessedInput.class;
-                constructorArgs[2] = int.class; // lowerbound
-                constructorArgs[3] = TreeBuilder.class;
-                constructorArgs[4] = int.class; // timelimit
-
-                Constructor<? extends AbstractSolver> ctor = SolverType.getDeclaredConstructor(constructorArgs);
-                solver = ctor.newInstance(graph, input, lowerbound, feasibleSolver,
-                        (int) Math.min(Integer.MAX_VALUE, timeToCompute));
-            } catch (NoSuchMethodException e) {
-                System.err.println("Could not create instance of solver '" + SolverType.toString() + "', constructor not found?!");
-                throw e;
-            } catch (SecurityException e) {
-                System.err.println(e.toString());
-                throw e;
-            }
-            */
-
-            switch (this.solverType) {
-                case SOLVER_TYPE_GUROBI:
-                    //solver = new GurobiSolver(graph, input, lowerbound, feasibleSolver,
-                    //        (int) Math.min(Integer.MAX_VALUE, timeToCompute));
-                    throw new UnsupportedOperationException("Normal gurobi solver not usable yet!");
-                case SOLVER_TYPE_NEWGUROBI:
-                    solver = new NewGurobiSolver(graph, input, lowerbound, feasibleSolver,
-                            (int) Math.min(Integer.MAX_VALUE, timeToCompute));
-                    break;
-                case SOLVER_TYPE_GLPK:
-                    solver = new GLPKSolver(graph, input, lowerbound, feasibleSolver,
-                            (int) Math.min(Integer.MAX_VALUE, timeToCompute));
-                    break;
-                default:
-                    System.err.println("Invalid solver id: " + this.solverType + ". Please check code!");
-                    throw new Exception("Invalid solver Id.");
-            }
-
-            solver.build();
-            return solver;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
     protected void resetTimeLimit() {
         timeout = System.currentTimeMillis() + secondsPerDecomposition * 1000l;
-    }
-
-
-    @Override
-    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
-        if (graph.numberOfVertices() <= 2)
-            return newTree(graph, new FTree(graph.getRoot().getChildren(0).getFormula()), graph.getRoot().getOutgoingEdge(0).getWeight());
-
-        if (prepared instanceof AbstractSolver) {
-            final AbstractSolver solver = (AbstractSolver) prepared;
-            return solver.solve();
-        } else {
-            throw new IllegalArgumentException("Expected solver to be instance of AbstractSolver, but " + prepared.getClass() + " given.");
-        }
-    }
-
-
-    @Override
-    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
-        return buildTree(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
-    }
-
-
-    @Override
-    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
-        return null;
-    }
-
-
-    @Override
-    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
-        return null;
     }
 
 
@@ -529,8 +430,4 @@ abstract public class AbstractSolver implements TreeBuilder {
         }
     }
 
-
-    protected void setSolverType(SolverType newType) {
-        this.solverType = newType;
-    }
 }
