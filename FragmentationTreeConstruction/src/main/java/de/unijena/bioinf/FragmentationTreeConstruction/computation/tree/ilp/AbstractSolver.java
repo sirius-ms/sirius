@@ -199,6 +199,7 @@ abstract public class AbstractSolver {
 
             // reconstruct tree after having determined the (possible) optimal solution
             final FTree TREE = buildSolution();
+            System.out.println("Solver finished with score: " + getSolverScore());
             if(TREE != null && !isComputationCorrect(TREE, this.graph))
                 throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
 

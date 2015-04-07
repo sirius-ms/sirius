@@ -21,6 +21,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.Commo
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.NewGurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
@@ -370,8 +371,9 @@ public class Main {
 
         {
             //analyzer.setReduction(new TMinimalController());
-            analyzer.setTreeBuilder(new GLPKSolver());
+            //analyzer.setTreeBuilder(new GLPKSolver());
             //analyzer.setTreeBuilder(new NewGurobiSolver());
+            analyzer.setTreeBuilder(new GurobiSolver());
         }
 
         eachFile:

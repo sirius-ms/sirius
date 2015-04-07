@@ -175,7 +175,7 @@ public class GLPKSolver implements TreeBuilder {
         @Override
         protected void setTreeConstraint() {
             // returns the index of the first newly created row
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES + this.LP_NUM_OF_VARIABLES);
+            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES);
 
             // create auxiliary variables first
             for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES; r++) {
@@ -187,9 +187,10 @@ public class GLPKSolver implements TreeBuilder {
 
             // set up row entries
             int lossId = 0;
-            for (int k=0; k<this.LP_NUM_OF_VERTICES; k++) {
+            for (int k=1; k<this.LP_NUM_OF_VERTICES; k++) {
 
                 final Fragment f = graph.getFragmentAt(k);
+                assert !f.isRoot();
 
                 {
                     SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree()+1);
@@ -227,7 +228,9 @@ public class GLPKSolver implements TreeBuilder {
                         GLPK.intArray_setitem(rowIndizes, rowIndex, edgeIds[i]+1); // each edge is weighted equally here
                         GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
                         GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree()+1, rowIndizes, rowValues);
+                        ++CONSTR_INDEX;
                     }
+
                     GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
                     GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
                     lossId = l;
@@ -385,7 +388,6 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected SolverState pastBuildSolution() throws Exception {
-            System.out.println("GLPK solver finished. Score is " + getSolverScore());
             GLPK.glp_delete_prob(this.LP); // free memory
             return SolverState.FINISHED;
         }
