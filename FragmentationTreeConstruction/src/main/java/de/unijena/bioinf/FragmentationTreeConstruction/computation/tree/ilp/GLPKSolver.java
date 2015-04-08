@@ -178,8 +178,7 @@ public class GLPKSolver implements TreeBuilder {
             final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES);
 
             // create auxiliary variables first
-            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES; r++) {
-                //GLPK.glp_set_row_name(this.LP, r, "r"+r);
+            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES; r++) {
                 GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_DB, 0.0, 1.0); // right-hand-side | maximum one edge!
             }
 
@@ -193,15 +192,15 @@ public class GLPKSolver implements TreeBuilder {
                 assert !f.isRoot();
 
                 {
-                    SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree()+1);
+                                        SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree()+1);
                     SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree()+1);
                     int l=lossId;
-                    int rowIndex = 1;
+                    int colIndex = 1;
                     for (Loss loss : f.getIncomingEdges()) {
                         assert losses.get(l).getTarget().equals(f);
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, ++l); // each edge is weighted equally here
-                        GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
-                        ++rowIndex;
+                        GLPK.intArray_setitem(rowIndizes, colIndex, ++l); // each edge is weighted equally here
+                        GLPK.doubleArray_setitem(rowValues, colIndex, 1d);
+                        ++colIndex;
                     }
                     GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree(), rowIndizes, rowValues);
                     ++CONSTR_INDEX;
@@ -213,20 +212,20 @@ public class GLPKSolver implements TreeBuilder {
 
                     SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree() + 2);
                     SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree() + 2);
-                    int rowIndex = 1;
+                    int colIndex = 1;
                     int l = lossId;
                     for (Loss loss : f.getIncomingEdges()) {
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, ++l); // each edge is weighted equally here
-                        GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
-                        ++rowIndex;
+                        GLPK.intArray_setitem(rowIndizes, colIndex, ++l); // each edge is weighted equally here
+                        GLPK.doubleArray_setitem(rowValues, colIndex, 1d);
+                        ++colIndex;
                     }
 
                     final int fromIndex = edgeOffsets[f.getVertexId()];
                     final int toIndex = fromIndex + f.getOutDegree();
                     for (int i=fromIndex; i < toIndex; ++i) {
-                        assert rowIndex <= (f.getInDegree()+1);
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, edgeIds[i]+1); // each edge is weighted equally here
-                        GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
+                        assert colIndex <= (f.getInDegree()+1);
+                        GLPK.intArray_setitem(rowIndizes, colIndex, edgeIds[i] + 1); // each edge is weighted equally here
+                        GLPK.doubleArray_setitem(rowValues, colIndex, -1d);
                         GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree()+1, rowIndizes, rowValues);
                         ++CONSTR_INDEX;
                     }
@@ -236,6 +235,8 @@ public class GLPKSolver implements TreeBuilder {
                     lossId = l;
                 }
             }
+
+            System.out.println("debug: Added: " + (this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES) + ";  Used: " + (CONSTR_INDEX - CONSTR_START_INDEX) );
         }
 
 
