@@ -23,7 +23,8 @@ import java.util.List;
  * - GLPKConstants.CV: Continuous Variable, x € R
  * - GLPKConstants.DB: Double bound, lb < x < ub
  * - GLPKConstants.LO: Only Lower Bound, lb < x < infinity
- * - GLPKConstraints.FX: fixed variables 1 <= x <= 1
+ * - GLPKConstraints.FX: fixed variables a <= x <= a
+ * TODO: TreeConstraint: the second part should contain the first condition, too!?
  * TODO: timlimit?
  * TODO: global lower bound?
  * Created by xentrics on 04.03.15.
@@ -174,11 +175,12 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected void setTreeConstraint() {
+
             // returns the index of the first newly created row
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES);
+            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES + this.LP_NUM_OF_VARIABLES - graph.getRoot().getOutDegree());
 
             // create auxiliary variables first
-            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES; r++) {
+            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES + this.LP_NUM_OF_VARIABLES - graph.getRoot().getOutDegree(); r++) {
                 GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_DB, 0.0, 1.0); // right-hand-side | maximum one edge!
             }
 
@@ -189,10 +191,10 @@ public class GLPKSolver implements TreeBuilder {
             for (int k=1; k<this.LP_NUM_OF_VERTICES; k++) {
 
                 final Fragment f = graph.getFragmentAt(k);
-                assert !f.isRoot();
+                assert !f.isRoot() : "The root must not be present to set up tree constraint";
 
                 {
-                                        SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree()+1);
+                    SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree()+1);
                     SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree()+1);
                     int l=lossId;
                     int colIndex = 1;
@@ -222,7 +224,7 @@ public class GLPKSolver implements TreeBuilder {
 
                     final int fromIndex = edgeOffsets[f.getVertexId()];
                     final int toIndex = fromIndex + f.getOutDegree();
-                    for (int i=fromIndex; i < toIndex; ++i) {
+                    for (int i=fromIndex; i < toIndex; i++) {
                         assert colIndex <= (f.getInDegree()+1);
                         GLPK.intArray_setitem(rowIndizes, colIndex, edgeIds[i] + 1); // each edge is weighted equally here
                         GLPK.doubleArray_setitem(rowValues, colIndex, -1d);
@@ -236,7 +238,52 @@ public class GLPKSolver implements TreeBuilder {
                 }
             }
 
-            System.out.println("debug: Added: " + (this.LP_NUM_OF_VERTICES - 1 + this.LP_NUM_OF_VARIABLES) + ";  Used: " + (CONSTR_INDEX - CONSTR_START_INDEX) );
+            /*
+                THIS SHOULD ALREADY SUFFICE!
+                DO NOT DELETE THIS UNTIL INVALIDATED
+
+            // returns the index of the first newly created row
+            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VARIABLES - graph.getRoot().getOutDegree());
+
+            // create auxiliary variables first
+            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VARIABLES - graph.getRoot().getOutDegree(); r++) {
+                GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_DB, 0.0, 1.0); // right-hand-side | maximum one edge!
+            }
+
+            int CONSTR_INDEX = CONSTR_START_INDEX;
+
+            // set up row entries
+            int lossId = 0;
+            for (int k=1; k<this.LP_NUM_OF_VERTICES; k++) {
+
+                final Fragment f = graph.getFragmentAt(k);
+                assert !f.isRoot();
+
+                SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree() + 2);
+                SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree() + 2);
+                int colIndex = 1;
+                int l = lossId;
+                for (Loss loss : f.getIncomingEdges()) {
+                    GLPK.intArray_setitem(rowIndizes, colIndex, ++l); // each edge is weighted equally here
+                    GLPK.doubleArray_setitem(rowValues, colIndex, 1d);
+                    ++colIndex;
+                }
+
+                final int fromIndex = edgeOffsets[f.getVertexId()];
+                final int toIndex = fromIndex + f.getOutDegree();
+                for (int i=fromIndex; i < toIndex; i++) {
+                    assert colIndex <= (f.getInDegree()+1);
+                    GLPK.intArray_setitem(rowIndizes, colIndex, edgeIds[i] + 1); // each edge is weighted equally here
+                    GLPK.doubleArray_setitem(rowValues, colIndex, -1d);
+                    GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree()+1, rowIndizes, rowValues);
+                    ++CONSTR_INDEX;
+                }
+
+                GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
+                GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
+                lossId = l;
+            }
+            */
         }
 
 
