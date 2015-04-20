@@ -55,4 +55,8 @@ public class RecalibrationFunction {
         }
         return new RecalibrationFunction(list.toArray());
     }
+
+    public static RecalibrationFunction identity() {
+        return new RecalibrationFunction(new double[]{0d,1d});
+    }
 }
