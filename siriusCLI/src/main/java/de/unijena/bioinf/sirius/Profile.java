@@ -1,4 +1,5 @@
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.sirius;
+
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;

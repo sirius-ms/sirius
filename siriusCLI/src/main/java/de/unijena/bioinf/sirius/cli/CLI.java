@@ -1,49 +1,46 @@
 package de.unijena.bioinf.sirius.cli;
 
-import com.lexicalscope.jewel.cli.CliFactory;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 
 public class CLI {
 
-    private Options options;
-
     public static void main(String[] args) {
-        new CLI(CliFactory.createCli(Options.class).parseArguments(args)).run();
+        final HashMap<String, Task> tasks = new HashMap<String, Task>();
+        final IdentifyTask identify = new IdentifyTask();
+        tasks.put(identify.getName(), identify);
+
+        if (args.length==0) displayHelp();
+
+        Task currentTask = null;
+        int argStart=0;
+
+        for (int k=0; k < args.length; ++k) {
+            if (args[k].equals("-h") || args[k].equals("--help")) {
+                displayHelp(); return;
+            } else if (args[k].equals("--version")) {
+                displayVersion(); return;
+            } else if (currentTask==null){
+                currentTask = tasks.get(args[k]);
+                argStart=k+1;
+                if (currentTask==null) {
+                    System.err.println("Unknown task: " + args[k]);
+                    displayHelp(); return;
+                }
+            } else if (k==args.length-1) {
+                final String[] taskArgs = new String[k-argStart+1];
+                System.arraycopy(args, argStart, taskArgs, 0, taskArgs.length);
+                currentTask.setArgs(taskArgs);
+                currentTask.run();
+            }
+        }
+
     }
 
-    public CLI(Options options) {
-        this.options = options;
+    private static void displayVersion() {
+
     }
 
-    public void run() {
-        final OutputHandler out = OutputHandler.create(options);
-        final InputHandler in = InputHandler.create(options);
-        final IdentifyFormulaHandler identify;
-        try {
-            identify = IdentifyFormulaHandler.create(options);
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
-        final TaskHandler taskHandler = TaskHandler.create(options);
-        final Iterator<Instance> compoundIterator;
-        try {
-            compoundIterator = in.receiveInput(taskHandler, options);
-        } catch (InvalidInputException e) {
-            System.err.println(e.getMessage());
-            return;
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-            return;
-        }
-        while (compoundIterator.hasNext()) {
-            final Instance experiment = compoundIterator.next();
-            final IdentificationResult result = identify.identify(experiment);
-            out.handle(result);
-        }
+    private static void displayHelp() {
+
     }
 }

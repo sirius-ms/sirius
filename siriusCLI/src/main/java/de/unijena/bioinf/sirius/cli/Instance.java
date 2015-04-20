@@ -20,7 +20,7 @@ public class Instance {
     public String fileNameWithoutExtension() {
         final String name = file.getName();
         final int i = name.lastIndexOf('.');
-        if (i>=0) return name.substring(i);
+        if (i>=0) return name.substring(0, i);
         else return name;
     }
 }
