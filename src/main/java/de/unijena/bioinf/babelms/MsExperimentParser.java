@@ -19,6 +19,7 @@ public class MsExperimentParser {
         final String name = f.getName();
         final String extName = name.substring(name.lastIndexOf('.'));
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
+        if (pc==null) return null;
         try {
             return new GenericParser<Ms2Experiment>(pc.newInstance());
         } catch (InstantiationException e) {

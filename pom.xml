@@ -55,7 +55,7 @@
         <dependency>
             <groupId>uk.ac.ebi.pride.tools</groupId>
             <artifactId>mzml-wrapper</artifactId>
-            <version>1.3.3</version>
+            <version>1.2</version>
             <type>jar</type>
         </dependency>
     </dependencies>
