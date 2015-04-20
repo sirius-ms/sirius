@@ -291,9 +291,6 @@ public class GurobiSolver implements TreeBuilder {
                         return null;
                     }
                 }
-
-                System.out.println(-model.get(GRB.DoubleAttr.ObjVal));
-
                 final FTree tree = buildSolution();
                 if (!isComputationCorrect(tree, graph)) {
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");

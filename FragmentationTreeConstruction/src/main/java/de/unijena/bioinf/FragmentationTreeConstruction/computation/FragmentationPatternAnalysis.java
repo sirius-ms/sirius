@@ -33,6 +33,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.util.*;
@@ -411,7 +412,20 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             treeScoring.setOverallScore(rec.getScoreBonus());
             treeScoring.setRecalibrationBonus(treeScoring.getOverallScore() - oldScore);
         }
+        if (func != null) {
+            final RecalibrationFunction f = toPolynomial(func);
+            if (f!=null)
+                tree.addAnnotation(RecalibrationFunction.class, f);
+        }
         return tree;
+    }
+
+    private static RecalibrationFunction toPolynomial(UnivariateFunction func) {
+        if (func instanceof PolynomialFunction) {
+            return new RecalibrationFunction(((PolynomialFunction) func).getCoefficients());
+        }
+        if (func instanceof Identity) return RecalibrationFunction.identity();
+        return null;
     }
 
     public FTree recalibrate(FTree tree) {
@@ -475,6 +489,29 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             graph = graphBuilder.addRoot(graph, parentPeaks.get(i), candidatesPerParentPeak.get(i));
         }
         return reduceGraph(scoreGraph(graphBuilder.fillGraph(graph)));
+    }
+
+    /**
+     * @return the relative amount of intensity that is explained by this tree
+     */
+    public double getIntensityRatioOfExplainedPeaks(FTree tree) {
+        double treeIntensity = 0d, maxIntensity = 0d;
+        final FragmentAnnotation<ProcessedPeak> pp = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        for (Fragment f : tree.getFragmentsWithoutRoot()) treeIntensity += pp.get(f).getRelativeIntensity();
+        final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
+        final PeakAnnotation<DecompositionList> decomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
+        final MolecularFormula parent = tree.getRoot().getFormula();
+        eachPeak:
+        for (ProcessedPeak p : input.getMergedPeaks())
+            if (p != input.getParentPeak()) {
+                for (ScoredMolecularFormula f : decomp.get(p).getDecompositions()) {
+                    if (parent.isSubtractable(f.getFormula())) {
+                        maxIntensity += p.getRelativeIntensity();
+                        continue eachPeak;
+                    }
+                }
+            }
+        return treeIntensity / maxIntensity;
     }
 
     /**
@@ -578,9 +615,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             scoreSum += s.sum();
         }
         scoreSum += fAno.get(tree.getRoot()).sum();
-        System.out.println(scoreSum);
-        System.out.println(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
-        System.out.println("--");
         return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
 
     }
