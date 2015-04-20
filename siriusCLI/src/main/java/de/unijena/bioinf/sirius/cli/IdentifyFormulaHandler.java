@@ -85,7 +85,7 @@ public class IdentifyFormulaHandler {
             if (list.size() >= computeOptNTrees) break;
         }
 
-        final IdentificationResult result = new IdentificationResult(list);
+        final IdentificationResult result = new IdentificationResult(experiment, list);
         return result;
     }
 

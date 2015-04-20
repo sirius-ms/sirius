@@ -11,7 +11,7 @@ public class CLI {
 
     private Options options;
 
-    public static void main(String args) {
+    public static void main(String[] args) {
         new CLI(CliFactory.createCli(Options.class).parseArguments(args)).run();
     }
 
