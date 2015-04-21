@@ -5,10 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 import de.unijena.bioinf.graphUtils.tree.TreeAdapter;
 import de.unijena.bioinf.graphUtils.tree.TreeCursor;
@@ -18,13 +15,100 @@ import java.util.*;
 
 public class FTDotWriter {
 
-    private boolean HTML = false;
+    private boolean HTML = true;
+    private boolean includeIon = true;
+
+    public FTDotWriter(boolean HTML, boolean includeIon) {
+        this.HTML = HTML;
+        this.includeIon = includeIon;
+    }
+
+    public FTDotWriter() {
+        this(true, true);
+    }
 
     private static String printClassName(Class<?> klass) {
         final Called name = klass.getAnnotation(Called.class);
         return name != null ? name.value() : klass.getSimpleName();
     }
 
+    public void writeTreeToFile(File file, FTree tree) throws IOException {
+        final FileWriter fw = new FileWriter(file);
+        writeTree(fw, tree);
+    }
+
+    public void writeTree(Writer writer, FTree tree) throws IOException {
+        if (!(writer instanceof BufferedWriter)) writer=new BufferedWriter(writer);
+        writer.write("strict digraph {\n");
+        final FragmentAnnotation<Peak> peakAno = tree.getFragmentAnnotationOrThrow(Peak.class);
+        // normalize intensities
+        double maxInt = 1e-12;
+        for (Fragment f : tree.getFragments())
+        maxInt = Math.max(maxInt, peakAno.get(f).getIntensity());
+
+        final boolean hasScores;
+        final FragmentAnnotation<Score> fscore = tree.getFragmentAnnotationOrNull(Score.class);
+        final LossAnnotation<Score> lscore = tree.getLossAnnotationOrNull(Score.class);
+        final TreeScoring scoring = tree.getAnnotationOrNull(TreeScoring.class);
+        if (fscore==null || lscore == null || scoring==null) {
+            hasScores=false;
+        } else {
+            hasScores = true;
+        }
+
+        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+
+        writer.write("\tnode [shape=rect,style=rounded];\n");
+        if (hasScores) {
+            writer.write("\tlabelloc=\"t\";\n");
+            writer.write("\tlabel=\"");
+            writer.write("Compound Score: ");
+            writer.write(String.format(Locale.US, "%.4f", scoring.getOverallScore()));
+            writer.write("\";\n");
+        }
+
+        for (Fragment f : tree.getFragments()) {
+            final MolecularFormula formula = (includeIon) ? ion.getAtoms().add(f.getFormula()) : f.getFormula();
+            writer.write("\t");
+            writer.write(formula.toString());
+            writer.write(" [label=");
+            writer.write(htmlStart());
+            writer.write(htmlFormula(formula,ion));
+            writer.write(htmlSmall());
+            writer.write(htmlNewline());
+            writer.write(" ");
+            writer.write(htmlNewline());
+            final Peak p = peakAno.get(f);
+            writer.write(htmlLabel(String.format(Locale.US, "%.4f Da, %.2f %%", p.getMass(), p.getIntensity() * 100d / maxInt)));
+            if (hasScores) {
+                writer.write(htmlNewline());
+                double score = fscore.get(f).sum();
+                if (!f.isRoot()) score += lscore.get(f.getIncomingEdge()).sum();
+                writer.write(htmlLabel(String.format(Locale.US, "%.4f", score)));
+            }
+            writer.write(htmlEndSmall());
+            writer.write(htmlEnd());
+            writer.write("];\n");
+        }
+        writer.write("\n");
+        for (Loss l : tree.losses()) {
+            final MolecularFormula sf = includeIon ? ion.getAtoms().add(l.getSource().getFormula()) : l.getSource().getFormula();
+            final MolecularFormula tf = includeIon ? ion.getAtoms().add(l.getTarget().getFormula()) : l.getTarget().getFormula();
+            writer.write("\t");
+            writer.write(sf.toString());
+            writer.write(" -> ");
+            writer.write(tf.toString());
+            writer.write(" [label=");
+            writer.write(htmlStart());
+            writer.write(htmlFormula(l.getFormula()));
+            writer.write(htmlEnd());
+            writer.write("];\n");
+        }
+        writer.write("}");
+        writer.close();
+    }
+
+    @Deprecated
     public void writeTreeToFile(File file, FTree graph,Map<Fragment, List<String>> additionalProperties,  Map<Fragment, Map<Class<?>, Double>> vertexScores,
                                                         Map<Loss, Map<Class<?>, Double>> edgeScores) throws IOException {
         FileWriter writer = null;
@@ -36,6 +120,7 @@ public class FTDotWriter {
         }
     }
 
+    @Deprecated
     public void writeGraph(Writer writer, FTree graph, Map<Fragment, List<String>> additionalProperties, Map<Fragment, Map<Class<?>, Double>> vertexScores,
                            Map<? extends Loss, Map<Class<?>, Double>> edgeScores) throws IOException {
         final Locale locale = Locale.US;
@@ -145,7 +230,7 @@ public class FTDotWriter {
             buf.write(htmlStart());
             buf.write(htmlFormula(f.getFormula()));
             buf.write(htmlNewline());
-            buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity()/normalization * 100));
+            buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity() / normalization * 100));
             buf.write(htmlSmall());
             final double dev = peakAno.get(f).getMass() - graph.getAnnotationOrThrow(Ionization.class).addToMass(f.getFormula().getMass());
             buf.write(htmlNewline());
@@ -237,9 +322,31 @@ public class FTDotWriter {
         return s.replaceAll("(\\d+)", "<SUB>$1</SUB>");
     }
 
+    public String htmlFormula(MolecularFormula f, Ionization ion) {
+        final String s = f.toString();
+        if (!HTML) return s;
+        final String str = s.replaceAll("(\\d+)", "<SUB>$1</SUB>");
+        if (!includeIon) return str;
+        if (ion.getCharge() > 0) {
+            return str + "<SUP>" + (ion.getCharge()>1 ? ion.getCharge() : "") + "+</SUP>";
+        } else {
+            return str + "<SUP>" + (ion.getCharge()<-1 ? -ion.getCharge() : "") + "-</SUP>";
+        }
+    }
+
     public String htmlEndSmall() {
         if (!HTML) return "";
         return "</FONT>";
+    }
+
+    public String htmlStartParagraph() {
+        if (!HTML) return "";
+        else return "<p>";
+    }
+
+    public String htmlEndParagraph() {
+        if (!HTML) return "\\n";
+        else return "</p>";
     }
 
     public String htmlNewline() {
