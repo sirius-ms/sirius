@@ -190,6 +190,11 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     }
 
     @SuppressWarnings("unchecked cast")
+    public <T> FragmentAnnotation<T> getFragmentAnnotationOrNull(Class<T> klass) {
+        return (FragmentAnnotation<T>) fragmentAnnotations.get(klass);
+    }
+
+    @SuppressWarnings("unchecked cast")
     public <T> LossAnnotation<T> getLossAnnotationOrThrow(Class<T> klass) {
         final LossAnnotation<T> ano = (LossAnnotation<T>) lossAnnotations.get(klass);
         if (ano == null)
@@ -198,10 +203,20 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     }
 
     @SuppressWarnings("unchecked cast")
+    public <T> LossAnnotation<T> getLossAnnotationOrNull(Class<T> klass) {
+        return (LossAnnotation<T>) lossAnnotations.get(klass);
+    }
+
+    @SuppressWarnings("unchecked cast")
     public <T> T getAnnotationOrThrow(Class<T> klass) {
         final T ano = (T) annotations.get(klass);
         if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
         return ano;
+    }
+
+    @SuppressWarnings("unchecked cast")
+    public <T> T getAnnotationOrNull(Class<T> klass) {
+        return (T) annotations.get(klass);
     }
 
     public boolean removeAnnotation(Class<?> klass) {
