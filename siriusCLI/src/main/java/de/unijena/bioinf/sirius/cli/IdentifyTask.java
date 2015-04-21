@@ -16,9 +16,9 @@ public class IdentifyTask extends TreeComputationTask {
 
     IdentifyOptions options;
 
-    @Override
     public void compute(List<File> input) {
         try {
+            options.getTarget().mkdirs();
             final Iterator<Instance> instances = handleInput(input);
             while (instances.hasNext()) {
                 final Instance i = instances.next();
@@ -45,7 +45,7 @@ public class IdentifyTask extends TreeComputationTask {
             if (format.equalsIgnoreCase("json")) {
                 new FTJsonWriter().writeTreeToFile(name, result.getTree());
             } else if (format.equalsIgnoreCase("dot")) {
-                new FTDotWriter().writeTreeToFile(name, result.getTree(), null, null, null);
+                new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(name, result.getTree());
             } else {
                 throw new RuntimeException("Unknown format '" + format + "'");
             }
@@ -71,7 +71,7 @@ public class IdentifyTask extends TreeComputationTask {
 
     @Override
     public String getDescription() {
-        return "identify the molecular formula of an unknown compound via MS and MS/MS analysis.\nusage: sirius identify [OPTIONS] [INPUTFILES]\nFor further help run: sirius identify --help\n";
+        return "identify the molecular formula of an unknown compound via MS and MS/MS analysis.\nusage: sirius identify [OPTIONS] [INPUTFILES]";
     }
 
     @Override

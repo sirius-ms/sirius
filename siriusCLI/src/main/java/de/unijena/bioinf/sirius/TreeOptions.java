@@ -37,4 +37,10 @@ public interface TreeOptions {
     @Option(shortName = "o", description = "file format of the output. Available are 'dot' and 'json' for trees and 'txt' and 'csv' for spectra", defaultToNull = true)
     public String getFormat();
 
+    @Option(longName = "no-html", description = "only for DOT/graphviz output: Do not use html for node labels")
+    public boolean isNoHTML();
+
+    @Option(longName = "no-ion", description = "only for DOT/graphviz output: Print node labels as neutral formulas instead of ions")
+    public boolean isNoIon();
+
 }

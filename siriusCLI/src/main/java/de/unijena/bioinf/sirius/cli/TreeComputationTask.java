@@ -63,8 +63,6 @@ public abstract class TreeComputationTask implements Task {
         System.out.printf(Locale.US, msg, args);
     }
 
-    public abstract void compute(List<File> input);
-
     public Iterator<Instance> handleInput(List<File> files) throws IOException {
         final MsExperimentParser parser = new MsExperimentParser();
         final ArrayDeque<File> queue = new ArrayDeque<File>(files);
