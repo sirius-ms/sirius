@@ -29,8 +29,9 @@ public class GenericParser<T> implements Parser<T> {
         return parseIterator(reader);
     }
 
-    public <S extends T> Iterator<S> parseIterator(final BufferedReader reader) throws IOException {
+    public <S extends T> Iterator<S> parseIterator(final BufferedReader r) throws IOException {
         return new Iterator<S>() {
+            BufferedReader reader=r;
             S elem = parse(reader);
             @Override
             public boolean hasNext() {
@@ -53,6 +54,7 @@ public class GenericParser<T> implements Parser<T> {
             private void tryclose() {
                 try {
                     reader.close();
+                    reader=null;
                 } catch (IOException e) {
 
                 }

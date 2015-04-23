@@ -79,6 +79,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             }
             parseEmptyLine();
+            if (compoundName==null) return null;
             return new JenaMsExperiment(compoundName, formula, parentMass, charge, ionization, ms1spectra, ms2spectra);
         }
 

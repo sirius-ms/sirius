@@ -17,7 +17,9 @@ public class MsExperimentParser {
 
     public GenericParser<Ms2Experiment> getParser(File f) {
         final String name = f.getName();
-        final String extName = name.substring(name.lastIndexOf('.'));
+        final int i = name.lastIndexOf('.');
+        if (i < 0) return null; // no parser found
+        final String extName = name.substring(i);
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
         if (pc==null) return null;
         try {

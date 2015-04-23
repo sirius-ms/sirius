@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import org.json.JSONWriter;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 class FTSpecials {
@@ -59,9 +60,21 @@ class FTSpecials {
             @Override
             public void writeJSON(JSONWriter writer, TreeScoring obj) throws JSONException {
                 writer.key("score");
+                writer.object();
+                writer.key("total");
                 writer.value(obj.getOverallScore());
                 writer.key("recalibrationBonus");
                 writer.value(obj.getRecalibrationBonus());
+                double addScore=0d;
+                for (Map.Entry<String, Double> special : obj.getAdditionalScores().entrySet()) {
+                    writer.key(special.getKey());
+                    writer.value(special.getValue().doubleValue());
+                    addScore += special.getValue();
+                }
+                writer.key("tree");
+                writer.value(obj.getOverallScore()-addScore);
+                writer.endObject();
+
             }
 
             @Override
