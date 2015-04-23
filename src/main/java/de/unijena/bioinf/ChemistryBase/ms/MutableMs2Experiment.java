@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,6 +23,8 @@ public class MutableMs2Experiment implements Ms2Experiment {
     private Spectrum<Peak> mergedMs1Spectrum;
 
     public MutableMs2Experiment(){
+        ms1Spectra = new ArrayList<Spectrum<Peak>>();
+        ms2Spectra = new ArrayList<Ms2Spectrum<? extends Peak>>();
     }
 
     public MutableMs2Experiment(Ms2Experiment experiment){
