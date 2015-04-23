@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -60,6 +61,16 @@ public class Ms2SpectrumImpl implements Ms2Spectrum<MS2Peak> {
     @Override
     public double getTotalIonCount() {
         return totalIonCount;
+    }
+
+    @Override
+    public Ionization getIonization() {
+        return null;
+    }
+
+    @Override
+    public int getMsLevel() {
+        return 2;
     }
 
     @Override
