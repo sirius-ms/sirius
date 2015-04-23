@@ -11,7 +11,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2Spectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.MedianSlope;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
@@ -182,7 +181,7 @@ public class CleanupSpectrum {
                 }
             }
             mspec.setCollisionEnergy(spec.getCollisionEnergy());
-            mspec.setTotalIonCurrent(spec.getTotalIonCount());
+            mspec.setTotalIonCount(spec.getTotalIonCount());
             mspec.setPrecursorMz(tree.getAnnotationOrThrow(ProcessedInput.class).getParentPeak().getMz());
             spectra.add(mspec);
         }
@@ -195,7 +194,7 @@ public class CleanupSpectrum {
         for (Ms2Spectrum spec : experiment.getMs2Spectra()) {
             final MutableMs2Spectrum mspec = new MutableMs2Spectrum();
             mspec.setCollisionEnergy(spec.getCollisionEnergy());
-            mspec.setTotalIonCurrent(spec.getTotalIonCount());
+            mspec.setTotalIonCount(spec.getTotalIonCount());
             mspec.setPrecursorMz(tree.getAnnotationOrThrow(ProcessedInput.class).getParentPeak().getMz());
             if (!spectra.containsKey(spec.getCollisionEnergy()))
                 spectra.put(spec.getCollisionEnergy(), mspec);
