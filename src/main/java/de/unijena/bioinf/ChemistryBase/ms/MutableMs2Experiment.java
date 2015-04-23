@@ -38,8 +38,8 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
 
     @Override
-    public List<? extends Ms2Spectrum<? extends Peak>> getMs2Spectra() {
-        return ms2Spectra;
+    public List<Ms2Spectrum<? extends Peak>> getMs2Spectra() {
+        return (List<Ms2Spectrum<? extends Peak>>) ms2Spectra;
     }
 
     @Override
@@ -74,8 +74,8 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
-    public List<? extends Spectrum<Peak>> getMs1Spectra() {
-        return ms1Spectra;
+    public List<Spectrum<Peak>> getMs1Spectra() {
+        return (List<Spectrum<Peak>>) ms1Spectra;
     }
 
     @Override
