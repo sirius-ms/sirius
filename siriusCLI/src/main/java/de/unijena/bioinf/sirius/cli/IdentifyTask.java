@@ -4,7 +4,6 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IdentifyOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,10 +15,10 @@ public class IdentifyTask extends TreeComputationTask {
 
     IdentifyOptions options;
 
-    public void compute(List<File> input) {
+    public void compute() {
         try {
             options.getTarget().mkdirs();
-            final Iterator<Instance> instances = handleInput(input);
+            final Iterator<Instance> instances = handleInput(options);
             while (instances.hasNext()) {
                 final Instance i = instances.next();
                 progress.info("Compute '" + i.file.getName() + "'");
@@ -27,7 +26,7 @@ public class IdentifyTask extends TreeComputationTask {
                 int rank=1;
                 int n = (int)Math.ceil(Math.log10(results.size()));
                 for (IdentificationResult result : results) {
-                    printf("%"+n+"d.) %s\t%.2f\n", rank++, result.getMolecularFormula().toString(), result.getScore());
+                    printf("%"+n+"d.) %s\tscore: %.2f\ttree: %+.2f\tisotope: %.2f\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore());
                 }
                 output(i, results);
             }
@@ -94,12 +93,6 @@ public class IdentifyTask extends TreeComputationTask {
 
     @Override
     public void run() {
-        final List<File> files = new ArrayList<File>(options.getInput().size());
-        for (String s : options.getInput()) {
-            files.add(new File(s));
-        }
-
-
-        compute(files);
+        compute();
     }
 }

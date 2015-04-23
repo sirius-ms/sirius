@@ -38,4 +38,14 @@ public class IdentificationResult {
     public FTree getTree() {
         return tree;
     }
+
+    public double getTreeScore() {
+        final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
+        return treeScore.getOverallScore() - treeScore.getAdditionalScore(Sirius.ISOTOPE_SCORE);
+    }
+
+    public double getIsotopeScore() {
+        final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
+        return treeScore.getAdditionalScore(Sirius.ISOTOPE_SCORE);
+    }
 }

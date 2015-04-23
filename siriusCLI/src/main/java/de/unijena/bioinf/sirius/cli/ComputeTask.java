@@ -2,9 +2,11 @@ package de.unijena.bioinf.sirius.cli;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.TreeOptions;
 
 import java.io.File;
@@ -17,37 +19,28 @@ import java.util.regex.Pattern;
 
 public class ComputeTask extends TreeComputationTask {
 
-    TreeOptions options;
+    ComputeOptions options;
 
-    public void compute(List<InputFile> input) {
+    public void compute() {
         try {
-
-            final String tname = options.getTarget().getName();
-            if (input.size() > 1 || (!tname.endsWith(".json") && !tname.endsWith(".dot"))) {
-                options.getTarget().mkdirs();
-            }
-
-            final HashMap<File, MolecularFormula> map = new HashMap<File, MolecularFormula>();
-            for (InputFile i : input) map.put(i.file, i.formula);
-
-            final Iterator<Instance> instances = handleInput(new ArrayList<File>(map.keySet()));
-            while (instances.hasNext()) {
-                final Instance i = instances.next();
-                progress.info("Compute '" + i.file.getName() + "'");
-
-                final MolecularFormula formula;
-
-                if (map.containsKey(i.file)) formula = map.get(i.file);
-                else if (i.experiment.getMolecularFormula()!=null) formula=i.experiment.getMolecularFormula();
-                else {
-                    System.err.println("Molecular formula of '" + i.file + "' is unknown. Please add the molecular formula before the filename or run sirius identify to predict the correct molecular formula.");
-                    System.exit(1);
-                    return;
+            final Iterator<Instance> instanceIterator = handleInput(options);
+            while (instanceIterator.hasNext()) {
+                final Instance i = instanceIterator.next();
+                if (i.experiment.getMolecularFormula()==null) {
+                    if (options.getMolecularFormula()==null) {
+                        System.err.println("The molecular formula for '" + i.file + "' is missing. Add the molecular formula via --formula option or use sirius identify to predict the correct molecular formula");
+                    } else {
+                        final MutableMs2Experiment exp;
+                        if (i.experiment instanceof MutableMs2Experiment) exp = (MutableMs2Experiment) i.experiment;
+                        else exp = new MutableMs2Experiment(i.experiment);
+                        exp.setMolecularFormula(MolecularFormula.parse(options.getMolecularFormula()));
+                        System.out.println("Compute " + i.file + " (" + exp.getMolecularFormula() + ")");
+                        final IdentificationResult result = sirius.compute(exp, MolecularFormula.parse(options.getMolecularFormula()), options);
+                        output(i, result);
+                    }
                 }
-
-                final IdentificationResult result = sirius.compute(i.experiment, formula, options);
-                output(i, result);
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -61,7 +54,7 @@ public class ComputeTask extends TreeComputationTask {
         } else {
             final String n = target.getName();
             final String ext = n.substring(n.lastIndexOf('.'));
-            if (ext.equals("json") || ext.equals("dot")) {
+            if (ext.equals(".json") || ext.equals(".dot")) {
                 format = ext;
             } else format = "json";
         }
@@ -104,7 +97,7 @@ public class ComputeTask extends TreeComputationTask {
 
     @Override
     public void setArgs(String[] args) {
-        this.options = CliFactory.createCli(TreeOptions.class).parseArguments(args);
+        this.options = CliFactory.createCli(ComputeOptions.class).parseArguments(args);
         setup(options);
         // validate
         final File target = options.getTarget();
@@ -120,26 +113,8 @@ public class ComputeTask extends TreeComputationTask {
         }
     }
 
-    private final static Pattern FORMULA_PATTERN = Pattern.compile("^([A-Z][a-z]*\\d*)+$");
-
     @Override
     public void run() {
-        final List<InputFile> files = new ArrayList<InputFile>(options.getInput().size());
-        files.add(new InputFile());
-        for (String s : options.getInput()) {
-            if (FORMULA_PATTERN.matcher(s).matches()) {
-                files.get(files.size()-1).formula = MolecularFormula.parse(s);
-            } else {
-                final File f = new File(s);
-                if (f.exists()) {
-                    files.get(files.size()-1).file = f;
-                    files.add(new InputFile());
-                } else {
-                    System.err.println("'" + f.getName() + "' is neither a molecular formula nor an existing file.");
-                }
-            }
-        }
-        if (files.get(files.size()-1).file==null) files.remove(files.size()-1);
-        compute(files);
+        compute();
     }
 }

@@ -22,6 +22,9 @@ public class ShellProgress implements Progress {
 
     private StringBuilder buffer;
 
+    private int fillEmptySpace=0;
+    private int prevPerc=0;
+
     public ShellProgress(PrintStream writer, boolean shellMode) {
         this.shellMode = shellMode;
         this.writer = writer;
@@ -35,6 +38,7 @@ public class ShellProgress implements Progress {
         clearBuffer();
         draw(0, maxProgress, "start computing");
         this.max = maxProgress;
+        prevPerc=0;
     }
 
     @Override
@@ -49,8 +53,8 @@ public class ShellProgress implements Progress {
 
     private void draw(double currentProgress, double maxProgress, String value) {
 
-        final int percentage = Math.max(0, Math.min(width, (int) Math.round(width * currentProgress / maxProgress)));
-        final int perc100 = percentage*5;
+        final double percentage = width * currentProgress / maxProgress;
+        final int perc100 = (int)Math.max(0,Math.min(100, Math.round(percentage*5)));
 
         buffer.append(FRAME);
         for (int k=0; k < width/2; ++k) buffer.append(k >= percentage ? UNREACHED : REACHED);
@@ -58,22 +62,23 @@ public class ShellProgress implements Progress {
         buffer.append(String.format(Locale.US, "%3d %%", perc100));
         for (int k=width/2; k < width; ++k) buffer.append(k >= percentage ? UNREACHED : REACHED);
         buffer.append(FRAME);
-        buffer.append('\n');
+        buffer.append('\t');
         if (value.length() < buffer.length()) {
             final int indent = (buffer.length()-1-value.length())/2;
             for (int i=0; i < indent; ++i) buffer.append(' ');
         }
         buffer.append(value);
-        buffer.append('\n');
-        writer.print(buffer); writer.flush();
+        writer.print(buffer);
+        for (int k=buffer.length(); k < fillEmptySpace; ++k) {
+            writer.print(' ');
+        }
+        fillEmptySpace=0;
+         writer.flush();
     }
 
     private void clearBuffer() {
-        for (int k=0; k < buffer.length(); ++k) {
-            buffer.setCharAt(k, '\b');
-        }
-        writer.print(buffer);
-        writer.flush();
+        writer.print('\r');
+        fillEmptySpace=buffer.length();
         buffer.delete(0, buffer.length());
     }
 
@@ -82,6 +87,7 @@ public class ShellProgress implements Progress {
         if (!shellMode) return;
         clearBuffer();
         draw(max, max, "computation finished");
+        writer.print("\n");
     }
 
     @Override

@@ -19,6 +19,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.CsvParser;
+import de.unijena.bioinf.sirius.cli.IdentifyOptions;
 import de.unijena.bioinf.sirius.cli.Instance;
 
 import java.io.File;
@@ -33,6 +34,8 @@ public class Sirius {
     private static final double MIN_EXPLAINED_INTENSITY = 0.85d;
 
     protected Profile profile;
+
+    public final static String ISOTOPE_SCORE = "isotope";
 
     public Sirius(String profileName) throws IOException {
         profile = new Profile(profileName);
@@ -72,7 +75,7 @@ public class Sirius {
             filterCandidateList(pattern, isoFormulas);
         }
 
-        final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
         MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
 
         if (isoFormulas.size() > 0) {
@@ -102,6 +105,8 @@ public class Sirius {
                 int counter=0;
                 while (iter.hasNext()) {
                     final FTree tree = iter.next();
+                    addIsoScore(isoFormulas, tree);
+
                     if (tree != null) {
                         treeSet.add(tree);
                         if (treeSet.size() > opts.getNumberOfCandidates()) treeSet.pollFirst();
@@ -112,19 +117,18 @@ public class Sirius {
                 progress.finished();
 
                 // check if at least one of the best N trees satisfies the tree-rejection-condition
-                if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE) {
-                    computedTrees.addAll(treeSet.descendingSet());
-                }
-                final Iterator<FTree> treeIterator = treeSet.descendingIterator();
-                boolean satisfied = false;
-                for (int k=0; k < computeNTrees; ++k) {
-                    if (treeIterator.hasNext()) {
-                        final FTree tree = treeIterator.next();
-                        final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
-                        if (tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
-                            satisfied=true; break;
-                        }
-                    } else break;
+                boolean satisfied = treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE;
+                if (!satisfied) {
+                    final Iterator<FTree> treeIterator = treeSet.descendingIterator();
+                    for (int k=0; k < computeNTrees; ++k) {
+                        if (treeIterator.hasNext()) {
+                            final FTree tree = treeIterator.next();
+                            final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
+                            if (tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
+                                satisfied=true; break;
+                            }
+                        } else break;
+                    }
                 }
                 if (satisfied) {
                     computedTrees.addAll(treeSet.descendingSet());
@@ -133,18 +137,25 @@ public class Sirius {
                     progress.info("Not enough peaks were explained. Repeat computation with less restricted constraints.");
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
+                    computedTrees.clear();
+                    // TODO!!!! find a smarter way to do this -_-
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
                 }
             }
 
-            // now recalibrate the trees and recompute them another time...
-            progress.info("recalibrate trees");
-            progress.init(computedTrees.size());
-            for (int k=0; k < computedTrees.size(); ++k) {
-                final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
-                computedTrees.set(k, recalibratedTree);
-                progress.update(k+1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString());
+            if (!opts.isNotRecalibrating()) {
+                // now recalibrate the trees and recompute them another time...
+                progress.info("recalibrate trees");
+                progress.init(computedTrees.size());
+                for (int k=0; k < computedTrees.size(); ++k) {
+                    final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    addIsoScore(isoFormulas, recalibratedTree);
+                    computedTrees.set(k, recalibratedTree);
+                    progress.update(k+1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString());
+                }
+                progress.finished();
             }
-            progress.finished();
+
             Collections.sort(computedTrees, Collections.reverseOrder(TREE_SCORE_COMPARATOR));
 
 
@@ -160,22 +171,31 @@ public class Sirius {
         }
     }
 
+    private void addIsoScore(HashMap<MolecularFormula, Double> isoFormulas, FTree tree) {
+        final TreeScoring sc = tree.getAnnotationOrThrow(TreeScoring.class);
+        if (isoFormulas.get(tree.getRoot().getFormula())!=null) {
+            sc.addAdditionalScore(ISOTOPE_SCORE, isoFormulas.get(tree.getRoot().getFormula()));
+        }
+    }
+
     public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, TreeOptions opts) {
-        final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer!=null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;
-        final double MAX_TREESIZE_SCORE = originalTreeSize+2d;
+        final double MAX_TREESIZE_SCORE = originalTreeSize+MAX_TREESIZE_INCREASE;
         FTree tree = null;
         try {
             while (true) {
-                tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration().onlyWith(Arrays.asList(formula)).optimalTree();
+                tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(!opts.isNotRecalibrating()).onlyWith(Arrays.asList(formula)).optimalTree();
                 final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
                 if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
                     break;
                 } else {
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
+                    // TODO!!!! find a smarter way to do this -_-
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
                 }
             }
             profile.fragmentationPatternAnalysis.recalculateScores(tree);
@@ -183,63 +203,6 @@ public class Sirius {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
         return new IdentificationResult(tree, 0);
-    }
-
-    public Iterator<Instance> readAllInstances(List<File> files) {
-        return null;
-    }
-
-    public Instance readFrom(File file) throws IOException {
-        final GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParser(file);
-        if (parser==null) {
-            return readFrom(null, Arrays.asList(file));
-        } else return new Instance(parser.parseFromFile(file).get(0), file);
-    }
-
-    public Instance readFrom(File ms1, List<File> ms2) throws IOException {
-        // expect ms1 and ms2 to be spectral files
-        final MutableMs2Experiment exp = new MutableMs2Experiment();
-        final ArrayList<SimpleSpectrum> ms1Spectra = new ArrayList<SimpleSpectrum>();
-        final ArrayList<Ms2Spectrum<Peak>> ms2Spectra = new ArrayList<Ms2Spectrum<Peak>>();
-        exp.setMs1Spectra(ms1Spectra);
-        exp.setMs2Spectra(ms2Spectra);
-
-        final Iterator<Ms2Spectrum<Peak>> ms1i;
-        if (ms1 != null && ms1.getName().endsWith(".mgf")) {
-            ms1i = new MgfParser().parseSpectra(ms1);
-        } else if (ms1 != null) {
-            ms1i = new CsvParser().parseSpectra(ms1);
-        } else ms1i = Iterators.emptyIterator();
-        Iterator<Ms2Spectrum<Peak>> ms2i = Iterators.emptyIterator();
-        for (File g : ms2) {
-            if (g.getName().endsWith(".mgf")) {
-                ms2i = Iterators.concat(ms2i, new MgfParser().parseSpectra(ms1));
-            } else {
-                ms2i = Iterators.concat(ms2i, new CsvParser().parseSpectra(ms1));
-            }
-        }
-        while (ms1i.hasNext())
-            ms1Spectra.add(new SimpleSpectrum(ms1i.next()));
-        while (ms2i.hasNext())
-            ms2Spectra.add(ms2i.next());
-        if (ms2Spectra.size() > 0) {
-            exp.setIonization(ms2Spectra.get(0).getIonization());
-            for (int k=1; k < ms2Spectra.size(); ++k) {
-                if (!ms2Spectra.get(k).getIonization().equals(exp.getIonization())) {
-                    throw new RuntimeException("SIRIUS currently does not support different MS/MS spectra with different ionization modes");
-                }
-            }
-            exp.setIonMass(ms2Spectra.get(0).getPrecursorMz());
-            for (int k=1; k < ms2Spectra.size(); ++k) {
-                if (Math.abs(ms2Spectra.get(k).getPrecursorMz() - exp.getIonMass()) > 1e-2) {
-                    throw new RuntimeException("MS/MS spectra of the same compound have different precursor mass");
-                }
-            }
-            if (exp.getIonMass()==0) {
-                throw new RuntimeException("There is no precursor mass given in the input file");
-            }
-        }
-        return new Instance(exp, ms2.get(0));
     }
 
     private void filterCandidateList(IsotopePattern candidate, HashMap<MolecularFormula, Double> formulas) {
