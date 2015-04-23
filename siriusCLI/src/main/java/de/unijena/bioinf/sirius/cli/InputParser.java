@@ -16,7 +16,7 @@ import java.util.List;
 
 public class InputParser {
 
-    public Iterator<Instance> parse(final InputOptions input) {
+    public Iterator<Instance> parse(final InputOptions input) throws IOException {
 
         ArrayDeque<Ms2Experiment> experiments;
         final MsExperimentParser parser = new MsExperimentParser();
@@ -40,7 +40,7 @@ public class InputParser {
             public void remove() {
 
             }
-        }
+        };
 
     }
 
@@ -64,10 +64,11 @@ public class InputParser {
         }
         for (File f : input.getMs1()) {
             final List<Ms2Experiment> exps = parser.getParser(f).parseFromFile(f);
-            for (MsExperiment exp : exps) {
+            for (Ms2Experiment exp2 : exps) {
 
             }
         }
+        return null;
 
     }
 
