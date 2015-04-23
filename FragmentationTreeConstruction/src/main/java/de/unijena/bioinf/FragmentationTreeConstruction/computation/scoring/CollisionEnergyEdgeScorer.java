@@ -135,6 +135,10 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
             int k=0;
             for (Ms2Spectrum ms : spectra) {
                 final CollisionEnergy e = ms.getCollisionEnergy();
+                if (e==null) {
+                    // cannot score collision energy if these is not contained in input
+                    return;
+                }
                 points[k++] = e.getMinEnergy();
                 points[k++] = e.getMaxEnergy();
             }

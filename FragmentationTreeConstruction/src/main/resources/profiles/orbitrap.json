@@ -33,7 +33,13 @@
             0.03
           ]
         }
-      }
+      }, {
+      "$name": "scoring.MissingPeakScorer",
+      "lambda": 1
+      }, {
+        "$name": "scoring.ScorePerPeak",
+        "scorePerPeak": 10
+        }
     ],
     "isotopes": {
       "$name": "ChemistryBase.chem.utils.IsotopicDistribution",

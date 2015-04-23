@@ -204,7 +204,7 @@ public class ProcessedPeak extends Peak implements WriteIntoDataDocument {
 
         @Override
         public int compare(ProcessedPeak o1, ProcessedPeak o2) {
-            return Double.compare(o1.getUnmodifiedMass(), o2.getUnmodifiedMass());
+            return Double.compare(o1.getMz(), o2.getMz());
         }
     }
     public static class RelativeIntensityComparator implements Comparator<ProcessedPeak> {

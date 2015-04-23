@@ -365,7 +365,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final Set<CollisionEnergy> energies = new TreeSet<CollisionEnergy>(CollisionEnergy.getMinEnergyComparator());
             int k = 0;
             for (MS2Peak op : peak.getOriginalPeaks()) {
-                energies.add(op.getSpectrum().getCollisionEnergy());
+                if (op.getSpectrum().getCollisionEnergy()!=null)
+                    energies.add(op.getSpectrum().getCollisionEnergy());
             }
             ces.set(f, energies.toArray(new CollisionEnergy[energies.size()]));
         }
@@ -404,13 +405,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (force || rec.shouldRecomputeTree()) {
             final FTree newTree = rec.getCorrectedTree(this, tree);
             final TreeScoring newTreeScoring = newTree.getAnnotationOrThrow(TreeScoring.class);
-            if (force || newTreeScoring.getOverallScore() > treeScoring.getOverallScore()) {
+            setRecalibrationBonusFromTree(tree, newTree);
+            if (force || newTreeScoring.getRecalibrationBonus()>0) {
                 tree = newTree;
-                newTreeScoring.setRecalibrationBonus(newTreeScoring.getOverallScore() - oldScore);
             }
         } else {
-            treeScoring.setOverallScore(rec.getScoreBonus());
-            treeScoring.setRecalibrationBonus(treeScoring.getOverallScore() - oldScore);
+            treeScoring.setOverallScore(treeScoring.getOverallScore() + rec.getScoreBonus());
+            treeScoring.setRecalibrationBonus(rec.getScoreBonus());
         }
         if (func != null) {
             final RecalibrationFunction f = toPolynomial(func);
@@ -418,6 +419,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 tree.addAnnotation(RecalibrationFunction.class, f);
         }
         return tree;
+    }
+
+    private static void setRecalibrationBonusFromTree(FTree old, FTree newTree) {
+        final TreeScoring a = old.getAnnotationOrThrow(TreeScoring.class);
+        final TreeScoring b = newTree.getAnnotationOrThrow(TreeScoring.class);
+        double aS = a.getOverallScore();
+        double bS = b.getOverallScore();
+        for (Map.Entry<String, Double> e : a.getAdditionalScores().entrySet()) {
+            if (b.getAdditionalScore(e.getKey())==0) aS -= e.getValue();
+        }
+        b.setRecalibrationBonus(bS-aS);
     }
 
     private static RecalibrationFunction toPolynomial(UnivariateFunction func) {
