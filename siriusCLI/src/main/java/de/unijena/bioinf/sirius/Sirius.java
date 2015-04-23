@@ -1,11 +1,12 @@
 package de.unijena.bioinf.sirius;
 
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
@@ -14,7 +15,13 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.mgf.MgfParser;
+import de.unijena.bioinf.babelms.ms.CsvParser;
+import de.unijena.bioinf.sirius.cli.Instance;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -176,6 +183,63 @@ public class Sirius {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
         return new IdentificationResult(tree, 0);
+    }
+
+    public Iterator<Instance> readAllInstances(List<File> files) {
+        return null;
+    }
+
+    public Instance readFrom(File file) throws IOException {
+        final GenericParser<Ms2Experiment> parser = new MsExperimentParser().getParser(file);
+        if (parser==null) {
+            return readFrom(null, Arrays.asList(file));
+        } else return new Instance(parser.parseFromFile(file).get(0), file);
+    }
+
+    public Instance readFrom(File ms1, List<File> ms2) throws IOException {
+        // expect ms1 and ms2 to be spectral files
+        final MutableMs2Experiment exp = new MutableMs2Experiment();
+        final ArrayList<SimpleSpectrum> ms1Spectra = new ArrayList<SimpleSpectrum>();
+        final ArrayList<Ms2Spectrum<Peak>> ms2Spectra = new ArrayList<Ms2Spectrum<Peak>>();
+        exp.setMs1Spectra(ms1Spectra);
+        exp.setMs2Spectra(ms2Spectra);
+
+        final Iterator<Ms2Spectrum<Peak>> ms1i;
+        if (ms1 != null && ms1.getName().endsWith(".mgf")) {
+            ms1i = new MgfParser().parseSpectra(ms1);
+        } else if (ms1 != null) {
+            ms1i = new CsvParser().parseSpectra(ms1);
+        } else ms1i = Iterators.emptyIterator();
+        Iterator<Ms2Spectrum<Peak>> ms2i = Iterators.emptyIterator();
+        for (File g : ms2) {
+            if (g.getName().endsWith(".mgf")) {
+                ms2i = Iterators.concat(ms2i, new MgfParser().parseSpectra(ms1));
+            } else {
+                ms2i = Iterators.concat(ms2i, new CsvParser().parseSpectra(ms1));
+            }
+        }
+        while (ms1i.hasNext())
+            ms1Spectra.add(new SimpleSpectrum(ms1i.next()));
+        while (ms2i.hasNext())
+            ms2Spectra.add(ms2i.next());
+        if (ms2Spectra.size() > 0) {
+            exp.setIonization(ms2Spectra.get(0).getIonization());
+            for (int k=1; k < ms2Spectra.size(); ++k) {
+                if (!ms2Spectra.get(k).getIonization().equals(exp.getIonization())) {
+                    throw new RuntimeException("SIRIUS currently does not support different MS/MS spectra with different ionization modes");
+                }
+            }
+            exp.setIonMass(ms2Spectra.get(0).getPrecursorMz());
+            for (int k=1; k < ms2Spectra.size(); ++k) {
+                if (Math.abs(ms2Spectra.get(k).getPrecursorMz() - exp.getIonMass()) > 1e-2) {
+                    throw new RuntimeException("MS/MS spectra of the same compound have different precursor mass");
+                }
+            }
+            if (exp.getIonMass()==0) {
+                throw new RuntimeException("There is no precursor mass given in the input file");
+            }
+        }
+        return new Instance(exp, ms2.get(0));
     }
 
     private void filterCandidateList(IsotopePattern candidate, HashMap<MolecularFormula, Double> formulas) {

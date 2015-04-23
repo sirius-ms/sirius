@@ -1,12 +1,11 @@
 package de.unijena.bioinf.sirius;
 
 import com.lexicalscope.jewel.cli.Option;
-import com.lexicalscope.jewel.cli.Unparsed;
+import de.unijena.bioinf.sirius.cli.InputOptions;
 
 import java.io.File;
-import java.util.List;
 
-public interface TreeOptions {
+public interface TreeOptions extends InputOptions {
 
     @Option(longName = "no-recalibrate", description = "do not recalibrate the spectrum")
     public boolean isNotRecalibrating();
@@ -28,8 +27,8 @@ public interface TreeOptions {
     @Option(shortName = "h", longName = "help", helpRequest = true)
     public boolean isHelp();
 
-    @Unparsed
-    public List<String> getInput();
+    @Option(shortName = "Z", longName = "auto-charge", description = "Use this option if the charge of your compounds is unknown and you do not want to assume [M+H]+ as default. With the auto charge option SIRIUS will not care about charges and allow arbitrary adducts for the precursor peak.")
+    public boolean isNoCharge();
 
     @Option(shortName = "t", description = "target directory/filename for the output", defaultValue = ".")
     public File getTarget();
