@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FTAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
