@@ -174,9 +174,13 @@ public class IsotopePatternAnalysis implements Parameterized {
     public List<IsotopePattern> extractPatterns(MsExperiment experiment, double targetMz, boolean allowAdducts) {
         final List<IsotopePattern> patterns = new ArrayList<IsotopePattern>();
         for (Spectrum spec : experiment.getMs1Spectra()) {
-            patterns.addAll(patternExtractor.extractPattern(experiment.getMeasurementProfile(), spec, targetMz, allowAdducts));
+            patterns.addAll(patternExtractor.extractPattern(getProfile(experiment.getMeasurementProfile()), spec, targetMz, allowAdducts));
         }
         return patterns;
+    }
+
+    private MeasurementProfile getProfile(MeasurementProfile measurementProfile) {
+        return MutableMeasurementProfile.merge(defaultProfile, measurementProfile);
     }
 
     public List<IsotopePattern> deisotope(MsExperiment experiment, double targetMz, boolean allowAdducts) {
@@ -191,7 +195,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     public List<IsotopePattern> deisotope(MsExperiment experiment) {
         final List<IsotopePattern> patterns = new ArrayList<IsotopePattern>();
         for (Spectrum spec : experiment.getMs1Spectra()) {
-            patterns.addAll(patternExtractor.extractPattern(experiment.getMeasurementProfile(), spec));
+            patterns.addAll(patternExtractor.extractPattern(getProfile(experiment.getMeasurementProfile()), spec));
         }
         final List<IsotopePattern> candidates = new ArrayList<IsotopePattern>();
         for (IsotopePattern pattern : patterns) {
@@ -203,7 +207,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     public IsotopePattern deisotope(MsExperiment experiment, IsotopePattern pattern) {
         final MutableMsExperiment mexperiment = new MutableMsExperiment(experiment);
         if (experiment.getMeasurementProfile() != null)
-            mexperiment.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, experiment.getMeasurementProfile()));
+            mexperiment.setMeasurementProfile(getProfile(experiment.getMeasurementProfile()));
         else mexperiment.setMeasurementProfile(defaultProfile);
         experiment = mexperiment;
         final Ionization ion = experiment.getIonization();

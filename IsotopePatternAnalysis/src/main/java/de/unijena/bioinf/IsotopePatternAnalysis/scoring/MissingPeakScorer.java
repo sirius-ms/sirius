@@ -17,7 +17,7 @@ public class MissingPeakScorer implements IsotopePatternScorer {
     }
 
     public MissingPeakScorer(double lambda) {
-        this(NormalizationMode.MAX, lambda);
+        this(NormalizationMode.SUM, lambda);
     }
 
     public MissingPeakScorer() {
@@ -46,7 +46,8 @@ public class MissingPeakScorer implements IsotopePatternScorer {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        this.normalization = (Normalization)helper.unwrap(document, document.getFromDictionary(dictionary, "normalization"));
+        if (document.hasKeyInDictionary(dictionary, "normalization"))
+            this.normalization = (Normalization)helper.unwrap(document, document.getFromDictionary(dictionary, "normalization"));
         this.lambda = document.getDoubleFromDictionary(dictionary, "lambda");
     }
 
