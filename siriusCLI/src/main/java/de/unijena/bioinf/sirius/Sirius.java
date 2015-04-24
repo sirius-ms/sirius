@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius;
 
 import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -28,12 +29,13 @@ import java.util.*;
 
 public class Sirius {
 
-    private static final double MAX_TREESIZE_INCREASE = 2d;
+    private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
     private static final double MIN_EXPLAINED_INTENSITY = 0.85d;
 
     protected Profile profile;
+    protected ElementPrediction elementPrediction;
 
     public final static String ISOTOPE_SCORE = "isotope";
 
@@ -63,11 +65,13 @@ public class Sirius {
         // make mutable
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
+        this.elementPrediction = new ElementPrediction();
     }
 
     public List<IdentificationResult> identify(Ms2Experiment experiment, IdentifyOptions opts, Progress progress) {
         // first check if MS data is present
-        final List<IsotopePattern> candidates = profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false);
+        experiment = extendConstraints(experiment, progress);
+        final List<IsotopePattern> candidates = opts.getIsotopes()!= IdentifyOptions.ISO.omit ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false) : Collections.<IsotopePattern>emptyList();
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
         if (candidates.size() > 0) {
@@ -105,7 +109,7 @@ public class Sirius {
                 int counter=0;
                 while (iter.hasNext()) {
                     final FTree tree = iter.next();
-                    addIsoScore(isoFormulas, tree);
+                    if (opts.getIsotopes()== IdentifyOptions.ISO.score) addIsoScore(isoFormulas, tree);
 
                     if (tree != null) {
                         treeSet.add(tree);
@@ -123,7 +127,7 @@ public class Sirius {
                     for (int k=0; k < computeNTrees; ++k) {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
-                            final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
+                            final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
                             if (tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
                                 satisfied=true; break;
                             }
@@ -149,7 +153,7 @@ public class Sirius {
                 progress.init(computedTrees.size());
                 for (int k=0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
-                    addIsoScore(isoFormulas, recalibratedTree);
+                    if (opts.getIsotopes()== IdentifyOptions.ISO.score) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k+1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString());
                 }
@@ -171,6 +175,26 @@ public class Sirius {
         }
     }
 
+    private Ms2Experiment extendConstraints(Ms2Experiment experiment, Progress progress) {
+        final FormulaConstraints constraints;
+        if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getFormulaConstraints()!=null) {
+            constraints = experiment.getMeasurementProfile().getFormulaConstraints();
+        } else constraints = profile.fragmentationPatternAnalysis.getDefaultProfile().getFormulaConstraints();
+        final Deviation allowedDev;
+        if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getAllowedMassDeviation()!=null) {
+            allowedDev = experiment.getMeasurementProfile().getAllowedMassDeviation();
+        } else allowedDev = profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation();
+        final FormulaConstraints newC = elementPrediction.extendConstraints(constraints, experiment, allowedDev);
+        if (newC != constraints) {
+            progress.info("Extend alphabet to " + newC.getChemicalAlphabet().toString());
+            final MutableMs2Experiment newExp = new MutableMs2Experiment(experiment);
+            final MutableMeasurementProfile newProf = experiment.getMeasurementProfile()!= null ? new MutableMeasurementProfile(experiment.getMeasurementProfile()) : new MutableMeasurementProfile();
+            newProf.setFormulaConstraints(newC);
+            newExp.setMeasurementProfile(newProf);
+            return newExp;
+        } else return experiment;
+    }
+
     private void addIsoScore(HashMap<MolecularFormula, Double> isoFormulas, FTree tree) {
         final TreeScoring sc = tree.getAnnotationOrThrow(TreeScoring.class);
         if (isoFormulas.get(tree.getRoot().getFormula())!=null) {
@@ -188,7 +212,7 @@ public class Sirius {
         try {
             while (true) {
                 tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(!opts.isNotRecalibrating()).onlyWith(Arrays.asList(formula)).optimalTree();
-                final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
+                final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
                 if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
                     break;
                 } else {

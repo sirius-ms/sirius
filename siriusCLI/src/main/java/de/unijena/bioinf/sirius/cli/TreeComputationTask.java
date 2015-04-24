@@ -81,7 +81,7 @@ public abstract class TreeComputationTask implements Task {
             exp.setMeasurementProfile(profile);
             exp.setIonization(ion);
             exp.setMs2Spectra(new ArrayList<Ms2Spectrum<Peak>>());
-            for (File f : options.getMs2()) {
+            for (File f : foreachIn(options.getMs2())) {
                 final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
                 while (spiter.hasNext()) {
                     final Ms2Spectrum<Peak> spec = spiter.next();
@@ -192,6 +192,19 @@ public abstract class TreeComputationTask implements Task {
             return instances.iterator();
         }
     }
+
+    private List<File> foreachIn(List<File> ms2) {
+        final List<File> queue = new ArrayList<File>();
+        for (File f : ms2) {
+            if (f.isDirectory()) {
+                for (File g : f.listFiles())
+                    if (!g.isDirectory())
+                        queue.add(g);
+            } else queue.add(f);
+        }
+        return queue;
+    }
+
 
     private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
 

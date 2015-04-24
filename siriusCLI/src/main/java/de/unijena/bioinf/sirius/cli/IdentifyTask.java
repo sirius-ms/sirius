@@ -26,7 +26,7 @@ public class IdentifyTask extends TreeComputationTask {
                 int rank=1;
                 int n = (int)Math.ceil(Math.log10(results.size()));
                 for (IdentificationResult result : results) {
-                    printf("%"+n+"d.) %s\tscore: %.2f\ttree: %+.2f\tisotope: %.2f\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore());
+                    printf("%"+n+"d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree())*100);
                 }
                 output(i, results);
             }
