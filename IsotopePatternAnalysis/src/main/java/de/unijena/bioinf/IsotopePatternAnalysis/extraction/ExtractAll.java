@@ -91,7 +91,7 @@ public class ExtractAll implements PatternExtractor {
             final IsotopePattern pattern = iter.next();
             final double mono = pattern.getMonoisotopicMass();
             // TODO: use adducts!
-            if (mono-targetMz > 2e-3) {
+            if (Math.abs(mono-targetMz) > 2e-3) {
                 iter.remove();
             }
         }
