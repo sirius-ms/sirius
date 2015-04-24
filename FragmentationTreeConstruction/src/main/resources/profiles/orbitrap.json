@@ -8,11 +8,13 @@
           "$name": "util.PiecewiseLinearFunctionIntensityDependency",
           "values": [
             1,
-            1.5
+            2,
+            3
           ],
           "bags": [
-            0.15,
-            0.1
+            0.2,
+            0.1,
+            0.01
           ]
         }
       },
@@ -35,7 +37,7 @@
         }
       }, {
       "$name": "scoring.MissingPeakScorer",
-      "lambda": 1
+      "lambda": 100
       }, {
         "$name": "scoring.ScorePerPeak",
         "scorePerPeak": 10
@@ -110,656 +112,401 @@
         }
       }
     },
-    "cutoff": 0.01,
+    "cutoff": 0.05,
     "patternExtractor": {
       "$name": "extraction.ExtractAll"
     },
-    "intensityOffset": 0.01
+    "intensityOffset": 0.005
   },
   "FragmentationPatternAnalysis": {
-    "rootScorers": [
-      {
-        "$name": "MassDeviationVertexScorer"
-      },
-      {
-        "$name": "IntrinsicallyChargedScorer",
-        "score": -2.3025850929940455
-      },
-      {
-        "$name": "ChemicalPriorScorer",
-        "normalization": 0.794817152411365,
-        "minimalMass": 100,
-        "prior": {
-          "heteroAtom2CarbonScorer": {
-            "$name": "ImprovedHetero2CarbonScorer",
-            "distribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.4,
-              "a": 0,
-              "k": 3.14534
-            }
+    "rootScorers": [{
+      "$name": "MassDeviationVertexScorer",
+      "standardDeviation": "5.0 ppm (5.0E-4 m/z)",
+      "useOriginalMz": true
+    }, {
+      "$name": "IntrinsicallyChargedScorer",
+      "score": -2.3025850929940455
+    }, {
+      "$name": "PhosphorScorer"
+    }, {
+      "$name": "StrangeElementRootScorer",
+      "penalty": -1.3862943611198906
+    }, {
+      "$name": "ChemicalPriorScorer",
+      "normalization": 0.8223655391091401,
+      "minimalMass": 100,
+      "prior": {
+        "heteroAtom2CarbonScorer": {
+          "$name": "ImprovedHetero2CarbonScorer",
+          "distribution": {
+            "$name": "PartialParetoDistribution",
+            "b": 0.4,
+            "a": 0,
+            "k": 3.14534
+          }
+        },
+        "$name": "ChemicalCompoundScorer$DefaultScorer",
+        "specialMoleculeScorer": {
+          "oxygenToHeteroDistribution": {
+            "$name": "PartialParetoDistribution",
+            "b": 0.75,
+            "a": 0,
+            "k": 5
           },
-          "$name": "ChemicalCompoundScorer$DefaultScorer",
-          "specialMoleculeScorer": {
-            "oxygenToHeteroDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.75,
-              "a": 0,
-              "k": 5
-            },
-            "rdbeDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 2,
-              "a": 0,
-              "k": 2
-            },
-            "$name": "SpecialMoleculeScorer"
+          "rdbeDistribution": {
+            "$name": "PartialParetoDistribution",
+            "b": 2,
+            "a": 0,
+            "k": 2
           },
-          "rdbeScorer": {
-            "$name": "RDBEMassScorer",
-            "distribution": {
-              "$name": "NormalDistribution",
-              "mean": 0.1481998,
-              "variance": 0.07341486
-            }
+          "$name": "SpecialMoleculeScorer"
+        },
+        "rdbeScorer": {
+          "$name": "RDBEMassScorer",
+          "distribution": {
+            "$name": "NormalDistribution",
+            "mean": 0.1481998,
+            "variance": 0.07341486
           }
         }
-      },
-      {
-        "$name": "StrangeElementRootScorer",
-        "penalty": -1.3862943611198906
       }
-    ],
+    }],
     "recalibrationMethod": {
       "$name": "HypothesenDrivenRecalibration",
       "method": {
         "$name": "MedianSlope",
-        "minNumberOfPeaks": 5,
-        "epsilon": "3.0 ppm (0.001 m/z)"
+        "minNumberOfPeaks": 8,
+        "maxDeviation": "10.0 ppm (0.001 m/z)",
+        "epsilon": "2.0 ppm (5.0E-4 m/z)",
+        "forceParentPeakIn": false,
+        "threshold": 0.01
       },
-      "threshold": 0.000010
+      "threshold": 1.0E-5
     },
     "$name": "FragmentationPatternAnalysis",
-    "preProcessing": [
-      {
-        "$name": "NormalizeToSumPreprocessor",
-        "onlyForRelativeIntensities": true
-      }
-    ],
+    "preProcessing": [{
+      "$name": "DynamicBaselineFilter",
+      "standardDeviation": 0.05,
+      "threshold": 0.25
+    }],
     "merge": {
       "$name": "HighIntensityMerger",
-      "minDistance": 0.01
+      "minDistance": 0.005
     },
-    "fragmentScorers": [
-      {
-        "$name": "MassDeviationVertexScorer"
+    "fragmentScorers": [{
+      "$name": "MassDeviationVertexScorer",
+      "useOriginalMz": false
+    }, {
+      "$name": "PhosphorScorer"
+    }, {
+      "$name": "StrangeElementSmallFragmentScorer",
+      "score": 0.5,
+      "maximalMass": 75
+    }, {
+      "$name": "CommonFragmentsScore",
+      "fragments": {
+        "C6H4": 1.280441763530519,
+        "C9H9N": 0.723147734156731,
+        "C3H5N": 0.8756603328268577,
+        "C4H7N": 0.48548667215981656,
+        "C4H9N": 0.6256806620036983,
+        "C8H6": 0.93243638719678,
+        "C8H8": 1.6964858880140792,
+        "C9H7N": 1.008448412668853,
+        "C11H10O": 0.5018780739178162,
+        "C9H7NO": 0.577492908561451,
+        "C5H4": 0.7593778465628661,
+        "C10H9N": 0.7461300224578211,
+        "C7H8O": 0.8422351063421905,
+        "C10H8": 0.7858496485398722,
+        "C10H7": 0.5225916408059882,
+        "C7H4O": 0.9219757071111565,
+        "C13H8": 0.8415537171280086,
+        "C5H11N": 0.612996479453784,
+        "C3H7N": 0.9534343853720886,
+        "C6H5NO": 0.6090390087619828,
+        "C7H6O": 1.0905998674343775,
+        "C13H10": 0.5172505891333642,
+        "C8H8O": 1.6202291370959956,
+        "C9H10": 0.8676246335070175,
+        "C6H11N": 0.7630487586279394,
+        "C10H10": 0.8953392288627682,
+        "C6H8O": 0.5696538981707627,
+        "C10H9NO": 0.675341185125755,
+        "C9H10O": 0.6647782471699986,
+        "C6H5N": 0.7188560195239636,
+        "C11H12": 0.787801660190543,
+        "C6H6": 0.5900884605181049,
+        "C10H10O": 0.9527251028891628,
+        "C11H10": 0.6992838523963624,
+        "C8H6O2": 0.4699798880654633,
+        "C12H10O": 0.6313368438742695,
+        "C8H10": 0.5124908977701288,
+        "C9H8": 1.021498685104785,
+        "C9H6": 1.0987016430798617,
+        "C7H6": 2.0843792986414407
       },
-      {
-        "$name": "CommonFragmentsScore",
-        "fragments": {
-          "C6H4": 2.0344206966403275,
-          "C8H10O": 0.5542770694856433,
-          "C3H5N": 1.5245193310096663,
-          "C4H7N": 1.040602379910432,
-          "C4H9N": 1.0492282511240993,
-          "C6H5NO2S": 0.5595830504871041,
-          "C8H6": 0.6704063442971755,
-          "C8H8": 1.7550187434035194,
-          "C7H8O": 1.3782506492360127,
-          "C5H4": 1.541394890045096,
-          "C7H4O": 0.7429071784180415,
-          "C4H6": 1.3950927952451342,
-          "C5H11N": 1.0331870559234304,
-          "C3H7N": 1.2771720192256288,
-          "C6H5NO": 0.8162600730678055,
-          "C7H6O": 1.1401010196832662,
-          "C3H5NO": 0.5728765805374818,
-          "C8H8O": 1.1793291892251863,
-          "C6H11N": 1.04655566773387,
-          "C9H10": 0.8568529498330161,
-          "C10H10": 0.5077951335554328,
-          "C5H5N": 0.6221581485656583,
-          "C5H9N": 0.8532285900570367,
-          "C6H13N": 0.7990985723699789,
-          "C5H6": 1.0759404961663472,
-          "C6H8O": 1.2999706758047593,
-          "C9H10O": 0.5007388406692848,
-          "C5H8": 1.0446731469998174,
-          "C6H5N": 1.3216807511434334,
-          "C7H8": 1.1753369109904983,
-          "C6H6": 1.4938084499775368,
-          "C7H10": 0.8618308475495808,
-          "C6H8": 1.428551617340089,
-          "C8H10": 0.7480869438868113,
-          "C9H8": 0.9188973244407879,
-          "C9H6": 0.8133328725834086,
-          "C7H6": 2.5696888272583625,
-          "C7H7N": 0.5653573889836778,
-          "C4H8": 1.0218398019216839,
-          "C3H4": 0.6372068016406839
+      "normalization": 0.16554708331150958,
+      "recombinator": {
+        "$name": "CommonFragmentsScore$LossCombinator",
+        "losses": ["HO3P", "H3N", "HI", "I", "HF", "CO", "C2H4", "C12H8ClNS", "HBr", "C2H2", "HCl", "HO2PS", "Br", "C11H10Cl2N2O", "CH4", "H2", "I2", "CIO", "H", "C10H9NO3S", "CH3", "CHN", "H2O", "C2H2O", "Cl"],
+        "penalty": -1
+      }
+    }],
+    "peakScorers": [{
+      "$name": "TreeSizeScorer",
+      "score": -0.5
+    }, {
+      "$name": "FragmentSizeScorer",
+      "maxScore": 3,
+      "maxSize": 300
+    }, {
+      "$name": "PeakIsNoiseScorer",
+      "distribution": {
+        "$name": "ParetoDistribution$EstimateByMedian",
+        "xmin": 0.002
+      }
+    }],
+    "peakPairScorers": [{
+      "$name": "CollisionEnergyEdgeScorer",
+      "alpha": 0.1,
+      "beta": 0.8
+    }, {
+      "$name": "LossSizeScorer",
+      "normalization": -5.310349962255842,
+      "adjustNormalizationBasedOnData": false,
+      "distribution": {
+        "$name": "LogNormalDistribution",
+        "mean": 4.022526672023266,
+        "variance": 0.3124649410213113,
+      }
+    }],
+    "lossScorers": [{
+      "$name": "FreeRadicalEdgeScorer",
+      "radicalPenalty": -2.3025850929940455,
+      "normalization": -0.011626542158820332,
+      "commonRadicals": {
+        "Cl": -0.10536051565782632,
+        "C6H5": -0.10536051565782632,
+        "CH3": -0.10536051565782632,
+        "HO": -0.10536051565782632,
+        "NO2": -0.10536051565782632,
+        "Br": -0.10536051565782632,
+        "C3H7": -0.10536051565782632,
+        "C4H9": -0.10536051565782628,
+        "O": -0.10536051565782628,
+        "H": -0.10536051565782632,
+        "I": -0.10536051565782632,
+        "CH3O": -0.10536051565782632,
+        "NO": -0.10536051565782632,
+        "C6H6N": -0.10536051565782628,
+        "C6H5O": -0.10536051565782628
+      }
+    }, {
+      "$name": "DBELossScorer",
+      "score": -1.0986122886681098
+    }, {
+      "$name": "PhosphorScorer"
+    }, {
+      "$name": "PureCarbonNitrogenLossScorer",
+      "penalty": -2.3025850929940455
+    }, {
+      "$name": "StrangeElementLossScorer",
+      "score": 0.6931471805599453,
+      "losses": ["C5H10N2O3S", "C2H4", "C6H6", "I", "C3H6S", "C3H7NOS", "CH4OS", "HBr", "H3", "CH4", "HO3S", "H2O", "C11H10Cl2N2O", "C11H14N2O", "H4", "Br", "CH3ClN2", "HO2PS", "C3H8NO6P", "C4H8", "C3H12NO6P", "C8H14N2O5S", "C10H9NO3S", "C2H5N", "C2H2", "C2H2O", "C3H7O5P", "CH2O", "CH3Cl", "C10H11NO3", "O3S", "C3H9O6P", "HO3P", "CH3", "CHN", "CH4S", "CO2", "CH", "HI", "CH4O", "C5H9NO3S", "I2", "CIO", "C10H17N3O6S", "C6H13O9P", "C6H5S", "H3O4P", "CH2", "H2N", "C2H8NO4P", "H2O3S", "CO", "H2", "CH3N", "CF3", "C3H7NO2S", "S", "H2S", "Cl", "H3N", "H", "C6H16NO9P", "C6H13O9S", "C3H6", "HO", "HF", "O2S", "C2H6", "C12H8ClNS", "HCl", "CHNO"]
+    }, {
+      "$name": "ChemicalPriorEdgeScorer",
+      "normalization": -0.04412622063311402,
+      "minimalMass": 100,
+      "prior": {
+        "heteroAtom2CarbonScorer": {
+          "$name": "ImprovedHetero2CarbonScorer",
+          "distribution": {
+            "$name": "PartialParetoDistribution",
+            "b": 0.4,
+            "a": 0,
+            "k": 3.14534
+          }
         },
-        "normalization": 0.0004875503105139005,
-        "recombinator": {
-          "$name": "CommonFragmentsScore$LossCombinator",
-          "losses": [
-            "Br",
-            "C11H10Cl2N2O",
-            "C12H8ClNS",
-            "C12H9NS",
-            "C13H6ClF",
-            "C13H8F3NS",
-            "C13H9ClS",
-            "C15H11ClN2O",
-            "C15H14F2",
-            "C20H15ClO",
-            "C21H14O4S",
-            "C2H2",
-            "C2H2O",
-            "C2H4",
-            "C2H5N",
-            "C2H7N",
-            "C2H7O4P",
-            "C3H6",
-            "C4H8",
-            "C5H9O7P",
-            "C6H10O5",
-            "C6H5NO2S",
-            "C6H6",
-            "C7H3BrClOP",
-            "C7H5Br2N",
-            "C7H7IN2",
-            "CH2",
-            "CH2N2",
-            "CH2O",
-            "CH3",
-            "CH3N",
-            "CH4",
-            "CH4O",
-            "CH5N",
-            "CHN",
-            "CHNO",
-            "CO",
-            "CO2",
-            "Cl",
-            "H",
-            "H2",
-            "H2O",
-            "H3N",
-            "HBr",
-            "HCl",
-            "HF",
-            "HI",
-            "HO2PS",
-            "HO3P",
-            "I",
-            "S"
-          ],
-          "penalty": -0.5
-        }
-      },
-      {
-        "$name": "StrangeElementSmallFragmentScorer",
-        "score": 0.4054651081081644,
-        "maximalMass": 100
-      }
-    ],
-    "peakScorers": [
-      {
-        "$name": "TreeSizeScorer",
-        "score": 0.5
-      },
-      {
-        "$name": "PeakIsNoiseScorer",
-        "distribution": {
-          "$name": "ParetoDistribution$EstimateByMedian",
-          "xmin": 0.005
-        }
-      },
-      {
-        "$name": "FragmentSizeScorer",
-        "maxScore": 2,
-        "maxSize": 200
-      }
-    ],
-    "peakPairScorers": [
-      {
-        "$name": "CollisionEnergyEdgeScorer",
-        "alpha": 0.1,
-        "beta": 0.8
-      },
-      {
-        "$name": "LossSizeScorer",
-        "normalization": -5.452741223898447,
-        "distribution": {
-          "$name": "LogNormalDistribution",
-          "mean": 4.302055852266228,
-          "variance": 0.36515226872664236
-        }
-      }
-    ],
-    "lossScorers": [
-      {
-        "$name": "FreeRadicalEdgeScorer",
-        "radicalPenalty": -2.3025850929940455,
-        "normalization": -0.011626542158820332,
-        "commonRadicals": {
-          "Cl": -0.10536051565782628,
-          "C6H5": -0.10536051565782628,
-          "CH3": -0.10536051565782628,
-          "HO": -0.10536051565782628,
-          "NO2": -0.10536051565782628,
-          "Br": -0.10536051565782628,
-          "C3H7": -0.10536051565782628,
-          "C4H9": -0.10536051565782628,
-          "O": -0.10536051565782628,
-          "H": -0.10536051565782628,
-          "CH3O": -0.10536051565782628,
-          "I": -0.10536051565782628,
-          "NO": -0.10536051565782628,
-          "C6H6N": -0.10536051565782628,
-          "C6H5O": -0.10536051565782628
-        }
-      },
-      {
-        "$name": "DBELossScorer",
-        "score": -1.0986122886681098
-      },
-      {
-        "$name": "PureCarbonNitrogenLossScorer",
-        "penalty": -2.3025850929940455
-      },
-      {
-        "$name": "ChemicalPriorEdgeScorer",
-        "normalization": -0.04832434583975178,
-        "minimalMass": 100,
-        "prior": {
-          "heteroAtom2CarbonScorer": {
-            "$name": "ImprovedHetero2CarbonScorer",
-            "distribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.4,
-              "a": 0,
-              "k": 3.14534
-            }
+        "$name": "ChemicalCompoundScorer$DefaultScorer",
+        "specialMoleculeScorer": {
+          "oxygenToHeteroDistribution": {
+            "$name": "PartialParetoDistribution",
+            "b": 0.75,
+            "a": 0,
+            "k": 5
           },
-          "$name": "ChemicalCompoundScorer$DefaultScorer",
-          "specialMoleculeScorer": {
-            "oxygenToHeteroDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.75,
-              "a": 0,
-              "k": 5
-            },
-            "rdbeDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 2,
-              "a": 0,
-              "k": 2
-            },
-            "$name": "SpecialMoleculeScorer"
+          "rdbeDistribution": {
+            "$name": "PartialParetoDistribution",
+            "b": 2,
+            "a": 0,
+            "k": 2
           },
-          "rdbeScorer": {
-            "$name": "RDBEMassScorer",
-            "distribution": {
-              "$name": "NormalDistribution",
-              "mean": 0.1481998,
-              "variance": 0.07341486
-            }
+          "$name": "SpecialMoleculeScorer"
+        },
+        "rdbeScorer": {
+          "$name": "RDBEMassScorer",
+          "distribution": {
+            "$name": "NormalDistribution",
+            "mean": 0.1481998,
+            "variance": 0.07341486
           }
         }
-      },
-      {
-        "$name": "CommonLossEdgeScorer",
-        "normalization": 3.5901956331796017,
-        "recombinator": {
-          "$name": "CommonLossEdgeScorer$LossSizeRecombinator",
-          "lossSize": {
-            "$name": "LossSizeScorer",
-            "normalization": -5.123652144210627,
-            "distribution": {
-              "$name": "LogNormalDistribution",
-              "mean": 4.189821136975131,
-              "variance": 0.411464736230562
-            }
-          },
-          "penalty": -1
+      }
+    }, {
+      "$name": "CommonLossEdgeScorer",
+      "normalization": 2.738930846569549,
+      "recombinator": {
+        "$name": "CommonLossEdgeScorer$MinimalScoreRecombinator",
+        "lossSize": {
+          "$name": "LossSizeScorer",
+          "normalization": -5.310349962255842,
+          "distribution": {
+            "$name": "LogNormalDistribution",
+            "mean": 4.022526672023266,
+            "variance": 0.3124649410213113
+          }
         },
-        "losses": {
-          "HCl": 2.4146852184195216,
-          "HI": 3.974940386563983,
-          "HO": 1.0187146213737672,
-          "HO2PS": 0.8596519775136789,
-          "C": -4.605170185988091,
-          "CO2": 0.8605714816411119,
-          "N": -4.605170185988091,
-          "CH3N": 2.5295663929008025,
-          "H": 20.220942890817216,
-          "C7H2": -4.605170185988091,
-          "I": 4.354362698206627,
-          "Cl": 2.0594243437349604,
-          "CHNO": 0.29674424737307975,
-          "H2O": 5.67249604773688,
-          "C5H2": -4.605170185988091,
-          "CHN": 2.9785102148245395,
-          "CH2O2": 0.3589292331831616,
-          "HF": 3.803513055021083,
-          "C2H5N": 1.6748815418934035,
-          "C12H8ClNS": 2.872702513765265,
-          "C2H3N": 0.3016345102183569,
-          "Br": 3.079386228516664,
-          "C4O": -4.605170185988091,
-          "CH4O": 2.1708741197858417,
-          "C2H7N": 0.6183387870665824,
-          "C2O": -4.605170185988091,
-          "CH2O": 1.9335734187196336,
-          "C6H10O5": 2.4801619404823367,
-          "HBr": 2.9334252583916234,
-          "C2H4": 3.291703121017744,
-          "CH4": 4.123339097643367,
-          "C6H6": 0.7950506519151743,
-          "CH3": 4.963292406053605,
-          "C2H2": 4.033071908011071,
-          "HO3P": 2.15647723062846,
-          "CH2": 2.798191050531504,
-          "CH5N": 1.8821846270130345,
-          "H2": 13.598693809797203,
-          "H3N": 4.526327515568298,
-          "C3H6": 1.736472427612093,
-          "CO": 3.838355790688008,
-          "C4H8": 1.481742980064013,
-          "C3H2": -4.605170185988091,
-          "C2H2O": 1.886558644743275,
-          "CH2N2": 0.729889129115697
-        }
+        "penalty": -1
       },
-      {
-        "$name": "StrangeElementLossScorer",
-        "score": 0.4054651081081644,
-        "losses": [
-          "H2Cl",
-          "C3H7F",
-          "CH5Cl",
-          "C12H9ClFNS",
-          "CH3BrO",
-          "C13H8ClNOS",
-          "H3BrO",
-          "C2H6ClN",
-          "C3H6Cl",
-          "CH4FN",
-          "C2H3BrO",
-          "CHIO2",
-          "CH3ClN",
-          "H2O3P",
-          "C2H2Br",
-          "C2H4I",
-          "C3H6Br",
-          "C4H9Cl",
-          "Br2",
-          "H2O6P2",
-          "CHO3PS",
-          "CH5ClN",
-          "C2H3F",
-          "C2H6BrN",
-          "C2H5F",
-          "CH3Br",
-          "H2Br",
-          "CH2ClN",
-          "C2H3O2PS",
-          "CHBrO2",
-          "CH6ClN",
-          "C13H9ClN2S",
-          "C13H11ClNS",
-          "C13H11ClN2S",
-          "CH3BrN",
-          "C6H11ClO5",
-          "H2I",
-          "C2H3O4P",
-          "C2H5O3P",
-          "CH2BrO",
-          "C6H10IO5",
-          "C6H7I",
-          "CBrO2",
-          "H2Br2",
-          "H2FO2PS",
-          "C2H4Cl",
-          "H3O4P",
-          "C6H7F",
-          "HIO3P",
-          "CH2FN",
-          "C6H10BrO5",
-          "CH2IN",
-          "CH4IO",
-          "C3H7Cl",
-          "H2Cl2",
-          "HClO3P",
-          "CHBrNO",
-          "CH2IO",
-          "ClI",
-          "CH3O4P",
-          "C2H7BrN",
-          "H3O3P",
-          "C13H10ClN3S",
-          "H2I2",
-          "H3O3PS",
-          "HFI",
-          "C13H10ClNO2S",
-          "CH2ClO",
-          "CH3I",
-          "HBrI",
-          "H3Br",
-          "CH6BrN",
-          "C2H6NO3P",
-          "H2BrO3P",
-          "BrCl",
-          "CH5F",
-          "CH6NO3P",
-          "HBrCl",
-          "C3H6I",
-          "H2ClF",
-          "C2H5Br",
-          "C2H7IN",
-          "C4H9F",
-          "C2H5IN",
-          "C2H4Br",
-          "H4NO3P",
-          "H3ClO",
-          "C6H7O3P",
-          "CH2BrO2",
-          "HI2",
-          "CH3F",
-          "CH2INO",
-          "C6H11BrO5",
-          "C6H11FO5",
-          "CH4F",
-          "C14H10ClNOS",
-          "CHFO2",
-          "C14H15ClN2S",
-          "C2H5ClN",
-          "C4H8Cl",
-          "C2H4IN",
-          "CH3Cl",
-          "C13H8ClNO2S",
-          "CHIO",
-          "C3H7I",
-          "H4BrN",
-          "C18H14ClNS",
-          "C12H8Cl2NS",
-          "C6H6Br",
-          "HIO",
-          "C2H8IN",
-          "C2H2ClO",
-          "C13H10ClNS",
-          "CH2BrN",
-          "CH2IO2",
-          "C13H10ClNOS",
-          "H2F2",
-          "H4NO2PS",
-          "CH3ClO",
-          "CH3BrN2",
-          "C2H4BrN",
-          "C6H11O7PS",
-          "C3H7O3P",
-          "C12H11ClN2S",
-          "C4H8Br",
-          "CH5IN",
-          "HClI",
-          "C2H8BrN",
-          "C13H12ClNS",
-          "C24H16Cl2N2S2",
-          "H3F",
-          "C12H9ClNS",
-          "H4IN",
-          "C2H6FN",
-          "CH2NO3P",
-          "CH3IO2",
-          "H2BrO2PS",
-          "C12H8ClINS",
-          "HIO2PS",
-          "C6H11O8P",
-          "CH4O3P",
-          "HBrO2PS",
-          "CHIN",
-          "CHBrN",
-          "H2IO3P",
-          "C2H3IN",
-          "C12H9ClNO2PS2",
-          "H2ClI",
-          "H4ClN",
-          "HBrO3P",
-          "CH3IN2",
-          "CH6FN",
-          "H3IN",
-          "H2BrO",
-          "H2BrI",
-          "CH5IO",
-          "C4H9Br",
-          "CH3IN",
-          "H2IO2PS",
-          "C2H2IO",
-          "C2H2I",
-          "H3BrN",
-          "CIO2",
-          "CH5FO",
-          "CH4Br",
-          "H2F",
-          "HClF",
-          "HBr2",
-          "C2H2BrO",
-          "C4H8I",
-          "CH4ClN",
-          "C3H7Br",
-          "C12H8BrClNS",
-          "H3ClN",
-          "H2BrCl",
-          "C13H12ClNOS",
-          "C2H3ClO",
-          "C12H9Cl2NS",
-          "C2H3I",
-          "C2H3Br",
-          "C6H10ClO5",
-          "CH2Br",
-          "CBrO",
-          "C2H6IN",
-          "H2ClO",
-          "Cl2",
-          "C2H3FO",
-          "C6H11IO5",
-          "C2H3O3P",
-          "C14H10ClNS",
-          "C2H5I",
-          "H2O5P2S",
-          "H2IO",
-          "H3Cl",
-          "C2H2Cl",
-          "C16H16ClNS",
-          "H2ClO3P",
-          "CH3IO",
-          "CHClO",
-          "CH3FO",
-          "C12H9ClINS",
-          "CH4Cl",
-          "CH2I",
-          "CH2BrN2",
-          "C2H5BrN",
-          "CH5BrN",
-          "CH3FN2",
-          "C6H7Br",
-          "CH3BrO2",
-          "H2ClO2PS",
-          "CH5O4P",
-          "C2H3Cl",
-          "H3FO",
-          "CHBrO",
-          "CH5ClO",
-          "C4H9I",
-          "CHINO",
-          "C18H18ClNO5S",
-          "C12H10ClNS",
-          "CClO",
-          "C2H5Cl",
-          "CH4ClO",
-          "H2FI",
-          "CH4O2PS",
-          "CH5O3P",
-          "H3IO",
-          "C12H9ClNO3PS",
-          "C12H10ClNOS",
-          "CH2NO2PS",
-          "CH5BrO",
-          "C14H13ClN2S",
-          "C6H6I",
-          "I2",
-          "CIO",
-          "CH6IN",
-          "C15H14ClNS",
-          "H2BrF",
-          "CH4IN",
-          "HBrF",
-          "CH4BrN",
-          "H4FN",
-          "BrI",
-          "CHClN",
-          "C14H12ClNS",
-          "CH5I",
-          "C13H13ClN2S",
-          "CH4I",
-          "CH4NO3P",
-          "C2H3IO",
-          "CH5O2PS",
-          "CH2BrNO",
-          "HCl2",
-          "C12H9BrClNS",
-          "C4H9O3P",
-          "C2H5O2PS",
-          "CH5Br",
-          "CH4BrO",
-          "CHO4P",
-          "C2H3BrN",
-          "H2FO3P",
-          "CH2IN2",
-          "H3I",
-          "CHFO"
-        ]
+      "losses": {
+        "C9H16O2": 3.8315821525102884,
+        "HO2PS": 1.7316559703243015,
+        "C6H16NO9P": 6.370959676862457,
+        "C10H11NO3": 0.5796857631743775,
+        "C8H15NO6": 5.26522973556253,
+        "CH3NO2": 1.6061566210276954,
+        "CO2": 1.1023477558468173,
+        "C2H4O2": 1.225985728356891,
+        "C3H7NOS": 2.5997827329665966,
+        "CH3ClN2": 1.9560715863107183,
+        "Cl": 1.879891430663427,
+        "C10H15N3O6": 6.296275424991179,
+        "C7H8O": 2.673997204630975,
+        "H3O4P": 1.6869481767472556,
+        "H2NO2": 1.4227504883287982,
+        "C11H14N2O": 0.37882236156981014,
+        "C2H5N": 0.629598618022493,
+        "C12H23NO10": 7.513166864951002,
+        "C3H6O3": 2.236441022557497,
+        "CN2O4": 2.5743816871306864,
+        "C4O": -4.605170185988091,
+        "CN2O5": 2.9658244436842054,
+        "CN2O3": 2.187875638394427,
+        "C2H8NO4P": 3.474792705579424,
+        "CH4": 3.2858117937408338,
+        "CH3": 4.2417392668996365,
+        "CH2": 0.6524634317799902,
+        "C6H5S": 2.6973505424997306,
+        "C6H8O6": 4.289057684938722,
+        "C2H2O2": 1.5544267605696132,
+        "NO2": 1.4064303540136838,
+        "C9H12O8": 5.811804025048728,
+        "C2H3NO": 1.5385125079427482,
+        "CH3Cl": 0.6723799157129207,
+        "C9H14O9": 6.162381982021967,
+        "C3H9N": 1.572274271481748,
+        "C5H10N2O3": 3.595049443880937,
+        "C": -4.605170185988091,
+        "C3H9O6P": 4.198030508740201,
+        "N": -4.605170185988091,
+        "H": 20.826563288986588,
+        "I": 4.758132349705918,
+        "NO": 1.5171658699074093,
+        "C10H17N3O6": 6.334352046350647,
+        "S": 0.7250819726799094,
+        "C3H7NO2S": 2.9911943433842003,
+        "C3H5NO": 1.7284168227901526,
+        "HF": 2.9899181287080525,
+        "C8H14N2O5S": 5.8514713417136175,
+        "C3H8NO6P": 4.490045057498156,
+        "C3H12NO6P": 4.579240864697572,
+        "C3O4": 2.476639795378039,
+        "C10H17N3O6S": 6.921172165938202,
+        "CF3": 1.7607849157020405,
+        "C5H7NO3": 3.186409377197763,
+        "C2O3": 1.8236923434627572,
+        "C6H5": 1.934510448412248,
+        "C2H4": 1.7134018662648436,
+        "C6H6": 1.957164968451276,
+        "C2H2": 2.899819843077258,
+        "H2": 0.550760955876423,
+        "C3H7": 0.974013771476772,
+        "C3H6": 0.6348137501932779,
+        "C3H2": -4.605170185988091,
+        "HCl": 2.309718036412991,
+        "HI": 4.312211579350918,
+        "HO": 2.4327415919322117,
+        "I2": 5.878608484356248,
+        "C5H10N2O3S": 4.334324788524754,
+        "C7H2": -4.605170185988091,
+        "C6H13O9S": 6.065484388432954,
+        "C6H13O9P": 6.0461726728060405,
+        "H2O3S": 2.0468436398903793,
+        "C4H8O4": 2.9673274585192493,
+        "C5H2": -4.605170185988091,
+        "C8H13NO5": 4.884749220375977,
+        "C10H9NO3S": 2.9201572576804438,
+        "C4O4": 2.7700575797128977,
+        "C12H8ClNS": 3.4247906342925294,
+        "C3H6S": 1.702810957825597,
+        "CH4OS": 1.6613120599921194,
+        "CH4O": 1.072190712277847,
+        "CH4S": 1.4227031328047601,
+        "C6H13NO5": 4.357651250982167,
+        "HO3S": 2.0236187783364823,
+        "O3S": 2.0005271689291027,
+        "HO3P": 0.8369481767472555,
+        "CH5N": 1.4900026394991859,
+        "H3N": 3.1123354081339416,
+        "C2H2O": 0.37598572835689115,
+        "C3H7O5P": 3.7821659177337668,
+        "C2HNO": 0.7036720246786563,
+        "C2HO2": 1.538134005736548,
+        "CH3N": 0.7857507277584046,
+        "CH3O": 1.490576846105274,
+        "CHNO": 1.390930612645709,
+        "C5H9NO3S": 3.992194504266435,
+        "H2O": 4.172461049689899,
+        "C5H10O2": 2.5275484595730013,
+        "H2N": 2.579751789208383,
+        "C5H8O4": 3.2590205581341545,
+        "C11H10Cl2N2O": 3.2160553771138938,
+        "CHN": 2.078360299621017,
+        "CHO2": 1.4000336491975869,
+        "H2S": 1.4334353724980757,
+        "C6H11NO4": 3.946825635101567,
+        "CH3NO": 0.7036720246786563,
+        "Br": 3.1138438262171237,
+        "C2H7N": 0.974013771476772,
+        "C6H10O7": 4.689009166454728,
+        "CH2O": 1.4007609558764234,
+        "C2O": -4.605170185988091,
+        "C6H10O5": 3.9696043522074103,
+        "HBr": 2.7067058538435407,
+        "C6H10O4": 3.5947829121756563,
+        "C6H10O3": 3.2111355535592225,
+        "CNO3": 1.867005037277044,
+        "CNO2": 1.5542200969479263,
+        "CO": 3.173475331082233,
+        "CIO": 2.3306725185876314
       }
-    ],
-    "postProcessing": [
-      {
-        "$name": "NoiseThresholdFilter",
-        "threshold": 0.005
-      },
-      {
-        "limit": 50,
-        "$name": "LimitNumberOfPeaksFilter"
-      }
-    ]
+    }],
+    "postProcessing": [{
+      "$name": "NoiseThresholdFilter",
+      "threshold": 0.002
+    }, {
+      "limit": 60,
+      "$name": "LimitNumberOfPeaksFilter"
+    }]
   },
   "profile": {
-    "allowedMassDeviation": "5.5 ppm (0.001 m/z)",
-    "intensityDeviation": 0.008,
+    "allowedMassDeviation": "5 ppm (0.001 m/z)",
+    "intensityDeviation": 0.05,
     "standardMs2MassDeviation": "1.8 ppm (3.4E-4 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
     "standardMs1MassDeviation": "2.0 ppm (7.0E-4 m/z)",
-    "medianNoiseIntensity": 0.01177087021643545,
+    "medianNoiseIntensity": 0.015,
     "formulaConstraints": {
       "$name": "ChemistryBase.chem.FormulaConstraints",
       "upperbounds": {},
@@ -771,6 +518,6 @@
         }
       ]
     },
-    "standardMassDifferenceDeviation": "1.3 ppm (3.0E-4 m/z)"
+    "standardMassDifferenceDeviation": "1.5 ppm (3.0E-4 m/z)"
   }
 }

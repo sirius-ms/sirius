@@ -5,8 +5,8 @@
       "$name": "scoring.MassDeviationScorer",
       "intensityDependency": {
         "$name": "util.PiecewiseLinearFunctionIntensityDependency",
-        "values": [1, 1.5],
-        "bags": [0.15, 0.05]
+        "values": [1, 2, 3],
+        "bags": [0.2, 0.1, 0.01]
       }
     }, {
       "$name": "scoring.LogNormDistributedIntensityScorer",
@@ -17,7 +17,7 @@
       }
     }, {
       "$name": "scoring.MissingPeakScorer",
-      "lambda": 1
+      "lambda": 100
       }, {
         "$name": "scoring.ScorePerPeak",
         "scorePerPeak": 10

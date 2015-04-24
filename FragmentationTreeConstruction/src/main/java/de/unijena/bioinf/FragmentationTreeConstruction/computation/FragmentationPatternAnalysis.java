@@ -504,9 +504,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     /**
-     * @return the relative amount of intensity that is explained by this tree
+     * @return the relative amount of intensity that is explained by this tree, considering only
+     * peaks that have an explanation for the hypothetical precursor ion of the tree
      */
-    public double getIntensityRatioOfExplainedPeaks(FTree tree) {
+    public double getIntensityRatioOfExplainablePeaks(FTree tree) {
         double treeIntensity = 0d, maxIntensity = 0d;
         final FragmentAnnotation<ProcessedPeak> pp = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (Fragment f : tree.getFragmentsWithoutRoot()) treeIntensity += pp.get(f).getRelativeIntensity();
@@ -523,6 +524,26 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     }
                 }
             }
+        if (maxIntensity==0) return 0;
+        return treeIntensity / maxIntensity;
+    }
+
+    /**
+     * @return the relative amount of intensity that is explained by this tree
+     */
+    public double getIntensityRatioOfExplainedPeaks(FTree tree) {
+        double treeIntensity = 0d, maxIntensity = 0d;
+        final FragmentAnnotation<ProcessedPeak> pp = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        for (Fragment f : tree.getFragmentsWithoutRoot()) treeIntensity += pp.get(f).getRelativeIntensity();
+        final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
+        final PeakAnnotation<DecompositionList> decomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
+        final MolecularFormula parent = tree.getRoot().getFormula();
+        eachPeak:
+        for (ProcessedPeak p : input.getMergedPeaks())
+            if (p != input.getParentPeak()) {
+                maxIntensity += p.getRelativeIntensity();
+            }
+        if (maxIntensity==0) return 0;
         return treeIntensity / maxIntensity;
     }
 
