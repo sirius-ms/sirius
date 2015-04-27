@@ -15,7 +15,6 @@ public class CLI {
         final ComputeTask compute = new ComputeTask();
         tasks.put(identify.getName(), identify);
         tasks.put(compute.getName(), compute);
-
         if (args.length==0) displayHelp(tasks);
 
         Task currentTask = null;

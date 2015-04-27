@@ -6,16 +6,10 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.TreeOptions;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.regex.Pattern;
 
 public class ComputeTask extends TreeComputationTask {
 
@@ -25,20 +19,22 @@ public class ComputeTask extends TreeComputationTask {
         try {
             final Iterator<Instance> instanceIterator = handleInput(options);
             while (instanceIterator.hasNext()) {
-                final Instance i = instanceIterator.next();
-                if (i.experiment.getMolecularFormula()==null) {
-                    if (options.getMolecularFormula()==null) {
-                        System.err.println("The molecular formula for '" + i.file + "' is missing. Add the molecular formula via --formula option or use sirius identify to predict the correct molecular formula");
-                    } else {
-                        final MutableMs2Experiment exp;
-                        if (i.experiment instanceof MutableMs2Experiment) exp = (MutableMs2Experiment) i.experiment;
-                        else exp = new MutableMs2Experiment(i.experiment);
-                        exp.setMolecularFormula(MolecularFormula.parse(options.getMolecularFormula()));
-                        System.out.println("Compute " + i.file + " (" + exp.getMolecularFormula() + ")");
-                        final IdentificationResult result = sirius.compute(exp, MolecularFormula.parse(options.getMolecularFormula()), options);
-                        output(i, result);
+                Instance i = instanceIterator.next();
+                if (i.experiment.getMolecularFormula() == null && options.getMolecularFormula() == null) {
+                    System.err.println("The molecular formula for '" + i.file + "' is missing. Add the molecular formula via --formula option or use sirius identify to predict the correct molecular formula");
+                } else {
+                    if (i.experiment.getMolecularFormula()==null) {
+                        final MutableMs2Experiment expm;
+                        if (i.experiment instanceof MutableMs2Experiment) expm = (MutableMs2Experiment) i.experiment;
+                        else expm = new MutableMs2Experiment(i.experiment);
+                        expm.setMolecularFormula(MolecularFormula.parse(options.getMolecularFormula()));
+                        i = new Instance(expm, i.file);
                     }
+                    System.out.println("Compute " + i.file + " (" + i.experiment.getMolecularFormula() + ")");
+                    final IdentificationResult result = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
+                    output(i, result);
                 }
+
             }
 
         } catch (IOException e) {
@@ -49,7 +45,7 @@ public class ComputeTask extends TreeComputationTask {
     private void output(Instance instance, IdentificationResult result) throws IOException {
         File target = options.getTarget();
         final String format;
-        if (options.getFormat()!=null) {
+        if (options.getFormat() != null) {
             format = options.getFormat();
         } else {
             final String n = target.getName();
@@ -107,7 +103,7 @@ public class ComputeTask extends TreeComputationTask {
         }
 
         final String format = options.getFormat();
-        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot")) {
+        if (format != null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot")) {
             System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
             System.exit(1);
         }

@@ -1,13 +1,14 @@
 package de.unijena.bioinf.sirius;
 
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
@@ -16,14 +17,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.mgf.MgfParser;
-import de.unijena.bioinf.babelms.ms.CsvParser;
 import de.unijena.bioinf.sirius.cli.IdentifyOptions;
-import de.unijena.bioinf.sirius.cli.Instance;
+import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -65,7 +61,7 @@ public class Sirius {
         // make mutable
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
-        this.elementPrediction = new ElementPrediction();
+        this.elementPrediction = new ElementPrediction(profile.isotopePatternAnalysis);
     }
 
     public List<IdentificationResult> identify(Ms2Experiment experiment, IdentifyOptions opts, Progress progress) {
@@ -180,11 +176,8 @@ public class Sirius {
         if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getFormulaConstraints()!=null) {
             constraints = experiment.getMeasurementProfile().getFormulaConstraints();
         } else constraints = profile.fragmentationPatternAnalysis.getDefaultProfile().getFormulaConstraints();
-        final Deviation allowedDev;
-        if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getAllowedMassDeviation()!=null) {
-            allowedDev = experiment.getMeasurementProfile().getAllowedMassDeviation();
-        } else allowedDev = profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation();
-        final FormulaConstraints newC = elementPrediction.extendConstraints(constraints, experiment, allowedDev);
+        final MeasurementProfile mpr = MutableMeasurementProfile.merge(profile.fragmentationPatternAnalysis.getDefaultProfile(), experiment.getMeasurementProfile());
+        final FormulaConstraints newC = elementPrediction.extendConstraints(constraints, experiment, mpr);
         if (newC != constraints) {
             progress.info("Extend alphabet to " + newC.getChemicalAlphabet().toString());
             final MutableMs2Experiment newExp = new MutableMs2Experiment(experiment);
