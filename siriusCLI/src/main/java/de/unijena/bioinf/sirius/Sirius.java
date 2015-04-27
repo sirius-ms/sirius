@@ -28,7 +28,7 @@ public class Sirius {
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0.85d;
+    private static final double MIN_EXPLAINED_INTENSITY = 0.8d;
 
     protected Profile profile;
     protected ElementPrediction elementPrediction;
@@ -64,10 +64,10 @@ public class Sirius {
         this.elementPrediction = new ElementPrediction(profile.isotopePatternAnalysis);
     }
 
-    public List<IdentificationResult> identify(Ms2Experiment experiment, IdentifyOptions opts, Progress progress) {
-        // first check if MS data is present
-        experiment = extendConstraints(experiment, progress);
-        final List<IsotopePattern> candidates = opts.getIsotopes()!= IdentifyOptions.ISO.omit ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false) : Collections.<IsotopePattern>emptyList();
+    public List<IdentificationResult> identify(Ms2Experiment uexperiment, IdentifyOptions opts, Progress progress) {
+        MutableMs2Experiment experiment = new MutableMs2Experiment(extendConstraints(uexperiment, progress));
+        // first check if MS data is present;
+        final List<IsotopePattern> candidates = getIsotopeCandidates(experiment, opts);
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
         if (candidates.size() > 0) {
@@ -123,7 +123,7 @@ public class Sirius {
                     for (int k=0; k < computeNTrees; ++k) {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
-                            final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
+                            final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
                             if (tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
                                 satisfied=true; break;
                             }
@@ -169,6 +169,19 @@ public class Sirius {
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
+    }
+
+    private List<IsotopePattern> getIsotopeCandidates(MutableMs2Experiment experiment, IdentifyOptions opts) {
+        if (experiment.getIonMass()==0) {
+            if (experiment.getMs1Spectra().size()==0)
+                throw new RuntimeException("Please provide the parentmass of the measured compound");
+            final List<IsotopePattern> candidates = profile.isotopePatternAnalysis.deisotope(experiment);
+            if (candidates.size() > 1) {
+                throw new RuntimeException("Please provide the parentmass of the measured compound");
+            }
+            experiment.setIonMass(candidates.get(0).getMonoisotopicMass());
+        }
+        return opts.getIsotopes()!= IdentifyOptions.ISO.omit ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false) : Collections.<IsotopePattern>emptyList();
     }
 
     private Ms2Experiment extendConstraints(Ms2Experiment experiment, Progress progress) {
