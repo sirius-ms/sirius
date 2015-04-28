@@ -12,6 +12,7 @@ public final class BoundedDoubleQueue {
 
     public BoundedDoubleQueue(int size) {
         this.values = new double[size];
+        Arrays.fill(values, Double.NEGATIVE_INFINITY);
         this.length = 0;
     }
 
@@ -46,7 +47,7 @@ public final class BoundedDoubleQueue {
     private int binarySearch(double value) {
         final int index = Arrays.binarySearch(values, 0, length, value);
         if (index >= 0) return index;
-        else return (-index + 1);
+        else return (-index-1);
     }
 
     private int linearSearch(double value) {

@@ -29,6 +29,8 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     public MutableMs2Experiment(Ms2Experiment experiment){
         this(experiment.getMolecularFormula(), experiment.getIonMass(), experiment.getIonization(), experiment.getMs1Spectra(), experiment.getMs2Spectra());
+        this.measurementProfile = experiment.getMeasurementProfile();
+        this.mergedMs1Spectrum = experiment.getMergedMs1Spectrum();
     }
 
     public MutableMs2Experiment(MolecularFormula compoundFormula, double ionMass, Ionization ionization, List<? extends Spectrum<Peak>> ms1Spectra, List<? extends Ms2Spectrum<? extends Peak>> ms2Spectra){
