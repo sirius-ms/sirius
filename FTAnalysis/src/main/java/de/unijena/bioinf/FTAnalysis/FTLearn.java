@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
@@ -84,6 +85,8 @@ public class FTLearn {
     private double oldProgress;
     private boolean inConsole = System.console() != null;
 
+    private TObjectDoubleHashMap<MolecularFormula> initialFrequencies;
+
     private boolean KEEP_LITERATURE_LOSS_LIST;
 
     public FTLearn(FragmentationPatternAnalysis initialAnalyzer, LearnOptions options) {
@@ -103,6 +106,24 @@ public class FTLearn {
         }
         PERC.setMaximumFractionDigits(2);
         USE_INTENSITY_FOR_COUNTING = !options.isFrequencyCounting();
+
+        if (options.getKeepOldLosses()>0) {
+            initialFrequencies = new TObjectDoubleHashMap<MolecularFormula>();
+            calculateInitialFrequencies();
+        }
+
+    }
+
+    private void calculateInitialFrequencies() {
+        final CommonLossEdgeScorer scorer = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, analyzer.getLossScorers());
+        final LossSizeScorer lscorer = FragmentationPatternAnalysis.getByClassName(LossSizeScorer.class, analyzer.getPeakPairScorers());
+        for (Map.Entry<MolecularFormula, Double> l : scorer.getCommonLosses().entrySet()) {
+            final MolecularFormula f = l.getKey();
+            final double multiplier = l.getValue();
+            final double sizeprob = lscorer.score(f) + lscorer.getNormalization();
+            final double frequency = Math.exp(multiplier+sizeprob);
+            initialFrequencies.put(f, frequency);
+        }
     }
 
     public static void main(String[] args) {
@@ -145,8 +166,8 @@ public class FTLearn {
             learner.addDatabase(f);
         }
         //learner.adjustLosses();
-        learner.addLiteratureLosses();
-        //learner.iterativeLearning();
+        //learner.addLiteratureLosses();
+        learner.iterativeLearning();
     }
 
     protected void addLiteratureLosses() {
@@ -827,6 +848,7 @@ public class FTLearn {
             }
             return;
         }
+
         println("Computed losses: " + (int) sum.x);
         final HashMap<MolecularFormula, Double> commonLosses = new HashMap<MolecularFormula, Double>();
         final HashMap<Element, Integer> nonchno = new HashMap<Element, Integer>();
@@ -854,6 +876,42 @@ public class FTLearn {
                 }
             }
         }
+
+        if (options.getKeepOldLosses() > 0) {
+            final double p = options.getKeepOldLosses();
+            final double X = sum.x * p;
+            final double Y = sum.y * p;
+            for (MolecularFormula f : initialFrequencies.keySet()) {
+                final double x,y;
+                if (f.isCHNO()) {
+                    x = initialFrequencies.get(f)*X;
+                    y = initialFrequencies.get(f)*Y;
+                } else {
+                    final double[] vs = new double[3];
+                    f.visit(new FormulaVisitor<Object>() {
+                        @Override
+                        public Object visit(Element e, int amount) {
+                            if (e == C || e == H || e == N || e == O) return null;
+                            vs[0] += nonchno.get(e);
+                            vs[1] += nonchnoIntensities.get(e);
+                            vs[2] += 1;
+                            return null;
+                        }
+                    });
+                    vs[0] /= vs[2];
+                    vs[1] /= vs[2];
+                    x = initialFrequencies.get(f)*vs[0]*p;
+                    y = initialFrequencies.get(f)*vs[1]*p;
+                }
+                XY v = lossCounter.get(f);
+                if (v==null) v = new XY(x, y);
+                else v = new XY(x+v.x, y + v.y);
+                sum.x += x;
+                sum.y += y;
+                lossCounter.put(f,v);
+            }
+        }
+
         final HashMap<MolecularFormula, XY> originalOne = new HashMap<MolecularFormula, XY>(lossCounter);
         final int lossSizeIterations = options.getLossSizeIterations() == 0 ? 100 : options.getLossSizeIterations();
         int I;
@@ -892,8 +950,13 @@ public class FTLearn {
                 final double expectedIntensity = OFFSET + intensityOfCompounds * distribution.getDensity(entry.getKey().getMass());
                 final double observedIntensity = OFFSET + entry.getValue().y;
                 final boolean newLoss = !commonLosses.containsKey(entry.getKey());
-                final double LIMIT = (newLoss) ? (5 + OFFSET) : 0;
-                final double newLossThreshold = isChno ? 10 : 3;
+                final double LIMIT;
+                if (options.getLossCountThreshold()!=null) LIMIT = options.getLossCountThreshold() + (newLoss ? 5 : 0) ;
+                else LIMIT = (newLoss) ? 5 : 0;
+
+                final double RATIO_THRESHOLD;
+                if (options.getLossRatioThreshold()==null) RATIO_THRESHOLD = Math.log(1.3333333d);
+                else RATIO_THRESHOLD = Math.log(options.getLossRatioThreshold());
 
                 //
                 //if  (((!isChno || entry.getKey().getMass() <= 10) && observedFrequency-expectedFrequency >= LIMIT) || observedFrequency-expectedFrequency >= frequencyThreshold &&  observedIntensity-expectedIntensity >= intensityThreshold) {
@@ -905,7 +968,7 @@ public class FTLearn {
                     } else {
                         score = Math.log(observedFrequency / expectedFrequency);
                     }
-                    if (score >= Math.log(1.33333333d)) {
+                    if (score >= RATIO_THRESHOLD) {
                         changed = true;
                         if (commonLosses.containsKey(entry.getKey()))
                             commonLosses.put(entry.getKey(), score + commonLosses.get(entry.getKey()));

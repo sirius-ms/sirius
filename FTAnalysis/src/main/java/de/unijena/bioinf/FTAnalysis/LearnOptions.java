@@ -66,11 +66,20 @@ public interface LearnOptions {
     @Option(shortName = "x", description = "like -X but expert losses are kept as common losses")
     public boolean isKeepExpertLosses();
 
+    @Option(shortName = "K", description = "keeep old loss list with the given frequency", defaultValue = "0")
+    public double getKeepOldLosses();
+
     @Option
     public boolean isExponentialDistribution();
 
     @Option(defaultToNull = true)
     public Double getMaximalCommonLossScore();
+
+    @Option(shortName = "m", defaultToNull = true)
+    public Double getLossCountThreshold();
+
+    @Option(shortName = "M", defaultToNull = true)
+    public Double getLossRatioThreshold();
 
     @Option(shortName = "v")
     public boolean isVerbose();

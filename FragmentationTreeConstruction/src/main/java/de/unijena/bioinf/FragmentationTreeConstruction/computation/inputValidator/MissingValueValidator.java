@@ -127,7 +127,7 @@ public class MissingValueValidator implements InputValidator {
                 searchForIon(warn, input);
             }
         }
-        if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula() != null || validDouble(input.getMoleculeNeutralMass(), false))) {
+        if (repair && input.getIonization() instanceof Charge && (input.getMolecularFormula() != null)) {
             double modificationMass = input.getIonMass() - (input.getMolecularFormula() != null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
             Ionization ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2, input.getIonization().getCharge());
             if (ion != null) {

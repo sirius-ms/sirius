@@ -1,9 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
@@ -46,29 +44,45 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
     }
 
     @Override
-    public Object prepare(ProcessedInput inputh) {
+    public Object prepare(ProcessedInput input) {
         final PeriodicTable pt = PeriodicTable.getInstance();
-        return pt.getAllByName("C", "H", "N", "O");
+        return pt.getAllByName("C", "H", "N", "O", "Na", "K", "Cl", "Br");
     }
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        return score(loss.getFormula(), (Element[]) precomputed);
+        final Ionization ion = input.getExperimentInformation().getIonization();
+        final int c;
+        if (ion instanceof Charge) {
+            c = ion.getCharge();
+        } else {
+            c=0;
+        }
+        return score(loss.getFormula(), (Element[]) precomputed, c);
     }
 
-    public boolean containsStrangeElement(MolecularFormula formula) {
-        return formula.numberOfCarbons() + formula.numberOfHydrogens() + formula.numberOfOxygens() + formula.numberOf(PeriodicTable.getInstance().getByName("N")) >= formula.atomCount();
-    }
+    private double score(MolecularFormula loss, Element[] precomputed, int allowAdductsOf) {
+        int numberOfNormalElements = loss.numberOf(precomputed[0]) + loss.numberOf(precomputed[1]) + loss.numberOf(precomputed[2]) + loss.numberOf(precomputed[3]);
+        if (allowAdductsOf != 0) {
+            if (allowAdductsOf > 0) {
+                if (loss.numberOf(precomputed[4]) > 0) ++numberOfNormalElements;
+                else if (loss.numberOf(precomputed[5]) > 0) ++ numberOfNormalElements;
+            } else {
+                if (loss.numberOf(precomputed[6]) > 0) ++numberOfNormalElements;
+                else if (loss.numberOf(precomputed[7]) > 0) ++ numberOfNormalElements;
+            }
+        }
 
-    private double score(MolecularFormula loss, Element[] precomputed) {
-        final boolean isChnops = loss.numberOf(precomputed[0]) + loss.numberOf(precomputed[1]) + loss.numberOf(precomputed[2]) + loss.numberOf(precomputed[3]) >= loss.atomCount();
-        return (isChnops ? 0d : penalty) - normalization;
+        if (numberOfNormalElements < loss.atomCount()) {
+            return penalty-normalization;
+        } else return -normalization;
     }
 
     @Override
     public double score(MolecularFormula formula) {
-        final boolean isChnops = containsStrangeElement(formula);
-        return (isChnops ? 0d : penalty) - normalization;
+        final PeriodicTable pt = PeriodicTable.getInstance();
+        final Element[] precomputed = pt.getAllByName("C", "H", "N", "O", "Na", "K", "Cl", "Br");
+        return score(formula, precomputed, 0);
     }
 
     @Override
