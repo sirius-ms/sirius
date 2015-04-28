@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by kaidu on 15.03.2015.
@@ -72,8 +73,12 @@ public class PatternExtractionTest {
             }
         });
 
-        assertEquals(4, candidates.size());
-        assertEquals(181.0707, candidates.get(0).getMonoisotopicMass(), 1e-3);
+        assertEquals(5, candidates.size());
+        assertTrue("isotope pattern of glucose with monoisotopic mass 181.0707", findCandidateWithMono(candidates, 181.0707));
+        assertTrue("isotope pattern of C12S5H10 with monoisotopic mass 314.9459", findCandidateWithMono(candidates, 314.9459));
+        assertTrue("isotope pattern of chlorophyl with monoisotopic mass 619.2402", findCandidateWithMono(candidates, 619.2402));
+        assertTrue("isotope pattern of C100H120 with monoisotopic mass 1321.9463", findCandidateWithMono(candidates, 1321.9463));
+        assertTrue("Maybe the isotope pattern at 1321.9463 is an overlap of two pattern. Therefore, allow both possibilities:", numberOfCandidatesWithMono(candidates,1321.9463)==2);
         assertEquals(314.9459, candidates.get(1).getMonoisotopicMass(), 1e-3);
         assertEquals(619.2402, candidates.get(2).getMonoisotopicMass(), 1e-3);
         assertEquals(1321.9463, candidates.get(3).getMonoisotopicMass(), 1e-3);
@@ -83,6 +88,21 @@ public class PatternExtractionTest {
         assertEquals(chlorophyl.size(), candidates.get(2).getPattern().size());
         assertEquals(fictional2.size(), candidates.get(3).getPattern().size());
 
+    }
+
+    private static boolean findCandidateWithMono(List<IsotopePattern> patterns, double mono) {
+        for (IsotopePattern p : patterns) {
+            if (Math.abs(p.getMonoisotopicMass()-mono) < 1e-3) return true;
+        }
+        return false;
+    }
+
+    private static int numberOfCandidatesWithMono(List<IsotopePattern> patterns, double mono) {
+        int c=0;
+        for (IsotopePattern p : patterns) {
+            if (Math.abs(p.getMonoisotopicMass()-mono) < 1e-3) ++c;
+        }
+        return c;
     }
 
 }

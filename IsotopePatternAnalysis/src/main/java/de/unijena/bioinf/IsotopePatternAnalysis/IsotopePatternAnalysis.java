@@ -180,6 +180,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     private MeasurementProfile getProfile(MeasurementProfile measurementProfile) {
+        if (measurementProfile==null) return defaultProfile;
         return MutableMeasurementProfile.merge(defaultProfile, measurementProfile);
     }
 

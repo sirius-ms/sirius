@@ -54,7 +54,7 @@ public class ExtractAll implements PatternExtractor {
             }
             // check also positions before
             // TODO: very heuristically approach optimized for metabolomics (=small molecules, restricted set of elements)
-            if (monomz > 1000) {
+            if (true) {//(monomz > 1000) {
                 j = mzIndex-1;
                 eachPatternPos:
                 for (int f=1; f <= 10; ++f) {
@@ -64,9 +64,10 @@ public class ExtractAll implements PatternExtractor {
                         final double expectedMass = monomz - f;
                         if (window.inErrorWindow(expectedMass, mz) && !allreadyUsed.get(j) && byMz.getIntensityAt(j)/byMz.getIntensityAt(mzIndex) > 0.33) {
                             buffer.addPeak(byMz.getMzAt(j), byMz.getIntensityAt(j));
-                            allreadyUsed.set(j);
+                            //do not reserve
+                            //allreadyUsed.set(j);
                             found = true;
-                        } else if (byMz.getMzAt(j) > (expectedMass+0.3)) {
+                        } else if (byMz.getMzAt(j) < (expectedMass-0.3)) {
                             if (found) continue eachPatternPos;
                             else break eachPatternPos;
                         }

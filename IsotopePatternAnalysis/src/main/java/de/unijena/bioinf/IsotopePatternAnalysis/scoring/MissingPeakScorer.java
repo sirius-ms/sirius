@@ -35,7 +35,7 @@ public class MissingPeakScorer implements IsotopePatternScorer {
             theoretical = theoreticalSpectrum;
         }
         double score = 0;
-        final double standardDeviation = 0.04;
+        final double standardDeviation = 0.03;
         for (int i=measured.size(); i < theoretical.size(); ++i) {
             final double diff = theoretical.getIntensityAt(i);
             score += Math.log(Erf.erfc(diff / (sqrt2 * standardDeviation)));
