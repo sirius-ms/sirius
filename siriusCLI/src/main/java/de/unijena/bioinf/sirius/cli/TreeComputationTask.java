@@ -1,10 +1,10 @@
 package de.unijena.bioinf.sirius.cli;
 
-import com.sun.xml.xsom.impl.scd.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -50,6 +50,14 @@ public abstract class TreeComputationTask implements Task {
                 ms1Prof.setStandardMs1MassDeviation(new Deviation(opts.getPPMSd()));
                 ms1Prof.setStandardMassDifferenceDeviation(ms1Prof.getStandardMs1MassDeviation().multiply(0.66d));
             }
+            /*
+            sirius.getMs2Analyzer().setValidatorWarning(new Warning() {
+                @Override
+                public void warn(String message) {
+                    progress.info(message);
+                }
+            });
+            */
         } catch (IOException e) {
             System.err.println("Cannot load profile '" + opts.getProfile() + "':\n");
             e.printStackTrace();
@@ -71,8 +79,13 @@ public abstract class TreeComputationTask implements Task {
         // two different input modes:
         // general information that should be used if this fields are missing in the file
         final Double defaultParentMass = options.getParentMz();
-        final Ionization ion = getIonFromOptions(options);
-        final FormulaConstraints constraints = options.getElements() == null ? getDefaultElementSet(ion, options.isNoIon()) : options.getElements();
+        Ionization ion = getIonFromOptions(options);
+        if (ion instanceof Charge) {
+            if (!options.isAutoCharge()) {
+                ion = (ion.getCharge()>0) ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName("[M-H]-");
+            }
+        }
+        final FormulaConstraints constraints = options.getElements() == null ? getDefaultElementSet(ion, options.isAutoCharge()) : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2()!=null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -101,7 +114,7 @@ public abstract class TreeComputationTask implements Task {
                                     else if (options instanceof ComputeOptions && ((ComputeOptions) options).getMolecularFormula() != null) formula = MolecularFormula.parse(((ComputeOptions) options).getMolecularFormula()); else formula=null;
                                     if (formula != null) {
                                         ms.setPrecursorMz(ms.getIonization().addToMass(formula.getMass()));
-                                    } else throw new IllegalArgumentException("Input MS/MS spectra do not contain the precursor mass of the measured ion. Please provide this information via --parentmass option");
+                                    } else ms.setPrecursorMz(0);
                                 }
                             } else {
                                 ms.setPrecursorMz(defaultParentMass);
@@ -112,11 +125,7 @@ public abstract class TreeComputationTask implements Task {
                 }
             }
             if (exp.getMs2Spectra().size() <= 0) throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
-            for (int k=1; k < exp.getMs2Spectra().size(); ++k) {
-                if (Math.abs(exp.getMs2Spectra().get(k).getPrecursorMz() - exp.getMs2Spectra().get(0).getPrecursorMz()) > 1e-3) {
-                    throw new IllegalArgumentException("The given MS/MS spectra have different precursor mass and cannot belong to the same compound");
-                }
-            }
+
             if (options.getMs2()!=null &&  options.getMs1() != null && !options.getMs1().isEmpty()) {
                 exp.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
                 for (File f : options.getMs1()) {
@@ -126,7 +135,37 @@ public abstract class TreeComputationTask implements Task {
                     }
                 }
             }
-            exp.setIonMass(exp.getMs2Spectra().get(0).getPrecursorMz());
+
+            final double expPrecursor;
+            if (options.getParentMz()!=null) {
+                expPrecursor = options.getParentMz();
+            } else {
+                double prec=0d;
+                for (int k=1; k < exp.getMs2Spectra().size(); ++k) {
+                    final double pmz = exp.getMs2Spectra().get(k).getPrecursorMz();
+                    if (pmz!=0 && Math.abs(pmz - exp.getMs2Spectra().get(0).getPrecursorMz()) > 1e-3) {
+                        throw new IllegalArgumentException("The given MS/MS spectra have different precursor mass and cannot belong to the same compound");
+                    } else if (pmz != 0) prec = pmz;
+                }
+                if (prec == 0) {
+                    if (exp.getMs1Spectra().size()>0) {
+                        final List<IsotopePattern> patterns = sirius.getMs1Analyzer().deisotope(exp);
+                        if (patterns.size()>0) {
+                            double pmz2 = patterns.get(0).getMonoisotopicMass();
+                            for (IsotopePattern pat : patterns) {
+                                if (Math.abs(pmz2-pat.getMonoisotopicMass()) > 1e-3) {
+                                    throw new IllegalArgumentException("SIRIUS cannot infer the parentmass of the measured compound from MS1 spectrum. Please provide it via the -z option.");
+                                }
+                            }
+                            prec = pmz2;
+                        } else throw new IllegalArgumentException("SIRIUS expects the parentmass of the measured compound as parameter. Please provide it via the -z option.");
+                    }
+                }
+                expPrecursor=prec;
+            }
+
+
+            exp.setIonMass(expPrecursor);
             instances.add(new Instance(exp, options.getMs2().get(0)));
         } else if (options.getMs1()!=null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
@@ -206,23 +245,26 @@ public abstract class TreeComputationTask implements Task {
     }
 
 
-    private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
+    private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)[+-]?");
+    private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
 
     protected static Ionization getIonFromOptions(InputOptions opt) {
-        final String ionStr = opt.getIon();
-        final Ionization ion = PeriodicTable.getInstance().ionByName(ionStr);
-        if (ion != null) return ion;
-        else {
-            final Matcher m = CHARGE_PATTERN.matcher(ionStr);
-            if (m.matches()) {
-                if (m.group(2)!=null && m.group(2).equals("-")) {
-                    return new Charge(-Integer.parseInt(m.group(1)));
-                } else {
-                    return new Charge(Integer.parseInt(m.group(1)));
-                }
+        String ionStr = opt.getIon();
+        if (ionStr==null) ionStr = "1+";
+        final Matcher m1 = CHARGE_PATTERN.matcher(ionStr);
+        final Matcher m2 = CHARGE_PATTERN2.matcher(ionStr);
+        final Matcher m = m1.matches() ? m1 : (m2.matches() ? m2 : null);
+        if (m != null) {
+            if (m.group(1)!=null && ionStr.contains("-")) {
+                return new Charge(-Integer.parseInt(m.group(1)));
             } else {
-                throw new IllegalArgumentException("Unknown ionization mode '" + ionStr + "'");
+                return new Charge(Integer.parseInt(m.group(1)));
             }
+        } else {
+            final Ionization ion = PeriodicTable.getInstance().ionByName(ionStr);
+            if (ion==null)
+                throw new IllegalArgumentException("Unknown ionization mode '" + ionStr + "'");
+            else return ion;
         }
     }
     private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");

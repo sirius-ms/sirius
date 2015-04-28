@@ -47,19 +47,19 @@ public class PredictFromMs1 implements Judge {
                     }
                     if (int1==0 && int2 == 0) continue;
                     if (int1 > 0 && int2 == 0) {
-                        votes.adjustValue(Cl, -10);
-                        votes.adjustValue(Br, -10);
+                        votes.adjustOrPutValue(Cl, -10, -10);
+                        votes.adjustOrPutValue(Br, -10, -10);
                     } else if (int2 > int1) {
-                        if ((int2 / int1) <= 2 ) {
-                            votes.adjustValue(Cl, 10);
-                            votes.adjustValue(Br, 3);
-                        } else if ((int2 / int1) > 2) {
-                            votes.adjustValue(Cl, 5);
-                            votes.adjustValue(Br, 6);
+                        if ((int2 / int1) <= 3 ) {
+                            votes.adjustOrPutValue(Cl, 10, 10);
+                            votes.adjustOrPutValue(Br, 3, 3);
+                        } else if ((int2 / int1) > 3) {
+                            votes.adjustOrPutValue(Cl, 5, 5);
+                            votes.adjustOrPutValue(Br, 6, 6);
                         }
                     } else {
-                        votes.adjustValue(Cl, -10);
-                        votes.adjustValue(Br, -10);
+                        votes.adjustOrPutValue(Cl, -10, -10);
+                        votes.adjustOrPutValue(Br, -10,-10);
                     }
 
                 }

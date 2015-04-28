@@ -28,7 +28,7 @@ public interface TreeOptions extends InputOptions {
     public boolean isHelp();
 
     @Option(shortName = "Z", longName = "auto-charge", description = "Use this option if the charge of your compounds is unknown and you do not want to assume [M+H]+ as default. With the auto charge option SIRIUS will not care about charges and allow arbitrary adducts for the precursor peak.")
-    public boolean isNoCharge();
+    public boolean isAutoCharge();
 
     @Option(shortName = "t", description = "target directory/filename for the output", defaultValue = ".")
     public File getTarget();

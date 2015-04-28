@@ -43,16 +43,26 @@ public class ComputeTask extends TreeComputationTask {
     }
 
     private void output(Instance instance, IdentificationResult result) throws IOException {
+        if (result==null) {
+            System.out.println("Cannot find valid tree with molecular formula '" + instance.experiment.getMolecularFormula() + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
+            return;
+        }
         File target = options.getTarget();
         final String format;
         if (options.getFormat() != null) {
             format = options.getFormat();
         } else {
             final String n = target.getName();
-            final String ext = n.substring(n.lastIndexOf('.'));
-            if (ext.equals(".json") || ext.equals(".dot")) {
-                format = ext;
-            } else format = "json";
+            final int i = n.lastIndexOf('.');
+            if (i >= 0) {
+                final String ext = n.substring(i);
+                if (ext.equals(".json") || ext.equals(".dot")) {
+                    format = ext;
+                } else format = "json";
+            } else {
+                if (!target.exists()) target.mkdirs();
+                format = "json";
+            }
         }
 
         if (target.isDirectory()) {

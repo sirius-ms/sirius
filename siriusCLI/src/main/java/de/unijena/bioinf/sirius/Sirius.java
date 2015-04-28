@@ -70,15 +70,22 @@ public class Sirius {
         final List<IsotopePattern> candidates = getIsotopeCandidates(experiment, opts);
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
+        final double optIsoScore;
         if (candidates.size() > 0) {
+            Collections.sort(candidates, new Comparator<IsotopePattern>() {
+                @Override
+                public int compare(IsotopePattern o1, IsotopePattern o2) {
+                    return Double.compare(o2.getBestScore(),o1.getBestScore());
+                }
+            });
             final IsotopePattern pattern = candidates.get(0);
-            filterCandidateList(pattern, isoFormulas);
-        }
+            optIsoScore = filterCandidateList(pattern, isoFormulas);
+        } else optIsoScore = 0d;
 
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
         MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
 
-        if (isoFormulas.size() > 0) {
+        if (isoFormulas.size() > 0 && optIsoScore>10) {
             trees = trees.onlyWith(isoFormulas.keySet());
             maxNumberOfFormulas = isoFormulas.size();
         } else {
@@ -218,6 +225,7 @@ public class Sirius {
         try {
             while (true) {
                 tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(!opts.isNotRecalibrating()).onlyWith(Arrays.asList(formula)).optimalTree();
+                if (tree==null) return null;
                 final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
                 if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
                     break;
@@ -235,9 +243,9 @@ public class Sirius {
         return new IdentificationResult(tree, 0);
     }
 
-    private void filterCandidateList(IsotopePattern candidate, HashMap<MolecularFormula, Double> formulas) {
-        if (candidate.getCandidates().size()==0) return;
-        if (candidate.getBestScore() <= 0) return;
+    private double filterCandidateList(IsotopePattern candidate, HashMap<MolecularFormula, Double> formulas) {
+        if (candidate.getCandidates().size()==0) return 0d;
+        if (candidate.getBestScore() <= 0) return 0d;
         final double optscore = candidate.getBestScore();
         final ArrayList<ScoredMolecularFormula> xs = new ArrayList<ScoredMolecularFormula>(candidate.getCandidates());
         Collections.sort(xs, Collections.reverseOrder());
@@ -248,6 +256,7 @@ public class Sirius {
             if (score <= 0 || score/optscore < 0.666 || score/prev < 0.5) break;
         }
         for (int i=0; i < n; ++i) formulas.put(xs.get(i).getFormula(), xs.get(i).getScore());
+        return optscore;
     }
 
     private static Comparator<FTree> TREE_SCORE_COMPARATOR = new Comparator<FTree>() {
