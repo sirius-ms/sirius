@@ -298,7 +298,6 @@
             "CO",
             "CO2",
             "Cl",
-            "H",
             "H2",
             "H2O",
             "H3N",
@@ -312,7 +311,7 @@
             "I2",
             "S"
           ],
-          "penalty": -1
+          "penalty": -0.5
         }
       }
     ],
@@ -335,11 +334,6 @@
       }
     ],
     "peakPairScorers": [
-      {
-        "$name": "CollisionEnergyEdgeScorer",
-        "alpha": 0.1,
-        "beta": 0.8
-      },
       {
         "$name": "LossSizeScorer",
         "normalization": -5.310349962255842,

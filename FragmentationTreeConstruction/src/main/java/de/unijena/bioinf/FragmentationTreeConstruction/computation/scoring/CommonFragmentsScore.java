@@ -175,6 +175,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
             final Map.Entry<String,G> entry = iter.next();
             commonFragments.put(MolecularFormula.parse(entry.getKey()), document.getDouble(entry.getValue()));
         }
+        recombinatedFragments = commonFragments;
         normalization = document.getDoubleFromDictionary(dictionary, "normalization");
         if (document.hasKeyInDictionary(dictionary, "recombinator")) {
             this.recombinator = (Recombinator) helper.unwrap(document, document.getFromDictionary(dictionary, "recombinator"));
@@ -244,6 +245,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
                 for (MolecularFormula f : source.keySet()) {
                     final MolecularFormula recomb = loss.add(f);
                     final double  score = source.get(f)+penalty;
+                    if (score < 0) continue;
                     if (!source.containsKey(recomb) || source.get(recomb)<score) recombination.put(recomb, score);
                 }
             }
