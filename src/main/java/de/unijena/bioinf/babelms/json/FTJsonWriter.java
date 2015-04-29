@@ -3,6 +3,9 @@ package de.unijena.bioinf.babelms.json;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.WriteIntoDataDocument;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -67,10 +70,13 @@ public class FTJsonWriter {
         final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();
         final List<LossAnnotation<Object>> lAnos = graph.getLossAnnotations();
 
+        final Ionization ion = graph.getAnnotationOrNull(Ionization.class);
+        final FragmentAnnotation<Peak> peakAno = graph.getFragmentAnnotationOrNull(Peak.class);
+
         writer.key("fragments");
         writer.array();
         for (Fragment f : graph) {
-            writeFragment(writer, f, fAnos);
+            writeFragment(writer, f, ion, peakAno!=null ? peakAno.get(f) : null, fAnos);
         }
         writer.endArray();
         writer.key("losses");
@@ -112,7 +118,7 @@ public class FTJsonWriter {
         writer.endObject();
     }
 
-    private void writeFragment(JSONWriter writer, Fragment f, List<FragmentAnnotation<Object>> fAnos) throws JSONException {
+    private void writeFragment(JSONWriter writer, Fragment f, Ionization ion, Peak p, List<FragmentAnnotation<Object>> fAnos) throws JSONException {
         writer.object();
 
         writer.key("id");
@@ -123,6 +129,12 @@ public class FTJsonWriter {
 
         writer.key("molecularFormula");
         writer.value(f.getFormula().toString());
+
+        if (p!=null && ion!=null) {
+            writer.key("massdev");
+            writer.value(Deviation.fromMeasurementAndReference(ion.subtractFromMass(p.getMass()), f.getFormula().getMass()).toString());
+        }
+
         final ArrayList<FragmentAnnotation<Object>> custom = new ArrayList<FragmentAnnotation<Object>>();
         for (FragmentAnnotation<Object> t : fAnos) {
             if (t.isAlias()) continue;
