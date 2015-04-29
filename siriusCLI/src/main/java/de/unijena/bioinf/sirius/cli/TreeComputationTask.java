@@ -139,6 +139,8 @@ public abstract class TreeComputationTask implements Task {
             final double expPrecursor;
             if (options.getParentMz()!=null) {
                 expPrecursor = options.getParentMz();
+            }else if (exp.getMolecularFormula()!=null) {
+                expPrecursor = exp.getIonization().addToMass(exp.getMolecularFormula().getMass());
             } else {
                 double prec=0d;
                 for (int k=1; k < exp.getMs2Spectra().size(); ++k) {

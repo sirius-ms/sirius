@@ -65,7 +65,7 @@ public class Sirius {
     }
 
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, IdentifyOptions opts, Progress progress) {
-        MutableMs2Experiment experiment = new MutableMs2Experiment(extendConstraints(uexperiment, progress));
+        MutableMs2Experiment experiment = new MutableMs2Experiment(extendConstraints(profile.fragmentationPatternAnalysis.validate(uexperiment), progress));
         // first check if MS data is present;
         final List<IsotopePattern> candidates = getIsotopeCandidates(experiment, opts);
         int maxNumberOfFormulas = 0;
@@ -83,10 +83,8 @@ public class Sirius {
         } else optIsoScore = 0d;
 
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
-        MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
 
         if (isoFormulas.size() > 0 && optIsoScore>10) {
-            trees = trees.onlyWith(isoFormulas.keySet());
             maxNumberOfFormulas = isoFormulas.size();
         } else {
             maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
@@ -94,7 +92,6 @@ public class Sirius {
 
         final int outputSize = Math.min(maxNumberOfFormulas, opts.getNumberOfCandidates());
         final int computeNTrees = Math.max(5, outputSize);
-        trees = trees.computeMaximal(computeNTrees).withoutRecalibration();
 
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer!=null ? treeSizeScorer.getTreeSizeScore() : 0d);
@@ -105,6 +102,12 @@ public class Sirius {
 
         try {
             while (true) {
+                MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
+                if (isoFormulas.size() > 0 && optIsoScore>10) {
+                    trees = trees.onlyWith(isoFormulas.keySet());
+                }
+                trees = trees.computeMaximal(computeNTrees).withoutRecalibration();
+
                 final TreeSet<FTree> treeSet = new TreeSet<FTree>(TREE_SCORE_COMPARATOR);
 
                 final TreeIterator iter = trees.iterator(true);
@@ -196,7 +199,7 @@ public class Sirius {
         if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getFormulaConstraints()!=null) {
             constraints = experiment.getMeasurementProfile().getFormulaConstraints();
         } else constraints = profile.fragmentationPatternAnalysis.getDefaultProfile().getFormulaConstraints();
-        final MeasurementProfile mpr = MutableMeasurementProfile.merge(profile.fragmentationPatternAnalysis.getDefaultProfile(), experiment.getMeasurementProfile());
+        final MeasurementProfile mpr = experiment.getMeasurementProfile()==null ? profile.fragmentationPatternAnalysis.getDefaultProfile() : MutableMeasurementProfile.merge(profile.fragmentationPatternAnalysis.getDefaultProfile(), experiment.getMeasurementProfile());
         final FormulaConstraints newC = elementPrediction.extendConstraints(constraints, experiment, mpr);
         if (newC != constraints) {
             progress.info("Extend alphabet to " + newC.getChemicalAlphabet().toString());
