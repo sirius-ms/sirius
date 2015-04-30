@@ -341,19 +341,55 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         --edgeNum;
     }
 
+    protected void deleteFragmentsKeepTopologicalOrder(Iterable<Fragment> todelete) {
+        for (Fragment fragment : todelete) {
+            if (fragments.get(fragment.vertexId) != fragment)
+                throw new NoSuchElementException("The given fragment is not part of this graph");
+            final int in = fragment.getInDegree(), out = fragment.getOutDegree();
+            for (int i=0; i < in; ++i) {
+                final Loss l = fragment.getIncomingEdge(i);
+                deleteOutEdgeInternal(l.source, l);
+            }
+            for (int i=0; i < out; ++i) {
+                final Loss l = fragment.getOutgoingEdge(i);
+                deleteInEdgeInternal(l.target, l);
+            }
+            fragments.set(fragment.vertexId, null);
+            fragment.vertexId = -1;
+        }
+        int i=0;
+        for (int k=0; k < fragments.size(); ++k) {
+            if (fragments.get(k)==null) {
+
+            } else {
+                if (k > i) {
+                    fragments.set(i, fragments.get(k));
+                    fragments.set(k, null);
+                    fragments.get(i).vertexId = i;
+                }
+                ++i;
+            }
+        }
+        for (int k=fragments.size()-1; k >= 0; --k)
+            if (fragments.get(k)==null) fragments.remove(k);
+    }
+
     protected void deleteFragment(Fragment fragment) {
         if (fragments.get(fragment.vertexId) != fragment)
             throw new NoSuchElementException("The given fragment is not part of this graph");
         // delete fragment by swapping it with last element and then delete last element
-        final Fragment f = fragments.get(fragments.size() - 1);
-        fragments.set(fragment.vertexId, f);
+        final Fragment SWAP = fragments.get(fragments.size() - 1);
+        fragments.set(fragment.vertexId, SWAP);
         fragments.remove(fragments.size() - 1);
-        f.setVertexId(fragment.vertexId);
+        SWAP.setVertexId(fragment.vertexId);
         // now delete all edges of the deleted fragment
-        for (Loss l : f.incomingEdges) {
+        final int in = fragment.getInDegree(), out = fragment.getOutDegree();
+        for (int i=0; i < in; ++i) {
+            final Loss l = fragment.getIncomingEdge(i);
             deleteOutEdgeInternal(l.source, l);
         }
-        for (Loss l : f.outgoingEdges) {
+        for (int i=0; i < out; ++i) {
+            final Loss l = fragment.getOutgoingEdge(i);
             deleteInEdgeInternal(l.target, l);
         }
         fragment.vertexId = -1;

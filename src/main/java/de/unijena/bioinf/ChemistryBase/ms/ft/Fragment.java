@@ -46,6 +46,19 @@ public class Fragment {
         this.incomingEdges = other.incomingEdges.clone();
     }
 
+    /**
+     * Reduce memory usage of this fragment by compacting the internal array structure.
+     * Call this after deleting lot of edges
+     */
+    public void compact() {
+        if (outgoingEdges.length > outDegree+2) {
+            outgoingEdges = Arrays.copyOf(outgoingEdges, outDegree);
+        }
+        if (incomingEdges.length > inDegree+2) {
+            incomingEdges = Arrays.copyOf(incomingEdges, inDegree);
+        }
+    }
+
     public boolean isDeleted() {
         return vertexId < 0;
     }

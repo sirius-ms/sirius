@@ -121,6 +121,10 @@ public class FGraph extends AbstractFragmentationGraph {
         super.deleteFragment(f);
     }
 
+    public void deleteFragmentsKeepTopologicalOrder(Iterable<Fragment> todelete) {
+        super.deleteFragmentsKeepTopologicalOrder(todelete);
+    }
+
     public Fragment addRootVertex(MolecularFormula formula) {
         final Fragment f = addFragment(formula);
         addLoss(pseudoRoot, f, MolecularFormula.emptyFormula());

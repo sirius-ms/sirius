@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.graphUtils.tree.BackrefTreeAdapter;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 import de.unijena.bioinf.graphUtils.tree.PreOrderTraversal;
@@ -226,6 +227,17 @@ public class FTree extends AbstractFragmentationGraph {
                 ++i;
             }
         }
+        final FragmentAnnotation<Peak> fa = getFragmentAnnotationOrThrow(Peak.class);
+        Collections.sort(fragments, new Comparator<Fragment>() {
+            @Override
+            public int compare(Fragment o1, Fragment o2) {
+                return Double.compare(fa.get(o2).getMass(),fa.get(o1).getMass());
+            }
+        });
+        for (int k=0; k < fragments.size(); ++k) {
+            fragments.get(k).setVertexId(k);
+        }
+
     }
 
 }
