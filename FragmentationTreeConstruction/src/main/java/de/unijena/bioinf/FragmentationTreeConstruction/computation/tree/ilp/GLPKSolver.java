@@ -1,14 +1,14 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.list.array.TIntArrayList;
-import org.gnu.glpk.GLPK;
-import org.gnu.glpk.GLPKConstants;
-import org.gnu.glpk.glp_prob;
-import org.gnu.glpk.glp_smcp;
-import org.gnu.glpk.SWIGTYPE_p_int;
-import org.gnu.glpk.SWIGTYPE_p_double;
+import org.gnu.glpk.*;
+
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
@@ -36,11 +36,11 @@ public class GLPKSolver implements TreeBuilder {
      * will be loaded the moment an instance of 'GLPKSolver' is created  *
      *********************************************************************/
     static {
+        final String versionString = GLPK.GLP_MAJOR_VERSION + "_" + GLPK.GLP_MINOR_VERSION;
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             // try to load Windows library
             try {
-                System.loadLibrary("glpk_" + GLPK.glp_version());
-                System.out.println("Using system glpk \nVersion: " + GLPK.glp_version());
+                System.loadLibrary("glpk_" + versionString);
             } catch (UnsatisfiedLinkError e) {
                 System.err.println("Could not load glpk library from windows! Make sure to have the correct" +
                         " version of glpk installed on your system!");
@@ -49,7 +49,6 @@ public class GLPKSolver implements TreeBuilder {
         } else {
             try {
                 System.loadLibrary("glpk_java");
-                System.out.println("Using java glpk \nVersion: " + GLPK.glp_version());
             } catch (UnsatisfiedLinkError e) {
                 System.err.println("The dynamic link library for GLPK for java could not be loaded. \n" +
                         "Consider using \njava -Djava.library.path=");
@@ -116,12 +115,8 @@ public class GLPKSolver implements TreeBuilder {
 
         protected Solver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) {
             super(graph, input, lowerbound, feasibleSolver, timeLimit);
-
-            System.out.printf("Using: GLPK solver...");
-
             this.LP = GLPK.glp_create_prob();
             GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
-            System.out.println("GLPK: Problem created...");
         }
 
 
@@ -390,7 +385,6 @@ public class GLPKSolver implements TreeBuilder {
 
             int status = GLPK.glp_get_status(this.LP);
             if (status == GLPKConstants.GLP_OPT) {
-                System.out.println("The solution is optimal.");
             } else if (status == GLPKConstants.GLP_FEAS) {
                 System.out.println("The solution is feasible.");
             } else if (status == GLPKConstants.GLP_INFEAS) {

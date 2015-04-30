@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.algorithm.BoundedDoubleQueue;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
@@ -11,7 +12,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.Guro
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MultipleTreeComputation {
 
@@ -86,21 +88,28 @@ public class MultipleTreeComputation {
     }
 
     public MultipleTreeComputation inParallel() {
-        return inParallel(1);
+        return inParallel(2);
     }
 
     public FTree optimalTree() {
         double lb = lowerbound;
         FTree opt = null;
-        final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
-        while (queue.hasNext()) {
-            final FGraph graph = queue.next();
-            final FTree tree = computeTree(graph, lb, recalibration);
-            if (tree != null && (opt == null || tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() > opt.getAnnotationOrThrow(TreeScoring.class).getOverallScore())) {
-                opt = tree;
+        final Iterator<FGraph> queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
+        try {
+            while (queue.hasNext()) {
+                final FGraph graph = queue.next();
+                final FTree tree = computeTree(graph, lb, recalibration);
+                if (tree != null && (opt == null || tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() > opt.getAnnotationOrThrow(TreeScoring.class).getOverallScore())) {
+                    opt = tree;
+                }
             }
+            return opt;
+        } catch (RuntimeException e) {
+            if (queue instanceof MultithreadedGraphBuildingQueue) {
+                ((MultithreadedGraphBuildingQueue)queue).kill();
+            }
+            throw e;
         }
-        return opt;
     }
 
     /**
@@ -121,7 +130,7 @@ public class MultipleTreeComputation {
      */
     public TreeIterator iterator(final boolean oncePerNext) {
         return new TreeIterator() {
-            private final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
+            private final Iterator<FGraph> queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
             private double lb = lowerbound;
             private BoundedDoubleQueue scores = maximalNumber < formulas.size() ? new BoundedDoubleQueue(maximalNumber) : null;
             private FGraph lastGraph;
@@ -133,20 +142,27 @@ public class MultipleTreeComputation {
 
             @Override
             public FTree next() {
-                while (hasNext()) {
-                    lastGraph = queue.next();
-                    FTree tree = computeTree(lastGraph, lb, recalibration);
-                    if (tree != null) {
-                        if (scores != null) {
-                            scores.add(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
-                            setLowerbound(Math.max(scores.min(), getLowerbound()));
+                try {
+                    while (hasNext()) {
+                        lastGraph = queue.next();
+                        FTree tree = computeTree(lastGraph, lb, recalibration);
+                        if (tree != null) {
+                            if (scores != null) {
+                                scores.add(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+                                setLowerbound(Math.max(scores.min(), getLowerbound()));
+                            }
+                            return tree;
                         }
-                        return tree;
+                        if (oncePerNext) return tree;
                     }
-                    if (oncePerNext) return tree;
+                    lastGraph = null;
+                    return null;
+                } catch (RuntimeException e) {
+                    if (queue instanceof MultithreadedGraphBuildingQueue) {
+                        ((MultithreadedGraphBuildingQueue)queue).kill();
+                    }
+                    throw e;
                 }
-                lastGraph = null;
-                return null;
             }
 
             @Override
@@ -179,21 +195,28 @@ public class MultipleTreeComputation {
             }
         });
         double lb = lowerbound;
-        final GraphBuildingQueue queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
-        while (queue.hasNext()) {
-            final FGraph graph = queue.next();
-            final FTree tree = computeTree(graph, lb, recalibration);
-            if (tree != null) {
-                trees.add(tree);
-                if (trees.size() > maximalNumber) {
-                    trees.pollFirst();
-                    final double newLowerbound = Math.max(0, trees.first().getAnnotationOrThrow(TreeScoring.class).getOverallScore());
-                    assert newLowerbound >= lb : newLowerbound + " should be greater than " + lb;
-                    lb = Math.max(lowerbound, newLowerbound);
+        final Iterator<FGraph> queue = numberOfThreads > 1 ? new MultithreadedGraphBuildingQueue() : new SinglethreadedGraphBuildingQueue();
+        try {
+            while (queue.hasNext()) {
+                final FGraph graph = queue.next();
+                final FTree tree = computeTree(graph, lb, recalibration);
+                if (tree != null) {
+                    trees.add(tree);
+                    if (trees.size() > maximalNumber) {
+                        trees.pollFirst();
+                        final double newLowerbound = Math.max(0, trees.first().getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+                        assert newLowerbound >= lb : newLowerbound + " should be greater than " + lb;
+                        lb = Math.max(lowerbound, newLowerbound);
+                    }
                 }
             }
+            return new ArrayList<FTree>(trees.descendingSet());
+        } catch (RuntimeException e) {
+        if (queue instanceof MultithreadedGraphBuildingQueue) {
+            ((MultithreadedGraphBuildingQueue)queue).kill();
         }
-        return new ArrayList<FTree>(trees.descendingSet());
+        throw e;
+    }
     }
 
     private FTree computeTree(FGraph graph, double lb, boolean recalibration) {
@@ -215,11 +238,11 @@ public class MultipleTreeComputation {
 
     /**
      * returns the number of threads that can be used for graph computation. It is assumed that each graph needs
-     * 1 GB memory, so multiple threads are only allowed if there is enough memory.
+     * at max 512 GB memory, so multiple threads are only allowed if there is enough memory.
      */
     protected int guessNumberOfThreads() {
         final int maxNumber = Runtime.getRuntime().availableProcessors();
-        final long gigabytes = Math.round(((double) Runtime.getRuntime().maxMemory()) / (1024 * 1024 * 1024));
+        final long gigabytes = Math.round(((double) Runtime.getRuntime().maxMemory()) / (512 * 1024 * 1024));
         return Math.max(1, Math.min(maxNumber, (int) gigabytes));
     }
 
@@ -301,48 +324,130 @@ public class MultipleTreeComputation {
         }
     }
 
-    class MultithreadedGraphBuildingQueue extends GraphBuildingQueue {
-        private final ArrayBlockingQueue<FGraph> queue = new ArrayBlockingQueue<FGraph>(numberOfThreads);
-
+    class MultithreadedGraphBuildingQueue extends MultithreadedWorkingQueue<ScoredMolecularFormula, FGraph> {
         MultithreadedGraphBuildingQueue() {
-            startComputation();
+            super(formulas, new Function<ScoredMolecularFormula, FGraph>() {
+                @Override
+                public FGraph apply(ScoredMolecularFormula mf) {
+                    return analyzer.buildGraph(input, mf);
+                }
+            }, numberOfThreads, 1); // TODO: better documentation. in general it doesn't make sense to use more than one thread for graph building
+            start();
+        }
+    }
+
+    private static class MultithreadedWorkingQueue<In, Out> implements Runnable, Iterator<Out> {
+        private final ArrayDeque<In> todoList;
+        private int pendingJobs;
+        private final ArrayDeque<Out> resultList;
+        private final Function<In, Out> worker;
+        private final Thread[] threads;
+
+        private final int maxNumberOfResults;
+        private final int maxNumberOfThreads;
+
+        private final ReentrantLock lock;
+        private final Condition notFull, notEmpty;
+
+        private boolean shutdown = false;
+
+        public MultithreadedWorkingQueue(List<In> todoList, Function<In, Out> worker, int maxNumberOfResults, int maxNumberOfThreads) {
+            this.todoList = new ArrayDeque<In>(todoList);
+            this.pendingJobs = 0;
+            this.resultList = new ArrayDeque<Out>(maxNumberOfResults);
+            this.maxNumberOfResults = maxNumberOfResults;
+            this.maxNumberOfThreads = maxNumberOfThreads;
+            this.worker = worker;
+            this.threads = new Thread[maxNumberOfThreads];
+            this.lock = new ReentrantLock();
+            this.notFull = lock.newCondition();
+            this.notEmpty = lock.newCondition();
+            for (int k=0; k < threads.length; ++k) {
+                threads[k] = new Thread(this);
+            }
         }
 
-        private void startComputation() {
-            final int n = formulas.size();
-            final ProcessedInput pinput = input;
-            final FragmentationPatternAnalysis anal = analyzer;
-            for (int k = 0; k < numberOfThreads; ++k) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (true) {
-                            final ScoredMolecularFormula f;
-                            synchronized (stack) {
-                                final int size = stack.size();
-                                if (size == 0) break;
-                                else f = stack.remove(size - 1);
-                            }
-                            try {
-                                queue.put(anal.buildGraph(pinput, f));
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
+        void kill() {
+            lock.lock();
+            try {
+                shutdown=true;
+                notEmpty.signalAll();
+                notFull.signalAll();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public void start() {
+            for (Thread t : threads) t.start();
+        }
+
+        @Override
+        public void run() {
+            outerLoop:
+            while (!shutdown) {
+                final In input;
+                // pull a job out of the todolist
+                lock.lock();
+                try {
+                    if (todoList.size() > 0) {
+                        input = todoList.pollFirst();
+                        ++pendingJobs;
+                    } else return;
+                } finally {
+                    lock.unlock();
+                }
+                // process pending job
+                final Out output = worker.apply(input);
+                // put result into result list
+                lock.lock();
+                try {
+                    while (resultList.size() >= maxNumberOfResults) {
+                        if (shutdown) return;
+                        notFull.await();
                     }
-                }).start();
+                    resultList.offerLast(output);
+                    --pendingJobs;
+                    notEmpty.signalAll();
+                } catch (InterruptedException e) {
+                    return;
+                } finally {
+                    lock.unlock();
+                }
             }
         }
 
         @Override
-        public FGraph next() {
-            if (!hasNext()) throw new NoSuchElementException();
+        public boolean hasNext() {
+            lock.lock();
             try {
-                return queue.take();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                return resultList.size() > 0 || pendingJobs > 0 || todoList.size() > 0;
+            } finally {
+                lock.unlock();
             }
         }
 
+        @Override
+        public Out next() {
+            lock.lock();
+            try {
+                while (resultList.isEmpty()) {
+                    notEmpty.await();
+                }
+                final Out out = resultList.pollFirst();
+                notFull.signalAll();
+                return out;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
+
 }

@@ -13,8 +13,6 @@ import java.util.*;
  */
 public class TReduce {
 
-    final static TReductionController controller = new TReductionController();
-
     final protected FGraph gGraph;
     final protected int VertexColorCount;
 
@@ -1064,12 +1062,6 @@ public class TReduce {
 
     protected FGraph getGraph() {
         return this.gGraph;
-    }
-
-    ;
-
-    protected static TReductionController getController() {
-        return TReduce.controller;
     }
 
     ///////////////////////

@@ -38,9 +38,4 @@ public class TMinimalController implements GraphReduction {
 
         return reduceInstance.getGraph();
     }
-
-    @Override
-    public void command(String cmd) {
-
-    }
 }

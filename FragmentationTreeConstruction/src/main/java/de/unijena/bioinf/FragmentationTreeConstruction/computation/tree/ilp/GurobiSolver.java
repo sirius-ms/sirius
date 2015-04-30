@@ -241,20 +241,19 @@ public class GurobiSolver implements TreeBuilder {
 
         protected static boolean isComputationCorrect(FTree tree, FGraph graph) {
             double score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-
-           // System.out.println("SCORE = " + score);
-
+            final Fragment pseudoRoot = graph.getRoot();
             final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
             for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
                 final Fragment t = e.getKey();
                 final Fragment g = e.getValue();
-                if (g.getParent().isRoot()) {
+                if (g.getParent() == pseudoRoot) {
                     score -= g.getIncomingEdge().getWeight();
                 } else {
                     final Loss in = e.getKey().getIncomingEdge();
                     for (int k = 0; k < g.getInDegree(); ++k)
                         if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
                             score -= g.getIncomingEdge(k).getWeight();
+                            break;
                         }
                 }
             }

@@ -99,12 +99,13 @@ public class TReductionController implements GraphReduction {
             this.gReduces.add(gReduce);
 
             executeCommands("reduce");
+
+			this.gReduces.clear(); // TODO: -_- FIX that
         }
 
         return graph;
     }
 
-    @Override
     public void command(String cmd) {
         executeCommands(cmd);
     }
@@ -1451,8 +1452,6 @@ public class TReductionController implements GraphReduction {
 	///--- CONSTRUCTORS ---///
 
 	public TReductionController() {
-
-		System.out.println();
 		setCommands();
 	}
 
@@ -1505,6 +1504,9 @@ public class TReductionController implements GraphReduction {
         this.CMD.put( "enable-seb-vub-strength", new CmdEnableSebVubStrength() );
 		this.CMD.put( "tim-vertex-ubs", new CmdTimVertexUpperBounds() );
 		this.CMD.put( "test", new CmdTest() );
+
+		this.CMD.put( "reduce", new CmdReduce() );
+
 
 		for ( String s : CMD.keySet() ) {
 			this.cmdNames.add( s );

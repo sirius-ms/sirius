@@ -18,6 +18,4 @@ public interface GraphReduction {
      * @return
      */
     public FGraph reduce(FGraph graph, double lowerbound);
-
-    public void command( String cmd );
 }
