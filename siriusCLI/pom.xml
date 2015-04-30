@@ -120,6 +120,8 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.2</version>
                 <configuration>
+                    <finalName>sirius</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
@@ -137,6 +139,34 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>launch4j</id>
+                        <phase>package</phase>
+                        <goals><goal>launch4j</goal></goals>
+                        <configuration>
+                            <headerType>console</headerType>
+                            <outfile>target/sirius.exe</outfile>
+                            <jar>target/sirius.jar</jar>
+                            <errTitle>sirius</errTitle>
+                            <classPath>
+                                <mainClass>de.unijena.bioinf.sirius.cli.CLI</mainClass>
+                                <addDependencies>true</addDependencies>
+                            </classPath>
+                            <jre>
+                                <minVersion>1.7.0</minVersion>
+                                <maxHeapSize>2048</maxHeapSize>
+                                <opts>
+                                    <opt>-Djava.library.path="%EXEDIR%"</opt>
+                                </opts>
+                            </jre>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

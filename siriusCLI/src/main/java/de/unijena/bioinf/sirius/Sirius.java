@@ -13,6 +13,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
@@ -32,6 +33,7 @@ public class Sirius {
 
     protected Profile profile;
     protected ElementPrediction elementPrediction;
+
 
     public final static String ISOTOPE_SCORE = "isotope";
 
@@ -62,6 +64,10 @@ public class Sirius {
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
         this.elementPrediction = new ElementPrediction(profile.isotopePatternAnalysis);
+
+
+        profile.fragmentationPatternAnalysis.setTreeBuilder(new GLPKSolver());
+
     }
 
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, IdentifyOptions opts, Progress progress) {
@@ -103,6 +109,7 @@ public class Sirius {
         try {
             while (true) {
                 MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
+                trees = trees.inParallel(3);
                 if (isoFormulas.size() > 0 && optIsoScore>10) {
                     trees = trees.onlyWith(isoFormulas.keySet());
                 }
@@ -175,10 +182,14 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k+1));
             }
+
             return list;
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
+
+
+
     }
 
     private List<IsotopePattern> getIsotopeCandidates(MutableMs2Experiment experiment, IdentifyOptions opts) {

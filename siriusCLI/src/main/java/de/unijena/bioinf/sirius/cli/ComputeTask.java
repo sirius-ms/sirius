@@ -42,11 +42,12 @@ public class ComputeTask extends TreeComputationTask {
         }
     }
 
-    private void output(Instance instance, IdentificationResult result) throws IOException {
+    protected void output(Instance instance, IdentificationResult result) throws IOException {
         if (result==null) {
             System.out.println("Cannot find valid tree with molecular formula '" + instance.experiment.getMolecularFormula() + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         }
+        result.getTree().normalizeStructure();
         File target = options.getTarget();
         final String format;
         if (options.getFormat() != null) {
