@@ -1,17 +1,20 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import gurobi.*;
+import gurobi.GRB;
+import gurobi.GRBException;
+import gurobi.GurobiJni;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -430,9 +433,5 @@ public class NewGurobiSolver implements TreeBuilder {
             return -GurobiJniAccess.get(this.model, GRB.DoubleAttr.ObjVal);
         }
     }
-
-
-    }
-
 
 }

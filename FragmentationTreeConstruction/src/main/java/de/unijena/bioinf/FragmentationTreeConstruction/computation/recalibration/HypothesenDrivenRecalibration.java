@@ -147,6 +147,10 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                     assert !force;
                     correctedTree = tree;
                 }
+                if (deviationScale == 1) {
+                    if (correctedTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() >= oldTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) return correctedTree;
+                    else return oldTree;
+                }
                 final FTree ft2 = analyzer.computeTrees(analyzer.preprocessing(impl)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().withBackbones(correctedTree).optimalTree();
                 if (ft2 == null) return correctedTree;
                 else if (ft2.getAnnotationOrThrow(TreeScoring.class).getOverallScore() > correctedTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore())

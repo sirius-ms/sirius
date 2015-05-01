@@ -481,7 +481,6 @@ public class GurobiSolver implements TreeBuilder {
 
         protected FTree buildSolution() throws GRBException {
             final double score = -model.get(GRB.DoubleAttr.ObjVal);
-
             final boolean[] edesAreUsed = getVariableAssignment();
             Fragment graphRoot = null;
             final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();

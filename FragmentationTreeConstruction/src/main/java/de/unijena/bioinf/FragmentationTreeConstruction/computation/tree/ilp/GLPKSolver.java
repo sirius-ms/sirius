@@ -1,14 +1,17 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.list.array.TIntArrayList;
-import org.gnu.glpk.GLPK;
-import org.gnu.glpk.GLPKConstants;
-import org.gnu.glpk.glp_prob;
-import org.gnu.glpk.glp_smcp;
-import org.gnu.glpk.SWIGTYPE_p_int;
-import org.gnu.glpk.SWIGTYPE_p_double;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
+import org.gnu.glpk.*;
+
+import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
@@ -114,12 +117,13 @@ public class GLPKSolver implements TreeBuilder {
 
         protected Solver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) {
             super(graph, input, lowerbound, feasibleSolver, timeLimit);
-
-            System.out.printf("Using: GLPK solver...");
-
             this.LP = GLPK.glp_create_prob();
             GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
-            System.out.println("GLPK: Problem created...");
+
+
+            GLPK.glp_java_set_msg_lvl(GLPKConstants.GLP_JAVA_MSG_LVL_OFF);
+            GLPK.glp_term_out(GLPKConstants.GLP_OFF);
+
         }
 
 
@@ -173,106 +177,89 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected void setTreeConstraint() {
-            System.out.println("GLPK: tree constraint...");
             // returns the index of the first newly created row
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, this.LP_NUM_OF_VERTICES + this.LP_NUM_OF_VARIABLES);
+            final int N = graph.numberOfEdges()-graph.getRoot().getOutDegree();
+            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, N);
 
             // create auxiliary variables first
-            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + this.LP_NUM_OF_VERTICES; r++) {
+            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + N; r++) {
                 //GLPK.glp_set_row_name(this.LP, r, "r"+r);
-                GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_DB, 0.0, 1.0); // right-hand-side | maximum one edge!
+                GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_LO, 0.0, 0.0);
             }
 
             int CONSTR_INDEX = CONSTR_START_INDEX;
-
+            final Fragment pseudoRoot = graph.getRoot();
             // set up row entries
             int lossId = 0;
-            for (int k=0; k<this.LP_NUM_OF_VERTICES; k++) {
-
-                System.out.println(LP_NUM_OF_VERTICES-k);
-
+            for (int k=0; k<graph.numberOfVertices(); k++) {
                 final Fragment f = graph.getFragmentAt(k);
-
+                if (f==pseudoRoot) continue;
                 {
-                    SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree()+1);
-                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree()+1);
-                    int l=lossId;
-                    int rowIndex = 1;
-                    for (Loss loss : f.getIncomingEdges()) {
-                        assert losses.get(l).getTarget().equals(f);
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, ++l); // each edge is weighted equally here
-                        GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
-                        ++rowIndex;
-                    }
-                    GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree(), rowIndizes, rowValues);
-                    ++CONSTR_INDEX;
-                    GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
-                    GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
-                }
-
-                {
-
                     SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree() + 2);
-                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree() + 2);
+                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree()+2);
                     int rowIndex = 1;
-                    int l = lossId;
-                    for (Loss loss : f.getIncomingEdges()) {
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, ++l); // each edge is weighted equally here
+                    for (int in=0; in < f.getInDegree(); ++in) {
+                        assert losses.get(lossId).getTarget() == f;
+                        GLPK.intArray_setitem(rowIndizes, rowIndex, ++lossId); // each edge is weighted equally here
                         GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
                         ++rowIndex;
                     }
-
-                    final int fromIndex = edgeOffsets[f.getVertexId()];
-                    final int toIndex = fromIndex + f.getOutDegree();
-                    for (int i=fromIndex; i < toIndex; ++i) {
-                        assert rowIndex <= (f.getInDegree()+1);
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, edgeIds[i]+1); // each edge is weighted equally here
-                        GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
+                    GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
+                    final int offset = edgeOffsets[k];
+                    for (int out=0; out < f.getOutDegree(); ++out ) {
+                        final int outgoingEdge = edgeIds[offset+out];
+                        assert losses.get(outgoingEdge).getSource()==f;
+                        GLPK.intArray_setitem(rowIndizes, rowIndex, outgoingEdge + 1); // each edge is weighted equally here
                         GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree()+1, rowIndizes, rowValues);
+                        assert CONSTR_INDEX < CONSTR_START_INDEX+N;
+                        ++CONSTR_INDEX;
                     }
                     GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
                     GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
-                    lossId = l;
                 }
             }
+            assert CONSTR_INDEX==CONSTR_START_INDEX+N;
         }
-
 
         @Override
         protected void setColorConstraint() {
-            System.out.println("GLPK: Color constraint...");
             // returns the index of the first newly created row
             final int COLOR_NUM = this.graph.maxColor()+1;
-            final boolean[] colorInUse = new boolean[COLOR_NUM];
-
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, COLOR_NUM);
-            for (int c=CONSTR_START_INDEX; c < CONSTR_START_INDEX + COLOR_NUM; c++) {
-                GLPK.glp_set_row_name(this.LP, c, null);
-                GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_DB, 0.0, 1.0);
-            }
 
             // get all edges of each color first. We can add each color-constraint afterwards + saving much memory!
             final TIntArrayList[] edgesOfColors = new TIntArrayList[COLOR_NUM];
             for (int c=0; c<COLOR_NUM; c++)
                 edgesOfColors[c] = new TIntArrayList();
 
-            int k=0;
-            for (Loss l : this.losses) {
-                final int c = l.getTarget().getColor();
-                edgesOfColors[c].add(k);
-                k++;
+            int colnum = 0;
+            int l=0;
+            for (int k=0; k < graph.numberOfVertices(); ++k) {
+                final Fragment u = graph.getFragmentAt(k);
+                final TIntArrayList list = edgesOfColors[u.getColor()];
+                for (int i=0; i < u.getInDegree(); ++i) {
+                    list.add(l++);
+                }
+            }
+            for (TIntArrayList list : edgesOfColors)
+                if (list.size()>0) ++colnum;
+
+            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, colnum);
+            for (int c=CONSTR_START_INDEX; c < CONSTR_START_INDEX + colnum; ++c) {
+                GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_UP, 0.0, 1.0);
             }
 
             // add constraints. Maximum one edge per color.
-            for (int c=0; c < COLOR_NUM; c++) {
+            int constrIndex=0;
+            for (int c=0; c < edgesOfColors.length; c++) {
                 final TIntArrayList COL_ENTRIES = edgesOfColors[c];
+                if (COL_ENTRIES.isEmpty()) continue;
                 SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(COL_ENTRIES.size()+1); // alloc memory
                 SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(COL_ENTRIES.size()+1); // alloc memory
                 for (int i=1; i<=COL_ENTRIES.size(); i++) {
                     GLPK.intArray_setitem(rowIndizes, i, COL_ENTRIES.get(i-1)+1);
                     GLPK.doubleArray_setitem(rowValues, i, 1.0d);
                 }
-                GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + c, COL_ENTRIES.size(), rowIndizes, rowValues);
+                GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + constrIndex++, COL_ENTRIES.size(), rowIndizes, rowValues);
                 GLPK.delete_intArray(rowIndizes); // free memory
                 GLPK.delete_doubleArray(rowValues); // free memory
 
@@ -282,8 +269,6 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected void setMinimalTreeSizeConstraint() {
-            System.out.println("GLPK: SetMinimalTreeSize...");
-
             // returns the index of the first newly created row
             final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
             GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
@@ -319,9 +304,11 @@ public class GLPKSolver implements TreeBuilder {
 
             final int N = losses.size();
             int k=1;
-            for (Loss l : losses ) {
-                GLPK.glp_set_obj_coef(this.LP, k, l.getWeight());
-                k++;
+            for (int i=0; i < graph.numberOfVertices(); ++i) {
+                final Fragment u = graph.getFragmentAt(i);
+                for (int j=0; j < u.getInDegree(); ++j) {
+                    GLPK.glp_set_obj_coef(this.LP, k++, u.getIncomingEdge(j).getWeight());
+                }
             }
 
             assert ((k-1) == this.LP_NUM_OF_VARIABLES) : "the objective function should contain the same amount of coefs as the number of variables just! (" + k  + " vs. " + LP_NUM_OF_VARIABLES;
@@ -331,20 +318,20 @@ public class GLPKSolver implements TreeBuilder {
         @Override
         protected SolverState solveMIP() throws InvalidPropertiesFormatException {
 
-            glp_smcp parm = new glp_smcp();
-            GLPK.glp_init_smcp(parm);
+            //glp_smcp parm = new glp_smcp();
+            glp_iocp parm = new glp_iocp();
+            GLPK.glp_init_iocp(parm);
+            parm.setPresolve(GLPKConstants.GLP_ON);
+            //GLPK.glp_init_smcp(parm);
 
-            int result = GLPK.glp_simplex(this.LP, parm);
+            //int result = GLPK.glp_simplex(this.LP, parm);
 
-            try {
-                System.out.println("SCORE = " + getSolverScore());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            int result = GLPK.glp_intopt(this.LP, parm);
 
-            int status = GLPK.glp_get_status(this.LP);
+
+
+            int status = GLPK.glp_mip_status(this.LP);
             if (status == GLPKConstants.GLP_OPT) {
-                System.out.println("The solution is optimal.");
             } else if (status == GLPKConstants.GLP_FEAS) {
                 System.out.println("The solution is feasible.");
             } else if (status == GLPKConstants.GLP_INFEAS) {
@@ -391,7 +378,6 @@ public class GLPKSolver implements TreeBuilder {
         @Override
         protected SolverState pastBuildSolution() throws Exception {
             GLPK.glp_delete_prob(this.LP); // free memory
-            System.out.println("GLPK solver finished.");
             return SolverState.FINISHED;
         }
 
@@ -406,10 +392,31 @@ public class GLPKSolver implements TreeBuilder {
 
             final int N = GLPK.glp_get_num_cols(this.LP);
             for (int x=1; x<=N; x++) {
-                final double VAL = GLPK.glp_get_col_prim(this.LP, x);
+                final double VAL = GLPK.glp_mip_col_val(this.LP, x);
                 assert VAL > -0.5 : "LP_LOWERBOUND violation for var " + x + " with value " + VAL;
                 assert VAL < 1.5  : "LP_LOWERBOUND violation for var " + x + " with value " + VAL;
                 assignments[x-1] = VAL > 0.5d;
+            }
+
+            {
+                final ArrayList<Loss> losses = new ArrayList<Loss>();
+                int k=0;
+                for (int i=0; i < graph.numberOfVertices(); ++i) {
+                    final Fragment u = graph.getFragmentAt(i);
+                    for (int j=0; j < u.getInDegree(); ++j) {
+                        final Loss l = u.getIncomingEdge(j);
+                        if (assignments[k++]) losses.add(l);
+                    }
+                }
+                final TIntSet colorset = new TIntHashSet();
+                boolean colorful = true;
+                for (Loss l : losses) {
+                    final int color = l.getTarget().getColor();
+                    if (colorset.contains(color)) {
+                        colorful=false;
+                    } else colorset.add(color);
+                }
+                assert colorful;
             }
 
             return assignments;
@@ -418,7 +425,7 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected double getSolverScore() throws Exception {
-            return GLPK.glp_get_obj_val(this.LP);
+            return GLPK.glp_mip_obj_val(this.LP);
         }
     }
 
