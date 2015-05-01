@@ -346,6 +346,8 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
             if (fragments.get(fragment.vertexId) != fragment)
                 throw new NoSuchElementException("The given fragment is not part of this graph");
             final int in = fragment.getInDegree(), out = fragment.getOutDegree();
+            edgeNum -= in;
+            edgeNum -= out;
             for (int i=0; i < in; ++i) {
                 final Loss l = fragment.getIncomingEdge(i);
                 deleteOutEdgeInternal(l.source, l);
@@ -384,6 +386,8 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         SWAP.setVertexId(fragment.vertexId);
         // now delete all edges of the deleted fragment
         final int in = fragment.getInDegree(), out = fragment.getOutDegree();
+        edgeNum -= in;
+        edgeNum -= out;
         for (int i=0; i < in; ++i) {
             final Loss l = fragment.getIncomingEdge(i);
             deleteOutEdgeInternal(l.source, l);
