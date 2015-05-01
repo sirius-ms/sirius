@@ -239,7 +239,7 @@ public class Sirius {
         try {
             while (true) {
                 tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(!opts.isNotRecalibrating()).onlyWith(Arrays.asList(formula)).optimalTree();
-                if (tree==null) return null;
+                if (tree==null) return new IdentificationResult(null, 0);
                 final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
                 if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
                     break;

@@ -49,21 +49,20 @@ public class ComputeTask extends TreeComputationTask {
         }
         result.getTree().normalizeStructure();
         File target = options.getTarget();
-        final String format;
+        String format;
+        final String n = target.getName();
+        final int i = n.lastIndexOf('.');
+        if (i >= 0) {
+            final String ext = n.substring(i);
+            if (ext.equals(".json") || ext.equals(".dot")) {
+                format = ext;
+            } else format = "json";
+        } else {
+            if (!target.exists()) target.mkdirs();
+            format = "json";
+        }
         if (options.getFormat() != null) {
             format = options.getFormat();
-        } else {
-            final String n = target.getName();
-            final int i = n.lastIndexOf('.');
-            if (i >= 0) {
-                final String ext = n.substring(i);
-                if (ext.equals(".json") || ext.equals(".dot")) {
-                    format = ext;
-                } else format = "json";
-            } else {
-                if (!target.exists()) target.mkdirs();
-                format = "json";
-            }
         }
 
         if (target.isDirectory()) {

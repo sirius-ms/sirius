@@ -13,7 +13,7 @@ public class IdentificationResult {
 
     public IdentificationResult(FTree tree, int rank) {
         this.tree = tree;
-        this.score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        this.score = tree==null ? 0d : tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
         this.rank = rank;
     }
 

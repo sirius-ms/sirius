@@ -4,6 +4,8 @@ import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SimpleReduction;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.io.File;
@@ -23,6 +25,7 @@ public class CLI {
         tasks.put(identify.getName(), identify);
         tasks.put(compute.getName(), compute);
         tasks.put("test-reduce", new TestReduction());
+        tasks.put("test-glpk", new TestGlkp());
         if (args.length==0) displayHelp(tasks);
 
         Task currentTask = null;
@@ -119,6 +122,67 @@ public class CLI {
                             }
                         } finally {
                             sirius.getMs2Analyzer().setReduction(null);
+                        }
+
+
+                    }
+
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static class TestGlkp extends ComputeTask {
+
+        @Override
+        public String getName() {
+            return "test-glpk";
+        }
+
+        @Override
+        public String getDescription() {
+            return "";
+        }
+
+        @Override
+        public void compute() {
+            try {
+                final Iterator<Instance> instanceIterator = handleInput(options);
+                while (instanceIterator.hasNext()) {
+                    Instance i = instanceIterator.next();
+                    if (i.experiment.getMolecularFormula() == null && options.getMolecularFormula() == null) {
+                        System.err.println("The molecular formula for '" + i.file + "' is missing. Add the molecular formula via --formula option or use sirius identify to predict the correct molecular formula");
+                    } else {
+                        if (i.experiment.getMolecularFormula()==null) {
+                            final MutableMs2Experiment expm;
+                            if (i.experiment instanceof MutableMs2Experiment) expm = (MutableMs2Experiment) i.experiment;
+                            else expm = new MutableMs2Experiment(i.experiment);
+                            expm.setMolecularFormula(MolecularFormula.parse(options.getMolecularFormula()));
+                            i = new Instance(expm, i.file);
+                        }
+                        System.out.println("Compute " + i.file + " (" + i.experiment.getMolecularFormula() + ")");
+                        final long time1 = System.nanoTime();
+                        final IdentificationResult result = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
+                        final long time2 = System.nanoTime();
+                        System.out.println("Computation took " + ((time2-time1)/1000000000d) + "ms");
+                        try {
+                            final long time3 = System.nanoTime();
+                            sirius.getMs2Analyzer().setTreeBuilder(new GLPKSolver());
+                            final IdentificationResult result2 = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
+                            final long time4 = System.nanoTime();
+                            assert result!=null;
+                            assert  result2!=null;
+                            System.out.println("With GLPK: computation took " + ((time4-time3)/1000000000d) + "ms");
+                            if (Math.abs(result.getScore()-result2.getScore()) > 1e-3) {
+                                output(i, result);
+                                output(new Instance(i.experiment, new File(i.file.getParent(), "reduced.ms")), result2);
+                                throw new RuntimeException("Different trees for " + i.file + " | " + result.getScore() + " vs. " + result2.getScore());
+                            }
+                        } finally {
+                            sirius.getMs2Analyzer().setTreeBuilder(new GurobiSolver());
                         }
 
 
