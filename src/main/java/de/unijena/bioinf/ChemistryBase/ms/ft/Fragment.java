@@ -6,7 +6,7 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Fragment {
+public class Fragment implements Comparable<Fragment> {
 
     protected final static Loss[] EMPTY_EDGES = new Loss[0];
     private final static Object[] EMPTY_ANNO = new Object[0];
@@ -204,5 +204,10 @@ public class Fragment {
 
     public String toString() {
         return formula + " <- (" + Arrays.toString(incomingEdges) + ")";
+    }
+
+    @Override
+    public int compareTo(Fragment o) {
+        return getFormula().compareTo(o.getFormula());
     }
 }

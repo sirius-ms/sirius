@@ -147,11 +147,17 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     }
 
     public int getUpperbound(Element e) {
-        return upperbounds[chemicalAlphabet.indexOf(e)];
+        final int i = chemicalAlphabet.indexOf(e);
+        if (i < 0) return 0;
+        return upperbounds[i];
     }
 
     public void setUpperbound(Element e, int upperbound) {
-        upperbounds[chemicalAlphabet.indexOf(e)] = upperbound;
+        final int i = chemicalAlphabet.indexOf(e);
+        if (i < 0 && upperbound > 0) {
+            throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
+        }
+        upperbounds[i] = upperbound;
     }
 
     public void addFilter(FormulaFilter filter) {
