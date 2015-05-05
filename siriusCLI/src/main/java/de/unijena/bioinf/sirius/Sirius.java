@@ -13,12 +13,12 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.sirius.cli.IdentifyOptions;
+import de.unijena.bioinf.sirius.cli.TreeOptions;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.IOException;
@@ -64,10 +64,6 @@ public class Sirius {
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
         this.elementPrediction = new ElementPrediction(profile.isotopePatternAnalysis);
-
-
-        profile.fragmentationPatternAnalysis.setTreeBuilder(new GLPKSolver());
-
     }
 
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, IdentifyOptions opts, Progress progress) {

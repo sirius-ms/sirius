@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.cli;
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.io.File;
@@ -16,7 +17,6 @@ public class IdentifyTask extends TreeComputationTask {
 
     public void compute() {
         try {
-            options.getTarget().mkdirs();
             final Iterator<Instance> instances = handleInput(options);
             while (instances.hasNext()) {
                 final Instance i = instances.next();
@@ -35,17 +35,23 @@ public class IdentifyTask extends TreeComputationTask {
     }
 
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
-        final File target = options.getTarget();
+        final File target = options.getOutput();
         String format = options.getFormat();
         if (format==null) format = "json";
         for (IdentificationResult result : results) {
-            final File name = getTargetName(target, instance, result, format);
-            if (format.equalsIgnoreCase("json")) {
-                new FTJsonWriter().writeTreeToFile(name, result.getTree());
-            } else if (format.equalsIgnoreCase("dot")) {
-                new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(name, result.getTree());
-            } else {
-                throw new RuntimeException("Unknown format '" + format + "'");
+            if (target!=null) {
+                final File name = getTargetName(target, instance, result, format);
+                if (format.equalsIgnoreCase("json")) {
+                    new FTJsonWriter().writeTreeToFile(name, result.getTree());
+                } else if (format.equalsIgnoreCase("dot")) {
+                    new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(name, result.getTree());
+                } else {
+                    throw new RuntimeException("Unknown format '" + format + "'");
+                }
+            }
+            if (options.isAnnotating()) {
+                final File anoName = getTargetName(target!=null ? target : new File("."), instance, result, "csv");
+                new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
             }
         }
 
@@ -77,10 +83,14 @@ public class IdentifyTask extends TreeComputationTask {
         this.options = CliFactory.createCli(IdentifyOptions.class).parseArguments(args);
         setup(options);
         // validate
-        final File target = options.getTarget();
-        if (target.exists() && !target.isDirectory()) {
-            System.err.println("Specify a directory name as output directory");
-            System.exit(1);
+        final File target = options.getOutput();
+        if (target != null) {
+            if (target.exists() && !target.isDirectory()) {
+                System.err.println("Specify a directory name as output directory");
+                System.exit(1);
+            } else {
+                target.mkdirs();
+            }
         }
 
         final String format = options.getFormat();

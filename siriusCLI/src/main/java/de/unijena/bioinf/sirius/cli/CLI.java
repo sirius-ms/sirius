@@ -19,13 +19,18 @@ public class CLI {
     protected final static String VERSION_STRING = "Sirius 3.0.0";
 
     public static void main(String[] args) {
+        {
+            String s = System.getProperty("java.library.path", "");
+            String x = System.getProperty("sirius.root", ".");
+            System.setProperty("java.library.path", s + ";" + x);
+        }
         final HashMap<String, Task> tasks = new HashMap<String, Task>();
         final IdentifyTask identify = new IdentifyTask();
         final ComputeTask compute = new ComputeTask();
         tasks.put(identify.getName(), identify);
         tasks.put(compute.getName(), compute);
-        tasks.put("test-reduce", new TestReduction());
-        tasks.put("test-glpk", new TestGlkp());
+        //tasks.put("test-reduce", new TestReduction());
+        //tasks.put("test-glpk", new TestGlkp());
         if (args.length==0) displayHelp(tasks);
 
         Task currentTask = null;

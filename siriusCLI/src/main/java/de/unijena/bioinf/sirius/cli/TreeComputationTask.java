@@ -10,7 +10,6 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.TreeOptions;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -45,11 +44,8 @@ public abstract class TreeComputationTask implements Task {
                 ms2Prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
                 ms1Prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
             }
-            if (opts.getPPMSd() != null) {
-                ms2Prof.setStandardMs2MassDeviation(new Deviation(opts.getPPMSd()));
-                ms1Prof.setStandardMs1MassDeviation(new Deviation(opts.getPPMSd()));
-                ms1Prof.setStandardMassDifferenceDeviation(ms1Prof.getStandardMs1MassDeviation().multiply(0.66d));
-            }
+            System.out.println("Compute trees using " + sirius.getMs2Analyzer().getTreeBuilder().getDescription());
+
             /*
             sirius.getMs2Analyzer().setValidatorWarning(new Warning() {
                 @Override
@@ -65,6 +61,31 @@ public abstract class TreeComputationTask implements Task {
         }
     }
 
+    protected Ms2Experiment extendInput(Ms2Experiment experiment, TreeOptions opts) {
+        final MutableMs2Experiment exp = new MutableMs2Experiment(experiment);
+        if (exp.getIonization()==null) {
+            exp.setIonization(getIonFromOptions(opts));
+        }
+        final MutableMeasurementProfile prof;
+        if (exp.getMeasurementProfile()==null) {
+            prof = new MutableMeasurementProfile();
+        } else prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
+        if (prof.getFormulaConstraints()==null) {
+            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()));
+        }
+        if (opts.getParentMz() != null && Math.abs(opts.getParentMz() - exp.getIonMass()) < 1e-3) {
+            exp.setIonMass(opts.getParentMz());
+        }
+        if (opts.getMedianNoise() != null) {
+            prof.setMedianNoiseIntensity(opts.getMedianNoise());
+        }
+        if (opts.getPPMMax() != null) {
+            prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
+        }
+        exp.setMeasurementProfile(prof);
+        return exp;
+    }
+
 
     protected void println(String msg) {
         System.out.println(msg);
@@ -73,7 +94,7 @@ public abstract class TreeComputationTask implements Task {
         System.out.printf(Locale.US, msg, args);
     }
 
-    public Iterator<Instance> handleInput(TreeOptions options) throws IOException {
+    public Iterator<Instance> handleInput(final TreeOptions options) throws IOException {
         final ArrayDeque<Instance> instances = new ArrayDeque<Instance>();
         final MsExperimentParser parser = new MsExperimentParser();
         // two different input modes:
@@ -85,7 +106,7 @@ public abstract class TreeComputationTask implements Task {
                 ion = (ion.getCharge()>0) ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName("[M-H]-");
             }
         }
-        final FormulaConstraints constraints = options.getElements() == null ? getDefaultElementSet(ion, options.isAutoCharge()) : options.getElements();
+        final FormulaConstraints constraints = options.getElements() == null ? getDefaultElementSet(options, ion) : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2()!=null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -168,7 +189,7 @@ public abstract class TreeComputationTask implements Task {
 
 
             exp.setIonMass(expPrecursor);
-            instances.add(new Instance(exp, options.getMs2().get(0)));
+            instances.add(new Instance(extendInput(exp, options), options.getMs2().get(0)));
         } else if (options.getMs1()!=null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
@@ -199,7 +220,8 @@ public abstract class TreeComputationTask implements Task {
                 @Override
                 public Instance next() {
                     fetchNext();
-                    return instances.poll();
+                    Instance c = instances.poll();
+                    return new Instance(extendInput(c.experiment,options), c.file);
                 }
 
                 private Iterator<Ms2Experiment> fetchNext() {
@@ -250,9 +272,12 @@ public abstract class TreeComputationTask implements Task {
     private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)[+-]?");
     private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
 
-    protected static Ionization getIonFromOptions(InputOptions opt) {
+    protected static Ionization getIonFromOptions(TreeOptions opt) {
         String ionStr = opt.getIon();
-        if (ionStr==null) ionStr = "1+";
+        if (ionStr==null) {
+            if (opt.isAutoCharge()) return new Charge(1);
+            else return PeriodicTable.getInstance().ionByName("[M+H]+");
+        }
         final Matcher m1 = CHARGE_PATTERN.matcher(ionStr);
         final Matcher m2 = CHARGE_PATTERN2.matcher(ionStr);
         final Matcher m = m1.matches() ? m1 : (m2.matches() ? m2 : null);
@@ -270,11 +295,30 @@ public abstract class TreeComputationTask implements Task {
         }
     }
     private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");
-    private final static FormulaConstraints DEFAULT_ELEMENTS_INCL_ADDP = new FormulaConstraints("CHNOP[5]SNa[1]K[1]");
-    private final static FormulaConstraints DEFAULT_ELEMENTS_INCL_ADDN = new FormulaConstraints("CHNOP[5]SCl[1]");
-    public FormulaConstraints getDefaultElementSet(Ionization ion, boolean nocharge) {
-        if (ion instanceof Charge && nocharge) {
-            return (ion.getCharge()>0) ? DEFAULT_ELEMENTS_INCL_ADDP : DEFAULT_ELEMENTS_INCL_ADDN;
-        } else return DEFAULT_ELEMENTS;
+    public FormulaConstraints getDefaultElementSet(TreeOptions opts, Ionization ion) {
+        final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
+        if (ion instanceof Charge && opts.isAutoCharge()) {
+            final PeriodicTable tb = PeriodicTable.getInstance();
+            final Element Na = tb.getByName("Na"), K = tb.getByName("K"), Cl = tb.getByName("Cl");
+            final Set<Element> elements = new HashSet<Element>(cf.getChemicalAlphabet().getElements());
+            if (ion.getCharge() > 0) {
+                elements.add(Na);
+                elements.add(K);
+            } else {
+                elements.add(Cl);
+            }
+            final FormulaConstraints ext = new FormulaConstraints(new ChemicalAlphabet(elements.toArray(new Element[elements.size()])));
+            for (Element e : cf.getChemicalAlphabet().getElements()) {
+                ext.setUpperbound(e, cf.getUpperbound(e));
+            }
+            final ChemicalAlphabet c = cf.getChemicalAlphabet();
+            if (ion.getCharge()>0) {
+                if (c.indexOf(Na) < 0) ext.setUpperbound(Na, 1);
+                if (c.indexOf(K) < 0) ext.setUpperbound(K, 1);
+            } else {
+                if (c.indexOf(Cl) < 0) ext.setUpperbound(Cl, 1);
+            }
+            return ext;
+        } else return cf;
     }
 }

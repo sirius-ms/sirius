@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius.cli;
 
 import com.lexicalscope.jewel.cli.Option;
-import de.unijena.bioinf.sirius.TreeOptions;
 
 public interface IdentifyOptions extends TreeOptions {
 

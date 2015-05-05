@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.io.File;
@@ -48,7 +49,8 @@ public class ComputeTask extends TreeComputationTask {
             return;
         }
         result.getTree().normalizeStructure();
-        File target = options.getTarget();
+        File target = options.getOutput();
+        if (target==null) target = new File(".");
         String format;
         final String n = target.getName();
         final int i = n.lastIndexOf('.');
@@ -75,6 +77,10 @@ public class ComputeTask extends TreeComputationTask {
             new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(target, result.getTree());
         } else {
             throw new RuntimeException("Unknown format '" + format + "'");
+        }
+        if (options.isAnnotating()) {
+            final File anoName = getTargetName(target, instance, result, "csv");
+            new AnnotatedSpectrumWriter().writeFile(anoName, instance.optTree);
         }
 
     }
@@ -106,7 +112,7 @@ public class ComputeTask extends TreeComputationTask {
         this.options = CliFactory.createCli(ComputeOptions.class).parseArguments(args);
         setup(options);
         // validate
-        final File target = options.getTarget();
+        final File target = options.getOutput();
         if (target.exists() && !target.isDirectory()) {
             System.err.println("Specify a directory name as output directory");
             System.exit(1);
