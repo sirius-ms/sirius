@@ -124,11 +124,11 @@ public class FTJsonWriter {
         writer.key("id");
         writer.value(f.getVertexId());
 
-        writer.key("color");
-        writer.value(f.getColor());
-
         writer.key("molecularFormula");
         writer.value(f.getFormula().toString());
+
+        writer.key("mz"); writer.value(p.getMass());
+        writer.key("intensity"); writer.value(p.getIntensity());
 
         if (p!=null && ion!=null) {
             writer.key("massdev");

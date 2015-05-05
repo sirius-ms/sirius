@@ -3,7 +3,6 @@ package de.unijena.bioinf.babelms.json;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -104,6 +103,7 @@ class FTSpecials {
             }
         });
 
+        /*
         add(handlers, Peak.class, new Handler<Peak>() {
             @Override
             public void writeJSON(JSONWriter writer, Peak obj) throws JSONException {
@@ -120,6 +120,7 @@ class FTSpecials {
                 } else return null;
             }
         });
+        */
 
         add(handlers, CollisionEnergy[].class, new Handler<CollisionEnergy[]>() {
             @Override
