@@ -33,6 +33,7 @@ public class Sirius {
 
     protected Profile profile;
     protected ElementPrediction elementPrediction;
+    protected Progress progress;
 
 
     public final static String ISOTOPE_SCORE = "isotope";
@@ -46,9 +47,18 @@ public class Sirius {
         try {
             profile = new Profile("default");
             loadMeasurementProfile();
+            this.progress = new Progress.Quiet();
         } catch (IOException e) { // should be in classpath
             throw new RuntimeException(e);
         }
+    }
+
+    public Progress getProgress() {
+        return progress;
+    }
+
+    public void setProgress(Progress progress) {
+        this.progress = progress;
     }
 
     public FragmentationPatternAnalysis getMs2Analyzer() {
@@ -66,10 +76,33 @@ public class Sirius {
         this.elementPrediction = new ElementPrediction(profile.isotopePatternAnalysis);
     }
 
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, IdentifyOptions opts, Progress progress) {
+    /**
+     *
+     * Identify the molecular formula of the measured compound using the provided MS and MSMS data
+     *
+     * @param uexperiment input data
+     *
+     * @return a list of identified molecular formulas together with their tree
+     */
+    public List<IdentificationResult> identify(Ms2Experiment uexperiment) {
+        return identify(uexperiment, 5, true, IsotopePatternHandling.score, Collections.<MolecularFormula>emptySet());
+    }
+
+    /**
+     *
+     * Identify the molecular formula of the measured compound using the provided MS and MSMS data
+     *
+     * @param uexperiment input data
+     * @param numberOfCandidates number of candidates to output
+     * @param recalibrating true if spectra should be recalibrated during tree computation
+     * @param deisotope set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
+     * @param whiteList restrict the analysis to this subset of molecular formulas. If this set is empty, consider all possible molecular formulas
+     * @return a list of identified molecular formulas together with their tree
+     */
+    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
         MutableMs2Experiment experiment = new MutableMs2Experiment(extendConstraints(profile.fragmentationPatternAnalysis.validate(uexperiment), progress));
         // first check if MS data is present;
-        final List<IsotopePattern> candidates = getIsotopeCandidates(experiment, opts);
+        final List<IsotopePattern> candidates = lookAtMs1(experiment, deisotope!=IsotopePatternHandling.omit);
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
         final double optIsoScore;
@@ -92,7 +125,7 @@ public class Sirius {
             maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
         }
 
-        final int outputSize = Math.min(maxNumberOfFormulas, opts.getNumberOfCandidates());
+        final int outputSize = Math.min(maxNumberOfFormulas, numberOfCandidates);
         final int computeNTrees = Math.max(5, outputSize);
 
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
@@ -109,6 +142,9 @@ public class Sirius {
                 if (isoFormulas.size() > 0 && optIsoScore>10) {
                     trees = trees.onlyWith(isoFormulas.keySet());
                 }
+                if (whiteList.size() > 0) {
+                    trees = trees.onlyWith(whiteList);
+                }
                 trees = trees.computeMaximal(computeNTrees).withoutRecalibration();
 
                 final TreeSet<FTree> treeSet = new TreeSet<FTree>(TREE_SCORE_COMPARATOR);
@@ -118,11 +154,11 @@ public class Sirius {
                 int counter=0;
                 while (iter.hasNext()) {
                     final FTree tree = iter.next();
-                    if (opts.getIsotopes()== IdentifyOptions.ISO.score) addIsoScore(isoFormulas, tree);
+                    if (deisotope == IsotopePatternHandling.score) addIsoScore(isoFormulas, tree);
 
                     if (tree != null) {
                         treeSet.add(tree);
-                        if (treeSet.size() > opts.getNumberOfCandidates()) treeSet.pollFirst();
+                        if (treeSet.size() > numberOfCandidates) treeSet.pollFirst();
                     }
                     if (iter.lastGraph()!=null)
                         progress.update(++counter, maxNumberOfFormulas, iter.lastGraph().getRoot().getChildren(0).getFormula().toString());
@@ -156,13 +192,13 @@ public class Sirius {
                 }
             }
 
-            if (!opts.isNotRecalibrating()) {
+            if (recalibrating) {
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k=0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
-                    if (opts.getIsotopes()== IdentifyOptions.ISO.score) addIsoScore(isoFormulas, recalibratedTree);
+                    if (deisotope== IsotopePatternHandling.score) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k+1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString());
                 }
@@ -188,7 +224,13 @@ public class Sirius {
 
     }
 
-    private List<IsotopePattern> getIsotopeCandidates(MutableMs2Experiment experiment, IdentifyOptions opts) {
+    /**
+     * check MS spectrum. If an isotope pattern is found, check it's monoisotopic mass and update the ionmass field
+     * if this field is null yet
+     * If deisotope is set, start isotope pattern analysis
+     * @return
+     */
+    private List<IsotopePattern> lookAtMs1(MutableMs2Experiment experiment, boolean deisotope) {
         if (experiment.getIonMass()==0) {
             if (experiment.getMs1Spectra().size()==0)
                 throw new RuntimeException("Please provide the parentmass of the measured compound");
@@ -198,7 +240,7 @@ public class Sirius {
             }
             experiment.setIonMass(candidates.get(0).getMonoisotopicMass());
         }
-        return opts.getIsotopes()!= IdentifyOptions.ISO.omit ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false) : Collections.<IsotopePattern>emptyList();
+        return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false) : Collections.<IsotopePattern>emptyList();
     }
 
     private Ms2Experiment extendConstraints(Ms2Experiment experiment, Progress progress) {
@@ -225,7 +267,11 @@ public class Sirius {
         }
     }
 
-    public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, TreeOptions opts) {
+    public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula) {
+        return compute(experiment, formula, true);
+    }
+
+    public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, boolean recalibrating) {
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer!=null ? treeSizeScorer.getTreeSizeScore() : 0d);
@@ -234,7 +280,7 @@ public class Sirius {
         FTree tree = null;
         try {
             while (true) {
-                tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(!opts.isNotRecalibrating()).onlyWith(Arrays.asList(formula)).optimalTree();
+                tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
                 if (tree==null) return new IdentificationResult(null, 0);
                 final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
                 if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {

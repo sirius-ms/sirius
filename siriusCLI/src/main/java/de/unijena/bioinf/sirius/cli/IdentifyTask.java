@@ -17,11 +17,12 @@ public class IdentifyTask extends TreeComputationTask {
 
     public void compute() {
         try {
+            sirius.setProgress(progress);
             final Iterator<Instance> instances = handleInput(options);
             while (instances.hasNext()) {
                 final Instance i = instances.next();
                 progress.info("Compute '" + i.file.getName() + "'");
-                final List<IdentificationResult> results = sirius.identify(i.experiment, options, progress);
+                final List<IdentificationResult> results = sirius.identify(i.experiment, options.getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
                 int rank=1;
                 int n = Math.max(1,(int)Math.ceil(Math.log10(results.size())));
                 for (IdentificationResult result : results) {
