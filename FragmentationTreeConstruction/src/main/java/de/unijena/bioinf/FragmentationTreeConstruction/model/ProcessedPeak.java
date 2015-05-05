@@ -26,8 +26,10 @@ public class ProcessedPeak extends Peak implements WriteIntoDataDocument {
 
     @Override
     public <G, D, L> void writeIntoDataDocument(DataDocument<G, D, L> document, D dictionary) {
+        /*
         document.addToDictionary(dictionary, "mz", getMz());
         document.addToDictionary(dictionary, "intensity", getIntensity());
+        */
         document.addToDictionary(dictionary, "ion", ion.toString());
         final L peaks = document.newList();
         for (MS2Peak p : originalPeaks) {

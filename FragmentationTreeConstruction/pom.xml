@@ -37,6 +37,7 @@
             <groupId>gurobi</groupId>
             <artifactId>gurobi-linux64</artifactId>
             <version>6.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>

@@ -21,5 +21,7 @@ public interface TreeBuilder {
 
     public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound);
 
+    public String getDescription();
+
 
 }

@@ -292,6 +292,11 @@ public class MultipleTreeComputation {
         public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
             throw new RuntimeException("Stub code");
         }
+
+        @Override
+        public String getDescription() {
+            return "stub";
+        }
     }
 
     abstract class GraphBuildingQueue implements Iterator<FGraph> {

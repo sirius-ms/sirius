@@ -30,6 +30,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
@@ -234,16 +235,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             // is gurobi.jar in classpath?
             final Class<TreeBuilder> kl = (Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver");
             // is gurobi native library in classpath?
+            final TreeBuilder b = kl.newInstance();
+            kl.getMethod("setNumberOfCPUs", int.class).invoke(b, Math.min(4, Runtime.getRuntime().availableProcessors()));
+            return b;
+        } catch (Throwable e) {
+            // try GLPK tree builder
             try {
-                final TreeBuilder b = kl.newInstance();
-                kl.getMethod("setNumberOfCPUs", int.class).invoke(b, Math.min(4, Runtime.getRuntime().availableProcessors()));
-                return b;
-            } catch (Throwable e) {
-                System.err.println("Warning: Gurobi couldn't loaded: " + e.getMessage());
+                return new GLPKSolver();
+            } catch (Throwable f) {
                 return new DPTreeBuilder(12);
             }
-        } catch (ClassNotFoundException e) {
-            return new DPTreeBuilder(12);
         }
     }
 
@@ -359,9 +360,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
         FragmentAnnotation<CollisionEnergy[]> ces = tree.getOrCreateFragmentAnnotation(CollisionEnergy[].class);
         FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
-        FragmentAnnotation<Peak> p = tree.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
+        FragmentAnnotation<Peak> p = tree.getOrCreateFragmentAnnotation(Peak.class);
         for (Fragment f : tree) {
             final ProcessedPeak peak = pp.get(f);
+            p.set(f, new Peak(peak.getOriginalMz(), peak.getIntensity()));
             ce.set(f, peak.getCollisionEnergy());
             final Set<CollisionEnergy> energies = new TreeSet<CollisionEnergy>(CollisionEnergy.getMinEnergyComparator());
             int k = 0;

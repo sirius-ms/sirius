@@ -49,5 +49,10 @@ public class DPTreeBuilder implements TreeBuilder {
     public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
         return buildMultipleTrees(input, graph, lowerbound, prepareTreeBuilding(input, graph, lowerbound));
     }
+
+    @Override
+    public String getDescription() {
+        return "DP";
+    }
 }
 

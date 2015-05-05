@@ -33,6 +33,7 @@ public class GurobiSolver implements TreeBuilder {
         this.secondsPerDecomposition = 18 * 60 * 60; // maximal 5 hours per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
+        setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
     }
 
     public GurobiSolver() {
@@ -188,6 +189,11 @@ public class GurobiSolver implements TreeBuilder {
     @Override
     public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public String getDescription() {
+        return "Gurobi";
     }
 
     @Override

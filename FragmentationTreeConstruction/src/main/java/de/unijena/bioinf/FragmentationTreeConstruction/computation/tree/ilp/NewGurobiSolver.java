@@ -64,6 +64,11 @@ public class NewGurobiSolver implements TreeBuilder {
         return null;
     }
 
+    @Override
+    public String getDescription() {
+        return "Gurobi JNI";
+    }
+
 
     ////////////////////////////////
     ///                          ///

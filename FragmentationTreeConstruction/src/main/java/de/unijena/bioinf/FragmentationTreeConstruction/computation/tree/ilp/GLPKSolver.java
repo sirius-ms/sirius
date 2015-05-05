@@ -32,12 +32,13 @@ import java.util.List;
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver implements TreeBuilder {
-
+    private static boolean isLoaded=false;
     /*********************************************************************
      * try to load the jni interface for glpk from the glpk library      *
      * will be loaded the moment an instance of 'GLPKSolver' is created  *
      *********************************************************************/
-    static {
+    public static synchronized void loadLibrary() {
+        if (isLoaded) return;
         final String versionString = GLPK.GLP_MAJOR_VERSION + "_" + GLPK.GLP_MINOR_VERSION;
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             // try to load Windows library
@@ -57,6 +58,11 @@ public class GLPKSolver implements TreeBuilder {
                 throw e;
             }
         }
+        isLoaded = true;
+    }
+
+    public GLPKSolver() {
+        loadLibrary();
     }
 
 
@@ -90,6 +96,11 @@ public class GLPKSolver implements TreeBuilder {
     @Override
     public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
         return null;
+    }
+
+    @Override
+    public String getDescription() {
+        return "GLPK " + GLPK.GLP_MAJOR_VERSION + "." + GLPK.GLP_MINOR_VERSION;
     }
 
 
