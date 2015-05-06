@@ -17,14 +17,25 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.sirius.cli.IdentifyOptions;
-import de.unijena.bioinf.sirius.cli.TreeOptions;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.IOException;
 import java.util.*;
 
 public class Sirius {
+
+    public final static String VERSION_STRING = "Sirius 3.0.0";
+
+    public final static String CITATION = "Sebastian Böcker and Florian Rasche\n" +
+            "Towards de novo identification of metabolites by analyzing tandem mass spectra.\n" +
+            "Bioinformatics, 24:I49-I55, 2008. Proc. of European Conference on Computational Biology (ECCB 2008).\n" +
+            "\n" +
+            "Kerstin Scheubert, Franziska Hufsky, Florian Rasche and Sebastian Böcker\n" +
+            "Computing fragmentation trees from metabolite multiple mass spectrometry data.\n" +
+            "In Proc. of Research in Computational Molecular Biology (RECOMB 2011), volume 6577 of Lect Notes Comput Sci, pages 377-391. Springer, Berlin, 2011.\n\n" +
+            "Kai Dührkop and Sebastian Böcker\n" +
+            "Fragmentation trees reloaded.\n" +
+            "In Proc. of Research in Computational Molecular Biology (RECOMB 2015), volume 9029 of Lect Notes Comput Sci, pages 65-79. 2015.";
 
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;

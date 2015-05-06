@@ -1,203 +1,499 @@
 package de.unijena.bioinf.sirius.cli;
 
+import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SimpleReduction;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
+import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.Sirius;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CLI {
 
-    protected final static String VERSION_STRING = "Sirius 3.0.0";
+    protected Sirius sirius;
+    protected final boolean shellMode;
+    protected ShellProgress progress;
 
     public static void main(String[] args) {
-        {
-            String s = System.getProperty("java.library.path", "");
-            String x = System.getProperty("sirius.root", ".");
-            System.setProperty("java.library.path", s + ";" + x);
-        }
-        final HashMap<String, Task> tasks = new HashMap<String, Task>();
-        final IdentifyTask identify = new IdentifyTask();
-        final ComputeTask compute = new ComputeTask();
-        tasks.put(identify.getName(), identify);
-        tasks.put(compute.getName(), compute);
-        //tasks.put("test-reduce", new TestReduction());
-        //tasks.put("test-glpk", new TestGlkp());
-        if (args.length==0) displayHelp(tasks);
+        final CLI cli = new CLI();
+        cli.setArgs(args);
+        cli.compute();
+    }
 
-        Task currentTask = null;
-        int argStart=0;
+    public CLI() {
+        this.shellMode = System.console()!=null;
+        this.progress = new ShellProgress(System.out, shellMode);
+    }
 
-        for (int k=0; k < args.length; ++k) {
-            if (currentTask==null && (args[k].equals("-h") || args[k].equals("--help"))) {
-                displayHelp(tasks); return;
-            } else if (args[k].equals("--version")) {
-                displayVersion(); return;
-            } else if (currentTask==null){
-                currentTask = tasks.get(args[k]);
-                argStart=k+1;
-                if (currentTask==null) {
-                    System.err.println("Unknown task: " + args[k]);
-                    displayHelp(tasks); return;
+    SiriusOptions options;
+
+    public void compute() {
+        try {
+            sirius.setProgress(progress);
+            final Iterator<Instance> instances = handleInput(options);
+            while (instances.hasNext()) {
+                final Instance i = instances.next();
+                progress.info("Compute '" + i.file.getName() + "'");
+                final boolean doIdentify;
+                final List<IdentificationResult> results;
+
+                final List<String> whitelist = options.getFormula();
+                final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
+                if (whitelist==null && !options.isNumberOfCandidates() && i.experiment.getMolecularFormula()!=null) {
+                    whiteset.add(i.experiment.getMolecularFormula());
+                } else if (whitelist!=null) for (String s :whitelist) whiteset.add(MolecularFormula.parse(s));
+                if (whiteset.size()!=1) {
+                    results = sirius.identify(i.experiment, options.getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
+                    doIdentify=true;
+                } else {
+                    doIdentify=false;
+                    results = Arrays.asList(sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating()));
                 }
-            } else if (k==args.length-1) {
-                final String[] taskArgs = new String[k-argStart+1];
-                System.arraycopy(args, argStart, taskArgs, 0, taskArgs.length);
-                try {
-                    currentTask.setArgs(taskArgs);
-                } catch (HelpRequestedException e) {
-                    displayVersion();
-                    System.out.println(currentTask.getName() + ":\t" + currentTask.getDescription());
-                    System.out.println("");
-                    System.out.println(e.getMessage());
-                    System.exit(0);
-                }
-                currentTask.run();
-            }
-        }
 
-    }
-
-    private static void displayVersion() {
-        System.out.println(VERSION_STRING);
-    }
-
-    private static void displayHelp(HashMap<String, Task> tasks) {
-        displayVersion();
-        System.out.println("usage: sirius [COMMAND] [OPTIONS] [INPUT]");
-        System.out.println("For documentation of available options use: sirius [COMMAND] --help");
-        System.out.println("\nAvailable commands:");
-        for (Map.Entry<String, Task> entry : tasks.entrySet()) {
-            final String descr = entry.getValue().getDescription().replaceAll("\n", "\n\t\t").replace("\n\t\t$","\n");
-            System.out.println("\t" + entry.getKey() + ":\t" + descr);
-        }
-    }
-
-    private static class TestReduction extends ComputeTask{
-
-        @Override
-        public String getName() {
-            return "test-reduce";
-        }
-
-        @Override
-        public String getDescription() {
-            return "";
-        }
-
-        @Override
-        public void compute() {
-            try {
-                final Iterator<Instance> instanceIterator = handleInput(options);
-                while (instanceIterator.hasNext()) {
-                    Instance i = instanceIterator.next();
-                    if (i.experiment.getMolecularFormula() == null && options.getMolecularFormula() == null) {
-                        System.err.println("The molecular formula for '" + i.file + "' is missing. Add the molecular formula via --formula option or use sirius identify to predict the correct molecular formula");
-                    } else {
-                        if (i.experiment.getMolecularFormula()==null) {
-                            final MutableMs2Experiment expm;
-                            if (i.experiment instanceof MutableMs2Experiment) expm = (MutableMs2Experiment) i.experiment;
-                            else expm = new MutableMs2Experiment(i.experiment);
-                            expm.setMolecularFormula(MolecularFormula.parse(options.getMolecularFormula()));
-                            i = new Instance(expm, i.file);
-                        }
-                        System.out.println("Compute " + i.file + " (" + i.experiment.getMolecularFormula() + ")");
-                        final long time1 = System.nanoTime();
-                        final IdentificationResult result = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
-                        final long time2 = System.nanoTime();
-                        System.out.println("Computation took " + ((time2-time1)/1000000000d) + "ms");
-                        try {
-                            final long time3 = System.nanoTime();
-                            sirius.getMs2Analyzer().setReduction(new SimpleReduction());
-                            final IdentificationResult result2 = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
-                            final long time4 = System.nanoTime();
-                            System.out.println("With Reduction: computation took " + ((time4-time3)/1000000000d) + "ms");
-                            if (Math.abs(result.getScore()-result2.getScore()) > 1e-3) {
-                                output(i, result);
-                                output(new Instance(i.experiment, new File(i.file.getParent(), "reduced.ms")), result2);
-                                throw new RuntimeException("Different trees for " + i.file + " | " + result.getScore() + " vs. " + result2.getScore());
-                            }
-                        } finally {
-                            sirius.getMs2Analyzer().setReduction(null);
-                        }
-
-
+                if (doIdentify) {
+                    int rank=1;
+                    int n = Math.max(1,(int)Math.ceil(Math.log10(results.size())));
+                    for (IdentificationResult result : results) {
+                        printf("%"+n+"d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree())*100);
                     }
-
+                    output(i, results);
+                } else {
+                    outputSingle(i, results.get(0));
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private static class TestGlkp extends ComputeTask {
-
-        @Override
-        public String getName() {
-            return "test-glpk";
-        }
-
-        @Override
-        public String getDescription() {
-            return "";
-        }
-
-        @Override
-        public void compute() {
-            try {
-                final Iterator<Instance> instanceIterator = handleInput(options);
-                while (instanceIterator.hasNext()) {
-                    Instance i = instanceIterator.next();
-                    if (i.experiment.getMolecularFormula() == null && options.getMolecularFormula() == null) {
-                        System.err.println("The molecular formula for '" + i.file + "' is missing. Add the molecular formula via --formula option or use sirius identify to predict the correct molecular formula");
-                    } else {
-                        if (i.experiment.getMolecularFormula()==null) {
-                            final MutableMs2Experiment expm;
-                            if (i.experiment instanceof MutableMs2Experiment) expm = (MutableMs2Experiment) i.experiment;
-                            else expm = new MutableMs2Experiment(i.experiment);
-                            expm.setMolecularFormula(MolecularFormula.parse(options.getMolecularFormula()));
-                            i = new Instance(expm, i.file);
-                        }
-                        System.out.println("Compute " + i.file + " (" + i.experiment.getMolecularFormula() + ")");
-                        final long time1 = System.nanoTime();
-                        final IdentificationResult result = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
-                        final long time2 = System.nanoTime();
-                        System.out.println("Computation took " + ((time2-time1)/1000000000d) + "ms");
-                        try {
-                            final long time3 = System.nanoTime();
-                            sirius.getMs2Analyzer().setTreeBuilder(new GLPKSolver());
-                            final IdentificationResult result2 = sirius.compute(i.experiment, i.experiment.getMolecularFormula(), options);
-                            final long time4 = System.nanoTime();
-                            assert result!=null;
-                            assert  result2!=null;
-                            System.out.println("With GLPK: computation took " + ((time4-time3)/1000000000d) + "ms");
-                            if (Math.abs(result.getScore()-result2.getScore()) > 1e-3) {
-                                output(i, result);
-                                output(new Instance(i.experiment, new File(i.file.getParent(), "reduced.ms")), result2);
-                                throw new RuntimeException("Different trees for " + i.file + " | " + result.getScore() + " vs. " + result2.getScore());
-                            }
-                        } finally {
-                            sirius.getMs2Analyzer().setTreeBuilder(new GurobiSolver());
-                        }
-
-
-                    }
-
+    private void output(Instance instance, List<IdentificationResult> results) throws IOException {
+        final int c = options.getNumberOfCandidates();
+        final File target = options.getOutput();
+        String format = options.getFormat();
+        if (format==null) format = "json";
+        for (IdentificationResult result : results) {
+            if (target!=null) {
+                final File name = getTargetName(target, instance, result, format,c);
+                if (format.equalsIgnoreCase("json")) {
+                    new FTJsonWriter().writeTreeToFile(name, result.getTree());
+                } else if (format.equalsIgnoreCase("dot")) {
+                    new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(name, result.getTree());
+                } else {
+                    throw new RuntimeException("Unknown format '" + format + "'");
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
+            }
+            if (options.isAnnotating()) {
+                final File anoName = getTargetName(target!=null ? target : new File("."), instance, result, "csv",c);
+                new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
             }
         }
+
+    }
+
+    protected void cite() {
+        System.out.println("Please cite the following paper when using our method:");
+        System.out.println(Sirius.CITATION);
+    }
+
+    protected void outputSingle(Instance instance, IdentificationResult result) throws IOException {
+        if (result==null) {
+            System.out.println("Cannot find valid tree with molecular formula '" + instance.experiment.getMolecularFormula() + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
+            return;
+        }
+        result.getTree().normalizeStructure();
+        File target = options.getOutput();
+        if (target==null) target = new File(".");
+        String format;
+        final String n = target.getName();
+        final int i = n.lastIndexOf('.');
+        if (i >= 0) {
+            final String ext = n.substring(i);
+            if (ext.equals(".json") || ext.equals(".dot")) {
+                format = ext;
+            } else format = "json";
+        } else {
+            if (!target.exists()) target.mkdirs();
+            format = "json";
+        }
+        if (options.getFormat() != null) {
+            format = options.getFormat();
+        }
+
+        if (target.isDirectory()) {
+            target = getTargetName(target, instance, result, format, 1);
+        }
+
+        if (format.equalsIgnoreCase("json")) {
+            new FTJsonWriter().writeTreeToFile(target, result.getTree());
+        } else if (format.equalsIgnoreCase("dot")) {
+            new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(target, result.getTree());
+        } else {
+            throw new RuntimeException("Unknown format '" + format + "'");
+        }
+        if (options.isAnnotating()) {
+            final File anoName = getTargetName(target, instance, result, "csv", 1);
+            new AnnotatedSpectrumWriter().writeFile(anoName, instance.optTree);
+        }
+
+    }
+
+    private File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
+        final String inputName = i.fileNameWithoutExtension();
+        final File name;
+        if (n<=1) {
+            name = new File(target, inputName + "." + format);
+        } else {
+            name = new File(target, inputName + "_" + result.getRank() + "_" + result.getMolecularFormula().toString() + "." + format);
+        }
+        return name;
+    }
+
+    public void setArgs(String[] args) {
+        try {
+            this.options = CliFactory.createCli(SiriusOptions.class).parseArguments(args);
+        } catch (HelpRequestedException e) {
+            System.out.println(e.getMessage());
+            System.out.println("");
+            cite();
+            System.exit(0);
+        }
+        if (options.isVersion()) {
+            System.out.println(Sirius.VERSION_STRING);
+            cite();
+            System.exit(0);
+        }
+        setup(options);
+        // validate
+        final File target = options.getOutput();
+        if (target != null) {
+            if (target.exists() && !target.isDirectory()) {
+                System.err.println("Specify a directory name as output directory");
+                System.exit(1);
+            } else {
+                target.mkdirs();
+            }
+        }
+
+        final String format = options.getFormat();
+        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot")) {
+            System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
+            System.exit(1);
+        }
+    }
+
+    public void setup(SiriusOptions opts) {
+        try {
+            this.sirius = new Sirius(opts.getProfile());
+            final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
+            final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
+            final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
+            final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
+
+            if (opts.getMedianNoise()!=null) {
+                ms2Prof.setMedianNoiseIntensity(opts.getMedianNoise());
+            }
+            if (opts.getPPMMax() != null) {
+                ms2Prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
+                ms1Prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
+            }
+            final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
+            if (builder instanceof DPTreeBuilder) {
+                System.err.println("Cannot load ILP solver. Please read the installation instructions.");
+                System.exit(1);
+            }
+            System.out.println("Compute trees using " + builder.getDescription());
+
+            /*
+            sirius.getMs2Analyzer().setValidatorWarning(new Warning() {
+                @Override
+                public void warn(String message) {
+                    progress.info(message);
+                }
+            });
+            */
+        } catch (IOException e) {
+            System.err.println("Cannot load profile '" + opts.getProfile() + "':\n");
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    protected Ms2Experiment extendInput(Ms2Experiment experiment, SiriusOptions opts) {
+        final MutableMs2Experiment exp = new MutableMs2Experiment(experiment);
+        if (exp.getIonization()==null) {
+            exp.setIonization(getIonFromOptions(opts));
+        }
+        final MutableMeasurementProfile prof;
+        if (exp.getMeasurementProfile()==null) {
+            prof = new MutableMeasurementProfile();
+        } else prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
+        if (prof.getFormulaConstraints()==null) {
+            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()));
+        }
+        if (opts.getParentMz() != null && Math.abs(opts.getParentMz() - exp.getIonMass()) < 1e-3) {
+            exp.setIonMass(opts.getParentMz());
+        }
+        if (opts.getMedianNoise() != null) {
+            prof.setMedianNoiseIntensity(opts.getMedianNoise());
+        }
+        if (opts.getPPMMax() != null) {
+            prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
+        }
+        exp.setMeasurementProfile(prof);
+        return exp;
+    }
+
+
+    protected void println(String msg) {
+        System.out.println(msg);
+    }
+    protected void printf(String msg, Object... args) {
+        System.out.printf(Locale.US, msg, args);
+    }
+
+    public Iterator<Instance> handleInput(final SiriusOptions options) throws IOException {
+        final ArrayDeque<Instance> instances = new ArrayDeque<Instance>();
+        final MsExperimentParser parser = new MsExperimentParser();
+        // two different input modes:
+        // general information that should be used if this fields are missing in the file
+        final Double defaultParentMass = options.getParentMz();
+        Ionization ion = getIonFromOptions(options);
+        if (ion instanceof Charge) {
+            if (!options.isAutoCharge()) {
+                ion = (ion.getCharge()>0) ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName("[M-H]-");
+            }
+        }
+        final FormulaConstraints constraints = options.getElements() == null ? getDefaultElementSet(options, ion) : options.getElements();
+        // direct input: --ms1 and --ms2 command line options are given
+        if (options.getMs2()!=null && !options.getMs2().isEmpty()) {
+            final MutableMeasurementProfile profile = new MutableMeasurementProfile();
+            profile.setFormulaConstraints(constraints);
+            final MutableMs2Experiment exp = new MutableMs2Experiment();
+            exp.setMeasurementProfile(profile);
+            exp.setIonization(ion);
+            exp.setMs2Spectra(new ArrayList<Ms2Spectrum<Peak>>());
+            for (File f : foreachIn(options.getMs2())) {
+                final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
+                while (spiter.hasNext()) {
+                    final Ms2Spectrum<Peak> spec = spiter.next();
+                    if (spec.getIonization()==null || spec.getPrecursorMz()==0 || spec.getMsLevel()==0) {
+                        final MutableMs2Spectrum ms;
+                        if (spec instanceof MutableMs2Spectrum) ms = (MutableMs2Spectrum)spec;
+                        else ms = new MutableMs2Spectrum(spec);
+                        if (ms.getIonization()==null) ms.setIonization(ion);
+                        if (ms.getMsLevel()==0) ms.setMsLevel(2);
+                        if (ms.getPrecursorMz()==0) {
+                            if (defaultParentMass==null) {
+                                if (exp.getMs2Spectra().size()>0) {
+                                    ms.setPrecursorMz(exp.getMs2Spectra().get(0).getPrecursorMz());
+                                } else {
+                                    final MolecularFormula formula;
+                                    if (exp.getMolecularFormula()!=null) formula = exp.getMolecularFormula();
+                                    else if (options.getFormula()!=null && options.getFormula().size()==1) formula = MolecularFormula.parse(options.getFormula().get(0)); else formula=null;
+                                    if (formula != null) {
+                                        ms.setPrecursorMz(ms.getIonization().addToMass(formula.getMass()));
+                                    } else ms.setPrecursorMz(0);
+                                }
+                            } else {
+                                ms.setPrecursorMz(defaultParentMass);
+                            }
+                        }
+                    }
+                    exp.getMs2Spectra().add(spec);
+                }
+            }
+            if (exp.getMs2Spectra().size() <= 0) throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
+
+            if (options.getMs2()!=null &&  options.getMs1() != null && !options.getMs1().isEmpty()) {
+                exp.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
+                for (File f : options.getMs1()) {
+                    final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
+                    while (spiter.hasNext()) {
+                        exp.getMs1Spectra().add(new SimpleSpectrum(spiter.next()));
+                    }
+                }
+            }
+
+            final double expPrecursor;
+            if (options.getParentMz()!=null) {
+                expPrecursor = options.getParentMz();
+            }else if (exp.getMolecularFormula()!=null) {
+                expPrecursor = exp.getIonization().addToMass(exp.getMolecularFormula().getMass());
+            } else {
+                double prec=0d;
+                for (int k=1; k < exp.getMs2Spectra().size(); ++k) {
+                    final double pmz = exp.getMs2Spectra().get(k).getPrecursorMz();
+                    if (pmz!=0 && Math.abs(pmz - exp.getMs2Spectra().get(0).getPrecursorMz()) > 1e-3) {
+                        throw new IllegalArgumentException("The given MS/MS spectra have different precursor mass and cannot belong to the same compound");
+                    } else if (pmz != 0) prec = pmz;
+                }
+                if (prec == 0) {
+                    if (exp.getMs1Spectra().size()>0) {
+                        final List<IsotopePattern> patterns = sirius.getMs1Analyzer().deisotope(exp);
+                        if (patterns.size()>0) {
+                            double pmz2 = patterns.get(0).getMonoisotopicMass();
+                            for (IsotopePattern pat : patterns) {
+                                if (Math.abs(pmz2-pat.getMonoisotopicMass()) > 1e-3) {
+                                    throw new IllegalArgumentException("SIRIUS cannot infer the parentmass of the measured compound from MS1 spectrum. Please provide it via the -z option.");
+                                }
+                            }
+                            prec = pmz2;
+                        } else throw new IllegalArgumentException("SIRIUS expects the parentmass of the measured compound as parameter. Please provide it via the -z option.");
+                    }
+                }
+                expPrecursor=prec;
+            }
+
+
+            exp.setIonMass(expPrecursor);
+            instances.add(new Instance(extendInput(exp, options), options.getMs2().get(0)));
+        } else if (options.getMs1()!=null && !options.getMs1().isEmpty()) {
+            throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
+        }
+        // batch input: files containing ms1 and ms2 data are given
+        if (options.getInput()!=null && !options.getInput().isEmpty()) {
+            final Iterator<File> fileIter;
+            final ArrayList<File> infiles = new ArrayList<File>();
+            for (String f : options.getInput()) {
+                final File g = new File(f);
+                if (g.isDirectory()) {infiles.addAll(Arrays.asList(g.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.isFile();
+                    }
+                })));} else {
+                    infiles.add(g);
+                }
+            }
+            fileIter=infiles.iterator();
+            return new Iterator<Instance>() {
+                Iterator<Ms2Experiment> experimentIterator = fetchNext();
+                File currentFile;
+                @Override
+                public boolean hasNext() {
+                    return !instances.isEmpty();
+                }
+
+                @Override
+                public Instance next() {
+                    fetchNext();
+                    Instance c = instances.poll();
+                    return new Instance(extendInput(c.experiment,options), c.file);
+                }
+
+                private Iterator<Ms2Experiment> fetchNext() {
+                    while (true) {
+                        if (experimentIterator==null || !experimentIterator.hasNext()) {
+                            if (fileIter.hasNext()) {
+                                currentFile = fileIter.next();
+                                try {
+                                    GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
+                                    if (p==null) {
+                                        System.err.println("Unknown file format: '" + currentFile + "'");
+                                    } else experimentIterator = p.parseFromFileIterator(currentFile);
+                                } catch (IOException e) {
+                                    System.err.println("Cannot parse file '" + currentFile + "':\n");
+                                    e.printStackTrace();
+                                }
+                            } else return null;
+                        } else {
+                            instances.push(new Instance(experimentIterator.next(), currentFile));
+                            return experimentIterator;
+                        }
+                    }
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        } else {
+            return instances.iterator();
+        }
+    }
+
+    private List<File> foreachIn(List<File> ms2) {
+        final List<File> queue = new ArrayList<File>();
+        for (File f : ms2) {
+            if (f.isDirectory()) {
+                for (File g : f.listFiles())
+                    if (!g.isDirectory())
+                        queue.add(g);
+            } else queue.add(f);
+        }
+        return queue;
+    }
+
+
+    private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)[+-]?");
+    private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
+
+    protected static Ionization getIonFromOptions(SiriusOptions opt) {
+        String ionStr = opt.getIon();
+        if (ionStr==null) {
+            if (opt.isAutoCharge()) return new Charge(1);
+            else return PeriodicTable.getInstance().ionByName("[M+H]+");
+        }
+        final Matcher m1 = CHARGE_PATTERN.matcher(ionStr);
+        final Matcher m2 = CHARGE_PATTERN2.matcher(ionStr);
+        final Matcher m = m1.matches() ? m1 : (m2.matches() ? m2 : null);
+        if (m != null) {
+            if (m.group(1)!=null && ionStr.contains("-")) {
+                return new Charge(-Integer.parseInt(m.group(1)));
+            } else {
+                return new Charge(Integer.parseInt(m.group(1)));
+            }
+        } else {
+            final Ionization ion = PeriodicTable.getInstance().ionByName(ionStr);
+            if (ion==null)
+                throw new IllegalArgumentException("Unknown ionization mode '" + ionStr + "'");
+            else return ion;
+        }
+    }
+    private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");
+    public FormulaConstraints getDefaultElementSet(SiriusOptions opts, Ionization ion) {
+        final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
+        if (ion instanceof Charge && opts.isAutoCharge()) {
+            final PeriodicTable tb = PeriodicTable.getInstance();
+            final Element Na = tb.getByName("Na"), K = tb.getByName("K"), Cl = tb.getByName("Cl");
+            final Set<Element> elements = new HashSet<Element>(cf.getChemicalAlphabet().getElements());
+            if (ion.getCharge() > 0) {
+                elements.add(Na);
+                elements.add(K);
+            } else {
+                elements.add(Cl);
+            }
+            final FormulaConstraints ext = new FormulaConstraints(new ChemicalAlphabet(elements.toArray(new Element[elements.size()])));
+            for (Element e : cf.getChemicalAlphabet().getElements()) {
+                ext.setUpperbound(e, cf.getUpperbound(e));
+            }
+            final ChemicalAlphabet c = cf.getChemicalAlphabet();
+            if (ion.getCharge()>0) {
+                if (c.indexOf(Na) < 0) ext.setUpperbound(Na, 1);
+                if (c.indexOf(K) < 0) ext.setUpperbound(K, 1);
+            } else {
+                if (c.indexOf(Cl) < 0) ext.setUpperbound(Cl, 1);
+            }
+            return ext;
+        } else return cf;
     }
 }
