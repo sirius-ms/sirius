@@ -230,6 +230,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return analysis;
     }
 
+
     private static TreeBuilder loadTreeBuilder() {
         try {
             // is gurobi.jar in classpath?
@@ -241,7 +242,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } catch (Throwable e) {
             // try GLPK tree builder
             try {
-                return new GLPKSolver();
+                return ((Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver")).newInstance();
             } catch (Throwable f) {
                 return new DPTreeBuilder(12);
             }

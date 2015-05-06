@@ -37,6 +37,7 @@ public class GLPKSolver implements TreeBuilder {
      * try to load the jni interface for glpk from the glpk library      *
      * will be loaded the moment an instance of 'GLPKSolver' is created  *
      *********************************************************************/
+    /*
     public static synchronized void loadLibrary() {
         if (isLoaded) return;
         final String versionString = GLPK.GLP_MAJOR_VERSION + "_" + GLPK.GLP_MINOR_VERSION;
@@ -60,9 +61,10 @@ public class GLPKSolver implements TreeBuilder {
         }
         isLoaded = true;
     }
+    */
 
     public GLPKSolver() {
-        loadLibrary();
+        //loadLibrary();
     }
 
 

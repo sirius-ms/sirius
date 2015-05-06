@@ -1,20 +1,20 @@
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FTEval</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
     <parent>
         <groupId>de.unijena.bioinf</groupId>
         <artifactId>FragmentationTree</artifactId>
-        <version>1.21-SNAPSHOT</version>
+        <version>3.0.0</version>
     </parent>
 
     <!--                                                               -->
     <developers>
         <developer>
-            <name>Kai Dührkop</name>
+            <name>Kai D&#xFC;hrkop</name>
             <email>kai.duehrkop@uni-jena.de</email>
             <organization>Jena University</organization>
             <organizationUrl>http://bio.informatik.uni-jena.de</organizationUrl>
@@ -37,12 +37,12 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>CLIBase</artifactId>
-            <version>1-SNAPSHOT</version>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>1.21-SNAPSHOT</version>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
@@ -62,27 +62,27 @@
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-fingerprint</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-inchi</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-core</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-io</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.10</version>
         </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-data</artifactId>
-            <version>1.5.6</version>
+            <version>1.5.10</version>
         </dependency>
 
 
