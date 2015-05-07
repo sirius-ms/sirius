@@ -100,4 +100,10 @@ public class CollisionEnergy {
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
+
+    private static CollisionEnergy NONE = new CollisionEnergy(0,0);
+
+    public static CollisionEnergy none() {
+        return NONE;
+    }
 }

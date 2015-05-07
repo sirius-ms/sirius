@@ -12,6 +12,10 @@ public class Spectrums {
 
     public final static double DELTA = 1e-8;
 
+    public static Spectrum<Peak> wrap(double[] mz, double[] intensities) {
+        return new ArrayWrapperSpectrum(mz, intensities);
+    }
+
     public static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum neutralMassSpectrum(final S spectrum, final Ionization ionization) {
         return map(spectrum, new Transformation<P, Peak>() {
