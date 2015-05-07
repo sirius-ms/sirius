@@ -369,7 +369,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             final Set<CollisionEnergy> energies = new TreeSet<CollisionEnergy>(CollisionEnergy.getMinEnergyComparator());
             int k = 0;
             for (MS2Peak op : peak.getOriginalPeaks()) {
-                if (op.getSpectrum().getCollisionEnergy()!=null)
+                if (op.getSpectrum().getCollisionEnergy()!=null && op.getSpectrum().getCollisionEnergy()!=CollisionEnergy.none())
                     energies.add(op.getSpectrum().getCollisionEnergy());
             }
             ces.set(f, energies.toArray(new CollisionEnergy[energies.size()]));

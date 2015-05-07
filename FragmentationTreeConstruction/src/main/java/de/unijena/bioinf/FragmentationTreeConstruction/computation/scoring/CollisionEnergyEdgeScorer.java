@@ -196,7 +196,9 @@ public class CollisionEnergyEdgeScorer implements PeakPairScorer {
             if (parentFragment.isSynthetic()) {
                 continue;
             }
+            if (minEnergy[parent]==maxEnergy[parent] && minEnergy[parent]==0) continue;
             for (int fragment = 0; fragment < parent; ++fragment) {
+                if (minEnergy[fragment]==maxEnergy[fragment] && minEnergy[fragment]==0) continue;
                 // you don't have to score pairs where the parent is smaller than the fragment, because
                 // we don't allow this in later steps --> so matrix is not symmetric
                 if (parentFragment.getMz() <= peaks.get(fragment).getMz())  {
