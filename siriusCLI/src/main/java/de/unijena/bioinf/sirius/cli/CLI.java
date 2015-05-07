@@ -88,7 +88,7 @@ public class CLI {
         final int c = options.getNumberOfCandidates();
         final File target = options.getOutput();
         String format = options.getFormat();
-        if (format==null) format = "json";
+        if (format==null) format = "dot";
         for (IdentificationResult result : results) {
             if (target!=null) {
                 final File name = getTargetName(target, instance, result, format,c);
@@ -128,10 +128,10 @@ public class CLI {
             final String ext = n.substring(i);
             if (ext.equals(".json") || ext.equals(".dot")) {
                 format = ext;
-            } else format = "json";
+            } else format = "dot";
         } else {
             if (!target.exists()) target.mkdirs();
-            format = "json";
+            format = "dot";
         }
         if (options.getFormat() != null) {
             format = options.getFormat();
@@ -220,6 +220,9 @@ public class CLI {
                 System.exit(1);
             }
             System.out.println("Compute trees using " + builder.getDescription());
+
+            sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
+            sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
 
             /*
             sirius.getMs2Analyzer().setValidatorWarning(new Warning() {

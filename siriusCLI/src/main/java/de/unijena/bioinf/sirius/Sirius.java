@@ -1,19 +1,19 @@
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -45,6 +45,7 @@ public class Sirius {
     protected Profile profile;
     protected ElementPrediction elementPrediction;
     protected Progress progress;
+    protected PeriodicTable table;
 
 
     public final static String ISOTOPE_SCORE = "isotope";
@@ -81,6 +82,7 @@ public class Sirius {
     }
 
     private void loadMeasurementProfile() {
+        this.table = PeriodicTable.getInstance();
         // make mutable
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
@@ -101,7 +103,7 @@ public class Sirius {
 
     /**
      *
-     * Identify the molecular formula of the measured compound using the provided MS and MSMS data
+     * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
      *
      * @param uexperiment input data
      * @param numberOfCandidates number of candidates to output
@@ -282,6 +284,13 @@ public class Sirius {
         return compute(experiment, formula, true);
     }
 
+    /**
+     * Compute a fragmentation tree for the given MS/MS data using the given neutral molecular formula as explanation for the measured compound
+     * @param experiment input data
+     * @param formula neutral molecular formula of the measured compound
+     * @param recalibrating true if spectra should be recalibrated during tree computation
+     * @return A single instance of IdentificationResult containing the computed fragmentation tree
+     */
     public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, boolean recalibrating) {
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
@@ -309,6 +318,157 @@ public class Sirius {
         }
         return new IdentificationResult(tree, 0);
     }
+
+
+    /*
+        DATA STRUCTURES API CALLS
+     */
+
+    /**
+     * Wraps an array of m/z values and and array of intensity values into a spectrum object that can be used by the SIRIUS library. The resulting spectrum is a lightweight view on the array, so changes in the array are reflected in the spectrum. The spectrum object itself is immutable.
+     * @param mz mass to charge ratios
+     * @param intensities intensity values. Can be normalized or absolute - SIRIUS will normalize them itself at later point
+     * @return view on the arrays implementing the Spectrum interface
+     */
+    public Spectrum<Peak> wrapSpectrum(double[] mz, double[] intensities) {
+        return Spectrums.wrap(mz, intensities);
+    }
+
+    /**
+     * Lookup the symbol in the periodic table and returns the corresponding Element object or null if no element with this symbol exists.
+     * @param symbol symbol of the element, e.g. H for hydrogen or Cl for chlorine
+     * @return instance of Element class
+     */
+    public Element getElement(String symbol) {
+        return table.getByName(symbol);
+    }
+
+    /**
+     * Lookup the ionization name and returns the corresponding ionization object or null if no ionization with this name is registered. The name of an ionization has the syntax [M+ADDUCT]CHARGE, for example [M+H]+ or [M-H]-.
+     * @param name name of the ionization
+     * @return adduct object
+     */
+    public Ionization getIonization(String name) {
+        return table.ionByName(name);
+    }
+
+    /**
+     * Charges are subclasses of Ionization. So they can be used everywhere as replacement for ionizations. A charge is very similar to the [M]+ and [M]- ionizations. However, the difference is that [M]+ describes an intrinsically charged compound where the Charge +1 describes an compound with unknown adduct.
+     * @param charge either 1 for positive or -1 for negative charges.
+     * @return
+     */
+    public Charge getCharge(int charge) {
+        if (charge != -1 && charge != 1)
+            throw new IllegalArgumentException("SIRIUS does not support multiple charged compounds");
+        return new Charge(charge);
+    }
+
+    /**
+     * Creates a Deviation object that describes a mass deviation as maximum of a relative term (in ppm) and an absolute term. Usually, mass accuracy is given as relative term in ppm, as measurement errors increase with higher masses. However, for very small compounds (and fragments!) these relative values might overestimate the mass accurary. Therefore, an absolute value have to be given.
+     * @param ppm mass deviation as relative value (in ppm)
+     * @param abs mass deviation as absolute value (m/z)
+     * @return Deviation object
+     */
+    public Deviation getMassDeviation(int ppm, double abs) {
+        return new Deviation(ppm, abs);
+    }
+
+    /**
+     * Creates a Deviation object with the given relative term. The absolute term is implicitly given by applying the relative term on m/z 100.
+     * @param ppm
+     * @return
+     */
+    public Deviation getMassDeviation(int ppm) {
+        return new Deviation(ppm);
+    }
+
+    /**
+     * Parses a molecular formula from the given string
+     * @param f molecular formula (e.g. in Hill notation)
+     * @return immutable molecular formula object
+     */
+    public MolecularFormula parseFormula(String f) {
+        return MolecularFormula.parse(f);
+    }
+
+    /**
+     * Creates a Ms2Experiment object from the given MS and MS/MS spectra. A Ms2Experiment is NOT a single run or measurement, but a measurement of a concrete compound. So a MS spectrum might contain several Ms2Experiments. However, each MS/MS spectrum should have on precursor or parent mass. All MS/MS spectra with the same precursor together with the MS spectrum containing this precursor peak can be seen as one Ms2Experiment.
+     * @param formula neutral molecular formula of the compound
+     * @param ion ionization mode (can be an instance of Charge if the exact adduct is unknown)
+     * @param ms1 the MS spectrum containing the isotope pattern of the measured compound. Might be null
+     * @param ms2 a list of MS/MS spectra containing the fragmentation pattern of the measured compound
+     * @return a MS2Experiment instance, ready to be analyzed by SIRIUS
+     */
+    public Ms2Experiment getMs2Experiment(MolecularFormula formula, Ionization ion, Spectrum<Peak> ms1, Spectrum... ms2) {
+        final MutableMs2Experiment mexp = new MutableMs2Experiment(formula, ion.addToMass(formula.getMass()), ion, new ArrayList<Spectrum<Peak>>(Arrays.asList(ms1)), new ArrayList<Ms2Spectrum<? extends Peak>>());
+        for (Spectrum<Peak> spec : ms2) {
+            mexp.getMs2Spectra().add(new Ms2SpectrumImpl(spec, CollisionEnergy.none(), mexp.getIonMass(), 0d));
+        }
+        return mexp;
+    }
+
+    /**
+     * Creates a Ms2Experiment object from the given MS and MS/MS spectra. A Ms2Experiment is NOT a single run or measurement, but a measurement of a concrete compound. So a MS spectrum might contain several Ms2Experiments. However, each MS/MS spectrum should have on precursor or parent mass. All MS/MS spectra with the same precursor together with the MS spectrum containing this precursor peak can be seen as one Ms2Experiment.
+     * @param parentMass the measured mass of the precursor ion. Can be either the MS peak or (if present) a MS/MS peak
+     * @param ion ionization mode (can be an instance of Charge if the exact adduct is unknown)
+     * @param ms1 the MS spectrum containing the isotope pattern of the measured compound. Might be null
+     * @param ms2 a list of MS/MS spectra containing the fragmentation pattern of the measured compound
+     * @return a MS2Experiment instance, ready to be analyzed by SIRIUS
+     */
+    public Ms2Experiment getMs2Experiment(double parentMass, Ionization ion, Spectrum<Peak> ms1, Spectrum... ms2) {
+        final MutableMs2Experiment mexp = new MutableMs2Experiment(null, parentMass, ion, new ArrayList<Spectrum<Peak>>(Arrays.asList(ms1)), new ArrayList<Ms2Spectrum<? extends Peak>>());
+        for (Spectrum<Peak> spec : ms2) {
+            mexp.getMs2Spectra().add(new Ms2SpectrumImpl(spec, CollisionEnergy.none(), mexp.getIonMass(), 0d));
+        }
+        return mexp;
+    }
+
+    /**
+     * Formula Constraints consist of a chemical alphabet (a subset of the periodic table, determining which elements might occur in the measured compounds) and upperbounds for each of this elements. A formula constraint can be given like a molecular formula. Upperbounds are written in square brackets or omitted, if any number of this element should be allowed.
+     * @param constraints string representation of the constraint, e.g. "CHNOP[5]S[20]"
+     * @return formula constraint object
+     */
+    public FormulaConstraints getFormulaConstraints(String constraints) {
+        return new FormulaConstraints(constraints);
+    }
+
+    /**
+     * Decomposes a mass and return a list of all molecular formulas which ionized mass is near the measured mass.
+     * The maximal distance between the neutral mass of the measured ion and the theoretical mass of the decomposed formula depends on the chosen profile. For qtof it is 10 ppm, for Orbitrap and FTICR it is 5 ppm.
+     * @param mass mass of the measured ion
+     * @param ion ionization mode (might be a Charge, in which case the decomposer will enumerate the ion formulas instead of the neutral formulas)
+     * @param constr the formula constraints, defining the allowed elements and their upperbounds
+     * @return list of molecular formulas which theoretical ion mass is near the given mass
+     */
+    public List<MolecularFormula> decompose(double mass, Ionization ion, FormulaConstraints constr) {
+        return decompose(mass, ion, constr, getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation());
+    }
+
+    /**
+     * Decomposes a mass and return a list of all molecular formulas which ionized mass is near the measured mass
+     * @param mass mass of the measured ion
+     * @param ion ionization mode (might be a Charge, in which case the decomposer will enumerate the ion formulas instead of the neutral formulas)
+     * @param constr the formula constraints, defining the allowed elements and their upperbounds
+     * @param dev the allowed mass deviation of the measured ion from the theoretical ion masses
+     * @return
+     */
+    public List<MolecularFormula> decompose(double mass, Ionization ion, FormulaConstraints constr, Deviation dev) {
+        return getMs2Analyzer().getDecomposerFor(constr.getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(mass), dev, constr);
+    }
+
+    /**
+     * Simulates an isotope pattern for the given molecular formula and the chosen ionization
+     * @param compound neutral molecular formula
+     * @param ion ionization mode (might be a Charge)
+     * @return spectrum containing the theoretical isotope pattern of this compound
+     */
+    public Spectrum<Peak> simulateIsotopePattern(MolecularFormula compound, Ionization ion) {
+        return getMs1Analyzer().getPatternGenerator().simulatePattern(compound, ion);
+    }
+
+
+
+
 
     private double filterCandidateList(IsotopePattern candidate, HashMap<MolecularFormula, Double> formulas) {
         if (candidate.getCandidates().size()==0) return 0d;
