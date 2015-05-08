@@ -18,7 +18,7 @@ public class CsvParser extends SpectralParser {
 
     }
 
-    private final static Pattern PEAK_PATTERN = Pattern.compile("^(\\d+(?:\\.\\d*)?)(\\s+|,)(\\d+(?:\\.\\d*)?)");
+    private final static Pattern PEAK_PATTERN = Pattern.compile("^([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?)(\\s+|,|;)([-+]?[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?)");
 
     @Override
     public Iterator<Ms2Spectrum<Peak>> parseSpectra(BufferedReader reader) throws IOException {

@@ -121,21 +121,24 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 } else {
                     error("Cannot parse charge '" + value + "'");
                 }
-            } else if (optionName.equals("collision")) {
+            } else if (optionName.contains("collision") || optionName.contains("energy")) {
                 if (currentSpectrum.size()>0) newSpectrum();
                 if (currentEnergy != null) warn("Collision energy is set twice");
-                final Matcher m = COLLISION_PATTERN.matcher(value);
-                if (m.find()) {
-                    if (m.group(1) != null) {
-                        final double val = Double.parseDouble(m.group(1));
-                        currentEnergy = new CollisionEnergy(val, val);
+                if (value.isEmpty()) this.currentEnergy = CollisionEnergy.none();
+                else {
+                    final Matcher m = COLLISION_PATTERN.matcher(value);
+                    if (m.find()) {
+                        if (m.group(1) != null) {
+                            final double val = Double.parseDouble(m.group(1));
+                            currentEnergy = new CollisionEnergy(val, val);
+                        } else {
+                            assert m.group(2) != null;
+                            final String[] range = m.group(2).split("\\s*-\\s*", 2);
+                            this.currentEnergy = new CollisionEnergy(Double.parseDouble(range[0]), Double.parseDouble(range[1]));
+                        }
                     } else {
-                        assert m.group(2) != null;
-                        final String[] range = m.group(2).split("\\s*-\\s*", 2);
-                        this.currentEnergy = new CollisionEnergy(Double.parseDouble(range[0]), Double.parseDouble(range[1]));
+                        error("Cannot parse collision '" + value + "'");
                     }
-                } else {
-                    error("Cannot parse collision '" + value + "'");
                 }
             } else if (optionName.equals("tic")) {
                 if (currentSpectrum.size()>0) newSpectrum();
@@ -146,12 +149,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 } else {
                     error("Cannot parse total ion count: '" + value + "'");
                 }
-            } else if (optionName.equals("ms1peaks")) {
+            } else if (optionName.contains("ms1")) {
                 if (currentSpectrum.size()>0) newSpectrum();
                 this.isMs1 = true;
             } else if (optionName.equals("retention")) {
                 parseRetention(value);
-            } else if (optionName.equals("ionization")) {
+            } else if (optionName.contains("ion")) {
                 final Ionization ion = PeriodicTable.getInstance().ionByName(value.trim());
                 if (ion==null) {
                     warn("Unknown ionization: '" + value + "'");
