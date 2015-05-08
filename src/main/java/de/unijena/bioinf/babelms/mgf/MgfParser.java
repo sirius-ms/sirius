@@ -3,18 +3,19 @@ package de.unijena.bioinf.babelms.mgf;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MgfParser extends SpectralParser {
+public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
     @Override
     public Iterator<Ms2Spectrum<Peak>> parseSpectra(final BufferedReader reader) throws IOException {
@@ -104,5 +105,24 @@ public class MgfParser extends SpectralParser {
         } else {
 
         }
+    }
+
+    private final ArrayDeque<Ms2Spectrum<Peak>> buffer = new ArrayDeque<Ms2Spectrum<Peak>>();
+
+    @Override
+    public Ms2Experiment parse(BufferedReader reader) throws IOException {
+        final Iterator<Ms2Spectrum<Peak>> iter = parseSpectra(reader);
+        while (iter.hasNext()) buffer.addLast(iter.next());
+        if (buffer.isEmpty()) return null;
+        final MutableMs2Experiment exp = new MutableMs2Experiment();
+        exp.setMs2Spectra(new ArrayList<Ms2Spectrum<Peak>>());
+        exp.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
+        exp.setIonMass(buffer.peekFirst().getPrecursorMz());
+        while (Math.abs(buffer.peekFirst().getPrecursorMz()-exp.getIonMass()) < 0.002) {
+            final Ms2Spectrum<Peak> spec = buffer.pollFirst();
+            if (spec.getMsLevel()==1) exp.getMs1Spectra().add(spec);
+            else exp.getMs2Spectra().add(spec);
+        }
+        return exp;
     }
 }

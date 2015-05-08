@@ -1,6 +1,7 @@
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 
 import java.io.File;
@@ -33,5 +34,6 @@ public class MsExperimentParser {
 
     private void addKnownEndings() {
         knownEndings.put(".ms", (Class<? extends Parser<Ms2Experiment>>)JenaMsParser.class);
+        knownEndings.put(".mgf", MgfParser.class);
     }
 }
