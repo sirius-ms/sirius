@@ -121,7 +121,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 } else {
                     error("Cannot parse charge '" + value + "'");
                 }
-            } else if (optionName.contains("collision") || optionName.contains("energy")) {
+            } else if (optionName.contains("collision") || optionName.contains("energy") || optionName.contains("ms2")) {
                 if (currentSpectrum.size()>0) newSpectrum();
                 if (currentEnergy != null) warn("Collision energy is set twice");
                 if (value.isEmpty()) this.currentEnergy = CollisionEnergy.none();

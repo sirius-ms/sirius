@@ -74,11 +74,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     spec.addPeak(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
                 } else {
                     final int i = line.indexOf('=');
-                    if (i>=0) handleKeyword(spec, line.substring(0, i), line.substring(i));
+                    if (i>=0) handleKeyword(spec, line.substring(0, i), line.substring(i+1));
                 }
             } else {
                 final int i = line.indexOf('=');
-                if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i));
+                if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i+1));
             }
         }
         return null;
@@ -118,7 +118,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setMs2Spectra(new ArrayList<Ms2Spectrum<Peak>>());
         exp.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
         exp.setIonMass(buffer.peekFirst().getPrecursorMz());
-        while (Math.abs(buffer.peekFirst().getPrecursorMz()-exp.getIonMass()) < 0.002) {
+        while (!buffer.isEmpty() && Math.abs(buffer.peekFirst().getPrecursorMz()-exp.getIonMass()) < 0.002) {
             final Ms2Spectrum<Peak> spec = buffer.pollFirst();
             if (spec.getMsLevel()==1) exp.getMs1Spectra().add(spec);
             else exp.getMs2Spectra().add(spec);
