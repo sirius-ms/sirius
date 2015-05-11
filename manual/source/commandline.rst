@@ -32,9 +32,10 @@ The input of SIRIUS are MS and MS/MS spectra as simple peak lists. SIRIUS can re
 The intensity values can be arbitrary floating point values. SIRIUS will transform the intensities into relative intensities, so only the ratio between the intensity values is important.
 
 SIRIUS also supports the mgf (mascot generic format). This file format was developed for peptide spectra for the mascot search engine. Each spectrum in a mgf file can contain many spectra each starting with ``BEGIN IONS`` and ending with ``END IONS``. Peaks are again written as pairs of m/z and intensity values separated by whitespaces with one peak per line. Further meta information can be given as NAME=VALUE pairs. SIRIUS recognizes the following meta information:
-* PEPMASS: contains the measured mass of the ion (e.g. the parent peak)
-* CHARGE: contains the charge of the ion. As SIRIUS supports only single charged ions, this value can be either 1+ or 1-.
-* MSLEVEL: should be 1 for MS spectra and 2 for MS/MS spectra. SIRIUS will treat higher values automatically as MS/MS spectra, although, it might be that it supports MSn spectra in future versions.
+
+  * PEPMASS: contains the measured mass of the ion (e.g. the parent peak)
+  * CHARGE: contains the charge of the ion. As SIRIUS supports only single charged ions, this value can be either 1+ or 1-.
+  * MSLEVEL: should be 1 for MS spectra and 2 for MS/MS spectra. SIRIUS will treat higher values automatically as MS/MS spectra, although, it might be that it supports MSn spectra in future versions.
 
 This is an example for a mgf file::
 
@@ -63,7 +64,7 @@ A disadvantage of these data formats is that they do not contain all information
 * >charge: is redundant if you already provided the ion mode. Otherwise, it gives the charge of the ion (1 or -1).
 * >ms1: All peaks after this line are interpreted as MS peaks
 * >ms2: All peaks after this line are interpreted as MS/MS peaks
-* >collision: The same as >ms2, just that you can provide a collision energy
+* >collision: The same as >ms2 with the difference that you can provide a collision energy
 
 An example for a .ms file::
 
@@ -126,21 +127,23 @@ The main purpose of SIRIUS is identifying the molecular formula of the measured 
 Where MS FILE and MS/MS FILE are either csv or mgf files. If mgf files are used, you might omit the PARENTMASS option. If you omit the IONIZATION option, [M+H]+ is used as default. It is also possible to give a list of MS/MS files if you have several measurements of the same compound with different collision energies. SIRIUS will merge these MS/MS spectra into one spectrum.
 
 
-If your input files are in *.ms* format, you can omit the -1 and -2 flag. For example::
+If your input files are in *.ms* or *.mgf* format (containing MSLEVEL and PEPMASS meta information), you can omit the -1 and -2 flag. For example::
 
-  sirius [OPTIONS] someDirectory/
+  sirius [OPTIONS] demo-data/ms
 
 SIRIUS will pick the meta information (parentmass, ionization etc.) from the *.ms* files in the given directory. This allows SIRIUS to run in batch mode (analyzing multiple compounds without starting a new jvm process every time).
 
 SIRIUS will output a candidate list containing the **rank**, **overall score**, **fragmentation pattern score**, **isotope pattern score**, the number of **explained peaks** and the relative amount of **explained intensity**. See the following example output::
 
-  sirius -z 217.04954 -1 bergapten_ms.csv -2 bergapten_msms.csv
+  sirius  -z 354.1347 -p orbitrap  -1 demo-data/txt/chelidonine_ms.txt
+          -2 demo-data/txt/chelidonine_msms1.txt demo-data/txt/chelidonine_msms2.txt
 
-  1.) C12H8O4 score: 60.60  tree: 52.26 iso: 8.34 peaks: 14   98.82 %
-  2.) C8H11NO4P score: 46.32  tree: 38.95 iso: 7.37 peaks: 14   98.82 %
-  3.) C4H12N2O6S score: -0.77  tree: -0.77 iso: 0.00 peaks: 3   80.29 %
-  4.) C6H9N4O3P score: -3.76  tree: -3.76 iso: 0.00 peaks: 5   83.14 %
-  5.) C10H6N3O3 score: -4.97  tree: -4.97 iso: 0.00 peaks: 4    2.70 %
+  1.) C20H19NO5         score: 33.17	tree: +27.48	iso: 5.69	peaks: 13	95.44 %
+  2.) C16H22N2O5P	score: 32.35	tree: +26.77	iso: 5.58	peaks: 13	95.44 %
+  3.) C12H23N3O7S	score: 24.62	tree: +24.62	iso: 0.00	peaks: 13	95.44 %
+  4.) C18H17N4O4	score: 23.28	tree: +23.28	iso: 0.00	peaks: 14	95.79 %
+  5.) C14H20N5O4P	score: 21.61	tree: +21.61	iso: 0.00	peaks: 14	95.79 %
+
 
 The overall score is the sum of the fragmentation pattern score and the isotope pattern score. If the isotope pattern score is negative, it is set to zero. If at least one isotope pattern score is greater than 10, the isotope pattern is considered to have *good quality* and only the candidates with best isotope pattern scores are selected for further fragmentation pattern analysis.
 
@@ -230,8 +233,7 @@ Computing Fragmentation Trees
 
 If you already know the correct molecular formula and just want to compute a tree, you can specify a single molecular formula with the ``-f`` option. SIRIUS will then only compute a tree for this molecular formula. If your input data is in ``.ms`` format, the molecular formula might be already specified within the file. If a molecular formula is specified, the parentmass can be omitted. However, you still have to specify the ionization (except for default value ``[M+H]+``)::
 
-  sirius -f C6H12O6 -2 msms.csv
-  sirius -f C6H12O6 -i [M-H]- -2 msms_neg.csv
+  sirius -f C20H19NO5 -2 demo-data/txt/chelidonine_msms2.txt demo-data/txt/chelidonine_msms2.txt
 
 ********************************
 Visualizing Fragmentation Trees
@@ -239,10 +241,13 @@ Visualizing Fragmentation Trees
 
 SIRIUS supports two output formats for fragmentation trees: dot (graphviz format) and json (machine readable format). The commandline tool Graphviz [#graphviz]_ can transform dot files into image formats (pdf, svg, png etc.). After installing Graphviz you can display tree files as follows::
 
-  sirius -o trees -1 demo/ms1.txt -2 demo/15eV.txt demo/25eV.txt demo/40eV.txt demo/55eV.txt
-  graphviz -Tpdf -O trees/15eV_1_C14H19NO4.dot
+  sirius -p orbitrap -f C20H17NO6 -o trees demo-data/ms/Bicuculline.ms
+  dot -Tpdf -O trees/Bicuculline.dot
 
-This creates a file 15eV_1_C14H19NO4.dot.pdf (:ref:`Fig.1 <treeimg>`). Remark that SIRIUS uses automatically the file name of the first MS/MS spectrum to name the output file.
+This creates a file Bicuculline.dot.pdf (:ref:`Fig.1 <treeimg>`). Remark that SIRIUS uses automatically the file name of the input spectrum to name the output file. You can specify another filename with the **-o** option (as long as only one tree is computed).
+
+  sirius -p orbitrap -f C20H17NO6 -o compound.dot demo-data/ms/Bicuculline.ms
+  dot -Tpdf -O compound.dot
 
 .. _treeimg:
 
@@ -254,29 +259,55 @@ This creates a file 15eV_1_C14H19NO4.dot.pdf (:ref:`Fig.1 <treeimg>`). Remark th
 Demo Data
 ********************************
 
-You can download some sample spectrum from the SIRIUS website at http://bio.informatik.uni-jena.de/sirius2/wp-content/uploads/2015/05/demo.zip
+You can download some sample spectra from the SIRIUS website at http://bio.informatik.uni-jena.de/sirius2/wp-content/uploads/2015/05/demo.zip
 
-In the zip file measurements of two compounds are contained. The files cafeoyl_choline_ms1.txt, cafeoyl_choline_15eV.txt, cafeoyl_choline_25eV.txt, cafeoyl_choline_40eV.txt and cafeoyl_choline_55eV.txt are measurements of the compound cafeoyl choline with different collision energies. To identify this compound with SIRIUS execute the following in your commandline::
+The demo-data contain examples for three different data formats readable by SIRIUS. The mgf folder contain an example for a mgf file containing a single compound with several MS/MS spectra measured on an Orbitrap instrument. SIRIUS recognizes that these MS/MS spectra belong to the same compound because they have the same parent mass. To analyze this compound, run::
 
-  sirius identify -1 cafeoyl_choline_ms1.txt -2 cafeoyl_choline_15eV.txt cafeoyl_choline_25eV.txt
-                                                cafeoyl_choline_40eV.txt and cafeoyl_choline_55eV.txt
+  sirius -p orbitrap demo-data/mgf/laudanosine.mgf
+
+The output is::
+
+  1.) C21H27NO4	        score: 25.41	tree: +17.55	iso: 7.86	peaks: 12	97.94 %
+  2.) C17H30N2O4P	score: 21.46	tree: +13.97	iso: 7.49	peaks: 12	97.94 %
+  3.) C15H28N5O3P	score: 15.00	tree: +15.00	iso: 0.00	peaks: 11	87.04 %
+  4.) C19H25N4O3	score: 14.66	tree: +14.66	iso: 0.00	peaks: 11	87.16 %
+  5.) C14H27N7O2S	score: 13.69	tree: +13.69	iso: 0.00	peaks: 11	97.38 %
+
+This is a ranking list of the top molecular formula candidates. The best candidate is C21H27NO4 with a overall score of 25.41. This score is the sum of the fragmentation pattern scoring (17.55) and the isotope pattern scoring (7.86). For the last three candidates, the isotope pattern scoring is 0. In fact, this score can never fall below zero. If all isotope pattern scores are zero, you can assume that the isotope pattern has very low quality and cannot be used to determine the molecular formula. If the isotope pattern score of the top candidate is over 10, it is assumed to be a high quality isotope pattern. In this case, the isotope pattern is also used to filter out unlikely candidates and speed up the analysis.
+
+The last two columns contain the number of explained peaks in MS/MS spectrum as well as the relative amount of explained intensity. The last value should usually be over 80 % or even 90 %. If this value is very low you either have strange high intensive noise in your spectrum or the allowed mass deviation might be too low to explain all the peaks.
+
+If you want to look at the trees, you have to add the output option::
+
+  sirius -p orbitrap -o outputdir demo-data/mgf/laudanosine.mgf
+
+Now, SIRIUS will write the computed trees into the *outputdir* directory. You can visualize this trees in pdf format using Graphviz::
+
+  dot -Tpdf -O outputdir/laudanosine_1_C21H27NO4.dot
+
+This creates a pdf file *outputdir/laudanosine_1_C21H27NO4.dot.pdf*.
+
+The directory *ms* contains two examples of the ms format. Each file contains a single compound measured with an Orbitrap instrument. To analyze this compound run::
+
+  sirius -p orbitrap -o outputdir demo-data/ms/Bicuculline.ms
+
+As the ms file already contains the correct molecular formula, SIRIUS will directly compute the tree. For such cases (as well as when you specify exactly one molecular formula via *-f* option) you can also specify the concrete filename of the output file::
+
+  sirius -p orbitrap -o mycompound.dot demo-data/ms/Bicuculline.ms
+
+If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file) you can specify the number of candidates with the *-c* option::
+
+  sirius -p orbitrap -c 5 demo-data/ms/Bicuculline.ms
+
+SIRIUS will now ignore the correct molecular formula in the file and output the 5 best candidates.
 
 
+The txt folder contains simple peaklist files. Such file formats can be easily extracted from Excel spreadsheets. However, they do not contain meta information like the MS level and the parent mass. So you have to specify this information via commandline options::
 
-The console output should be something like this::
+  sirius  -p orbitrap  -z 354.134704589844 -1 demo-data/txt/chelidonine_ms.txt
+          -2 demo-data/txt/chelidonine_msms1.txt demo-data/txt/chelidonine_msms2.txt
 
-  Compute 'cafeoyl_choline_15eV.txt'
-  |==========100 %==========|	   computation finished
-
-  recalibrate trees
-  |==========100 %==========|	   computation finished
-  1.) C14H19NO4	score: 21.62	tree: +10.09	iso: 11.53	peaks: 6	66.95 %
-  2.) C10H22N2O4P	score: 19.61	tree: +8.89	iso: 10.71	peaks: 8	98.92 %
-  3.) C12H17N4O3	score: 19.01	tree: +6.43	iso: 12.57	peaks: 5	39.89 %
-  4.) C11H18N6P	score: 2.97	tree: -8.41	iso: 11.38	peaks: 1	0.00 %
-
-The ranklist shows the correct molecular formula of cafeoyl choline (C14H19NO4) in the top position, explaining 6 peaks (and 66.95% of the intensity) with an overall score of 21.62.
-
+The demo data contain a clean MS spectrum (e.g. there is only one isotope pattern contained in the MS spectrum). In such cases, SIRIUS can infer the correct parent mass from the MS data (by simply using the monoisotopic mass of the isotope pattern as parent mass). So you can omit the *-z* option in this cases.
 
 .. rubric:: Footnotes
 

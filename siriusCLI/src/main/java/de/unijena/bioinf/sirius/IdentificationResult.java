@@ -4,6 +4,12 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
+
+import java.io.File;
+import java.io.IOException;
 
 public class IdentificationResult {
 
@@ -42,6 +48,17 @@ public class IdentificationResult {
     public double getTreeScore() {
         final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
         return treeScore.getOverallScore() - treeScore.getAdditionalScore(Sirius.ISOTOPE_SCORE);
+    }
+
+    public void writeTreeToFile(File target) throws IOException {
+        final String name = target.getName();
+        if (name.endsWith(".dot")) {
+            new FTDotWriter().writeTreeToFile(target, tree);
+        } else new FTJsonWriter().writeTreeToFile(target, tree);
+    }
+
+    public void writeAnnotatedSpectrumToFile(File target) throws IOException {
+        new AnnotatedSpectrumWriter().writeFile(target, tree);
     }
 
     public double getIsotopeScore() {

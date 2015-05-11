@@ -57,11 +57,11 @@ public class CLI {
 
                 final List<String> whitelist = options.getFormula();
                 final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
-                if (whitelist==null && !options.isNumberOfCandidates() && i.experiment.getMolecularFormula()!=null) {
+                if (whitelist==null && (options.getNumberOfCandidates()==null) && i.experiment.getMolecularFormula()!=null) {
                     whiteset.add(i.experiment.getMolecularFormula());
                 } else if (whitelist!=null) for (String s :whitelist) whiteset.add(MolecularFormula.parse(s));
                 if (whiteset.size()!=1) {
-                    results = sirius.identify(i.experiment, options.getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
+                    results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
                     doIdentify=true;
                 } else {
                     doIdentify=false;
@@ -76,7 +76,7 @@ public class CLI {
                     }
                     output(i, results);
                 } else {
-                    outputSingle(i, results.get(0));
+                    outputSingle(i, results.get(0), whiteset.iterator().next());
                 }
             }
         } catch (IOException e) {
@@ -84,8 +84,12 @@ public class CLI {
         }
     }
 
+    private Integer getNumberOfCandidates() {
+        return options.getNumberOfCandidates()!=null ? options.getNumberOfCandidates() : 5;
+    }
+
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
-        final int c = options.getNumberOfCandidates();
+        final int c = getNumberOfCandidates();
         final File target = options.getOutput();
         String format = options.getFormat();
         if (format==null) format = "dot";
@@ -113,9 +117,9 @@ public class CLI {
         System.out.println(Sirius.CITATION);
     }
 
-    protected void outputSingle(Instance instance, IdentificationResult result) throws IOException {
-        if (result==null) {
-            System.out.println("Cannot find valid tree with molecular formula '" + instance.experiment.getMolecularFormula() + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
+    protected void outputSingle(Instance instance, IdentificationResult result, MolecularFormula formula) throws IOException {
+        if (result==null || result.getTree()==null) {
+            System.out.println("Cannot find valid tree with molecular formula '" + formula + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         }
         result.getTree().normalizeStructure();
@@ -125,8 +129,8 @@ public class CLI {
         final String n = target.getName();
         final int i = n.lastIndexOf('.');
         if (i >= 0) {
-            final String ext = n.substring(i);
-            if (ext.equals(".json") || ext.equals(".dot")) {
+            final String ext = n.substring(i+1);
+            if (ext.equals("json") || ext.equals("dot")) {
                 format = ext;
             } else format = "dot";
         } else {
@@ -150,20 +154,27 @@ public class CLI {
         }
         if (options.isAnnotating()) {
             final File anoName = getTargetName(target, instance, result, "csv", 1);
-            new AnnotatedSpectrumWriter().writeFile(anoName, instance.optTree);
+            new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
         }
 
     }
 
     private File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
-        final String inputName = i.fileNameWithoutExtension();
-        final File name;
-        if (n<=1) {
-            name = new File(target, inputName + "." + format);
+        if (!target.isDirectory()) {
+            final String name = target.getName();
+            final int j = name.lastIndexOf('.');
+            if (j>=0) return new File(target.getParentFile(), name.substring(0, j) + "." + format);
+            else return new File(target.getParentFile(), name + "." + format);
         } else {
-            name = new File(target, inputName + "_" + result.getRank() + "_" + result.getMolecularFormula().toString() + "." + format);
+            final String inputName = i.fileNameWithoutExtension();
+            final File name;
+            if (n<=1) {
+                name = new File(target, inputName + "." + format);
+            } else {
+                name = new File(target, inputName + "_" + result.getRank() + "_" + result.getMolecularFormula().toString() + "." + format);
+            }
+            return name;
         }
-        return name;
     }
 
     public void setArgs(String[] args) {
@@ -187,7 +198,7 @@ public class CLI {
             if (target.exists() && !target.isDirectory()) {
                 System.err.println("Specify a directory name as output directory");
                 System.exit(1);
-            } else {
+            } else if (target.getName().indexOf('.') < 0){
                 target.mkdirs();
             }
         }

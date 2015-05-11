@@ -6,6 +6,7 @@ You can integrate the SIRIUS library in your java project, either by using Maven
 
 Maven Integration
 ----------------------
+.. highlight:: xml
 
 Add the following repository to your pom file::
 
@@ -15,12 +16,6 @@ Add the following repository to your pom file::
         <name>bioinf-jena-releases</name>
         <url>http://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
     </repository>
-    <snapshotRepository>
-        <id>bioinf-jena</id>
-        <name>bioinf-jena-snapshots</name>
-        <url>http://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
-        <uniqueVersion>false</uniqueVersion>
-    </snapshotRepository>
   </distributionManagement>
 
 Now you can integrate SIRIUS in your project by adding the following dependency::
@@ -31,10 +26,12 @@ Now you can integrate SIRIUS in your project by adding the following dependency:
     <version>3.0.0</version>
   </dependency>
 
+.. highlight:: text
+
 Main API
 ----------------------
 
-The main class in SIRIUS is **de.unijena.bioinf.sirius.Sirius**. It is basically a wrapper around the important functionalities of the library. Although there are special classes for all parts of the analysis pipeline it is recommended to only use the Sirius class as the API of all other classes might change in future releases. The Sirius class also provides factory methods for the most important data structures. Although for many of this data structures you could also use their constructors directly, it is recommended to use the methods in the Sirius class.
+The main class in SIRIUS is **de.unijena.bioinf.sirius.Sirius**. It is basically a wrapper around the important functionalities of the library. Although there are special classes for all parts of the analysis pipeline it is recommended to only use the Sirius class as the API of all other classes might change in future releases. The Sirius class also provides factory methods for the most important data structures. Although, for many of this data structures you could also use their constructors directly, it is recommended to use the methods in the Sirius class.
 
 .. java:package:: de.unijena.bioinf.sirius
 
@@ -44,7 +41,7 @@ The main class in SIRIUS is **de.unijena.bioinf.sirius.Sirius**. It is basically
 
   :param profile: the profile name. Can be one of 'qtof', 'orbitrap' or 'fticr'. If ommited, the default profile ('qtof') is used.
 
-The main functions of SIRIUS are either identifying the molecular formula of a given MS/MS experiment or computing a tree for a given molecular formula and MS/MS spectrum. The Sirius class provides two methods for this purpose: identify and compute. The basic input type is a Ms2Experiment. It can be seen as a set of MS/MS spectra derived from the same precursor as well as a MS spectrum containing this precursor peak. The output of Sirius is an instance of IdentificationResult, containing the score and the corresponding fragmentation tree for the candidate molecular formula.
+The main functions of SIRIUS are either identifying the molecular formula of a given MS/MS experiment or computing a tree for a given molecular formula and MS/MS spectrum. The Sirius class provides two methods for this purpose: identify and compute. The basic input type is an Ms2Experiment. It can be seen as a set of MS/MS spectra derived from the same precursor as well as a MS spectrum containing this precursor peak. The output of Sirius is an instance of IdentificationResult, containing the score and the corresponding fragmentation tree for the candidate molecular formula.
 
 Create Datastructures
 **********************
@@ -158,6 +155,28 @@ Provided Algorithms
   :param compound: neutral molecular formula
   :param ion: ionization mode (might be a Charge)
   :return: spectrum containing the theoretical isotope pattern of this compound
+
+Output Type
+**********************
+
+.. java:package:: de.unijena.bioinf.sirius
+
+.. java:type:: public class IdentificationResult
+
+  The compute and identify methods return instances of IdentificationResult. This class wraps a tree and its scores. You can write the tree to a file using the writeTreeToFile method.
+
+
+.. java:method:: public void writeTreeToFile(File target) throws IOException
+
+  Writes the tree into a file. The file format is determined by the file ending (either '.dot' or '.json')
+
+  :param target: file name
+
+.. java:method:: public void writeAnnotatedSpectrumToFile(File target) throws IOException
+
+  Writes the annotated spectrum into a csv file.
+
+  :param target: file name
 
 
 .. rubric:: Footnotes
