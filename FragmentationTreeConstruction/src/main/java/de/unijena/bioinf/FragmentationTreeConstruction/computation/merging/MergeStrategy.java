@@ -15,16 +15,26 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.merging;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 import java.util.List;
 
-public interface PeakPairScorer extends Parameterized {
-
-    public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores);
-
+/**
+ * A strategy to merge peaks from different spectra. Merging is done by picking all peaks in the same merge window
+ * and calculate a new mass which represents them all. Their intensities are summed up by the merger.
+ *
+ * It is allowed to modify the parent peak and add new originalPeaks to it. But the mass of the parent peak should
+ * not be modified. Furthermore, the intensity of the parent usually doesn't matter.
+ *
+ * ParentPeak may be null if no parent peak was found or if the parent peak detection should happen later
+ *
+ * Returns the list of merged peaks
+ */
+public interface MergeStrategy extends Parameterized {
+    public List<ProcessedPeak> mergePeaks(Ms2Experiment experiment, ProcessedPeak parentPeak, List<List<ProcessedPeak>> peaks);
 }

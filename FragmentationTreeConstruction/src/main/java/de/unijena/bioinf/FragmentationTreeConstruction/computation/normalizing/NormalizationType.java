@@ -15,33 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.siriuscli;
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing;
 
-import de.unijena.bioinf.FragmentationTree.GraphBuilder;
-import de.unijena.bioinf.FragmentationTree.Main;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+public enum NormalizationType {
 
-/**
- * TEMPORARY
- */
-public class GraphBuilderCommand implements Command{
-    @Override
-    public String getDescription() {
-        return "Build fragmentation graphs for the given instance. Is for debugging purpose only.";
-    }
+    LOCAL, GLOBAL;
 
-    @Override
-    public String getName() {
-        return "graph";
-    }
-
-    @Override
-    public void run(String[] args) {
-        GraphBuilder.main(args);
-    }
-
-    @Override
-    public String getVersion() {
-        return Main.VERSION_STRING;
-    }
 }
