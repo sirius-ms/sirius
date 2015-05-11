@@ -155,6 +155,7 @@
                             <outfile>target/sirius.exe</outfile>
                             <jar>target/sirius.jar</jar>
                             <errTitle>sirius</errTitle>
+                            <icon>${project.basedir}/src/main/resources/sirius.ico</icon>
                             <classPath>
                                 <mainClass>de.unijena.bioinf.sirius.cli.CLI</mainClass>
                                 <addDependencies>true</addDependencies>

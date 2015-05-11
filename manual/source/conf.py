@@ -98,7 +98,7 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
-highlight_language = "java"
+highlight_language = "text"
 
 
 # -- Options for HTML output ----------------------------------------------
