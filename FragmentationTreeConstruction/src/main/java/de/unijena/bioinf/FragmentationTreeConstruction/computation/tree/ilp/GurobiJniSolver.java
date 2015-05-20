@@ -12,6 +12,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.*;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -30,6 +31,15 @@ public class GurobiJniSolver implements TreeBuilder {
     ///                                ///
     //////////////////////////////////////
 
+    private static GRBModel STATIC_MODEL;
+
+    public GurobiJniSolver() {
+        if (STATIC_MODEL==null) try {
+            STATIC_MODEL = new GRBModel(new GRBEnv());
+        } catch (GRBException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
@@ -390,7 +400,13 @@ public class GurobiJniSolver implements TreeBuilder {
         protected SolverState solveMIP() throws Exception {
             GurobiJni.updatemodel(this.model);
 
-            int error = GurobiJni.tunemodel(this.model);
+
+            int error;
+
+            final Method opt = GRBModel.class.getDeclaredMethod("jnioptimize", long.class, int.class, int.class);
+            opt.setAccessible(true);
+            error = ((Integer)opt.invoke(STATIC_MODEL, model, 0, 0)).intValue();
+
             if(error != 0) throw new GRBException(GurobiJni.geterrormsg(this.env), error);
 
             // TODO: find a hack to use jnioptimize()!
