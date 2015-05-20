@@ -28,10 +28,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import gurobi.GRB;
-import gurobi.GRBException;
-import gurobi.GurobiJni;
+import gurobi.*;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -50,6 +49,14 @@ public class NewGurobiSolver implements TreeBuilder {
     ///                                ///
     //////////////////////////////////////
 
+
+    public NewGurobiSolver() {
+        try {
+            STATIC_MODEL = new GRBModel(new GRBEnv());
+        } catch (GRBException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
@@ -86,6 +93,7 @@ public class NewGurobiSolver implements TreeBuilder {
         return "Gurobi JNI";
     }
 
+    private static GRBModel STATIC_MODEL;
 
     ////////////////////////////////
     ///                          ///
@@ -174,7 +182,6 @@ public class NewGurobiSolver implements TreeBuilder {
          * OPTIMIZED I
          */
         protected void defineVariablesWithStartValues(FTree presolvedTree) throws GRBException {
-
             if (this.model == 0L) throw new GRBException("Model not loaded", 20003);
 
             // First: Acquire start values
@@ -373,10 +380,12 @@ public class NewGurobiSolver implements TreeBuilder {
             // nothing to do here
         }
 
-
         @Override
         protected SolverState solveMIP() throws Exception {
-            GurobiJni.tunemodel(this.model); //TODO: check: is this optimizing?
+
+            final Method opt = GRBModel.class.getDeclaredMethod("jnioptimize", long.class, int.class, int.class);
+            opt.setAccessible(true);
+            opt.invoke(STATIC_MODEL, model, 0, 0);
 
             if (GurobiJniAccess.get(this.model, GRB.IntAttr.Status) != GRB.OPTIMAL) {
                 if (GurobiJniAccess.get(this.model, GRB.IntAttr.Status) == GRB.INFEASIBLE) {
