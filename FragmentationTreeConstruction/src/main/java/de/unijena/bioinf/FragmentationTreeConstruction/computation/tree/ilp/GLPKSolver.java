@@ -44,44 +44,15 @@ import java.util.List;
  * - GLPKConstants.DB: Double bound, lb < x < ub
  * - GLPKConstants.LO: Only Lower Bound, lb < x < infinity
  * - GLPKConstraints.FX: fixed variables 1 <= x <= 1
- * TODO: timlimit?
+ * TODO: timelimit?
  * TODO: global lower bound?
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver implements TreeBuilder {
     private static boolean isLoaded=false;
-    /*********************************************************************
-     * try to load the jni interface for glpk from the glpk library      *
-     * will be loaded the moment an instance of 'GLPKSolver' is created  *
-     *********************************************************************/
-    /*
-    public static synchronized void loadLibrary() {
-        if (isLoaded) return;
-        final String versionString = GLPK.GLP_MAJOR_VERSION + "_" + GLPK.GLP_MINOR_VERSION;
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            // try to load Windows library
-            try {
-                System.loadLibrary("glpk_" + versionString);
-            } catch (UnsatisfiedLinkError e) {
-                System.err.println("Could not load glpk library from windows! Make sure to have the correct" +
-                        " version of glpk installed on your system!");
-                throw e;
-            }
-        } else {
-            try {
-                System.loadLibrary("glpk_java");
-            } catch (UnsatisfiedLinkError e) {
-                System.err.println("The dynamic link library for GLPK for java could not be loaded. \n" +
-                        "Consider using \njava -Djava.library.path=");
-                throw e;
-            }
-        }
-        isLoaded = true;
-    }
-    */
+
 
     public GLPKSolver() {
-        //loadLibrary();
     }
 
 
@@ -226,7 +197,7 @@ public class GLPKSolver implements TreeBuilder {
                 if (f==pseudoRoot) continue;
                 {
                     SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree() + 2);
-                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree()+2);
+                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree() + 2);
                     int rowIndex = 1;
                     for (int in=0; in < f.getInDegree(); ++in) {
                         assert losses.get(lossId).getTarget() == f;
@@ -234,6 +205,7 @@ public class GLPKSolver implements TreeBuilder {
                         GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
                         ++rowIndex;
                     }
+
                     GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
                     final int offset = edgeOffsets[k];
                     for (int out=0; out < f.getOutDegree(); ++out ) {
@@ -253,10 +225,10 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected void setColorConstraint() {
-            // returns the index of the first newly created row
+
             final int COLOR_NUM = this.graph.maxColor()+1;
 
-            // get all edges of each color first. We can add each color-constraint afterwards + saving much memory!
+            // get all edges of each color first. We can add each color-constraint afterwards + save much memory!
             final TIntArrayList[] edgesOfColors = new TIntArrayList[COLOR_NUM];
             for (int c=0; c<COLOR_NUM; c++)
                 edgesOfColors[c] = new TIntArrayList();
@@ -270,6 +242,7 @@ public class GLPKSolver implements TreeBuilder {
                     list.add(l++);
                 }
             }
+
             for (TIntArrayList list : edgesOfColors)
                 if (list.size()>0) ++colnum;
 
@@ -302,7 +275,7 @@ public class GLPKSolver implements TreeBuilder {
             // returns the index of the first newly created row
             final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
             GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
-            GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_FX, 1.0, 1.0); // fixed variable! TODO: check!
+            GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_FX, 1.0, 1.0); // fixed variable!
 
             final Fragment localRoot = graph.getRoot();
             final int fromIndex = edgeOffsets[localRoot.getVertexId()];

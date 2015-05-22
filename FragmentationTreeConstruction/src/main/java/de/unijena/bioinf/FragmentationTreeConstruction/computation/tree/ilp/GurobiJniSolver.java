@@ -40,7 +40,7 @@ import java.util.List;
  *   Remember that when reading the code!
  * Created by Xentrics on 13.11.2014.
  */
-public class NewGurobiSolver implements TreeBuilder {
+public class GurobiJniSolver implements TreeBuilder {
 
 
     //////////////////////////////////////
@@ -49,9 +49,10 @@ public class NewGurobiSolver implements TreeBuilder {
     ///                                ///
     //////////////////////////////////////
 
+    private static GRBModel STATIC_MODEL;
 
-    public NewGurobiSolver() {
-        try {
+    public GurobiJniSolver() {
+        if (STATIC_MODEL==null) try {
             STATIC_MODEL = new GRBModel(new GRBEnv());
         } catch (GRBException e) {
             e.printStackTrace();
@@ -93,7 +94,6 @@ public class NewGurobiSolver implements TreeBuilder {
         return "Gurobi JNI";
     }
 
-    private static GRBModel STATIC_MODEL;
 
     ////////////////////////////////
     ///                          ///
@@ -106,10 +106,9 @@ public class NewGurobiSolver implements TreeBuilder {
 
         final protected TreeBuilder feasibleSolver;
 
-        protected final long model;
+        protected long model;
         protected final long env;
 
-        protected int[] vars;
 
 
         public Solver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) throws GRBException {
@@ -117,18 +116,16 @@ public class NewGurobiSolver implements TreeBuilder {
 
             this.env = getDefaultEnv(null);
 
-            // TODO: NOTE: THIS IS COPIED FROM GUROBI CLASS. IT DOESN'T MATCH THE C REFERENCE; IF STH. GOES WRONG, CHECK THAT FIRST!
             int[] error = new int[1];
             this.model = GurobiJni.newmodel(error, this.env, null, 0, null, null, null, null, null);
             if (error.length > 0 && error[0] != 0)
                 throw new GRBException("Number of Errors: (" + error.length + "). First error entry: \n" +  GurobiJni.geterrormsg(env), error[0]);
 
-            GurobiJniAccess.set( this.env, GRB.DoubleParam.TimeLimit, 0);
+            // set time limit
+            GurobiJniAccess.set( this.env, GRB.DoubleParam.TimeLimit, this.LP_TIMELIMIT);
 
             this.feasibleSolver = feasibleSolver;
-
-            losses = graph.losses();
-            assert (losses != null);
+            setNumberOfCPUs(Runtime.getRuntime().availableProcessors());
         }
 
 
@@ -156,13 +153,13 @@ public class NewGurobiSolver implements TreeBuilder {
 
 
         //////////////////////////////
-///////--- INSTANCE METHODS ---///////
+    ///////--- INSTANCE METHODS ---///////
         //////////////////////////////
 
 
         @Override
-        public void build() {
-            super.build();
+        public void prepareSolver() {
+            super.prepareSolver();
 
             try {
                 assert GurobiJniAccess.get(this.model, GRB.IntAttr.IsMIP) != 0;
@@ -182,6 +179,7 @@ public class NewGurobiSolver implements TreeBuilder {
          * OPTIMIZED I
          */
         protected void defineVariablesWithStartValues(FTree presolvedTree) throws GRBException {
+
             if (this.model == 0L) throw new GRBException("Model not loaded", 20003);
 
             // First: Acquire start values
@@ -212,7 +210,6 @@ public class NewGurobiSolver implements TreeBuilder {
             }
 
             // Second: set up all other attributes
-            this.vars = new int[LP_NUM_OF_VARIABLES];
 
             final double[] ubs = new double[this.LP_NUM_OF_VARIABLES];
             final double[] lbs = null; // this will cause lbs to be 0.0 by default
@@ -248,23 +245,29 @@ public class NewGurobiSolver implements TreeBuilder {
 
             if (this.model == 0L) throw new GRBException("Model not loaded", 20003);
 
-            this.vars = new int[LP_NUM_OF_VARIABLES];
-
-            final double[] vals = new double[this.LP_NUM_OF_VARIABLES];
+            final int nonZero = 0;
+            final int[] vbeg = new int[this.LP_NUM_OF_VARIABLES];
+            final int[] inds = null;
+            final double[] vals = null;
             final double[] ubs = new double[this.LP_NUM_OF_VARIABLES];
-            final double[] lbs = null; // this will cause lbs to be 0.0 by default
+            final double[] lbs = new double[this.LP_NUM_OF_VARIABLES]; // this will cause lbs to be 0.0 by default
             final double[] obj = new double[this.LP_NUM_OF_VARIABLES];
-            final char[] vtypes = null; // arguments will be assumed to be continuous
+            final char[] vtypes = new char[this.LP_NUM_OF_VARIABLES];
             String[] names = null; // arguments will have default names.
 
             for(int i=0; i < losses.size(); i++) {
-                ubs[i] = 1.0;
-                obj[i] = -losses.get(i).getWeight();
-                vals[i] = 1.0d; // edges
+                vbeg[i] = i;
+                lbs[i] = 0d;
+                ubs[i] = 1d;
+                obj[i] = -losses.get(i).getWeight(); // var coefficient
+                vtypes[i] = GRB.INTEGER;
             }
 
-            final int error = GurobiJni.addvars(model, LP_NUM_OF_VARIABLES, 0, edgeOffsets, edgeIds, vals, obj , lbs, ubs, vtypes, names);
+            //final int error = GurobiJni.addvars(model, 2, 0, new int[]{0,1}, null, null, new double[]{1d, 1d}, new double[]{0d, 0d}, new double[]{1d, 1d}, new char[]{GRB.INTEGER, GRB.INTEGER}, null);
+            final int error = GurobiJni.addvars(model, this.LP_NUM_OF_VARIABLES, nonZero, vbeg, inds, vals, obj, lbs, ubs, vtypes, names);
             if (error != 0) throw new GRBException(GurobiJni.geterrormsg(this.env), error);
+
+            GurobiJni.updatemodel(this.model); // this is important! we could not define constraints afterwards
 
         }
 
@@ -274,6 +277,7 @@ public class NewGurobiSolver implements TreeBuilder {
          * for each vertex, take one out-going edge at most
          * => the sum of all variables as edges going away from v is equal or less 1
          * OPTIMIZED I
+         * TODO: optimize to oneliner
          */
         protected void setTreeConstraint() {
 
@@ -288,19 +292,38 @@ public class NewGurobiSolver implements TreeBuilder {
             final double[] lhsc = null; // left-hand-side-constants. We usually don't have any of those
             final char[] signs = new char[LP_NUM_OF_VARIABLES]; // equation sign between left and right hand side
 
-            for (int k=0; k<this.LP_NUM_OF_VERTICES; k++) {
-                // LP_NUM_OF_VARIABLES is NumOfEdges!
-                final int LAST_INDEX = (k == this.LP_NUM_OF_VARIABLES -1) ? LP_NUM_OF_VARIABLES -1 : edgeOffsets[k+1] -1;
+            final Fragment pseudoRoot = graph.getRoot();
+            int lossId = 0;
+            for (int k=1; k<this.LP_NUM_OF_VERTICES; k++) { // do not include the root
 
-                for (int i= edgeOffsets[k]; i<LAST_INDEX; i++)
-                    coefs[i] = 1.0; // each edge is weighted equally here
+                final Fragment f = graph.getFragmentAt(k);
+                assert f != pseudoRoot : "Tree constraint must not iterate over root vertex!";
 
-                // we want to only use 1 edge from any vertex at max
-                signs[k] = GRB.LESS_EQUAL;
-                rhsc[k] = 1.0d;
+                // define sparse matrix
+                int[] inds = new int[f.getInDegree()+1];
+                double[] vals = new double [f.getInDegree()+1];
+                for (int in = 0; in < f.getInDegree(); ++in) {
+                    assert losses.get(lossId).getTarget() == f;
+                    inds[in] = lossId;
+                    vals[in] = 1d;
+                    lossId++;
+                }
+
+                final int lastIndex = f.getInDegree();
+                vals[lastIndex] = -1d;
+                final int offset = edgeOffsets[k];
+                for (int out=0; out < f.getOutDegree(); ++out ) {
+                    final int outgoingEdge = edgeIds[offset+out];
+                    assert losses.get(outgoingEdge).getSource()==f;
+                    inds[lastIndex] = outgoingEdge;
+
+                    final int[] cbeg = new int[]{0};
+                    final char[] sense = new char[]{GRB.LESS_EQUAL};
+                    final double[] lhs = new double[]{0d};
+                    final double[] rhs = new double[]{Double.POSITIVE_INFINITY}; // could be 1, I guess
+                    GurobiJni.addconstrs(this.model, 1, f.getInDegree()+1, cbeg, inds, vals, sense, lhs, rhs, null); //TODO: this can be wrapped up into one execution. Should be checked for validity first, though!
+                }
             }
-
-            GurobiJni.addconstrs(model, edgeOffsets.length, coefs.length, edgeOffsets, edgeIds, coefs, signs, lhsc, rhsc ,null);
         }
 
 
@@ -312,43 +335,47 @@ public class NewGurobiSolver implements TreeBuilder {
          */
         protected void setColorConstraint() {
 
-            final boolean[] colorInUse = new boolean[graph.maxColor()+1];
-            final int COLOR_NUM = graph.maxColor()+1;
+            final int COLOR_NUM = this.graph.maxColor()+1;
 
-        /* Concept:
-         * - each color has a given amount of incoming edges
-         * - we already defined those edges as variables ( 'defineVariables()' )
-         * - we already applied the tree constraint
-         * - now, we gather all edges of each color and make a second constraint, that the maximum
-         *   amount of edges used to reach that color is 1 edge
-         */
+            // get all edges of each color first. We can add each color-constraint afterwards + save much memory!
+            final TIntArrayList[] edgesOfColors = new TIntArrayList[COLOR_NUM];
+            for (int c=0; c<COLOR_NUM; c++)
+                edgesOfColors[c] = new TIntArrayList();
 
-            // prepare arrays
-            TDoubleArrayList[] coefs = new TDoubleArrayList[COLOR_NUM]; // hey are all 1
-            TIntArrayList[] vars = new TIntArrayList[this.LP_NUM_OF_VARIABLES]; // I do not know how many edges are going into on color :/
-            double[] constants = new double[]{1.0d}; // they are all 1
-            char[] signs = new char[]{GRB.LESS_EQUAL}; // the are all GRB.LESS_EQUAL
-
-            // init
-            for (int c=0; c<COLOR_NUM; c++) {
-                coefs[c] = new TDoubleArrayList();
-                vars[c] = new TIntArrayList();
-            }
-
-            // make constraint. Remember: sparse matrices!
-            for (int e : this.edgeIds) { // edgeIds are equal to the index of an edge
-                final int color = losses.get(e).getTarget().getColor();
-                colorInUse[color] = true; // we may skip colors we did not use, later
-                coefs[color].add(1.0d); // each edge has an impact on 1
-                vars[color].add(e);
-            }
-
-
-            // add our constraints
-            for (int c=0; c<COLOR_NUM; c++) {
-                if (colorInUse[c]) {
-                    GurobiJni.addconstrs(model, 1, coefs[c].size(), new int[]{0}, vars[c].toArray(), coefs[c].toArray(), signs, constants, null, null);
+            int colnum = 0;
+            int l=0;
+            for (int k=0; k < graph.numberOfVertices(); ++k) {
+                final Fragment u = graph.getFragmentAt(k);
+                final TIntArrayList list = edgesOfColors[u.getColor()];
+                for (int i=0; i < u.getInDegree(); ++i) {
+                    list.add(l++);
                 }
+            }
+
+            for (TIntArrayList list : edgesOfColors)
+                if (list.size()>0) ++colnum;
+
+            final int NUM_OF_CONSTRAINTS = COLOR_NUM;
+
+            // add constraints. Maximum one edge per color.
+            int constrIndex=0;
+            for (int c=0; c < edgesOfColors.length; c++) {
+                final TIntArrayList COL_ENTRIES = edgesOfColors[c];
+                if (COL_ENTRIES.isEmpty())
+                    continue;
+
+                final int[] inds = new int[COL_ENTRIES.size()];
+                final double[] coefs = new double[COL_ENTRIES.size()];
+                for (int i=0; i < COL_ENTRIES.size(); i++) {
+                    inds[i] = COL_ENTRIES.get(i);
+                    coefs[i] = 1d;
+                }
+
+                final int[] cbeg = new int[]{0};
+                final char[] sign = new char[]{GRB.LESS_EQUAL};
+                final double[] lhs = new double[]{0d};
+                final double[] rhs = new double[]{1d};
+                GurobiJni.addconstrs(this.model, 1, inds.length, cbeg, inds, coefs, sign, lhs, rhs, null);
             }
         }
 
@@ -358,21 +385,27 @@ public class NewGurobiSolver implements TreeBuilder {
          * there should be at least one edge leading away from the root
          */
         protected void setMinimalTreeSizeConstraint() {
+
             final Fragment localRoot = graph.getRoot();
             final int fromIndex = edgeOffsets[localRoot.getVertexId()];
             final int toIndex = fromIndex + localRoot.getOutDegree();
 
-            final int[] indices = new int[toIndex-fromIndex+1];
-            final double[] coefs = new double[toIndex-fromIndex+1];
+            final int[] inds = new int[localRoot.getOutDegree()];
+            final double[] coefs = new double[localRoot.getOutDegree()];
 
-            for (int i=fromIndex; i<=toIndex; i++) {
-                indices[i-fromIndex] = i; // add variable indices
+            assert fromIndex <= toIndex;
+            for (int i=fromIndex; i<toIndex; i++) {
+                inds[i-fromIndex] = i; // add variable indices
                 coefs[i-fromIndex] = 1.0d;
             }
 
-            assert (indices[toIndex] != 0) : "The Last value shouldn't be zero?!";
+            assert (coefs[toIndex-1] != 0) : "The Last value shouldn't be zero?!";
 
-            GurobiJni.addconstrs(model, 1, coefs.length, new int[]{fromIndex}, indices, coefs, new char[]{GRB.GREATER_EQUAL}, new double[]{1.0d}, null, null);
+            final int[] cbeg = new int[]{0};
+            final char[] sign = new char[]{GRB.LESS_EQUAL};
+            final double[] lhs = new double[]{0d};
+            final double[] rhs = new double[]{1d};
+            GurobiJni.addconstrs(model, 1, inds.length, cbeg, inds, coefs, sign, lhs, rhs, null);
         }
 
         @Override
@@ -380,12 +413,21 @@ public class NewGurobiSolver implements TreeBuilder {
             // nothing to do here
         }
 
+
         @Override
         protected SolverState solveMIP() throws Exception {
+            GurobiJni.updatemodel(this.model);
+
+
+            int error;
 
             final Method opt = GRBModel.class.getDeclaredMethod("jnioptimize", long.class, int.class, int.class);
             opt.setAccessible(true);
-            opt.invoke(STATIC_MODEL, model, 0, 0);
+            error = ((Integer)opt.invoke(STATIC_MODEL, model, 0, 0)).intValue();
+
+            if(error != 0) throw new GRBException(GurobiJni.geterrormsg(this.env), error);
+
+            // TODO: find a hack to use jnioptimize()!
 
             if (GurobiJniAccess.get(this.model, GRB.IntAttr.Status) != GRB.OPTIMAL) {
                 if (GurobiJniAccess.get(this.model, GRB.IntAttr.Status) == GRB.INFEASIBLE) {
@@ -462,6 +504,18 @@ public class NewGurobiSolver implements TreeBuilder {
         protected double getSolverScore() throws Exception {
 
             return -GurobiJniAccess.get(this.model, GRB.DoubleAttr.ObjVal);
+        }
+
+        public void setNumberOfCPUs(int numberOfCPUs) {
+            if (numberOfCPUs != this.numberOfCPUs) {
+                try {
+                    GurobiJniAccess.set( this.env, GRB.IntParam.Threads, numberOfCPUs);
+                } catch (GRBException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            this.numberOfCPUs = numberOfCPUs;
+
         }
     }
 

@@ -43,7 +43,7 @@ abstract public class AbstractSolver {
 
     // graph information
     protected final FGraph graph;
-    protected List<Loss> losses;
+    protected final List<Loss> losses;
     protected final int[] edgeIds; // contains variable indices (after 'computeoffsets')
     protected final int[] edgeOffsets; // contains: the first index j of edges starting from a given vertex i
 
@@ -139,7 +139,7 @@ abstract public class AbstractSolver {
      * - this class should be implemented through abstract sub methods
      * - model.update() like used within the gurobi solver may be used within one of those, if necessary
      */
-    public void build() {
+    public void prepareSolver() {
         try {
             computeOffsets();
             assert (edgeOffsets != null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
@@ -208,21 +208,21 @@ abstract public class AbstractSolver {
         try {
             if (graph.numberOfEdges() == 1) return buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true});
             // set up constraints etc.
-            build();
+            prepareSolver();
 
-            // pre-optimization, if needed (e.g. lower bounds)
+            // get optimal solution (score) if existing
             AbstractSolver.SolverState signal = solveMIP();
-            if(signal == SolverState.SHALL_RETURN_NULL)
+            if (signal == SolverState.SHALL_RETURN_NULL)
                 return null;
 
             // reconstruct tree after having determined the (possible) optimal solution
             final FTree TREE = buildSolution();
-            if(TREE != null && !isComputationCorrect(TREE, this.graph))
+            if (TREE != null && !isComputationCorrect(TREE, this.graph))
                 throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
 
             // free any memory, if necessary
             signal = pastBuildSolution();
-            if(signal == SolverState.SHALL_RETURN_NULL)
+            if (signal == SolverState.SHALL_RETURN_NULL)
                 return null;
 
             return TREE;
@@ -232,7 +232,7 @@ abstract public class AbstractSolver {
     }
 
 
-    // functions used within 'build'
+    // functions used within 'prepareSolver'
 
     /**
      * Variables in our problem are the edges of the given graph.
@@ -251,8 +251,12 @@ abstract public class AbstractSolver {
     abstract protected void applyLowerBounds() throws Exception;
 
     /**
-     * - for each vertex, take only one out-going edge at most
-     * => the sum of all variables as edges going away from v is equal or less 1
+     * - relaxed version: for each vertex, there are only one or more outgoing edges,
+     *   if there is at least one incomming edge
+     *   -> the sum of all incomming edges - sum of outgoing edges >= 0
+     * - applying 'ColorConstraint' will tighten this condition to:
+     *      for each vertex, there can only be one incommning edge at most and only if one incomming edge is present,
+     *      one single outgoing edge can be present.
      * @throws Exception
      */
     abstract protected void setTreeConstraint() throws Exception;
@@ -280,7 +284,7 @@ abstract public class AbstractSolver {
     abstract protected void setObjective() throws Exception;
 
     /**
-     * - in here, the implemented solver should solve the problem, so that the result can be build afterwards
+     * - in here, the implemented solver should solve the problem, so that the result can be prepareSolver afterwards
      * - a specific solver might need to set up more before starting the solving process
      * - this is called after all constraints are applied
      * @return
