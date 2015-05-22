@@ -49,12 +49,42 @@ import java.util.List;
  * Created by xentrics on 04.03.15.
  */
 public class GLPKSolver implements TreeBuilder {
-    private static boolean isLoaded=false;
+    //private static boolean isLoaded=false;
 
+
+    /*********************************************************************
+     * try to load the jni interface for glpk from the glpk library      *
+     * will be loaded the moment an instance of 'GLPKSolver' is created  *
+     *********************************************************************/
+    /*
+    public static synchronized void loadLibrary() {
+        if (isLoaded) return;
+        final String versionString = GLPK.GLP_MAJOR_VERSION + "_" + GLPK.GLP_MINOR_VERSION;
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            // try to load Windows library
+            try {
+                System.loadLibrary("glpk_" + versionString);
+            } catch (UnsatisfiedLinkError e) {
+                System.err.println("Could not load glpk library from windows! Make sure to have the correct" +
+                        " version of glpk installed on your system!");
+                throw e;
+            }
+        } else {
+            try {
+                System.loadLibrary("glpk_java");
+            } catch (UnsatisfiedLinkError e) {
+                System.err.println("The dynamic link library for GLPK for java could not be loaded. \n" +
+                        "Consider using \njava -Djava.library.path=");
+                throw e;
+            }
+        }
+        isLoaded = true;
+    }
+    */
 
     public GLPKSolver() {
+        //loadLibrary();
     }
-
 
     //////////////////////////////////////
     ///                                ///
