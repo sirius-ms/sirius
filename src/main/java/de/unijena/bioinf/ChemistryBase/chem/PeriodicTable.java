@@ -17,7 +17,9 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
 import java.io.IOException;
 import java.util.*;
@@ -513,6 +515,35 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             if (ion.equals(a)) return ion;
         }
         return a;
+    }
+
+    /**
+     * Calculate for a given alphabet the maximal and minimal mass defects of isotopes.
+     * @param alphabet chemical alphabet
+     * @param deviation allowed mass deviation
+     * @param monomz m/z of monoisotopic peak
+     * @param peakOffset integer distance between isotope peak and monoisotopic peak (minimum: 1)
+     * @return an interval which should contain the isotopic peak
+     */
+    public Range<Double> getIsotopicMassWindow(ChemicalAlphabet alphabet, Deviation deviation, double monomz, int peakOffset) {
+        if (peakOffset < 1) throw new IllegalArgumentException("Expect a peak offset of at least 1");
+        final IsotopicDistribution dist = getDistribution();
+        double minmz = Double.POSITIVE_INFINITY;
+        double maxmz = Double.NEGATIVE_INFINITY;
+        for (Element e : alphabet) {
+            final Isotopes iso = dist.getIsotopesFor(e);
+            for (int k=1; k < iso.getNumberOfIsotopes(); ++k) {
+                final int i = iso.getIntegerMass(k) - e.getIntegerMass();
+                if (i > peakOffset) break;
+                double diff = iso.getMassDifference(k) - i;
+                diff *= (peakOffset/i);
+                minmz = Math.min(minmz, diff);
+                maxmz = Math.max(maxmz, diff);
+            }
+        }
+        final double a = monomz + peakOffset - minmz;
+        final double b = monomz + peakOffset + maxmz;
+        return Range.closed(a - deviation.absoluteFor(a), b + deviation.absoluteFor(b));
     }
 
     /**

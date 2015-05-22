@@ -65,7 +65,7 @@ public abstract class Ionization implements Comparable<Ionization> {
      * used for isotopic pattern generation of a formula with the given ionization mode.
      */
     public MolecularFormula getAtoms() {
-    	return null;
+    	return MolecularFormula.emptyFormula();
     }
     
     public abstract String getName();

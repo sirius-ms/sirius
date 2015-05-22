@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
@@ -68,6 +69,11 @@ public class Deviation implements Cloneable{
     public boolean inErrorWindow(double center, double value) {
         final double diff = Math.abs(center - value);
         return diff <= absoluteFor(center);
+    }
+
+    public Range<Double> getRange(double mz) {
+        final double abs = absoluteFor(mz);
+        return Range.closed(mz - abs, mz + abs);
     }
 
     public double getPpm() {

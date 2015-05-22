@@ -487,8 +487,20 @@ public class Spectrums {
      *
      * @param spectrum
      */
+    public static Spectrum<Peak> getMassOrderedSpectrum(Spectrum<? extends Peak> spectrum) {
+        if (spectrum instanceof OrderedSpectrum) return (Spectrum<Peak>) spectrum;
+        return new SimpleSpectrum(spectrum);
+
+    }
+
+    /**
+     * Use quicksort to sort a spectrum by its masses in ascending order
+     *
+     * @param spectrum
+     */
     public static <T extends Peak, S extends MutableSpectrum<T>>
     void sortSpectrumByMass(S spectrum) {
+        if (spectrum instanceof OrderedSpectrum) return;
         __sortSpectrum__(spectrum, new PeakComparator<T, S>() {
             @Override
             public int compare(S left, S right, int i, int j) {
