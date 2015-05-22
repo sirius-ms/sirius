@@ -39,6 +39,7 @@ public interface SiriusOptions {
     @Option(shortName = "f", longName = {"formula", "formulas"}, description = "specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas", defaultToNull = true)
     public List<String> getFormula();
 
+    @Option(longName = "no-recalibration")
     public boolean isNotRecalibrating();
 
     @Option(longName = "ppm-max", description = "allowed ppm for decomposing masses", defaultToNull = true)

@@ -27,7 +27,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiJniSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -103,8 +102,6 @@ public class Sirius {
         profile.fragmentationPatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile()));
         profile.isotopePatternAnalysis.setDefaultProfile(new MutableMeasurementProfile(profile.isotopePatternAnalysis.getDefaultProfile()));
         this.elementPrediction = new ElementPrediction(profile.isotopePatternAnalysis);
-
-        this.profile.fragmentationPatternAnalysis.setTreeBuilder(new GurobiJniSolver());
 
     }
 
