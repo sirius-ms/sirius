@@ -18,8 +18,6 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
-import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
-import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.*;
 
@@ -113,46 +111,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             buffer[sel.indexOf(e.element)] += e.amount;
         }
         return new ImmutableMolecularFormula(sel, buffer);
-    }
-
-    public static void Test() {
-
-        MolecularFormula f = MolecularFormula.parse("C6H12O6");
-        f.visit(new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                return null;
-            }
-        });
-
-        Element[] elements = f.elementArray();
-        for (Element e : elements) {
-            int amount = f.numberOf(e);
-
-        }
-
-        PeriodicTable T = PeriodicTable.getInstance();
-        IsotopicDistribution distribution = T.getDistribution();
-
-        Element C = T.getByName("C");
-        Element H = T.getByName("H");
-
-        Isotopes isotopes = distribution.getIsotopesFor(C);
-
-        isotopes.getAbundance(1);
-
-
-        TDoubleArrayList mzs = new TDoubleArrayList();
-        TDoubleArrayList ints = new TDoubleArrayList();
-
-        mzs.add(131.21);
-        ints.add(0.00023);
-        // ...
-
-
-        int amountOfC = f.numberOf(C);
-
-
     }
 
     /**
@@ -616,10 +574,12 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final StringBuilder buffer = new StringBuilder(3 * amounts.length);
-        final Element[] elements = new Element[Math.max(0, amounts.length - 2)];
+        final int c = numberOfCarbons();
+        final boolean hasCarbon = c!=0;
+        final Element[] elements = new Element[Math.max(0, hasCarbon ? amounts.length - 2 : amounts.length-1)];
         int k = 0;
         for (int i = 0; i < amounts.length; ++i) {
-            if (i == selection.hydrogenIndex() || i == selection.carbonIndex()) continue;
+            if ((i == selection.hydrogenIndex() && hasCarbon) || i == selection.carbonIndex()) continue;
             if (amounts[i] != 0) {
                 elements[k++] = selection.get(i);
             }
@@ -631,20 +591,19 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             }
         });
         final int h = numberOfHydrogens();
-        final int c = numberOfCarbons();
-        if (c != 0) {
+        if (hasCarbon) {
             if (c < 0) buffer.append("-");
             buffer.append(selection.get(selection.carbonIndex()).getSymbol());
-        }
-        if (Math.abs(c) > 1) {
-            buffer.append(c);
-        }
-        if (h != 0) {
-            if (h < 0) buffer.append("-");
-            buffer.append(selection.get(selection.hydrogenIndex()).getSymbol());
-        }
-        if (Math.abs(h) > 1) {
-            buffer.append(Math.abs(h));
+            if (Math.abs(c) > 1) {
+                buffer.append(c);
+            }
+            if (h != 0) {
+                if (h < 0) buffer.append("-");
+                buffer.append(selection.get(selection.hydrogenIndex()).getSymbol());
+            }
+            if (Math.abs(h) > 1) {
+                buffer.append(Math.abs(h));
+            }
         }
         for (int i = 0; i < k; ++i) {
             final int n = numberOf(elements[i]);

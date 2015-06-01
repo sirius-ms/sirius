@@ -30,6 +30,19 @@ public class FormulaTest {
 		final MolecularFormula formula2 = MolecularFormula.parse("H6C8Fe3Cl7N8");
 		assertEquals(3, formula2.numberOf(PeriodicTable.getInstance().getByName("Fe")));
 	}
+
+	@Test
+	public void testHillNotation() {
+		final MolecularFormula formula = MolecularFormula.parse("MgN4C55OH72");
+		assertEquals("Formula is ordered according to Hill notation", "C55H72MgN4O", formula.formatByHill());
+		final MolecularFormula formula2 = MolecularFormula.parse("H").add(MolecularFormula.parse("Cl"));
+		assertEquals("Formula is ordered according to Hill notation", "ClH", formula2.formatByHill());
+		final MolecularFormula formula3 = MolecularFormula.parse("NH3");
+		assertEquals("Formula is ordered according to Hill notation", "H3N", formula3.formatByHill());
+		assertEquals("Default String representation of formula is Hill", formula.formatByHill(), formula.toString());
+		assertEquals("Default String representation of formula is Hill", formula2.formatByHill(), formula2.toString());
+		assertEquals("Default String representation of formula is Hill", formula3.formatByHill(), formula3.toString());
+	}
 	
 	@Test
 	public void testCaching() {
