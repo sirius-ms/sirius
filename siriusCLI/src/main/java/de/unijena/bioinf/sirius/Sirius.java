@@ -55,7 +55,7 @@ public class Sirius {
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0.8d;
+    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
 
     protected Profile profile;
     protected ElementPrediction elementPrediction;
@@ -73,6 +73,7 @@ public class Sirius {
     public Sirius() {
         try {
             profile = new Profile("default");
+            profile = new Profile(profile.isotopePatternAnalysis, FragmentationPatternAnalysis.oldSiriusAnalyzer());
             loadMeasurementProfile();
             this.progress = new Progress.Quiet();
         } catch (IOException e) { // should be in classpath
@@ -129,7 +130,7 @@ public class Sirius {
      * @return a list of identified molecular formulas together with their tree
      */
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
-        MutableMs2Experiment experiment = new MutableMs2Experiment(extendConstraints(profile.fragmentationPatternAnalysis.validate(uexperiment), progress));
+        MutableMs2Experiment experiment = new MutableMs2Experiment(profile.fragmentationPatternAnalysis.validate(uexperiment));
         // first check if MS data is present;
         final List<IsotopePattern> candidates = lookAtMs1(experiment, deisotope!=IsotopePatternHandling.omit);
         int maxNumberOfFormulas = 0;
@@ -253,6 +254,15 @@ public class Sirius {
 
     }
 
+    public FormulaConstraints predictElements(Ms2Experiment experiment) {
+        experiment = getMs2Analyzer().validate(experiment);
+        final FormulaConstraints constraints;
+        if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getFormulaConstraints()!=null) {
+            constraints = experiment.getMeasurementProfile().getFormulaConstraints();
+        } else constraints = profile.fragmentationPatternAnalysis.getDefaultProfile().getFormulaConstraints();
+        return elementPrediction.extendConstraints(constraints, experiment, experiment.getMeasurementProfile());
+    }
+
     /**
      * check MS spectrum. If an isotope pattern is found, check it's monoisotopic mass and update the ionmass field
      * if this field is null yet
@@ -272,13 +282,23 @@ public class Sirius {
         return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), false) : Collections.<IsotopePattern>emptyList();
     }
 
-    private Ms2Experiment extendConstraints(Ms2Experiment experiment, Progress progress) {
+    private Ms2Experiment extendConstraints(Ms2Experiment experiment, Set<MolecularFormula> whiteset, Progress progress) {
         final FormulaConstraints constraints;
         if (experiment.getMeasurementProfile()!=null && experiment.getMeasurementProfile().getFormulaConstraints()!=null) {
             constraints = experiment.getMeasurementProfile().getFormulaConstraints();
         } else constraints = profile.fragmentationPatternAnalysis.getDefaultProfile().getFormulaConstraints();
         final MeasurementProfile mpr = experiment.getMeasurementProfile()==null ? profile.fragmentationPatternAnalysis.getDefaultProfile() : MutableMeasurementProfile.merge(profile.fragmentationPatternAnalysis.getDefaultProfile(), experiment.getMeasurementProfile());
-        final FormulaConstraints newC = elementPrediction.extendConstraints(constraints, experiment, mpr);
+        final FormulaConstraints newC;
+        if (whiteset!=null && whiteset.isEmpty()) {
+            newC = elementPrediction.extendConstraints(constraints, experiment, mpr);
+        } else {
+            final Set<Element> elements = new HashSet<Element>();
+            elements.addAll(constraints.getChemicalAlphabet().getElements());
+            for (MolecularFormula f : whiteset) {
+                elements.addAll(f.elements());
+            }
+            newC = new FormulaConstraints(new ChemicalAlphabet(elements.toArray(new Element[elements.size()])));
+        }
         if (newC != constraints) {
             progress.info("Extend alphabet to " + newC.getChemicalAlphabet().toString());
             final MutableMs2Experiment newExp = new MutableMs2Experiment(experiment);

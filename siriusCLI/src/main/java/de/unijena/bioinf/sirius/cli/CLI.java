@@ -280,8 +280,8 @@ public class CLI {
         if (exp.getMeasurementProfile()==null) {
             prof = new MutableMeasurementProfile();
         } else prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
-        if (prof.getFormulaConstraints()==null) {
-            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()));
+        if (prof.getFormulaConstraints()==null && experiment.getMolecularFormula()!=null) {
+            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()).getExtendedConstraints(experiment.getMolecularFormula().elementArray()));
         }
         if (opts.getParentMz() != null && Math.abs(opts.getParentMz() - exp.getIonMass()) < 1e-3) {
             exp.setIonMass(opts.getParentMz());
@@ -293,7 +293,54 @@ public class CLI {
             prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
         }
         exp.setMeasurementProfile(prof);
+        if (opts.getElements()==null) {
+            if (exp.getMolecularFormula()!=null) {
+                prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(exp.getMolecularFormula().elementArray()));
+            } else if (opts.getFormula()!=null && !opts.getFormula().isEmpty()) {
+                final HashMap<Element, Integer> bounds = new HashMap<Element, Integer>();
+                for (String s : opts.getFormula()) {
+                    final MolecularFormula f = MolecularFormula.parse(s);
+                    for (Element e : f) {
+                        final int i = f.numberOf(e);
+                        final Integer I = bounds.get(e);
+                        if (I == null || I < i) {
+                            bounds.put(e, i);
+                        }
+                    }
+                }
+                final FormulaConstraints fc = new FormulaConstraints(new ChemicalAlphabet(bounds.values().toArray(new Element[bounds.size()])));
+                for (Map.Entry<Element, Integer> e : bounds.entrySet()) {
+                    fc.setUpperbound(e.getKey(), e.getValue());
+                }
+            } else {
+                prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(sirius.predictElements(exp)));
+            }
+        } else {
+            prof.setFormulaConstraints(opts.getElements());
+        }
+        if (opts.isAutoCharge()) {
+            addAdducts(exp, prof, opts);
+        }
         return exp;
+    }
+
+    private void addAdducts(Ms2Experiment exp, MutableMeasurementProfile prof, SiriusOptions opts) {
+        final Ionization ion = exp.getIonization();
+        final FormulaConstraints fcOld = prof.getFormulaConstraints();
+        FormulaConstraints fcNew = fcOld;
+        if (ion instanceof Charge && opts.isAutoCharge()) {
+            final PeriodicTable tb = PeriodicTable.getInstance();
+            final Element Na = tb.getByName("Na"), K = tb.getByName("K"), Cl = tb.getByName("Cl");
+            if (ion.getCharge() > 0) {
+                fcNew = fcOld.getExtendedConstraints(Na, K);
+                fcNew.setUpperbound(Na, Math.max(1, fcOld.getUpperbound(Na)));
+                fcNew.setUpperbound(K, Math.max(1, fcOld.getUpperbound(K)));
+            } else {
+                fcNew = fcOld.getExtendedConstraints(Cl);
+                fcNew.setUpperbound(Cl, Math.max(1, fcOld.getUpperbound(Cl)));
+            }
+            prof.setFormulaConstraints(fcNew);
+        }
     }
 
 
@@ -316,7 +363,7 @@ public class CLI {
                 ion = (ion.getCharge()>0) ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName("[M-H]-");
             }
         }
-        final FormulaConstraints constraints = options.getElements() == null ? getDefaultElementSet(options, ion) : options.getElements();
+        final FormulaConstraints constraints = options.getElements() == null ? null/*getDefaultElementSet(options, ion)*/ : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2()!=null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -507,28 +554,6 @@ public class CLI {
     private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");
     public FormulaConstraints getDefaultElementSet(SiriusOptions opts, Ionization ion) {
         final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
-        if (ion instanceof Charge && opts.isAutoCharge()) {
-            final PeriodicTable tb = PeriodicTable.getInstance();
-            final Element Na = tb.getByName("Na"), K = tb.getByName("K"), Cl = tb.getByName("Cl");
-            final Set<Element> elements = new HashSet<Element>(cf.getChemicalAlphabet().getElements());
-            if (ion.getCharge() > 0) {
-                elements.add(Na);
-                elements.add(K);
-            } else {
-                elements.add(Cl);
-            }
-            final FormulaConstraints ext = new FormulaConstraints(new ChemicalAlphabet(elements.toArray(new Element[elements.size()])));
-            for (Element e : cf.getChemicalAlphabet().getElements()) {
-                ext.setUpperbound(e, cf.getUpperbound(e));
-            }
-            final ChemicalAlphabet c = cf.getChemicalAlphabet();
-            if (ion.getCharge()>0) {
-                if (c.indexOf(Na) < 0) ext.setUpperbound(Na, 1);
-                if (c.indexOf(K) < 0) ext.setUpperbound(K, 1);
-            } else {
-                if (c.indexOf(Cl) < 0) ext.setUpperbound(Cl, 1);
-            }
-            return ext;
-        } else return cf;
+        return cf;
     }
 }
