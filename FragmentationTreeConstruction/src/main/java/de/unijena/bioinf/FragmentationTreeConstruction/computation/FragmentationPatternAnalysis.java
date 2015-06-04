@@ -47,7 +47,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
@@ -763,10 +762,26 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     ProcessedPeak selectParentPeakAndCleanSpectrum(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks) {
         // and sort the resulting peaklist by mass
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
+
+        final double parentmass = experiment.getIonMass();
+
+        Peak ms1parent = null;
+
+        // if ms1 spectra are available: use the parentpeak from them
+        if (!experiment.getMs1Spectra().isEmpty()) {
+            Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
+            if (spec == null) spec = experiment.getMs1Spectra().get(0);
+            final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
+            final int i = Spectrums.mostIntensivePeakWithin(Spectrums.getMassOrderedSpectrum(spec), parentmass, parentDeviation);
+            if (i >= 0) {
+                ms1parent = spec.getPeakAt(i);
+            }
+        }
+
+
         // now search the parent peak. If it is not contained in the spectrum: create one!
         // delete all peaks behind the parent, such that the parent is the heaviest peak in the spectrum
         // Now we can access the parent peak by peaklist[peaklist.size-1]
-        final double parentmass = experiment.getIonMass();
         final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
         for (int i = processedPeaks.size() - 1; i >= 0; --i) {
             if (!parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
@@ -785,6 +800,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // everything which is heavier is noise
         final double threshold = parentmass + experiment.getMeasurementProfile().getAllowedMassDeviation().absoluteFor(parentmass) - PeriodicTable.getInstance().getByName("H").getMass();
         final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
+
+        // if ms1 peak present, use his mass and intensity as parent peak
+        /*
+        if (ms1parent != null) {
+            parentPeak.setMz(ms1parent.getMass());
+            parentPeak.setOriginalMz(ms1parent.getMass());
+        }
+        */
+
         // delete all peaks between parentmass-H and parentmass except the parent peak itself
         for (int i = processedPeaks.size() - 2; i >= 0; --i) {
             if (processedPeaks.get(i).getMz() <= threshold) break;

@@ -57,10 +57,12 @@ public class MissingValueValidator implements InputValidator {
     protected void checkMeasurementProfile(Warning warn, boolean repair, Ms2ExperimentImpl input) {
         if (input.getMeasurementProfile() == null) throw new InvalidException("Measurement profile is missing");
         final MutableMeasurementProfile profile = new MutableMeasurementProfile(input.getMeasurementProfile());
+
         if (profile.getFormulaConstraints() == null) {
             throwOrWarn(warn, repair, "Measurement profile: Formula constraints are missing");
             profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
         }
+
         // get at least one deviation
         Deviation dev = profile.getAllowedMassDeviation();
         if (dev == null) dev = profile.getStandardMs2MassDeviation();

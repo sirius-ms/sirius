@@ -31,7 +31,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  */
 public class IntrinsicallyChargedScorer implements DecompositionScorer {
 
-    private static boolean  DEBUG_MODE = true;
+    private static boolean  DEBUG_MODE = false;
 
     private double penalty;
 

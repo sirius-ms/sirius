@@ -644,7 +644,7 @@
     ]
   },
   "profile": {
-    "allowedMassDeviation": "10.0 ppm (0.002 m/z)",
+    "allowedMassDeviation": "10.0 ppm (0.0025 m/z)",
     "intensityDeviation": 0.02,
     "standardMs2MassDeviation": "10.0 ppm (0.002 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
