@@ -576,7 +576,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final StringBuilder buffer = new StringBuilder(3 * amounts.length);
         final int c = numberOfCarbons();
         final boolean hasCarbon = c!=0;
-        final Element[] elements = new Element[Math.max(0, hasCarbon ? amounts.length - 2 : amounts.length-1)];
+        final Element[] elements = new Element[Math.max(0, hasCarbon ? amounts.length - 2 : amounts.length)];
         int k = 0;
         for (int i = 0; i < amounts.length; ++i) {
             if ((i == selection.hydrogenIndex() && hasCarbon) || i == selection.carbonIndex()) continue;

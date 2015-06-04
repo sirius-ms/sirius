@@ -49,4 +49,11 @@ public class ValenceFilter implements FormulaFilter {
     public double getMinValence() {
         return minValence;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ValenceFilter && obj.getClass().equals(this.getClass())) {
+            return ((ValenceFilter) obj).minValenceInt == minValenceInt;
+        } else return false;
+    }
 }

@@ -185,6 +185,49 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return filters;
     }
 
+    /**
+     * Create a new FormulaConstraints object which alphabet includes the given elements and which
+     * upperbounds are the same as for this
+     * @param elements
+     * @return
+     */
+    public FormulaConstraints getExtendedConstraints(Element... elements) {
+        final Set<Element> elems = new HashSet<Element>(getChemicalAlphabet().getElements());
+        elems.addAll(Arrays.asList(elements));
+        final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(elems.toArray(new Element[elems.size()])));
+        for (Element e :getChemicalAlphabet()) {
+            c.setUpperbound(e, getUpperbound(e));
+        }
+        final ArrayList<FormulaFilter> filters = new ArrayList<FormulaFilter>(getFilters());
+        filters.removeAll(c.getFilters());
+        for (FormulaFilter f : filters) {
+            c.addFilter(f);
+        }
+        return c;
+    }
+
+    /**
+     * Create a new FormulaConstraints which allows all molecular formulas which are either satisfy this constraints or
+     * otherConstraints
+     * @param otherConstraints
+     * @return
+     */
+    public FormulaConstraints getExtendedConstraints(FormulaConstraints otherConstraints) {
+        final Set<Element> elems = new HashSet<Element>(otherConstraints.chemicalAlphabet.getElements());
+        elems.addAll(chemicalAlphabet.getElements());
+        final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(elems.toArray(new Element[elems.size()])));
+        for (Element e : elems) {
+            c.setUpperbound(e, Math.max(otherConstraints.getUpperbound(e), getUpperbound(e)));
+        }
+        final ArrayList<FormulaFilter> filters = new ArrayList<FormulaFilter>(getFilters());
+        filters.removeAll(otherConstraints.getFilters());
+        for (FormulaFilter f : filters) {
+            c.addFilter(f);
+        }
+        return c;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
