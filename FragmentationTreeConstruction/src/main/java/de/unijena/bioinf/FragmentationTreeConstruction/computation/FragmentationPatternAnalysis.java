@@ -366,19 +366,80 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration) {
         FTree tree = treeBuilder.buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
         if (tree == null) return null;
-        addTreeAnnotations(tree);
+        addTreeAnnotations(graph, tree);
         if (tree != null && recalibration) tree = recalibrate(tree);
-        addTreeAnnotations(tree);
         return tree;
     }
 
-    private void addTreeAnnotations(FTree tree) {
+    protected static class Stackitem {
+        private final Fragment treeNode;
+        private final Fragment graphNode;
+
+        protected Stackitem(Fragment treeNode, Fragment graphNode) {
+            this.treeNode = treeNode;
+            this.graphNode = graphNode;
+        }
+    }
+
+    protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
+        originalGraph.copyAnnotations(tree);
+        final List<FragmentAnnotation<Object>> fanos = new ArrayList<FragmentAnnotation<Object>>();
+        final List<LossAnnotation<Object>> lanos = new ArrayList<LossAnnotation<Object>>();
+        for (FragmentAnnotation<Object> f : tree.getFragmentAnnotations())
+            if (!f.isAlias()) fanos.add(f);
+        for (LossAnnotation<Object> l : tree.getLossAnnotations())
+            if (!l.isAlias()) lanos.add(l);
+        final ArrayList<LossAnnotation<Object>> lanos2 = new ArrayList<LossAnnotation<Object>>();
+        final ArrayList<FragmentAnnotation<Object>> fanos2 = new ArrayList<FragmentAnnotation<Object>>();
+        for (LossAnnotation<Object> la : lanos)
+            lanos2.add(originalGraph.getLossAnnotationOrNull(la.getAnnotationType()));
+        for (FragmentAnnotation<Object> fa : fanos)
+            fanos2.add(originalGraph.getFragmentAnnotationOrNull(fa.getAnnotationType()));
         tree.setAnnotation(Ionization.class, tree.getAnnotationOrThrow(ProcessedInput.class).getExperimentInformation().getIonization());
         FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
         FragmentAnnotation<CollisionEnergy[]> ces = tree.getOrCreateFragmentAnnotation(CollisionEnergy[].class);
-        FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
+
+        // NOOOOOOOOO!!!!
+        // okay: Yet another quick'n dirty solution: delete Peak-Annotation from graph and set them yourself
+        // reason: we want to put the original mz into the Peak annotation and the processed m/z into ProcessedPeak
+        // annotation. However: That does not make any sense: Outside of the MS/MS analysis we don't know
+        // about the processed peaks but might still be interested into the processed/recalibrated m/z
+        tree.removeFragmentAnnotation(Peak.class);
         FragmentAnnotation<Peak> p = tree.getOrCreateFragmentAnnotation(Peak.class);
+
+        FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
+
+        final TreeScoring scoring = tree.getOrCreateAnnotation(TreeScoring.class);
+
+        final Fragment graphRoot = originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getTarget();
+        for (int i=0; i < fanos.size(); ++i) {
+            if (fanos2.get(i)!=null)
+                fanos.get(i).set(tree.getRoot(), fanos2.get(i).get(graphRoot));
+        }
+        final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
+        stack.push(new Stackitem(tree.getRoot(), graphRoot));
+        while (!stack.isEmpty()) {
+            final Stackitem item = stack.pop();
+            for (int j = 0; j < item.treeNode.getOutDegree(); ++j) {
+                final Loss uv = item.treeNode.getOutgoingEdge(j);
+                final Loss uv2 = originalGraph.getLoss(item.graphNode, uv.getTarget().getFormula());
+                for (int i=0; i < lanos.size(); ++i) {
+                    if (lanos2.get(i)!=null)
+                        lanos.get(i).set(uv, lanos2.get(i).get(uv2));
+                }
+                for (int i=0; i < fanos.size(); ++i) {
+                    if (fanos2.get(i)!=null)
+                        fanos.get(i).set(uv.getTarget(), fanos2.get(i).get(uv2.getTarget()));
+                }
+                if (uv.getTarget().getOutDegree() > 0) stack.push(new Stackitem(uv.getTarget(), uv2.getTarget()));
+            }
+        }
+
+        double weight = graphRoot.getIncomingEdge().getWeight();
+
         for (Fragment f : tree) {
+            if (!f.isRoot())
+                weight += f.getIncomingEdge().getWeight();
             final ProcessedPeak peak = pp.get(f);
             p.set(f, new Peak(peak.getOriginalMz(), peak.getIntensity()));
             ce.set(f, peak.getCollisionEnergy());
@@ -390,6 +451,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
             ces.set(f, energies.toArray(new CollisionEnergy[energies.size()]));
         }
+        scoring.setOverallScore(weight);
+        scoring.setRootScore(graphRoot.getIncomingEdge().getWeight());
     }
 
     /**

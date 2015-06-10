@@ -76,6 +76,7 @@ public class GurobiSolver implements TreeBuilder {
     }
 
     protected static FTree newTree(FGraph graph, FTree tree, double rootScore, double scoring) {
+        if (true) return tree;
         tree.addAnnotation(ProcessedInput.class, graph.getAnnotationOrThrow(ProcessedInput.class));
         tree.addAnnotation(Ionization.class, graph.getAnnotationOrThrow(Ionization.class));
         final TreeScoring treeScoring = new TreeScoring();
@@ -262,8 +263,7 @@ public class GurobiSolver implements TreeBuilder {
             built = false;
         }
 
-        protected static boolean isComputationCorrect(FTree tree, FGraph graph) {
-            double score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
             final Fragment pseudoRoot = graph.getRoot();
             final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
             for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
@@ -314,7 +314,7 @@ public class GurobiSolver implements TreeBuilder {
                     }
                 }
                 final FTree tree = buildSolution();
-                if (!isComputationCorrect(tree, graph)) {
+                if (!isComputationCorrect(tree, graph, getOptimalScore())) {
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
                 }
                 model.dispose(); // free memory
@@ -372,7 +372,7 @@ public class GurobiSolver implements TreeBuilder {
                     try {
                         if (model.get(GRB.DoubleAttr.ConstrVioSum) > 0)
                             cause = "Constraint are violated. Tree-correctness: "
-                                    + isComputationCorrect(buildSolution(), graph);
+                                    + isComputationCorrect(buildSolution(), graph, getOptimalScore());
                         else cause = "Unknown error. Status code is " + status;
                     } catch (GRBException e) {
                         throw new RuntimeException("Unknown error. Status code is " + status, e);
@@ -502,8 +502,12 @@ public class GurobiSolver implements TreeBuilder {
             model.optimize();
         }
 
+        protected double getOptimalScore() throws GRBException {
+            return -model.get(GRB.DoubleAttr.ObjVal);
+        }
+
         protected FTree buildSolution() throws GRBException {
-            final double score = -model.get(GRB.DoubleAttr.ObjVal);
+            final double score = getOptimalScore();
             final boolean[] edesAreUsed = getVariableAssignment();
             Fragment graphRoot = null;
             final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();
@@ -528,11 +532,12 @@ public class GurobiSolver implements TreeBuilder {
             if (graphRoot == null) return null;
 
             final FTree tree = newTree(graph, new FTree(graphRoot.getFormula()), rootScore, rootScore);
+            /*
             for (FragmentAnnotation<Object> x : fAnos) fTrees.add(tree.addFragmentAnnotation(x.getAnnotationType()));
             for (LossAnnotation<Object> x : lAnos) lTrees.add(tree.addLossAnnotation(x.getAnnotationType()));
             final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
             for (int k = 0; k < fAnos.size(); ++k) fTrees.get(k).set(tree.getRoot(), fAnos.get(k).get(graphRoot));
-
+            */
             final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
             stack.push(new Stackitem(tree.getRoot(), graphRoot));
             while (!stack.isEmpty()) {
@@ -543,14 +548,15 @@ public class GurobiSolver implements TreeBuilder {
                     if (edesAreUsed[edgeIds[offset]]) {
                         final Loss l = losses.get(edgeIds[offset]);
                         final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
+                        /*
                         for (int k = 0; k < fAnos.size(); ++k)
                             fTrees.get(k).set(child, fAnos.get(k).get(l.getTarget()));
                         for (int k = 0; k < lAnos.size(); ++k)
                             lTrees.get(k).set(child.getIncomingEdge(), lAnos.get(k).get(l));
-
+                        */
                         child.getIncomingEdge().setWeight(l.getWeight());
                         stack.push(new Stackitem(child, l.getTarget()));
-                        scoring.setOverallScore(scoring.getOverallScore() + l.getWeight());
+                        //scoring.setOverallScore(scoring.getOverallScore() + l.getWeight());
                     }
                     ++offset;
                 }
