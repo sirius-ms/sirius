@@ -280,8 +280,8 @@ public class CLI {
         if (exp.getMeasurementProfile()==null) {
             prof = new MutableMeasurementProfile();
         } else prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
-        if (prof.getFormulaConstraints()==null && experiment.getMolecularFormula()!=null) {
-            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()).getExtendedConstraints(experiment.getMolecularFormula().elementArray()));
+        if (prof.getFormulaConstraints()==null) {
+            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()));
         }
         if (opts.getParentMz() != null && Math.abs(opts.getParentMz() - exp.getIonMass()) < 1e-3) {
             exp.setIonMass(opts.getParentMz());
@@ -330,11 +330,10 @@ public class CLI {
         FormulaConstraints fcNew = fcOld;
         if (ion instanceof Charge && opts.isAutoCharge()) {
             final PeriodicTable tb = PeriodicTable.getInstance();
-            final Element Na = tb.getByName("Na"), K = tb.getByName("K"), Cl = tb.getByName("Cl");
+            final Element Na = tb.getByName("Na"), Cl = tb.getByName("Cl");
             if (ion.getCharge() > 0) {
-                fcNew = fcOld.getExtendedConstraints(Na, K);
+                fcNew = fcOld.getExtendedConstraints(Na);
                 fcNew.setUpperbound(Na, Math.max(1, fcOld.getUpperbound(Na)));
-                fcNew.setUpperbound(K, Math.max(1, fcOld.getUpperbound(K)));
             } else {
                 fcNew = fcOld.getExtendedConstraints(Cl);
                 fcNew.setUpperbound(Cl, Math.max(1, fcOld.getUpperbound(Cl)));

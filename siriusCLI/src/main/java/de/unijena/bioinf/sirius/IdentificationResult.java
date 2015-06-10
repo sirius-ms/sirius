@@ -27,6 +27,7 @@ import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 
 public class IdentificationResult {
 
@@ -72,6 +73,16 @@ public class IdentificationResult {
         if (name.endsWith(".dot")) {
             new FTDotWriter().writeTreeToFile(target, tree);
         } else new FTJsonWriter().writeTreeToFile(target, tree);
+    }
+
+    public String getJSONTree() {
+        final StringWriter sw = new StringWriter(1024);
+        try {
+            new FTJsonWriter().writeTree(sw,tree);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return sw.toString();
     }
 
     public void writeAnnotatedSpectrumToFile(File target) throws IOException {
