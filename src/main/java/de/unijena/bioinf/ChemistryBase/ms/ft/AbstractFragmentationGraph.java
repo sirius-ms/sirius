@@ -240,22 +240,101 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return annotations.remove(klass) != null;
     }
 
+    public boolean removeAliasForFragmentAnnotation(Class<?> klass) {
+        FragmentAnnotation<Object> f = fragmentAnnotations.get(klass);
+        if (f.isAlias()) {
+            fragmentAnnotations.remove(klass);
+            return true;
+        } else return false;
+    }
+
+    public boolean removeAliasForLossAnnotation(Class<?> klass) {
+        LossAnnotation<Object> f = lossAnnotations.get(klass);
+        if (f.isAlias()) {
+            lossAnnotations.remove(klass);
+            return true;
+        } else return false;
+    }
+
+    public void copyAnnotations(AbstractFragmentationGraph otherGraph) {
+        for (FragmentAnnotation<Object> entry : fragmentAnnotations.values()) {
+           if (!entry.isAlias()) {
+               otherGraph.addFragmentAnnotation(entry.getAnnotationType());
+           }
+        }
+        for (FragmentAnnotation<Object> entry : fragmentAnnotations.values()) {
+            if (entry.isAlias()) {
+                otherGraph.addAliasForFragmentAnnotation(entry.getAliasType(), entry.getAnnotationType());
+            }
+        }
+        for (LossAnnotation<Object> entry : lossAnnotations.values()) {
+            if (!entry.isAlias()) {
+                otherGraph.addLossAnnotation(entry.getAnnotationType());
+            }
+        }
+        for (LossAnnotation<Object> entry : lossAnnotations.values()) {
+            if (entry.isAlias()) {
+                otherGraph.addAliasForLossAnnotation(entry.getAliasType(), entry.getAnnotationType());
+            }
+        }
+        for (Map.Entry<Class<Object>,Object> entry : annotations.entrySet()) {
+            otherGraph.addAnnotation(entry.getKey(), entry.getValue());
+        }
+        otherGraph.aliases.addAll(aliases);
+    }
+
+    public boolean removeFragmentAnnotation(Class<? extends Object> klass) {
+        final FragmentAnnotation<Object> ano = fragmentAnnotations.get(klass);
+        if (ano==null) return false;
+        if (ano.isAlias()) {
+            fragmentAnnotations.remove(klass);
+            return true;
+        }
+        fragmentAnnotations.remove(klass);
+        for (Fragment f : fragments) {
+            ano.set(f, null);
+        }
+        return true;
+    }
+    public boolean removeLossAnnotation(Class<? extends Object> klass) {
+        final LossAnnotation<Object> ano = lossAnnotations.get(klass);
+        if (ano==null) return false;
+        if (ano.isAlias()) {
+            lossAnnotations.remove(klass);
+            return true;
+        }
+        lossAnnotations.remove(klass);
+        for (Loss f : losses()) {
+            ano.set(f, null);
+        }
+        return true;
+    }
+
     public <T> FragmentAnnotation<T> addFragmentAnnotation(Class<T> klass) {
         if (fragmentAnnotations.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
-        final int n = fragmentAnnotations.size();
-        final FragmentAnnotation<T> ano = new FragmentAnnotation<T>(n, n + 1, klass);
-        for (FragmentAnnotation<Object> a : fragmentAnnotations.values()) a.capa = n + 1;
+        final BitSet ids = new BitSet();
+        for (FragmentAnnotation<Object> a : fragmentAnnotations.values())
+            if (!a.isAlias())
+                ids.set(a.id);
+        final int id = ids.nextClearBit(0);
+        final int length = ids.length();
+        final FragmentAnnotation<T> ano = new FragmentAnnotation<T>(id, length, klass);
+        for (FragmentAnnotation<Object> a : fragmentAnnotations.values()) a.capa = length;
         fragmentAnnotations.put((Class<Object>) klass, (FragmentAnnotation<Object>) ano);
         return ano;
     }
-
     public <T> LossAnnotation<T> addLossAnnotation(Class<T> klass) {
         if (lossAnnotations.containsKey(klass))
-            throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
-        final int n = lossAnnotations.size();
-        final LossAnnotation<T> ano = new LossAnnotation<T>(n, n + 1, klass);
-        for (LossAnnotation<Object> a : lossAnnotations.values()) a.capa = n + 1;
+            throw new RuntimeException("Loss annotation '" + klass.getName() + "' is already present.");
+        final BitSet ids = new BitSet();
+        for (LossAnnotation<Object> a : lossAnnotations.values())
+            if (!a.isAlias())
+                ids.set(a.id);
+        final int id = ids.nextClearBit(0);
+        final int length = ids.length();
+        final LossAnnotation<T> ano = new LossAnnotation<T>(id, length, klass);
+        for (LossAnnotation<Object> a : lossAnnotations.values()) a.capa = length;
         lossAnnotations.put((Class<Object>) klass, (LossAnnotation<Object>) ano);
         return ano;
     }

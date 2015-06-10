@@ -19,8 +19,8 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 public final class LossAnnotation<T> {
 
-    private final int id;
-    private final Class<T> klass;
+    protected final int id;
+    protected final Class<T> klass;
     int capa;
     LossAnnotation<? extends T> alias;
 

@@ -204,6 +204,14 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             ionNameMap.put(ion, adduct);
             ionMap.put(adduct.getMass(), adduct);
         }
+
+        // add unknown ionization to ionNameMap
+        final Charge positive=new Charge(1), negative = new Charge(-1);
+        ionNameMap.put("[M+?]+", positive);
+        ionNameMap.put("[M+?]-", negative);
+        // don't add them to ionMap or ionizations, as they would conflict with [M]+ and [M]-.
+
+
     }
 
     private final static class ElementStack {
