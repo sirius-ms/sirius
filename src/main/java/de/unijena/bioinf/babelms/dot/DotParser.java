@@ -140,6 +140,10 @@ public class DotParser<NodeType, EdgeType> {
                 } else if (token.equals("[")) {
                     // parse vertex
                     String vertexName = before().trim();
+                    if (vertexName.equals("graph") || vertexName.equals("node") || vertexName.equals("edge")) {
+                        // ignore this part
+                        jumpTo("]");
+                    }
                     currentVertex = handler.addVertex(vertexName);
                     vertices.put(vertexName, currentVertex);
                     m = MODE.INVERTEX;
