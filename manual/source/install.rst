@@ -22,6 +22,8 @@ Alternatively, SIRIUS ships with the necessary binaries. You might have to add t
 
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/sirius
 
+However, it might be that libglpk needs further dependencies, so installing GLPK via package manager is recommended.
+
 Gurobi
 -------
 

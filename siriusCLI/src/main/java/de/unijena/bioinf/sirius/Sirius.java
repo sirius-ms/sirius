@@ -39,7 +39,7 @@ import java.util.*;
 
 public class Sirius {
 
-    public final static String VERSION_STRING = "Sirius 3.0.0";
+    public final static String VERSION_STRING = "Sirius 3.0.1";
 
     public final static String CITATION = "Sebastian Böcker and Florian Rasche\n" +
             "Towards de novo identification of metabolites by analyzing tandem mass spectra.\n" +
