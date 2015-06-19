@@ -20,6 +20,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -33,7 +34,7 @@ import gnu.trove.procedure.TObjectDoubleProcedure;
 import java.util.*;
 
 // TODO: Add normalization as field
-@Called("Common Fragments:")
+@Called("Common Fragments")
 public class CommonFragmentsScore implements DecompositionScorer<Object>, MolecularFormulaScorer {
 
     private final TObjectDoubleHashMap<MolecularFormula> commonFragments;
@@ -169,12 +170,17 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     }
 
     public Object prepare(ProcessedInput input) {
-        return null;
+        return MolecularFormula.parse("H");
     }
 
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-        return getRecombinatedFragments().get(formula);
+        double score = getRecombinatedFragments().get(formula);
+        // if ionization unknown, try also intrinsically charged
+        if (input.getExperimentInformation().getIonization() instanceof Charge) {
+            score = Math.max(getRecombinatedFragments().get(formula.subtract((MolecularFormula)precomputed)), score);
+        }
+        return score;
     }
 
     @Override
