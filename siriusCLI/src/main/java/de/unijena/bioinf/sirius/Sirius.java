@@ -73,7 +73,6 @@ public class Sirius {
     public Sirius() {
         try {
             profile = new Profile("default");
-            profile = new Profile(profile.isotopePatternAnalysis, FragmentationPatternAnalysis.oldSiriusAnalyzer());
             loadMeasurementProfile();
             this.progress = new Progress.Quiet();
         } catch (IOException e) { // should be in classpath
@@ -154,6 +153,8 @@ public class Sirius {
         } else {
             maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
         }
+
+        if (whiteList!=null && !whiteList.isEmpty()) maxNumberOfFormulas = Math.min(maxNumberOfFormulas, whiteList.size());
 
         final int outputSize = Math.min(maxNumberOfFormulas, numberOfCandidates);
         final int computeNTrees = Math.max(5, outputSize);

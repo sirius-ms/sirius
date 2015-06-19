@@ -308,7 +308,7 @@ public class CLI {
                         }
                     }
                 }
-                final FormulaConstraints fc = new FormulaConstraints(new ChemicalAlphabet(bounds.values().toArray(new Element[bounds.size()])));
+                final FormulaConstraints fc = new FormulaConstraints(new ChemicalAlphabet(bounds.keySet().toArray(new Element[bounds.size()])));
                 for (Map.Entry<Element, Integer> e : bounds.entrySet()) {
                     fc.setUpperbound(e.getKey(), e.getValue());
                 }
