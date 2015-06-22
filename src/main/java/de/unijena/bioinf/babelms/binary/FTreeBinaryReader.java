@@ -5,10 +5,11 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.babelms.GenericParser;
+import de.unijena.bioinf.babelms.dot.FTDotReader;
+import de.unijena.bioinf.babelms.dot.FTDotWriter;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
@@ -16,6 +17,23 @@ import java.util.HashMap;
  * Created by kaidu on 20.06.2015.
  */
 public class FTreeBinaryReader {
+
+    public static void main(String[] args) {
+        try {
+            final FTree tree = new GenericParser<FTree>(new FTDotReader()).parseFile(new File("/home/kaidu/data/trees/casmi2013/casmi_trees/challenge2.dot"));
+
+            final byte[] buf = new byte[32000];
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1024);
+            FTreeBinaryWriter.writeTrees(outputStream, new FTree[]{tree});
+            outputStream.close();
+            final ByteArrayInputStream inStream = new ByteArrayInputStream(outputStream.toByteArray());
+            final FTree[] atree = readTrees(inStream);
+            new FTDotWriter().writeTree(new PrintWriter(System.out), atree[0]);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static FTree[] readTrees(InputStream stream) throws IOException {
         final DataInputStream in = new DataInputStream(stream);
@@ -66,7 +84,7 @@ public class FTreeBinaryReader {
             for (int i=0; i < numberOfEdges; ++i) {
                 final Fragment f = treemap.get(edgeSource[i]);
                 if (f!=null) {
-                    tree.addFragment(f, edgeTarget[i]);
+                    treemap.put(edgeTarget[i], tree.addFragment(f, edgeTarget[i]));
                 }
             }
         }
