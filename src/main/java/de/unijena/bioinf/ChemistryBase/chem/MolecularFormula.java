@@ -668,6 +668,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         };
     }
 
+
+
     /**
      * Two molecular formulas are only equal iff they are the same
      * formula. This is even the case if their masses are "equal" (which
