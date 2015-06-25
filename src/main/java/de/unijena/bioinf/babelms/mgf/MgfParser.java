@@ -105,7 +105,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
     private void handleKeyword(MutableMs2Spectrum spec, String keyword, String value) throws IOException {
         if (keyword.equals("PEPMASS")) {
-            spec.setPrecursorMz(Double.parseDouble(value));
+            spec.setPrecursorMz(Double.parseDouble(value.split("\\s+")[0]));
         } else if (keyword.equals("CHARGE")) {
             final Matcher m = CHARGE_PATTERN.matcher(value);
             m.find();
