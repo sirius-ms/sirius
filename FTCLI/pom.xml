@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FTCLI</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
     <parent>
         <groupId>de.unijena.bioinf</groupId>
         <artifactId>FragmentationTree</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
     </parent>
 
     <!--                                                               -->
@@ -18,12 +18,12 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsotopePatternAnalysis</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
    <groupId>uk.ac.ebi.pride.tools</groupId>
@@ -33,12 +33,12 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FTAnalysis</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FTEval</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
@@ -48,22 +48,22 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsogenCLI</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>DecompCLI</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>CLIBase</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>SiriusCLI</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

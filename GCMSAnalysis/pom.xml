@@ -7,7 +7,7 @@
     <parent>
         <artifactId>FragmentationTree</artifactId>
         <groupId>de.unijena.bioinf</groupId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
     </parent>
 
 
@@ -16,22 +16,22 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FTAnalysis</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>BabelMs</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>ChemistryBase</artifactId>
-            <version>4.0.1</version>
+            <version>4.0.2</version>
         </dependency>
         <dependency>
             <groupId>com.lexicalscope.jewelcli</groupId>
