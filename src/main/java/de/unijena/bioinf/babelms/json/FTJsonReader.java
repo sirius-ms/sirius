@@ -18,9 +18,10 @@
 package de.unijena.bioinf.babelms.json;
 
 import com.google.common.collect.HashMultimap;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.Parser;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,9 +30,16 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class FTJsonReader implements Parser<FTree> {
+
+    /*
+    TODO: currently, only Peak and Ionization are parsed from input
+     */
+
     @Override
     public FTree parse(BufferedReader reader) throws IOException {
         final StringBuilder buffer = new StringBuilder(1024);
@@ -71,6 +79,22 @@ public class FTJsonReader implements Parser<FTree> {
                     v.getIncomingEdge().setWeight(incomingLossMap.get(child).getDouble("score"));
                 }
             }
+
+            // add annotations
+            final List<FragmentAnnotation<? extends Object>> fragmentannotations = Arrays.asList(
+                    tree.getOrCreateFragmentAnnotation(Peak.class),
+                    tree.getOrCreateFragmentAnnotation(Ionization.class),
+                    tree.getOrCreateFragmentAnnotation(Score.class )
+            );
+            for (Fragment f : tree.getFragments()) {
+                for (FragmentAnnotation<? extends Object> g : fragmentannotations) {
+                    ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(fragmentMap.get(f.getFormula()), g.getAnnotationType()));
+                }
+            }
+
+            // add tree annotation
+            tree.addAnnotation(Ionization.class, FTSpecials.readSpecialAnnotation(json, Ionization.class));
+            tree.addAnnotation(RecalibrationFunction.class, FTSpecials.readSpecialAnnotation(json, RecalibrationFunction.class));
             return tree;
         } catch (JSONException e) {
             throw new IOException(e);
