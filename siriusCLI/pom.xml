@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>SiriusCLI</artifactId>
-    <version>3.0.2</version>
+    <version>3.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <!--                                                               -->
@@ -32,22 +32,22 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>ChemistryBase</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>BabelMs</artifactId>
-            <version>3.0.2</version>
+            <version>3.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>3.0.2</version>
+            <version>3.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsotopePatternAnalysis</artifactId>
-            <version>3.0.2</version>
+            <version>3.0.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
