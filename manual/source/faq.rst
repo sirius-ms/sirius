@@ -1,6 +1,9 @@
 Changelog
 **********************
 
+3.0.3
+  * fix crash when using GLPK solver
+
 3.0.2
   * fix bug: SIRIUS uses the old scoring system by default when -p parameter is not given
   * fix some minor bugs
