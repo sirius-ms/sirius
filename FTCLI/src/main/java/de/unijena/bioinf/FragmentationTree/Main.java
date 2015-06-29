@@ -382,14 +382,6 @@ public class Main {
             }
         }
 
-
-        {
-            //analyzer.setReduction(new TMinimalController());
-            //analyzer.setTreeBuilder(new GLPKSolver());
-            //analyzer.setTreeBuilder(new GurobiJniSolver());
-            analyzer.setTreeBuilder(new GurobiSolver());
-        }
-
         eachFile:
         for (int fnum = 0; fnum < files.size(); ++fnum) {
 

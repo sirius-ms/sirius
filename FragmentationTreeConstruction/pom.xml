@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FragmentationTreeConstruction</artifactId>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>3.0.3</version>
     <parent>
         <groupId>de.unijena.bioinf</groupId>
         <artifactId>FragmentationTree</artifactId>
-        <version>3.0.2-SNAPSHOT</version>
+        <version>3.0.2</version>
     </parent>
 
     <!--                                                               -->
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>MassDecomposer</artifactId>
-            <version>3.0.2-SNAPSHOT</version>
+            <version>3.0.3</version>
         </dependency>
         <dependency><groupId>org.apache.commons</groupId>
             <artifactId>commons-math3</artifactId>
@@ -42,12 +42,12 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>ChemistryBase</artifactId>
-            <version>4.0.2-SNAPSHOT</version>
+            <version>4.0.3</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>IsotopePatternAnalysis</artifactId>
-            <version>3.0.2-SNAPSHOT</version>
+            <version>3.0.3</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
@@ -66,7 +66,7 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>BabelMs</artifactId>
-            <version>3.0.2-SNAPSHOT</version>
+            <version>3.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
