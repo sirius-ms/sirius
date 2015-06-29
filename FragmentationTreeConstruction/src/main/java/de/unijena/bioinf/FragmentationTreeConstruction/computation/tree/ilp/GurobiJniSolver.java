@@ -465,7 +465,7 @@ public class GurobiJniSolver implements TreeBuilder {
                     try {
                         if (GurobiJniAccess.get(this.model, GRB.DoubleAttr.ConstrVioSum) > 0)
                             cause = "Constraint are violated. Tree-correctness: "
-                                    + isComputationCorrect(buildSolution(), graph);
+                                    + isComputationCorrect(buildSolution(), graph, getSolverScore());
                         else cause = "Unknown error. Status code is " + status;
                     } catch (GRBException e) {
                         throw new RuntimeException("Unknown error. Status code is " + status, e);

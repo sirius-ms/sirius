@@ -18,9 +18,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import com.google.common.collect.BiMap;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TimeoutException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -69,34 +71,6 @@ public class GurobiSolver implements TreeBuilder {
         } catch (GRBException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    protected static FTree newTree(FGraph graph, FTree tree, double rootScore) {
-        return newTree(graph, tree, rootScore, rootScore);
-    }
-
-    protected static FTree newTree(FGraph graph, FTree tree, double rootScore, double scoring) {
-        if (true) return tree;
-        tree.addAnnotation(ProcessedInput.class, graph.getAnnotationOrThrow(ProcessedInput.class));
-        tree.addAnnotation(Ionization.class, graph.getAnnotationOrThrow(Ionization.class));
-        final TreeScoring treeScoring = new TreeScoring();
-        tree.addAnnotation(TreeScoring.class, treeScoring);
-        treeScoring.setOverallScore(scoring);
-        treeScoring.setRootScore(rootScore);
-        for (Map.Entry<Class<Object>, Object> entry : graph.getAnnotations().entrySet()) {
-            tree.setAnnotation(entry.getKey(), entry.getValue());
-        }
-        if (graph.numberOfVertices() <= 2) {
-            final Fragment graphVertex = graph.getFragmentAt(1);
-            final Fragment treeVertex = tree.getFragmentAt(0);
-            for (FragmentAnnotation<Object> x : graph.getFragmentAnnotations()) {
-                tree.addFragmentAnnotation(x.getAnnotationType()).set(treeVertex, x.get(graphVertex));
-            }
-            for (LossAnnotation<Object> x : graph.getLossAnnotations()) {
-                tree.addLossAnnotation(x.getAnnotationType()).set(treeVertex.getIncomingEdge(), x.get(graphVertex.getIncomingEdge()));
-            }
-        }
-        return tree;
     }
 
     public int getSecondsPerDecomposition() {
@@ -182,7 +156,7 @@ public class GurobiSolver implements TreeBuilder {
         }
         try {
             if (graph.numberOfVertices() <= 2) {
-                return newTree(graph, new FTree(graph.getRoot().getChildren(0).getFormula()), graph.getRoot().getOutgoingEdge(0).getWeight());
+                return new FTree(graph.getRoot().getChildren(0).getFormula());
             }
             final long timeToCompute = Math.max(0l, Math.min((long) secondsPerDecomposition, timeout - System.currentTimeMillis()));
             final Solver solver = new Solver(graph, input, lowerbound, env, feasibleSolver,
@@ -197,7 +171,7 @@ public class GurobiSolver implements TreeBuilder {
     @Override
     public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
         if (graph.numberOfVertices() <= 2)
-            return newTree(graph, new FTree(graph.getRoot().getChildren(0).getFormula()), graph.getRoot().getOutgoingEdge(0).getWeight());
+            return new FTree(graph.getRoot().getChildren(0).getFormula());
         if (!(prepared instanceof Solver))
             throw new IllegalArgumentException("Expected solver to be instance of Solver, but " + prepared.getClass() + " given.");
         final Solver solver = (Solver) prepared;
@@ -510,10 +484,6 @@ public class GurobiSolver implements TreeBuilder {
             final double score = getOptimalScore();
             final boolean[] edesAreUsed = getVariableAssignment();
             Fragment graphRoot = null;
-            final List<FragmentAnnotation<Object>> fAnos = graph.getFragmentAnnotations();
-            final List<LossAnnotation<Object>> lAnos = graph.getLossAnnotations();
-            final List<FragmentAnnotation<Object>> fTrees = new ArrayList<FragmentAnnotation<Object>>();
-            final List<LossAnnotation<Object>> lTrees = new ArrayList<LossAnnotation<Object>>();
             double rootScore = 0d;
             // get root
             {
@@ -531,13 +501,7 @@ public class GurobiSolver implements TreeBuilder {
             assert graphRoot != null;
             if (graphRoot == null) return null;
 
-            final FTree tree = newTree(graph, new FTree(graphRoot.getFormula()), rootScore, rootScore);
-            /*
-            for (FragmentAnnotation<Object> x : fAnos) fTrees.add(tree.addFragmentAnnotation(x.getAnnotationType()));
-            for (LossAnnotation<Object> x : lAnos) lTrees.add(tree.addLossAnnotation(x.getAnnotationType()));
-            final TreeScoring scoring = tree.getAnnotationOrThrow(TreeScoring.class);
-            for (int k = 0; k < fAnos.size(); ++k) fTrees.get(k).set(tree.getRoot(), fAnos.get(k).get(graphRoot));
-            */
+            final FTree tree = new FTree(graphRoot.getFormula());
             final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
             stack.push(new Stackitem(tree.getRoot(), graphRoot));
             while (!stack.isEmpty()) {
@@ -548,15 +512,8 @@ public class GurobiSolver implements TreeBuilder {
                     if (edesAreUsed[edgeIds[offset]]) {
                         final Loss l = losses.get(edgeIds[offset]);
                         final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
-                        /*
-                        for (int k = 0; k < fAnos.size(); ++k)
-                            fTrees.get(k).set(child, fAnos.get(k).get(l.getTarget()));
-                        for (int k = 0; k < lAnos.size(); ++k)
-                            lTrees.get(k).set(child.getIncomingEdge(), lAnos.get(k).get(l));
-                        */
                         child.getIncomingEdge().setWeight(l.getWeight());
                         stack.push(new Stackitem(child, l.getTarget()));
-                        //scoring.setOverallScore(scoring.getOverallScore() + l.getWeight());
                     }
                     ++offset;
                 }
