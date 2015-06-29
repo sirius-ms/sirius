@@ -81,20 +81,25 @@ public class FTJsonReader implements Parser<FTree> {
             }
 
             // add annotations
+            final FragmentAnnotation<Peak> peakAno = tree.getOrCreateFragmentAnnotation(Peak.class);
             final List<FragmentAnnotation<? extends Object>> fragmentannotations = Arrays.asList(
-                    tree.getOrCreateFragmentAnnotation(Peak.class),
                     tree.getOrCreateFragmentAnnotation(Ionization.class),
                     tree.getOrCreateFragmentAnnotation(Score.class )
             );
             for (Fragment f : tree.getFragments()) {
+                final JSONObject jsonfragment = fragmentMap.get(f.getFormula());
                 for (FragmentAnnotation<? extends Object> g : fragmentannotations) {
-                    ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(fragmentMap.get(f.getFormula()), g.getAnnotationType()));
+                    ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(jsonfragment, g.getAnnotationType()));
                 }
+                // read peak data
+                peakAno.set(f, new Peak(jsonfragment.getDouble("mz"), jsonfragment.getDouble("intensity")));
+
             }
 
             // add tree annotation
-            tree.addAnnotation(Ionization.class, FTSpecials.readSpecialAnnotation(json, Ionization.class));
-            tree.addAnnotation(RecalibrationFunction.class, FTSpecials.readSpecialAnnotation(json, RecalibrationFunction.class));
+            tree.addAnnotation(Ionization.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), Ionization.class));
+            tree.addAnnotation(RecalibrationFunction.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), RecalibrationFunction.class));
+            tree.addAnnotation(TreeScoring.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations").getJSONObject("score"), TreeScoring.class));
             return tree;
         } catch (JSONException e) {
             throw new IOException(e);
