@@ -10,7 +10,7 @@
     <parent>
       <groupId>de.unijena.bioinf</groupId>
       <artifactId>IsotopePattern</artifactId>
-      <version>3.0.0</version>
+      <version>3.0.3-SNAPSHOT</version>
     </parent>
 
    <repositories>

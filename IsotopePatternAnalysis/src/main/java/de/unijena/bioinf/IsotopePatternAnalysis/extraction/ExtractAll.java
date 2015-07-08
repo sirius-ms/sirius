@@ -105,11 +105,12 @@ public class ExtractAll implements PatternExtractor {
         final List<IsotopePattern> list = extractPattern(profile, spectrum);
         final PeriodicTable table = PeriodicTable.getInstance();
         final Iterator<IsotopePattern> iter = list.iterator();
+        final double threshold = profile.getAllowedMassDeviation().multiply(1.25).absoluteFor(targetMz);
         while (iter.hasNext()) {
             final IsotopePattern pattern = iter.next();
             final double mono = pattern.getMonoisotopicMass();
             // TODO: use adducts!
-            if (Math.abs(mono-targetMz) > 2e-3) {
+            if (Math.abs(mono-targetMz) > threshold) {
                 iter.remove();
             }
         }
