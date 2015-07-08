@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.unijena.bioinf</groupId>
   <artifactId>TreeViewer</artifactId>
-  <version>3.0.2-SNAPSHOT</version>
+  <version>3.0.3-SNAPSHOT</version>
   <parent>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FragmentationTree</artifactId>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>3.0.3-SNAPSHOT</version>
   </parent>
   
   <!--                                                               -->
@@ -42,7 +42,7 @@
       <dependency>
           <groupId>de.unijena.bioinf</groupId>
           <artifactId>BabelMs</artifactId>
-          <version>3.0.2-SNAPSHOT</version>
+          <version>3.0.3-SNAPSHOT</version>
       </dependency>
   </dependencies>
   
