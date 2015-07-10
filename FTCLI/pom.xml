@@ -66,6 +66,11 @@
             <version>3.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.openscience.cdk</groupId>
+            <artifactId>cdk-qsarmolecular</artifactId>
+            <version>1.5.10</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.6</version>
@@ -96,10 +101,10 @@
             <layout>default</layout>
         </repository>
         <repository>
-   <id>ebi-repo</id>
-   <name>The EBI internal repository</name>
-   <url>http://www.ebi.ac.uk/~maven/m2repo</url>
-</repository>
+            <id>ebi-repo</id>
+            <name>The EBI internal repository</name>
+            <url>http://www.ebi.ac.uk/~maven/m2repo</url>
+        </repository>
     </repositories>
 
     <!-- Defines how to compile this software -->
