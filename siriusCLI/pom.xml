@@ -42,7 +42,7 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>3.0.3</version>
+            <version>3.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
