@@ -826,7 +826,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // and sort the resulting peaklist by mass
         Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
 
-        final double parentmass = experiment.getIonMass();
+        double parentmass = experiment.getIonMass();
 
         Peak ms1parent = null;
 
@@ -839,6 +839,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             if (i >= 0) {
                 ms1parent = spec.getPeakAt(i);
             }
+        }
+        if (ms1parent!=null) {
+            parentmass = ms1parent.getMass();
         }
 
 
@@ -858,6 +861,13 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         if (processedPeaks.isEmpty()) {
             addSyntheticParent(experiment, processedPeaks, parentmass);
         }
+
+        // set parent peak mass to ms1 parent mass
+        if (ms1parent!=null) {
+            processedPeaks.get(processedPeaks.size() - 1).setMz(ms1parent.getMass());
+            processedPeaks.get(processedPeaks.size() - 1).setOriginalMz(ms1parent.getMass());
+        }
+
         assert parentDeviation.inErrorWindow(parentmass, processedPeaks.get(processedPeaks.size() - 1).getMz()) : "heaviest peak is parent peak";
         // the heaviest fragment that is possible is M - H
         // everything which is heavier is noise
