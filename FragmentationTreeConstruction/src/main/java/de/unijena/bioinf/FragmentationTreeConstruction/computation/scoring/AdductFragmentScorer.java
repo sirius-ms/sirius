@@ -54,7 +54,8 @@ public class AdductFragmentScorer implements LossScorer<Element[]> {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        this.penalty = document.getDoubleFromDictionary(dictionary, "score");
+        if (document.hasKeyInDictionary(dictionary, "score"))
+            this.penalty = document.getDoubleFromDictionary(dictionary, "score");
     }
 
     @Override

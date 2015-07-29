@@ -157,6 +157,9 @@
         "penalty": -1.3862943611198906
       },
       {
+        "$name": "AdductFragmentScorer"
+      },
+      {
         "$name": "ChemicalPriorScorer",
         "normalization": 0.8223655391091401,
         "minimalMass": 100,
@@ -224,7 +227,7 @@
     "fragmentScorers": [
       {
         "$name": "MassDeviationVertexScorer",
-        "useOriginalMz": false
+        "useOriginalMz": true
       },
       {
         "$name": "PhosphorScorer"

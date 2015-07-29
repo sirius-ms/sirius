@@ -224,7 +224,8 @@
     "fragmentScorers": [
       {
         "$name": "MassDeviationVertexScorer",
-        "useOriginalMz": false
+        "standardDeviation": "5.0 ppm (5.0E-4 m/z)",
+        "useOriginalMz": true
       },
       {
         "$name": "PhosphorScorer"
@@ -433,6 +434,9 @@
       {
         "$name": "PureCarbonNitrogenLossScorer",
         "penalty": -2.3025850929940455
+      },
+      {
+        "$name": "AdductFragmentScorer"
       },
       {
         "$name": "StrangeElementLossScorer",

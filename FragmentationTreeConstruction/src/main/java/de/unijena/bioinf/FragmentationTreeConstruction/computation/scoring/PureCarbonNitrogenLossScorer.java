@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
-public class PureCarbonNitrogenLossScorer implements LossScorer {
+public class PureCarbonNitrogenLossScorer implements LossScorer<Element[]> {
 
     private double penalty;
 
@@ -38,17 +38,26 @@ public class PureCarbonNitrogenLossScorer implements LossScorer {
     }
 
     @Override
-    public Element prepare(ProcessedInput inputh) {
-        return PeriodicTable.getInstance().getByName("N");
+    public Element[] prepare(ProcessedInput input) {
+        final PeriodicTable T = PeriodicTable.getInstance();
+        return new Element[]{T.getByName("Cl"), T.getByName("K"),T.getByName("Na")};
     }
 
     @Override
-    public double score(Loss loss, ProcessedInput input, Object n) {
+    public double score(Loss loss, ProcessedInput input, Element[] halogens) {
         final MolecularFormula f = loss.getFormula();
-        final int nitrogen = f.numberOf((Element) n);
+        final int nitrogen = f.numberOfNitrogens();
         final int carbon = f.numberOfCarbons();
-        if (nitrogen + carbon >= f.atomCount()) return penalty;
-        else return 0d;
+        final int both = nitrogen+carbon;
+        final int atomcount = f.atomCount();
+        if (both >= atomcount) return penalty;
+        else if (both >= atomcount-1) {
+            // exclude single Na, Cl and K losses
+            for (Element e : halogens) {
+                if (f.numberOf(e) > 0) return penalty;
+            }
+            return 0d;
+        } else return 0d;
     }
 
     @Override
