@@ -17,7 +17,7 @@
  */
 package de.unijena.bioinf.babelms.ms;
 
-import com.sun.xml.xsom.impl.scd.Iterators;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -48,6 +48,6 @@ public class CsvParser extends SpectralParser {
             }
         }
         reader.close();
-        return Iterators.singleton((Ms2Spectrum<Peak>)spec);
+        return Iterators.singletonIterator((Ms2Spectrum<Peak>) spec);
     }
 }
