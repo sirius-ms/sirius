@@ -75,11 +75,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 	}
 	
 	public void showTree(TreeNode root){
-//		System.err.println("showTree");
 		if(root!=null){
-//			System.err.println("size: "+renderPanel.getSize().getWidth()+" "+renderPanel.getSize().getHeight());
-//			System.err.println("psize: "+renderPanel.getPreferredSize().getWidth()+" "+renderPanel.getPreferredSize().getHeight());
-//			System.err.println("msize: "+renderPanel.getMinimumSize().getWidth()+" "+renderPanel.getMinimumSize().getHeight());
 			NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
 			NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
 			this.renderPanel.showTree(root,nt,nc);
@@ -90,10 +86,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 			}else{
 				legendText.setText("intensity");
 			}
-//			System.err.println("size: "+renderPanel.getSize().getWidth()+" "+renderPanel.getSize().getHeight());
-//			System.err.println("psize: "+renderPanel.getPreferredSize().getWidth()+" "+renderPanel.getPreferredSize().getHeight());
-//			System.err.println("msize: "+renderPanel.getMinimumSize().getWidth()+" "+renderPanel.getMinimumSize().getHeight());
-			pane.invalidate();
+//			pane.invalidate();
 			this.svp.setNodeColorManager(this.renderPanel.getNodeColorManager());
 			this.svp.repaint();
 		}else{

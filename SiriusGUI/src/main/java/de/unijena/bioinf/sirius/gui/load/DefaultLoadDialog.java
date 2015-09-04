@@ -183,7 +183,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	@Override
 	public void newCollisionEnergy(CompactSpectrum sp) {
 		msList.repaint();
-		System.out.println("update "+sp.getCollisionEnergy().getMinEnergy());
 		updateCETextField();
 		
 	}
@@ -199,7 +198,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		for(int i=0;i<listModel.size();i++){
 			SpectrumContainer spCont = listModel.getElementAt(i);
 			if(spCont.getSpectrum().equals(sp)){
-				System.out.println(i+" "+listModel.size());
 				listModel.remove(i);
 				break;
 			}

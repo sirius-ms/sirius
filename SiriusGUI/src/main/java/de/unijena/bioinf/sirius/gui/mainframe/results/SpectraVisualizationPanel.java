@@ -104,7 +104,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 				for(CompactSpectrum sp : ms2){
 					double minEn = sp.getCollisionEnergy().getMinEnergy();
 					double maxEn = sp.getCollisionEnergy().getMaxEnergy();
-					System.out.println("fuege spectrum hinzu "+minEn+" "+maxEn);
 					if(minEn==maxEn){
 						cbModel.addElement(cEFormat.format(minEn)+" eV");
 					}else{
@@ -125,19 +124,14 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		this.model = new ResultsMSViewerDataModel(ec);
 		java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
 		java.util.List<CompactSpectrum> ms2 = ec.getMs2Spectra();
-		System.out.println("change Experiment: "+ms1.size()+" "+ms2.size());
-		System.out.println(this.cbModel.getSize()+" "+this.model.getSize());
 		if(sre==null){
 			model.showDummySpectrum();
 		}else if(ms1!=null&&ms1.size()>0){
-//			System.err.println("j1");
 			model.selectMS1Spectrum();
 		}else if(ms2!=null&&ms2.size()>0){
-//			System.err.println("j2");
 			model.selectMS2Spectrum(0);
 		}else{
 			model.showDummySpectrum();
-//			System.err.println("j3");
 		}
 		msviewer.setData(model);
 		this.showMolecularFormulaMarkings();

@@ -120,14 +120,11 @@ public class LoadController implements LoadDialogListener{
 		if(returnVal == JFileChooser.APPROVE_OPTION){
 			File f = chooser.getSelectedFile();
 			int dotIndex = f.getName().lastIndexOf(".");
-			System.out.println(dotIndex+"");
 			if(dotIndex>0){
 				String ending = f.getName().substring(dotIndex+1, f.getName().length());
 				DataFormatIdentifier dfi = new  DataFormatIdentifier();
 				DataFormat df = dfi.identifyFormat(f);
 				
-				System.out.println(df);
-				System.out.println(f.getAbsolutePath());
 				if(df==DataFormat.JenaMS){
 					MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
 					CompactExperiment cexp = reader.read(f);
@@ -157,11 +154,6 @@ public class LoadController implements LoadDialogListener{
 					CompactSpectrum ms1 = cexp.getMS1Spectrum();
 					List<CompactSpectrum> newSP = new ArrayList<>();
 					if(ms1!=null){
-						System.out.println("-----------");
-						for(int i=0;i<ms1.getSize();i++){
-							System.out.println(ms1.getMass(i)+" "+ms1.getAbsoluteIntensity(i));
-						}
-						System.out.println("-----------");
 						if(this.exp.getMs1Spectra().isEmpty()){
 							this.exp.getMs1Spectra().add(ms1);
 							newSP.add(ms1);
@@ -283,8 +275,6 @@ public class LoadController implements LoadDialogListener{
 			ms2Spectra.add(sp);
 			loadDialog.msLevelChanged(sp);
 		}
-		System.out.println("Size ms1: "+ms1Spectra.size());
-		System.out.println("Size ms2: "+ms2Spectra.size());
 	}
 
 	@Override

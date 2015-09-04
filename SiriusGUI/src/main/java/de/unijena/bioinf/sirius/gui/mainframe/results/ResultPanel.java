@@ -73,7 +73,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	}
 	
 	public void changeData(ExperimentContainer ec){
-		System.out.println("changeData");
 		this.ec = ec;
 		
 //		if(this.ec!=null){
@@ -82,20 +81,16 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 //			listRenderer.updateData(new ArrayList<SiriusResultElement>());
 //		}
 		
-//		dddd
 		SiriusResultElement sre = null;
 		resultsJList.removeListSelectionListener(this);
 		if(this.ec!=null&&!this.ec.getResults().isEmpty()){
-//			System.out.println("Wahl1");
 			this.listModel.setData(ec.getResults());
 			if(this.listModel.getSize()>0){
 				this.resultsJList.setSelectedIndex(0);
 				sre = ec.getResults().get(0);
 			}
 //			tvp.showTree(ec.getResults().get(0).getTree());
-//			System.out.println(tvp.getSize().getWidth()+" "+tvp.getSize().getHeight());
 		}else{
-//			System.out.println("Wahl2");
 			this.listModel.setData(new ArrayList<SiriusResultElement>());
 		}
 		resultsJList.addListSelectionListener(this);
@@ -106,7 +101,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
-		System.out.println("valueChanged");
 		SiriusResultElement sre = this.resultsJList.getSelectedValue();
 		if(sre==null){
 			tvp.showTree(null);

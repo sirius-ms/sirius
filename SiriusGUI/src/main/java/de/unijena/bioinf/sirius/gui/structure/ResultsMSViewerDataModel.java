@@ -170,7 +170,6 @@ public class ResultsMSViewerDataModel implements MSViewerDataModel {
 	}
 	
 	public void removeMarkings(){
-		System.out.println("removeMarkings");
 		this.isMarkedSet.clear();
 	}
 	

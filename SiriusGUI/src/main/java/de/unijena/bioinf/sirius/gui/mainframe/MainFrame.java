@@ -236,14 +236,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 						
 					}
 					this.names.add(ec.getName());
-					System.out.println("Fall 1: "+ec.getName());
 				}else{
 					ec.setName("Compound "+nameCounter);
-					System.out.println("Fall 2: "+ec.getName());
 					nameCounter++;
 				}
 				this.compoundModel.addElement(ec);
-				System.out.println(ec.getName());
 			}
 		}else if(e.getSource()==newB){
 			LoadController lc = new LoadController(this);
@@ -256,10 +253,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 						
 					}
 					this.names.add(ec.getName());
-					System.out.println("Fall 1: "+ec.getName());
 				}else{
 					ec.setName("Compound "+nameCounter);
-					System.out.println("Fall 2: "+ec.getName());
 					nameCounter++;
 				}
 				this.compoundModel.addElement(ec);

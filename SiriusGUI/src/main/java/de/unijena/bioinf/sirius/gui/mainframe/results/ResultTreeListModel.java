@@ -40,7 +40,6 @@ public class ResultTreeListModel implements ListModel<SiriusResultElement> {
 	
 	public void setData(List<SiriusResultElement> results){
 		int size = this.trees.size();
-		System.out.println("Anzahl Elemente vor update: "+size);
 		this.trees = new ArrayList<>(results.size());
 		if(size>0){
 			ListDataEvent event = new ListDataEvent(this, ListDataEvent.INTERVAL_REMOVED,0,size-1);
