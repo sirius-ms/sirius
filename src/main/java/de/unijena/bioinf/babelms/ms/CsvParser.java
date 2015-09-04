@@ -16,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 package de.unijena.bioinf.babelms.ms;
-
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
@@ -48,6 +47,6 @@ public class CsvParser extends SpectralParser {
             }
         }
         reader.close();
-        return Iterators.singletonIterator((Ms2Spectrum<Peak>) spec);
+        return Iterators.singletonIterator((Ms2Spectrum<Peak>)spec);
     }
 }
