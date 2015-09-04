@@ -381,23 +381,57 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     
     //private static final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*([+-])\\s*(.+)([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
     Adduct __parseIonFromString(String s) {
-        if (true) throw new RuntimeException("The current implementation seems to be buggy!"); // TODO: FIX!!!
-    	final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*(?:([+-])\\s*(.+))?([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
-    	final Matcher m = ION_PATTERN.matcher(s);
-    	if (!m.find()) throw new RuntimeException("Can't parse ion: '" + s + "'");
-    	final int charge = (m.group(4).equals("+") ? 1 : -1);
-    	final int numberOfCharges = m.group(5).isEmpty() ? 1 : Integer.parseInt(m.group(4));
-    	final boolean add = m.group(1) == null || m.group(1).equals("+");
-    	final MolecularFormula molecule = MolecularFormula.parse(m.group(2) == null ? "" : m.group(2), this);
-    	//final char electron = m.group(3).isEmpty() ? '.' : m.group(3).charAt(0);
-    	double mass = molecule.getMass();
-    	//switch (electron) {
+//        if (true) throw new RuntimeException("The current implementation seems to be buggy!"); // TODO: FIX!!!
+        //another try
+        final Pattern adductPattern = Pattern.compile("\\[\\d?M([-+])(\\d)?(\\w*)(([-+])(\\d)?(\\w*))?\\](\\d?)([-+])");
+        final Matcher m = adductPattern.matcher(s);
+        if (!m.find()) throw new RuntimeException("Can't parse ion: '" + s + "'");
+        final int charge = (m.group(9).equals("+") ? 1 : -1);
+        final int numberOfCharges = m.group(8).isEmpty() ? 1 : Integer.parseInt(m.group(8));
+        final boolean add = m.group(1) == null || m.group(1).equals("+");
+        MolecularFormula molecule = MolecularFormula.parse(m.group(3) == null ? "" : m.group(3));
+
+
+        if (m.group(2)!=null){
+            int mult = Integer.parseInt(m.group(2));
+            molecule = molecule.multiply(mult);
+        }
+        //final char electron = m.group(3).isEmpty() ? '.' : m.group(3).charAt(0);
+        double mass = molecule.getMass();
+        //switch (electron) {
 			/*case '+':*/if (charge > 0) mass -= Charge.ELECTRON_MASS *numberOfCharges;//break;
 			/*case '-':*/else if (charge < 0) mass += Charge.ELECTRON_MASS *numberOfCharges;// break;
-			//default:
-		//}
-    	return (add) 	? new Adduct(mass, numberOfCharges*charge, s, molecule) 
-    					: new Adduct(-mass, numberOfCharges*charge, s, molecule.negate());
+        //default:
+        //}
+
+        if (m.group(4)==null) {
+            return (add) 	? new Adduct(mass, numberOfCharges*charge, s, molecule)
+                    : new Adduct(-mass, numberOfCharges*charge, s, molecule.negate());
+        }
+
+        if (m.group(5) == null) throw new RuntimeException("Ionization string wrong");
+        final boolean add2 = m.group(5).equals("+");
+        MolecularFormula molecule2 = MolecularFormula.parse(m.group(7) == null ? "" : m.group(7));
+
+        if (m.group(6)!=null){
+            int mult = Integer.parseInt(m.group(6));
+            molecule2 = molecule2.multiply(mult);
+        }
+
+
+        double mass2 = molecule2.getMass();
+        if (charge > 0) mass2 -= Charge.ELECTRON_MASS *numberOfCharges;
+        else if (charge < 0) mass2 += Charge.ELECTRON_MASS *numberOfCharges;
+
+        if (!add){
+            mass = -mass;
+            molecule = molecule.negate();
+        }
+        if (!add2){
+            mass2 = -mass2;
+            molecule2 = molecule2.negate();
+        }
+        return new Adduct(mass+mass2, numberOfCharges*charge, s, molecule.add(molecule2));
     }
     
     /**
