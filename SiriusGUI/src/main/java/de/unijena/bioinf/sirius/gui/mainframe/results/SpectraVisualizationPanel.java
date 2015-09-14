@@ -87,7 +87,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	}
 	
 	private void updateLogic(){
-		if(spectraSelection!=null)spectraSelection.removeActionListener(this);
+		if(spectraSelection!=null) spectraSelection.removeActionListener(this);
 		cbModel.removeAllElements();
 		if(ec==null){
 			this.zoomIn.setEnabled(false);
@@ -114,7 +114,15 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			if(cbModel.getSize()>0) spectraSelection.setSelectedIndex(0);
 			else spectraSelection.setSelectedIndex(-1);
 		}
-		if(spectraSelection!=null)spectraSelection.addActionListener(this);
+		
+		if(spectraSelection!=null){
+			if(sre==null){
+				spectraSelection.setEnabled(false);
+			}else{
+				spectraSelection.setEnabled(true);
+			}
+			spectraSelection.addActionListener(this);
+		}
 	}
 	
 	public void changeExperiment(ExperimentContainer ec,SiriusResultElement sre){
@@ -187,6 +195,11 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	
 	public void changeSiriusResultElement(SiriusResultElement sre){
 		this.sre = sre;
+		if(sre==null){
+			spectraSelection.setEnabled(false);
+		}else{
+			spectraSelection.setEnabled(true);
+		}
 		showMolecularFormulaMarkings();
 	}
 	

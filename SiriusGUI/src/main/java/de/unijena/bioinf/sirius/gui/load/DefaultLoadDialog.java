@@ -78,6 +78,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		remove = new JButton("-");
 		add.addActionListener(this);
 		remove.addActionListener(this);
+		remove.setEnabled(false);
 		msControls.add(add);
 		msControls.add(remove);
 		leftPanel.add(msControls,BorderLayout.SOUTH);
@@ -194,7 +195,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
 	@Override
 	public void spectraRemoved(CompactSpectrum sp) {
-		System.out.println("remove");
 		for(int i=0;i<listModel.size();i++){
 			SpectrumContainer spCont = listModel.getElementAt(i);
 			if(spCont.getSpectrum().equals(sp)){
@@ -286,7 +286,10 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			this.msviewer.repaint();
 			this.msLevelBox.setEnabled(false);
 			this.changeMSLevel.setEnabled(false);
+			this.remove.setEnabled(false);
 			return;
+		}else{
+			this.remove.setEnabled(true);
 		}
 		SpectrumContainer spcont = listModel.get(msList.getSelectedIndex()); 
 		msviewer.setData(spcont);
