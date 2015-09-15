@@ -23,13 +23,16 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	
 	private ExperimentContainer ec;
 	
-	public ResultPanel() {
-		this(null);
+	private Frame owner;
+	
+	public ResultPanel(Frame owner) {
+		this(null, owner);
 	}
 	
-	public ResultPanel(ExperimentContainer ec) {
+	public ResultPanel(ExperimentContainer ec, Frame owner) {
 		this.setLayout(new BorderLayout());
 		this.ec = ec;
+		this.owner = owner;
 		
 		if(this.ec!=null) this.listModel = new ResultTreeListModel(ec.getResults());
 		else this.listModel = new ResultTreeListModel();
@@ -58,7 +61,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		this.add(temp,BorderLayout.NORTH);
 		
 		JTabbedPane centerPane = new JTabbedPane();
-		tvp = new TreeVisualizationPanel();
+		tvp = new TreeVisualizationPanel(owner);
 		centerPane.addTab("tree view",tvp);
 		
 		svp = new SpectraVisualizationPanel(ec);
@@ -96,7 +99,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		resultsJList.addListSelectionListener(this);
 		svp.changeExperiment(this.ec,sre);
 		if(sre==null) tvp.showTree(null);
-		else tvp.showTree(sre.getTree());
+		else tvp.showTree(sre);
 	}
 
 	@Override
@@ -106,7 +109,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 			tvp.showTree(null);
 			svp.changeSiriusResultElement(null);
 		}else{
-			tvp.showTree(sre.getTree());
+			tvp.showTree(sre);
 			svp.changeSiriusResultElement(sre);
 		}
 	}

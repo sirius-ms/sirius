@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import java.util.*;
 import java.util.List;
+import java.util.zip.ZipOutputStream;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,6 +24,7 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
+import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
 import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
@@ -34,7 +36,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	private DefaultListModel<ExperimentContainer> compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB;
+	private JButton newB, loadB, closeB, saveB, /*editB,*/ computeB;
 	
 	private HashSet<String> names;
 	private int nameCounter;
@@ -76,7 +78,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel dummyPanel = new JPanel();
 		resultsPanel.add(dummyPanel,DUMMY_CARD);
 		
-		showResultsPanel = new ResultPanel();
+		showResultsPanel = new ResultPanel(this);
 //		resultsPanel.add(showResultsPanel,RESULTS_CARD);
 //		resultsPanelCL.show(resultsPanel, RESULTS_CARD);
 		mainPanel.add(showResultsPanel,BorderLayout.CENTER);
@@ -113,13 +115,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		newB = new JButton("new");
 		newB.addActionListener(this);
 		controlPanel.add(newB);
-		loadB = new JButton("load");
+		loadB = new JButton("open");
 		loadB.addActionListener(this);
 		controlPanel.add(loadB);
-		editB = new JButton("edit");
-		editB.addActionListener(this);
-		editB.setEnabled(false);
-		controlPanel.add(editB);
+//		editB = new JButton("edit");
+//		editB.addActionListener(this);
+//		editB.setEnabled(false);
+//		controlPanel.add(editB);
 		closeB = new JButton("close");
 		closeB.addActionListener(this);
 		closeB.setEnabled(false);
@@ -198,51 +200,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==loadB){
-			
-			File dir = new File("/media/Ext4_log/gnps/gnps_ms/");
-			int counter = 0;
-			List<CompactSpectrum> spectra = new ArrayList<CompactSpectrum>();
-			ExperimentContainer expCont = new ExperimentContainer();
-			for(File ms : dir.listFiles()){
-				System.out.println(ms.getAbsolutePath());
-				if(counter>10) break;
-				MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
-				CompactExperiment exp = reader.read(ms);
-				if(exp.getFocusedMass()>0){
-					expCont.setSelectedFocusedMass(exp.getFocusedMass());
-					expCont.setDataFocusedMass(exp.getFocusedMass());
-				}
-				CompactSpectrum ms1 = exp.getMS1Spectrum();
-				if(ms1!=null){
-					spectra.add(ms1);
-				}
-				for(CompactSpectrum sp : exp.getMS2Spectra()){
-					spectra.add(sp);
-				}
-				counter++;
-			}
-			expCont.setMs2Spectra(spectra);
-			
-			System.out.println("Anzahl Spektren: "+spectra.size());
-			
-			LoadController lc = new LoadController(this,expCont);
-			if(lc.getReturnValue() == ReturnValue.Success){
-				ExperimentContainer ec = lc.getExperiment();
-				if(ec.getName()!=null&&!ec.getName().isEmpty()){
-					if(this.names.contains(ec.getName())){
-						ec.setName(ec.getName().trim()+" ("+nameCounter+")");
-						nameCounter++;
-						
-					}
-					this.names.add(ec.getName());
-				}else{
-					ec.setName("Compound "+nameCounter);
-					nameCounter++;
-				}
-				this.compoundModel.addElement(ec);
-			}
-		}else if(e.getSource()==newB){
+		if(e.getSource()==newB){
 			LoadController lc = new LoadController(this);
 			if(lc.getReturnValue() == ReturnValue.Success){
 				ExperimentContainer ec = lc.getExperiment();
@@ -274,35 +232,44 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				}
 			}
 			this.compoundList.repaint();
-		}else if(e.getSource()==editB){
-//			ExperimentContainer ec = this.compoundList.getSelectedValue();
-//			if(ec!=null){
-//				ComputeDialog cd = new ComputeDialog(this,ec);
-//				System.out.println("werte cd aus");
-//				if(cd.isSuccessful()){
-//					System.err.println("ComputeDialog erfolgreich");
-//					System.err.println("Anzahl Ergebnisse: "+ec.getResults().size());
-//					this.showResultsPanel.changeData(ec);
-//					resultsPanelCL.show(resultsPanel,RESULTS_CARD);
-////					dhh
-////					ResultPanel rp = new ResultPanel(ec);
-////					resultsPanel.add(rp, "blablabla");
-////					this.validate();
-////					resultsPanel.validate();
-////					resultsPanel.repaint();
-////					resultsPanelCL.show(resultsPanel,"blablabla");
-////					this.validate();
-////					resultsPanel.validate();
-////					resultsPanel.repaint();
-////					this.repaint();
-////					
-////					this.repaint();
-//				}else{
-//					System.err.println("ComputeDialog nicht erfolgreich");
-//				}
-////				compute(ec);
-//			}
+		}else if(e.getSource()==saveB){
+			ExperimentContainer ec = this.compoundList.getSelectedValue();
+			ZipExperimentIO io = new ZipExperimentIO();
+			io.save(ec, new File("/home/otto/sirius.zip"));
+		}else if(e.getSource()==loadB){
+			
+			ZipExperimentIO io = new ZipExperimentIO();
+			io.load(new File("/home/otto/sirius.zip"));
 		}
+//		}else if(e.getSource()==editB){
+////			ExperimentContainer ec = this.compoundList.getSelectedValue();
+////			if(ec!=null){
+////				ComputeDialog cd = new ComputeDialog(this,ec);
+////				System.out.println("werte cd aus");
+////				if(cd.isSuccessful()){
+////					System.err.println("ComputeDialog erfolgreich");
+////					System.err.println("Anzahl Ergebnisse: "+ec.getResults().size());
+////					this.showResultsPanel.changeData(ec);
+////					resultsPanelCL.show(resultsPanel,RESULTS_CARD);
+//////					dhh
+//////					ResultPanel rp = new ResultPanel(ec);
+//////					resultsPanel.add(rp, "blablabla");
+//////					this.validate();
+//////					resultsPanel.validate();
+//////					resultsPanel.repaint();
+//////					resultsPanelCL.show(resultsPanel,"blablabla");
+//////					this.validate();
+//////					resultsPanel.validate();
+//////					resultsPanel.repaint();
+//////					this.repaint();
+//////					
+//////					this.repaint();
+////				}else{
+////					System.err.println("ComputeDialog nicht erfolgreich");
+////				}
+//////				compute(ec);
+////			}
+//		}
 		
 		
 		
@@ -319,12 +286,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			int index = compoundList.getSelectedIndex();
 			if(index<0){
 				closeB.setEnabled(false);
-				editB.setEnabled(false);
+//				editB.setEnabled(false);
 				saveB.setEnabled(false);
 				computeB.setEnabled(false);
 			}else{
 				closeB.setEnabled(true);
-				editB.setEnabled(true);
+//				editB.setEnabled(true);
 				saveB.setEnabled(true);
 				computeB.setEnabled(true);
 				this.showResultsPanel.changeData(compoundModel.getElementAt(index));

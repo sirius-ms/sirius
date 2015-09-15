@@ -16,6 +16,7 @@ public class ExperimentContainer {
 	private String name;
 	
 	private List<SiriusResultElement> results;
+	private List<IdentificationResult> originalResults;
 
 	public ExperimentContainer() {
 		ms1Spectra = new ArrayList<CompactSpectrum>();
@@ -25,6 +26,7 @@ public class ExperimentContainer {
 		dataFocusedMass = -1;
 		name = "";
 		results = Collections.emptyList();
+		originalResults = Collections.emptyList();
 	}
 
 	public String getName() {
