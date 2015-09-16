@@ -55,6 +55,7 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 
 public class ComputeDialog extends JDialog implements ActionListener{
 
@@ -416,7 +417,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            if(progDiag.isSucessful()){
 	            	System.err.println("progDiag erfolgreich");
 	            	this.success = true;
-	            	this.ec.setResults(convertResults(progDiag.getResults()));
+	            	this.ec.setResults(SiriusResultElementConverter.convertResults(progDiag.getResults()));
 	            	this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
 	            	Object o = box.getSelectedItem();
 	            	if(o instanceof String){
@@ -446,81 +447,81 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		return this.success;
 	}
 	
-	private static List<SiriusResultElement> convertResults(List<IdentificationResult> in){
-		List<SiriusResultElement> outs = new ArrayList<>();
-		for(IdentificationResult res : in){
-			SiriusResultElement out = new SiriusResultElement();
-			out.setMolecularFormula(res.getMolecularFormula());
-			out.setRank(res.getRank());
-			out.setScore(res.getScore());
-			
-			FTree ft = res.getTree();
-			out.setRawTree(ft);
-			
-			FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
-			LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);
-			FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrNull(Score.class);
-			
-			double maxInt = Double.NEGATIVE_INFINITY;
-			for(Fragment fragment : ft.getFragments()){
-				double fragInt = peakAno.get(fragment).getIntensity();
-				if(fragInt>maxInt) maxInt = fragInt;
-			}
-			
-			TreeNode root = initConvertNode(ft, peakAno, lscore, fscore, maxInt);
-			out.setTree(root);	
-			outs.add(out);
-		}
-		return outs;
-	}
-	
-	public static TreeNode initConvertNode(FTree ft,FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
-		Fragment rootK = ft.getRoot();
-		TreeNode rootM = new DefaultTreeNode();
-		rootM.setMolecularFormula(rootK.getFormula().toString());
-		rootM.setMolecularFormulaMass(rootK.getFormula().getMass());
-		rootM.setPeakMass(peakAno.get(rootK).getMass());
-		rootM.setPeakAbsoluteIntenstiy(peakAno.get(rootK).getIntensity());
-		rootM.setPeakRelativeIntensity(peakAno.get(rootK).getIntensity()/maxInt);
-		double tempScore = fscore.get(rootK).sum();
-		rootM.setScore(tempScore);
-		
-		convertNode(ft, rootK, rootM, peakAno, lscore, fscore, maxInt);
-		
-		return rootM;
-	}
-	
-	private static void convertNode(FTree ft, Fragment sourceK, TreeNode sourceM, FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
-		for(Loss edgeK : sourceK.getOutgoingEdges()){
-			Fragment targetK = edgeK.getTarget();
-			
-			DefaultTreeNode targetM = new DefaultTreeNode();
-			targetM.setMolecularFormula(targetK.getFormula().toString());
-			targetM.setMolecularFormulaMass(targetK.getFormula().getMass());
-			targetM.setPeakMass(peakAno.get(targetK).getMass());
-			targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
-			targetM.setPeakRelativeIntensity(peakAno.get(targetK).getIntensity()/maxInt);
-			double tempScore = fscore.get(targetK).sum();
-			tempScore += lscore.get(edgeK).sum();
-			targetM.setScore(tempScore);
-			
-			DefaultTreeEdge edgeM = new DefaultTreeEdge();
-			edgeM.setSource(sourceM);
-			edgeM.setTarget(targetM);
-			edgeM.setScore(lscore.get(edgeK).sum()); //TODO korrekt???
-			MolecularFormula mfSource = sourceK.getFormula();
-			MolecularFormula mfTarget = targetK.getFormula();
-			MolecularFormula mfLoss = mfSource.subtract(mfTarget);
-			edgeM.setLossFormula(mfLoss.toString());
-			edgeM.setLossMass(targetM.getPeakMass()-sourceM.getPeakMass());
-			
-			sourceM.addOutEdge(edgeM);
-			targetM.setInEdge(edgeM);
-			
-			convertNode(ft,targetK,targetM,peakAno,lscore,fscore,maxInt);
-			
-		}
-	}
+//	private static List<SiriusResultElement> convertResults(List<IdentificationResult> in){
+//		List<SiriusResultElement> outs = new ArrayList<>();
+//		for(IdentificationResult res : in){
+//			SiriusResultElement out = new SiriusResultElement();
+//			out.setMolecularFormula(res.getMolecularFormula());
+//			out.setRank(res.getRank());
+//			out.setScore(res.getScore());
+//			
+//			FTree ft = res.getTree();
+//			out.setRawTree(ft);
+//			
+//			FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
+//			LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);
+//			FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrNull(Score.class);
+//			
+//			double maxInt = Double.NEGATIVE_INFINITY;
+//			for(Fragment fragment : ft.getFragments()){
+//				double fragInt = peakAno.get(fragment).getIntensity();
+//				if(fragInt>maxInt) maxInt = fragInt;
+//			}
+//			
+//			TreeNode root = initConvertNode(ft, peakAno, lscore, fscore, maxInt);
+//			out.setTree(root);	
+//			outs.add(out);
+//		}
+//		return outs;
+//	}
+//	
+//	public static TreeNode initConvertNode(FTree ft,FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
+//		Fragment rootK = ft.getRoot();
+//		TreeNode rootM = new DefaultTreeNode();
+//		rootM.setMolecularFormula(rootK.getFormula().toString());
+//		rootM.setMolecularFormulaMass(rootK.getFormula().getMass());
+//		rootM.setPeakMass(peakAno.get(rootK).getMass());
+//		rootM.setPeakAbsoluteIntenstiy(peakAno.get(rootK).getIntensity());
+//		rootM.setPeakRelativeIntensity(peakAno.get(rootK).getIntensity()/maxInt);
+//		double tempScore = fscore.get(rootK).sum();
+//		rootM.setScore(tempScore);
+//		
+//		convertNode(ft, rootK, rootM, peakAno, lscore, fscore, maxInt);
+//		
+//		return rootM;
+//	}
+//	
+//	private static void convertNode(FTree ft, Fragment sourceK, TreeNode sourceM, FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
+//		for(Loss edgeK : sourceK.getOutgoingEdges()){
+//			Fragment targetK = edgeK.getTarget();
+//			
+//			DefaultTreeNode targetM = new DefaultTreeNode();
+//			targetM.setMolecularFormula(targetK.getFormula().toString());
+//			targetM.setMolecularFormulaMass(targetK.getFormula().getMass());
+//			targetM.setPeakMass(peakAno.get(targetK).getMass());
+//			targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
+//			targetM.setPeakRelativeIntensity(peakAno.get(targetK).getIntensity()/maxInt);
+//			double tempScore = fscore.get(targetK).sum();
+//			tempScore += lscore.get(edgeK).sum();
+//			targetM.setScore(tempScore);
+//			
+//			DefaultTreeEdge edgeM = new DefaultTreeEdge();
+//			edgeM.setSource(sourceM);
+//			edgeM.setTarget(targetM);
+//			edgeM.setScore(lscore.get(edgeK).sum()); //TODO korrekt???
+//			MolecularFormula mfSource = sourceK.getFormula();
+//			MolecularFormula mfTarget = targetK.getFormula();
+//			MolecularFormula mfLoss = mfSource.subtract(mfTarget);
+//			edgeM.setLossFormula(mfLoss.toString());
+//			edgeM.setLossMass(targetM.getPeakMass()-sourceM.getPeakMass());
+//			
+//			sourceM.addOutEdge(edgeM);
+//			targetM.setInEdge(edgeM);
+//			
+//			convertNode(ft,targetK,targetM,peakAno,lscore,fscore,maxInt);
+//			
+//		}
+//	}
 	
 	private Ms2Experiment convert(ExperimentContainer ec,String ionization, double pm){
 		MutableMs2Experiment exp = new MutableMs2Experiment();

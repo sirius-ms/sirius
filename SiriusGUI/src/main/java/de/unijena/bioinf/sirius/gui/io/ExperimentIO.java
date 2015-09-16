@@ -8,6 +8,6 @@ public interface ExperimentIO {
 
 	public void save(ExperimentContainer ec, File file);
 	
-	public void load(File file);
+	public ExperimentContainer load(File file);
 
 }

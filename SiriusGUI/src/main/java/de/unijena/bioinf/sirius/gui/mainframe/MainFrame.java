@@ -216,19 +216,19 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 					nameCounter++;
 				}
 				this.compoundModel.addElement(ec);
-				System.out.println(ec.getName());
+//				System.out.println(ec.getName());
 			}
 		}else if(e.getSource()==computeB){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			if(ec!=null){
 				ComputeDialog cd = new ComputeDialog(this,ec);
 				if(cd.isSuccessful()){
-					System.err.println("ComputeDialog erfolgreich");
-					System.err.println("Anzahl Ergebnisse: "+ec.getResults().size());
+//					System.err.println("ComputeDialog erfolgreich");
+//					System.err.println("Anzahl Ergebnisse: "+ec.getResults().size());
 					this.showResultsPanel.changeData(ec);
 					resultsPanelCL.show(resultsPanel,RESULTS_CARD);
 				}else{
-					System.err.println("ComputeDialog nicht erfolgreich");
+//					System.err.println("ComputeDialog nicht erfolgreich");
 				}
 			}
 			this.compoundList.repaint();
@@ -239,7 +239,20 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==loadB){
 			
 			ZipExperimentIO io = new ZipExperimentIO();
-			io.load(new File("/home/otto/sirius.zip"));
+			ExperimentContainer ec = io.load(new File("/home/otto/sirius.zip"));
+			
+			if(ec.getName()!=null&&!ec.getName().isEmpty()){
+				if(this.names.contains(ec.getName())){
+					ec.setName(ec.getName().trim()+" ("+nameCounter+")");
+					nameCounter++;
+					
+				}
+				this.names.add(ec.getName());
+			}else{
+				ec.setName("Compound "+nameCounter);
+				nameCounter++;
+			}
+			this.compoundModel.addElement(ec);
 		}
 //		}else if(e.getSource()==editB){
 ////			ExperimentContainer ec = this.compoundList.getSelectedValue();

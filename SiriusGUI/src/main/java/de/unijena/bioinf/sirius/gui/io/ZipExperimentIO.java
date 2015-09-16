@@ -7,21 +7,35 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import org.json.*;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 
 public class ZipExperimentIO implements ExperimentIO{
 
@@ -36,10 +50,18 @@ public class ZipExperimentIO implements ExperimentIO{
 			for(SiriusResultElement sre : sres){
 				ZipEntry ze = new ZipEntry("Rank_"+sre.getRank()+".json");
 				zos.putNextEntry(ze);
-				IdentificationResult ir = new IdentificationResult(sre.getRawTree(), sre.getRank());
-				String json = ir.getJSONTree();
-				byte[] bytes = json.getBytes();
-				zos.write(bytes);
+				zos.write(getJSONTree(sre.getTree()).getBytes());
+				
+//				FTDotWriter dotWriter = new FTDotWriter();
+//				StringWriter sWriter = new StringWriter();
+//				dotWriter.writeTree(sWriter, sre.getRawTree());
+//				zos.write(sWriter.toString().getBytes());
+//				sWriter.
+				
+//				IdentificationResult ir = new IdentificationResult(sre.getRawTree(), sre.getRank());
+//				String json = ir.getJSONTree();
+//				byte[] bytes = json.getBytes();
+//				zos.write(bytes);
 			}
 			List<CompactSpectrum> ms1 = ec.getMs1Spectra();
 			if(ms1!=null&&!ms1.isEmpty()){
@@ -74,6 +96,75 @@ public class ZipExperimentIO implements ExperimentIO{
 		
 	}
 	
+	private static String getJSONTree(TreeNode root){
+		ArrayDeque<TreeNode> nDeque = new ArrayDeque<>();
+//		StringBuilder sb = new StringBuilder();
+		List<TreeEdge> edges = new ArrayList<>();
+		nDeque.add(root);
+		
+		HashMap<Integer,TreeNode> nodeToID = new HashMap<>();
+		HashMap<TreeNode, Integer> idToNode = new HashMap<>();
+		int counter = 0;
+		nodeToID.put(counter, root);
+		idToNode.put(root, counter);
+		counter++;
+		
+		StringWriter sw = new StringWriter();
+		JSONWriter writer = new JSONWriter(sw);
+		
+		try{
+			writer.object();
+			writer.key("type");
+			writer.value("nodes");
+			writer.key("rootid");
+			writer.value("0");
+			
+			writer.key("data");
+			writer.array();	
+			
+			while(!nDeque.isEmpty()){
+				TreeNode node = nDeque.remove();
+				writer.object();
+				writer.key("mf");
+				writer.value(node.getMolecularFormula());
+				writer.key("mfMass");
+				writer.value(node.getMolecularFormulaMass());
+				writer.key("peakMass");
+				writer.value(node.getPeakMass());
+				writer.key("peakInt");
+				writer.value(node.getPeakAbsoluteIntensity());
+				writer.key("peakRelInt");
+				writer.value(node.getPeakRelativeIntensity());
+				writer.key("score");
+				writer.value(node.getScore());
+				writer.key("id");
+				writer.value(String.valueOf(nodeToID.get(node)));
+				writer.endObject();
+				for(TreeEdge edge : node.getOutEdges()){
+					TreeNode target = edge.getTarget();
+					nodeToID.put(counter, node);
+					idToNode.put(node, counter);
+					counter++;
+					nDeque.add(target);
+					
+					edges.add(edge);
+				}
+			}
+			writer.endArray();
+			
+			writer.endObject();
+			
+			//TODO Edges + ids funktionieren nichts
+			
+			
+		}catch(JSONException e){
+			System.err.println(e);
+		}
+		
+		
+		return sw.toString();
+	}
+	
 	private static String getInformations(ExperimentContainer ec){
 		StringBuilder sb = new StringBuilder();
 		String name = ec.getName();
@@ -98,6 +189,9 @@ public class ZipExperimentIO implements ExperimentIO{
 		}
 		sb.append(String.valueOf(dataFM)+"\n");
 		sb.append(String.valueOf(selFM)+"\n");
+		for(SiriusResultElement  sre : ec.getResults()){
+			sb.append(sre.getRank()+" "+sre.getScore()+" "+sre.getMolecularFormula());
+		}
 		return sb.toString();
 	}
 	
@@ -114,26 +208,29 @@ public class ZipExperimentIO implements ExperimentIO{
 		sb.append(String.valueOf(sp.getMSLevel())+"\n");
 		sb.append(String.valueOf(sp.getSize())+"\n");
 		for(int i=0;i<sp.getSize();i++){
-			sb.append(sp.getMass(i)+" "+sp.getAbsoluteIntensity(i)+" "+sp.getRelativeIntensity(i)+" "+
+			sb.append(sp.getMass(i)+" "+sp.getAbsoluteIntensity(i)+" "+
 		              sp.getResolution(i)+" "+sp.getSignalToNoise(i)+"\n");
 		}
 		return sb.toString();
 	}
 
 	@Override
-	public void load(File file) {
+	public ExperimentContainer load(File file) {
+		
+		List<CompactSpectrum> ms1List = new ArrayList<>();
+		TreeMap<Integer, CompactSpectrum> ms2Map = new TreeMap<>();
+		TreeMap<Integer, FTree> rankToTree = new TreeMap<>();
+		
+		HashMap<Integer,String> rankToMF = new HashMap<>();
+		HashMap<Integer,Double> rankToScore = new HashMap<>();
+		
+		double dataFM = -1;
+		double selFM = -1;
+		String name = null;
+		Ionization ion = null;
+		
 		try(ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)))){
 			
-			List<CompactSpectrum> ms1List = new ArrayList<>();
-			List<CompactSpectrum> ms2List = new ArrayList<>();
-			TreeMap<Integer, CompactSpectrum> ms2Set = new TreeMap<>();
-			List<SiriusResultElement> results = new ArrayList<>();
-			TreeMap<Integer, SiriusResultElement> resultsSet = new TreeMap<>();
-			double dataFM = -1;
-			double selFM = -1;
-			String name = null;
-			Ionization ion = null;
-
 			ZipEntry entry;
 	        while((entry = zis.getNextEntry()) != null) {
 	        	String zName = entry.getName();
@@ -146,7 +243,7 @@ public class ZipExperimentIO implements ExperimentIO{
 	        	
 	        	if(zName.equals("info.txt")){
 	        		String[] splits = temp.toString().split("\n");
-	        		name = splits[0] == "null" ? null : splits[0];
+	        		name = splits[0].trim() == "null" ? null : splits[0].trim();
 	        		if(splits[1].equals("M")){
 	        			ion = Ionization.M;
 	        		}else if(splits[1].equals("MPlusH")){
@@ -160,22 +257,91 @@ public class ZipExperimentIO implements ExperimentIO{
 	        		}
 	        		dataFM = Double.parseDouble(splits[2]);
 	        		selFM = Double.parseDouble(splits[3]);
+	        		for(int i=4;i<splits.length;i++){
+	        			String[] row = splits[i].split(" ");
+	        			Integer rank = Integer.valueOf(row[0]);
+	        			Double score = Double.valueOf(row[1]);
+	        			String mf = row[2];
+	        			rankToMF.put(rank, mf);
+	        			rankToScore.put(rank, score);
+	        		}
 	        	}else if(zName.startsWith("Rank")){
 	        		int rank = Integer.parseInt(zName.substring(5,zName.length()-5));
-	        		//TODO parsen und in Tree einfuegen
+	        		StringReader stringReader = new StringReader(temp.toString());
+	        		FTJsonReader jsonReader = new FTJsonReader();
+	        		FTree tree = jsonReader.parse(new BufferedReader(stringReader));
+	        		rankToTree.put(rank, tree);
+//	        		IdentificationResult res = new IdentificationResult(tree, rank);
+//	        		SiriusResultElement sre = SiriusResultElementConverter.convertResult(res);
+//	        		resultsMap.put(rank, sre);
+	        	}else if(zName.equals("ms1.txt")){
+	        		BufferedReader re = new BufferedReader(new StringReader(temp.toString()));
+	        		ms1List.add(readSpectrum(re));
+	        	}else if(zName.startsWith("ms2")){
+	        		BufferedReader re = new BufferedReader(new StringReader(temp.toString()));
+	        		int index = Integer.parseInt(zName.substring(4,zName.length()-4));
+	        		ms2Map.put(index, readSpectrum(re));
+	        	}else{
+	        		System.err.println("unknown element: "+zName);
 	        	}
-	        	
-	        	//TODO MS1, MS2...
-	        	
-	        	
-	        	System.out.println(name);
-	        	System.out.println("--------------------");
-	        	System.out.println(temp.toString());
 	        }
 	        	 
 	    }catch(IOException e){
 	         throw new RuntimeException(e);
 	    }
+		
+		ExperimentContainer ec = new ExperimentContainer();
+		ec.setIonization(ion);
+		ec.setName(name);
+		ec.setDataFocusedMass(dataFM);
+		ec.setSelectedFocusedMass(selFM);
+		
+		List<CompactSpectrum> ms2List = new ArrayList<>();
+		List<SiriusResultElement> results = new ArrayList<>();
+		for(Integer index : ms2Map.keySet()){
+			ms2List.add(ms2Map.get(index));
+		}
+		for(Integer rank : rankToScore.keySet()){
+			SiriusResultElement sre = new SiriusResultElement();
+			sre.setMolecularFormula(MolecularFormula.parse(rankToMF.get(rank)));
+			sre.setRank(rank);
+			sre.setRawTree(rankToTree.get(rank));
+			sre.setScore(rankToScore.get(rank));
+			sre.setTree(SiriusResultElementConverter.convertTree(sre.getRawTree()));
+			results.add(sre);
+		}
+		
+		ec.setResults(results);
+		ec.setMs1Spectra(ms1List);
+		ec.setMs2Spectra(ms2List);
+		return ec;
+	}
+	
+	private CompactSpectrum readSpectrum(BufferedReader re) throws IOException{
+		double minCE = Double.parseDouble(re.readLine());
+		double maxCE = Double.parseDouble(re.readLine());
+		int msLevel = Integer.parseInt(re.readLine());
+		int size = Integer.parseInt(re.readLine());
+		double[] masses = new double[size];
+		double[] absInts = new double[size];
+		double[] resolutions = new double[size];
+		double[] snRatios = new double[size];
+		for(int i=0;i<size;i++){
+			String[] splits = re.readLine().split(" ");
+			masses[i]  = Double.parseDouble(splits[0]);
+			absInts[i] = Double.parseDouble(splits[1]);
+			resolutions[i] = Double.parseDouble(splits[2]);
+			snRatios[i] = Double.parseDouble(splits[3]);
+		}
+		DefaultCompactSpectrum sp = new DefaultCompactSpectrum(masses, absInts);
+		sp.setMSLevel(msLevel);
+		if(minCE>=0&&minCE>=0&&minCE<=maxCE){
+			CollisionEnergy ce = new CollisionEnergy(minCE, maxCE);
+			sp.setCollisionEnergy(ce);
+		}
+		sp.setResolutions(resolutions);
+		sp.setSnRatios(snRatios);
+		return sp;
 	}
 
 }
