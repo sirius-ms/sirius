@@ -9,12 +9,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+
+import org.json.JSONException;
 
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 
@@ -301,22 +304,40 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			
 		}else if(e.getSource()==loadB){
 			
-			ZipExperimentIO io = new ZipExperimentIO();
-			ExperimentContainer ec = io.load(new File("/home/otto/sirius.zip"));
+			JFileChooser jfc = new JFileChooser();
+			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			jfc.setAcceptAllFileFilterUsed(true);
+			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
 			
-			while(true){
-				if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
-					if(this.names.contains(ec.getGUIName())){
-						ec.setSuffix(ec.getSuffix()+1);
-					}else{
-						this.names.add(ec.getGUIName());
-						break;
+			int returnVal = jfc.showOpenDialog(this);
+			if(returnVal == JFileChooser.APPROVE_OPTION){
+				ZipExperimentIO io = new ZipExperimentIO();
+				try{
+					ExperimentContainer ec = io.load(jfc.getSelectedFile());
+					while(true){
+						if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+							if(this.names.contains(ec.getGUIName())){
+								ec.setSuffix(ec.getSuffix()+1);
+							}else{
+								this.names.add(ec.getGUIName());
+								break;
+							}
+						}else{
+							ec.setName("Unknown");
+							ec.setSuffix(1);
+						}
 					}
-				}else{
-					ec.setName("Unknown");
-					ec.setSuffix(1);
+					this.compoundModel.addElement(ec);
+					this.compoundList.setSelectedValue(ec,true);
+				}catch(Exception e2){
+					new ExceptionDialog(this, e2.getMessage());
 				}
 			}
+			
+			
+			
+			
+			
 //			if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
 //				if(this.names.contains(ec.getName())){
 //					ec.setName(ec.getName().trim()+" ("+nameCounter+")");
@@ -328,7 +349,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //				ec.setName("Compound "+nameCounter);
 //				nameCounter++;
 //			}
-			this.compoundModel.addElement(ec);
+			
 		}
 //		}else if(e.getSource()==editB){
 ////			ExperimentContainer ec = this.compoundList.getSelectedValue();
