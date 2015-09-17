@@ -32,6 +32,8 @@ import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -195,7 +197,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 				try{
 					ir.writeTreeToFile(selectedFile);
 				}catch(IOException e2){
-					FileExceptionDialog fed = new FileExceptionDialog(owner, e2.getMessage());
+					ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
 				}
 				System.out.println(selectedFile.getAbsolutePath());
 			}
@@ -240,84 +242,6 @@ class FTreeDotFilter extends FileFilter{
 	@Override
 	public String getDescription() {
 		return "Dot";
-	}
-	
-}
-
-class FilePresentDialog extends JDialog implements ActionListener{
-	
-	private ReturnValue rv;
-	
-	private JButton ok, abort;
-	
-	public FilePresentDialog(Frame owner, String name) {
-		super(owner,true);
-		
-		rv = ReturnValue.Abort;
-		
-		this.setLayout(new BorderLayout());
-		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
-		Icon icon = UIManager.getIcon("OptionPane.questionIcon");
-		northPanel.add(new JLabel(icon));
-		northPanel.add(new JLabel("The file \""+name+"\" is already present. Override it?"));
-		this.add(northPanel,BorderLayout.CENTER);
-		JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		ok = new JButton("Yes");
-		ok.addActionListener(this);
-		abort = new JButton("No");
-		abort.addActionListener(this);
-		south.add(ok);
-		south.add(abort);
-		this.add(south,BorderLayout.SOUTH);
-		this.pack();
-		this.setVisible(true);
-		// TODO Auto-generated constructor stub
-	}
-	
-	public ReturnValue getReturnValue(){
-		return rv;
-	}
-
-
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==ok){
-			rv = ReturnValue.Success;
-		}else{
-			rv = ReturnValue.Abort;
-		}
-		this.dispose();
-	}
-	
-}
-
-class FileExceptionDialog extends JDialog implements ActionListener{
-	
-	private JButton ok;
-	
-	public FileExceptionDialog(Frame owner, String message) {
-		super(owner,true);
-		
-		this.setLayout(new BorderLayout());
-		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
-		Icon icon = UIManager.getIcon("OptionPane.errorIcon");
-		northPanel.add(new JLabel(icon));
-		northPanel.add(new JLabel(message));
-		this.add(northPanel,BorderLayout.CENTER);
-		JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		ok = new JButton("Ok");
-		ok.addActionListener(this);
-		south.add(ok);
-		this.add(south,BorderLayout.SOUTH);
-		this.pack();
-		this.setVisible(true);
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		this.dispose();
 	}
 	
 }

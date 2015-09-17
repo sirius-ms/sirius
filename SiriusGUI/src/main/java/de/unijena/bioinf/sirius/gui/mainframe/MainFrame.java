@@ -14,6 +14,7 @@ import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
 
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 
@@ -24,6 +25,8 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
 import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -250,8 +253,52 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			this.compoundList.repaint();
 		}else if(e.getSource()==saveB){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
-			ZipExperimentIO io = new ZipExperimentIO();
-			io.save(ec, new File("/home/otto/sirius.zip"));
+			
+			JFileChooser jfc = new JFileChooser();
+			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			jfc.setAcceptAllFileFilterUsed(true);
+			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
+			
+			File selectedFile = null;
+			
+			while(selectedFile==null){
+				int returnval = jfc.showSaveDialog(this);
+				if(returnval == JFileChooser.APPROVE_OPTION){
+					File selFile = jfc.getSelectedFile();
+					
+					String name = selFile.getName();
+					if(!selFile.getAbsolutePath().endsWith(".sirius")){
+						selFile = new File(selFile.getAbsolutePath()+".sirius");
+					}
+					
+					if(selFile.exists()){
+						FilePresentDialog fpd = new FilePresentDialog(this, selFile.getName());
+						ReturnValue rv = fpd.getReturnValue();
+						if(rv==ReturnValue.Success){
+							selectedFile = selFile;
+						}
+//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
+					}else{
+						selectedFile = selFile;	
+					}
+					
+					
+				}else{
+					break;
+				}
+			}
+			
+			if(selectedFile!=null){
+				try{
+					ZipExperimentIO io = new ZipExperimentIO();
+					io.save(ec, selectedFile);
+				}catch(Exception e2){
+					new ExceptionDialog(this, e2.getMessage());
+				}
+				
+			}
+			
+			
 		}else if(e.getSource()==loadB){
 			
 			ZipExperimentIO io = new ZipExperimentIO();
@@ -364,6 +411,25 @@ class DummyProgress implements Progress {
 	@Override
 	public void update(double current, double max, String value) {
 		System.out.println("current: "+current+"/"+max+" "+value);
+	}
+	
+}
+
+class SiriusSaveFileFilter extends FileFilter{
+
+	@Override
+	public boolean accept(File f) {
+		if(f.isDirectory()) return true;
+		String name = f.getName();
+		if(name.endsWith(".sirius")){
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public String getDescription() {
+		return ".sirius";
 	}
 	
 }
