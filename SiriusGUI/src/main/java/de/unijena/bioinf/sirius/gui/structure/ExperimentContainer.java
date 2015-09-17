@@ -13,7 +13,8 @@ public class ExperimentContainer {
 	private Ionization ionization;
 	private double selectedFocusedMass;
 	private double dataFocusedMass;
-	private String name;
+	private String name,guiName;
+	private int suffix;
 	
 	private List<SiriusResultElement> results;
 	private List<IdentificationResult> originalResults;
@@ -25,6 +26,8 @@ public class ExperimentContainer {
 		selectedFocusedMass = -1;
 		dataFocusedMass = -1;
 		name = "";
+		guiName ="";
+		suffix = 1;
 		results = Collections.emptyList();
 		originalResults = Collections.emptyList();
 	}
@@ -32,9 +35,23 @@ public class ExperimentContainer {
 	public String getName() {
 		return name;
 	}
+	
+	public String getGUIName(){
+		return guiName;
+	}
 
 	public void setName(String name) {
 		this.name = name;
+		this.guiName = this.suffix>=2 ? this.name + " ("+suffix+")" : this.name;
+	}
+	
+	public void setSuffix(int value){
+		this.suffix = value;
+		this.guiName = this.suffix>=2 ? this.name + " ("+suffix+")" : this.name;
+	}
+	
+	public int getSuffix(){
+		return this.suffix;
 	}
 
 	public List<CompactSpectrum> getMs1Spectra() {

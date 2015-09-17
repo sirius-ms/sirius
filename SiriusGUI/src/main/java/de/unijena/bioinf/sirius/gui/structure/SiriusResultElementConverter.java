@@ -136,7 +136,7 @@ public class SiriusResultElementConverter {
 			MolecularFormula mfTarget = targetK.getFormula();
 			MolecularFormula mfLoss = mfSource.subtract(mfTarget);
 			edgeM.setLossFormula(mfLoss.toString());
-			edgeM.setLossMass(targetM.getPeakMass()-sourceM.getPeakMass());
+			edgeM.setLossMass(sourceM.getPeakMass()-targetM.getPeakMass());
 			
 			sourceM.addOutEdge(edgeM);
 			targetM.setInEdge(edgeM);

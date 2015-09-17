@@ -204,17 +204,33 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			LoadController lc = new LoadController(this);
 			if(lc.getReturnValue() == ReturnValue.Success){
 				ExperimentContainer ec = lc.getExperiment();
-				if(ec.getName()!=null&&!ec.getName().isEmpty()){
-					if(this.names.contains(ec.getName())){
-						ec.setName(ec.getName().trim()+" ("+nameCounter+")");
-						nameCounter++;
-						
+				
+				while(true){
+					System.out.println(ec.getSuffix());
+					if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+						if(this.names.contains(ec.getGUIName())){
+							ec.setSuffix(ec.getSuffix()+1);
+						}else{
+							this.names.add(ec.getGUIName());
+							break;
+						}
+					}else{
+						ec.setName("Unknown");
+						ec.setSuffix(1);
 					}
-					this.names.add(ec.getName());
-				}else{
-					ec.setName("Compound "+nameCounter);
-					nameCounter++;
 				}
+				
+//				if(ec.getName()!=null&&!ec.getName().isEmpty()){
+//					if(this.names.contains(ec.getName())){
+//						ec.setName(ec.getName().trim()+" ("+nameCounter+")");
+//						nameCounter++;
+//						
+//					}
+//					this.names.add(ec.getName());
+//				}else{
+//					ec.setName("Compound "+nameCounter);
+//					nameCounter++;
+//				}
 				this.compoundModel.addElement(ec);
 //				System.out.println(ec.getName());
 			}
@@ -241,17 +257,30 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			ZipExperimentIO io = new ZipExperimentIO();
 			ExperimentContainer ec = io.load(new File("/home/otto/sirius.zip"));
 			
-			if(ec.getName()!=null&&!ec.getName().isEmpty()){
-				if(this.names.contains(ec.getName())){
-					ec.setName(ec.getName().trim()+" ("+nameCounter+")");
-					nameCounter++;
-					
+			while(true){
+				if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+					if(this.names.contains(ec.getGUIName())){
+						ec.setSuffix(ec.getSuffix()+1);
+					}else{
+						this.names.add(ec.getGUIName());
+						break;
+					}
+				}else{
+					ec.setName("Unknown");
+					ec.setSuffix(1);
 				}
-				this.names.add(ec.getName());
-			}else{
-				ec.setName("Compound "+nameCounter);
-				nameCounter++;
 			}
+//			if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+//				if(this.names.contains(ec.getName())){
+//					ec.setName(ec.getName().trim()+" ("+nameCounter+")");
+//					nameCounter++;
+//					
+//				}
+//				this.names.add(ec.getName());
+//			}else{
+//				ec.setName("Compound "+nameCounter);
+//				nameCounter++;
+//			}
 			this.compoundModel.addElement(ec);
 		}
 //		}else if(e.getSource()==editB){

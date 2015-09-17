@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
@@ -19,7 +20,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.swing.JEditorPane;
+
 import org.json.*;
+import org.junit.experimental.results.ResultMatchers;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
@@ -27,6 +31,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
+import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
@@ -50,18 +56,7 @@ public class ZipExperimentIO implements ExperimentIO{
 			for(SiriusResultElement sre : sres){
 				ZipEntry ze = new ZipEntry("Rank_"+sre.getRank()+".json");
 				zos.putNextEntry(ze);
-				zos.write(getJSONTree(sre.getTree()).getBytes());
-				
-//				FTDotWriter dotWriter = new FTDotWriter();
-//				StringWriter sWriter = new StringWriter();
-//				dotWriter.writeTree(sWriter, sre.getRawTree());
-//				zos.write(sWriter.toString().getBytes());
-//				sWriter.
-				
-//				IdentificationResult ir = new IdentificationResult(sre.getRawTree(), sre.getRank());
-//				String json = ir.getJSONTree();
-//				byte[] bytes = json.getBytes();
-//				zos.write(bytes);
+				zos.write(getSREString(sre).getBytes());
 			}
 			List<CompactSpectrum> ms1 = ec.getMs1Spectra();
 			if(ms1!=null&&!ms1.isEmpty()){
@@ -96,30 +91,45 @@ public class ZipExperimentIO implements ExperimentIO{
 		
 	}
 	
-	private static String getJSONTree(TreeNode root){
+	private static String getSREString(SiriusResultElement sre){
 		ArrayDeque<TreeNode> nDeque = new ArrayDeque<>();
 //		StringBuilder sb = new StringBuilder();
+		TreeNode root = sre.getTree();
 		List<TreeEdge> edges = new ArrayList<>();
 		nDeque.add(root);
 		
-		HashMap<Integer,TreeNode> nodeToID = new HashMap<>();
-		HashMap<TreeNode, Integer> idToNode = new HashMap<>();
+		HashMap<Integer,TreeNode> idToNode = new HashMap<>();
+		HashMap<TreeNode, Integer> nodeToID = new HashMap<>();
 		int counter = 0;
-		nodeToID.put(counter, root);
-		idToNode.put(root, counter);
+		idToNode.put(counter, root);
+		nodeToID.put(root, counter);
+//		System.out.println("-----");
+//		System.out.println(idToNode.get(counter));
+//		System.out.println(nodeToID.get(root));
 		counter++;
 		
 		StringWriter sw = new StringWriter();
 		JSONWriter writer = new JSONWriter(sw);
 		
 		try{
-			writer.object();
-			writer.key("type");
-			writer.value("nodes");
-			writer.key("rootid");
-			writer.value("0");
 			
-			writer.key("data");
+			//schreibe allgemein
+			
+			writer.object();
+//			writer.key("type");
+//			writer.value("nodes");
+			writer.key("rootID");
+			writer.value("0");
+			writer.key("rank");
+			writer.value(String.valueOf(sre.getRank()));
+			writer.key("mf");
+			writer.value(sre.getMolecularFormula());
+			writer.key("score");
+			writer.value(sre.getScore());
+			
+			//schreibe Nodes
+			
+			writer.key("nodes");
 			writer.array();	
 			
 			while(!nDeque.isEmpty()){
@@ -142,8 +152,11 @@ public class ZipExperimentIO implements ExperimentIO{
 				writer.endObject();
 				for(TreeEdge edge : node.getOutEdges()){
 					TreeNode target = edge.getTarget();
-					nodeToID.put(counter, node);
-					idToNode.put(node, counter);
+					idToNode.put(counter, target);
+					nodeToID.put(target, counter);
+//					System.out.println("-----");
+//					System.out.println(idToNode.get(counter));
+//					System.out.println(nodeToID.get(target));
 					counter++;
 					nDeque.add(target);
 					
@@ -152,6 +165,28 @@ public class ZipExperimentIO implements ExperimentIO{
 			}
 			writer.endArray();
 			
+			// schreibe edges
+			
+			writer.key("edges");
+			writer.array();	
+			
+			for(TreeEdge edge : edges){
+				writer.object();
+				
+				writer.key("sourceID");
+				writer.value(String.valueOf(nodeToID.get(edge.getSource())));
+				writer.key("targetID");
+				writer.value(String.valueOf(nodeToID.get(edge.getTarget())));
+				writer.key("mf");
+				writer.value(edge.getLossFormula());
+				writer.key("lossMass");
+				writer.value(edge.getLossMass());
+				writer.key("score");
+				writer.value(edge.getScore());
+				writer.endObject();
+			}
+			
+			writer.endArray();
 			writer.endObject();
 			
 			//TODO Edges + ids funktionieren nichts
@@ -166,52 +201,117 @@ public class ZipExperimentIO implements ExperimentIO{
 	}
 	
 	private static String getInformations(ExperimentContainer ec){
-		StringBuilder sb = new StringBuilder();
-		String name = ec.getName();
+		
+		StringWriter sw = new StringWriter();
+		JSONWriter writer = new JSONWriter(sw);
+		
 		Ionization ion = ec.getIonization();
 		double dataFM = ec.getDataFocusedMass();
 		double selFM  = ec.getSelectedFocusedMass();
-		if(name!=null){
-			sb.append(name+"\n");
-		}else{
-			sb.append("null\n");
-		}
+		String ionS = null;
 		if(ion==Ionization.M){
-			sb.append("M\n");
+			ionS = "M";
 		}else if(ion==Ionization.MPlusH){
-			sb.append("MPlusH\n");
+			ionS = "MPlusH";
 		}else if(ion==Ionization.MPlusNa){
-			sb.append("MPlusNa\n");
+			ionS = "MPlusNa";
 		}else if(ion==Ionization.MMinusH){
-			sb.append("MMinusH\n");
+			ionS = "MMinusH";
 		}else if(ion==Ionization.Unknown){
-			sb.append("Unknown\n");
+			ionS = "Unknown";
 		}
-		sb.append(String.valueOf(dataFM)+"\n");
-		sb.append(String.valueOf(selFM)+"\n");
-		for(SiriusResultElement  sre : ec.getResults()){
-			sb.append(sre.getRank()+" "+sre.getScore()+" "+sre.getMolecularFormula());
+		
+		try{
+			writer.object();
+			writer.key("name");
+			writer.value(ec.getName()==null? "null" : ec.getName());
+			writer.key("dataFM");
+			writer.value(dataFM);
+			writer.key("selFM");
+			writer.value(selFM);
+			writer.key("ionization");
+			writer.value(ionS);
+			writer.endObject();
+		}catch(JSONException e){
+			throw new RuntimeException(e);
 		}
-		return sb.toString();
+		
+		return sw.toString();
+		
 	}
 	
 	private static String getSpectrumString(CompactSpectrum sp){
-		StringBuilder sb = new StringBuilder();
+		
+		StringWriter sWriter = new StringWriter();
+		JSONWriter writer = new JSONWriter(sWriter);
+		
 		CollisionEnergy ce = sp.getCollisionEnergy();
-		if(ce!=null){
-			sb.append(String.valueOf(ce.getMinEnergy())+"\n");
-			sb.append(String.valueOf(ce.getMaxEnergy())+"\n");
-		}else{
-			sb.append("-1\n");
-			sb.append("-1\n");
-		}
-		sb.append(String.valueOf(sp.getMSLevel())+"\n");
-		sb.append(String.valueOf(sp.getSize())+"\n");
+		
+		boolean resolutionPresent = false;
 		for(int i=0;i<sp.getSize();i++){
-			sb.append(sp.getMass(i)+" "+sp.getAbsoluteIntensity(i)+" "+
-		              sp.getResolution(i)+" "+sp.getSignalToNoise(i)+"\n");
+			if(sp.getResolution(i)>0){
+				resolutionPresent = true;
+				break;
+			}
 		}
-		return sb.toString();
+		
+		boolean snPresent = false;
+		for(int i=0;i<sp.getSize();i++){
+			if(sp.getSignalToNoise(i)>0){
+				snPresent = true;
+				break;
+			}
+		}
+		
+		try{
+			writer.object();
+			writer.key("minCE");
+			writer.value(ce==null?-1:ce.getMinEnergy());
+			writer.key("maxCE");
+			writer.value(ce==null?-1:ce.getMaxEnergy());
+			writer.key("msLevel");
+			writer.value(String.valueOf(sp.getMSLevel()));
+			int size = sp.getSize();
+			
+			writer.key("masses");
+			writer.array();
+			for(int i=0;i<size;i++){
+				writer.value(sp.getMass(i));
+			}
+			writer.endArray();
+			
+			writer.key("absInts");
+			writer.array();
+			for(int i=0;i<size;i++){
+				writer.value(sp.getAbsoluteIntensity(i));
+			}
+			writer.endArray();
+			
+			if(resolutionPresent){
+				writer.key("resolutions");
+				writer.array();
+				for(int i=0;i<size;i++){
+					writer.value(sp.getResolution(i));
+				}
+				writer.endArray();
+			}
+			
+			if(snPresent){
+				writer.key("s/n");
+				writer.array();
+				for(int i=0;i<size;i++){
+					writer.value(sp.getSignalToNoise(i));
+				}
+				writer.endArray();
+			}
+			
+			writer.endObject();
+		}catch(JSONException e){
+			throw new RuntimeException(e);
+		}
+		
+		return sWriter.toString();
+		
 	}
 
 	@Override
@@ -219,10 +319,7 @@ public class ZipExperimentIO implements ExperimentIO{
 		
 		List<CompactSpectrum> ms1List = new ArrayList<>();
 		TreeMap<Integer, CompactSpectrum> ms2Map = new TreeMap<>();
-		TreeMap<Integer, FTree> rankToTree = new TreeMap<>();
-		
-		HashMap<Integer,String> rankToMF = new HashMap<>();
-		HashMap<Integer,Double> rankToScore = new HashMap<>();
+		TreeMap<Integer, SiriusResultElement> rankToSRE = new TreeMap<>();
 		
 		double dataFM = -1;
 		double selFM = -1;
@@ -242,38 +339,35 @@ public class ZipExperimentIO implements ExperimentIO{
 	        	}
 	        	
 	        	if(zName.equals("info.txt")){
-	        		String[] splits = temp.toString().split("\n");
-	        		name = splits[0].trim() == "null" ? null : splits[0].trim();
-	        		if(splits[1].equals("M")){
-	        			ion = Ionization.M;
-	        		}else if(splits[1].equals("MPlusH")){
-	        			ion = Ionization.MPlusH;
-	        		}else if(splits[1].equals("MPlusNa")){
-	        			ion = Ionization.MPlusNa;
-	        		}else if(splits[1].equals("MMinusH")){
-	        			ion = Ionization.MMinusH;
-	        		}else if(splits[1].equals("Unknown")){
-	        			ion = Ionization.Unknown;
-	        		}
-	        		dataFM = Double.parseDouble(splits[2]);
-	        		selFM = Double.parseDouble(splits[3]);
-	        		for(int i=4;i<splits.length;i++){
-	        			String[] row = splits[i].split(" ");
-	        			Integer rank = Integer.valueOf(row[0]);
-	        			Double score = Double.valueOf(row[1]);
-	        			String mf = row[2];
-	        			rankToMF.put(rank, mf);
-	        			rankToScore.put(rank, score);
+	        		StringReader stringReader = new StringReader(temp.toString());
+	        		JSONTokener tok = new JSONTokener(stringReader);
+	        		try{
+	        			JSONObject obj = new JSONObject(tok);
+	        			name = obj.getString("name");
+	        			if(name.equals("null")) name = null;
+	        			dataFM = obj.getDouble("dataFM");
+	        			selFM = obj.getDouble("selFM");
+	        			String ionS = obj.getString("ionization");
+	        			if(ionS.equals("M")){
+		        			ion = Ionization.M;
+		        		}else if(ionS.equals("MPlusH")){
+		        			ion = Ionization.MPlusH;
+		        		}else if(ionS.equals("MPlusNa")){
+		        			ion = Ionization.MPlusNa;
+		        		}else if(ionS.equals("MMinusH")){
+		        			ion = Ionization.MMinusH;
+		        		}else if(ionS.equals("Unknown")){
+		        			ion = Ionization.Unknown;
+		        		}
+	        			
+	        		}catch(JSONException e){
+	        			throw new RuntimeException(e);
 	        		}
 	        	}else if(zName.startsWith("Rank")){
 	        		int rank = Integer.parseInt(zName.substring(5,zName.length()-5));
 	        		StringReader stringReader = new StringReader(temp.toString());
-	        		FTJsonReader jsonReader = new FTJsonReader();
-	        		FTree tree = jsonReader.parse(new BufferedReader(stringReader));
-	        		rankToTree.put(rank, tree);
-//	        		IdentificationResult res = new IdentificationResult(tree, rank);
-//	        		SiriusResultElement sre = SiriusResultElementConverter.convertResult(res);
-//	        		resultsMap.put(rank, sre);
+	        		SiriusResultElement sre = readSRE(stringReader);
+	        		rankToSRE.put(rank,sre);
 	        	}else if(zName.equals("ms1.txt")){
 	        		BufferedReader re = new BufferedReader(new StringReader(temp.toString()));
 	        		ms1List.add(readSpectrum(re));
@@ -301,14 +395,8 @@ public class ZipExperimentIO implements ExperimentIO{
 		for(Integer index : ms2Map.keySet()){
 			ms2List.add(ms2Map.get(index));
 		}
-		for(Integer rank : rankToScore.keySet()){
-			SiriusResultElement sre = new SiriusResultElement();
-			sre.setMolecularFormula(MolecularFormula.parse(rankToMF.get(rank)));
-			sre.setRank(rank);
-			sre.setRawTree(rankToTree.get(rank));
-			sre.setScore(rankToScore.get(rank));
-			sre.setTree(SiriusResultElementConverter.convertTree(sre.getRawTree()));
-			results.add(sre);
+		for(Integer rank : rankToSRE.keySet()){
+			results.add(rankToSRE.get(rank));
 		}
 		
 		ec.setResults(results);
@@ -317,31 +405,139 @@ public class ZipExperimentIO implements ExperimentIO{
 		return ec;
 	}
 	
+	private SiriusResultElement readSRE(Reader re){
+		
+		SiriusResultElement sre = null;
+		
+		try{
+			JSONTokener tok = new JSONTokener(re);
+			JSONObject obj = new JSONObject(tok);
+			
+			HashMap<Integer, TreeNode> idToNode = new HashMap<>();
+			int rank = Integer.parseInt(obj.getString("rank"));
+			String mf = obj.getString("mf");
+			double score = obj.getDouble("score");
+			int rootID = Integer.parseInt(obj.getString("rootID"));
+			
+			JSONArray nodes = obj.getJSONArray("nodes");
+			int noNodes = nodes.length();
+			for(int i=0;i<noNodes;i++){
+				JSONObject jNode = nodes.getJSONObject(i);
+				String nodeMF = jNode.getString("mf");
+				double nodeMFMass = jNode.getDouble("mfMass");
+				double nodeMass = jNode.getDouble("peakMass");
+				double nodeInt = jNode.getDouble("peakInt");
+				double nodeRelInt = jNode.getDouble("peakRelInt");
+				double nodeScore = jNode.getDouble("score");
+				Integer nodeId = Integer.valueOf(jNode.getString("id"));
+				DefaultTreeNode tn = new DefaultTreeNode();
+				tn.setMolecularFormula(nodeMF);
+				tn.setMolecularFormulaMass(nodeMFMass);
+				tn.setPeakMass(nodeMass);
+				tn.setPeakAbsoluteIntenstiy(nodeInt);
+				tn.setPeakRelativeIntensity(nodeRelInt);
+				tn.setScore(nodeScore);
+				idToNode.put(nodeId,tn);
+			}
+			
+			//Edges
+			JSONArray edges = obj.getJSONArray("edges");
+			int noEdges = edges.length();
+			for(int i=0;i<noEdges;i++){
+				JSONObject jEdge = edges.getJSONObject(i);
+				Integer sourceID = Integer.valueOf(jEdge.getString("sourceID"));
+				Integer targetID = Integer.valueOf(jEdge.getString("targetID"));
+				String edgeMf = jEdge.getString("mf");
+				double lossMass = jEdge.getDouble("lossMass");
+				double edgeScore = jEdge.getDouble("score");
+				DefaultTreeEdge te = new DefaultTreeEdge();
+				TreeNode source = idToNode.get(sourceID);
+				TreeNode target = idToNode.get(targetID);
+				if(source==null) throw new RuntimeException("source null "+sourceID);
+				if(target==null) throw new RuntimeException("target null "+targetID);
+				te.setSource(source);
+				te.setTarget(target);
+				te.setLossFormula(edgeMf);
+				te.setLossMass(lossMass);
+				te.setScore(edgeScore);
+				source.addOutEdge(te);
+				target.setInEdge(te);
+				
+			}
+			
+			sre = new SiriusResultElement();
+			sre.setRank(rank);
+			sre.setMolecularFormula(MolecularFormula.parse(mf));
+			sre.setScore(score);
+			sre.setTree(idToNode.get(rootID));
+			
+		}catch(JSONException e){
+			throw new RuntimeException(e);
+		}
+		
+		return sre;
+		
+	}
+	
 	private CompactSpectrum readSpectrum(BufferedReader re) throws IOException{
-		double minCE = Double.parseDouble(re.readLine());
-		double maxCE = Double.parseDouble(re.readLine());
-		int msLevel = Integer.parseInt(re.readLine());
-		int size = Integer.parseInt(re.readLine());
-		double[] masses = new double[size];
-		double[] absInts = new double[size];
-		double[] resolutions = new double[size];
-		double[] snRatios = new double[size];
-		for(int i=0;i<size;i++){
-			String[] splits = re.readLine().split(" ");
-			masses[i]  = Double.parseDouble(splits[0]);
-			absInts[i] = Double.parseDouble(splits[1]);
-			resolutions[i] = Double.parseDouble(splits[2]);
-			snRatios[i] = Double.parseDouble(splits[3]);
+		
+		JSONTokener tok = new JSONTokener(re);
+		
+		DefaultCompactSpectrum sp = null;
+		
+		try{
+			JSONObject obj = new JSONObject(tok);
+			double minCE = obj.getDouble("minCE");
+			double maxCE = obj.getDouble("maxCE");
+			int msLevel = Integer.parseInt(obj.getString("msLevel"));
+			
+			boolean resPresent = obj.has("resolutions");
+			boolean snPresent = obj.has("s/n");
+			
+			JSONArray jMasses = obj.getJSONArray("masses");
+			JSONArray jAbsInts = obj.getJSONArray("absInts");
+			
+			int size = jMasses.length();
+			
+			double[] masses = new double[size];
+			double[] absInts = new double[size];
+			
+			for(int i=0;i<size;i++){
+				masses[i] = jMasses.getDouble(i);
+				absInts[i] = jAbsInts.getDouble(i);
+			}
+			
+			sp = new DefaultCompactSpectrum(masses, absInts);
+			sp.setMSLevel(msLevel);
+			
+			if(resPresent){
+				JSONArray jResolutions = obj.getJSONArray("resolutions");
+				double[] resolutions = new double[size];
+				for(int i=0;i<size;i++){
+					resolutions[i] = jResolutions.getDouble(i);
+				}
+				sp.setResolutions(resolutions);
+			}
+			
+			if(snPresent){
+				JSONArray jSignalNoise = obj.getJSONArray("s/n");
+				double[] signalNoise = new double[size];
+				for(int i=0;i<size;i++){
+					signalNoise[i] = jSignalNoise.getDouble(i);
+				}
+				sp.setSnRatios(signalNoise);
+			}
+			
+			if(minCE>=0&&maxCE>=0&&minCE<=maxCE){
+				sp.setCollisionEnergy(new CollisionEnergy(minCE, maxCE));
+			}
+			
+		}catch(JSONException e){
+			throw new RuntimeException(e);
 		}
-		DefaultCompactSpectrum sp = new DefaultCompactSpectrum(masses, absInts);
-		sp.setMSLevel(msLevel);
-		if(minCE>=0&&minCE>=0&&minCE<=maxCE){
-			CollisionEnergy ce = new CollisionEnergy(minCE, maxCE);
-			sp.setCollisionEnergy(ce);
-		}
-		sp.setResolutions(resolutions);
-		sp.setSnRatios(snRatios);
+		
 		return sp;
+		
 	}
 
 }

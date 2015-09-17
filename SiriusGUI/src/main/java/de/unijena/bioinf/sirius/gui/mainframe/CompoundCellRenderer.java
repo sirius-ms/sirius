@@ -126,12 +126,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		
 		g2.setColor(this.foreColor);
 		
-		int compoundLength = compoundFm.stringWidth(ec.getName())+4;
+		int compoundLength = compoundFm.stringWidth(ec.getGUIName())+4;
 		
 		g2.drawLine(2, 17, 2+compoundLength, 17);
 		
 		g2.setFont(compoundFont);
-		g2.drawString(ec.getName(), 4, 13);
+		g2.drawString(ec.getGUIName(), 4, 13);
 		
 		int ms1No = ec.getMs1Spectra().size();
 		int ms2No = ec.getMs2Spectra().size();
