@@ -306,7 +306,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			
 			JFileChooser jfc = new JFileChooser();
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			jfc.setAcceptAllFileFilterUsed(true);
+			jfc.setAcceptAllFileFilterUsed(false);
 			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
 			
 			int returnVal = jfc.showOpenDialog(this);

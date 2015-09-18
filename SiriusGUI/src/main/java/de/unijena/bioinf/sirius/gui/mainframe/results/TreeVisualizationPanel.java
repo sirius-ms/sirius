@@ -3,13 +3,17 @@ package de.unijena.bioinf.sirius.gui.mainframe.results;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -30,12 +34,18 @@ import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderFrame;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
+import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
+import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.sirius.gui.io.DotIO;
+import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
 
 public class TreeVisualizationPanel extends JPanel implements ActionListener{
 
@@ -153,11 +163,16 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 			JFileChooser jfc = new JFileChooser();
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			jfc.setAcceptAllFileFilterUsed(false);
-			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 			jfc.addChoosableFileFilter(new FTreeDotFilter());
+			jfc.addChoosableFileFilter(new FTreeGIFFilter());
+			jfc.addChoosableFileFilter(new FTreeJPGFilter());
+			jfc.addChoosableFileFilter(new FTreePNGFilter());
+//			jfc.addChoosableFileFilter(new FTreeJsonFilter());
+			
 			
 			
 			File selectedFile = null;
+			FileFormat ff = FileFormat.none;
 			
 			while(selectedFile==null){
 				int returnval = jfc.showSaveDialog(this);
@@ -166,12 +181,29 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 					
 					String name = selFile.getName();
 					if(jfc.getFileFilter() instanceof FTreeJsonFilter){
+						ff = FileFormat.json;
 						if(!selFile.getAbsolutePath().endsWith(".json")){
 							selFile = new File(selFile.getAbsolutePath()+".json");
 						}
 					}else if(jfc.getFileFilter() instanceof FTreeDotFilter){
+						ff = FileFormat.dot;
 						if(!selFile.getAbsolutePath().endsWith(".dot")){
 							selFile = new File(selFile.getAbsolutePath()+".dot");
+						}
+					}else if(jfc.getFileFilter() instanceof FTreeGIFFilter){
+						ff = FileFormat.gif;
+						if(!selFile.getAbsolutePath().endsWith(".gif")){
+							selFile = new File(selFile.getAbsolutePath()+".gif");
+						}
+					}else if(jfc.getFileFilter() instanceof FTreeJPGFilter){
+						ff = FileFormat.jpg;
+						if(!selFile.getAbsolutePath().endsWith(".jpg")){
+							selFile = new File(selFile.getAbsolutePath()+".jpg");
+						}
+					}else if(jfc.getFileFilter() instanceof FTreePNGFilter){
+						ff = FileFormat.png;
+						if(!selFile.getAbsolutePath().endsWith(".png")){
+							selFile = new File(selFile.getAbsolutePath()+".png");
 						}
 					}else{
 						throw new RuntimeException(jfc.getFileFilter().getClass().getName());
@@ -192,29 +224,74 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 				}
 			}
 			
-			if(selectedFile!=null){
-				IdentificationResult ir = new IdentificationResult(sre.getRawTree(), sre.getRank());
+			if(selectedFile!=null&&ff!=FileFormat.none){
+				
 				try{
-					ir.writeTreeToFile(selectedFile);
-				}catch(IOException e2){
+					if(ff==FileFormat.dot){
+						DotIO.writeTree(selectedFile, sre.getTree(), sre.getScore());
+					}else if(ff==FileFormat.gif){
+						RasterGraphicsIO.writeGIF(selectedFile, getTreeImage());
+					}else if(ff==FileFormat.jpg){
+						RasterGraphicsIO.writeJPG(selectedFile, getTreeImage());
+					}else if(ff==FileFormat.png){
+						RasterGraphicsIO.writePNG(selectedFile, getTreeImage());
+					}
+				}catch(Exception e2){
 					ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
+					e2.printStackTrace();
 				}
-				System.out.println(selectedFile.getAbsolutePath());
+				
+				
+				
+//				IdentificationResult ir = new IdentificationResult(sre.getRawTree(), sre.getRank());
+//				try{
+//					ir.writeTreeToFile(selectedFile);
+//				}catch(IOException e2){
+//					ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
+//				}
+//				System.out.println(selectedFile.getAbsolutePath());
 			}
 			
 //			if(jfc.)
 		}
 	}
+	
+	private BufferedImage getTreeImage(){
+		TreeNode root = TreeCopyTool.copyTree(this.sre.getTree());
+		NodeColor color = this.renderPanel.getNodeColor();
+		NodeType type = this.renderPanel.getNodeType();
+		System.out.println("root "+root);
+		System.out.println("color "+color);
+		System.out.println("type "+type);
+		TreeRenderPanel panel = new TreeRenderPanel();
+		System.out.println("1");
+		panel.showTree(root, type, color);
+		System.out.println("2");
+		Dimension dim = panel.getMinimumSize();
+		panel.setSize(new Dimension((int)dim.getWidth(),(int)dim.getHeight()));
+//		panel.setSize(new Dimension(1000,400));
+		panel.changeNodeType(type);
+		System.out.println("3");
+		System.out.println(dim.getWidth()+" "+dim.getHeight());
+		return panel.getImage();
+	}
 
 }
 
-class FTreeJsonFilter extends FileFilter{
+abstract class FTreeFilter extends FileFilter{
+	
+	private String fileSuffix,description;
+	
+	public FTreeFilter(String fileSuffix, String description) {
+		this.fileSuffix = fileSuffix;
+		this.description = description;
+	}
 
 	@Override
 	public boolean accept(File f) {
 		if(f.isDirectory()) return true;
 		String name = f.getName();
-		if(name.endsWith(".json")){
+		if(name.endsWith(fileSuffix)){
 			return true;
 		}
 		return false;
@@ -222,26 +299,51 @@ class FTreeJsonFilter extends FileFilter{
 
 	@Override
 	public String getDescription() {
-		return "JSON";
+		return description;
 	}
 	
 }
 
-class FTreeDotFilter extends FileFilter{
-
-	@Override
-	public boolean accept(File f) {
-		if(f.isDirectory()) return true;
-		String name = f.getName();
-		if(name.endsWith(".dot")){
-			return true;
-		}
-		return false;
-	}
-
-	@Override
-	public String getDescription() {
-		return "Dot";
+class FTreeJsonFilter extends FTreeFilter{
+	
+	public FTreeJsonFilter() {
+		super(".json","JSON");
 	}
 	
+}
+
+class FTreeDotFilter extends FTreeFilter{
+	
+	public FTreeDotFilter() {
+		super(".dot","Dot");
+	}
+	
+}
+
+class FTreeJPGFilter extends FTreeFilter{
+	
+	public FTreeJPGFilter() {
+		super(".jpg","JPEG");
+	}
+	
+}
+
+class FTreeGIFFilter extends FTreeFilter{
+	
+	public FTreeGIFFilter() {
+		super(".gif","GIF");
+	}
+	
+}
+
+class FTreePNGFilter extends FTreeFilter{
+	
+	public FTreePNGFilter() {
+		super(".png","PNG");
+	}
+	
+}
+
+enum FileFormat {
+	dot,json,jpg,png,gif,none;
 }
