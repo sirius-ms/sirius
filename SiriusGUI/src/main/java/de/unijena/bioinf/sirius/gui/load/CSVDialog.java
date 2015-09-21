@@ -66,7 +66,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		columnNumber = data.get(0).size();
 		rowNumber = data.size();
 		currentMassColumn = 0;
-		currentIntensityColumn = 0;
+		currentIntensityColumn = 1;
 		
 		massModel = new DefaultComboBoxModel<>();
 		intModel = new DefaultComboBoxModel<>();
