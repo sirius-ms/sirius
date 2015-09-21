@@ -60,7 +60,7 @@ public class ZipExperimentIO implements ExperimentIO{
 			}
 			List<CompactSpectrum> ms1 = ec.getMs1Spectra();
 			if(ms1!=null&&!ms1.isEmpty()){
-				ZipEntry ze = new ZipEntry("ms1.txt");
+				ZipEntry ze = new ZipEntry("ms1.json");
 				zos.putNextEntry(ze);
 				String ms1S = getSpectrumString(ms1.get(0));
 				byte[] ms1B = ms1S.getBytes();
@@ -70,7 +70,7 @@ public class ZipExperimentIO implements ExperimentIO{
 			if(ms2!=null){
 				int counter=0;
 				for(CompactSpectrum sp : ms2){
-					ZipEntry ze = new ZipEntry("ms2_"+counter+".txt");
+					ZipEntry ze = new ZipEntry("ms2_"+counter+".json");
 					zos.putNextEntry(ze);
 					String ms2S = getSpectrumString(sp);
 					byte[] ms2B = ms2S.getBytes();
@@ -78,7 +78,7 @@ public class ZipExperimentIO implements ExperimentIO{
 					counter++;
 				}
 			}
-			ZipEntry ze = new ZipEntry("info.txt");
+			ZipEntry ze = new ZipEntry("info.json");
 			zos.putNextEntry(ze);
 			String infoS = getInformations(ec);
 			byte[] infoB = infoS.getBytes();
@@ -338,7 +338,7 @@ public class ZipExperimentIO implements ExperimentIO{
 	        		temp.write(data,0,count);
 	        	}
 	        	
-	        	if(zName.equals("info.txt")){
+	        	if(zName.equals("info.json")){
 	        		StringReader stringReader = new StringReader(temp.toString());
 	        		JSONTokener tok = new JSONTokener(stringReader);
 	        		try{
@@ -368,12 +368,12 @@ public class ZipExperimentIO implements ExperimentIO{
 	        		StringReader stringReader = new StringReader(temp.toString());
 	        		SiriusResultElement sre = readSRE(stringReader);
 	        		rankToSRE.put(rank,sre);
-	        	}else if(zName.equals("ms1.txt")){
+	        	}else if(zName.equals("ms1.json")){
 	        		BufferedReader re = new BufferedReader(new StringReader(temp.toString()));
 	        		ms1List.add(readSpectrum(re));
 	        	}else if(zName.startsWith("ms2")){
 	        		BufferedReader re = new BufferedReader(new StringReader(temp.toString()));
-	        		int index = Integer.parseInt(zName.substring(4,zName.length()-4));
+	        		int index = Integer.parseInt(zName.substring(4,zName.length()-5));
 	        		ms2Map.put(index, readSpectrum(re));
 	        	}else{
 	        		System.err.println("unknown element: "+zName);
