@@ -9,8 +9,10 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
@@ -130,7 +132,6 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		
 		cl = new CardLayout();
 		cEInnerPanel = new JPanel(cl);
-		
 		cEInnerPanel.add(singlePanel,SINGLE_S);
 		cEInnerPanel.add(rampPanel,RAMP_S);
 		cl.show(cEInnerPanel, SINGLE_S);
@@ -160,6 +161,8 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		table = new JTable(dtm);
 		JScrollPane jsb = new JScrollPane(table);
 		columnPanel.add(jsb,BorderLayout.CENTER);
+		table.setDefaultRenderer(Object.class, new ColoredTableCellRenderer());
+		
 		
 		ok = new JButton("ok");
 		ok.addActionListener(this);
@@ -295,4 +298,25 @@ class UneditableTableModel extends DefaultTableModel{
 	public boolean isCellEditable(int row, int column) {
         return false;
     }
+}
+
+class ColoredTableCellRenderer extends DefaultTableCellRenderer{
+
+	@Override
+	public Component getTableCellRendererComponent(JTable table, Object value,
+			boolean isSelected, boolean hasFocus, int row, int column) {
+		
+		if(isSelected){
+			return  super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
+		}else{
+			JLabel label = new JLabel(value.toString());
+			if(column<2){
+				label.setForeground(Color.black);
+			}else{
+				label.setForeground(Color.gray);
+			}
+			return label;
+		}
+	}
+	
 }

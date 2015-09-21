@@ -175,7 +175,22 @@ public class LoadController implements LoadDialogListener{
 					CSVDialog diag = new CSVDialog((JDialog)loadDialog,data);
 					if(diag.getReturnValue() == ReturnValue.Success){
 						CompactSpectrum sp = diag.getSpectrum();
-						this.exp.getMs2Spectra().add(sp);
+						if(sp.getMSLevel()==1){
+							List<CompactSpectrum> ms1Spectra = this.exp.getMs1Spectra();
+							if(ms1Spectra.isEmpty()){
+								ms1Spectra.add(sp);
+							}else{
+								CompactSpectrum oldMS1 = ms1Spectra.get(0);
+								oldMS1.setMSLevel(2);
+								exp.getMs2Spectra().add(oldMS1);
+								ms1Spectra.clear();
+								ms1Spectra.add(sp);
+								loadDialog.msLevelChanged(oldMS1);
+							}
+						}else{
+							this.exp.getMs2Spectra().add(sp);
+						}
+						
 						loadDialog.spectraAdded(sp);
 					}
 				}
