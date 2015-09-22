@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.*;
@@ -87,6 +88,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	}
 	
 	private void updateLogic(){
+		HashSet<String> nameStorage = new HashSet<>();
+		
 		if(spectraSelection!=null) spectraSelection.removeActionListener(this);
 		cbModel.removeAllElements();
 		if(ec==null){
@@ -104,11 +107,23 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 				for(CompactSpectrum sp : ms2){
 					double minEn = sp.getCollisionEnergy().getMinEnergy();
 					double maxEn = sp.getCollisionEnergy().getMaxEnergy();
+					String value = null;
 					if(minEn==maxEn){
-						cbModel.addElement(cEFormat.format(minEn)+" eV");
+						value = cEFormat.format(minEn)+" eV";
 					}else{
-						cbModel.addElement(cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV");
+						value = cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV";
 					}
+					int counter = 2;
+					while(nameStorage.contains(value)){
+						if(minEn==maxEn){
+							value = cEFormat.format(minEn)+" eV ("+counter+")";
+						}else{
+							value = cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV ("+counter+")";
+						}
+						counter++;
+					}
+					nameStorage.add(value);
+					cbModel.addElement(value);
 				}
 			}
 			if(cbModel.getSize()>0) spectraSelection.setSelectedIndex(0);
@@ -167,7 +182,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 				}	
 			}else{
 				if(ms2!=null&&ms2.size()>0){
-					model.selectMS2Spectrum(0);
+					model.selectMS2Spectrum(index);
 				}
 			}
 			msviewer.setData(model);

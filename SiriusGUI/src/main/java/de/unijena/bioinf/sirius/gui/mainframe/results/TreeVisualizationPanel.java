@@ -87,7 +87,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		colorType.addActionListener(this);
 		northPanel.add(new JLabel(" node color style "));
 		northPanel.add(colorType);
-		saveTreeB = new JButton("save tree");
+		saveTreeB = new JButton("export tree");
 		saveTreeB.addActionListener(this);
 		saveTreeB.setEnabled(false);
 		northPanel.add(new JLabel("  "));
