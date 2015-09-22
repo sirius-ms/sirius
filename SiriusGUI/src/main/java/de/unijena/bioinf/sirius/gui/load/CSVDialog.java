@@ -55,9 +55,12 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 	private ReturnValue returnValue;
 	
 	private DefaultComboBoxModel<String> massModel, intModel;
+	private boolean multiCSV;
 	
-	public CSVDialog(JDialog owner,List<TDoubleArrayList> data) {
+	public CSVDialog(JDialog owner,List<TDoubleArrayList> data, boolean multiCSV) {
 		super(owner,"CSV",true);
+		
+		this.multiCSV = multiCSV;
 		
 		returnValue = ReturnValue.Success;
 		
@@ -104,6 +107,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		String[] msLevelVals = {"MS 1","MS 2"};
 		msLevelBox = new JComboBox<>(msLevelVals);
 		msLevelBox.setSelectedIndex(1);
+		
 		JPanel msTempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		msTempPanel.add(msLevelBox);
 		msLevelPanel.add(msTempPanel);
@@ -143,6 +147,14 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		JPanel cbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		cbPanel.add(cb);
 		cELevelPanel.add(cbPanel);
+		
+		if(multiCSV){
+			msLevelBox.setEnabled(false);
+			minEnergy.setEnabled(false);
+			maxEnergy.setEnabled(false);
+			colEnergy.setEnabled(false);
+			cb.setEnabled(false);
+		}
 		
 		dtm = new UneditableTableModel(rowNumber, columnNumber);
 		Vector<String> columnNames = new Vector<>();
@@ -255,25 +267,27 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		return returnValue;
 	}
 	
-	public CompactSpectrum getSpectrum(){
+	public CSVDialogReturnContainer getResults(){
 		if(returnValue==ReturnValue.Abort){
 			return null;
 		}else{
-			double[] masses = new double[rowNumber];
-			double[] ints = new double[rowNumber];
-			for(int i=0;i<rowNumber;i++){
-				masses[i] = data.get(i).get(currentMassColumn);
-				ints[i] = data.get(i).get(currentIntensityColumn);
+			CSVDialogReturnContainer cont = new CSVDialogReturnContainer();
+			cont.setIntIndex(currentIntensityColumn);
+			cont.setMassIndex(currentMassColumn);
+			
+			if(!multiCSV){
+				cont.setMsLevel(msLevelBox.getSelectedIndex()+1);
+				
+				if(cb.isSelected()){
+					cont.setMinEnergy((Double) minEnergy.getValue());
+					cont.setMaxEnergy((Double) maxEnergy.getValue());
+				}else{
+					cont.setMinEnergy((Double) colEnergy.getValue());
+					cont.setMaxEnergy((Double) colEnergy.getValue());
+				}
 			}
-			DefaultCompactSpectrum sp = new DefaultCompactSpectrum(masses,ints);
-			sp.setMSLevel(msLevelBox.getSelectedIndex()+1);
-			if(cb.isSelected()){
-				sp.setCollisionEnergy(new CollisionEnergy((Double) minEnergy.getValue(), (Double) maxEnergy.getValue()));
-			}else{
-				double cE = (Double) colEnergy.getValue();
-				sp.setCollisionEnergy(new CollisionEnergy(cE,cE));
-			}
-			return sp;
+			
+			return cont;
 		}
 	}
 

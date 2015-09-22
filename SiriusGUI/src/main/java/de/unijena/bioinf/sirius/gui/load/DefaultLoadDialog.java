@@ -173,9 +173,14 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			cEField.setEnabled(true);
 			editCE.setEnabled(true);
 			CollisionEnergy ce = spcont.getSpectrum().getCollisionEnergy();
-			double ceMin = ce.getMinEnergy();
-			double ceMax = ce.getMaxEnergy();
-			String ceString = ceMin == ceMax ? cEFormat.format(ceMin) : cEFormat.format(ceMin) + " - " + cEFormat.format(ceMax); 
+			String ceString = null;
+			if(ce==null){
+				ceString = "unknown";
+			}else{
+				double ceMin = ce.getMinEnergy();
+				double ceMax = ce.getMaxEnergy();
+				ceString = ceMin == ceMax ? cEFormat.format(ceMin) : cEFormat.format(ceMin) + " - " + cEFormat.format(ceMax);
+			}
 			cEField.setText(ceString);
 		}
 		

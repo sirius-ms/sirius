@@ -25,6 +25,7 @@ import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
+import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
@@ -116,86 +117,131 @@ public class LoadController implements LoadDialogListener{
 	@Override
 	public void addSpectra() {
 		JFileChooser chooser = new JFileChooser(new File("/media/Ext4_log/gnps/gnps_ms/"));
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setMultiSelectionEnabled(true);
 		int returnVal = chooser.showOpenDialog((JDialog)loadDialog);
 		if(returnVal == JFileChooser.APPROVE_OPTION){
-			File f = chooser.getSelectedFile();
-			int dotIndex = f.getName().lastIndexOf(".");
-			if(dotIndex>0){
-				String ending = f.getName().substring(dotIndex+1, f.getName().length());
-				DataFormatIdentifier dfi = new  DataFormatIdentifier();
-				DataFormat df = dfi.identifyFormat(f);
-				
-				if(df==DataFormat.JenaMS){
-					MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
-					CompactExperiment cexp = reader.read(f);
-					String ion = cexp.getIonization();
-					if(ion!=null && !ion.isEmpty() &&this.exp.getIonization()==Ionization.Unknown){
-						if(ion.contains("[M+H]+")){
-							this.exp.setIonization(Ionization.MPlusH);
-						}else if(ion.contains("[M+Na]+")){
-							this.exp.setIonization(Ionization.MPlusNa);
-						}else if(ion.contains("[M-H]-")){
-							this.exp.setIonization(Ionization.MMinusH);
-						}else if(ion.contains("M+")){
-							this.exp.setIonization(Ionization.M);
-						}else{
-							this.exp.setIonization(Ionization.Unknown);
-						}
-					}
-					double focusedMass = cexp.getFocusedMass();
-					if(focusedMass>0){
-						this.exp.setDataFocusedMass(focusedMass);
-					}
-					String name = cexp.getCompoundName();
-					if(name!=null&&!name.isEmpty()&&(this.exp.getName()==null||this.exp.getName().isEmpty())){
-						this.exp.setName(name);
-						loadDialog.experimentNameChanged(this.exp.getName());
-					}
-					CompactSpectrum ms1 = cexp.getMS1Spectrum();
-					List<CompactSpectrum> newSP = new ArrayList<>();
-					if(ms1!=null){
-						if(this.exp.getMs1Spectra().isEmpty()){
-							this.exp.getMs1Spectra().add(ms1);
-							newSP.add(ms1);
-						}else{
-							this.exp.getMs2Spectra().add(ms1);
-						}
-					}
-					
-					for(CompactSpectrum sp : cexp.getMS2Spectra()){
-						this.exp.getMs2Spectra().add(sp);
-						newSP.add(sp);
-					}
-					for(CompactSpectrum sp : newSP){
-						loadDialog.spectraAdded(sp);
-					}
-				}else if(df==DataFormat.CSV){
-					CSVNumberReader reader = new CSVNumberReader();
-					List<TDoubleArrayList> data = reader.readCSV(f);
-					CSVDialog diag = new CSVDialog((JDialog)loadDialog,data);
-					if(diag.getReturnValue() == ReturnValue.Success){
-						CompactSpectrum sp = diag.getSpectrum();
-						if(sp.getMSLevel()==1){
-							List<CompactSpectrum> ms1Spectra = this.exp.getMs1Spectra();
-							if(ms1Spectra.isEmpty()){
-								ms1Spectra.add(sp);
-							}else{
-								CompactSpectrum oldMS1 = ms1Spectra.get(0);
-								oldMS1.setMSLevel(2);
-								exp.getMs2Spectra().add(oldMS1);
-								ms1Spectra.clear();
-								ms1Spectra.add(sp);
-								loadDialog.msLevelChanged(oldMS1);
-							}
-						}else{
-							this.exp.getMs2Spectra().add(sp);
-						}
-						
-						loadDialog.spectraAdded(sp);
-					}
+			File[] files = chooser.getSelectedFiles();
+			
+			//untersuche die Dateitypen und schaue ob CSV vorhanden, wenn vorhanden behandelte alle CSVs auf
+			//gleiche Weise
+			
+			DataFormatIdentifier dfi = new  DataFormatIdentifier();
+			int csvCounter = 0;
+			File firstCSV = null;
+			for(File file : files){
+				DataFormat df = dfi.identifyFormat(file);
+				if(df==DataFormat.CSV){
+					firstCSV = file;
+					csvCounter++;
 				}
 			}
 			
+			CSVDialogReturnContainer cont = null;
+			CSVNumberReader csvReader = new CSVNumberReader();
+			
+			if(csvCounter>1){
+				
+				List<TDoubleArrayList> data = csvReader.readCSV(firstCSV);
+				CSVDialog diag = new CSVDialog((JDialog)loadDialog,data,true);
+				if(diag.getReturnValue() == ReturnValue.Success){
+					cont = diag.getResults();
+					cont.setMaxEnergy(-1);
+					cont.setMinEnergy(-1);
+					cont.setMsLevel(2);
+				}else{
+					return; //breche ab
+				}
+					
+			}else if(csvCounter==1){
+				List<TDoubleArrayList> data = csvReader.readCSV(firstCSV);
+				CSVDialog diag = new CSVDialog((JDialog)loadDialog,data,false);
+				if(diag.getReturnValue() == ReturnValue.Success){
+					cont = diag.getResults();
+					CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
+					CompactSpectrum sp = conv.convertCSVToSpectrum(data, cont);
+					if(sp.getMSLevel()==1){
+						this.exp.getMs1Spectra().add(sp);
+						this.loadDialog.spectraAdded(sp);
+					}else{
+						this.exp.getMs2Spectra().add(sp);
+						this.loadDialog.spectraAdded(sp);
+					}
+				}else{
+					return; //breche ab
+				}
+			}
+			
+			for(File file : files){
+				if(csvCounter==1 && file==firstCSV) continue;
+				
+				int dotIndex = file.getName().lastIndexOf(".");
+				if(dotIndex>0){
+					String ending = file.getName().substring(dotIndex+1, file.getName().length());
+//					DataFormatIdentifier dfi = new  DataFormatIdentifier();
+					DataFormat df = dfi.identifyFormat(file);
+					
+					if(df==DataFormat.JenaMS){
+						MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
+						CompactExperiment cexp = reader.read(file);
+						String ion = cexp.getIonization();
+						if(ion!=null && !ion.isEmpty() &&this.exp.getIonization()==Ionization.Unknown){
+							if(ion.contains("[M+H]+")){
+								this.exp.setIonization(Ionization.MPlusH);
+							}else if(ion.contains("[M+Na]+")){
+								this.exp.setIonization(Ionization.MPlusNa);
+							}else if(ion.contains("[M-H]-")){
+								this.exp.setIonization(Ionization.MMinusH);
+							}else if(ion.contains("M+")){
+								this.exp.setIonization(Ionization.M);
+							}else{
+								this.exp.setIonization(Ionization.Unknown);
+							}
+						}
+						double focusedMass = cexp.getFocusedMass();
+						if(focusedMass>0){
+							this.exp.setDataFocusedMass(focusedMass);
+						}
+						String name = cexp.getCompoundName();
+						if(name!=null&&!name.isEmpty()&&(this.exp.getName()==null||this.exp.getName().isEmpty())){
+							this.exp.setName(name);
+							loadDialog.experimentNameChanged(this.exp.getName());
+						}
+						CompactSpectrum ms1 = cexp.getMS1Spectrum();
+						List<CompactSpectrum> newSP = new ArrayList<>();
+						if(ms1!=null){
+							if(this.exp.getMs1Spectra().isEmpty()){
+								this.exp.getMs1Spectra().add(ms1);
+								newSP.add(ms1);
+							}else{
+								this.exp.getMs2Spectra().add(ms1);
+							}
+						}
+						
+						for(CompactSpectrum sp : cexp.getMS2Spectra()){
+							this.exp.getMs2Spectra().add(sp);
+							newSP.add(sp);
+						}
+						for(CompactSpectrum sp : newSP){
+							loadDialog.spectraAdded(sp);
+						}
+					}else if(df==DataFormat.CSV){ //falls nur 1 CSV vorhanden schon weiter oben behandelt 
+						                          //(sollte dann auch nie das else if betreten koennen (continue weiter oben))
+						
+						CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
+						List<TDoubleArrayList> data = csvReader.readCSV(file);
+						
+						if(csvCounter>1){
+							
+							CompactSpectrum sp = conv.convertCSVToSpectrum(data, cont);
+							this.exp.getMs2Spectra().add(sp);
+							loadDialog.spectraAdded(sp);
+						}
+						
+					}
+				}
+				
+			}
 			
 		}
 		
@@ -250,8 +296,15 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void changeCollisionEnergy(CompactSpectrum sp) {
-		double oldMin = sp.getCollisionEnergy().getMinEnergy();
-		double oldMax = sp.getCollisionEnergy().getMaxEnergy();
+		double oldMin,oldMax;
+		if(sp.getCollisionEnergy()==null){
+			oldMin = 0;
+			oldMax = 0;
+		}else{
+			oldMin = sp.getCollisionEnergy().getMinEnergy();
+			oldMax = sp.getCollisionEnergy().getMaxEnergy();
+		}
+		
 		CollisionEnergyDialog ced = new CollisionEnergyDialog((JDialog) loadDialog, oldMin, oldMax);
 		if(ced.getReturnValue() == ReturnValue.Success){
 			double newMin = ced.getMinCollisionEnergy();
