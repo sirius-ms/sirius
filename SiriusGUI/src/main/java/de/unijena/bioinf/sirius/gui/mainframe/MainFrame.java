@@ -29,8 +29,11 @@ import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
+import de.unijena.bioinf.sirius.gui.dialogs.CloseExperimentDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
 import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -43,7 +46,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	private DefaultListModel<ExperimentContainer> compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, /*editB,*/ computeB;
+	private JButton newB, loadB, closeB, saveB, editB, computeB;
 	
 	private HashSet<String> names;
 	private int nameCounter;
@@ -121,30 +124,45 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		
 		
-		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		controlPanel.setBorder(BorderFactory.createEtchedBorder());
-		newB = new JButton("new experiment");
+		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,3,0));
+//		controlPanel.setBorder(BorderFactory.createEtchedBorder());
+		
+		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+		tempP.setBorder(BorderFactory.createEtchedBorder());
+		
+		newB = new JButton("new");
 		newB.addActionListener(this);
-		controlPanel.add(newB);
-		loadB = new JButton("open");
-		loadB.addActionListener(this);
-		controlPanel.add(loadB);
-//		editB = new JButton("edit");
-//		editB.addActionListener(this);
-//		editB.setEnabled(false);
-//		controlPanel.add(editB);
+		tempP.add(newB);
+		editB = new JButton("edit");
+		editB.addActionListener(this);
+		editB.setEnabled(false);
+		tempP.add(editB);
 		closeB = new JButton("close");
 		closeB.addActionListener(this);
 		closeB.setEnabled(false);
-		controlPanel.add(closeB);
+		tempP.add(closeB);
+		controlPanel.add(tempP);
+		
+		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+		tempP.setBorder(BorderFactory.createEtchedBorder());
+		
+		loadB = new JButton("open");
+		loadB.addActionListener(this);
+		tempP.add(loadB);
 		saveB = new JButton("save");
 		saveB.addActionListener(this);
 		saveB.setEnabled(false);
-		controlPanel.add(saveB);
+		tempP.add(saveB);
+		controlPanel.add(tempP);
+		
+		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+		tempP.setBorder(BorderFactory.createEtchedBorder());
+		
 		computeB = new JButton("compute");
 		computeB.addActionListener(this);
 		computeB.setEnabled(false);
-		controlPanel.add(computeB);
+		tempP.add(computeB);
+		controlPanel.add(tempP);
 		
 		mainPanel.add(controlPanel,BorderLayout.NORTH);
 		
@@ -263,10 +281,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			
 			JFileChooser jfc = new JFileChooser();
-			System.out.println(config.getDefaultSaveFilePath());
 			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			jfc.setAcceptAllFileFilterUsed(true);
+			jfc.setAcceptAllFileFilterUsed(false);
 			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
 			
 			File selectedFile = null;
@@ -350,8 +367,66 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==closeB){
 			int index = this.compoundList.getSelectedIndex();
 			ExperimentContainer cont = this.compoundModel.get(index);
-			this.compoundModel.remove(index);
-			this.compoundList.setSelectedIndex(-1);
+			
+			CloseExperimentDialog diag = new CloseExperimentDialog(this,"Save before closing \""+cont.getGUIName()+"\"?");
+			CloseDialogReturnValue val = diag.getReturnValue();
+			if(val==CloseDialogReturnValue.abort){
+				return;
+			}else if(val==CloseDialogReturnValue.no){
+				this.compoundModel.remove(index);
+				this.compoundList.setSelectedIndex(-1);
+			}else{
+				JFileChooser jfc = new JFileChooser();
+				jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
+				jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				jfc.setAcceptAllFileFilterUsed(false);
+				jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
+				
+				File selectedFile = null;
+				
+				int returnval = jfc.showSaveDialog(this);
+				if(returnval == JFileChooser.APPROVE_OPTION){
+					File selFile = jfc.getSelectedFile();
+					config.setDefaultSaveFilePath(selFile.getParentFile());
+					
+					String name = selFile.getName();
+					if(!selFile.getAbsolutePath().endsWith(".sirius")){
+						selFile = new File(selFile.getAbsolutePath()+".sirius");
+					}
+					
+					if(selFile.exists()){
+						FilePresentDialog fpd = new FilePresentDialog(this, selFile.getName());
+						ReturnValue rv = fpd.getReturnValue();
+						if(rv==ReturnValue.Success){
+							selectedFile = selFile;
+						}else{
+							return;
+						}
+//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
+					}else{
+						selectedFile = selFile;	
+					}
+					
+					
+				}else{
+					return;
+				}
+				
+				boolean trigger = false;
+				try{
+					ZipExperimentIO io = new ZipExperimentIO();
+					io.save(cont, selectedFile);
+					trigger = true;
+				}catch(Exception e2){
+					new ExceptionDialog(this, e2.getMessage());
+				}
+				
+				if(trigger){
+					this.compoundModel.remove(index);
+					this.compoundList.setSelectedIndex(-1);
+				}
+			}
+			
 		}
 //		}else if(e.getSource()==editB){
 ////			ExperimentContainer ec = this.compoundList.getSelectedValue();
