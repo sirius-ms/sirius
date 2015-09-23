@@ -113,7 +113,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		msLevelPanel.add(msTempPanel);
 		
 		JPanel cELevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		cELevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy"));
+		cELevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
 		propertiesPanel.add(cELevelPanel);
 		
 		JPanel rampPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
@@ -315,6 +315,15 @@ class UneditableTableModel extends DefaultTableModel{
 }
 
 class ColoredTableCellRenderer extends DefaultTableCellRenderer{
+	
+	private Color unevenColor;
+	private Color evenColor;
+	
+	public ColoredTableCellRenderer() {
+		unevenColor = new Color(213,227,238);
+		evenColor  = Color.white;
+//		evenColor = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
+	}
 
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value,
@@ -324,6 +333,14 @@ class ColoredTableCellRenderer extends DefaultTableCellRenderer{
 			return  super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
 		}else{
 			JLabel label = new JLabel(value.toString());
+			
+			if(row%2==1){
+				label.setBackground(unevenColor);
+			}else{
+				label.setBackground(evenColor);
+			}
+			label.setOpaque(true);
+			
 			if(column<2){
 				label.setForeground(Color.black);
 			}else{

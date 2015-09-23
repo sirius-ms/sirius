@@ -27,7 +27,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	private JButton add, remove, ok, abort;
 	private JList<SpectrumContainer> msList;
 	private MSViewerPanel msviewer;
-	private JButton editCE,changeMSLevel;
+	private JButton editCE/*, changeMSLevel*/;
 	private JTextField cEField;
 	private JComboBox<String> msLevelBox;
 	
@@ -107,22 +107,14 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		editCE.addActionListener(this);
 		cEPanel.add(editCE);
 		
-		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"cE"));
+		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
 		propsPanel.add(cEPanel);
 		
-		JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ms level"));
-		propsPanel.add(msLevelPanel);
 		
-		String[] msLevelVals = {"MS 1","MS 2"};
-		
-		msLevelBox = new JComboBox<>(msLevelVals);
-		msLevelBox.setEnabled(false);
-		msLevelPanel.add(msLevelBox);
-		changeMSLevel = new JButton("change");
-		changeMSLevel.addActionListener(this);
-		changeMSLevel.setEnabled(false);
-		msLevelPanel.add(changeMSLevel);
+//		changeMSLevel = new JButton("change");
+//		changeMSLevel.addActionListener(this);
+//		changeMSLevel.setEnabled(false);
+//		msLevelPanel.add(changeMSLevel);
 		
 		JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiment name"));
@@ -135,6 +127,17 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		namePanel.add(nameB);
 		propsPanel.add(namePanel);
 		
+		
+		JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ms level"));
+		propsPanel.add(msLevelPanel);
+		
+		String[] msLevelVals = {"MS 1","MS 2"};
+		
+		msLevelBox = new JComboBox<>(msLevelVals);
+		msLevelBox.setEnabled(false);
+		msLevelBox.addActionListener(this);
+		msLevelPanel.add(msLevelBox);
 		
 		
 		rightPanel.add(propsPanel,BorderLayout.SOUTH);
@@ -234,7 +237,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==this.changeMSLevel){
+		if(e.getSource()==this.msLevelBox){
 			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
 			for(LoadDialogListener ldl : listeners){
 				ldl.changeMSLevel(spcont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
@@ -290,7 +293,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			this.msviewer.setData(new DummySpectrumContainer());
 			this.msviewer.repaint();
 			this.msLevelBox.setEnabled(false);
-			this.changeMSLevel.setEnabled(false);
+//			this.changeMSLevel.setEnabled(false);
 			this.remove.setEnabled(false);
 			return;
 		}else{
@@ -306,7 +309,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 //		cEField.setText(ceString);
 //		System.out.println(spcont.getSpectrum().getMSLevel());
 		msLevelBox.setEnabled(true);
-		changeMSLevel.setEnabled(true);
+//		changeMSLevel.setEnabled(true);
 		msLevelBox.setSelectedIndex(spcont.getSpectrum().getMSLevel()-1);
 	}
 
