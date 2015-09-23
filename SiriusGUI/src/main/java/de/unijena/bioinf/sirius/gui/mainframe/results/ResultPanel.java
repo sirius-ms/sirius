@@ -10,6 +10,7 @@ import javax.swing.event.ListSelectionListener;
 
 import org.jdesktop.swingx.calendar.DateSelectionModel.SelectionMode;
 
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -25,14 +26,17 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	
 	private Frame owner;
 	
-	public ResultPanel(Frame owner) {
-		this(null, owner);
+	private ConfigStorage config;
+	
+	public ResultPanel(Frame owner, ConfigStorage config) {
+		this(null, owner, config);
 	}
 	
-	public ResultPanel(ExperimentContainer ec, Frame owner) {
+	public ResultPanel(ExperimentContainer ec, Frame owner, ConfigStorage config) {
 		this.setLayout(new BorderLayout());
 		this.ec = ec;
 		this.owner = owner;
+		this.config = config;
 		
 		if(this.ec!=null) this.listModel = new ResultTreeListModel(ec.getResults());
 		else this.listModel = new ResultTreeListModel();
@@ -61,7 +65,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		this.add(temp,BorderLayout.NORTH);
 		
 		JTabbedPane centerPane = new JTabbedPane();
-		tvp = new TreeVisualizationPanel(owner);
+		tvp = new TreeVisualizationPanel(owner,config);
 		centerPane.addTab("tree view",tvp);
 		
 		svp = new SpectraVisualizationPanel(ec);

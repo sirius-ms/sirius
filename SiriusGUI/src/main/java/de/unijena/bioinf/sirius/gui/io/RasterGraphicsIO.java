@@ -24,15 +24,15 @@ public class RasterGraphicsIO {
 	}
 	
 	public static void writeGIF(File path,BufferedImage image) throws IOException{
-		write(path, image, "gif");
+		write(path, image, "GIF");
 	}
 	
 	public static void writeJPG(File path,BufferedImage image) throws IOException{
-		write(path, image, "jpg");
+		write(path, image, "JPEG");
 	}
 	
 	public static void writePNG(File path,BufferedImage image) throws IOException{
-		write(path, image, "png");
+		write(path, image, "PNG");
 	}
 
 }

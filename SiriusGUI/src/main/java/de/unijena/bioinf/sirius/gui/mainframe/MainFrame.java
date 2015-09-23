@@ -89,7 +89,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel dummyPanel = new JPanel();
 		resultsPanel.add(dummyPanel,DUMMY_CARD);
 		
-		showResultsPanel = new ResultPanel(this);
+		showResultsPanel = new ResultPanel(this,config);
 //		resultsPanel.add(showResultsPanel,RESULTS_CARD);
 //		resultsPanelCL.show(resultsPanel, RESULTS_CARD);
 		mainPanel.add(showResultsPanel,BorderLayout.CENTER);
@@ -263,6 +263,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			
 			JFileChooser jfc = new JFileChooser();
+			System.out.println(config.getDefaultSaveFilePath());
+			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			jfc.setAcceptAllFileFilterUsed(true);
 			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
@@ -273,6 +275,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				int returnval = jfc.showSaveDialog(this);
 				if(returnval == JFileChooser.APPROVE_OPTION){
 					File selFile = jfc.getSelectedFile();
+					config.setDefaultSaveFilePath(selFile.getParentFile());
 					
 					String name = selFile.getName();
 					if(!selFile.getAbsolutePath().endsWith(".sirius")){
@@ -310,6 +313,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==loadB){
 			
 			JFileChooser jfc = new JFileChooser();
+			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			jfc.setAcceptAllFileFilterUsed(false);
 			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
@@ -317,8 +321,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			int returnVal = jfc.showOpenDialog(this);
 			if(returnVal == JFileChooser.APPROVE_OPTION){
 				ZipExperimentIO io = new ZipExperimentIO();
+				File selFile = jfc.getSelectedFile();
+				config.setDefaultSaveFilePath(selFile.getParentFile());
+				System.out.println(config.getDefaultSaveFilePath().getAbsolutePath());
+				
 				try{
-					ExperimentContainer ec = io.load(jfc.getSelectedFile());
+					ExperimentContainer ec = io.load(selFile);
 					while(true){
 						if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
 							if(this.names.contains(ec.getGUIName())){
