@@ -147,7 +147,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		mainPanel.add(rightPanel,BorderLayout.CENTER);
 		
 		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		controlPanel.setBorder(BorderFactory.createEtchedBorder());
+//		controlPanel.setBorder(BorderFactory.createEtchedBorder());
 		this.add(controlPanel,BorderLayout.SOUTH);
 		
 		ok = new JButton("OK");
