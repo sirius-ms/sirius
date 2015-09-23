@@ -64,6 +64,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		listModel = new DefaultListModel<>();
 		
 		msList = new JList<SpectrumContainer>(listModel);
+		msList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		JScrollPane msPanel = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		msPanel.setViewportView(msList);
 		leftPanel.add(msPanel,BorderLayout.CENTER);
@@ -165,6 +166,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		int index = msList.getSelectedIndex();
 		if(index==-1||listModel.size()<=index){
 			this.cEField.setText("");
+			this.cEField.setEnabled(false);
+			this.editCE.setEnabled(false);
 			return;
 		}
 		SpectrumContainer spcont = listModel.get(index);
@@ -243,9 +246,15 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 				ldl.changeMSLevel(spcont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
 			}
 		}else if(e.getSource()==this.remove){
-			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
-			for(LoadDialogListener ldl : listeners){
-				ldl.removeSpectrum(spcont.getSpectrum());
+			int[] indices = msList.getSelectedIndices();
+			List<SpectrumContainer> conts = new ArrayList<SpectrumContainer>();
+			for(int index : indices){
+				conts.add(listModel.get(index));
+			}
+			for(SpectrumContainer spcont : conts){
+				for(LoadDialogListener ldl : listeners){
+					ldl.removeSpectrum(spcont.getSpectrum());
+				}
 			}
 		}else if(e.getSource()==this.editCE){
 			for(LoadDialogListener ldl : listeners){
@@ -286,31 +295,34 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
-		updateCETextField();
-//		System.out.println(msList.getSelectedIndex());
-		if(msList.getSelectedIndex()<0){
-//			this.cEField.setText("");
-			this.msviewer.setData(new DummySpectrumContainer());
-			this.msviewer.repaint();
-			this.msLevelBox.setEnabled(false);
-//			this.changeMSLevel.setEnabled(false);
-			this.remove.setEnabled(false);
-			return;
+		
+		int[] indices = msList.getSelectedIndices();
+		if(indices.length<=1){
+			updateCETextField();
+//			System.out.println(msList.getSelectedIndex());
+			if(msList.getSelectedIndex()<0){
+//				this.cEField.setText("");
+				this.msviewer.setData(new DummySpectrumContainer());
+				this.msviewer.repaint();
+				this.msLevelBox.setEnabled(false);
+//				this.changeMSLevel.setEnabled(false);
+				this.remove.setEnabled(false);
+				return;
+			}else{
+				this.remove.setEnabled(true);
+			}
+			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex()); 
+			msviewer.setData(spcont);
+			msviewer.repaint();
+			msLevelBox.setEnabled(true);
+			msLevelBox.setSelectedIndex(spcont.getSpectrum().getMSLevel()-1);
 		}else{
-			this.remove.setEnabled(true);
+			this.cEField.setText("");
+			this.cEField.setEnabled(false);
+			this.editCE.setEnabled(false);
+			this.msLevelBox.setEnabled(false);
 		}
-		SpectrumContainer spcont = listModel.get(msList.getSelectedIndex()); 
-		msviewer.setData(spcont);
-		msviewer.repaint();
-//		CollisionEnergy ce = spcont.getSpectrum().getCollisionEnergy();
-//		double ceMin = ce.getMinEnergy();
-//		double ceMax = ce.getMaxEnergy();
-//		String ceString = ceMin == ceMax ? cEFormat.format(ceMin) : cEFormat.format(ceMin) + " - " + cEFormat.format(ceMax); 
-//		cEField.setText(ceString);
-//		System.out.println(spcont.getSpectrum().getMSLevel());
-		msLevelBox.setEnabled(true);
-//		changeMSLevel.setEnabled(true);
-		msLevelBox.setSelectedIndex(spcont.getSpectrum().getMSLevel()-1);
+		
 	}
 
 	@Override

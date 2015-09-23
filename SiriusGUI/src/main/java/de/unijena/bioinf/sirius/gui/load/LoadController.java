@@ -24,6 +24,7 @@ import de.unijena.bioinf.myxo.io.spectrum.DataFormatIdentifier;
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -43,7 +44,9 @@ public class LoadController implements LoadDialogListener{
 	
 	private ReturnValue returnValue;
 	
-	public LoadController(JFrame owner,ExperimentContainer exp) {
+	private ConfigStorage config;
+	
+	public LoadController(JFrame owner,ExperimentContainer exp, ConfigStorage config) {
 //		this.spectra = new ArrayList<>();
 //		if(exp.getMs1Spectra()!=null){
 //			spectra.addAll(exp.getMs1Spectra());
@@ -60,6 +63,7 @@ public class LoadController implements LoadDialogListener{
 //		this.compoundName = exp.getName();
 		
 		this.exp = exp;
+		this.config = config;
 		
 		loadDialog = new DefaultLoadDialog(owner);
 		
@@ -85,8 +89,8 @@ public class LoadController implements LoadDialogListener{
 		loadDialog.showDialog();
 	}
 	
-	public LoadController(JFrame owner) {
-		this(owner,new ExperimentContainer());
+	public LoadController(JFrame owner, ConfigStorage config) {
+		this(owner,new ExperimentContainer(),config);
 	}
 	
 //	public LoadController(JFrame owner,double focMass,Ionization ionization,String compoundName,List<CompactSpectrum> spectra) {
@@ -116,12 +120,16 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void addSpectra() {
-		JFileChooser chooser = new JFileChooser(new File("/media/Ext4_log/gnps/gnps_ms/"));
+		JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		chooser.setMultiSelectionEnabled(true);
 		int returnVal = chooser.showOpenDialog((JDialog)loadDialog);
 		if(returnVal == JFileChooser.APPROVE_OPTION){
+			
 			File[] files = chooser.getSelectedFiles();
+			
+			//setzt Pfad
+			config.setDefaultLoadDialogPath(files[0].getParentFile());
 			
 			//untersuche die Dateitypen und schaue ob CSV vorhanden, wenn vorhanden behandelte alle CSVs auf
 			//gleiche Weise

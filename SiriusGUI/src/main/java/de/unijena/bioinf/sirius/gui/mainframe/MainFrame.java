@@ -28,6 +28,7 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
@@ -52,6 +53,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private ResultPanel showResultsPanel;
 	private static final String DUMMY_CARD = "dummy";
 	private static final String RESULTS_CARD = "results";
+	private ConfigStorage config;
 	
 	public MainFrame(){
 		super("Sirius Prototype");
@@ -66,6 +68,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		} catch (Exception e) {
 		    // If Nimbus is not available, you can set the GUI to another look and feel.
 		}
+		
+		this.config = new ConfigStorage();
+		
 		nameCounter=1;
 		this.names = new HashSet<>();
 		
@@ -207,7 +212,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==newB){
-			LoadController lc = new LoadController(this);
+			LoadController lc = new LoadController(this,config);
 			if(lc.getReturnValue() == ReturnValue.Success){
 				ExperimentContainer ec = lc.getExperiment();
 				
