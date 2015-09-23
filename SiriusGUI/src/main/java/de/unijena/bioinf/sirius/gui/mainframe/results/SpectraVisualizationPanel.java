@@ -159,19 +159,24 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		this.sre = sre;
 		updateLogic();
 		this.model = new ResultsMSViewerDataModel(ec);
-		java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
-		java.util.List<CompactSpectrum> ms2 = ec.getMs2Spectra();
-		if(sre==null){
+		if(this.ec==null){
 			model.showDummySpectrum();
-		}else if(ms1!=null&&ms1.size()>0){
-			model.selectMS1Spectrum();
-		}else if(ms2!=null&&ms2.size()>0){
-			model.selectMS2Spectrum(0);
 		}else{
-			model.showDummySpectrum();
+			java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
+			java.util.List<CompactSpectrum> ms2 = ec.getMs2Spectra();
+			if(sre==null){
+				model.showDummySpectrum();
+			}else if(ms1!=null&&ms1.size()>0){
+				model.selectMS1Spectrum();
+			}else if(ms2!=null&&ms2.size()>0){
+				model.selectMS2Spectrum(0);
+			}else{
+				model.showDummySpectrum();
+			}
 		}
+		
 		msviewer.setData(model);
-		this.showMolecularFormulaMarkings();
+		if(this.ec != null) this.showMolecularFormulaMarkings();
 //		msviewer.repaint();
 	}
 	

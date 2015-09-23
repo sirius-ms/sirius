@@ -347,22 +347,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				}
 			}
 			
-			
-			
-			
-			
-//			if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
-//				if(this.names.contains(ec.getName())){
-//					ec.setName(ec.getName().trim()+" ("+nameCounter+")");
-//					nameCounter++;
-//					
-//				}
-//				this.names.add(ec.getName());
-//			}else{
-//				ec.setName("Compound "+nameCounter);
-//				nameCounter++;
-//			}
-			
+		}else if(e.getSource()==closeB){
+			int index = this.compoundList.getSelectedIndex();
+			ExperimentContainer cont = this.compoundModel.get(index);
+			this.compoundModel.remove(index);
+			this.compoundList.setSelectedIndex(-1);
 		}
 //		}else if(e.getSource()==editB){
 ////			ExperimentContainer ec = this.compoundList.getSelectedValue();
@@ -412,6 +401,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //				editB.setEnabled(false);
 				saveB.setEnabled(false);
 				computeB.setEnabled(false);
+				this.showResultsPanel.changeData(null);
 			}else{
 				closeB.setEnabled(true);
 //				editB.setEnabled(true);
