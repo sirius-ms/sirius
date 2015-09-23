@@ -105,23 +105,37 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			}
 			if(ms2!=null){
 				for(CompactSpectrum sp : ms2){
-					double minEn = sp.getCollisionEnergy().getMinEnergy();
-					double maxEn = sp.getCollisionEnergy().getMaxEnergy();
+					
 					String value = null;
-					if(minEn==maxEn){
-						value = cEFormat.format(minEn)+" eV";
-					}else{
-						value = cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV";
-					}
-					int counter = 2;
-					while(nameStorage.contains(value)){
+					
+					if(sp.getCollisionEnergy()!=null){
+						double minEn = sp.getCollisionEnergy().getMinEnergy();
+						double maxEn = sp.getCollisionEnergy().getMaxEnergy();
+						
 						if(minEn==maxEn){
-							value = cEFormat.format(minEn)+" eV ("+counter+")";
+							value = cEFormat.format(minEn)+" eV";
 						}else{
-							value = cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV ("+counter+")";
+							value = cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV";
 						}
-						counter++;
+						int counter = 2;
+						while(nameStorage.contains(value)){
+							if(minEn==maxEn){
+								value = cEFormat.format(minEn)+" eV ("+counter+")";
+							}else{
+								value = cEFormat.format(minEn)+"-"+cEFormat.format(maxEn)+" eV ("+counter+")";
+							}
+							counter++;
+						}
+					}else{
+						value = "MS 2";
+						int counter = 2;
+						while(nameStorage.contains(value)){
+							value = "MS 2 ("+counter+")";
+							counter++;
+						}
 					}
+					
+					
 					nameStorage.add(value);
 					cbModel.addElement(value);
 				}

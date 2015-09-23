@@ -37,6 +37,7 @@ public class CSVToSpectrumConverter {
 //			masses[i] = data.get(i).get(massIndex);
 //			ints[i] = data.get(i).get(absIntIndex);
 //		}
+		
 		DefaultCompactSpectrum sp = new DefaultCompactSpectrum(masses,ints);
 		sp.setMSLevel(msLevel);
 		if(minEnergy>0 && maxEnergy>0 && minEnergy<=maxEnergy) sp.setCollisionEnergy(new CollisionEnergy(minEnergy,maxEnergy));
