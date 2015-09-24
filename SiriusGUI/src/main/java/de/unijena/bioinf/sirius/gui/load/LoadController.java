@@ -3,7 +3,9 @@ package de.unijena.bioinf.sirius.gui.load;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.awt.Dimension;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,13 +20,17 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.myxo.io.spectrum.CSVNumberReader;
-import de.unijena.bioinf.myxo.io.spectrum.DataFormat;
-import de.unijena.bioinf.myxo.io.spectrum.DataFormatIdentifier;
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormats;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.MGFConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -40,9 +46,13 @@ public class LoadController implements LoadDialogListener{
 	
 	private ConfigStorage config;
 	
+	private JFrame owner;
+	
 	public LoadController(JFrame owner,ExperimentContainer exp, ConfigStorage config) {
 		
 		returnValue = ReturnValue.Abort;
+		
+		this.owner = owner;
 		
 		this.exp = exp;
 		this.config = config;
@@ -80,6 +90,8 @@ public class LoadController implements LoadDialogListener{
 		JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		chooser.setMultiSelectionEnabled(true);
+		chooser.addChoosableFileFilter(new SupportedDataFormats());
+		chooser.setAcceptAllFileFilterUsed(false);
 		int returnVal = chooser.showOpenDialog((JDialog)loadDialog);
 		if(returnVal == JFileChooser.APPROVE_OPTION){
 			
@@ -165,12 +177,7 @@ public class LoadController implements LoadDialogListener{
 								}
 							}
 						}
-						if(exp.getDataFocusedMass()<=0){
-							double focusedMass = cexp.getFocusedMass();
-							if(focusedMass>0){
-								this.exp.setDataFocusedMass(focusedMass);
-							}
-						}
+						
 						if(exp.getName()==null || exp.getName().isEmpty()){
 							String name = cexp.getCompoundName();
 							if(name!=null&&!name.isEmpty()&&(this.exp.getName()==null||this.exp.getName().isEmpty())){
@@ -186,8 +193,15 @@ public class LoadController implements LoadDialogListener{
 							if(this.exp.getMs1Spectra().isEmpty()){
 								this.exp.getMs1Spectra().add(ms1);
 								newSP.add(ms1);
+								if(exp.getDataFocusedMass()<=0){
+									double focusedMass = cexp.getFocusedMass();
+									if(focusedMass>0){
+										this.exp.setDataFocusedMass(focusedMass);
+									}
+								}
 							}else{
 								this.exp.getMs2Spectra().add(ms1);
+								ms1.setMSLevel(2);
 								newSP.add(ms1);
 							}
 						}
@@ -211,6 +225,58 @@ public class LoadController implements LoadDialogListener{
 							loadDialog.spectraAdded(sp);
 						}
 						
+					}else if(df==DataFormat.MGF){
+						
+						MGFConverter conv = new MGFConverter();
+						ExperimentContainer ec = null;
+						try{
+							ec = conv.convert(file);
+						}catch(RuntimeException e2){
+							ExceptionDialog ed = new ExceptionDialog(this.owner,file.getName()+": Invalid file format.");
+							return;
+						}
+						
+						List<CompactSpectrum> ms1 = ec.getMs1Spectra();
+						List<CompactSpectrum> ms2 = ec.getMs2Spectra();
+						
+						System.out.println("Anzahl MS1: "+ms1.size());
+						System.out.println("Anzahl MS2: "+ms2.size());
+						
+						List<CompactSpectrum> newSP = new ArrayList<>();
+						
+						if(!ms1.isEmpty()){
+							if(exp.getMs1Spectra().isEmpty()){
+								exp.getMs1Spectra().add(ec.getMs1Spectra().get(0));
+								if(ec.getDataFocusedMass()>0 && exp.getDataFocusedMass()<=0){
+									exp.setDataFocusedMass(ec.getDataFocusedMass());
+								}
+							}else{
+								ms1.get(0).setMSLevel(2);
+								exp.getMs2Spectra().add(ms1.get(0));
+							}
+							newSP.add(ms1.get(0));
+						}
+						
+						for(CompactSpectrum sp : ms2){
+							exp.getMs2Spectra().add(sp);
+							newSP.add(sp);
+						}
+						
+						if(exp.getName()==null||exp.getName().isEmpty()){
+							if(ec.getName()!=null&&!ec.getName().isEmpty()){
+								exp.setName(ec.getName());
+								loadDialog.experimentNameChanged(exp.getName());
+							}
+						}
+						
+						if(exp.getIonization()==Ionization.Unknown){
+							exp.setIonization(ec.getIonization());
+						}
+						
+						for(CompactSpectrum sp : newSP){
+							loadDialog.spectraAdded(sp);
+						}
+
 					}
 				}
 				

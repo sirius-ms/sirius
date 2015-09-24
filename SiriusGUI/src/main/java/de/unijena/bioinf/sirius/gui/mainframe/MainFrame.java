@@ -130,7 +130,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		newB = new JButton("new");
+		newB = new JButton("create new experiment");
 		newB.addActionListener(this);
 		tempP.add(newB);
 		editB = new JButton("edit");
