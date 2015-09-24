@@ -248,20 +248,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 						ec.setSuffix(1);
 					}
 				}
-				
-//				if(ec.getName()!=null&&!ec.getName().isEmpty()){
-//					if(this.names.contains(ec.getName())){
-//						ec.setName(ec.getName().trim()+" ("+nameCounter+")");
-//						nameCounter++;
-//						
-//					}
-//					this.names.add(ec.getName());
-//				}else{
-//					ec.setName("Compound "+nameCounter);
-//					nameCounter++;
-//				}
 				this.compoundModel.addElement(ec);
-//				System.out.println(ec.getName());
 			}
 		}else if(e.getSource()==computeB){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
@@ -375,6 +362,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}else if(val==CloseDialogReturnValue.no){
 				this.compoundModel.remove(index);
 				this.compoundList.setSelectedIndex(-1);
+				this.names.remove(cont.getGUIName());
 			}else{
 				JFileChooser jfc = new JFileChooser();
 				jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
@@ -424,7 +412,38 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				if(trigger){
 					this.compoundModel.remove(index);
 					this.compoundList.setSelectedIndex(-1);
+					this.names.remove(cont.getGUIName());
 				}
+			}
+			
+		}else if(e.getSource()==editB){
+			ExperimentContainer ec = this.compoundList.getSelectedValue();
+			String guiname = ec.getGUIName();
+			System.out.println("MS2 "+ec.getMs2Spectra().size());
+			
+			LoadController lc = new LoadController(this,ec,config);
+			if(lc.getReturnValue() == ReturnValue.Success){
+//				ExperimentContainer ec = lc.getExperiment();
+				
+				if(!ec.getGUIName().equals(guiname)){
+					while(true){
+						System.out.println(ec.getSuffix());
+						if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+							if(this.names.contains(ec.getGUIName())){
+								ec.setSuffix(ec.getSuffix()+1);
+							}else{
+								this.names.add(ec.getGUIName());
+								break;
+							}
+						}else{
+							ec.setName("Unknown");
+							ec.setSuffix(1);
+						}
+					}
+				}
+				
+				this.compoundList.repaint();
+				
 			}
 			
 		}
@@ -473,13 +492,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			int index = compoundList.getSelectedIndex();
 			if(index<0){
 				closeB.setEnabled(false);
-//				editB.setEnabled(false);
+				editB.setEnabled(false);
 				saveB.setEnabled(false);
 				computeB.setEnabled(false);
 				this.showResultsPanel.changeData(null);
 			}else{
 				closeB.setEnabled(true);
-//				editB.setEnabled(true);
+				editB.setEnabled(true);
 				saveB.setEnabled(true);
 				computeB.setEnabled(true);
 				this.showResultsPanel.changeData(compoundModel.getElementAt(index));

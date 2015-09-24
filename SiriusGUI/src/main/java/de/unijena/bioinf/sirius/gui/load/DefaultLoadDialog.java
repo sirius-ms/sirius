@@ -96,6 +96,22 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 //		JSpinner maxspinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 100.0, 0.1));
 		
 		JPanel propsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		
+		JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ms level"));
+		propsPanel.add(msLevelPanel);
+		
+		JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiment name"));
+		nameTF = new JTextField(12);
+		nameTF.setEditable(false);
+//		nameTF.setText("unknown");
+		namePanel.add(nameTF);
+		nameB = new JButton("change");
+		nameB.addActionListener(this);
+		namePanel.add(nameB);
+		propsPanel.add(namePanel);
+		
 		JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		cEField = new JTextField(10);
 		cEField.setEditable(false);
@@ -111,27 +127,10 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
 		propsPanel.add(cEPanel);
 		
-		
 //		changeMSLevel = new JButton("change");
 //		changeMSLevel.addActionListener(this);
 //		changeMSLevel.setEnabled(false);
 //		msLevelPanel.add(changeMSLevel);
-		
-		JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiment name"));
-		nameTF = new JTextField(12);
-		nameTF.setEditable(false);
-//		nameTF.setText("unknown");
-		namePanel.add(nameTF);
-		nameB = new JButton("change");
-		nameB.addActionListener(this);
-		namePanel.add(nameB);
-		propsPanel.add(namePanel);
-		
-		
-		JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ms level"));
-		propsPanel.add(msLevelPanel);
 		
 		String[] msLevelVals = {"MS 1","MS 2"};
 		
@@ -241,9 +240,13 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.msLevelBox){
-			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
-			for(LoadDialogListener ldl : listeners){
-				ldl.changeMSLevel(spcont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
+			SpectrumContainer spCont = listModel.get(msList.getSelectedIndex());
+			int msLevel = msLevelBox.getSelectedIndex()+1;
+			if(spCont.getSpectrum().getMSLevel()!=msLevel){
+				System.out.println("msLevelBox aktiviert");
+				for(LoadDialogListener ldl : listeners){
+					ldl.changeMSLevel(spCont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
+				}
 			}
 		}else if(e.getSource()==this.remove){
 			int[] indices = msList.getSelectedIndices();

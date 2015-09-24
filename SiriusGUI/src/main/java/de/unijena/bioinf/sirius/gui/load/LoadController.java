@@ -34,12 +34,6 @@ public class LoadController implements LoadDialogListener{
 
 	LoadDialog loadDialog;
 	
-//	private List<CompactSpectrum> spectra; 
-	
-//	private double focMass;
-//	private Ionization ionization;
-//	private String compoundName;
-	
 	private ExperimentContainer exp;
 	
 	private ReturnValue returnValue;
@@ -47,20 +41,8 @@ public class LoadController implements LoadDialogListener{
 	private ConfigStorage config;
 	
 	public LoadController(JFrame owner,ExperimentContainer exp, ConfigStorage config) {
-//		this.spectra = new ArrayList<>();
-//		if(exp.getMs1Spectra()!=null){
-//			spectra.addAll(exp.getMs1Spectra());
-//		}
-//		
-//		if(exp.getMs2Spectra()!=null){
-//			spectra.addAll(exp.getMs2Spectra());
-//		}
 		
 		returnValue = ReturnValue.Abort;
-		
-//		this.focMass = exp.getFocusedMass();
-//		this.ionization = exp.getIonization();
-//		this.compoundName = exp.getName();
 		
 		this.exp = exp;
 		this.config = config;
@@ -92,31 +74,6 @@ public class LoadController implements LoadDialogListener{
 	public LoadController(JFrame owner, ConfigStorage config) {
 		this(owner,new ExperimentContainer(),config);
 	}
-	
-//	public LoadController(JFrame owner,double focMass,Ionization ionization,String compoundName,List<CompactSpectrum> spectra) {
-//		
-//		returnValue = ReturnValue.Abort;
-//		
-//		this.focMass = focMass;
-//		this.ionization = ionization;
-//		this.compoundName = compoundName;
-//		
-//		if(spectra==null){
-//			this.spectra = new ArrayList<CompactSpectrum>();
-//		}else{
-//			this.spectra = spectra;
-//		}
-//		
-//		loadDialog = new DefaultLoadDialog(owner);
-//		
-//		for(CompactSpectrum spectrum : this.spectra){
-//			loadDialog.spectraAdded(spectrum);
-//		}
-//		
-//		loadDialog.addLoadDialogListener(this);
-//		if(this.compoundName!=null&&!this.compoundName.isEmpty()) loadDialog.experimentNameChanged(this.compoundName);
-//		loadDialog.showDialog();
-//	}
 
 	@Override
 	public void addSpectra() {
@@ -192,29 +149,37 @@ public class LoadController implements LoadDialogListener{
 					if(df==DataFormat.JenaMS){
 						MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
 						CompactExperiment cexp = reader.read(file);
-						String ion = cexp.getIonization();
-						if(ion!=null && !ion.isEmpty() &&this.exp.getIonization()==Ionization.Unknown){
-							if(ion.contains("[M+H]+")){
-								this.exp.setIonization(Ionization.MPlusH);
-							}else if(ion.contains("[M+Na]+")){
-								this.exp.setIonization(Ionization.MPlusNa);
-							}else if(ion.contains("[M-H]-")){
-								this.exp.setIonization(Ionization.MMinusH);
-							}else if(ion.contains("M+")){
-								this.exp.setIonization(Ionization.M);
-							}else{
-								this.exp.setIonization(Ionization.Unknown);
+						if(exp.getIonization()==Ionization.Unknown){
+							String ion = cexp.getIonization();
+							if(ion!=null && !ion.isEmpty() &&this.exp.getIonization()==Ionization.Unknown){
+								if(ion.contains("[M+H]+")){
+									this.exp.setIonization(Ionization.MPlusH);
+								}else if(ion.contains("[M+Na]+")){
+									this.exp.setIonization(Ionization.MPlusNa);
+								}else if(ion.contains("[M-H]-")){
+									this.exp.setIonization(Ionization.MMinusH);
+								}else if(ion.contains("M+")){
+									this.exp.setIonization(Ionization.M);
+								}else{
+									this.exp.setIonization(Ionization.Unknown);
+								}
 							}
 						}
-						double focusedMass = cexp.getFocusedMass();
-						if(focusedMass>0){
-							this.exp.setDataFocusedMass(focusedMass);
+						if(exp.getDataFocusedMass()<=0){
+							double focusedMass = cexp.getFocusedMass();
+							if(focusedMass>0){
+								this.exp.setDataFocusedMass(focusedMass);
+							}
 						}
-						String name = cexp.getCompoundName();
-						if(name!=null&&!name.isEmpty()&&(this.exp.getName()==null||this.exp.getName().isEmpty())){
-							this.exp.setName(name);
-							loadDialog.experimentNameChanged(this.exp.getName());
+						if(exp.getName()==null || exp.getName().isEmpty()){
+							String name = cexp.getCompoundName();
+							if(name!=null&&!name.isEmpty()&&(this.exp.getName()==null||this.exp.getName().isEmpty())){
+								this.exp.setName(name);
+								loadDialog.experimentNameChanged(this.exp.getName());
+							}
 						}
+						
+						
 						CompactSpectrum ms1 = cexp.getMS1Spectrum();
 						List<CompactSpectrum> newSP = new ArrayList<>();
 						if(ms1!=null){
@@ -223,9 +188,9 @@ public class LoadController implements LoadDialogListener{
 								newSP.add(ms1);
 							}else{
 								this.exp.getMs2Spectra().add(ms1);
+								newSP.add(ms1);
 							}
 						}
-						
 						for(CompactSpectrum sp : cexp.getMS2Spectra()){
 							this.exp.getMs2Spectra().add(sp);
 							newSP.add(sp);
@@ -282,13 +247,19 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void removeSpectrum(CompactSpectrum sp) {
+		System.out.println("pre remove ms1: "+exp.getMs1Spectra().size());
+		System.out.println("pre remove ms2: "+exp.getMs2Spectra().size());
 		if(sp.getMSLevel()==1){
 			exp.getMs1Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
 		}else if(sp.getMSLevel()==2){
 			exp.getMs2Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
+		}else{
+			System.err.println("Spektrum hat kein msLevel: "+sp.getMSLevel());
 		}
+		System.out.println("post remove ms1: "+exp.getMs1Spectra().size());
+		System.out.println("post remove ms2: "+exp.getMs2Spectra().size());
 		
 	}
 
@@ -326,7 +297,9 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void changeMSLevel(CompactSpectrum sp, int msLevel) {
-		System.out.println("Change: "+sp.getSize()+" "+msLevel);
+		if(sp.getMSLevel()==msLevel){
+			return;
+		}
 		sp.setMSLevel(msLevel);
 		List<CompactSpectrum> ms1Spectra = this.exp.getMs1Spectra();
 		List<CompactSpectrum> ms2Spectra = this.exp.getMs2Spectra();

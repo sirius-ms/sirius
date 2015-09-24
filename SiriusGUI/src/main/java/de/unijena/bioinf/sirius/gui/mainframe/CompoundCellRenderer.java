@@ -157,7 +157,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		else if(ioni == Ionization.MPlusNa) ionValue = "[M+Na]+";
 		if(ionValue==null||ionValue.isEmpty()) ionValue = "unknown";
 		double focD = ec.getSelectedFocusedMass();
-		String focMass = focD>0 ? numberFormat.format(focD) : "unknown";
+		String focMass = focD>0 ? numberFormat.format(focD)+" Da" : "unknown";
 		
 		g2.setFont(valueFont);
 		g2.drawString(ionValue,xPos,32);

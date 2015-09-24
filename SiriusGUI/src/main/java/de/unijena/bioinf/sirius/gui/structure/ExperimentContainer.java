@@ -55,19 +55,23 @@ public class ExperimentContainer {
 	}
 
 	public List<CompactSpectrum> getMs1Spectra() {
+//		System.out.println("getMS1Spectra");
 		return ms1Spectra;
 	}
 
 	public void setMs1Spectra(List<CompactSpectrum> ms1Spectra) {
+//		System.out.println("setMS1Spectra");
 		if(ms1Spectra==null) return;
 		this.ms1Spectra = ms1Spectra;
 	}
 
 	public List<CompactSpectrum> getMs2Spectra() {
+//		System.out.println("getMS2Spectra");
 		return ms2Spectra;
 	}
 
 	public void setMs2Spectra(List<CompactSpectrum> ms2Spectra) {
+//		System.out.println("setMS2Spectra");
 		if(ms2Spectra==null) return;
 		this.ms2Spectra = ms2Spectra;
 	}
