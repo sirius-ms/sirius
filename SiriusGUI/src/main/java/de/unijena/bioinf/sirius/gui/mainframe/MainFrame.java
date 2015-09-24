@@ -36,6 +36,9 @@ import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.MGFConverter;
 import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
 import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -453,6 +456,19 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	
 	public ExperimentContainer readCompound(File file){
+		DataFormatIdentifier dfi = new  DataFormatIdentifier();
+		DataFormat df = dfi.identifyFormat(file);
+		if(df==DataFormat.MGF){
+			MGFConverter conv = new MGFConverter();
+			ExperimentContainer ec = null;
+			try{
+				ec = conv.convert(file);
+			}catch(RuntimeException e2){
+				ExceptionDialog ed = new ExceptionDialog(this,file.getName()+": Invalid file format.");
+				return null;
+			}
+			return ec;
+		}
 		return null;
 	}
 	
