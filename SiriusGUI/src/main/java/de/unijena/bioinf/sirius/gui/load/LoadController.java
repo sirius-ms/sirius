@@ -27,7 +27,7 @@ import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormats;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.io.MGFConverter;
@@ -90,7 +90,7 @@ public class LoadController implements LoadDialogListener{
 		JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		chooser.setMultiSelectionEnabled(true);
-		chooser.addChoosableFileFilter(new SupportedDataFormats());
+		chooser.addChoosableFileFilter(new SupportedDataFormatsFilter());
 		chooser.setAcceptAllFileFilterUsed(false);
 		int returnVal = chooser.showOpenDialog((JDialog)loadDialog);
 		if(returnVal == JFileChooser.APPROVE_OPTION){

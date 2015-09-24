@@ -34,6 +34,8 @@ import de.unijena.bioinf.sirius.gui.dialogs.CloseExperimentDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
 import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -46,7 +48,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	private DefaultListModel<ExperimentContainer> compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB;
+	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB;
 	
 	private HashSet<String> names;
 	private int nameCounter;
@@ -130,9 +132,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		newB = new JButton("create new experiment");
+		newB = new JButton("import experiment");
 		newB.addActionListener(this);
 		tempP.add(newB);
+		batchB = new JButton("batch import");
+		batchB.addActionListener(this);
+		tempP.add(batchB);
 		editB = new JButton("edit");
 		editB.addActionListener(this);
 		editB.setEnabled(false);
@@ -146,7 +151,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		loadB = new JButton("open");
+		loadB = new JButton("open save file");
 		loadB.addActionListener(this);
 		tempP.add(loadB);
 		saveB = new JButton("save");
@@ -234,21 +239,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			if(lc.getReturnValue() == ReturnValue.Success){
 				ExperimentContainer ec = lc.getExperiment();
 				
-				while(true){
-					System.out.println(ec.getSuffix());
-					if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
-						if(this.names.contains(ec.getGUIName())){
-							ec.setSuffix(ec.getSuffix()+1);
-						}else{
-							this.names.add(ec.getGUIName());
-							break;
-						}
-					}else{
-						ec.setName("Unknown");
-						ec.setSuffix(1);
-					}
-				}
-				this.compoundModel.addElement(ec);
+				importCompound(ec);
 			}
 		}else if(e.getSource()==computeB){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
@@ -331,21 +322,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 				try{
 					ExperimentContainer ec = io.load(selFile);
-					while(true){
-						if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
-							if(this.names.contains(ec.getGUIName())){
-								ec.setSuffix(ec.getSuffix()+1);
-							}else{
-								this.names.add(ec.getGUIName());
-								break;
-							}
-						}else{
-							ec.setName("Unknown");
-							ec.setSuffix(1);
-						}
-					}
-					this.compoundModel.addElement(ec);
-					this.compoundList.setSelectedValue(ec,true);
+					importCompound(ec);
 				}catch(Exception e2){
 					new ExceptionDialog(this, e2.getMessage());
 				}
@@ -446,45 +423,57 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 			}
 			
+		}else if(e.getSource()==batchB){
+			JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
+			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			chooser.setMultiSelectionEnabled(true);
+			chooser.addChoosableFileFilter(new SupportedBatchDataFormatFilter());
+			chooser.setAcceptAllFileFilterUsed(false);
+			int returnVal = chooser.showOpenDialog(this);
+			if(returnVal == JFileChooser.APPROVE_OPTION){
+				File[] files = chooser.getSelectedFiles();
+				for(File file : files){
+					ExperimentContainer ec = readCompound(file);
+					if(ec==null){
+						continue;
+					}else{
+						importCompound(ec);
+					}
+				}
+			}
+			
+			
+			//zu unfangreich, extra Methode
+			
 		}
-//		}else if(e.getSource()==editB){
-////			ExperimentContainer ec = this.compoundList.getSelectedValue();
-////			if(ec!=null){
-////				ComputeDialog cd = new ComputeDialog(this,ec);
-////				System.out.println("werte cd aus");
-////				if(cd.isSuccessful()){
-////					System.err.println("ComputeDialog erfolgreich");
-////					System.err.println("Anzahl Ergebnisse: "+ec.getResults().size());
-////					this.showResultsPanel.changeData(ec);
-////					resultsPanelCL.show(resultsPanel,RESULTS_CARD);
-//////					dhh
-//////					ResultPanel rp = new ResultPanel(ec);
-//////					resultsPanel.add(rp, "blablabla");
-//////					this.validate();
-//////					resultsPanel.validate();
-//////					resultsPanel.repaint();
-//////					resultsPanelCL.show(resultsPanel,"blablabla");
-//////					this.validate();
-//////					resultsPanel.validate();
-//////					resultsPanel.repaint();
-//////					this.repaint();
-//////					
-//////					this.repaint();
-////				}else{
-////					System.err.println("ComputeDialog nicht erfolgreich");
-////				}
-//////				compute(ec);
-////			}
-//		}
 		
 		
 		
 	}
 	
 	
-//	private void compute(ExperimentContainer ec){
-////		Sirius sirius = new 
-//	}
+	public ExperimentContainer readCompound(File file){
+		return null;
+	}
+	
+	public void importCompound(ExperimentContainer ec){
+		while(true){
+			System.out.println(ec.getSuffix());
+			if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+				if(this.names.contains(ec.getGUIName())){
+					ec.setSuffix(ec.getSuffix()+1);
+				}else{
+					this.names.add(ec.getGUIName());
+					break;
+				}
+			}else{
+				ec.setName("Unknown");
+				ec.setSuffix(1);
+			}
+		}
+		this.compoundModel.addElement(ec);
+		this.compoundList.setSelectedValue(ec, true);
+	}
 
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
