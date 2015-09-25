@@ -111,12 +111,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		compoundList.setCellRenderer(new CompoundCellRenderer());
 		compoundList.addListSelectionListener(this);
 		compoundList.setMinimumSize(new Dimension(200,0));
-		compoundList.setPreferredSize(new Dimension(200,0));
+//		compoundList.setPreferredSize(new Dimension(200,0));
 		
 		JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		pane.setViewportView(compoundList);
 		
 		pane.getViewport().setPreferredSize(new Dimension(200,(int)pane.getViewport().getPreferredSize().getHeight()));
+//		pane.getViewport().setMinimumSize(new Dimension(200,(int)pane.getViewport().getPreferredSize().getHeight()));
 		
 //		System.err.println(pane.getViewport().getPreferredSize().getWidth()+" "+pane.getViewport().getPreferredSize().getHeight());
 //		
