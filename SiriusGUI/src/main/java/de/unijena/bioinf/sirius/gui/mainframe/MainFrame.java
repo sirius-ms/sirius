@@ -436,14 +436,34 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			int returnVal = chooser.showOpenDialog(this);
 			if(returnVal == JFileChooser.APPROVE_OPTION){
 				File[] files = chooser.getSelectedFiles();
-				for(File file : files){
-					ExperimentContainer ec = readCompound(file);
-					if(ec==null){
-						continue;
-					}else{
-						importCompound(ec);
+				BatchImportDialog batchDiag = new BatchImportDialog(this);
+				batchDiag.start(files);
+				
+				List<ExperimentContainer> ecs = batchDiag.getResults();
+				List<String> errors = batchDiag.getErrors(); 
+				if(ecs!=null){
+					for(ExperimentContainer ec : ecs){
+						if(ec==null){
+							continue;
+						}else{
+							importCompound(ec);
+						}
 					}
 				}
+				
+				
+				if(errors!=null && !errors.isEmpty()){
+					
+				}
+				
+//				for(File file : files){
+//					ExperimentContainer ec = readCompound(file);
+//					if(ec==null){
+//						continue;
+//					}else{
+//						importCompound(ec);
+//					}
+//				}
 			}
 			
 			
@@ -456,71 +476,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 	
 	
-	public ExperimentContainer readCompound(File file){
-		DataFormatIdentifier dfi = new  DataFormatIdentifier();
-		DataFormat df = dfi.identifyFormat(file);
-		if(df==DataFormat.MGF){
-			MGFConverter conv = new MGFConverter();
-			ExperimentContainer ec = null;
-			try{
-				ec = conv.convert(file);
-			}catch(RuntimeException e2){
-				ExceptionDialog ed = new ExceptionDialog(this,file.getName()+": Invalid file format.");
-				return null;
-			}
-			return ec;
-		}else if(df==DataFormat.JenaMS){
-			ExperimentContainer ec = new ExperimentContainer();
-			MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
-			CompactExperiment cexp = reader.read(file);
-			String ion = cexp.getIonization();
-			if(ion!=null && !ion.isEmpty()){
-				if(ion.contains("[M+H]+")){
-					ec.setIonization(Ionization.MPlusH);
-				}else if(ion.contains("[M+Na]+")){
-					ec.setIonization(Ionization.MPlusNa);
-				}else if(ion.contains("[M-H]-")){
-					ec.setIonization(Ionization.MMinusH);
-				}else if(ion.contains("M+")){
-					ec.setIonization(Ionization.M);
-				}else{
-					ec.setIonization(Ionization.Unknown);
-				}
-			}
-			
-			String name = cexp.getCompoundName();
-			if(name!=null&&!name.isEmpty()){
-				ec.setName(name);
-			}else{
-				String fileName = file.getName();
-				ec.setName(fileName.substring(0, fileName.length()-4));
-			}
-			
-			
-			CompactSpectrum ms1 = cexp.getMS1Spectrum();
-			List<CompactSpectrum> ms1Spectra = new ArrayList<>();
-			if(ms1!=null){
-				ms1.setMSLevel(1);
-				ms1Spectra.add(ms1);
-			}
-			ec.setMs1Spectra(ms1Spectra);
-				
-			List<CompactSpectrum> ms2Spectra = new ArrayList<>();
-			if(cexp.getMS2Spectra()!=null){
-				for(CompactSpectrum sp : cexp.getMS2Spectra()){
-					sp.setMSLevel(2);
-					ms2Spectra.add(sp);
-				}
-			}
-			ec.setMs2Spectra(ms2Spectra);
-			
-			ec.setDataFocusedMass(cexp.getFocusedMass()>0?cexp.getFocusedMass():-1);
-			return ec;
-		}else{
-			ExceptionDialog ed = new ExceptionDialog(this,file.getName()+": unsupported file format.");
-			return null;
-		}
-	}
+	
 	
 	public void importCompound(ExperimentContainer ec){
 		while(true){
