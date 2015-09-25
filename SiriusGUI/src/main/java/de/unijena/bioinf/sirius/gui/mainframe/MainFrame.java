@@ -31,6 +31,7 @@ import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseExperimentDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
@@ -451,8 +452,16 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 					}
 				}
 				
+//				for(File f : files){
+//					errors.add("useless error: "+f.getName());
+//				}
 				
-				if(errors!=null && !errors.isEmpty()){
+				if(errors!=null){
+					if(errors.size()>1){
+						ErrorListDialog elDiag = new ErrorListDialog(this, errors);
+					}else if(errors.size()==1){
+						ExceptionDialog eDiag = new ExceptionDialog(this, errors.get(0)); 
+					}
 					
 				}
 				
