@@ -5,8 +5,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.io.File;
 import java.text.DecimalFormat;
@@ -104,6 +106,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 //			else this.foreColor = this.foreColor = this.deactivatedForeground;
 		}
 		
+		this.setToolTipText(ec.getGUIName());
+		
 		return this;
 	}
 	
@@ -128,10 +132,20 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		
 		int compoundLength = compoundFm.stringWidth(ec.getGUIName())+4;
 		
-		g2.drawLine(2, 17, 2+compoundLength, 17);
+		boolean trigger = compoundLength + 2 > 198;
+		
+		Paint p = g2.getPaint();
+		
+		if(trigger){
+			g2.setPaint(new GradientPaint(180, 0, foreColor,199, 0, backColor));
+		}
+		
+		g2.drawLine(2, 17, Math.min(197,2+compoundLength), 17);
 		
 		g2.setFont(compoundFont);
 		g2.drawString(ec.getGUIName(), 4, 13);
+		
+		if(trigger) g2.setPaint(p);
 		
 		int ms1No = ec.getMs1Spectra().size();
 		int ms2No = ec.getMs2Spectra().size();
@@ -179,45 +193,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			ms2String = ms2No+" ms2 "+ms2String;
 			g2.drawString(ms2String, 4, yPos);
 		}
-		
-//		String peakProp = "peaks:";
-//		String cEProp = "cE:";
-//		
-//		int peakPropLength = valueFm.stringWidth(peakProp);
-//		int cEPropLength = valueFm.stringWidth(cEProp);
-//		
-//		g2.setFont(propertyFont);
-//		g2.drawString(peakProp, 5, 12);
-//		g2.drawString(cEProp, 5, 28);
-//		
-//		String peakVal = ""+sp.getSize();
-//		
-//		double minE = sp.getSpectrum().getCollisionEnergy().getMinEnergy();
-//		double maxE = sp.getSpectrum().getCollisionEnergy().getMaxEnergy();
-//		
-//		String cEVal = null;
-//		if(minE==maxE){
-//			cEVal = cEFormat.format(minE)+" eV";
-//		}else{
-//			cEVal = cEFormat.format(minE)+" - "+cEFormat.format(maxE)+" eV";
-//		}
-//		
-//		int peakValLength = valueFm.stringWidth(peakVal);
-//		int cEValLength = valueFm.stringWidth(cEVal);
-//		
-//		int valX = Math.max(peakPropLength, cEPropLength) + 15;
-//		
-//		g2.setFont(valueFont);
-//		g2.drawString(peakVal, valX, 12);
-//		g2.drawString(cEVal, valX, 28);
-//		
-//		g2.setFont(msLevelFont);
-//		
-//		String msLevel = "MS "+sp.getSpectrum().getMSLevel();
-//		
-//		int msLevelLength = msLevelFm.stringWidth(msLevel);
-//		
-//		g2.drawString(msLevel, ((int)this.getSize().getWidth())-msLevelLength-2, 12);
 		
 		
 	}
