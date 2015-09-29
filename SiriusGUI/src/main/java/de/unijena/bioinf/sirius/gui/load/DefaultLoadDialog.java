@@ -9,6 +9,8 @@ import de.unijena.bioinf.myxo.gui.msview.msviewer.MSViewerPanel;
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
@@ -435,9 +437,17 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	    	dtde.rejectDrop();
 	    }
 	    
-		if(newFiles.size()>0){
+	    DataFormatIdentifier identifier = new DataFormatIdentifier();
+	    List<File> acceptedFiles = new ArrayList<>(newFiles.size());
+	    for(File file : newFiles){
+	    	if(identifier.identifyFormat(file)!=DataFormat.NotSupported){
+	    		acceptedFiles.add(file);
+	    	}
+	    }
+	    
+		if(acceptedFiles.size()>0){
 			for(LoadDialogListener li : listeners){
-				li.addSpectra(newFiles);
+				li.addSpectra(acceptedFiles);
 			}
 		}
 	}

@@ -38,6 +38,8 @@ import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseExperimentDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialogReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
@@ -443,42 +445,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			int returnVal = chooser.showOpenDialog(this);
 			if(returnVal == JFileChooser.APPROVE_OPTION){
 				File[] files = chooser.getSelectedFiles();
-				BatchImportDialog batchDiag = new BatchImportDialog(this);
-				batchDiag.start(files);
-				
-				List<ExperimentContainer> ecs = batchDiag.getResults();
-				List<String> errors = batchDiag.getErrors(); 
-				if(ecs!=null){
-					for(ExperimentContainer ec : ecs){
-						if(ec==null){
-							continue;
-						}else{
-							importCompound(ec);
-						}
-					}
-				}
-				
-//				for(File f : files){
-//					errors.add("useless error: "+f.getName());
-//				}
-				
-				if(errors!=null){
-					if(errors.size()>1){
-						ErrorListDialog elDiag = new ErrorListDialog(this, errors);
-					}else if(errors.size()==1){
-						ExceptionDialog eDiag = new ExceptionDialog(this, errors.get(0)); 
-					}
-					
-				}
-				
-//				for(File file : files){
-//					ExperimentContainer ec = readCompound(file);
-//					if(ec==null){
-//						continue;
-//					}else{
-//						importCompound(ec);
-//					}
-//				}
+				importOneExperimentPerFile(files);
 			}
 			
 			
@@ -488,6 +455,33 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		
 		
+	}
+	
+	public void importOneExperimentPerFile(File[] files){
+		BatchImportDialog batchDiag = new BatchImportDialog(this);
+		batchDiag.start(files);
+		
+		List<ExperimentContainer> ecs = batchDiag.getResults();
+		List<String> errors = batchDiag.getErrors(); 
+		if(ecs!=null){
+			for(ExperimentContainer ec : ecs){
+				if(ec==null){
+					continue;
+				}else{
+					importCompound(ec);
+				}
+			}
+		}
+		
+		
+		if(errors!=null){
+			if(errors.size()>1){
+				ErrorListDialog elDiag = new ErrorListDialog(this, errors);
+			}else if(errors.size()==1){
+				ExceptionDialog eDiag = new ExceptionDialog(this, errors.get(0)); 
+			}
+			
+		}
 	}
 	
 	
@@ -616,8 +610,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
-		if(csvNumber==files.size()){   //nur CSV
-			System.out.println("nur CSV");
+		if(csvNumber>0){   //nur CSV
 			LoadController lc = new LoadController(this, config);
 			lc.addSpectra(files);
 			lc.showDialog();
@@ -626,6 +619,26 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				ExperimentContainer ec = lc.getExperiment();
 				
 				importCompound(ec);
+			}
+		}else{
+			DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
+			DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
+			if(rv==DragAndDropOpenDialogReturnValue.abort){
+				return;
+			}else if(rv==DragAndDropOpenDialogReturnValue.oneExperimentForAll){
+				LoadController lc = new LoadController(this, config);
+				lc.addSpectra(files);
+				lc.showDialog();
+				
+				if(lc.getReturnValue() == ReturnValue.Success){
+					ExperimentContainer ec = lc.getExperiment();
+					
+					importCompound(ec);
+				}
+			}else if(rv==DragAndDropOpenDialogReturnValue.oneExperimentPerFile){
+				File[] fileArr = new File[files.size()];
+				files.toArray(fileArr);
+				importOneExperimentPerFile(fileArr);
 			}
 		}
 	}
