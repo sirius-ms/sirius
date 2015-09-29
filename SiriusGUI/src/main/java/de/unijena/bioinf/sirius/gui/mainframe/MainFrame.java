@@ -4,6 +4,13 @@ import java.util.*;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -189,15 +196,63 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		compoundControls.add(save);
 //		compoundPanel.add(compoundControls,BorderLayout.SOUTH);
 		
+		
+		DropTargetListener dropTargetListener = new DropTargetListener() {
+			
+			@Override
+			public void dropActionChanged(DropTargetDragEvent dtde) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void drop(DropTargetDropEvent dtde) {
+				try {
+				      Transferable tr = dtde.getTransferable();
+				      DataFlavor[] flavors = tr.getTransferDataFlavors();
+				      System.out.println(flavors.length);
+				      for (int i = 0; i < flavors.length; i++){
+				    	  if (flavors[i].isFlavorJavaFileListType()) {
+						    	   dtde.acceptDrop (dtde.getDropAction());
+						        List files = (List) tr.getTransferData(flavors[i]);
+						        System.out.println(files.get(0).getClass()+" "+files.size());
+						        // Wir setzen in das Label den Namen der ersten 
+						        // Datei
+						        System.out.println("drop: "+files.get(0).toString());
+						        
+						       }
+				      }
+				      dtde.dropComplete(true);
+				       
+				    } catch (Throwable t) { t.printStackTrace(); }
+				    // Ein Problem ist aufgetreten
+				    dtde.rejectDrop();
+			}
+			
+			@Override
+			public void dragOver(DropTargetDragEvent dtde) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void dragExit(DropTargetEvent dte) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void dragEnter(DropTargetDragEvent dtde) {
+				// TODO Auto-generated method stub
+				
+			}
+		};
+		
+		DropTarget dropTarget = new DropTarget(this, dropTargetListener);
+		
 		this.setSize(new Dimension(1024,800));
 		
-		System.err.println(this.compoundList.getWidth());
 		this.setVisible(true);
-		System.err.println(this.compoundList.getWidth());
-		
-		System.err.println(this.compoundList.getSize().getWidth()+" "+this.compoundList.getSize().getHeight());
-		System.err.println(pane.getSize().getWidth()+" "+pane.getSize().getHeight());
-		System.err.println(compoundPanel.getSize().getWidth()+" "+compoundPanel.getSize().getHeight());
 	}
 	
 	public static void main(String[] args){

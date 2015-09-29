@@ -13,16 +13,25 @@ import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 
-public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener{
+public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
+				DropTargetListener{
 	
 	private JButton add, remove, ok, abort;
 	private JList<SpectrumContainer> msList;
@@ -156,6 +165,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		abort.addActionListener(this);
 		controlPanel.add(ok);
 		controlPanel.add(abort);
+		
+		DropTarget dropTarget = new DropTarget(this, this);
 		
 //		this.setSize(new Dimension(800,600));
 //		this.setVisible(true);
@@ -373,6 +384,62 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	@Override
 	public void experimentNameChanged(String name) {
 		nameTF.setText(name);
+	}
+	
+	/// drag and drop support...
+
+	@Override
+	public void dragEnter(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragOver(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dropActionChanged(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragExit(DropTargetEvent dte) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void drop(DropTargetDropEvent dtde) {
+		Transferable tr = dtde.getTransferable();
+	    DataFlavor[] flavors = tr.getTransferDataFlavors();
+	    List<File> newFiles = new ArrayList<File>();
+	    try{
+			for (int i = 0; i < flavors.length; i++) {
+				if (flavors[i].isFlavorJavaFileListType()) {
+					dtde.acceptDrop(dtde.getDropAction());
+					List files = (List) tr.getTransferData(flavors[i]);
+					for (Object o : files) {
+						File file = (File) o;
+						newFiles.add(file);
+//						System.out.println("drop: " + file.getAbsolutePath());
+					}
+				}
+				dtde.dropComplete(true);
+			}
+	    }catch(Exception e){
+	    	e.printStackTrace();
+	    	dtde.rejectDrop();
+	    }
+	    
+		if(newFiles.size()>0){
+			for(LoadDialogListener li : listeners){
+				li.addSpectra(newFiles);
+			}
+		}
 	}
 	
 }
