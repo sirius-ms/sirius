@@ -50,12 +50,13 @@ import de.unijena.bioinf.sirius.gui.io.MGFConverter;
 import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
 import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
+import de.unijena.bioinf.sirius.gui.load.LoadDialogListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.cli.*;
 
-public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener{
+public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener{
 	
 	private DefaultListModel<ExperimentContainer> compoundModel;
 	private JList<ExperimentContainer> compoundList;
@@ -196,59 +197,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		compoundControls.add(save);
 //		compoundPanel.add(compoundControls,BorderLayout.SOUTH);
 		
-		
-		DropTargetListener dropTargetListener = new DropTargetListener() {
-			
-			@Override
-			public void dropActionChanged(DropTargetDragEvent dtde) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void drop(DropTargetDropEvent dtde) {
-				try {
-				      Transferable tr = dtde.getTransferable();
-				      DataFlavor[] flavors = tr.getTransferDataFlavors();
-				      System.out.println(flavors.length);
-				      for (int i = 0; i < flavors.length; i++){
-				    	  if (flavors[i].isFlavorJavaFileListType()) {
-						    	   dtde.acceptDrop (dtde.getDropAction());
-						        List files = (List) tr.getTransferData(flavors[i]);
-						        System.out.println(files.get(0).getClass()+" "+files.size());
-						        // Wir setzen in das Label den Namen der ersten 
-						        // Datei
-						        System.out.println("drop: "+files.get(0).toString());
-						        
-						       }
-				      }
-				      dtde.dropComplete(true);
-				       
-				    } catch (Throwable t) { t.printStackTrace(); }
-				    // Ein Problem ist aufgetreten
-				    dtde.rejectDrop();
-			}
-			
-			@Override
-			public void dragOver(DropTargetDragEvent dtde) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void dragExit(DropTargetEvent dte) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void dragEnter(DropTargetDragEvent dtde) {
-				// TODO Auto-generated method stub
-				
-			}
-		};
-		
-		DropTarget dropTarget = new DropTarget(this, dropTargetListener);
+		DropTarget dropTarget = new DropTarget(this, this);
 		
 		this.setSize(new Dimension(1024,800));
 		
@@ -296,6 +245,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==newB){
 			LoadController lc = new LoadController(this,config);
+			lc.showDialog();
 			if(lc.getReturnValue() == ReturnValue.Success){
 				ExperimentContainer ec = lc.getExperiment();
 				
@@ -459,6 +409,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			System.out.println("MS2 "+ec.getMs2Spectra().size());
 			
 			LoadController lc = new LoadController(this,ec,config);
+			lc.showDialog();
 			if(lc.getReturnValue() == ReturnValue.Success){
 //				ExperimentContainer ec = lc.getExperiment();
 				
@@ -578,6 +529,103 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				computeB.setEnabled(true);
 				this.showResultsPanel.changeData(compoundModel.getElementAt(index));
 				resultsPanelCL.show(resultsPanel,RESULTS_CARD);
+			}
+		}
+	}
+	
+	//////////////////////////////////////////////////
+	////////////////// drag and drop /////////////////
+	//////////////////////////////////////////////////
+	
+	@Override
+	public void dragEnter(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragOver(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dropActionChanged(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragExit(DropTargetEvent dte) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void drop(DropTargetDropEvent dtde) {
+		Transferable tr = dtde.getTransferable();
+	    DataFlavor[] flavors = tr.getTransferDataFlavors();
+	    List<File> newFiles = new ArrayList<File>();
+	    try{
+			for (int i = 0; i < flavors.length; i++) {
+				if (flavors[i].isFlavorJavaFileListType()) {
+					dtde.acceptDrop(dtde.getDropAction());
+					List files = (List) tr.getTransferData(flavors[i]);
+					for (Object o : files) {
+						File file = (File) o;
+						newFiles.add(file);
+//						System.out.println("drop: " + file.getAbsolutePath());
+					}
+				}
+				dtde.dropComplete(true);
+			}
+	    }catch(Exception e){
+	    	e.printStackTrace();
+	    	dtde.rejectDrop();
+	    }
+	    
+		if(newFiles.size()>0){
+			importDragAndDropFiles(newFiles);
+		}
+	}
+	
+	private void importDragAndDropFiles(List<File> rawFiles){
+		
+		// entferne nicht unterstuetzte Files und suche nach CSVs
+		
+		DataFormatIdentifier ident = new DataFormatIdentifier();
+		int csvNumber = 0;
+		List<File> files = new ArrayList<File>(rawFiles.size());
+		for(File file : rawFiles){
+			DataFormat df = ident.identifyFormat(file);
+			System.out.println(df);
+			if(df==DataFormat.NotSupported){
+				continue;
+			}else{
+				files.add(file);
+				if(df == DataFormat.CSV){
+					csvNumber++;;
+				}
+			}
+			
+		}
+		
+		System.out.println("Size: "+files.size());
+		
+		if(files.size()==0) return;
+		
+		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
+		
+		if(csvNumber==files.size()){   //nur CSV
+			System.out.println("nur CSV");
+			LoadController lc = new LoadController(this, config);
+			lc.addSpectra(files);
+			lc.showDialog();
+			
+			if(lc.getReturnValue() == ReturnValue.Success){
+				ExperimentContainer ec = lc.getExperiment();
+				
+				importCompound(ec);
 			}
 		}
 	}

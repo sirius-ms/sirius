@@ -38,6 +38,7 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.JenaMSConverter;
 import de.unijena.bioinf.sirius.gui.io.MGFConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -204,51 +205,14 @@ class ImportExperimentsThread implements Runnable{
 			}
 			return ec;
 		}else if(df==DataFormat.JenaMS){
-			ExperimentContainer ec = new ExperimentContainer();
-			MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
-			CompactExperiment cexp = reader.read(file);
-			String ion = cexp.getIonization();
-			if(ion!=null && !ion.isEmpty()){
-				if(ion.contains("[M+H]+")){
-					ec.setIonization(Ionization.MPlusH);
-				}else if(ion.contains("[M+Na]+")){
-					ec.setIonization(Ionization.MPlusNa);
-				}else if(ion.contains("[M-H]-")){
-					ec.setIonization(Ionization.MMinusH);
-				}else if(ion.contains("M+")){
-					ec.setIonization(Ionization.M);
-				}else{
-					ec.setIonization(Ionization.Unknown);
-				}
+			JenaMSConverter conv = new JenaMSConverter();
+			ExperimentContainer ec = null;
+			try{
+				ec = conv.convert(file);
+			}catch(RuntimeException e2){
+				errors.add(file.getName()+": Invalid file format.");
+				return null;
 			}
-			
-			String name = cexp.getCompoundName();
-			if(name!=null&&!name.isEmpty()){
-				ec.setName(name);
-			}else{
-				String fileName = file.getName();
-				ec.setName(fileName.substring(0, fileName.length()-4));
-			}
-			
-			
-			CompactSpectrum ms1 = cexp.getMS1Spectrum();
-			List<CompactSpectrum> ms1Spectra = new ArrayList<>();
-			if(ms1!=null){
-				ms1.setMSLevel(1);
-				ms1Spectra.add(ms1);
-			}
-			ec.setMs1Spectra(ms1Spectra);
-				
-			List<CompactSpectrum> ms2Spectra = new ArrayList<>();
-			if(cexp.getMS2Spectra()!=null){
-				for(CompactSpectrum sp : cexp.getMS2Spectra()){
-					sp.setMSLevel(2);
-					ms2Spectra.add(sp);
-				}
-			}
-			ec.setMs2Spectra(ms2Spectra);
-			
-			ec.setDataFocusedMass(cexp.getFocusedMass()>0?cexp.getFocusedMass():-1);
 			return ec;
 		}else{
 			errors.add(file.getName()+": unsupported file format.");

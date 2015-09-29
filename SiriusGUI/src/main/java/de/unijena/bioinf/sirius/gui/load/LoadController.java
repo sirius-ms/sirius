@@ -30,6 +30,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.JenaMSConverter;
 import de.unijena.bioinf.sirius.gui.io.MGFConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
@@ -78,6 +79,10 @@ public class LoadController implements LoadDialogListener{
 		
 		loadDialog.addLoadDialogListener(this);
 		if(this.exp.getName()!=null||this.exp.getName().isEmpty()) loadDialog.experimentNameChanged(this.exp.getName());
+//		loadDialog.showDialog();
+	}
+	
+	public void showDialog(){
 		loadDialog.showDialog();
 	}
 	
@@ -167,53 +172,46 @@ public class LoadController implements LoadDialogListener{
 				DataFormat df = dfi.identifyFormat(file);
 				
 				if(df==DataFormat.JenaMS){
-					MS2FormatSpectraReader reader = new MS2FormatSpectraReader();
-					CompactExperiment cexp = reader.read(file);
-					if(exp.getIonization()==Ionization.Unknown){
-						String ion = cexp.getIonization();
-						if(ion!=null && !ion.isEmpty() &&this.exp.getIonization()==Ionization.Unknown){
-							if(ion.contains("[M+H]+")){
-								this.exp.setIonization(Ionization.MPlusH);
-							}else if(ion.contains("[M+Na]+")){
-								this.exp.setIonization(Ionization.MPlusNa);
-							}else if(ion.contains("[M-H]-")){
-								this.exp.setIonization(Ionization.MMinusH);
-							}else if(ion.contains("M+")){
-								this.exp.setIonization(Ionization.M);
-							}else{
-								this.exp.setIonization(Ionization.Unknown);
-							}
-						}
+					JenaMSConverter conv = new JenaMSConverter();
+					ExperimentContainer ec = conv.convert(file);
+					
+					if(exp.getIonization()==Ionization.Unknown && ec.getIonization()!=Ionization.Unknown){
+						exp.setIonization(ec.getIonization());
 					}
 					
 					if(exp.getName()==null || exp.getName().isEmpty()){
-						String name = cexp.getCompoundName();
-						if(name!=null&&!name.isEmpty()&&(this.exp.getName()==null||this.exp.getName().isEmpty())){
+						String name = ec.getName();
+						if(name!=null&&!name.isEmpty()){
 							this.exp.setName(name);
 							loadDialog.experimentNameChanged(this.exp.getName());
 						}
 					}
 					
-					
-					CompactSpectrum ms1 = cexp.getMS1Spectrum();
 					List<CompactSpectrum> newSP = new ArrayList<>();
-					if(ms1!=null){
-						if(this.exp.getMs1Spectra().isEmpty()){
-							this.exp.getMs1Spectra().add(ms1);
-							newSP.add(ms1);
-							if(exp.getDataFocusedMass()<=0){
-								double focusedMass = cexp.getFocusedMass();
-								if(focusedMass>0){
-									this.exp.setDataFocusedMass(focusedMass);
+					
+					if(ec.getMs1Spectra().size()>0){
+						CompactSpectrum ms1 = ec.getMs1Spectra().get(0);
+						
+						if(ms1!=null){
+							if(this.exp.getMs1Spectra().isEmpty()){
+								this.exp.getMs1Spectra().add(ms1);
+								newSP.add(ms1);
+								if(exp.getDataFocusedMass()<=0){
+									double focusedMass = ec.getDataFocusedMass();
+									if(focusedMass>0){
+										this.exp.setDataFocusedMass(focusedMass);
+									}
 								}
+							}else{
+								this.exp.getMs2Spectra().add(ms1);
+								ms1.setMSLevel(2);
+								newSP.add(ms1);
 							}
-						}else{
-							this.exp.getMs2Spectra().add(ms1);
-							ms1.setMSLevel(2);
-							newSP.add(ms1);
 						}
 					}
-					for(CompactSpectrum sp : cexp.getMS2Spectra()){
+					
+					
+					for(CompactSpectrum sp : ec.getMs2Spectra()){
 						this.exp.getMs2Spectra().add(sp);
 						newSP.add(sp);
 					}
