@@ -51,10 +51,11 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 //	private Thread t;
 	private Lock lock;
 	private JButton abort;
-	private boolean abortPressed;
+//	private boolean abortPressed;
 	private JLabel progressl;
 	private ReturnValue rv;
 	private AnalyseFileTypesThread analyseThread;
+	private List<String> errors;
 
 	public BatchImportDialog(JFrame owner) {
 		super(owner,true);
@@ -88,28 +89,30 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		buttonPanel.add(abort);
 		this.add(buttonPanel, BorderLayout.SOUTH);
 		
-		abortPressed = false;
+//		abortPressed = false;
 	}
 	
 	public void start(List<File> msFiles, List<File> mgfFiles){
-		importThread = new ImportExperimentsThread(msFiles,mgfFiles, this,new ArrayList<String>());
+		errors = new ArrayList<>();
+		importThread = new ImportExperimentsThread(msFiles,mgfFiles, this,errors);
 		Thread t = new Thread(importThread);
 		t.start();
-		this.pack();
+		this.setSize(new Dimension(300,125));
 		this.setVisible(true);
 	}
 	
 	public void start(File[] files){
-		analyseThread = new AnalyseFileTypesThread(files, this);
+		errors = new ArrayList<>();
+		analyseThread = new AnalyseFileTypesThread(files, this, errors);
 		Thread thread = new Thread(analyseThread);
 		thread = new Thread(analyseThread);
 		thread.start();
-		this.pack();
+		this.setSize(new Dimension(300,125));
 		this.setVisible(true);
 	}
 
 	public void finished() {
-		if(abortPressed) return;
+//		if(abortPressed) return;
 		this.rv = importThread.wasSuccessful();
 		this.dispose();
 	}
@@ -141,8 +144,9 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.abort){
-			abortPressed = true;
-			importThread.abort();
+//			abortPressed = true;
+			if(analyseThread!=null) analyseThread.abortProgress();
+			if(importThread!=null) importThread.abortImport();
 			this.dispose();
 		}
 		
@@ -156,22 +160,18 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	///////////// fuer DF Analyse ////////////////////
 	
 	public void initDataFileAnalysis(int maxVal) {
-		System.out.println("Anfang init");
 		lock.lock();
 		progBar.setMaximum(maxVal);
 		progBar.setMinimum(0);
 		progBar.setValue(0);
 		progressl.setText("Analysing data formats ...");
 		lock.unlock();
-		System.out.println("Ende init");
 	}
 
 	public void updateDataFileAnaysis(int currentIndex) {
-		System.out.println("update");
 		lock.lock();
 		progBar.setValue(currentIndex);
 		lock.unlock();		
-		System.out.println("Ende update");
 	}
 	
 //	public void finishedFileAnalysis() {
@@ -193,17 +193,17 @@ class AnalyseFileTypesThread implements Runnable{
 	private List<String> errors;
 	
 	
-	public AnalyseFileTypesThread(File[] files,BatchImportDialog bid) {
+	public AnalyseFileTypesThread(File[] files,BatchImportDialog bid, List<String> errors) {
 		this.files = files;
 		this.bid = bid;
 		stop = false;
 		lock = new ReentrantLock();
 		msFiles = new ArrayList<>();
 		mgfFiles = new ArrayList<>();
-		this.errors = new ArrayList<>();
+		this.errors = errors;
 	}	
 	
-	private void abortProgress(){
+	void abortProgress(){
 		lock.lock();
 		this.stop = true;
 		lock.unlock();
@@ -271,7 +271,7 @@ class ImportExperimentsThread implements Runnable{
 		this.bid = bid;
 	}
 	
-	private void abortImport(){
+	void abortImport(){
 		lock.lock();
 		this.stop = true;
 		lock.unlock();
@@ -286,11 +286,11 @@ class ImportExperimentsThread implements Runnable{
 		this.bid.init(size);
 		int counter=0;
 		for(File msFile : msFiles){
+			this.bid.update(counter, msFile.getName());
 			boolean trigger;
 			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
 			trigger = this.stop;
 			lock.unlock();
-			this.bid.update(counter, msFile.getName());
 			if(trigger){
 				bid.finished();
 				return;
@@ -362,12 +362,6 @@ class ImportExperimentsThread implements Runnable{
 	
 	List<String> getErrors(){
 		return this.errors;
-	}
-	
-	public void abort(){
-		lock.lock();
-		this.stop = true;
-		lock.unlock();
 	}
 	
 	
