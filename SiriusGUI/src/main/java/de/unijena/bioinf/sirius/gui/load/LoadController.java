@@ -120,10 +120,11 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	private void importSpectra(File[] files){
+		
 		DataFormatIdentifier dfi = new  DataFormatIdentifier();
 		List<File> csvFiles = new ArrayList<>();
 		List<File> msFiles = new ArrayList<>();
-		List<File> mgfsFiles = new ArrayList<>();
+		List<File> mgfFiles = new ArrayList<>();
 //		File firstCSV = null;
 		for(File file : files){
 			DataFormat df = dfi.identifyFormat(file);
@@ -132,9 +133,15 @@ public class LoadController implements LoadDialogListener{
 			}else if(df==DataFormat.JenaMS){
 				msFiles.add(file);
 			}else if(df==DataFormat.MGF){
-				mgfsFiles.add(file);
+				mgfFiles.add(file);
 			}
 		}
+		
+		importSpectra(csvFiles, msFiles, mgfFiles);
+	}
+		
+	
+	private void importSpectra(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles){
 		
 		List<String> errorStorage = new ArrayList<>();
 		
@@ -266,8 +273,8 @@ public class LoadController implements LoadDialogListener{
 			}
 		}
 			
-		if(mgfsFiles.size()>0){
-			for(File file : mgfsFiles){
+		if(mgfFiles.size()>0){
+			for(File file : mgfFiles){
 				MGFConverter conv = new MGFConverter();
 				ExperimentContainer ec = null;
 				
@@ -447,6 +454,10 @@ public class LoadController implements LoadDialogListener{
 		File[] fileArr = new File[files.size()];
 		importSpectra(files.toArray(fileArr));
 		
+	}
+	
+	public void addSpectra(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles){
+		importSpectra(csvFiles, msFiles, mgfFiles);
 	}
 
 }

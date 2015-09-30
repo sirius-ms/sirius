@@ -47,12 +47,14 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	
 	private JProgressBar progBar;
 //	private double minVal, maxVal;
-	private ImportExperimentsThread importThread;
-	private Thread t;
+	ImportExperimentsThread importThread ;
+//	private Thread t;
 	private Lock lock;
 	private JButton abort;
+	private boolean abortPressed;
 	private JLabel progressl;
 	private ReturnValue rv;
+	private AnalyseFileTypesThread analyseThread;
 
 	public BatchImportDialog(JFrame owner) {
 		super(owner,true);
@@ -85,17 +87,29 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		abort.addActionListener(this);
 		buttonPanel.add(abort);
 		this.add(buttonPanel, BorderLayout.SOUTH);
+		
+		abortPressed = false;
+	}
+	
+	public void start(List<File> msFiles, List<File> mgfFiles){
+		importThread = new ImportExperimentsThread(msFiles,mgfFiles, this,new ArrayList<String>());
+		Thread t = new Thread(importThread);
+		t.start();
+		this.pack();
+		this.setVisible(true);
 	}
 	
 	public void start(File[] files){
-		importThread = new ImportExperimentsThread(files, this);
-		t = new Thread(importThread);
-		t.start();
+		analyseThread = new AnalyseFileTypesThread(files, this);
+		Thread thread = new Thread(analyseThread);
+		thread = new Thread(analyseThread);
+		thread.start();
 		this.pack();
 		this.setVisible(true);
 	}
 
 	public void finished() {
+		if(abortPressed) return;
 		this.rv = importThread.wasSuccessful();
 		this.dispose();
 	}
@@ -127,6 +141,7 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.abort){
+			abortPressed = true;
 			importThread.abort();
 			this.dispose();
 		}
@@ -136,12 +151,108 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	public ReturnValue wasSucessful(){
 		return this.rv;
 	}
+	
+	
+	///////////// fuer DF Analyse ////////////////////
+	
+	public void initDataFileAnalysis(int maxVal) {
+		System.out.println("Anfang init");
+		lock.lock();
+		progBar.setMaximum(maxVal);
+		progBar.setMinimum(0);
+		progBar.setValue(0);
+		progressl.setText("Analysing data formats ...");
+		lock.unlock();
+		System.out.println("Ende init");
+	}
 
+	public void updateDataFileAnaysis(int currentIndex) {
+		System.out.println("update");
+		lock.lock();
+		progBar.setValue(currentIndex);
+		lock.unlock();		
+		System.out.println("Ende update");
+	}
+	
+//	public void finishedFileAnalysis() {
+//		if(abortPressed) return;
+//		List<File> msFiles = this.analyseThread.getMSFiles();
+//		List<File> mgfFiles = this.analyseThread.getMGFFiles();
+//		this.startAfterAnalysis(msFiles, mgfFiles);
+//	}
+
+}
+
+class AnalyseFileTypesThread implements Runnable{
+	
+	private File[] files;
+	private List<File> msFiles, mgfFiles;
+	private ReentrantLock lock;
+	private boolean stop;
+	private BatchImportDialog bid;
+	private List<String> errors;
+	
+	
+	public AnalyseFileTypesThread(File[] files,BatchImportDialog bid) {
+		this.files = files;
+		this.bid = bid;
+		stop = false;
+		lock = new ReentrantLock();
+		msFiles = new ArrayList<>();
+		mgfFiles = new ArrayList<>();
+		this.errors = new ArrayList<>();
+	}	
+	
+	private void abortProgress(){
+		lock.lock();
+		this.stop = true;
+		lock.unlock();
+	}
+	
+	List<String> getErrors(){
+		return this.errors;
+	}
+	
+	List<File> getMSFiles(){
+		return this.msFiles;
+	}
+	
+	List<File> getMGFFiles(){
+		return this.mgfFiles;
+	}
+
+	@Override
+	public void run() {
+		DataFormatIdentifier dfi = new  DataFormatIdentifier();
+		int counter = 0;
+		this.bid.initDataFileAnalysis(files.length);
+		for(File f : files){
+			lock.lock();
+			if(this.stop) return;
+			lock.unlock();
+			this.bid.updateDataFileAnaysis(counter);
+			DataFormat df = dfi.identifyFormat(f);
+			if(df==DataFormat.JenaMS){
+				msFiles.add(f);
+			}else if(df==DataFormat.MGF){
+				mgfFiles.add(f);
+			}else if(df==DataFormat.NotSupported){
+				this.errors.add(f.getName()+": unsupported file format.");
+			}
+			counter++;
+		}
+		
+		ImportExperimentsThread importThread = new ImportExperimentsThread(msFiles,mgfFiles, bid, errors);
+		Thread t = new Thread(importThread);
+		bid.importThread = importThread;
+		t.start();
+	}
+	
 }
 
 class ImportExperimentsThread implements Runnable{
 	
-	private File[] files;
+	private List<File> msFiles, mgfFiles;
 	private List<ExperimentContainer> results;
 	private boolean stop;
 	private ReentrantLock lock;
@@ -149,10 +260,11 @@ class ImportExperimentsThread implements Runnable{
 	private List<String> errors;
 	private BatchImportDialog bid;
 	
-	ImportExperimentsThread(File[] files, BatchImportDialog bid){
-		this.files = files;
+	ImportExperimentsThread(List<File> msFiles, List<File> mgfFiles, BatchImportDialog bid, List<String> errors){
+		this.msFiles = msFiles;
+		this.mgfFiles = mgfFiles;
 		this.results = Collections.EMPTY_LIST;
-		this.errors = Collections.EMPTY_LIST;
+		this.errors = errors;
 		this.stop = false;
 		this.lock = new ReentrantLock(true);
 		this.rv = ReturnValue.Abort;
@@ -167,58 +279,78 @@ class ImportExperimentsThread implements Runnable{
 
 	@Override
 	public void run() {
-		this.results = new ArrayList<>(files.length);
+		int size = msFiles.size()+mgfFiles.size();
+		this.results = new ArrayList<>(size);
 		this.rv = ReturnValue.Abort;
 		this.errors = Collections.synchronizedList(new ArrayList<String>());
-		this.bid.init(files.length);
+		this.bid.init(size);
 		int counter=0;
-		for(File f : files){
+		for(File msFile : msFiles){
 			boolean trigger;
 			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
 			trigger = this.stop;
 			lock.unlock();
-			this.bid.update(counter, f.getName());
+			this.bid.update(counter, msFile.getName());
 			if(trigger){
 				bid.finished();
 				return;
 			}
-			ExperimentContainer ec = readCompound(f);
+			ExperimentContainer ec = readMSCompound(msFile);
 			if(ec!=null) results.add(ec);
 			counter++;
 		}
+		
+		for(File mgfFile : mgfFiles){
+			boolean trigger;
+			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
+			trigger = this.stop;
+			lock.unlock();
+			this.bid.update(counter, mgfFile.getName());
+			if(trigger){
+				bid.finished();
+				return;
+			}
+			ExperimentContainer ec = readMGFCompound(mgfFile);
+			if(ec!=null) results.add(ec);
+			counter++;
+		}
+		
 		this.rv = ReturnValue.Success;
 		bid.finished();
 		
 	}
 	
-	public ExperimentContainer readCompound(File file){
-		DataFormatIdentifier dfi = new  DataFormatIdentifier();
-		DataFormat df = dfi.identifyFormat(file);
-		if(df==DataFormat.MGF){
-			MGFConverter conv = new MGFConverter();
-			ExperimentContainer ec = null;
-			try{
-				ec = conv.convert(file);
-			}catch(RuntimeException e2){
-				errors.add(file.getName()+": Invalid file format.");
-				return null;
-			}
-			return ec;
-		}else if(df==DataFormat.JenaMS){
-			JenaMSConverter conv = new JenaMSConverter();
-			ExperimentContainer ec = null;
-			try{
-				ec = conv.convert(file);
-			}catch(RuntimeException e2){
-				errors.add(file.getName()+": Invalid file format.");
-				return null;
-			}
-			return ec;
-		}else{
-			errors.add(file.getName()+": unsupported file format.");
+	public ExperimentContainer readMSCompound(File file){
+		
+		JenaMSConverter conv = new JenaMSConverter();
+		ExperimentContainer ec = null;
+		try{
+			ec = conv.convert(file);
+		}catch(RuntimeException e2){
+			errors.add(file.getName()+": Invalid file format.");
 			return null;
 		}
+		return ec;
+		
 	}
+	
+	public ExperimentContainer readMGFCompound(File file){
+		
+		MGFConverter conv = new MGFConverter();
+		ExperimentContainer ec = null;
+		try{
+			ec = conv.convert(file);
+		}catch(RuntimeException e2){
+			errors.add(file.getName()+": Invalid file format.");
+			return null;
+		}
+		return ec;
+		
+	}
+	
+	
+	
+
 	
 	public ReturnValue wasSuccessful(){
 		return rv;

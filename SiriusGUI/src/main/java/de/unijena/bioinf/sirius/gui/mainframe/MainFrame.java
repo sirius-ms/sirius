@@ -454,12 +454,25 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 	}
 	
+	public void importOneExperimentPerFile(List<File> msFiles, List<File> mgfFiles){
+		BatchImportDialog batchDiag = new BatchImportDialog(this);
+		batchDiag.start(msFiles,mgfFiles);
+		
+		List<ExperimentContainer> ecs = batchDiag.getResults();
+		List<String> errors = batchDiag.getErrors(); 
+		importOneExperimentPerFileStep2(ecs, errors);
+	}
+	
 	public void importOneExperimentPerFile(File[] files){
 		BatchImportDialog batchDiag = new BatchImportDialog(this);
 		batchDiag.start(files);
 		
 		List<ExperimentContainer> ecs = batchDiag.getResults();
 		List<String> errors = batchDiag.getErrors(); 
+		importOneExperimentPerFileStep2(ecs, errors);
+	}
+	
+	public void importOneExperimentPerFileStep2(List<ExperimentContainer> ecs, List<String> errors){
 		if(ecs!=null){
 			for(ExperimentContainer ec : ecs){
 				if(ec==null){
@@ -585,27 +598,22 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		DataFormatIdentifier ident = new DataFormatIdentifier();
 		int csvNumber = 0;
-		List<File> files = new ArrayList<File>(rawFiles.size());
-		for(File file : rawFiles){
-			DataFormat df = ident.identifyFormat(file);
-			if(df==DataFormat.NotSupported){
-				continue;
-			}else{
-				files.add(file);
-				if(df == DataFormat.CSV){
-					csvNumber++;;
-				}
-			}
-			
-		}
 		
-		if(files.size()==0) return;
+		DropImportDialog dropDiag = new DropImportDialog(this, rawFiles);
+		
+		List<File> csvFiles = dropDiag.getCSVFiles();
+		List<File> msFiles = dropDiag.getMSFiles();
+		List<File> mgfFiles = dropDiag.getMGFFiles();
+		
+		if(csvFiles.isEmpty()&&msFiles.isEmpty()&&mgfFiles.isEmpty()) return;
 		
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
-		if(csvNumber>0){   //nur CSV
+		if(csvFiles.size()>0){   //nur CSV
 			LoadController lc = new LoadController(this, config);
-			lc.addSpectra(files);
+//			files
+			
+			lc.addSpectra(csvFiles,msFiles,mgfFiles);
 			lc.showDialog();
 			
 			if(lc.getReturnValue() == ReturnValue.Success){
@@ -620,7 +628,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				return;
 			}else if(rv==DragAndDropOpenDialogReturnValue.oneExperimentForAll){
 				LoadController lc = new LoadController(this, config);
-				lc.addSpectra(files);
+				lc.addSpectra(csvFiles,msFiles,mgfFiles);
 				lc.showDialog();
 				
 				if(lc.getReturnValue() == ReturnValue.Success){
@@ -629,9 +637,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 					importCompound(ec);
 				}
 			}else if(rv==DragAndDropOpenDialogReturnValue.oneExperimentPerFile){
-				File[] fileArr = new File[files.size()];
-				files.toArray(fileArr);
-				importOneExperimentPerFile(fileArr);
+				importOneExperimentPerFile(msFiles,mgfFiles);
 			}
 		}
 	}
