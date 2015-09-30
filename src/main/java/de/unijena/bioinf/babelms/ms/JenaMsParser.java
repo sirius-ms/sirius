@@ -17,13 +17,12 @@
  */
 package de.unijena.bioinf.babelms.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 
 import java.io.BufferedReader;
@@ -35,7 +34,7 @@ import java.util.regex.Pattern;
 public class JenaMsParser implements Parser<Ms2Experiment> {
 
     @Override
-    public JenaMsExperiment parse(BufferedReader reader) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader) throws IOException {
         return new ParserInstance(reader).parse();
     }
 
@@ -53,14 +52,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private MolecularFormula formula;
         private int charge=0;
         private boolean isMs1 = false;
-        private Ionization ionization;
+        private PrecursorIonType ionization;
         private CollisionEnergy currentEnergy;
         private double tic=0, parentMass=0, retentionTime=0;
         private SimpleMutableSpectrum currentSpectrum;
-        private ArrayList<JenaMs2Spectrum> ms2spectra = new ArrayList<JenaMs2Spectrum>();
-        private ArrayList<JenaMsSpectrum> ms1spectra = new ArrayList<JenaMsSpectrum>();
+        private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
+        private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
 
-        private JenaMsExperiment parse() throws IOException {
+        private MutableMs2Experiment parse() throws IOException {
             while (reader.ready()) {
                 final String line = reader.readLine();
                 try {
@@ -97,7 +96,16 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
             parseEmptyLine();
             if (compoundName==null) return null;
-            return new JenaMsExperiment(compoundName, formula, parentMass, charge, ionization, ms1spectra, ms2spectra);
+            final MutableMs2Experiment exp = new MutableMs2Experiment();
+            exp.setIonMass(parentMass);
+            if (parentMass!=0 && ionization!=null)
+                exp.setMoleculeNeutralMass(ionization.precursorMassToNeutralMass(exp.getIonMass()));
+            exp.setMolecularFormula(formula);
+            exp.setName(compoundName);
+            exp.setPrecursorIonType(ionization);
+            exp.setMs1Spectra(ms1spectra);
+            exp.setMs2Spectra(ms2spectra);
+            return exp;
         }
 
         private static Pattern LINE_PATTERN = Pattern.compile("^\\s*([>#]|\\d)");
@@ -172,7 +180,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equals("retention")) {
                 parseRetention(value);
             } else if (optionName.contains("ion")) {
-                final Ionization ion = PeriodicTable.getInstance().ionByName(value.trim());
+                final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(value.trim());
                 if (ion==null) {
                     warn("Unknown ionization: '" + value + "'");
                 } else {
@@ -220,9 +228,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void newSpectrum() {
             if (currentSpectrum.size() > 0) {
                 if (isMs1) {
-                    ms1spectra.add(new JenaMsSpectrum(currentSpectrum, tic, retentionTime));
+                    ms1spectra.add(new SimpleSpectrum(currentSpectrum));
                 } else {
-                    ms2spectra.add(new JenaMs2Spectrum(currentSpectrum, parentMass, tic, currentEnergy, retentionTime));
+                    ms2spectra.add(new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2));
                 }
             } else return;
             isMs1=false;
