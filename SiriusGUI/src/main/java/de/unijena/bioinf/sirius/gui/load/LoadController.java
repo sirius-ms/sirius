@@ -29,6 +29,7 @@ import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
@@ -318,6 +319,12 @@ public class LoadController implements LoadDialogListener{
 					loadDialog.spectraAdded(sp);
 				}
 			}
+		}
+		
+		if(errorStorage.size()>1){
+			ErrorListDialog elDiag = new ErrorListDialog(this.owner, errorStorage);
+		}else if(errorStorage.size()==1){
+			ExceptionDialog eDiag = new ExceptionDialog(this.owner, errorStorage.get(0)); 
 		}
 		
 	}

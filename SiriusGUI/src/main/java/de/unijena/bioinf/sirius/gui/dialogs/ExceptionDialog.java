@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 import java.awt.BorderLayout;
+import java.awt.Dialog;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -19,6 +20,15 @@ public class ExceptionDialog extends JDialog implements ActionListener{
 	
 	public ExceptionDialog(Frame owner, String message) {
 		super(owner,true);
+		initDialog(message);
+	}
+	
+	public ExceptionDialog(Dialog owner, String message) {
+		super(owner,true);
+		initDialog(message);
+	}
+	
+	public void initDialog(String message) {
 		
 		this.setLayout(new BorderLayout());
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));

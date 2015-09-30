@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 import java.awt.BorderLayout;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -23,8 +24,18 @@ public class ErrorListDialog extends JDialog implements ActionListener{
 	private JButton ok;
 	private JTextArea ta;
 	
+	
+	public ErrorListDialog(Dialog owner, List<String> errors){
+		super(owner,true);
+		initDialog(errors);
+	}
+	
 	public ErrorListDialog(Frame owner, List<String> errors) {
 		super(owner,true);
+		initDialog(errors);
+	}
+	
+	public void initDialog(List<String> errors) {
 		
 		this.setLayout(new BorderLayout());
 //		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
