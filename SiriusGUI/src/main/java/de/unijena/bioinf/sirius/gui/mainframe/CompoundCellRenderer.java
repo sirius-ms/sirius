@@ -83,7 +83,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
 		evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
 		disableBackground = UIManager.getColor("ComboBox.background");
-		System.out.println("Farbe: "+disableBackground);
 		unevenBackground = new Color(213,227,238);
 		activatedForeground = UIManager.getColor("List.foreground");
 		deactivatedForeground = Color.GRAY;
@@ -149,8 +148,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		
 		int ms1No = ec.getMs1Spectra().size();
 		int ms2No = ec.getMs2Spectra().size();
-		
-		System.out.println(ms1No+" "+ms2No);
 		
 		String ionizationProp = "ionization";
 		String focMassProp = "focused mass";

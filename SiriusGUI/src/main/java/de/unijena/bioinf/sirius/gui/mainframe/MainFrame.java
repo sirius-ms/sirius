@@ -330,7 +330,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				ZipExperimentIO io = new ZipExperimentIO();
 				File selFile = jfc.getSelectedFile();
 				config.setDefaultSaveFilePath(selFile.getParentFile());
-				System.out.println(config.getDefaultSaveFilePath().getAbsolutePath());
 				
 				try{
 					ExperimentContainer ec = io.load(selFile);
@@ -408,7 +407,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==editB){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			String guiname = ec.getGUIName();
-			System.out.println("MS2 "+ec.getMs2Spectra().size());
 			
 			LoadController lc = new LoadController(this,ec,config);
 			lc.showDialog();
@@ -417,7 +415,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 				if(!ec.getGUIName().equals(guiname)){
 					while(true){
-						System.out.println(ec.getSuffix());
 						if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
 							if(this.names.contains(ec.getGUIName())){
 								ec.setSuffix(ec.getSuffix()+1);
@@ -489,7 +486,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	public void importCompound(ExperimentContainer ec){
 		while(true){
-			System.out.println(ec.getSuffix());
 			if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
 				if(this.names.contains(ec.getGUIName())){
 					ec.setSuffix(ec.getSuffix()+1);
@@ -592,7 +588,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		List<File> files = new ArrayList<File>(rawFiles.size());
 		for(File file : rawFiles){
 			DataFormat df = ident.identifyFormat(file);
-			System.out.println(df);
 			if(df==DataFormat.NotSupported){
 				continue;
 			}else{
@@ -603,8 +598,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 			
 		}
-		
-		System.out.println("Size: "+files.size());
 		
 		if(files.size()==0) return;
 		
@@ -643,30 +636,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}
 	}
 
-}
-
-class DummyProgress implements Progress {
-
-	@Override
-	public void finished() {
-		System.out.println("done");
-	}
-
-	@Override
-	public void info(String s) {
-		System.out.println("info: "+s);
-	}
-
-	@Override
-	public void init(double max) {
-		System.out.println("max: "+max);
-	}
-
-	@Override
-	public void update(double current, double max, String value) {
-		System.out.println("current: "+current+"/"+max+" "+value);
-	}
-	
 }
 
 class SiriusSaveFileFilter extends FileFilter{

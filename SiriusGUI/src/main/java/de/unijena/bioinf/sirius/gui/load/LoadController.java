@@ -21,7 +21,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
-import de.unijena.bioinf.myxo.io.spectrum.CSVNumberReader;
+import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
@@ -128,7 +128,7 @@ public class LoadController implements LoadDialogListener{
 		}
 		
 		CSVDialogReturnContainer cont = null;
-		CSVNumberReader csvReader = new CSVNumberReader();
+		CSVFormatReader csvReader = new CSVFormatReader();
 		
 		if(csvCounter>1){
 			
