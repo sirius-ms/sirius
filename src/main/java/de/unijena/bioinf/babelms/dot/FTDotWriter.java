@@ -18,7 +18,7 @@
 package de.unijena.bioinf.babelms.dot;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
-import de.unijena.bioinf.ChemistryBase.chem.Adduct;
+import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
@@ -86,7 +86,7 @@ public class FTDotWriter {
         }
 
         for (Fragment f : tree.getFragments()) {
-            final MolecularFormula formula = (includeIon && ion instanceof Adduct) ? ion.getAtoms().add(f.getFormula()) : f.getFormula();
+            final MolecularFormula formula = (includeIon && ion instanceof IonMode) ? ion.getAtoms().add(f.getFormula()) : f.getFormula();
             writer.write("\t");
             writer.write(formula.toString());
             writer.write(" [label=");
@@ -110,8 +110,8 @@ public class FTDotWriter {
         }
         writer.write("\n");
         for (Loss l : tree.losses()) {
-            final MolecularFormula sf = (includeIon && ion instanceof Adduct) ? ion.getAtoms().add(l.getSource().getFormula()) : l.getSource().getFormula();
-            final MolecularFormula tf = (includeIon && ion instanceof Adduct) ? ion.getAtoms().add(l.getTarget().getFormula()) : l.getTarget().getFormula();
+            final MolecularFormula sf = (includeIon && ion instanceof IonMode) ? ion.getAtoms().add(l.getSource().getFormula()) : l.getSource().getFormula();
+            final MolecularFormula tf = (includeIon && ion instanceof IonMode) ? ion.getAtoms().add(l.getTarget().getFormula()) : l.getTarget().getFormula();
             writer.write("\t");
             writer.write(sf.toString());
             writer.write(" -> ");
