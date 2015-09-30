@@ -166,52 +166,162 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     }
 
+    private IonMode[] POSITIVE_ION_MODES, NEGATIVE_ION_MODES;
+    private Charge POSITIVE_IONIZATION, NEGATIVE_IONIZATION;
+    private IonMode PROTONATION, DEPROTONATION;
     private void addDefaultIons() {
-        final String[] ions = new String[]{"[M+H]+", "[M-H]-", "[M]+", "[M]-", "[M-2H]-", "[M+K]+", "[M+K-2H]+", "[M+K-2H]-",
-                "[M-OH]-", "[M+Na]+", "[M+Cl]-", "[M+H-H2O]+", "[M-H+Na]+", "[M+2Na-H]+","[M+Na2-H]+", "[M+NH3+H]+", "[(M+NH3)+H]+", "[M+NH4]+",
-                "[M+H-C6H10O4]+", "[M+H-C6H10O5]+", "[M-H+OH]-", "[M+HCOO-]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
+        // ION MODES
+        PROTONATION = new IonMode(1, "[M+H]+", MolecularFormula.parse("H"));
+        DEPROTONATION = new IonMode(-1, "[M-H]-", MolecularFormula.parse("H").negate());
+        this.POSITIVE_ION_MODES = new IonMode[]{
+                new IonMode(1, "[M+K]+", MolecularFormula.parse("K")),
+                new IonMode(1, "[M+Na]+", MolecularFormula.parse("Na")),
+                PROTONATION
         };
-        final MolecularFormula[] formulas = new MolecularFormula[]{
-                MolecularFormula.parse("H"),
-                MolecularFormula.parse("H").negate(),
-                MolecularFormula.parse(""),
-                MolecularFormula.parse(""),
-                MolecularFormula.parse("H2").negate(),
-                MolecularFormula.parse("K"),
-                MolecularFormula.parse("K").subtract(MolecularFormula.parse("H2")),
-                MolecularFormula.parse("K").subtract(MolecularFormula.parse("H2")),
-                MolecularFormula.parse("OH").negate(),
-                MolecularFormula.parse("Na"),
-                MolecularFormula.parse("Cl"),
-                MolecularFormula.parse("HO").negate() ,
-                MolecularFormula.parse("Na").subtract(MolecularFormula.parse("H")),
-                MolecularFormula.parse("Na2").subtract(MolecularFormula.parse("H")),MolecularFormula.parse("Na2").subtract(MolecularFormula.parse("H")),
-                MolecularFormula.parse("NH4"), MolecularFormula.parse("NH4"), MolecularFormula.parse("NH4"),
-                MolecularFormula.parse("H").subtract(MolecularFormula.parse("C6H10O4")),
-                MolecularFormula.parse("H").subtract(MolecularFormula.parse("C6H10O5")),
-                MolecularFormula.parse("O"),
-                MolecularFormula.parse("HCO2"),
-                MolecularFormula.parse("C2H3O2"), MolecularFormula.parse("C2H3O2")
+        this.NEGATIVE_ION_MODES = new IonMode[]{
+                new IonMode(-1, "[M+Cl]-", MolecularFormula.parse("Cl")),
+                DEPROTONATION
         };
-
-        assert ions.length==formulas.length;
-        for (int i=0; i < ions.length; ++i) {
-            final String ion = ions[i];
-            final MolecularFormula form = formulas[i];
-            final int charge = ion.endsWith("+") ? 1 : -1;
-            final Adduct adduct = new Adduct(form.getMass() - Charge.ELECTRON_MASS *charge, charge , ion, form );
-            ionizations.add(adduct);
-            ionNameMap.put(ion, adduct);
-            ionMap.put(adduct.getMass(), adduct);
+        this.POSITIVE_IONIZATION = new Charge(1);
+        this.NEGATIVE_IONIZATION = new Charge(-1);
+        // ADDUCTS
+        final String[] adductsPositive = new String[]{
+                "[M+H]+","[M]+", "[M+K]+", "[M+K-2H]+",
+                "[M+Na]+", "[M+H-H2O]+", "[M-H+Na]+", "[M+Na2-H]+","[M+Na2-H]+", "[M+NH3+H]+", "[(M+NH3)+H]+", "[M+NH4]+",
+                "[M+H-C6H10O4]+", "[M+H-C6H10O5]+"
+        };
+        final String[] adductsNegative = new String[]{
+                "[M-H]-", "[M]-", "[M-2H]-", "[M+K-2H]-",
+                "[M-OH]-", "[M+Cl]-", "[M-H+OH]-", "[M+HCOO-]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
+        };
+        final HashMap<String, PrecursorIonType> positiveIonTypes = new HashMap<String, PrecursorIonType>();
+        for (String pos : adductsPositive) {
+            positiveIonTypes.put(pos, parseIonType(pos));
+            assert positiveIonTypes.get(pos).getIonization().getCharge() > 0;
         }
+        final HashMap<String, PrecursorIonType> negativeIonTypes = new HashMap<String, PrecursorIonType>();
+        for (String neg : adductsNegative) {
+            negativeIonTypes.put(neg, parseIonType(neg));
+            assert negativeIonTypes.get(neg).getIonization().getCharge() < 0;
+        }
+        knownIonTypes.putAll(positiveIonTypes);
+        knownIonTypes.putAll(negativeIonTypes);
+    }
 
-        // add unknown ionization to ionNameMap
-        final Charge positive=new Charge(1), negative = new Charge(-1);
-        ionNameMap.put("[M+?]+", positive);
-        ionNameMap.put("[M+?]-", negative);
-        // don't add them to ionMap or ionizations, as they would conflict with [M]+ and [M]-.
+    private final static Pattern IONTYPE_PATTERN = Pattern.compile("[\\[\\]()+-]");
+    private final static Pattern IONTYPE_NUM_PATTERN = Pattern.compile("^\\d+$");
+    private PrecursorIonType parseIonType(String name) {
+        // tokenize String
+        final ArrayList<String> tokens = new ArrayList<String>();
+        final Matcher m = IONTYPE_PATTERN.matcher(name);
+        int lastPos = 0;
+        while (m.find()) {
+            if (m.regionStart() > lastPos) tokens.add(name.substring(lastPos, m.regionStart()));
+            tokens.add(m.group());
+            lastPos = m.regionEnd();
+        }
+        if (lastPos < name.length()) tokens.add(name.substring(lastPos, name.length()));
+
+        int state = 0;
+        final ArrayList<MolecularFormula> adducts = new ArrayList<MolecularFormula>();
+        final ArrayList<MolecularFormula> insourceFrags = new ArrayList<MolecularFormula>();
+
+        boolean isAdd = true;
+        int number = 1;
+
+        for (int k=0; k < tokens.size(); ++k) {
+            final String token = tokens.get(k).trim();
+            final char c = token.charAt(0);
+            switch (c) {
+                case '(': if (number != 1) {
+                    throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
+                } else break;
+                case ')': break;
+                case '[': break; // ignore
+                case ']': break; // ignore
+                case '+': if (number != 1) {
+                    throw new IllegalArgumentException("Do not support multiple charges: '" + name + "'");
+                } else {
+                    isAdd = true;
+                    break;
+                }
+                case '-': if (number != 1) {
+                    throw new IllegalArgumentException("Do not support multiple charges: '" + name + "'");
+                } else {
+                    isAdd = false;
+                    break;
+                }
+                case 'M': if (number != 1) {
+                    throw new IllegalArgumentException("Do not support multimeres: '" + name + "'");
+                } else if (!isAdd) {
+                    throw new IllegalArgumentException("Invalid format of ion type: '" + name + "'");
+                } else break;
+                default: {
+                    if (IONTYPE_NUM_PATTERN.matcher(token).find()) {
+                        // is a number
+                        number = Integer.parseInt(token);
+                    } else {
+                        // should be a molecular formula
+                        if (number != 1) {
+                            throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
+                        }
+                        final MolecularFormula f = MolecularFormula.parse(token);
+                        if (isAdd) {
+                            adducts.add(f);
+                        } else {
+                            insourceFrags.add(f);
+                        }
+                        isAdd = true;
+                        number = 1;
+                    }
+                }
+            }
+        }
+        final int charge = (isAdd ? 1 : -1);
+
+        // find ionization mode
+        Ionization usedIonMode = null;
+        final IonMode[] ionModes = (charge > 0) ? POSITIVE_ION_MODES : NEGATIVE_ION_MODES;
+        for (IonMode ion : ionModes) {
+            // search for adduct containing this ion
+            int found = -1;
+            for (int i=0; i < adducts.size(); ++i) {
+                if (ion.equals(adducts.get(i))) {
+                    found = i; break;
+                }
+            }
+            if (found >= 0) {
+                adducts.remove(found);
+                usedIonMode = ion;
+            } else {
+                for (int i=0; i < adducts.size(); ++i) {
+                    if (adducts.get(i).isSubtractable(ion.getAtoms())) {
+                        found = i; break;
+                    }
+                }
+                if (found >= 0) {
+                    usedIonMode = ion;
+                    adducts.set(found, adducts.get(found).subtract(ion.getAtoms()));
+                }
+            }
+            if (usedIonMode!=null) break;
+        }
+        if (usedIonMode==null) {
+            usedIonMode = charge>0 ? POSITIVE_IONIZATION : NEGATIVE_IONIZATION;
+        }
+        MolecularFormula adduct = MolecularFormula.emptyFormula();
+        for (MolecularFormula f : adducts) adduct = adduct.add(f);
+        MolecularFormula insource = MolecularFormula.emptyFormula();
+        for (MolecularFormula f : insourceFrags) insource.add(f);
+        return new PrecursorIonType(usedIonMode, insource, adduct);
+    }
 
 
+    public IonMode getProtonation() {
+        return PROTONATION;
+    }
+    public IonMode getDeprotonation() {
+        return DEPROTONATION;
     }
 
     private final static class ElementStack {
@@ -233,61 +343,20 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     private Pattern pattern;
     private final HashMap<String, Element> nameMap;
-    private final ArrayList<Ionization> ionizations;
-    private final NavigableMap<Double, Ionization> ionMap;
-    private final HashMap<String, Ionization> ionNameMap;
     private final ArrayList<Element> elements;
     private IsotopicDistribution distribution;
     private MolecularFormula emptyFormula;
+    private final HashMap<String, PrecursorIonType> knownIonTypes;
     /**
      * Cache which is used to build molecular formulas with shared structure
      */
     final TableSelectionCache cache;
-    
-    /**
-     * build a periodic table with standard values.
-     */
-    /*
-    PeriodicTable() {
-        this.elements = new Element[Static.ELEMENT_SYMBOL.length];
-        for (int i=0; i < elements.length; ++i) {            
-            elements[i] = new Element(i);
-        }
-        this.nameMap = new HashMap<String, Element>((int)(elements.length*1.5));
-        for (Element e : elements) {
-            if (e != null) nameMap.put(e.getSymbol(), e);
-        }
-        final ArrayList<String> names = new ArrayList<String>(nameMap.keySet());
-        Collections.sort(names, new Comparator<String>() {
-            @Override public int compare(String s, String s1) {
-                return s1.length() - s.length();
-            }
-        });
-        final StringBuilder buffer = new StringBuilder();
-        final Iterator<String> nameIterator = names.iterator();
-        buffer.append("(\\)|");
-        buffer.append(nameIterator.next());
-        while (nameIterator.hasNext()) {
-            buffer.append("|").append(nameIterator.next());
-        }
-        buffer.append(")(\\d*)|\\(");
-        this.pattern = Pattern.compile(buffer.toString());
-        this.ions = Arrays.copyOf(IONS, IONS.length + ION_FORMULAS.length);
-        this.cache = new TableSelectionCache(this, TableSelectionCache.DEFAULT_MAX_COMPOMERE_SIZE);
-        for (int i=IONS.length; i < ions.length; ++i) {
-        	ions[i] = __parseIonFromString(ION_FORMULAS[i-IONS.length]);
-        }
-        Arrays.sort(ions);
-    }
-    */
 
     PeriodicTable() {
         this.elements = new ArrayList<Element>();
         this.nameMap = new HashMap<String, Element>();
-        this.ionizations = new ArrayList<Ionization>();
         this.cache = new TableSelectionCache(this, TableSelectionCache.DEFAULT_MAX_COMPOMERE_SIZE);
-        this.ionMap = new TreeMap<Double, Ionization>(); // TODO: Use MultiMaps
-        this.ionNameMap = new HashMap<String, Ionization>();
+        this.knownIonTypes = new HashMap<String, PrecursorIonType>();
         this.distribution = new IsotopicDistribution(this);
         this.emptyFormula = null;
     }
@@ -295,17 +364,18 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     PeriodicTable(PeriodicTable pt) {
         this.elements = new ArrayList<Element>(pt.elements);
         this.nameMap = new HashMap<String, Element>(pt.nameMap);
-        this.ionizations = new ArrayList<Ionization>(pt.ionizations);
         this.pattern = pt.pattern;
-        this.ionMap = new TreeMap<Double, Ionization>(pt.ionMap);
+        this.knownIonTypes = new HashMap<String, PrecursorIonType>();
         // new cache =(
         this.cache = new TableSelectionCache(this, TableSelectionCache.DEFAULT_MAX_COMPOMERE_SIZE);
-        this.ionNameMap = new HashMap<String, Ionization>(pt.ionNameMap);
         this.emptyFormula = null;
         this.distribution = new IsotopicDistribution(this);
         distribution.merge(pt.distribution);
     }
 
+    /**
+     * @return the empty formula. This object is cached as molecular formulas are immutable
+     */
     public MolecularFormula emptyFormula() {
         if (emptyFormula==null) emptyFormula = MolecularFormula.fromCompomer(cache.getSelectionFor(new BitSet()), new short[0]);
         return emptyFormula;
@@ -318,13 +388,33 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         pattern = null;
     }
 
-    public void addIonizationAdduct(Adduct adduct) {
-        if (ionNameMap.containsKey(adduct.getName())) throw new IllegalArgumentException("There is already an ionization with name '" + adduct.getName() + "'");
-        ionMap.put(adduct.getMass(), adduct);
-        ionNameMap.put(adduct.getName(), adduct);
-        ionizations.add(adduct);
+    /**
+     * Adds a new ion type to the list of known/common ion types
+     * @param name name of the ion type
+     * @param ionType ion type that should be added
+     * @throws IllegalArgumentException if the name is already used for a different ion type
+     * @return true if ion type is added, false if the ion type was already in the set
+     */
+    public boolean addCommonIonType(String name, PrecursorIonType ionType) {
+        if (knownIonTypes.containsKey(name)) {
+            if (ionType.equals(knownIonTypes.get(ionType))) return false;
+            else throw new IllegalArgumentException("There is already an ionization with name '" + name + "'");
+        }
+        knownIonTypes.put(name, ionType);
+        return true;
     }
 
+    /**
+     * @see PeriodicTable#addCommonIonType(String, PrecursorIonType)
+     * uses the normalized name of the ion type
+     */
+    public boolean addCommonIonType(PrecursorIonType ionType) {
+        return addCommonIonType(ionType.toString(), ionType);
+    }
+
+    /**
+     * @return the regular expression pattern that is used to parse molecular formulas
+     */
     public Pattern getPattern() {
         if (pattern == null) refreshRegularExpression();
         return pattern;
@@ -379,61 +469,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     
-    //private static final Pattern ION_PATTERN = Pattern.compile("\\s*\\A\\[M\\s*([+-])\\s*(.+)([+-]?)\\]\\s*([+-])\\s*(\\d*)\\Z");
-    Adduct __parseIonFromString(String s) {
-//        if (true) throw new RuntimeException("The current implementation seems to be buggy!"); // TODO: FIX!!!
-        //another try
-        final Pattern adductPattern = Pattern.compile("\\[\\d?M([-+])(\\d)?(\\w*)(([-+])(\\d)?(\\w*))?\\](\\d?)([-+])");
-        final Matcher m = adductPattern.matcher(s);
-        if (!m.find()) throw new RuntimeException("Can't parse ion: '" + s + "'");
-        final int charge = (m.group(9).equals("+") ? 1 : -1);
-        final int numberOfCharges = m.group(8).isEmpty() ? 1 : Integer.parseInt(m.group(8));
-        final boolean add = m.group(1) == null || m.group(1).equals("+");
-        MolecularFormula molecule = MolecularFormula.parse(m.group(3) == null ? "" : m.group(3));
-
-
-        if (m.group(2)!=null){
-            int mult = Integer.parseInt(m.group(2));
-            molecule = molecule.multiply(mult);
-        }
-        //final char electron = m.group(3).isEmpty() ? '.' : m.group(3).charAt(0);
-        double mass = molecule.getMass();
-        //switch (electron) {
-			/*case '+':*/if (charge > 0) mass -= Charge.ELECTRON_MASS *numberOfCharges;//break;
-			/*case '-':*/else if (charge < 0) mass += Charge.ELECTRON_MASS *numberOfCharges;// break;
-        //default:
-        //}
-
-        if (m.group(4)==null) {
-            return (add) 	? new Adduct(mass, numberOfCharges*charge, s, molecule)
-                    : new Adduct(-mass, numberOfCharges*charge, s, molecule.negate());
-        }
-
-        if (m.group(5) == null) throw new RuntimeException("Ionization string wrong");
-        final boolean add2 = m.group(5).equals("+");
-        MolecularFormula molecule2 = MolecularFormula.parse(m.group(7) == null ? "" : m.group(7));
-
-        if (m.group(6)!=null){
-            int mult = Integer.parseInt(m.group(6));
-            molecule2 = molecule2.multiply(mult);
-        }
-
-
-        double mass2 = molecule2.getMass();
-        if (charge > 0) mass2 -= Charge.ELECTRON_MASS *numberOfCharges;
-        else if (charge < 0) mass2 += Charge.ELECTRON_MASS *numberOfCharges;
-
-        if (!add){
-            mass = -mass;
-            molecule = molecule.negate();
-        }
-        if (!add2){
-            mass2 = -mass2;
-            molecule2 = molecule2.negate();
-        }
-        return new Adduct(mass+mass2, numberOfCharges*charge, s, molecule.add(molecule2));
-    }
-    
     /**
      * build a bitset of an array of elements. The i-th bit is set if the i-th element is contained
      * in the array
@@ -455,8 +490,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     /**
      * @return an immutable list of ions
      */
-    public List<Ionization> getIons() {
-    	return Collections.unmodifiableList(ionizations);
+    public Collection<PrecursorIonType> getIons() {
+    	return knownIonTypes.values();
     }
     
     /**
@@ -512,7 +547,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return cache.getSelectionFor(bitset);
     }
 
-    public Ionization ionByMass(double mass, double absError) {
+    public PrecursorIonType ionByMass(double mass, double absError) {
         return ionByMass(mass, absError, 0);
     }
 
@@ -524,18 +559,20 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @param absError
      * @return an ion with the given mass or null if no ion is found
      */
-    public Ionization ionByMass(double mass, double absError, int charge) {
-        Ionization minIon = null;
+    public PrecursorIonType ionByMass(double mass, double absError, int charge) {
+        PrecursorIonType minIon = null;
         double minDistance = Double.MAX_VALUE;
-        for (Ionization ion : ionMap.subMap(mass-absError, mass+absError).values()) {
+        for (PrecursorIonType iontype : knownIonTypes.values()) {
+            final Ionization ion = iontype.getIonization();
             if (charge!=0 && ion.getCharge() != charge) continue;
-            final double abw = (ion.getMass()-mass);
+            final double abw = Math.abs(ion.getMass() - mass);
             if (abw < minDistance) {
                 minDistance = abw;
-                minIon = ion;
+                minIon = iontype;
             }
         }
-        return minIon;
+        if (minDistance < absError) return minIon;
+        else return null;
     }
     
     /**
@@ -545,18 +582,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * [M+H]+
      *
      */
-    public Ionization ionByName(String name) {
-    	if (ionNameMap.containsKey(name)) return ionNameMap.get(name);
-    	Ionization a;
-    	try {
-    		a = __parseIonFromString(name);
-    	} catch (RuntimeException e) {
-    		return null;
-    	}
-    	for (Ionization ion : ionMap.subMap(a.getMass()-1e-2, a.getMass()+1e-2).values()) {
-            if (ion.equals(a)) return ion;
-        }
-        return a;
+    public PrecursorIonType ionByName(String name) {
+    	if (knownIonTypes.containsKey(name)) return knownIonTypes.get(name);
+    	else return parseIonType(name);
     }
 
     /**

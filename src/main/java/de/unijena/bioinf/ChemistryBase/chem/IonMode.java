@@ -22,15 +22,11 @@ package de.unijena.bioinf.ChemistryBase.chem;
  * molecule ([M-ion]) or the molecule itself is an ion ([M]).
  *
  */
-public class Adduct extends Ionization {
+class IonMode extends Ionization {
 	private final double mass;
 	private final int charge;
 	private final String name;
 	private final MolecularFormula molecularFormula;
-
-    public static Adduct parse(String str) {
-        return PeriodicTable.getInstance().__parseIonFromString(str);
-    }
 
     /**
      * Construct an adduct from a charge and a molecular name. The mass is computed as mass(adduct) - charge * electron mass
@@ -38,11 +34,11 @@ public class Adduct extends Ionization {
      * @param name the name has usually the format [M+'name']'charge'
      * @param formula the molecular name of the adduct. May be negative, if it is subtracted from the neutral molecule
      */
-	public Adduct(int charge, String name, MolecularFormula formula) {
+	public IonMode(int charge, String name, MolecularFormula formula) {
 		this(formula.getMass() - charge*Charge.ELECTRON_MASS, charge, name, formula);
 	}
 	
-	public Adduct(double mass, int charge, String name, MolecularFormula formula) {
+	public IonMode(double mass, int charge, String name, MolecularFormula formula) {
 		this.mass = mass;
 		this.charge = charge;
 		if (formula == null) throw new NullPointerException("Expect non-null name");
@@ -50,12 +46,12 @@ public class Adduct extends Ionization {
 		this.molecularFormula = formula;
 	}
 	
-	public Adduct(double mass, int charge, String formula) {
+	public IonMode(double mass, int charge, String formula) {
 		this.mass = mass;
 		this.charge = charge;
 		if (formula == null) throw new NullPointerException("Expect non-null name");
 		this.name = formula;
-		this.molecularFormula = null;
+		this.molecularFormula = MolecularFormula.emptyFormula();
 	}
 	
 	/**

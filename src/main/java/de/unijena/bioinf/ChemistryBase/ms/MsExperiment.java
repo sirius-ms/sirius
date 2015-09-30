@@ -33,6 +33,7 @@ public interface MsExperiment {
      */
     public Ionization getIonization();
 
+
     /**
      * Notes:
      * - If the data is preprocessed, then there should be a *clean* and single isotope pattern of the

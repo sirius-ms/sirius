@@ -29,7 +29,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  *  where each peak contains only the masses (not mass-to-charge ratio) of the measured molecules (without adducts).
  */
 public abstract class Ionization implements Comparable<Ionization> {
-    
+
     /**
      * @return mass (Dalton) of the ion
      */
