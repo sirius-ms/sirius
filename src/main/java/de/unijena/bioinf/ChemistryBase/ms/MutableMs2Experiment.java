@@ -1,50 +1,63 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Marcus
- * Date: 16.08.13
- * Time: 16:08
- * To change this template use File | Settings | File Templates.
- */
 public class MutableMs2Experiment implements Ms2Experiment {
-    private MolecularFormula compoundFormula;
+
+    private PrecursorIonType precursorIonType;
+    private List<SimpleSpectrum> ms1Spectra;
+    private SimpleSpectrum mergedMs1Spectrum;
+    private List<MutableMs2Spectrum> ms2Spectra;
+    private HashMap<Class<Object>, Object> annotations;
     private double ionMass;
-    private Ionization ionization;
-    private List<? extends Spectrum<Peak>> ms1Spectra;
-    private List<? extends Ms2Spectrum<? extends Peak>> ms2Spectra;
-    private MeasurementProfile measurementProfile;
-    private Spectrum<Peak> mergedMs1Spectrum;
+    private double molecularNeutralMass;
+    private MolecularFormula molecularFormula;
 
-    public MutableMs2Experiment(){
-        ms1Spectra = new ArrayList<Spectrum<Peak>>();
-        ms2Spectra = new ArrayList<Ms2Spectrum<? extends Peak>>();
+    public MutableMs2Experiment(Ms2Experiment experiment) {
+        this.precursorIonType = experiment.getPrecursorIonType();
+        this.ms1Spectra = new ArrayList<SimpleSpectrum>();
+        for (Spectrum<Peak> spec : experiment.getMs1Spectra())
+            ms1Spectra.add(new SimpleSpectrum(spec));
+        this.mergedMs1Spectrum = new SimpleSpectrum(experiment.getMergedMs1Spectrum());
+        this.ms2Spectra = new ArrayList<MutableMs2Spectrum>();
+        for (Ms2Spectrum<Peak> ms2spec : experiment.getMs2Spectra()) {
+            this.ms2Spectra.add(new MutableMs2Spectrum(ms2spec));
+        }
+        this.annotations = new HashMap<Class<Object>, Object>();
+        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
+        while (iter.hasNext()) {
+            final Map.Entry<Class<Object>, Object> v = iter.next();
+            this.annotations.put(v.getKey(), v.getValue());
+        }
+        this.ionMass = experiment.getIonMass();
+        this.molecularNeutralMass = experiment.getMoleculeNeutralMass();
+        this.molecularFormula = experiment.getMolecularFormula();
     }
 
-    public MutableMs2Experiment(Ms2Experiment experiment){
-        this(experiment.getMolecularFormula(), experiment.getIonMass(), experiment.getIonization(), experiment.getMs1Spectra(), experiment.getMs2Spectra());
-        this.measurementProfile = experiment.getMeasurementProfile();
-        this.mergedMs1Spectrum = experiment.getMergedMs1Spectrum();
-    }
-
-    public MutableMs2Experiment(MolecularFormula compoundFormula, double ionMass, Ionization ionization, List<? extends Spectrum<Peak>> ms1Spectra, List<? extends Ms2Spectrum<? extends Peak>> ms2Spectra){
-        this.compoundFormula = compoundFormula;
-        this.ionMass = ionMass;
-        this.ionization = ionization;
-        this.ms1Spectra = ms1Spectra;
-        this.ms2Spectra = ms2Spectra;
-    }
 
 
     @Override
-    public List<Ms2Spectrum<? extends Peak>> getMs2Spectra() {
-        return (List<Ms2Spectrum<? extends Peak>>) ms2Spectra;
+    public PrecursorIonType getPrecursorIonType() {
+        return precursorIonType;
+    }
+
+    @Override
+    public List<SimpleSpectrum> getMs1Spectra() {
+        return ms1Spectra;
+    }
+
+    @Override
+    public SimpleSpectrum getMergedMs1Spectrum() {
+        return mergedMs1Spectrum;
+    }
+
+    @Override
+    public List<MutableMs2Spectrum> getMs2Spectra() {
+        return ms2Spectra;
     }
 
     @Override
@@ -53,66 +66,75 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
-    public double getRetentionTime() {
-        return 0;
-    }
-
-    @Override
     public double getMoleculeNeutralMass() {
-        //todo also ((ionizaiton!=null && ionMass>0) ? ionization.subtractFrom(....
-        return (compoundFormula!=null ? compoundFormula.getMass() : Double.NaN);
+        return molecularNeutralMass;
     }
 
     @Override
     public MolecularFormula getMolecularFormula() {
-        return compoundFormula;
+        return molecularFormula;
     }
 
     @Override
-    public MeasurementProfile getMeasurementProfile() {
-        return measurementProfile;
+    public Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation() {
+        return annotations.entrySet().iterator();
     }
 
-    @Override
-    public Ionization getIonization() {
-        return ionization;
+    public void setPrecursorIonType(PrecursorIonType precursorIonType) {
+        this.precursorIonType = precursorIonType;
     }
 
-    @Override
-    public List<Spectrum<Peak>> getMs1Spectra() {
-        return (List<Spectrum<Peak>>) ms1Spectra;
+    public void setMs1Spectra(List<SimpleSpectrum> ms1Spectra) {
+        this.ms1Spectra = ms1Spectra;
     }
 
-    @Override
-    public Spectrum<Peak> getMergedMs1Spectrum() {
-        return mergedMs1Spectrum;
+    public void setMergedMs1Spectrum(SimpleSpectrum mergedMs1Spectrum) {
+        this.mergedMs1Spectrum = mergedMs1Spectrum;
     }
 
-    public void setMolecularFormula(MolecularFormula compoundFormula) {
-        this.compoundFormula = compoundFormula;
+    public void setMs2Spectra(List<MutableMs2Spectrum> ms2Spectra) {
+        this.ms2Spectra = ms2Spectra;
     }
 
     public void setIonMass(double ionMass) {
         this.ionMass = ionMass;
     }
 
-    public void setIonization(Ionization ionization) {
-        this.ionization = ionization;
+    public void setMolecularNeutralMass(double molecularNeutralMass) {
+        this.molecularNeutralMass = molecularNeutralMass;
     }
 
-    public void setMs1Spectra(List<? extends Spectrum<Peak>> ms1Spectra) {
-        this.ms1Spectra = ms1Spectra;
+    public void setMolecularFormula(MolecularFormula molecularFormula) {
+        this.molecularFormula = molecularFormula;
     }
 
-    public void setMs2Spectra(List<? extends Ms2Spectrum<Peak>> ms2Spectra) {
-        this.ms2Spectra = ms2Spectra;
+    @Override
+    public <T> T getAnnotationOrThrow(Class<T> klass) {
+        final T val = getAnnotation(klass);
+        if (val == null) throw new NullPointerException("No annotation for key: " + klass.getName());
+        else return val;
     }
 
-    public void setMeasurementProfile(MeasurementProfile measurementProfile) {
-        this.measurementProfile = measurementProfile;
+    @Override
+    public <T> T getAnnotation(Class<T> klass) {
+        return (T)annotations.get(klass);
     }
 
-    public void setMergedMs1Spectrum(Spectrum<Peak> mergedMs1Spectrum) {
-        this.mergedMs1Spectrum = mergedMs1Spectrum;
+    @Override
+    public <T> T getAnnotation(Class<T> klass, T defaultValue) {
+        final T val = getAnnotation(klass);
+        if (val == null) return defaultValue;
+        else return val;
+    }
+
+    @Override
+    public <T> boolean setAnnotation(Class<T> klass, T value) {
+        final T val = (T) annotations.put((Class<Object>)klass, value);
+        return val != null;
+    }
+
+    @Override
+    public MutableMs2Experiment clone() {
+        return new MutableMs2Experiment(this);
     }
 }
