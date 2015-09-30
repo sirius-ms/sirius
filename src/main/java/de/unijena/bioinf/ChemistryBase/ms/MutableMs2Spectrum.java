@@ -34,6 +34,13 @@ public class MutableMs2Spectrum extends SimpleMutableSpectrum implements Ms2Spec
     public MutableMs2Spectrum() {
     }
 
+    public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel) {
+        this(spec);
+        this.precursorMz=parentmass;
+        this.collisionEnergy=energy;
+        this.msLevel = mslevel;
+    }
+
     public MutableMs2Spectrum(Spectrum<? extends Peak> spec) {
         super(spec);
         if (spec instanceof Ms2Spectrum) {

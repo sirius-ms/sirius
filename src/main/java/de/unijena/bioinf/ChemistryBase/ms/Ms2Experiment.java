@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,10 @@ import java.util.Map;
  */
 public interface Ms2Experiment extends Cloneable {
 
+
+    public URL getSource();
+
+    public String getName();
 
     /**
      * @return the ionization type of the ion or null if this type is unknown
