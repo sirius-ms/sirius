@@ -407,7 +407,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            	pm = Double.parseDouble(selected.toString());
 	            }
 	            
-	            System.err.println(pm);
+//	            System.err.println(pm);
 	            
 	            Ms2Experiment exp = this.convert(ec,(String) ionizationCB.getSelectedItem(),pm);
 	            
@@ -416,7 +416,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            ProgressDialog progDiag = new ProgressDialog(this);
 	            progDiag.start(sirius, exp, whiteset);
 	            if(progDiag.isSucessful()){
-	            	System.err.println("progDiag erfolgreich");
+//	            	System.err.println("progDiag erfolgreich");
 	            	this.success = true;
 	            	this.ec.setResults(SiriusResultElementConverter.convertResults(progDiag.getResults()));
 	            	this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
@@ -428,11 +428,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            		this.ec.setSelectedFocusedMass(p.getMass());
 	            	}
 	            	
-	            	System.out.println("predispose");
 	            	this.dispose();
-	            	System.out.println("postdispose");
 	            }else{
-	            	System.err.println("progDiag nicht erfolgreich");
+//	            	System.err.println("progDiag nicht erfolgreich");
 	            }
 	            
 //	            List<IdentificationResult> results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);
@@ -440,7 +438,6 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			}catch(IOException e2){
 				throw new RuntimeException(e2);
 			}
-			System.out.println("Ende computeDiag");
 		}
 	}
 	

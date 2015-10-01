@@ -298,7 +298,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			if(diag.getReturnValue()==ReturnValue.Success){
 				String newName = diag.getNewName();
 				if(newName!=null && !newName.isEmpty()){
-					System.out.println(newName);
 					for(LoadDialogListener ldl : listeners){
 						ldl.experimentNameChanged(newName);
 					}

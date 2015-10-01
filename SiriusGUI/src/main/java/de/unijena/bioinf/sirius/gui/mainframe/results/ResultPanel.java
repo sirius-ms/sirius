@@ -56,7 +56,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		resultsJList.setMinimumSize(new Dimension(0,45));
 		resultsJList.setPreferredSize(new Dimension(0,45));
 		resultsJList.addListSelectionListener(this);
-		System.err.println("resultsPS"+resultsJList.getPreferredSize().getWidth()+" "+resultsJList.getPreferredSize().getHeight());
 		
 		JScrollPane listJSP = new JScrollPane(resultsJList,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		JPanel temp = new JPanel(new BorderLayout());

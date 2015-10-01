@@ -75,7 +75,6 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 		selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
 		evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
 		disableBackground = UIManager.getColor("ComboBox.background");
-		System.out.println("Farbe: "+disableBackground);
 		unevenBackground = new Color(213,227,238);
 		activatedForeground = UIManager.getColor("List.foreground");
 		deactivatedForeground = Color.GRAY;

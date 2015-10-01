@@ -193,7 +193,8 @@ public class ZipExperimentIO implements ExperimentIO{
 			
 			
 		}catch(JSONException e){
-			System.err.println(e);
+			System.err.println("getSREString: ");
+			e.printStackTrace();
 		}
 		
 		

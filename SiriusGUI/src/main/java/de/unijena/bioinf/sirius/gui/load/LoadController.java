@@ -371,7 +371,7 @@ public class LoadController implements LoadDialogListener{
 			exp.getMs2Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
 		}else{
-			System.err.println("Spektrum hat kein msLevel: "+sp.getMSLevel());
+			System.err.println("unexpected ms level: "+sp.getMSLevel());
 		}
 		System.out.println("post remove ms1: "+exp.getMs1Spectra().size());
 		System.out.println("post remove ms2: "+exp.getMs2Spectra().size());
