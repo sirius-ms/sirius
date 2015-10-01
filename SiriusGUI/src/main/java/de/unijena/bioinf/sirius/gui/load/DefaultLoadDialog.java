@@ -245,6 +245,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	@Override
 	public void showDialog(){
 		this.setSize(new Dimension(950,640));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 

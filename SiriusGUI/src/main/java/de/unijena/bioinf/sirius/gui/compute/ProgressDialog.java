@@ -96,9 +96,8 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		rt = new RunThread(sirius, exp, whiteset,this);
 		t = new Thread(rt);
 		t.start();
-//		System.out.println("mache sichtbar");
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
-//		System.out.println("ist sichtbar");
 	}
 
 	@Override

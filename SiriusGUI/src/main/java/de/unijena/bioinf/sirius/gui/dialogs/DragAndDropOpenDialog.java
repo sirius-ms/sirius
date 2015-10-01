@@ -46,6 +46,7 @@ public class DragAndDropOpenDialog extends JDialog implements ActionListener{
 		south.add(abortB);
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 

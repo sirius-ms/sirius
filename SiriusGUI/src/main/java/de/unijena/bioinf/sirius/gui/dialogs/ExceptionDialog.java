@@ -42,6 +42,7 @@ public class ExceptionDialog extends JDialog implements ActionListener{
 		south.add(ok);
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 		// TODO Auto-generated constructor stub
 	}

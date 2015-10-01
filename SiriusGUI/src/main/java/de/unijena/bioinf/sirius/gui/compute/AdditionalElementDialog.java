@@ -116,6 +116,7 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 		
 		
 		this.pack();
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 	

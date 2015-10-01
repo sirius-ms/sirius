@@ -264,6 +264,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		this.pack();
 		this.setResizable(false);
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 		
 	}

@@ -98,6 +98,7 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		Thread t = new Thread(importThread);
 		t.start();
 		this.setSize(new Dimension(300,125));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 	
@@ -108,6 +109,7 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		thread = new Thread(analyseThread);
 		thread.start();
 		this.setSize(new Dimension(300,125));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 	

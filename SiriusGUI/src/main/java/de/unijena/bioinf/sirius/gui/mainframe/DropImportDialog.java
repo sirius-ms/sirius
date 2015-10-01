@@ -69,6 +69,7 @@ public class DropImportDialog extends JDialog implements ActionListener{
 		Thread t = new Thread(dat);
 		t.start();
 		
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 	

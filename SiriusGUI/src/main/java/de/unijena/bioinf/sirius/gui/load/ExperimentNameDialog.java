@@ -38,6 +38,7 @@ public class ExperimentNameDialog extends JDialog implements ActionListener{
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
 		tf.setText(name);
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 	

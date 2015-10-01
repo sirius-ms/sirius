@@ -186,6 +186,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		this.add(controlPanel,BorderLayout.SOUTH);
 		
 		this.setSize(new Dimension(640,480));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 

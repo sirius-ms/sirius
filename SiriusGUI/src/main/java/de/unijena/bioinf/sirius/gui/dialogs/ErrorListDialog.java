@@ -72,6 +72,7 @@ public class ErrorListDialog extends JDialog implements ActionListener{
 		this.pack();
 		int newHeight = Math.min(240,(int) this.getPreferredSize().getHeight());
 		this.setSize(new Dimension(600,newHeight));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 		// TODO Auto-generated constructor stub
 	}

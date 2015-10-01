@@ -44,6 +44,7 @@ public class CloseExperimentDialog extends JDialog implements ActionListener{
 		south.add(abort);
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 		// TODO Auto-generated constructor stub
 	}
