@@ -24,6 +24,8 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -33,7 +35,7 @@ import java.util.*;
 import java.util.List;
 
 public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
-				DropTargetListener{
+				DropTargetListener, MouseListener{
 	
 	private JButton add, remove, ok, abort;
 	private JList<SpectrumContainer> msList;
@@ -52,6 +54,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	private JTextField nameTF;
 	private JButton nameB;
+	
+	JPopupMenu spPopMenu;
+	JMenuItem addMI, removeMI;
 
 	public DefaultLoadDialog(JFrame owner){ 
 		super(owner,"load",true);
@@ -82,6 +87,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		msList.setCellRenderer(new LoadSpectraCellRenderer());
 		
 		msList.addListSelectionListener(this);
+		msList.addMouseListener(this);
 		
 		
 		
@@ -170,8 +176,26 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		
 		DropTarget dropTarget = new DropTarget(this, this);
 		
+		constructSpectraListPopupMenu();
+		
 //		this.setSize(new Dimension(800,600));
 //		this.setVisible(true);
+	}
+	
+	
+	
+	public void constructSpectraListPopupMenu(){
+		spPopMenu = new JPopupMenu();
+		addMI = new JMenuItem("add experiment(s)");
+		removeMI = new JMenuItem("remove experiment(s)");
+		
+		addMI.addActionListener(this);
+		removeMI.addActionListener(this);
+		
+		removeMI.setEnabled(false);
+		
+		spPopMenu.add(addMI);
+		spPopMenu.add(removeMI);
 	}
 	
 	private void updateCETextField(){
@@ -261,7 +285,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 					ldl.changeMSLevel(spCont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
 				}
 			}
-		}else if(e.getSource()==this.remove){
+		}else if(e.getSource()==this.remove || e.getSource()==this.removeMI){
 			int[] indices = msList.getSelectedIndices();
 			List<SpectrumContainer> conts = new ArrayList<SpectrumContainer>();
 			for(int index : indices){
@@ -276,7 +300,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			for(LoadDialogListener ldl : listeners){
 				ldl.changeCollisionEnergy(listModel.get(msList.getSelectedIndex()).getSpectrum());
 			}
-		}else if(e.getSource()==this.add){
+		}else if(e.getSource()==this.add || e.getSource()==this.addMI){
 			for(LoadDialogListener ldl : listeners){
 				ldl.addSpectra();
 			}
@@ -321,9 +345,11 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 				this.msLevelBox.setEnabled(false);
 //				this.changeMSLevel.setEnabled(false);
 				this.remove.setEnabled(false);
+				this.removeMI.setEnabled(false);
 				return;
 			}else{
 				this.remove.setEnabled(true);
+				this.removeMI.setEnabled(true);
 			}
 			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex()); 
 			msviewer.setData(spcont);
@@ -447,6 +473,38 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 				li.addSpectra(acceptedFiles);
 			}
 		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if(e.isPopupTrigger()){
+			this.spPopMenu.show(e.getComponent(), e.getX(), e.getY());			
+		}
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if(e.isPopupTrigger()){
+			this.spPopMenu.show(e.getComponent(), e.getX(), e.getY());			
+		}
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
