@@ -13,6 +13,8 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -58,7 +60,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.cli.*;
 
-public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener{
+public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener{
 	
 	private DefaultListModel<ExperimentContainer> compoundModel;
 	private JList<ExperimentContainer> compoundList;
@@ -73,6 +75,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private static final String DUMMY_CARD = "dummy";
 	private static final String RESULTS_CARD = "results";
 	private ConfigStorage config;
+	
+	private JPopupMenu expPopMenu;
+	private JMenuItem newExpMI, batchMI, editMI, closeMI, openMI, saveMI, computeMI;
 	
 	public MainFrame(){
 		super("Sirius Prototype");
@@ -122,6 +127,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		compoundList.setCellRenderer(new CompoundCellRenderer());
 		compoundList.addListSelectionListener(this);
 		compoundList.setMinimumSize(new Dimension(200,0));
+		compoundList.addMouseListener(this);
 //		compoundList.setPreferredSize(new Dimension(200,0));
 		
 		JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -186,24 +192,48 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		mainPanel.add(controlPanel,BorderLayout.NORTH);
 		
-		
-//		JPanel compoundControls = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-//		add = new JButton("load");
-//		add.addActionListener(this);
-//		remove = new JButton("close");
-//		remove.addActionListener(this);
-//		save = new JButton("save");
-//		save.addActionListener(this);
-//		compoundControls.add(add);
-//		compoundControls.add(remove);
-//		compoundControls.add(save);
-//		compoundPanel.add(compoundControls,BorderLayout.SOUTH);
-		
 		DropTarget dropTarget = new DropTarget(this, this);
+		
+		constructExperimentListPopupMenu();
 		
 		this.setSize(new Dimension(1024,800));
 		
 		this.setVisible(true);
+	}
+	
+	public void constructExperimentListPopupMenu(){
+		expPopMenu = new JPopupMenu();
+		newExpMI = new JMenuItem("import experiment");
+		batchMI = new JMenuItem("batch import");
+		editMI = new JMenuItem("edit experiment");
+		closeMI = new JMenuItem("close experiment");
+		openMI = new JMenuItem("open save file ");
+		saveMI = new JMenuItem("save");
+		computeMI = new JMenuItem("compute");
+		
+		newExpMI.addActionListener(this);
+		batchMI.addActionListener(this);
+		editMI.addActionListener(this);
+		closeMI.addActionListener(this);
+		openMI.addActionListener(this);
+		saveMI.addActionListener(this);
+		computeMI.addActionListener(this);
+		
+		editMI.setEnabled(false);
+		closeMI.setEnabled(false);
+		saveMI.setEnabled(false);
+		computeMI.setEnabled(false);
+		
+		expPopMenu.add(computeMI);
+		expPopMenu.addSeparator();
+		expPopMenu.add(newExpMI);
+		expPopMenu.add(batchMI);
+		expPopMenu.addSeparator();
+		expPopMenu.add(editMI);
+		expPopMenu.add(closeMI);
+		expPopMenu.addSeparator();
+		expPopMenu.add(openMI);
+		expPopMenu.add(saveMI);
 	}
 	
 	public static void main(String[] args){
@@ -245,7 +275,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==newB){
+		if(e.getSource()==newB || e.getSource()==newExpMI){
 			LoadController lc = new LoadController(this,config);
 			lc.showDialog();
 			if(lc.getReturnValue() == ReturnValue.Success){
@@ -253,7 +283,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 				importCompound(ec);
 			}
-		}else if(e.getSource()==computeB){
+		}else if(e.getSource()==computeB || e.getSource()==computeMI){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			if(ec!=null){
 				ComputeDialog cd = new ComputeDialog(this,ec);
@@ -267,7 +297,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				}
 			}
 			this.compoundList.repaint();
-		}else if(e.getSource()==saveB){
+		}else if(e.getSource()==saveB || e.getSource()==saveMI){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			
 			JFileChooser jfc = new JFileChooser();
@@ -317,7 +347,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 			
 			
-		}else if(e.getSource()==loadB){
+		}else if(e.getSource()==loadB || e.getSource()==openMI){
 			
 			JFileChooser jfc = new JFileChooser();
 			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
@@ -339,7 +369,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				}
 			}
 			
-		}else if(e.getSource()==closeB){
+		}else if(e.getSource()==closeB || e.getSource()==closeMI){
 			int index = this.compoundList.getSelectedIndex();
 			ExperimentContainer cont = this.compoundModel.get(index);
 			
@@ -404,7 +434,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				}
 			}
 			
-		}else if(e.getSource()==editB){
+		}else if(e.getSource()==editB || e.getSource()==editMI){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			String guiname = ec.getGUIName();
 			
@@ -433,7 +463,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 			}
 			
-		}else if(e.getSource()==batchB){
+		}else if(e.getSource()==batchB || e.getSource()==batchMI){
 			JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
 			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooser.setMultiSelectionEnabled(true);
@@ -524,12 +554,22 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				editB.setEnabled(false);
 				saveB.setEnabled(false);
 				computeB.setEnabled(false);
+				
+				closeMI.setEnabled(false);
+				editMI.setEnabled(false);
+				saveMI.setEnabled(false);
+				computeMI.setEnabled(false);
 				this.showResultsPanel.changeData(null);
 			}else{
 				closeB.setEnabled(true);
 				editB.setEnabled(true);
 				saveB.setEnabled(true);
 				computeB.setEnabled(true);
+				
+				closeMI.setEnabled(true);
+				editMI.setEnabled(true);
+				saveMI.setEnabled(true);
+				computeMI.setEnabled(true);
 				this.showResultsPanel.changeData(compoundModel.getElementAt(index));
 				resultsPanelCL.show(resultsPanel,RESULTS_CARD);
 			}
@@ -640,6 +680,35 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				importOneExperimentPerFile(msFiles,mgfFiles);
 			}
 		}
+	}
+	
+	/////////////////// Mouselistener ///////////////////////
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if(e.isPopupTrigger()){
+			this.expPopMenu.show(e.getComponent(), e.getX(), e.getY());			
+		}
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if(e.isPopupTrigger()){
+			this.expPopMenu.show(e.getComponent(), e.getX(), e.getY());			
+		}
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
 	}
 
 }
