@@ -288,9 +288,6 @@ public class LoadController implements LoadDialogListener{
 				List<CompactSpectrum> ms1 = ec.getMs1Spectra();
 				List<CompactSpectrum> ms2 = ec.getMs2Spectra();
 				
-				System.out.println("Anzahl MS1: "+ms1.size());
-				System.out.println("Anzahl MS2: "+ms2.size());
-				
 				List<CompactSpectrum> newSP = new ArrayList<>();
 				
 				if(!ms1.isEmpty()){
@@ -362,8 +359,6 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void removeSpectrum(CompactSpectrum sp) {
-		System.out.println("pre remove ms1: "+exp.getMs1Spectra().size());
-		System.out.println("pre remove ms2: "+exp.getMs2Spectra().size());
 		if(sp.getMSLevel()==1){
 			exp.getMs1Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
@@ -373,8 +368,6 @@ public class LoadController implements LoadDialogListener{
 		}else{
 			System.err.println("unexpected ms level: "+sp.getMSLevel());
 		}
-		System.out.println("post remove ms1: "+exp.getMs1Spectra().size());
-		System.out.println("post remove ms2: "+exp.getMs2Spectra().size());
 		
 	}
 

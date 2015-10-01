@@ -17,11 +17,11 @@ public class MassSearchable implements Searchable<String, String>{
 			//TODO
 		}else{
 			CompactSpectrum spec = ms1.get(0);
-			System.out.println(spec);
-			System.out.println(spec.getSize());
+//			System.out.println(spec);
+//			System.out.println(spec.getSize());
 			for(int i=0;i<spec.getSize();i++){
-				System.out.println(spec.getMass(i)+" "+spec.getPeak(i));
-				System.out.println(String.valueOf(spec.getMass(i)));
+//				System.out.println(spec.getMass(i)+" "+spec.getPeak(i));
+//				System.out.println(String.valueOf(spec.getMass(i)));
 				peaks.put(String.valueOf(spec.getMass(i)),spec.getPeak(i));
 			}
 		}

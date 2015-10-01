@@ -213,7 +213,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			int end = model.getLastMarkedIndex();
 			this.model.removeMarkings();
 			if(start<0||end<0||start==end){
-				System.out.println(start+" "+end);
 				return;
 			}
 			this.msviewer.showZoomedView(start, end);

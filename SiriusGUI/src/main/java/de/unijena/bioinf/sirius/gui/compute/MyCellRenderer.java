@@ -92,9 +92,6 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 		this.setPreferredSize(new Dimension(idealWidth,15));
 		this.setMinimumSize(new Dimension(idealWidth,15));
 		
-		System.out.println("benoetigte Groesse: "+idealWidth+" 15");
-		
-//		System.out.println("Bestimmung: "+maxWidth+" "+maxWidth2);
 	}
 	
 	public void initColorsAndFonts(){
@@ -103,7 +100,7 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			textfont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		massColor = Color.BLACK;
@@ -165,9 +162,6 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 //			
 //		}
 		
-//		System.out.println("S  "+ this.getSize().getWidth()+" "+this.getSize().getHeight());
-//		System.out.println("PS "+ this.getPreferredSize().getWidth()+" "+this.getPreferredSize().getHeight());
-//		System.out.println("Sollwert: "+this.idealWidth+" 15");
 		
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		

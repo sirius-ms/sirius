@@ -547,7 +547,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
         	spNew.setMsLevel(2);
 //        	spNew.setPrecursorMz(ec.getFocusedMass()); //TODO
         	spNew.setPrecursorMz(pm);
-        	System.err.println(spNew.getPrecursorMz());
+//        	System.err.println(spNew.getPrecursorMz());
         	spNew.setCollisionEnergy(sp.getCollisionEnergy());
         	for(int i=0;i<sp.getSize();i++){
         		spNew.addPeak(sp.getMass(i), sp.getAbsoluteIntensity(i));

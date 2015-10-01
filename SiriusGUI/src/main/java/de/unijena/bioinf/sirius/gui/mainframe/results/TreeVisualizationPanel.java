@@ -290,19 +290,12 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		TreeNode root = TreeCopyTool.copyTree(this.sre.getTree());
 		NodeColor color = this.renderPanel.getNodeColor();
 		NodeType type = this.renderPanel.getNodeType();
-		System.out.println("root "+root);
-		System.out.println("color "+color);
-		System.out.println("type "+type);
 		TreeRenderPanel panel = new TreeRenderPanel();
-		System.out.println("1");
 		panel.showTree(root, type, color);
-		System.out.println("2");
 		Dimension dim = panel.getMinimumSize();
 		panel.setSize(new Dimension((int)dim.getWidth(),(int)dim.getHeight()));
 //		panel.setSize(new Dimension(1000,400));
 		panel.changeNodeType(type);
-		System.out.println("3");
-		System.out.println(dim.getWidth()+" "+dim.getHeight());
 		return panel.getImage();
 	}
 

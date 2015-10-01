@@ -257,7 +257,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			SpectrumContainer spCont = listModel.get(msList.getSelectedIndex());
 			int msLevel = msLevelBox.getSelectedIndex()+1;
 			if(spCont.getSpectrum().getMSLevel()!=msLevel){
-				System.out.println("msLevelBox aktiviert");
 				for(LoadDialogListener ldl : listeners){
 					ldl.changeMSLevel(spCont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
 				}
@@ -315,7 +314,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		int[] indices = msList.getSelectedIndices();
 		if(indices.length<=1){
 			updateCETextField();
-//			System.out.println(msList.getSelectedIndex());
 			if(msList.getSelectedIndex()<0){
 //				this.cEField.setText("");
 				this.msviewer.setData(new DummySpectrumContainer());
@@ -427,7 +425,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 					for (Object o : files) {
 						File file = (File) o;
 						newFiles.add(file);
-//						System.out.println("drop: " + file.getAbsolutePath());
 					}
 				}
 				dtde.dropComplete(true);

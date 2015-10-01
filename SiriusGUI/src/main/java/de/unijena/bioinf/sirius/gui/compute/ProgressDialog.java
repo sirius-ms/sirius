@@ -154,9 +154,7 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	}
 	
 	public void computationComplete(){
-		System.out.println("computationComplete");
 		this.successful = true;
-		System.out.println("Anzahl Ergebnisse: "+rt.getResults().size());
 		this.dispose();
 		
 		

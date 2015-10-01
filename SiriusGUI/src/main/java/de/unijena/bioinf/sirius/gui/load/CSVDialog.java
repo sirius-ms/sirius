@@ -215,10 +215,8 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 				}else{
 					massColumn.removeActionListener(this);
 					if(massIndex+1 > columnNumber-1){
-						System.out.println("way1: "+massIndex+" "+columnNumber);
 						massIndex--;
 					}else{
-						System.out.println("way2: "+massIndex+" "+columnNumber);
 						massIndex++;
 					}
 					massColumn.setSelectedIndex(massIndex);
@@ -228,8 +226,6 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 			
 			this.currentMassColumn = massIndex;
 			this.currentIntensityColumn = intIndex;
-			
-			System.out.println(currentMassColumn+" "+currentIntensityColumn);
 			
 			Vector<String> newNames = new Vector<>();
 			newNames.add("mass (column "+(currentMassColumn+1)+")");
@@ -253,8 +249,6 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 				}
 				counter++;
 			}
-			
-			System.out.println(massIndex+" "+intIndex);
 		}else if(e.getSource()==ok){
 			this.returnValue = ReturnValue.Success;
 			this.setVisible(false);

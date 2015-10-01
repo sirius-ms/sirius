@@ -67,7 +67,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			
 			propertyFont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		try{
@@ -76,7 +76,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");

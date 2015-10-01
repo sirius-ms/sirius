@@ -59,7 +59,7 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			
 			propertyFont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		try{
@@ -68,7 +68,7 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");

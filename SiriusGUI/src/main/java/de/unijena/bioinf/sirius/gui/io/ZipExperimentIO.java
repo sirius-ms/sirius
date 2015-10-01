@@ -103,9 +103,6 @@ public class ZipExperimentIO implements ExperimentIO{
 		int counter = 0;
 		idToNode.put(counter, root);
 		nodeToID.put(root, counter);
-//		System.out.println("-----");
-//		System.out.println(idToNode.get(counter));
-//		System.out.println(nodeToID.get(root));
 		counter++;
 		
 		StringWriter sw = new StringWriter();
@@ -154,9 +151,6 @@ public class ZipExperimentIO implements ExperimentIO{
 					TreeNode target = edge.getTarget();
 					idToNode.put(counter, target);
 					nodeToID.put(target, counter);
-//					System.out.println("-----");
-//					System.out.println(idToNode.get(counter));
-//					System.out.println(nodeToID.get(target));
 					counter++;
 					nDeque.add(target);
 					
