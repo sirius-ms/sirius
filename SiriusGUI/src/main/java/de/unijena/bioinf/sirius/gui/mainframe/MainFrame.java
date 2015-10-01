@@ -600,6 +600,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		int csvNumber = 0;
 		
 		DropImportDialog dropDiag = new DropImportDialog(this, rawFiles);
+		if(dropDiag.getReturnValue()==ReturnValue.Abort){
+			return;
+		}
 		
 		List<File> csvFiles = dropDiag.getCSVFiles();
 		List<File> msFiles = dropDiag.getMSFiles();
