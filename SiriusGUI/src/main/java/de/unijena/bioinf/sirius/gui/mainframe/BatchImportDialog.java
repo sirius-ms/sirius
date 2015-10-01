@@ -110,22 +110,23 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		this.setSize(new Dimension(300,125));
 		this.setVisible(true);
 	}
-
-	public void finished() {
-//		if(abortPressed) return;
-		this.rv = importThread.wasSuccessful();
-		this.dispose();
-	}
 	
 	public List<ExperimentContainer> getResults(){
-		return this.importThread.getResults();
+		if(this.rv == ReturnValue.Abort) return new ArrayList<>();
+		else return this.importThread.getResults();
 	}
 	
 	public List<String> getErrors(){
-		return this.importThread.getErrors();
+		return this.errors;
 	}
+	
+	public ReturnValue wasSucessful(){
+		return this.rv;
+	}
+	
+	/////// File import ///////////
 
-	public void init(int maxVal) {
+	void fileImportInit(int maxVal) {
 		lock.lock();
 		progBar.setMaximum(maxVal);
 		progBar.setMinimum(0);
@@ -134,13 +135,58 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		lock.unlock();
 	}
 
-	public void update(int currentIndex, String currentFileName) {
+	void fileImportUpdate(int currentIndex, String currentFileName) {
 		lock.lock();
 		progBar.setValue(currentIndex);
 		progressl.setText("import \""+currentFileName+"\"");
 		lock.unlock();		
 	}
+	
+	void fileImportFinished() {
+		this.rv = ReturnValue.Success;
+		this.dispose();
+	}
+	
+	void fileImportAborted(){
+		this.rv = ReturnValue.Abort;
+		this.dispose();
+	}
+	
+	///////////// fuer DF Analyse ////////////////////
+	
+	void fileAnalysisInit(int maxVal) {
+		lock.lock();
+		progBar.setMaximum(maxVal);
+		progBar.setMinimum(0);
+		progBar.setValue(0);
+		progressl.setText("Analysing data formats ...");
+		lock.unlock();
+	}
 
+	
+	void FileAnaysisUpdate(int currentIndex) {
+		lock.lock();
+		progBar.setValue(currentIndex);
+		lock.unlock();		
+	}
+	
+	void fileAnalysisAborted(){
+		this.rv = ReturnValue.Abort;
+		this.dispose();
+	}
+	
+	void fileAnalysisFinished() {
+		List<File> msFiles = this.analyseThread.getMSFiles();
+		List<File> mgfFiles = this.analyseThread.getMGFFiles();
+		
+		this.importThread = new ImportExperimentsThread(msFiles,mgfFiles, this, this.errors);
+		Thread t = new Thread(importThread);
+		t.start();
+	}
+	
+	
+	//// Action Listener ////
+	
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.abort){
@@ -151,35 +197,6 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		}
 		
 	}
-	
-	public ReturnValue wasSucessful(){
-		return this.rv;
-	}
-	
-	
-	///////////// fuer DF Analyse ////////////////////
-	
-	public void initDataFileAnalysis(int maxVal) {
-		lock.lock();
-		progBar.setMaximum(maxVal);
-		progBar.setMinimum(0);
-		progBar.setValue(0);
-		progressl.setText("Analysing data formats ...");
-		lock.unlock();
-	}
-
-	public void updateDataFileAnaysis(int currentIndex) {
-		lock.lock();
-		progBar.setValue(currentIndex);
-		lock.unlock();		
-	}
-	
-//	public void finishedFileAnalysis() {
-//		if(abortPressed) return;
-//		List<File> msFiles = this.analyseThread.getMSFiles();
-//		List<File> mgfFiles = this.analyseThread.getMGFFiles();
-//		this.startAfterAnalysis(msFiles, mgfFiles);
-//	}
 
 }
 
@@ -209,10 +226,6 @@ class AnalyseFileTypesThread implements Runnable{
 		lock.unlock();
 	}
 	
-	List<String> getErrors(){
-		return this.errors;
-	}
-	
 	List<File> getMSFiles(){
 		return this.msFiles;
 	}
@@ -225,12 +238,15 @@ class AnalyseFileTypesThread implements Runnable{
 	public void run() {
 		DataFormatIdentifier dfi = new  DataFormatIdentifier();
 		int counter = 0;
-		this.bid.initDataFileAnalysis(files.length);
+		this.bid.fileAnalysisInit(files.length);
 		for(File f : files){
 			lock.lock();
-			if(this.stop) return;
+			if(this.stop){
+				this.bid.fileAnalysisAborted();
+				return;
+			}
 			lock.unlock();
-			this.bid.updateDataFileAnaysis(counter);
+			this.bid.FileAnaysisUpdate(counter);
 			DataFormat df = dfi.identifyFormat(f);
 			if(df==DataFormat.JenaMS){
 				msFiles.add(f);
@@ -242,10 +258,8 @@ class AnalyseFileTypesThread implements Runnable{
 			counter++;
 		}
 		
-		ImportExperimentsThread importThread = new ImportExperimentsThread(msFiles,mgfFiles, bid, errors);
-		Thread t = new Thread(importThread);
-		bid.importThread = importThread;
-		t.start();
+		bid.fileAnalysisFinished();
+		
 	}
 	
 }
@@ -256,18 +270,16 @@ class ImportExperimentsThread implements Runnable{
 	private List<ExperimentContainer> results;
 	private boolean stop;
 	private ReentrantLock lock;
-	private ReturnValue rv;
 	private List<String> errors;
 	private BatchImportDialog bid;
 	
 	ImportExperimentsThread(List<File> msFiles, List<File> mgfFiles, BatchImportDialog bid, List<String> errors){
 		this.msFiles = msFiles;
 		this.mgfFiles = mgfFiles;
-		this.results = Collections.EMPTY_LIST;
+		this.results = new ArrayList<>();
 		this.errors = errors;
 		this.stop = false;
 		this.lock = new ReentrantLock(true);
-		this.rv = ReturnValue.Abort;
 		this.bid = bid;
 	}
 	
@@ -281,18 +293,16 @@ class ImportExperimentsThread implements Runnable{
 	public void run() {
 		int size = msFiles.size()+mgfFiles.size();
 		this.results = new ArrayList<>(size);
-		this.rv = ReturnValue.Abort;
-		this.errors = Collections.synchronizedList(new ArrayList<String>());
-		this.bid.init(size);
+		this.bid.fileImportInit(size);
 		int counter=0;
 		for(File msFile : msFiles){
-			this.bid.update(counter, msFile.getName());
+			this.bid.fileImportUpdate(counter, msFile.getName());
 			boolean trigger;
 			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
 			trigger = this.stop;
 			lock.unlock();
 			if(trigger){
-				bid.finished();
+				bid.fileImportAborted();
 				return;
 			}
 			ExperimentContainer ec = readMSCompound(msFile);
@@ -305,9 +315,9 @@ class ImportExperimentsThread implements Runnable{
 			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
 			trigger = this.stop;
 			lock.unlock();
-			this.bid.update(counter, mgfFile.getName());
+			this.bid.fileImportUpdate(counter, mgfFile.getName());
 			if(trigger){
-				bid.finished();
+				bid.fileAnalysisAborted();
 				return;
 			}
 			ExperimentContainer ec = readMGFCompound(mgfFile);
@@ -315,8 +325,7 @@ class ImportExperimentsThread implements Runnable{
 			counter++;
 		}
 		
-		this.rv = ReturnValue.Success;
-		bid.finished();
+		bid.fileImportFinished();
 		
 	}
 	
@@ -348,20 +357,8 @@ class ImportExperimentsThread implements Runnable{
 		
 	}
 	
-	
-	
-
-	
-	public ReturnValue wasSuccessful(){
-		return rv;
-	}
-	
 	List<ExperimentContainer> getResults(){
 		return this.results;
-	}
-	
-	List<String> getErrors(){
-		return this.errors;
 	}
 	
 	
