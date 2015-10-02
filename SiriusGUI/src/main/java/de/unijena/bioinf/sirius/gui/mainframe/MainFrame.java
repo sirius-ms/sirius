@@ -649,7 +649,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
-		if(csvFiles.size()>0){   //nur CSV
+		if(csvFiles.size()>0||(csvFiles.size()+msFiles.size()+mgfFiles.size()==1)){   //nur CSV
 			LoadController lc = new LoadController(this, config);
 //			files
 			
