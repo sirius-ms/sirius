@@ -472,6 +472,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			int returnVal = chooser.showOpenDialog(this);
 			if(returnVal == JFileChooser.APPROVE_OPTION){
 				File[] files = chooser.getSelectedFiles();
+				config.setDefaultLoadDialogPath(files[0].getParentFile());
 				importOneExperimentPerFile(files);
 			}
 			
