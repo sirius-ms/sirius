@@ -241,6 +241,11 @@ public class LoadController implements LoadDialogListener{
 				
 				List<CompactSpectrum> newSP = new ArrayList<>();
 				
+				double ecFM = ec.getDataFocusedMass();
+				if(exp.getDataFocusedMass()<=0 && ecFM>0){
+					exp.setDataFocusedMass(ecFM);
+				}
+				
 				if(ec.getMs1Spectra().size()>0){
 					CompactSpectrum ms1 = ec.getMs1Spectra().get(0);
 					
@@ -248,12 +253,12 @@ public class LoadController implements LoadDialogListener{
 						if(this.exp.getMs1Spectra().isEmpty()){
 							this.exp.getMs1Spectra().add(ms1);
 							newSP.add(ms1);
-							if(exp.getDataFocusedMass()<=0){
-								double focusedMass = ec.getDataFocusedMass();
-								if(focusedMass>0){
-									this.exp.setDataFocusedMass(focusedMass);
-								}
-							}
+//							if(exp.getDataFocusedMass()<=0){
+//								double focusedMass = ec.getDataFocusedMass();
+//								if(focusedMass>0){
+//									this.exp.setDataFocusedMass(focusedMass);
+//								}
+//							}
 						}else{
 							this.exp.getMs2Spectra().add(ms1);
 							ms1.setMSLevel(2);
