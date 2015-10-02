@@ -137,32 +137,6 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 		
 		FontMetrics fm = g2.getFontMetrics(this.textfont);
 		
-//		if(!isInit){
-//			int maxMassWidth = 0;
-//			int maxIntWidth = 0;
-//			for(CompactPeak peak : peaks){
-//				String massS = String.valueOf(peak.getMass());
-//				String intS = numberFormat.format(peak.getAbsoluteIntensity()/maxInt);
-//				int massWidth = fm.stringWidth(massS);
-//				int intWidth  = fm.stringWidth(intS);
-//				if(massWidth>maxMassWidth) maxMassWidth = massWidth;
-//				if(intWidth>maxIntWidth) maxIntWidth = intWidth;
-////				int width = fm.stringWidth(massS)+fm.stringWidth(intS)+20;
-////				if(width>maxWidth) maxWidth = width;
-//			}
-//			
-//			int maxWidth = maxMassWidth + maxIntWidth + 20;
-////			int maxWidth = 140;
-//			this.intPos = 15 + maxMassWidth;
-//			
-//			this.setPreferredSize(new Dimension(maxWidth,15));
-//			this.setSize(new Dimension(maxWidth,15));
-//			this.setMinimumSize(new Dimension(maxWidth,15));
-//			isInit=true;
-//			
-//		}
-		
-		
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		
 		if(isSelected){

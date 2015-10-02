@@ -101,7 +101,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		double maxInt = -1;
 		Object maxObj = null;
 		List<CompactSpectrum> ms1Spectra = ec.getMs1Spectra();
+		// falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
+		boolean useMS1;
 		if(!ms1Spectra.isEmpty()){
+			useMS1 = true;
 			CompactSpectrum sp = ms1Spectra.get(0);
 			for(int i=0;i<sp.getSize();i++){
 				if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
@@ -109,6 +112,17 @@ public class ComputeDialog extends JDialog implements ActionListener{
 					maxObj = sp.getPeak(i);
 				}
 				masses.add(sp.getPeak(i));
+			}
+		}else{
+			useMS1 = false;
+			for(CompactSpectrum sp : ec.getMs2Spectra()){
+				for(int i=0;i<sp.getSize();i++){
+					if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
+						maxInt = sp.getPeak(i).getAbsoluteIntensity();
+						maxObj = sp.getPeak(i);
+					}
+					masses.add(sp.getPeak(i));
+				}
 			}
 		}
 		box = new JComboBox<>(masses);
@@ -157,7 +171,11 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		if(ec.getDataFocusedMass()<=0)expFM.setEnabled(false);
 		
 		if(!masses.isEmpty()){
-			box.setSelectedItem(maxObj);
+			if(!useMS1&&ec.getDataFocusedMass()>0){
+				box.setSelectedItem(String.valueOf(ec.getDataFocusedMass()));
+			}else{
+				box.setSelectedItem(maxObj);
+			}
 		}else if(ec.getDataFocusedMass()>0){
 			box.setSelectedItem(String.valueOf(ec.getDataFocusedMass()));
 		}else{
