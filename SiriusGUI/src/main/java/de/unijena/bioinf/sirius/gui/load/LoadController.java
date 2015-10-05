@@ -326,7 +326,12 @@ public class LoadController implements LoadDialogListener{
 		}else{
 			System.err.println("unexpected ms level: "+sp.getMSLevel());
 		}
-		
+		if(exp.getMs1Spectra().isEmpty()&&exp.getMs2Spectra().isEmpty()){
+			exp.setDataFocusedMass(-1);
+			exp.setIonization(Ionization.Unknown);
+			exp.setName("");
+			this.loadDialog.experimentNameChanged("");
+		}
 	}
 
 	@Override
