@@ -153,17 +153,17 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		newB = new JButton("import experiment");
+		newB = new JButton("Import experiment",new ImageIcon("src/main/resources/icons/document-new.png"));
 		newB.addActionListener(this);
 		tempP.add(newB);
-		batchB = new JButton("batch import");
+		batchB = new JButton("Batch import",new ImageIcon("src/main/resources/icons/document-open-folder.png"));
 		batchB.addActionListener(this);
 		tempP.add(batchB);
-		editB = new JButton("edit");
+		editB = new JButton("Edit",new ImageIcon("src/main/resources/icons/document-edit.png"));
 		editB.addActionListener(this);
 		editB.setEnabled(false);
 		tempP.add(editB);
-		closeB = new JButton("close");
+		closeB = new JButton("Close",new ImageIcon("src/main/resources/icons/document-close.png"));
 		closeB.addActionListener(this);
 		closeB.setEnabled(false);
 		tempP.add(closeB);
@@ -172,10 +172,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		loadB = new JButton("open save file");
+		loadB = new JButton("Open",new ImageIcon("src/main/resources/icons/document-open.png"));
 		loadB.addActionListener(this);
 		tempP.add(loadB);
-		saveB = new JButton("save");
+		saveB = new JButton("Save",new ImageIcon("src/main/resources/icons/media-floppy.png"));
 		saveB.addActionListener(this);
 		saveB.setEnabled(false);
 		tempP.add(saveB);
@@ -184,7 +184,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		computeB = new JButton("compute");
+		computeB = new JButton("Compute",new ImageIcon("src/main/resources/icons/applications-system.png"));
 		computeB.addActionListener(this);
 		computeB.setEnabled(false);
 		tempP.add(computeB);
@@ -203,13 +203,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	public void constructExperimentListPopupMenu(){
 		expPopMenu = new JPopupMenu();
-		newExpMI = new JMenuItem("import experiment");
-		batchMI = new JMenuItem("batch import");
-		editMI = new JMenuItem("edit experiment");
-		closeMI = new JMenuItem("close experiment");
-		openMI = new JMenuItem("open save file ");
-		saveMI = new JMenuItem("save");
-		computeMI = new JMenuItem("compute");
+		newExpMI = new JMenuItem("Import experiment",new ImageIcon("src/main/resources/icons/document-new.png"));
+		batchMI = new JMenuItem("Batch import",new ImageIcon("src/main/resources/icons/document-open-folder.png"));
+		editMI = new JMenuItem("Edit experiment",new ImageIcon("src/main/resources/icons/document-edit.png"));
+		closeMI = new JMenuItem("Close experiment",new ImageIcon("src/main/resources/icons/document-close.png"));
+		openMI = new JMenuItem("Open",new ImageIcon("src/main/resources/icons/document-open.png"));
+		saveMI = new JMenuItem("Save",new ImageIcon("src/main/resources/icons/media-floppy.png"));
+		computeMI = new JMenuItem("Compute",new ImageIcon("src/main/resources/icons/applications-system.png"));
 		
 		newExpMI.addActionListener(this);
 		batchMI.addActionListener(this);
@@ -228,7 +228,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		expPopMenu.addSeparator();
 		expPopMenu.add(newExpMI);
 		expPopMenu.add(batchMI);
-		expPopMenu.addSeparator();
+//		expPopMenu.addSeparator();
 		expPopMenu.add(editMI);
 		expPopMenu.add(closeMI);
 		expPopMenu.addSeparator();
