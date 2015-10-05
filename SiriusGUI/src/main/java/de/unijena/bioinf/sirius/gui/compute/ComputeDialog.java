@@ -163,10 +163,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 //		msa = new MassSearchable(ec);
 //		autoComboBox = new AutocompleteJComboBox(msa);
 //		focMassPanel.add(autoComboBox);
-		autoDetectFM = new JButton("most intensive peak");
+		autoDetectFM = new JButton("Most intensive peak");
 		autoDetectFM.addActionListener(this);
 		if(masses.isEmpty()) autoDetectFM.setEnabled(false);
-		expFM = new JButton("file value");
+		expFM = new JButton("File value");
 		expFM.addActionListener(this);
 		if(ec.getDataFocusedMass()<=0)expFM.setEnabled(false);
 		
@@ -207,11 +207,12 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		elements.add(iodine);
 		elements.add(selenium);
 		
-		elementAutoDetect = new JButton("auto detect");
+		elementAutoDetect = new JButton("Auto detect");
 		elementAutoDetect.addActionListener(this);
+		elementAutoDetect.setEnabled(false);
 		elementTF = new JTextField(10);
 		elementTF.setEditable(false);
-		elementButton = new JButton("more elements");
+		elementButton = new JButton("More elements");
 		elementButton.addActionListener(this);
 		
 		elements.add(elementAutoDetect);
@@ -273,9 +274,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		this.add(southPanel,BorderLayout.SOUTH);
-		compute = new JButton("compute");
+		compute = new JButton("Compute");
 		compute.addActionListener(this);
-		abort = new JButton("abort");
+		abort = new JButton("Abort");
 		abort.addActionListener(this);
 		southPanel.add(compute);
 		southPanel.add(abort);
