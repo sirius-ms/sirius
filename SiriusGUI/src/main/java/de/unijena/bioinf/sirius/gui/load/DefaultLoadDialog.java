@@ -92,8 +92,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		
 		
 		JPanel msControls = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		add = new JButton("+");
-		remove = new JButton("-");
+		add = new JButton(new ImageIcon("src/main/resources/icons/list-add.png"));
+		remove = new JButton(new ImageIcon("src/main/resources/icons/list-remove.png"));
 		add.addActionListener(this);
 		remove.addActionListener(this);
 		remove.setEnabled(false);
@@ -124,7 +124,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		nameTF.setEditable(false);
 //		nameTF.setText("unknown");
 		namePanel.add(nameTF);
-		nameB = new JButton("change");
+		nameB = new JButton("Change");
 		nameB.addActionListener(this);
 		namePanel.add(nameB);
 		propsPanel.add(namePanel);
@@ -136,7 +136,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		cEPanel.add(cEField);
 		cEPanel.add(new JLabel("eV"));
 		
-		editCE = new JButton("edit");
+		editCE = new JButton("Edit");
 		editCE.setEnabled(false);
 		editCE.addActionListener(this);
 		cEPanel.add(editCE);
@@ -186,8 +186,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	public void constructSpectraListPopupMenu(){
 		spPopMenu = new JPopupMenu();
-		addMI = new JMenuItem("add experiment(s)");
-		removeMI = new JMenuItem("remove experiment(s)");
+		addMI = new JMenuItem("Add experiment(s)",new ImageIcon("src/main/resources/icons/list-add.png"));
+		removeMI = new JMenuItem("Remove experiment(s)",new ImageIcon("src/main/resources/icons/list-remove.png"));
 		
 		addMI.addActionListener(this);
 		removeMI.addActionListener(this);

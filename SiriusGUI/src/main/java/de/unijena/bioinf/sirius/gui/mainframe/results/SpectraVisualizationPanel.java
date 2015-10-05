@@ -52,8 +52,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		
 		JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 //		zoomPanel.setBorder(BorderFactory.createEtchedBorder());
-		zoomIn = new JButton("zoom in");
-		zoomOut = new JButton("zoom out");
+		zoomIn = new JButton("Zoom in",new ImageIcon("src/main/resources/icons/zoom-in.png"));
+		zoomOut = new JButton("Zoom out",new ImageIcon("src/main/resources/icons/zoom-out.png"));
 		zoomIn.addActionListener(this);
 		zoomOut.addActionListener(this);
 		zoomIn.setEnabled(false);
@@ -98,8 +98,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	
 	public void constructZoomPopupMenu(){
 		zoomPopMenu = new JPopupMenu();
-		zoomInMI = new JMenuItem("zoom in");
-		zoomOutMI = new JMenuItem("zoom out");
+		zoomInMI = new JMenuItem("Zoom in",new ImageIcon("src/main/resources/icons/zoom-in.png"));
+		zoomOutMI = new JMenuItem("Zoom out",new ImageIcon("src/main/resources/icons/zoom-out.png"));
 		
 		zoomInMI.addActionListener(this);
 		zoomOutMI.addActionListener(this);

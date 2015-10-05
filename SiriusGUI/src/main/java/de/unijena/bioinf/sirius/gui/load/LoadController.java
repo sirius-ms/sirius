@@ -148,7 +148,7 @@ public class LoadController implements LoadDialogListener{
 		CSVDialogReturnContainer cont = null;
 		CSVFormatReader csvReader = new CSVFormatReader();
 		
-		if(csvFiles.size()>1){
+		if(csvFiles.size()>0){
 			
 			HashMap<Integer,List<List<TDoubleArrayList>>> columnNumberToData = new HashMap<>();
 			
@@ -336,7 +336,8 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void completeProcess() {
-		this.returnValue = ReturnValue.Success;
+		if(this.exp.getMs1Spectra().isEmpty()&&this.exp.getMs2Spectra().isEmpty()) this.returnValue = ReturnValue.Abort;
+		else this.returnValue = ReturnValue.Success;
 	}
 
 	@Override

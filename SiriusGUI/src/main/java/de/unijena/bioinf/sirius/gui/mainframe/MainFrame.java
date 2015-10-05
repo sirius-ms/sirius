@@ -156,7 +156,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		newB = new JButton("Import experiment",new ImageIcon("src/main/resources/icons/document-new.png"));
 		newB.addActionListener(this);
 		tempP.add(newB);
-		batchB = new JButton("Batch import",new ImageIcon("src/main/resources/icons/document-open-folder.png"));
+		batchB = new JButton("Batch import",new ImageIcon("src/main/resources/icons/document-multiple.png"));
 		batchB.addActionListener(this);
 		tempP.add(batchB);
 		editB = new JButton("Edit",new ImageIcon("src/main/resources/icons/document-edit.png"));
@@ -204,7 +204,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	public void constructExperimentListPopupMenu(){
 		expPopMenu = new JPopupMenu();
 		newExpMI = new JMenuItem("Import experiment",new ImageIcon("src/main/resources/icons/document-new.png"));
-		batchMI = new JMenuItem("Batch import",new ImageIcon("src/main/resources/icons/document-open-folder.png"));
+		batchMI = new JMenuItem("Batch import",new ImageIcon("src/main/resources/icons/document-multiple.png"));
 		editMI = new JMenuItem("Edit experiment",new ImageIcon("src/main/resources/icons/document-edit.png"));
 		closeMI = new JMenuItem("Close experiment",new ImageIcon("src/main/resources/icons/document-close.png"));
 		openMI = new JMenuItem("Open",new ImageIcon("src/main/resources/icons/document-open.png"));

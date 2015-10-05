@@ -17,6 +17,7 @@ import java.util.Deque;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -93,7 +94,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		colorType.addActionListener(this);
 		northPanel.add(new JLabel(" node color style "));
 		northPanel.add(colorType);
-		saveTreeB = new JButton("export tree");
+		saveTreeB = new JButton("Export tree",new ImageIcon("src/main/resources/icons/document-export.png"));
 		saveTreeB.addActionListener(this);
 		saveTreeB.setEnabled(false);
 		northPanel.add(new JLabel("  "));
