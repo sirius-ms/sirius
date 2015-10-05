@@ -359,6 +359,7 @@ public class LoadController implements LoadDialogListener{
 		}
 		if(workingExp.getMs1Spectra().isEmpty()&&workingExp.getMs2Spectra().isEmpty()){
 			workingExp.setDataFocusedMass(-1);
+			workingExp.setSelectedFocusedMass(-1);
 			workingExp.setIonization(Ionization.Unknown);
 			workingExp.setName("");
 			this.loadDialog.experimentNameChanged("");
