@@ -40,12 +40,13 @@ import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 public class LoadController implements LoadDialogListener{
 
 	LoadDialog loadDialog;
 	
-	private ExperimentContainer exp;
+	private ExperimentContainer workingExp, inputExp;
 	
 	private ReturnValue returnValue;
 	
@@ -59,13 +60,20 @@ public class LoadController implements LoadDialogListener{
 		
 		this.owner = owner;
 		
-		this.exp = exp;
+		this.inputExp = exp;
+		if(exp==null){
+			this.workingExp = new ExperimentContainer();
+		}else{
+			this.workingExp = copyExperiment(exp);
+		}
+		
+		
 		this.config = config;
 		
 		loadDialog = new DefaultLoadDialog(owner);
 		
-		List<CompactSpectrum> ms1Spectrum = this.exp.getMs1Spectra();
-		List<CompactSpectrum> ms2Spectrum = this.exp.getMs2Spectra();
+		List<CompactSpectrum> ms1Spectrum = this.workingExp.getMs1Spectra();
+		List<CompactSpectrum> ms2Spectrum = this.workingExp.getMs2Spectra();
 		
 		if(ms1Spectrum!=null){
 			for(CompactSpectrum spectrum : ms1Spectrum){
@@ -82,7 +90,7 @@ public class LoadController implements LoadDialogListener{
 		
 		
 		loadDialog.addLoadDialogListener(this);
-		if(this.exp.getName()!=null||this.exp.getName().isEmpty()) loadDialog.experimentNameChanged(this.exp.getName());
+		if(this.workingExp.getName()!=null||this.workingExp.getName().isEmpty()) loadDialog.experimentNameChanged(this.workingExp.getName());
 //		loadDialog.showDialog();
 	}
 	
@@ -91,7 +99,26 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	public LoadController(JFrame owner, ConfigStorage config) {
-		this(owner,new ExperimentContainer(),config);
+		this(owner,null,config);
+	}
+	
+	private static ExperimentContainer copyExperiment(ExperimentContainer exp){
+		ExperimentContainer newExp = new ExperimentContainer();
+		newExp.setDataFocusedMass(exp.getDataFocusedMass());
+		newExp.setIonization(exp.getIonization());
+		newExp.setName(exp.getName());
+		newExp.setSelectedFocusedMass(exp.getSelectedFocusedMass());
+		newExp.setSuffix(exp.getSuffix());
+		List<CompactSpectrum> newMS1 = new ArrayList<>();
+		newMS1.addAll(exp.getMs1Spectra());
+		List<CompactSpectrum> newMS2 = new ArrayList<>();
+		newMS2.addAll(exp.getMs2Spectra());
+		List<SiriusResultElement> sre = new ArrayList<>();
+		sre.addAll(exp.getResults());
+		newExp.setMs1Spectra(newMS1);
+		newExp.setMs2Spectra(newMS2);
+		newExp.setResults(sre);
+		return newExp;
 	}
 
 	@Override
@@ -178,15 +205,15 @@ public class LoadController implements LoadDialogListener{
 							CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
 							CompactSpectrum sp = conv.convertCSVToSpectrum(list.get(0), cont);
 							if(sp.getMSLevel()==1){
-								if(exp.getMs1Spectra().size()==0){
-									this.exp.getMs1Spectra().add(sp);
+								if(workingExp.getMs1Spectra().size()==0){
+									this.workingExp.getMs1Spectra().add(sp);
 								}else{
 									sp.setMSLevel(2);
-									this.exp.getMs2Spectra().add(sp);
+									this.workingExp.getMs2Spectra().add(sp);
 								}
 								this.loadDialog.spectraAdded(sp);
 							}else{
-								this.exp.getMs2Spectra().add(sp);
+								this.workingExp.getMs2Spectra().add(sp);
 								this.loadDialog.spectraAdded(sp);
 							}
 						}else{
@@ -203,7 +230,7 @@ public class LoadController implements LoadDialogListener{
 							for(List<TDoubleArrayList> data : list){
 								CSVToSpectrumConverter conv = new CSVToSpectrumConverter();
 								CompactSpectrum sp = conv.convertCSVToSpectrum(data, cont);
-								this.exp.getMs2Spectra().add(sp);
+								this.workingExp.getMs2Spectra().add(sp);
 								loadDialog.spectraAdded(sp);
 							}
 							
@@ -256,31 +283,31 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	public void importExperimentContainer(ExperimentContainer ec, List<String> errorStorage){
-		if(exp.getIonization()==Ionization.Unknown && ec.getIonization()!=Ionization.Unknown){
-			exp.setIonization(ec.getIonization());
+		if(workingExp.getIonization()==Ionization.Unknown && ec.getIonization()!=Ionization.Unknown){
+			workingExp.setIonization(ec.getIonization());
 		}
 		
-		if(exp.getName()==null || exp.getName().isEmpty()){
+		if(workingExp.getName()==null || workingExp.getName().isEmpty()){
 			String name = ec.getName();
 			if(name!=null&&!name.isEmpty()){
-				this.exp.setName(name);
-				loadDialog.experimentNameChanged(this.exp.getName());
+				this.workingExp.setName(name);
+				loadDialog.experimentNameChanged(this.workingExp.getName());
 			}
 		}
 		
 		List<CompactSpectrum> newSP = new ArrayList<>();
 		
 		double ecFM = ec.getDataFocusedMass();
-		if(exp.getDataFocusedMass()<=0 && ecFM>0){
-			exp.setDataFocusedMass(ecFM);
+		if(workingExp.getDataFocusedMass()<=0 && ecFM>0){
+			workingExp.setDataFocusedMass(ecFM);
 		}
 		
 		if(ec.getMs1Spectra().size()>0){
 			CompactSpectrum ms1 = ec.getMs1Spectra().get(0);
 			
 			if(ms1!=null){
-				if(this.exp.getMs1Spectra().isEmpty()){
-					this.exp.getMs1Spectra().add(ms1);
+				if(this.workingExp.getMs1Spectra().isEmpty()){
+					this.workingExp.getMs1Spectra().add(ms1);
 					ms1.setMSLevel(1);
 					newSP.add(ms1);
 //					if(exp.getDataFocusedMass()<=0){
@@ -290,7 +317,7 @@ public class LoadController implements LoadDialogListener{
 //						}
 //					}
 				}else{
-					this.exp.getMs2Spectra().add(ms1);
+					this.workingExp.getMs2Spectra().add(ms1);
 					ms1.setMSLevel(2);
 					newSP.add(ms1);
 				}
@@ -299,7 +326,7 @@ public class LoadController implements LoadDialogListener{
 		
 		
 		for(CompactSpectrum sp : ec.getMs2Spectra()){
-			this.exp.getMs2Spectra().add(sp);
+			this.workingExp.getMs2Spectra().add(sp);
 			newSP.add(sp);
 		}
 		for(CompactSpectrum sp : newSP){
@@ -308,7 +335,11 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	public ExperimentContainer getExperiment(){
-		return this.exp;
+		if(this.returnValue==ReturnValue.Abort){
+			return this.inputExp;
+		}else{
+			return this.workingExp;
+		}
 	}
 	
 	public ReturnValue getReturnValue(){
@@ -318,18 +349,18 @@ public class LoadController implements LoadDialogListener{
 	@Override
 	public void removeSpectrum(CompactSpectrum sp) {
 		if(sp.getMSLevel()==1){
-			exp.getMs1Spectra().remove(sp);
+			workingExp.getMs1Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
 		}else if(sp.getMSLevel()==2){
-			exp.getMs2Spectra().remove(sp);
+			workingExp.getMs2Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
 		}else{
 			System.err.println("unexpected ms level: "+sp.getMSLevel());
 		}
-		if(exp.getMs1Spectra().isEmpty()&&exp.getMs2Spectra().isEmpty()){
-			exp.setDataFocusedMass(-1);
-			exp.setIonization(Ionization.Unknown);
-			exp.setName("");
+		if(workingExp.getMs1Spectra().isEmpty()&&workingExp.getMs2Spectra().isEmpty()){
+			workingExp.setDataFocusedMass(-1);
+			workingExp.setIonization(Ionization.Unknown);
+			workingExp.setName("");
 			this.loadDialog.experimentNameChanged("");
 		}
 	}
@@ -341,8 +372,24 @@ public class LoadController implements LoadDialogListener{
 
 	@Override
 	public void completeProcess() {
-		if(this.exp.getMs1Spectra().isEmpty()&&this.exp.getMs2Spectra().isEmpty()) this.returnValue = ReturnValue.Abort;
-		else this.returnValue = ReturnValue.Success;
+		if(this.workingExp.getMs1Spectra().isEmpty()&&this.workingExp.getMs2Spectra().isEmpty()) this.returnValue = ReturnValue.Abort;
+		else{
+			this.returnValue = ReturnValue.Success;
+			if(this.inputExp!=null){
+				acceptChanges(this.workingExp,this.inputExp);
+			}
+		}
+	}
+	
+	private static void acceptChanges(ExperimentContainer sourceExp, ExperimentContainer targetExp){
+		targetExp.setDataFocusedMass(sourceExp.getDataFocusedMass());
+		targetExp.setIonization(sourceExp.getIonization());
+		targetExp.setMs1Spectra(sourceExp.getMs1Spectra());
+		targetExp.setMs2Spectra(sourceExp.getMs2Spectra());
+		targetExp.setName(sourceExp.getName());
+		targetExp.setResults(sourceExp.getResults());
+		targetExp.setSelectedFocusedMass(sourceExp.getSelectedFocusedMass());
+		targetExp.setSuffix(sourceExp.getSuffix());
 	}
 
 	@Override
@@ -373,8 +420,8 @@ public class LoadController implements LoadDialogListener{
 			return;
 		}
 		sp.setMSLevel(msLevel);
-		List<CompactSpectrum> ms1Spectra = this.exp.getMs1Spectra();
-		List<CompactSpectrum> ms2Spectra = this.exp.getMs2Spectra();
+		List<CompactSpectrum> ms1Spectra = this.workingExp.getMs1Spectra();
+		List<CompactSpectrum> ms2Spectra = this.workingExp.getMs2Spectra();
 		if(msLevel==1){
 			if(ms1Spectra.isEmpty()){
 				ms2Spectra.remove(sp);
@@ -401,8 +448,8 @@ public class LoadController implements LoadDialogListener{
 	@Override
 	public void experimentNameChanged(String name) {
 		if(name!=null && !name.isEmpty()){
-			this.exp.setName(name);
-			loadDialog.experimentNameChanged(this.exp.getName());
+			this.workingExp.setName(name);
+			loadDialog.experimentNameChanged(this.workingExp.getName());
 		}
 	}
 
