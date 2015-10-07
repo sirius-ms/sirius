@@ -185,6 +185,10 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         return fragments.get(k);
     }
 
+    protected final boolean isOwnFragment(Fragment f) {
+        return fragments.get(f.vertexId)==f;
+    }
+
     public List<FragmentAnnotation<Object>> getFragmentAnnotations() {
         return new ArrayList<FragmentAnnotation<Object>>(fragmentAnnotations.values());
     }

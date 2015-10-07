@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import gnu.trove.list.array.TIntArrayList;
@@ -138,6 +139,17 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         this(c.getChemicalAlphabet());
         System.arraycopy(c.upperbounds, 0, upperbounds, 0, c.upperbounds.length);
         filters.addAll(c.getFilters());
+    }
+
+    public static FormulaConstraints allSubsetsOf(MolecularFormula f) {
+        final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(f.elementArray()));
+        f.visit(new FormulaVisitor<Object>() {
+            @Override
+            public Object visit(Element element, int amount) {
+                c.setUpperbound(element, amount); return null;
+            }
+        });
+        return c;
     }
 
     public FormulaConstraints() {

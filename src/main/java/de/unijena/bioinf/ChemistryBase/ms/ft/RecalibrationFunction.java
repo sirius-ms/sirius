@@ -41,6 +41,14 @@ public class RecalibrationFunction {
         this.polynomialTerms = polynomialTerms;
     }
 
+    public double apply(double x) {
+        double val = 0;
+        for (int k=0; k < polynomialTerms.length; ++k) {
+            val += polynomialTerms[k] * Math.pow(x, k);
+        }
+        return val;
+    }
+
     public String toString() {
         final List<String> terms = new ArrayList<String>(polynomialTerms.length);
         for (int k=polynomialTerms.length-1; k >= 0; --k) {

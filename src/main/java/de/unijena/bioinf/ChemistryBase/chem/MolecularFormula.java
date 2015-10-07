@@ -238,6 +238,10 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return sum;
     }
 
+    public boolean isEmpty() {
+        return atomCount()==0;
+    }
+
     public boolean isCHNO() {
         return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens();
     }
@@ -497,8 +501,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] otherAmounts = other.buffer();
         final TableSelection otherSelection = other.getTableSelection();
         if (selection != otherSelection) return add(other.negate()); // TODO: improve performance
-        if (amounts.length < otherAmounts.length) return other.subtract(this);
-        final short[] nrs = Arrays.copyOf(amounts, amounts.length);
+        final short[] nrs = Arrays.copyOf(amounts, Math.max(amounts.length, otherAmounts.length));
         for (int i = 0; i < otherAmounts.length; ++i) {
             nrs[i] -= otherAmounts[i];
         }

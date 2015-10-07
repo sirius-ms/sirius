@@ -26,6 +26,10 @@ public class PrecursorIonType {
         return PeriodicTable.getInstance().ionByName(name);
     }
 
+    public static PrecursorIonType getPrecursorIonType(Ionization ion) {
+        return PeriodicTable.getInstance().getPrecursorIonTypeFromIonization(ion);
+    }
+
     PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct) {
         this.ionization = ion;
         this.inSourceFragmentation = insource==null ? MolecularFormula.emptyFormula() : insource;
@@ -44,6 +48,14 @@ public class PrecursorIonType {
         } else return false;
     }
 
+    public PrecursorIonType withoutAdduct() {
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula());
+    }
+
+    public PrecursorIonType withoutInsource() {
+        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct);
+    }
+
     @Override
     public int hashCode() {
         return 31 * ionization.hashCode() + modification.hashCode();
@@ -58,15 +70,15 @@ public class PrecursorIonType {
         final StringBuilder buf = new StringBuilder(128);
         buf.append("[M");
         MolecularFormula ion = MolecularFormula.emptyFormula();
-        if (ionization.getAtoms()!=null) ion.add(ionization.getAtoms());
+        if (ionization.getAtoms()!=null) ion = ion.add(ionization.getAtoms());
         final boolean isH = ion.numberOfHydrogens() == ion.atomCount();
         final boolean isNeg = ion.atomCount() < 0;
         MolecularFormula subtractions = MolecularFormula.emptyFormula();
-        subtractions.add(inSourceFragmentation);
-        if (isH && isNeg) subtractions.subtract(ion);
+        subtractions = subtractions.add(inSourceFragmentation);
+        if (isH && isNeg) subtractions = subtractions.subtract(ion);
         MolecularFormula additions = MolecularFormula.emptyFormula();
-        additions.add(adduct);
-        if (isH && !isNeg) additions.add(ion);
+        additions=additions.add(adduct);
+        if (isH && !isNeg) additions=additions.add(ion);
         if (subtractions.atomCount()>0) {
             buf.append(" - ");
             buf.append(subtractions);
@@ -84,11 +96,24 @@ public class PrecursorIonType {
             if (ionization.getCharge() > 1) buf.append(ionization.getCharge());
             buf.append("+");
         } else {
-            if (ionization.getCharge() < 1) buf.append(-ionization.getCharge());
+            if (ionization.getCharge() < -1) buf.append(-ionization.getCharge());
             buf.append("-");
         }
         return buf.toString();
     }
+
+    public boolean isIonizationUnknown() {
+        return ionization instanceof Charge;
+    }
+
+    public int getCharge() {
+        return ionization.getCharge();
+    }
+
+    public MolecularFormula neutralMoleculeToMeasuredNeutralMolecule(MolecularFormula neutral) {
+        return neutral.subtract(inSourceFragmentation).add(adduct);
+    }
+
 
     public MolecularFormula precursorIonToNeutralMolecule(MolecularFormula precursor) {
         return precursor.subtract(modification).subtract(ionization.getAtoms());
@@ -96,6 +121,17 @@ public class PrecursorIonType {
 
     public MolecularFormula neutralMoleculeToPrecursorIon(MolecularFormula formula) {
         return formula.add(modification).add(ionization.getAtoms());
+    }
+
+    /**
+     * @return the mass difference between the ion mass and the neutral mass including in-source fragmentation, adduct, and electron masses
+     */
+    public double getModificationMass() {
+        return ionization.getMass() + modification.getMass();
+    }
+
+    public double subtractIonAndAdduct(double mz) {
+        return ionization.subtractFromMass(mz - adduct.getMass());
     }
 
     public double precursorMassToNeutralMass(double mz) {
@@ -127,5 +163,9 @@ public class PrecursorIonType {
 
     public MolecularFormula getAdduct() {
         return adduct;
+    }
+
+    public MolecularFormula getAdductAndIons() {
+        return adduct.add(ionization.getAtoms());
     }
 }

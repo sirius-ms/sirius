@@ -17,9 +17,11 @@
  */
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
+import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -114,8 +116,44 @@ public class Spectrums {
         return spectrum;
     }
 
+    public static <P extends Peak, S extends MutableSpectrum<P>>
+    S filter(S spectrum, Predicate<P> predicate) {
+        final TIntArrayList keep = new TIntArrayList();
+        final int n = spectrum.size();
+        for (int i = 0; i < n; ++i) {
+            if (predicate.apply(spectrum.getPeakAt(i))) keep.add(i);
+        }
+        for (int i=0; i < keep.size(); ++i) {
+            if (i != keep.get(i)) spectrum.swap(keep.get(i), i);
+        }
+        for (int i=n; i >= keep.size(); ++i) {
+            spectrum.removePeakAt(i);
+        }
+        return spectrum;
+    }
+
+    public static <P extends Peak, S extends MutableSpectrum<P>>
+    S filter(S spectrum, PeakPredicate predicate) {
+        final TIntArrayList keep = new TIntArrayList();
+        final int n = spectrum.size();
+        for (int i = 0; i < n; ++i) {
+            if (predicate.apply(spectrum.getMzAt(i), spectrum.getIntensityAt(i))) keep.add(i);
+        }
+        for (int i=0; i < keep.size(); ++i) {
+            if (i != keep.get(i)) spectrum.swap(keep.get(i), i);
+        }
+        for (int i=n; i >= keep.size(); ++i) {
+            spectrum.removePeakAt(i);
+        }
+        return spectrum;
+    }
+
+
     public static interface Transformation<P1 extends Peak, P2 extends Peak> {
         public P2 transform(P1 input);
+    }
+    public static interface PeakPredicate {
+        public boolean apply(double mz, double intensity);
     }
 
     public static SimpleSpectrum from(Collection<Peak> peaks) {

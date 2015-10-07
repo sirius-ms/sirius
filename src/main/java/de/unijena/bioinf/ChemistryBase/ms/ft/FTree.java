@@ -18,7 +18,6 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.graphUtils.tree.BackrefTreeAdapter;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 import de.unijena.bioinf.graphUtils.tree.PreOrderTraversal;
@@ -39,6 +38,51 @@ public class FTree extends AbstractFragmentationGraph {
         this.root = fragments.get(0);
         assert root.isRoot();
     }
+
+    /**
+     * Add a new root to the tree and connecting it with the previous root
+     * @param newRoot
+     */
+    public Fragment addRoot(MolecularFormula newRoot) {
+        final MolecularFormula loss = newRoot.subtract(root.getFormula());
+        if (!loss.isAllPositiveOrZero()) {
+            throw new IllegalArgumentException(root.getFormula().toString() + " cannot be child formula of " + newRoot.toString());
+        }
+        final Fragment f = addFragment(newRoot);
+        addLoss(f, root);
+        fragments.set(0, f);
+        fragments.set(f.vertexId, root);
+        root.setVertexId(f.vertexId);
+        f.setVertexId(0);
+        root = f;
+        return f;
+    }
+
+    /*
+    public void swapRoot(Fragment f) {
+        if (!isOwnFragment(f)) throw new IllegalArgumentException("Expect a fragment of the same tree as parameter");
+        fragments.set(0, f);
+        fragments.set(f.vertexId, root);
+        root.setVertexId(f.vertexId);
+        f.setVertexId(0);
+        invertPathsForRootSwapping(f);
+        root = f;
+    }
+
+    protected void invertPathsForRootSwapping(Fragment v) {
+        // all incoming egdes become outgoing edges
+        final ArrayList<Loss> incomingLosses = new ArrayList<Loss>(v.getIncomingEdges());
+        for (Loss l : incomingLosses) {
+            final Fragment u = l.getSource();
+            // u becomes child of v
+            invertPathsForRootSwapping(u);
+            // delete edge u->v
+            deleteLoss(getLoss(u, v));
+            // add new edge v<-u
+            swapLoss(u, v);
+        }
+    }
+    */
 
     public static BackrefTreeAdapter<Fragment> treeAdapter() {
         return new BackrefTreeAdapter<Fragment>() {
@@ -256,11 +300,10 @@ public class FTree extends AbstractFragmentationGraph {
                 ++i;
             }
         }
-        final FragmentAnnotation<Peak> fa = getFragmentAnnotationOrThrow(Peak.class);
         Collections.sort(fragments, new Comparator<Fragment>() {
             @Override
             public int compare(Fragment o1, Fragment o2) {
-                return Double.compare(fa.get(o2).getMass(),fa.get(o1).getMass());
+                return Double.compare(o2.getFormula().getMass(), o1.getFormula().getMass());
             }
         });
         for (int k=0; k < fragments.size(); ++k) {
@@ -268,5 +311,6 @@ public class FTree extends AbstractFragmentationGraph {
         }
 
     }
+
 
 }
