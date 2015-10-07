@@ -86,7 +86,7 @@ private final MassToFormulaDecomposer decomposer;
                 spec.addPeak(sms.getMzAt(k), sms.getIntensityAt(k));
             }
             Spectrums.sortSpectrumByMass(spec);
-            final Ionization ion = ms2spec.getIonization()==null ? experiment.getIonization() : ms2spec.getIonization();
+            final Ionization ion = ms2spec.getIonization()==null ? experiment.getPrecursorIonType().getIonization() : ms2spec.getIonization();
             for (int k = 0; k < spec.size(); ++k) {
                 final double mz = spec.getMzAt(k);
                 final double neutralMass = ion.subtractFromMass(mz);

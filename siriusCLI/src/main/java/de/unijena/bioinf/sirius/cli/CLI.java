@@ -19,7 +19,10 @@ package de.unijena.bioinf.sirius.cli;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -35,6 +38,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -77,7 +81,10 @@ public class CLI {
                 if (whitelist==null && (options.getNumberOfCandidates()==null) && i.experiment.getMolecularFormula()!=null) {
                     whiteset.add(i.experiment.getMolecularFormula());
                 } else if (whitelist!=null) for (String s :whitelist) whiteset.add(MolecularFormula.parse(s));
-                if (whiteset.size()!=1) {
+                if (whiteset.isEmpty() && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                    results = sirius.identifyPrecursorAndIonization(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
+                    doIdentify=true;
+                } else if (whiteset.size()!=1) {
                     results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
                     doIdentify=true;
                 } else {
@@ -85,11 +92,21 @@ public class CLI {
                     results = Arrays.asList(sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating()));
                 }
 
+                if (options.isIonTree()) {
+                    for (IdentificationResult result : results) {
+                        result.transformToIonTree();
+                    }
+                } else {
+                    for (IdentificationResult result : results) {
+                        result.resolveIonizationInTree();
+                    }
+                }
+
                 if (doIdentify) {
                     int rank=1;
                     int n = Math.max(1,(int)Math.ceil(Math.log10(results.size())));
                     for (IdentificationResult result : results) {
-                        printf("%"+n+"d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree())*100);
+                        printf("%" + n + "d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree()) * 100);
                     }
                     output(i, results);
                 } else {
@@ -116,7 +133,7 @@ public class CLI {
                 if (format.equalsIgnoreCase("json")) {
                     new FTJsonWriter().writeTreeToFile(name, result.getTree());
                 } else if (format.equalsIgnoreCase("dot")) {
-                    new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(name, result.getTree());
+                    new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(name, result.getTree());
                 } else {
                     throw new RuntimeException("Unknown format '" + format + "'");
                 }
@@ -165,7 +182,7 @@ public class CLI {
         if (format.equalsIgnoreCase("json")) {
             new FTJsonWriter().writeTreeToFile(target, result.getTree());
         } else if (format.equalsIgnoreCase("dot")) {
-            new FTDotWriter(!options.isNoHTML(), !options.isNoIon()).writeTreeToFile(target, result.getTree());
+            new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(target, result.getTree());
         } else {
             throw new RuntimeException("Unknown format '" + format + "'");
         }
@@ -239,6 +256,20 @@ public class CLI {
             final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
             final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
 
+            if (opts.getElements()==null) {
+                // autodetect and use default set
+                ms1Prof.setFormulaConstraints(getDefaultElementSet(opts));
+                ms2Prof.setFormulaConstraints(getDefaultElementSet(opts));
+                sirius.setElementPrediction(new ElementPrediction(sirius.getMs1Analyzer()));
+            } else {
+                ms2Prof.setFormulaConstraints(opts.getElements());
+                ms1Prof.setFormulaConstraints(opts.getElements());
+            }
+
+            if (opts.isAutoCharge()) {
+                sirius.setAutoIonMode(true);
+            }
+
             if (opts.getMedianNoise()!=null) {
                 ms2Prof.setMedianNoiseIntensity(opts.getMedianNoise());
             }
@@ -271,77 +302,6 @@ public class CLI {
         }
     }
 
-    protected Ms2Experiment extendInput(Ms2Experiment experiment, SiriusOptions opts) {
-        final MutableMs2Experiment exp = new MutableMs2Experiment(experiment);
-        if (exp.getIonization()==null) {
-            exp.setIonization(getIonFromOptions(opts));
-        }
-        final MutableMeasurementProfile prof;
-        if (exp.getMeasurementProfile()==null) {
-            prof = new MutableMeasurementProfile();
-        } else prof = new MutableMeasurementProfile(exp.getMeasurementProfile());
-        if (prof.getFormulaConstraints()==null) {
-            prof.setFormulaConstraints(getDefaultElementSet(opts, exp.getIonization()));
-        }
-        if (opts.getParentMz() != null && Math.abs(opts.getParentMz() - exp.getIonMass()) < 1e-3) {
-            exp.setIonMass(opts.getParentMz());
-        }
-        if (opts.getMedianNoise() != null) {
-            prof.setMedianNoiseIntensity(opts.getMedianNoise());
-        }
-        if (opts.getPPMMax() != null) {
-            prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
-        }
-        exp.setMeasurementProfile(prof);
-        if (opts.getElements()==null) {
-            if (exp.getMolecularFormula()!=null) {
-                prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(exp.getMolecularFormula().elementArray()));
-            } else if (opts.getFormula()!=null && !opts.getFormula().isEmpty()) {
-                final HashMap<Element, Integer> bounds = new HashMap<Element, Integer>();
-                for (String s : opts.getFormula()) {
-                    final MolecularFormula f = MolecularFormula.parse(s);
-                    for (Element e : f) {
-                        final int i = f.numberOf(e);
-                        final Integer I = bounds.get(e);
-                        if (I == null || I < i) {
-                            bounds.put(e, i);
-                        }
-                    }
-                }
-                final FormulaConstraints fc = new FormulaConstraints(new ChemicalAlphabet(bounds.keySet().toArray(new Element[bounds.size()])));
-                for (Map.Entry<Element, Integer> e : bounds.entrySet()) {
-                    fc.setUpperbound(e.getKey(), e.getValue());
-                }
-            } else {
-                prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(sirius.predictElements(exp)));
-            }
-        } else {
-            prof.setFormulaConstraints(opts.getElements());
-        }
-        if (opts.isAutoCharge()) {
-            addAdducts(exp, prof, opts);
-        }
-        return exp;
-    }
-
-    private void addAdducts(Ms2Experiment exp, MutableMeasurementProfile prof, SiriusOptions opts) {
-        final Ionization ion = exp.getIonization();
-        final FormulaConstraints fcOld = prof.getFormulaConstraints();
-        FormulaConstraints fcNew = fcOld;
-        if (ion instanceof Charge && opts.isAutoCharge()) {
-            final PeriodicTable tb = PeriodicTable.getInstance();
-            final Element Na = tb.getByName("Na"), Cl = tb.getByName("Cl");
-            if (ion.getCharge() > 0) {
-                fcNew = fcOld.getExtendedConstraints(Na);
-                fcNew.setUpperbound(Na, Math.max(1, fcOld.getUpperbound(Na)));
-            } else {
-                fcNew = fcOld.getExtendedConstraints(Cl);
-                fcNew.setUpperbound(Cl, Math.max(1, fcOld.getUpperbound(Cl)));
-            }
-            prof.setFormulaConstraints(fcNew);
-        }
-    }
-
 
     protected void println(String msg) {
         System.out.println(msg);
@@ -350,14 +310,22 @@ public class CLI {
         System.out.printf(Locale.US, msg, args);
     }
 
+    protected Instance setupInstance(Instance inst) {
+        final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment)inst.experiment : new MutableMs2Experiment(inst.experiment);
+        if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isIonizationUnknown()) exp.setPrecursorIonType(getIonFromOptions(options));
+        if (options.getFormula()!=null && options.getFormula().size()==1) exp.setMolecularFormula(MolecularFormula.parse(options.getFormula().get(0)));
+        if (options.getParentMz()!=null) exp.setIonMass(options.getParentMz());
+        return new Instance(exp, inst.file);
+    }
+
     public Iterator<Instance> handleInput(final SiriusOptions options) throws IOException {
         final ArrayDeque<Instance> instances = new ArrayDeque<Instance>();
         final MsExperimentParser parser = new MsExperimentParser();
         // two different input modes:
         // general information that should be used if this fields are missing in the file
         final Double defaultParentMass = options.getParentMz();
-        Ionization ion = getIonFromOptions(options);
-        if (ion instanceof Charge) {
+        PrecursorIonType ion = getIonFromOptions(options);
+        if (ion.isIonizationUnknown()) {
             if (!options.isAutoCharge()) {
                 ion = (ion.getCharge()>0) ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName("[M-H]-");
             }
@@ -368,9 +336,8 @@ public class CLI {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setFormulaConstraints(constraints);
             final MutableMs2Experiment exp = new MutableMs2Experiment();
-            exp.setMeasurementProfile(profile);
-            exp.setIonization(ion);
-            exp.setMs2Spectra(new ArrayList<Ms2Spectrum<Peak>>());
+            exp.setPrecursorIonType(ion);
+            exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
             for (File f : foreachIn(options.getMs2())) {
                 final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
                 while (spiter.hasNext()) {
@@ -379,7 +346,7 @@ public class CLI {
                         final MutableMs2Spectrum ms;
                         if (spec instanceof MutableMs2Spectrum) ms = (MutableMs2Spectrum)spec;
                         else ms = new MutableMs2Spectrum(spec);
-                        if (ms.getIonization()==null) ms.setIonization(ion);
+                        if (ms.getIonization()==null) ms.setIonization(ion.getIonization());
                         if (ms.getMsLevel()==0) ms.setMsLevel(2);
                         if (ms.getPrecursorMz()==0) {
                             if (defaultParentMass==null) {
@@ -398,13 +365,13 @@ public class CLI {
                             }
                         }
                     }
-                    exp.getMs2Spectra().add(spec);
+                    exp.getMs2Spectra().add(new MutableMs2Spectrum(spec));
                 }
             }
             if (exp.getMs2Spectra().size() <= 0) throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
 
             if (options.getMs2()!=null &&  options.getMs1() != null && !options.getMs1().isEmpty()) {
-                exp.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
+                exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
                 for (File f : options.getMs1()) {
                     final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
                     while (spiter.hasNext()) {
@@ -417,7 +384,7 @@ public class CLI {
             if (options.getParentMz()!=null) {
                 expPrecursor = options.getParentMz();
             }else if (exp.getMolecularFormula()!=null) {
-                expPrecursor = exp.getIonization().addToMass(exp.getMolecularFormula().getMass());
+                expPrecursor = exp.getPrecursorIonType().neutralMassToPrecursorMass(exp.getMolecularFormula().getMass());
             } else {
                 double prec=0d;
                 for (int k=1; k < exp.getMs2Spectra().size(); ++k) {
@@ -445,7 +412,7 @@ public class CLI {
 
 
             exp.setIonMass(expPrecursor);
-            instances.add(new Instance(extendInput(exp, options), options.getMs2().get(0)));
+            instances.add(new Instance(exp, options.getMs2().get(0)));
         } else if (options.getMs1()!=null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
@@ -477,7 +444,7 @@ public class CLI {
                 public Instance next() {
                     fetchNext();
                     Instance c = instances.poll();
-                    return new Instance(extendInput(c.experiment,options), c.file);
+                    return setupInstance(new Instance(c.experiment, c.file));
                 }
 
                 private Iterator<Ms2Experiment> fetchNext() {
@@ -528,10 +495,10 @@ public class CLI {
     private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)[+-]?");
     private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
 
-    protected static Ionization getIonFromOptions(SiriusOptions opt) {
+    protected static PrecursorIonType getIonFromOptions(SiriusOptions opt) {
         String ionStr = opt.getIon();
         if (ionStr==null) {
-            if (opt.isAutoCharge()) return new Charge(1);
+            if (opt.isAutoCharge()) return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
             else return PeriodicTable.getInstance().ionByName("[M+H]+");
         }
         final Matcher m1 = CHARGE_PATTERN.matcher(ionStr);
@@ -539,19 +506,19 @@ public class CLI {
         final Matcher m = m1.matches() ? m1 : (m2.matches() ? m2 : null);
         if (m != null) {
             if (m.group(1)!=null && ionStr.contains("-")) {
-                return new Charge(-Integer.parseInt(m.group(1)));
+                return PeriodicTable.getInstance().getUnknownPrecursorIonType(-Integer.parseInt(m.group(1)));
             } else {
-                return new Charge(Integer.parseInt(m.group(1)));
+                return PeriodicTable.getInstance().getUnknownPrecursorIonType(Integer.parseInt(m.group(1)));
             }
         } else {
-            final Ionization ion = PeriodicTable.getInstance().ionByName(ionStr);
+            final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ionStr);
             if (ion==null)
                 throw new IllegalArgumentException("Unknown ionization mode '" + ionStr + "'");
             else return ion;
         }
     }
     private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");
-    public FormulaConstraints getDefaultElementSet(SiriusOptions opts, Ionization ion) {
+    public FormulaConstraints getDefaultElementSet(SiriusOptions opts) {
         final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
         return cf;
     }

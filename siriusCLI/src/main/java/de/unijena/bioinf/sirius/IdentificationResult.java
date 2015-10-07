@@ -19,6 +19,7 @@ package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
@@ -29,7 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class IdentificationResult {
+public class IdentificationResult implements Cloneable {
 
     protected FTree tree;
     protected int rank;
@@ -53,6 +54,14 @@ public class IdentificationResult {
         final RecalibrationFunction f = (RecalibrationFunction) tree.getAnnotations().get(RecalibrationFunction.class);
         if (f==null) return RecalibrationFunction.identity();
         else return f;
+    }
+
+    public void transformToIonTree() {
+        if (tree != null) tree = new IonTreeUtils().treeToIonTree(tree);
+    }
+
+    public void resolveIonizationInTree() {
+        if (tree != null) tree = new IonTreeUtils().treeToNeutralTree(tree);
     }
 
     public double getScore() {
@@ -92,5 +101,11 @@ public class IdentificationResult {
     public double getIsotopeScore() {
         final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
         return treeScore.getAdditionalScore(Sirius.ISOTOPE_SCORE);
+    }
+
+    public IdentificationResult clone() {
+        final IdentificationResult r = new IdentificationResult(new FTree(tree), rank);
+        r.score = score;
+        return r;
     }
 }
