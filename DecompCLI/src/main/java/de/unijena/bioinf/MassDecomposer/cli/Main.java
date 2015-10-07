@@ -149,25 +149,21 @@ public class Main {
             }
         }
         final double mass;
-        if (options.getIonization() != null) {
-            final double mz = options.getMass();
-            final String ion = options.getIonization();
-            final Ionization ionization = PeriodicTable.getInstance().ionByName(ion);
-            if (ionization == null) {
-                System.err.println("Unknown ion '" + ion + "'");
-                return;
-            }
-            mass = ionization.subtractFromMass(mz);
-            if (validator == null) {
-                // do nothing
-            } else if (validator instanceof ChemicalValidator) {
-                final ChemicalValidator c = (ChemicalValidator) validator;
-                validator = new ChemicalValidator(c.getRdbeThreshold(), c.getRdbeLowerbound() + 0.5d, c.getHeteroToCarbonThreshold(), c.getHydrogenToCarbonThreshold());
-            } else if (validator instanceof ValenceValidator) {
-                validator = new ValenceValidator<Element>(0d);
-            }
-        } else {
-            mass = options.getMass();
+        final double mz = options.getMass();
+        final String ion = options.getIonization();
+        final PrecursorIonType ionization = ion == null ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName(ion);
+        if (ionization == null) {
+            System.err.println("Unknown ion '" + ion + "'");
+            return;
+        }
+        mass = ionization.precursorMassToNeutralMass(mz);
+        if (validator == null) {
+            // do nothing
+        } else if (validator instanceof ChemicalValidator) {
+            final ChemicalValidator c = (ChemicalValidator) validator;
+            validator = new ChemicalValidator(c.getRdbeThreshold(), c.getRdbeLowerbound() + 0.5d, c.getHeteroToCarbonThreshold(), c.getHydrogenToCarbonThreshold());
+        } else if (validator instanceof ValenceValidator) {
+            validator = new ValenceValidator<Element>(0d);
         }
         final Deviation dev = new Deviation(options.getPPM(), options.getAbsoluteDeviation());
         final ChemicalAlphabet alphabet = options.getAlphabet().getAlphabet();

@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.unijena.bioinf</groupId>
   <artifactId>DecompCLI</artifactId>
-  <version>3.0.3-SNAPSHOT</version>
+  <version>3.1-SNAPSHOT</version>
   <parent>
       <groupId>de.unijena.bioinf</groupId>
       <artifactId>MassDecomposition</artifactId>
-      <version>3.0.3-SNAPSHOT</version>
+      <version>3.1-SNAPSHOT</version>
   </parent>
   
   <!-- Where you can find the other libraries -->
@@ -23,7 +23,7 @@
     <dependency>
       <groupId>de.unijena.bioinf</groupId>
       <artifactId>MassDecomposer</artifactId>
-      <version>3.0.3-SNAPSHOT</version>
+      <version>3.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.lexicalscope.jewelcli</groupId>
