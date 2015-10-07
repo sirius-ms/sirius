@@ -45,7 +45,7 @@ public class MassDeviationScorer implements IsotopePatternScorer {
     }
 
     @Override
-    public double score(Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, MsExperiment experiment) {
+    public double score(Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
         if (measured.size() > theoretical.size())
             throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
         // remove peaks from theoretical pattern until the length of both spectra is equal
@@ -59,13 +59,13 @@ public class MassDeviationScorer implements IsotopePatternScorer {
         final double thMz0 = theoreticalSpectrum.getMzAt(0);
         final double int0 = measured.getIntensityAt(0);
         double score = Math.log(Erf.erfc(Math.abs(thMz0 - mz0)/
-                (root2*(experiment.getMeasurementProfile().getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
+                (root2*(profile.getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
         for (int i=1; i < measured.size(); ++i) {
             final double mz = measured.getMzAt(i) - mz0;
             final double thMz = theoreticalSpectrum.getMzAt(i) - thMz0;
             final double thIntensity = measured.getIntensityAt(i);
             // TODO: thMz hier richtig?
-            final double sd = experiment.getMeasurementProfile().getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
+            final double sd = profile.getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
         }
         return score;

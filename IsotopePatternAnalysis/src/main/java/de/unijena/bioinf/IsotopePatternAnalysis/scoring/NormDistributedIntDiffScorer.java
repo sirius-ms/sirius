@@ -44,7 +44,7 @@ public class NormDistributedIntDiffScorer implements IsotopePatternScorer {
     }
 
     @Override
-    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoretical, Normalization usedNormalization, MsExperiment experiment) {
+    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoretical, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
         if (measuredSpectrum.size() > theoretical.size())
             throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
         // remove peaks from theoretical pattern until the length of both spectra is equal

@@ -50,7 +50,7 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
 
 
     @Override
-    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalPattern, Normalization norm, MsExperiment experiment) {
+    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalPattern, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
         // remove peaks from theoretical pattern until the length of both spectra is equal
         final MutableSpectrum<Peak> theoreticalSpectrum = new SimpleMutableSpectrum(theoreticalPattern);
         while (measuredSpectrum.size() < theoreticalSpectrum.size()) {
@@ -60,7 +60,7 @@ public class LogNormDistributedIntensityScorer implements IsotopePatternScorer {
         Spectrums.normalize(theoreticalSpectrum, norm);
         // score
         double score = 0d;
-        final double intensityDeviation = experiment.getMeasurementProfile().getIntensityDeviation();
+        final double intensityDeviation = profile.getIntensityDeviation();
         for (int i=0; i < measuredSpectrum.size(); ++i) {
             final double intensity = measuredSpectrum.getIntensityAt(i);
             final double thIntensity = theoreticalSpectrum.getIntensityAt(i);

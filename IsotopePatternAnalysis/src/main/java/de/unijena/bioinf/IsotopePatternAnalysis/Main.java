@@ -41,7 +41,7 @@ public class Main {
         try {
 
             MolecularFormula f = MolecularFormula.parse("C37H55N5O8S");
-            Ionization ion = PeriodicTable.getInstance().ionByName("[M+H]+");
+            Ionization ion = PeriodicTable.getInstance().ionByName("[M+H]+").getIonization();
             final FinestructurePatternGenerator gen = new FinestructurePatternGenerator();
             gen.setResolution(1000);
             gen.setMaximalNumberOfPeaks(4);
@@ -82,7 +82,7 @@ public class Main {
         gen2.setMaximalNumberOfPeaks(8);
         gen2.setMinimalProbabilityThreshold(1e-8);
         gen2.setResolution(1000);
-        final Ionization hplus = PeriodicTable.getInstance().ionByName("[M+H]+");
+        final Ionization hplus = PeriodicTable.getInstance().ionByName("[M+H]+").getIonization();
 
         double[] avg1sum = new double[3];
         double[] avg2sum = new double[3];

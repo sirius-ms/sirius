@@ -119,7 +119,7 @@ public class Main {
                             }
                         };
                     } else {
-                        final Ionization ion = PeriodicTable.getInstance().ionByName(ionizationMode);
+                        final Ionization ion = PeriodicTable.getInstance().ionByName(ionizationMode).getIonization();
                         if (ion == null) {
                             System.err.println("Unknown ion type " + ionizationMode);
                             System.err.println("Please set ionization explicitely: isogen -i \"[M+<mass>]<charge>+\"");

@@ -97,7 +97,7 @@ public class PatternGeneratorTest {
 	
 	@Test
 	public void testChargedPatternGeneration() {
-		final PatternGenerator generator = new PatternGenerator(PeriodicTable.getInstance().ionByName("[M+Na]+"), Normalization.Max(100));
+		final PatternGenerator generator = new PatternGenerator(PeriodicTable.getInstance().ionByName("[M+Na]+").getIonization(), Normalization.Max(100));
 		final PatternGenerator generatorRaw = 
 				new PatternGenerator(new Charge(1), Normalization.Max(100));
 		final MolecularFormula glucose = MolecularFormula.parse("C6H12O6");
