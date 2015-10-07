@@ -121,6 +121,7 @@ public class FTJsonWriter {
         final ArrayList<LossAnnotation<Object>> custom = new ArrayList<LossAnnotation<Object>>();
         for (LossAnnotation<Object> t : lAnos) {
             if (t.isAlias()) continue;
+            if (t.get(l)==null) continue;
             if (!FTSpecials.writeSpecialAnnotation(writer, t.getAnnotationType(), t.get(l))) {
                 custom.add(t);
             }
@@ -143,18 +144,19 @@ public class FTJsonWriter {
 
         writer.key("molecularFormula");
         writer.value(f.getFormula().toString());
-
-        writer.key("mz"); writer.value(p.getMass());
-        writer.key("intensity"); writer.value(p.getIntensity());
-
-        if (p!=null && ion!=null) {
-            writer.key("massdev");
-            writer.value(Deviation.fromMeasurementAndReference(ion.subtractFromMass(p.getMass()), f.getFormula().getMass()).toString());
+        if (p != null) {
+            writer.key("mz"); writer.value(p.getMass());
+            writer.key("intensity"); writer.value(p.getIntensity());
+            if (ion!=null) {
+                writer.key("massdev");
+                writer.value(Deviation.fromMeasurementAndReference(ion.subtractFromMass(p.getMass()), f.getFormula().getMass()).toString());
+            }
         }
 
         final ArrayList<FragmentAnnotation<Object>> custom = new ArrayList<FragmentAnnotation<Object>>();
         for (FragmentAnnotation<Object> t : fAnos) {
             if (t.isAlias()) continue;
+            if (t.get(f)==null) continue;
             if (!FTSpecials.writeSpecialAnnotation(writer, t.getAnnotationType(), t.get(f))) {
                 custom.add(t);
             }

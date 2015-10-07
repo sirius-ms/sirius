@@ -20,7 +20,9 @@ package de.unijena.bioinf.babelms.mgf;
 import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
 
@@ -80,6 +82,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         boolean reading=false;
         MutableMs2Spectrum spec = null;
         while ((line=reader.readLine())!=null) {
+            if (line.isEmpty()) continue;
             if (!reading && line.startsWith("BEGIN IONS")) {
                 spec = new MutableMs2Spectrum(prototype);
                 reading=true;
@@ -114,9 +117,9 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             if (spec.getIonization()==null || spec.getIonization().getCharge() != charge)
                 spec.setIonization(new Charge(charge));
         } else if (keyword.startsWith("ION")) {
-            final Ionization ion = PeriodicTable.getInstance().ionByName(value);
+            final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(value);
             if (ion==null) throw new IOException("Unknown ion '" + value +"'");
-            else spec.setIonization(ion);
+            else spec.setIonization(ion.getIonization());
         } else if (keyword.contains("LEVEL")) {
             spec.setMsLevel(Integer.parseInt(value));
         } else {
@@ -132,13 +135,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         while (iter.hasNext()) buffer.addLast(iter.next());
         if (buffer.isEmpty()) return null;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
-        exp.setMs2Spectra(new ArrayList<Ms2Spectrum<Peak>>());
-        exp.setMs1Spectra(new ArrayList<Spectrum<Peak>>());
+        exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
+        exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
         exp.setIonMass(buffer.peekFirst().getPrecursorMz());
         while (!buffer.isEmpty() && Math.abs(buffer.peekFirst().getPrecursorMz()-exp.getIonMass()) < 0.002) {
             final Ms2Spectrum<Peak> spec = buffer.pollFirst();
-            if (spec.getMsLevel()==1) exp.getMs1Spectra().add(spec);
-            else exp.getMs2Spectra().add(spec);
+            if (spec.getMsLevel()==1) exp.getMs1Spectra().add(new SimpleSpectrum(spec));
+            else exp.getMs2Spectra().add(new MutableMs2Spectrum(spec));
+            if (exp.getPrecursorIonType()==null && spec.getIonization()!=null) exp.setPrecursorIonType(PrecursorIonType.getPrecursorIonType(spec.getIonization()));
         }
         return exp;
     }

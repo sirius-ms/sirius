@@ -25,9 +25,6 @@ import de.unijena.bioinf.babelms.DataWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
-/**
- * Created by kaidu on 12/5/13.
- */
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException{
@@ -36,7 +33,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writer.newLine();
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass()!=0d);
-        writeIfAvailable(writer, ">ionization", data.getIonization());
+        writeIfAvailable(writer, ">ionization", data.getPrecursorIonType().toString());
         writer.newLine();
         for (Spectrum spec : data.getMs1Spectra()) {
             writeMs1(writer, spec);

@@ -18,9 +18,9 @@
 package de.unijena.bioinf.babelms.dot;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
-import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
@@ -59,10 +59,13 @@ public class FTDotWriter {
         if (!(writer instanceof BufferedWriter)) writer=new BufferedWriter(writer);
         writer.write("strict digraph {\n");
         final FragmentAnnotation<Peak> peakAno = tree.getFragmentAnnotationOrThrow(Peak.class);
+        final LossAnnotation<InsourceFragmentation> insource = tree.getLossAnnotationOrNull(InsourceFragmentation.class);
         // normalize intensities
         double maxInt = 1e-12;
-        for (Fragment f : tree.getFragments())
-        maxInt = Math.max(maxInt, peakAno.get(f).getIntensity());
+        for (Fragment f : tree.getFragments()) {
+            if (peakAno.get(f)==null) continue;
+            maxInt = Math.max(maxInt, peakAno.get(f).getIntensity());
+        }
 
         final boolean hasScores;
         final FragmentAnnotation<Score> fscore = tree.getFragmentAnnotationOrNull(Score.class);
@@ -74,7 +77,10 @@ public class FTDotWriter {
             hasScores = true;
         }
 
-        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+        final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
+        Ionization ion = tree.getAnnotationOrNull(Ionization.class);
+        final PrecursorIonType iontype = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        if (ion==null) ion = iontype.getIonization();
 
         writer.write("\tnode [shape=rect,style=rounded];\n");
         if (hasScores) {
@@ -86,32 +92,46 @@ public class FTDotWriter {
         }
 
         for (Fragment f : tree.getFragments()) {
-            final MolecularFormula formula = (includeIon && ion instanceof IonMode) ? ion.getAtoms().add(f.getFormula()) : f.getFormula();
+            final PrecursorIonType ftion = (ionPerFragment==null ? null : ionPerFragment.get(f));
+            final MolecularFormula formula = f.getFormula();
+            final MolecularFormula exactIonFormula;
+            if (ftion!=null) exactIonFormula = ftion.neutralMoleculeToPrecursorIon(formula);
+            else exactIonFormula = ion.getAtoms().add(formula);
             writer.write("\t");
-            writer.write(formula.toString());
+            writer.write(exactIonFormula.toString());
             writer.write(" [label=");
             writer.write(htmlStart());
-            writer.write(htmlFormula(formula,ion));
-            writer.write(htmlSmall());
-            writer.write(htmlNewline());
-            writer.write(" ");
-            writer.write(htmlNewline());
+            if (ftion!=null)
+                writer.write(htmlFormula(formula,ftion));
+            else
+                writer.write(htmlFormula(formula,ion));
             final Peak p = peakAno.get(f);
-            writer.write(htmlLabel(String.format(Locale.US, "%.4f Da, %.2f %%", p.getMass(), p.getIntensity() * 100d / maxInt)));
-            if (hasScores) {
+            if (p != null) {
+                writer.write(htmlSmall());
                 writer.write(htmlNewline());
-                double score = fscore.get(f).sum();
-                if (!f.isRoot()) score += lscore.get(f.getIncomingEdge()).sum();
-                writer.write(htmlLabel(String.format(Locale.US, "%.4f", score)));
+                writer.write(" ");
+                writer.write(htmlNewline());
+                writer.write(htmlLabel(String.format(Locale.US, "%.4f Da, %.2f %%", p.getMass(), p.getIntensity() * 100d / maxInt)));
+                if (hasScores) {
+                    writer.write(htmlNewline());
+                    double score = fscore.get(f).sum();
+                    if (!f.isRoot() && lscore.get(f.getIncomingEdge())!=null) score += lscore.get(f.getIncomingEdge()).sum();
+                    writer.write(htmlLabel(String.format(Locale.US, "%.4f", score)));
+                }
+                writer.write(htmlEndSmall());
             }
-            writer.write(htmlEndSmall());
             writer.write(htmlEnd());
             writer.write("];\n");
         }
         writer.write("\n");
         for (Loss l : tree.losses()) {
-            final MolecularFormula sf = (includeIon && ion instanceof IonMode) ? ion.getAtoms().add(l.getSource().getFormula()) : l.getSource().getFormula();
-            final MolecularFormula tf = (includeIon && ion instanceof IonMode) ? ion.getAtoms().add(l.getTarget().getFormula()) : l.getTarget().getFormula();
+            final MolecularFormula sf, tf;
+            final PrecursorIonType ftionS = (ionPerFragment==null ? null : ionPerFragment.get(l.getSource()));
+            final PrecursorIonType ftionT = (ionPerFragment==null ? null : ionPerFragment.get(l.getTarget()));
+            if (ftionS!=null) sf = ftionS.neutralMoleculeToPrecursorIon(l.getSource().getFormula());
+            else sf = ion.getAtoms().add(l.getSource().getFormula());
+            if (ftionT!=null) tf = ftionT.neutralMoleculeToPrecursorIon(l.getTarget().getFormula());
+            else tf = ion.getAtoms().add(l.getTarget().getFormula());
             writer.write("\t");
             writer.write(sf.toString());
             writer.write(" -> ");
@@ -119,6 +139,10 @@ public class FTDotWriter {
             writer.write(" [label=");
             writer.write(htmlStart());
             writer.write(htmlFormula(l.getFormula()));
+            if (insource!=null && insource.get(l)!=null && insource.get(l).isInsource()) {
+                writer.write(htmlNewline());
+                writer.write("(in-source)");
+            }
             writer.write(htmlEnd());
             writer.write("];\n");
         }
@@ -242,15 +266,31 @@ public class FTDotWriter {
             }
             normalization = maxInt;
         }
+        final FragmentAnnotation<PrecursorIonType> ionPerFragment = graph.getFragmentAnnotationOrNull(PrecursorIonType.class);
+        Ionization ion = graph.getAnnotationOrNull(Ionization.class);
+        final PrecursorIonType iontype = graph.getAnnotationOrThrow(PrecursorIonType.class);
+        if (ion==null) ion = iontype.getIonization();
         for (Fragment f : new PostOrderTraversal<Fragment>(cursor)) {
+            PrecursorIonType ftion = null;
+            if (ionPerFragment!=null) ftion = ionPerFragment.get(f);
             ids.put(f, ++id);
             buf.write("v" + id + " [label=");
             buf.write(htmlStart());
-            buf.write(htmlFormula(f.getFormula()));
+            if (ftion != null) {
+                buf.write(htmlFormula(f.getFormula(), ftion));
+            } else {
+                buf.write(htmlFormula(f.getFormula(), ion));
+            }
             buf.write(htmlNewline());
             buf.write(String.format(locale, "%.4f Da, %.2f %%", peakAno.get(f).getMass(), peakAno.get(f).getIntensity() / normalization * 100));
             buf.write(htmlSmall());
-            final double dev = peakAno.get(f).getMass() - graph.getAnnotationOrThrow(Ionization.class).addToMass(f.getFormula().getMass());
+
+            final double dev;
+            if (ftion != null) {
+                dev = peakAno.get(f).getMass() - ftion.neutralMassToPrecursorMass(f.getFormula().getMass());
+            } else {
+                dev = peakAno.get(f).getMass() - ion.addToMass(f.getFormula().getMass());
+            }
             buf.write(htmlNewline());
             buf.write(String.format(locale, "MassDev: %.4f ppm, %.4f Da", dev * 1e6d / peakAno.get(f).getMass(), dev));
             buf.write(htmlNewline());
@@ -344,11 +384,30 @@ public class FTDotWriter {
         final String s = f.toString();
         if (!HTML) return s;
         final String str = s.replaceAll("(\\d+)", "<SUB>$1</SUB>");
-        if (!includeIon) return str;
         if (ion.getCharge() > 0) {
             return str + "<SUP>" + (ion.getCharge()>1 ? ion.getCharge() : "") + "+</SUP>";
         } else {
             return str + "<SUP>" + (ion.getCharge()<-1 ? -ion.getCharge() : "") + "-</SUP>";
+        }
+    }
+
+    public String htmlFormula(MolecularFormula f, PrecursorIonType ion) {
+        String s = f.toString();
+        if (!HTML) return s;
+        if (includeIon) {
+            if (!ion.getInSourceFragmentation().isEmpty()) {
+                s = s + " - " + ion.getInSourceFragmentation().toString();
+            }
+            final MolecularFormula adduct = ion.getAdductAndIons();
+            if (!adduct.isEmpty()) {
+                s = s + " + " + adduct.toString();
+            }
+        }
+        s = s.replaceAll("(\\d+)", "<SUB>$1</SUB>");
+        if (ion.getCharge() > 0) {
+            return s + "<SUP>" + (ion.getCharge()>1 ? ion.getCharge() : "") + "+</SUP>";
+        } else {
+            return s + "<SUP>" + (ion.getCharge()<-1 ? -ion.getCharge() : "") + "-</SUP>";
         }
     }
 

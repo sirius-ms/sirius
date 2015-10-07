@@ -19,7 +19,9 @@ package de.unijena.bioinf.babelms.json;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.ft.InsourceFragmentation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -28,7 +30,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONWriter;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 class FTSpecials {
 
@@ -66,6 +70,36 @@ class FTSpecials {
             @Override
             public Ionization readJSON(JSONObject obj) throws JSONException {
                 if (!obj.has("ion")) return null;
+                return PeriodicTable.getInstance().ionByName(obj.getString("ion")).getIonization();
+            }
+        });
+
+        add(handlers, InsourceFragmentation.class, new Handler<InsourceFragmentation>() {
+            @Override
+            public void writeJSON(JSONWriter writer, InsourceFragmentation obj) throws JSONException {
+                if (obj.isInsource()) {
+                    writer.key("insourceFragmentation");
+                    writer.value(true);
+                }
+            }
+
+            @Override
+            public InsourceFragmentation readJSON(JSONObject obj) throws JSONException {
+                if (!obj.has("insourceFragmentation")) return new InsourceFragmentation(false);
+                else return new InsourceFragmentation(obj.getBoolean("insourceFragmentation"));
+            }
+        });
+
+        add(handlers, PrecursorIonType.class, new Handler<PrecursorIonType>() {
+            @Override
+            public void writeJSON(JSONWriter writer, PrecursorIonType obj) throws JSONException {
+                writer.key("precursorIonType");
+                writer.value(obj.toString());
+            }
+
+            @Override
+            public PrecursorIonType readJSON(JSONObject obj) throws JSONException {
+                if (!obj.has("precursorIonType")) return null;
                 return PeriodicTable.getInstance().ionByName(obj.getString("ion"));
             }
         });

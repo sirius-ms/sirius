@@ -21,7 +21,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.chemdb.CompoundQuery;
-import de.unijena.bioinf.babelms.chemspider.ChemSpider;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -45,7 +44,7 @@ public class Pubchem implements CompoundQuery {
     public static void main(String[] args) {
         final Pubchem pubchem = new Pubchem();
         final Set<MolecularFormula> formulas = pubchem.findMolecularFormulasByMass(
-                PeriodicTable.getInstance().ionByName("[M+H]+").subtractFromMass(314.1364), new Deviation(15, 0.0025));
+                PeriodicTable.getInstance().ionByName("[M+H]+").precursorMassToNeutralMass(314.1364), new Deviation(15, 0.0025));
         System.out.println(formulas.size());
         //formulas.addAll(new ChemSpider().findMolecularFormulasByMass(194.080376, new Deviation(5)));
         //System.out.println(formulas.size());
