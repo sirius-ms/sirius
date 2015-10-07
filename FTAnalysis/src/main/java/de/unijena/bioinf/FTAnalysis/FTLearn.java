@@ -19,10 +19,7 @@ package de.unijena.bioinf.FTAnalysis;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
@@ -322,7 +319,7 @@ public class FTLearn {
                     ++computedTrees;
                     massDevs.add(new XYZ(
                                     input.getParentPeak().getOriginalMz(),
-                                    input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
+                                    input.getExperimentInformation().getPrecursorIonType().precursorMassToNeutralMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
                                     2d)
                     );
                     // get signal peaks
@@ -592,7 +589,7 @@ public class FTLearn {
                     ++computedTrees;
                     massDevs.add(new XYZ(
                                     input.getParentPeak().getOriginalMz(),
-                                    input.getExperimentInformation().getIonization().subtractFromMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
+                                    input.getExperimentInformation().getPrecursorIonType().precursorMassToNeutralMass(input.getParentPeak().getOriginalMz()) - correctFormula.getMass(),
                                     2d)
                     );
                     // get signal peaks
@@ -1506,7 +1503,7 @@ public class FTLearn {
                     db.compounds.add(new Compound(input.getExperimentInformation().getMolecularFormula(), in.getFileName()));
                     lock.unlock();
                     // 1. get deviation of precursor
-                    final double realMz = input.getExperimentInformation().getIonization().addToMass(input.getExperimentInformation().getMolecularFormula().getMass());
+                    final double realMz = input.getExperimentInformation().getPrecursorIonType().neutralMassToPrecursorMass(input.getExperimentInformation().getMolecularFormula().getMass());
                     final double mz;
                     if (input.getParentPeak().isSynthetic()) {
                         // search for parent peak in ms1 spectra
@@ -1558,8 +1555,8 @@ public class FTLearn {
             public void call(InputFile in) {
                 final Ms2Experiment exp = in.getExperiment();
                 final ProcessedInput input = new Analyzer(analyzer).preprocess(exp);
-                final MassToFormulaDecomposer decomposer = analyzer.getDecomposerFor(input.getExperimentInformation().getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
-                final Ionization ion = input.getExperimentInformation().getIonization();
+                final MassToFormulaDecomposer decomposer = analyzer.getDecomposerFor(new ChemicalAlphabet(exp.getMolecularFormula().elementArray()));
+                final PrecursorIonType ion = input.getExperimentInformation().getPrecursorIonType();
                 // 2. get intensity of noise peaks
                 final MolecularFormula precursor = input.getExperimentInformation().getMolecularFormula();
                 final Map<Element, Interval> haveToMatchParent = precursor.getTableSelection().toMap();
@@ -1569,7 +1566,7 @@ public class FTLearn {
                 final TDoubleArrayList noiseInts = new TDoubleArrayList(input.getMergedPeaks().size());
                 final TDoubleArrayList sigInts = new TDoubleArrayList(input.getMergedPeaks().size());
                 for (ProcessedPeak p : input.getMergedPeaks()) {
-                    if (decomposer.decomposeToFormulas(ion.subtractFromMass(p.getMz()), analyzer.getDefaultProfile().getAllowedMassDeviation(), haveToMatchParent, new ValenceFilter()).size() == 0) {
+                    if (decomposer.decomposeToFormulas(ion.getIonization().subtractFromMass(p.getMz()), analyzer.getDefaultProfile().getAllowedMassDeviation(), haveToMatchParent, new ValenceFilter()).size() == 0) {
                         noiseInts.add(Math.max(1e-16, p.getRelativeIntensity()));
                     } else {
                         sigInts.add(Math.max(1e-16, p.getRelativeIntensity()));

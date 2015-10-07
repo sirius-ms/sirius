@@ -17,23 +17,6 @@
  */
 package de.unijena.bioinf.siriuscli;
 
-import com.lexicalscope.jewel.cli.ArgumentValidationException;
-import com.lexicalscope.jewel.cli.Cli;
-import com.lexicalscope.jewel.cli.CliFactory;
-import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.FragmentationTree.Main;
-import de.unijena.bioinf.FragmentationTree.QueryOptions;
-import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.babelms.chemdb.DBMolecularFormulaCache;
-
-import java.io.File;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -52,7 +35,7 @@ public class QueryCommand implements Command {
 
     private final static Pattern NUM_PATTERN = Pattern.compile("^\\s*\\d+");
     @Override
-    public void run(String[] args) {
+    public void run(String[] args) {/*
         final Cli<QueryOptions> cli = CliFactory.createCli(QueryOptions.class);
         try {
             final QueryOptions options = cli.parseArguments(args);
@@ -81,7 +64,7 @@ public class QueryCommand implements Command {
                 out.println("Error while parsing command line arguments: " + e.getMessage());
             }
             out.println(cli.getHelpMessage());
-        }
+        }*/
     }
 
     @Override

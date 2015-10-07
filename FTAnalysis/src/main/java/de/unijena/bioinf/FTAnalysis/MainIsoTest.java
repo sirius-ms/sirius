@@ -75,7 +75,7 @@ public class MainIsoTest {
                 new double[]{0.8, 0.5, 0.2, 0.1, 0.05, 0.01, 0.0001},
                 new double[]{isoPPm*1, isoPPm*1.1, isoPPm*1.2, isoPPm*2, isoPPm*2.5, isoPPm*10, isoPPm*30}
         );
-        Spectrums.normalize(ms, Normalization.Sum(1));
+        Spectrums.performNormalization(ms, Normalization.Sum(1));
         final Random r = new Random();
         for (int i=0; i < ms.size(); ++i) {
             // mass deviation
@@ -85,9 +85,9 @@ public class MainIsoTest {
             ms.setMzAt(i, massDist.sample());
             // intensity deviation:
             ms.setIntensityAt(i, in * Math.exp(inDist.sample()));
-            Spectrums.normalize(ms, Normalization.Sum(1));
+            Spectrums.performNormalization(ms, Normalization.Sum(1));
         }
-        Spectrums.normalize(ms, Normalization.Sum(1));
+        Spectrums.performNormalization(ms, Normalization.Sum(1));
         spec = new ChargedSpectrum(ms, spec.getIonization());
         final DeIsotope deiso = new DeIsotope(isoPPm, isoPPm*100d*1e-6, alphabet, PeriodicTable.getInstance().getDistribution(),
                 3, 3, 1, 1, 1, 1, 50, 0d);

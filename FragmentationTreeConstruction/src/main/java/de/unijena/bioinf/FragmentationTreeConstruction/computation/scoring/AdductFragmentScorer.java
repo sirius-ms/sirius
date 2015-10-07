@@ -28,6 +28,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
  * Na+ and K+ might be typical adducts in MS/MS. If a compound is ionized with such an adduct, it shouldn't loose it
  * during fragmentation. I exclude Cl as this element might also occur in organic compounds.
  */
+@Deprecated
 public class AdductFragmentScorer implements LossScorer<Element[]> {
 
     protected double penalty = Math.log(0.05);
@@ -35,7 +36,7 @@ public class AdductFragmentScorer implements LossScorer<Element[]> {
     @Override
     public Element[] prepare(ProcessedInput input) {
         final PeriodicTable pt = PeriodicTable.getInstance();
-        if (input.getExperimentInformation().getIonization().getCharge() < 0) {
+        if (input.getExperimentInformation().getPrecursorIonType().getCharge() < 0) {
             return new Element[]{};
         } else {
             return new Element[]{pt.getByName("Na"), pt.getByName("K")};

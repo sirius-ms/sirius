@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing;
 
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -38,6 +39,6 @@ public interface Normalizer {
      * @return a list for each spectrum containing a list of processed peaks. Each peak should have a backreference to
      *         the original peak as well as local, global and (according to NormalizationType) relative intensities
      */
-    public List<List<ProcessedPeak>> normalize(Ms2Experiment experiment, NormalizationType type);
+    public List<List<ProcessedPeak>> normalize(Ms2Experiment experiment, MeasurementProfile profile, NormalizationType type);
 
 }

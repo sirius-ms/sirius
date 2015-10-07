@@ -17,18 +17,19 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class DecompositionList {
 
     private final List<ScoredMolecularFormula> decompositions;
 
-    public static DecompositionList fromFormulas(List<MolecularFormula> formulas) {
-        final ArrayList<ScoredMolecularFormula> decompositions = new ArrayList<ScoredMolecularFormula>(formulas.size());
+    public static DecompositionList fromFormulas(Iterable<MolecularFormula> formulas) {
+        final ArrayList<ScoredMolecularFormula> decompositions = new ArrayList<ScoredMolecularFormula>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
         for (MolecularFormula f : formulas) decompositions.add(new ScoredMolecularFormula(f,0d));
         return new DecompositionList(decompositions);
 
@@ -36,6 +37,25 @@ public class DecompositionList {
 
     public DecompositionList(List<ScoredMolecularFormula> decompositions) {
         this.decompositions = decompositions;
+    }
+
+    public Collection<MolecularFormula> getFormulas() {
+        return new AbstractCollection<MolecularFormula>() {
+            @Override
+            public Iterator<MolecularFormula> iterator() {
+                return Iterators.transform(decompositions.iterator(), new Function<ScoredMolecularFormula, MolecularFormula>() {
+                    @Override
+                    public MolecularFormula apply(ScoredMolecularFormula input) {
+                        return input.getFormula();
+                    }
+                });
+            }
+
+            @Override
+            public int size() {
+                return decompositions.size();
+            }
+        };
     }
 
     public List<ScoredMolecularFormula> getDecompositions() {

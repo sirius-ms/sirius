@@ -17,35 +17,29 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.normalizing;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.List;
 
 /**
  * Normalizes such that the base peak gets intensity 1.0 and all other peaks have intensities relative to the base peak.
- * If the parent peak is the base peak, then use the second most intensive peak to normalize.
+ * If the parent peak is the base peak, then use the second most intensive peak to performNormalization.
  * This fix problems with spectra where the parent peak has 99% of sumed intensities.
  */
 public class LeaveOutParentPeakMaxNormalizer implements Normalizer {
     @Override
-    public List<List<ProcessedPeak>> normalize(Ms2Experiment experiment, NormalizationType type) {
+    public List<List<ProcessedPeak>> normalize(Ms2Experiment experiment, MeasurementProfile profile, NormalizationType type) {
         final double parentMass  = experiment.getIonMass();
         final ArrayList<List<ProcessedPeak>> peaklist = new ArrayList<List<ProcessedPeak>>(100);
-        final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation().divide(2d);
-        final Ionization ion = experiment.getIonization();
+        final Deviation mergeWindow = profile.getAllowedMassDeviation().divide(2d);
         double globalMaxIntensity = 0d;
         for (Ms2Spectrum<? extends Peak> s : experiment.getMs2Spectra()) {
             final ArrayList<ProcessedPeak> peaks = new ArrayList<ProcessedPeak>(s.size());
             for (Peak p : s) peaks.add(new ProcessedPeak((MS2Peak)p));
-            // now normalize spectrum. Ignore peaks near to the parent peak
+            // now performNormalization spectrum. Ignore peaks near to the parent peak
             final double lowerbound = parentMass - 0.75d;
             double scale = 0d;
             for (int i=0; i < peaklist.size() && peaks.get(i).getMz() < lowerbound; ++i) {

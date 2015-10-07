@@ -93,9 +93,9 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
 
          //todo peaks sorted by mass?
 
-        this.deviation = input.getExperimentInformation().getMeasurementProfile().getAllowedMassDeviation(); //todo what about intensities in deviation?
-        this.ionization = input.getExperimentInformation().getIonization();
-        final FormulaConstraints constraints = input.getExperimentInformation().getMeasurementProfile().getFormulaConstraints();
+        this.deviation = input.getMeasurementProfile().getAllowedMassDeviation(); //todo what about intensities in deviation?
+        this.ionization = input.getExperimentInformation().getPrecursorIonType().getIonization();
+        final FormulaConstraints constraints = input.getMeasurementProfile().getFormulaConstraints();
         //todo group pattern with same monosisotopic -> only have to decompose once
 
         //Estimate all possible pattern
@@ -181,7 +181,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
                     for (int i = 0; i < peakList.size(); i++) {
                         final Pattern pattern = new Pattern(peakList.subList(0, i+1));
 
-                        final double[] scores = patternScorer.scoreFormulas(new SimpleSpectrum(pattern.createChargedSpectrum()), decompositions, experiment);
+                        final double[] scores = patternScorer.scoreFormulas(new SimpleSpectrum(pattern.createChargedSpectrum()), decompositions, experiment, patternScorer.getDefaultProfile());
                         if (VERBOSE) System.out.println("scores: "+Arrays.toString(scores));
                         final int scorePos = bestScorePos(scores);
                         if (scorePos >= 0){
@@ -283,7 +283,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
             if (pattern.getBestDecomposition().equals(formula)) return pattern.getScore();
             //todo how to score formulas which had not the best score to the isotope pattern?
             //todo recalculate vs. storing all?
-            return Math.max(patternScorer.scoreFormulas(new SimpleSpectrum(pattern.createChargedSpectrum()), Collections.singletonList(formula), input.getExperimentInformation())[0], penalty); //max to avoid -Infinity score
+            return Math.max(patternScorer.scoreFormulas(new SimpleSpectrum(pattern.createChargedSpectrum()), Collections.singletonList(formula), input.getExperimentInformation(), patternScorer.getDefaultProfile())[0], penalty); //max to avoid -Infinity score
         }
 
         return penalty; //todo how to score peaks, which weren't rated as mono isotopic according to indepentent set solver

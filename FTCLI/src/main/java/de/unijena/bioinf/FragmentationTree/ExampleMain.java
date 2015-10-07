@@ -20,10 +20,10 @@ package de.unijena.bioinf.FragmentationTree;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
 import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -45,7 +45,7 @@ public class ExampleMain {
         // load ms file
         final Ms2Experiment experiment = new GenericParser<Ms2Experiment>(new JenaMsParser()).parseFile(new File(fileName));
 
-        final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(experiment);
+        final MutableMs2Experiment exp = new MutableMs2Experiment(experiment);
 
         // analyze ms/ms with SIRIUS
         final ProcessedInput preprocessing = profile.fragmentationPatternAnalysis.preprocessing(experiment);

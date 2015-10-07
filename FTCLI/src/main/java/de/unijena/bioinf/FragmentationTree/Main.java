@@ -17,45 +17,6 @@
  */
 package de.unijena.bioinf.FragmentationTree;
 
-import com.lexicalscope.jewel.cli.CliFactory;
-import com.lexicalscope.jewel.cli.HelpRequestedException;
-import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.AbstractRecalibrationStrategy;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.inspection.GraphOutput;
-import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
-import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.Parser;
-import de.unijena.bioinf.babelms.chemdb.DBMolecularFormulaCache;
-import de.unijena.bioinf.babelms.chemdb.Databases;
-import de.unijena.bioinf.babelms.dot.FTDotWriter;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.babelms.ms.JenaMsParser;
-import de.unijena.bioinf.sirius.cli.ProfileOptions;
-import gnu.trove.map.hash.TObjectIntHashMap;
-
-import java.io.*;
-import java.util.*;
-
 public class Main {
 
     public static final String VERSION = "1.21";
@@ -70,6 +31,8 @@ public class Main {
 
     public final static String VERSION_STRING = "FragmentationPatternAnalysis " + VERSION + "\n" + CITE + "\nusage:\n" + USAGE;
 
+    public static void main(String[] args) {}
+/*
     private static boolean DEBUG_ONLY_INT = true;
 
     private static boolean DEBUG = false;
@@ -197,12 +160,12 @@ public class Main {
     public static Ms2Experiment parseFile(File f, MeasurementProfile profile) throws IOException {
         final GenericParser<Ms2Experiment> parser = new GenericParser<Ms2Experiment>(getParserFor(f));
         final Ms2Experiment experiment = parser.parseFile(f);
-        final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(experiment);
+        final MutableMs2Experiment impl = new MutableMs2Experiment(experiment);
         {
-            if (impl.getIonization() == null) {
+            if (impl.getPrecursorIonType() == null) {
                 final MolecularFormula formula = experiment.getMolecularFormula();
                 final double ionMass = experiment.getIonMass() - experiment.getMoleculeNeutralMass();
-                final Ionization ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-3, experiment.getIonization().getCharge());
+                final PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(ionMass, 1e-3, experiment.getPrecursorIonType().getCharge());
                 impl.setIonization(ion);
             } else if (impl.getIonization().getName().equals("[M+H-H2O]X+")) {
                 // TODO: QUICKNDIRTY
@@ -467,9 +430,9 @@ public class Main {
 
                 }
 
-                /*
+                *//*
                     FILTER BY DATABASE (if activated)
-                 */
+                 *//*
                 final int decompositionListSize = input.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
                 if (database != Databases.NONE) {
                     final ArrayList<ScoredMolecularFormula> formulas =
@@ -485,9 +448,9 @@ public class Main {
                                 + decompositionListSize + " candidates.");
                 }
 
-                /*
+                *//*
                 TODO: Push into separate branch "newScores2013"
-                 */
+                 *//*
                 final TObjectIntHashMap<MolecularFormula> isoRankingMap;
                 // isoN = Rank of correct compound if you remove all explanations before it that have an isotope rank of
                 // worse than N % relative to all decompositions
@@ -628,9 +591,9 @@ public class Main {
 
                 if (DEBUG_MODE) lowerbound = 0d;
 
-                if (experiment.getMolecularFormula() != null /*&& correctRankInPmds < 1000*/ /* TODO: What does this mean? */) {
+                if (experiment.getMolecularFormula() != null *//*&& correctRankInPmds < 1000*//* *//* TODO: What does this mean? *//*) {
                     correctTree = analyzer.computeTrees(input).onlyWith(Arrays.asList(correctFormula)).withoutRecalibration().optimalTree();
-                    /*
+                    *//*
                     if (correctTree != null) {
                         final TreeScoring scoring = correctTree.getAnnotationOrThrow(TreeScoring.class);
                         if (options.getWrongPositive() && correctTree != null)
@@ -643,7 +606,7 @@ public class Main {
                                 new File("graph.txt"));
 
                     }
-                    */
+                    *//*
                     if (verbose) {
                         if (correctTree != null) {
                             printResult(correctTree);
@@ -673,7 +636,7 @@ public class Main {
                     }
                 }
                 if (correctFormula != null) blacklist.add(correctFormula);
-                final int NumberOfTreesToCompute = (/*options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() :*/ options.getTrees());
+                final int NumberOfTreesToCompute = (*//*options.isIsotopeFilteringCheat() ? input.getParentMassDecompositions().size() :*//* options.getTrees());
                 final int TreesToConsider = options.getTrees();
                 int rank = 1;
                 double optScore = Double.NEGATIVE_INFINITY;//(correctTree==null) ? Double.NEGATIVE_INFINITY : correctTree.getScore();
@@ -768,7 +731,7 @@ public class Main {
                                 ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).setDeviationScale(1d);
                                 if (verbose)
                                     System.out.print("Recalibrate " + trees.get(i).getRoot().getFormula().toString() + "(" + trees.get(i).getAnnotationOrThrow(TreeScoring.class).getOverallScore() + ")");
-                                /*
+                                *//*
                                 {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy)((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).getMethod();
                                     //method.setMaxDeviation(analyzer.getDefaultProfile().getAllowedMassDeviation().multiply(1d));
@@ -778,7 +741,7 @@ public class Main {
                                     method.setMaxDeviation(new Deviation(20, 0.1)); // "disable" max deviation
                                     ((HypothesenDrivenRecalibration)analyzer.getRecalibrationMethod()).setDeviationScale(1d);
                                 }
-                                */
+                                *//*
                                 {
                                     AbstractRecalibrationStrategy method = (AbstractRecalibrationStrategy) ((HypothesenDrivenRecalibration) analyzer.getRecalibrationMethod()).getMethod();
                                     method.setMaxDeviation(new Deviation(10, 5e-4d));
@@ -840,9 +803,9 @@ public class Main {
                     }
 
 
-                    /*
+                    *//*
                    TODO: Push into separate branch "newScores2013"
-                    */
+                    *//*
                     if (isoRankingMap != null) {
                         iso20 = 1;
                         iso10 = 1;
@@ -1160,6 +1123,6 @@ public class Main {
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
 }

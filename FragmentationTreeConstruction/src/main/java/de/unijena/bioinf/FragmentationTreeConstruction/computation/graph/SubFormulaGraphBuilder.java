@@ -19,6 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -40,7 +41,8 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
         graph.addAnnotation(ProcessedInput.class, input);
         graph.addFragmentAnnotation(ProcessedPeak.class);
         graph.getOrCreateAnnotation(ScoredFormulaMap.class);
-        graph.addAnnotation(Ionization.class, input.getExperimentInformation().getIonization());
+        graph.addAnnotation(Ionization.class, input.getExperimentInformation().getPrecursorIonType().getIonization());
+        graph.addAnnotation(PrecursorIonType.class, input.getExperimentInformation().getPrecursorIonType());
         return graph;
     }
 

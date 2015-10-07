@@ -19,16 +19,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class NormalizeToSumPreprocessor implements Preprocessor {
@@ -44,19 +37,12 @@ public class NormalizeToSumPreprocessor implements Preprocessor {
     }
 
     @Override
-    public Ms2Experiment process(Ms2Experiment experiment) {
-        List<? extends Ms2Spectrum<? extends Peak>> specs = experiment.getMs2Spectra();
-        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>(specs.size());
+    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile prof) {
         if (onlyForRelativeIntensities && !hasRelativeIntensities(experiment)) return experiment;
-        for (Ms2Spectrum spec : specs) {
-            final SimpleMutableSpectrum ms = new SimpleMutableSpectrum(spec);
-            Spectrums.normalize(ms, Normalization.Sum(100d));
-            final Ms2SpectrumImpl ms2 = new Ms2SpectrumImpl(ms, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount());
-            spectra.add(ms2);
+        for (MutableMs2Spectrum spec : experiment.getMs2Spectra()) {
+            Spectrums.normalize(spec, Normalization.Sum(100d));
         }
-        final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(experiment);
-        exp.setMs2Spectra(spectra);
-        return exp;
+        return experiment;
     }
 
     public boolean hasRelativeIntensities(Ms2Experiment experiment) {

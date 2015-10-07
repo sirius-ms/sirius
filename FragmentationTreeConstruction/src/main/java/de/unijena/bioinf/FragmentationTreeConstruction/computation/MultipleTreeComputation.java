@@ -73,10 +73,23 @@ public class MultipleTreeComputation {
         return new MultipleTreeComputation(analyzer, input, formulas, lowerbound, maximalNumber, Math.max(1, Math.min(guessNumberOfThreads(), numberOfThreads)), recalibration, backbones);
     }
 
-    public MultipleTreeComputation onlyWith(Iterable<MolecularFormula> formulas) {
+    public MultipleTreeComputation onlyWithIons(Iterable<MolecularFormula> formulas) {
         final HashSet<MolecularFormula> whitelist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) whitelist.add(iter.next());
+        final List<ScoredMolecularFormula> pmds = new ArrayList<ScoredMolecularFormula>(whitelist.size());
+        for (ScoredMolecularFormula f : this.formulas) {
+            if (whitelist.contains(f.getFormula())) {
+                pmds.add(f);
+            }
+        }
+        return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
+    }
+
+    public MultipleTreeComputation onlyWith(Iterable<MolecularFormula> formulas) {
+        final HashSet<MolecularFormula> whitelist = new HashSet<MolecularFormula>();
+        final Iterator<MolecularFormula> iter = formulas.iterator();
+        while (iter.hasNext()) whitelist.add(input.getExperimentInformation().getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(iter.next()));
         final List<ScoredMolecularFormula> pmds = new ArrayList<ScoredMolecularFormula>(whitelist.size());
         for (ScoredMolecularFormula f : this.formulas) {
             if (whitelist.contains(f.getFormula())) {
@@ -93,7 +106,7 @@ public class MultipleTreeComputation {
     public MultipleTreeComputation without(Iterable<MolecularFormula> formulas) {
         final HashSet<MolecularFormula> blacklist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();
-        while (iter.hasNext()) blacklist.add(iter.next());
+        while (iter.hasNext()) blacklist.add(input.getExperimentInformation().getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(iter.next()));
         if (blacklist.isEmpty()) return this;
         final List<ScoredMolecularFormula> pmds = new ArrayList<ScoredMolecularFormula>(Math.max(0, this.formulas.size() - blacklist.size()));
         for (ScoredMolecularFormula f : this.formulas) {

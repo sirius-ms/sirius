@@ -46,12 +46,12 @@ public class SearchMatchingInputParentPeak implements ParentPeakDetector {
     private double delta = 1e-5;
 
     @Override
-    public ProcessedPeak detectParentPeak(Ms2Experiment experiment) {
+    public ProcessedPeak detectParentPeak(Ms2Experiment experiment, MeasurementProfile profile) {
 
         ProcessedPeak parent = searchForExactHit(experiment);
         if (parent != null) return parent;
 
-        parent = searchInMassWindow(experiment);
+        parent = searchInMassWindow(experiment, profile);
         if (parent != null) return parent;
 
         return createSyntheticParentPeak(experiment);
@@ -72,8 +72,8 @@ public class SearchMatchingInputParentPeak implements ParentPeakDetector {
         return null;
     }
 
-    protected ProcessedPeak searchInMassWindow(Ms2Experiment experiment) {
-        final Deviation window = getSearchWindow(experiment);
+    protected ProcessedPeak searchInMassWindow(Ms2Experiment experiment, MeasurementProfile profile) {
+        final Deviation window = getSearchWindow(experiment, profile);
         final List<MS2Peak> peaks = new ArrayList<MS2Peak>();
         for (Ms2Spectrum<? extends Peak> spec : experiment.getMs2Spectra()) {
             for (Peak p : spec) {
@@ -97,8 +97,8 @@ public class SearchMatchingInputParentPeak implements ParentPeakDetector {
         return peak;
     }
 
-    protected Deviation getSearchWindow(Ms2Experiment experiment) {
-        Deviation dev = experiment.getMeasurementProfile().getAllowedMassDeviation();
+    protected Deviation getSearchWindow(Ms2Experiment experiment, MeasurementProfile profile) {
+        Deviation dev = profile.getAllowedMassDeviation();
         final double precision = getPrecision(experiment.getIonMass());
         final double absolute = Math.max(Math.pow(10, -precision - 1) * 5, dev.getAbsolute());
         return new Deviation(dev.getPpm(), absolute);

@@ -60,14 +60,14 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
             return 0d; // don't score synthetic peaks
         final double theoreticalMass = formula.getMass();
         final double realMass = useOriginalMz ? (peak.getUnmodifiedOriginalMass()) : peak.getUnmodifiedMass();
-        final MeasurementProfile profile = input.getExperimentInformation().getMeasurementProfile();
+        final MeasurementProfile profile = input.getMeasurementProfile();
         final Deviation dev = standardDeviation != null ? standardDeviation : profile.getStandardMs2MassDeviation();
         final double sd = dev.absoluteFor(realMass);
         return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
     }
 
     public NormalDistribution getDistribution(double peakMz, double peakIntensity, ProcessedInput input) {
-        final double sd = input.getExperimentInformation().getMeasurementProfile().getStandardMs2MassDeviation().absoluteFor(peakMz);
+        final double sd = input.getMeasurementProfile().getStandardMs2MassDeviation().absoluteFor(peakMz);
         return new NormalDistribution(0d, sd*sd);
     }
 

@@ -20,7 +20,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -177,7 +176,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
         double score = getRecombinatedFragments().get(formula);
         // if ionization unknown, try also intrinsically charged
-        if (input.getExperimentInformation().getIonization() instanceof Charge) {
+        if (input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
             score = Math.max(getRecombinatedFragments().get(formula.subtract((MolecularFormula)precomputed)), score);
         }
         return score;

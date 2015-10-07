@@ -17,8 +17,12 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -62,13 +66,23 @@ import java.util.List;
  */
 public class ProcessedInput {
 
-    private final Ms2Experiment experiment, originalExperiment;
+    private final Ms2Experiment originalExperiment;
+    private MutableMs2Experiment experiment;
+    private MutableMeasurementProfile measurementProfile;
     private List<ProcessedPeak> mergedPeaks;
     private ProcessedPeak parentPeak;
     private HashMap<Class, PeakAnnotation> peakAnnotations;
     private HashMap<Class, Object> annotations;
 
-    public ProcessedInput(Ms2Experiment experiment, Ms2Experiment originalExperiment,
+    public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment, MeasurementProfile measurementProfile) {
+        this.experiment = experiment;
+        this.originalExperiment = originalExperiment;
+        this.mergedPeaks = new ArrayList<ProcessedPeak>();
+        this.annotations = new HashMap<Class, Object>();
+        this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
+        this.measurementProfile = new MutableMeasurementProfile(measurementProfile);    }
+
+    public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment, MeasurementProfile measurementProfile,
                           List<ProcessedPeak> mergedPeaks, ProcessedPeak parentPeak) {
         this.experiment = experiment;
         this.originalExperiment = originalExperiment;
@@ -76,6 +90,15 @@ public class ProcessedInput {
         this.parentPeak = parentPeak;
         this.annotations = new HashMap<Class, Object>();
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
+        this.measurementProfile = new MutableMeasurementProfile(measurementProfile);
+    }
+
+    public MutableMeasurementProfile getMeasurementProfile() {
+        return measurementProfile;
+    }
+
+    public void setMeasurementProfile(MeasurementProfile measurementProfile) {
+        this.measurementProfile = (measurementProfile instanceof MutableMeasurementProfile) ? (MutableMeasurementProfile) measurementProfile : new MutableMeasurementProfile(measurementProfile);
     }
 
     public Ms2Experiment getOriginalInput() {
@@ -93,6 +116,12 @@ public class ProcessedInput {
     public <T> T getAnnotationOrThrow(Class<T> klass) {
         final T ano = (T)annotations.get(klass);
         if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
+        return ano;
+    }
+
+    public <T> T getAnnotation(Class<T> klass, T defaultval) {
+        final T ano = (T)annotations.get(klass);
+        if (ano == null) return defaultval;
         return ano;
     }
 
@@ -134,8 +163,16 @@ public class ProcessedInput {
         }
     }
 
-    public Ms2Experiment getExperimentInformation() {
+    public MutableMs2Experiment getExperimentInformation() {
         return experiment;
+    }
+
+    public void setExperimentInformation(Ms2Experiment exp) {
+        if (exp instanceof MutableMs2Experiment) {
+            this.experiment = (MutableMs2Experiment)exp;
+        } else {
+            this.experiment = new MutableMs2Experiment(exp);
+        }
     }
 
     public List<ProcessedPeak> getMergedPeaks() {

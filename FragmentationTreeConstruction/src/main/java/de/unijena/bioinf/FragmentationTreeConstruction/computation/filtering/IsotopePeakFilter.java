@@ -23,15 +23,9 @@ import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +47,7 @@ public class IsotopePeakFilter implements Preprocessor {
     }
 
     @Override
-    public Ms2Experiment process(Ms2Experiment experiment) {
+    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile) {
         final PeriodicTable p = PeriodicTable.getInstance();
         final IsotopicDistribution dist = p.getDistribution();
         final Isotopes HIso = dist.getIsotopesFor(p.getByName("H"));
@@ -62,7 +56,7 @@ public class IsotopePeakFilter implements Preprocessor {
         final double Hdiff = HIso.getMass(1)-HIso.getMass(0);
         for (int k=0; k < maxNumberOfIsotopePeaks; ++k) minDists[k] = maxDists[k] = Hdiff*(k+1);
 
-        for (Element e : experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet().getElements()) {
+        for (Element e : profile.getFormulaConstraints().getChemicalAlphabet().getElements()) {
             final Isotopes isotope = dist.getIsotopesFor(e);
             if (isotope != null && isotope.getNumberOfIsotopes()>1) {
                 for (int k=1; k < Math.min(maxNumberOfIsotopePeaks+1, isotope.getNumberOfIsotopes()); ++k) {
@@ -79,7 +73,7 @@ public class IsotopePeakFilter implements Preprocessor {
             }
         }
 
-        final List<Ms2Spectrum<? extends Peak>> newSpectras = new ArrayList<Ms2Spectrum<? extends Peak>>();
+        final List<MutableMs2Spectrum> newSpectras = new ArrayList<MutableMs2Spectrum>();
 
         for (Ms2Spectrum<? extends Peak> spec : experiment.getMs2Spectra()) {
             final SimpleMutableSpectrum sms = new SimpleMutableSpectrum(spec);
@@ -102,12 +96,11 @@ public class IsotopePeakFilter implements Preprocessor {
                     }
                 }
             }
-            newSpectras.add(new Ms2SpectrumImpl(sms, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount()));
+            newSpectras.add(new MutableMs2Spectrum(sms, spec.getPrecursorMz(), spec.getCollisionEnergy(), spec.getMsLevel()));
         }
 
-        final Ms2ExperimentImpl impl = new Ms2ExperimentImpl(experiment);
-        impl.setMs2Spectra(newSpectras);
-        return impl;
+        experiment.setMs2Spectra(newSpectras);
+        return experiment;
     }
 
     @Override

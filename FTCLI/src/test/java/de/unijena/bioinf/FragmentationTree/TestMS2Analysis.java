@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.Hydrogen2CarbonScorer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -34,7 +35,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.inspection.TreeAnnotation
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
-import de.unijena.bioinf.babelms.ms.JenaMsExperiment;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import org.junit.Test;
 
@@ -48,13 +48,12 @@ public class TestMS2Analysis {
     public void testPipeline() {
         final FragmentationPatternAnalysis patternAnalysis = new FragmentationPatternAnalysis();
         try {
-            final JenaMsExperiment experiment = new GenericParser<Ms2Experiment>(new JenaMsParser()).parseFile(new File(this.getClass().getClassLoader().getResource("Apomorphine.ms").getFile()));
+            final MutableMs2Experiment experiment = new MutableMs2Experiment(new GenericParser<Ms2Experiment>(new JenaMsParser()).parseFile(new File(this.getClass().getClassLoader().getResource("Apomorphine.ms").getFile())));
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setAllowedMassDeviation(new Deviation(20, 2e-3));
             profile.setStandardMs2MassDeviation(new Deviation(20, 2e-3));
             profile.setMedianNoiseIntensity(0.01);
             profile.setFormulaConstraints(new FormulaConstraints(new ChemicalAlphabet()));
-            experiment.setMeasurementProfile(profile);
             final StringWriter writer = new StringWriter();
 
             final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();

@@ -29,6 +29,6 @@ public class Analyzer {
     }
 
     public ProcessedInput preprocess(Ms2Experiment experiment) {
-        return analyzer.preprocessWithoutDecomposing(experiment);
+        return analyzer.performParentPeakDetection(analyzer.performPeakMerging(analyzer.performNormalization(analyzer.performPreprocessing(analyzer.performValidation(experiment)))));
     }
 }

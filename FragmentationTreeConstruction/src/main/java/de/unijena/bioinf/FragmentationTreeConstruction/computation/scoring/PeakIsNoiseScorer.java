@@ -51,7 +51,7 @@ public class PeakIsNoiseScorer implements PeakScorer {
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores) {
-        final RealDistribution estimatedDistribution = distribution.extimateByMedian(input.getExperimentInformation().getMeasurementProfile().getMedianNoiseIntensity());
+        final RealDistribution estimatedDistribution = distribution.extimateByMedian(input.getMeasurementProfile().getMedianNoiseIntensity());
         for (int i=0; i < peaks.size(); ++i) {
             scores[i] -= estimatedDistribution.getInverseLogCumulativeProbability(peaks.get(i).getRelativeIntensity());
         }

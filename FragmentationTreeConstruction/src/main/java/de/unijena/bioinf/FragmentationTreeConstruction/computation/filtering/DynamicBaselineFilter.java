@@ -20,16 +20,15 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 
 import java.util.ArrayList;
 
-
+/**
+ * Remove satellite peaks around a large peak
+ */
 public class DynamicBaselineFilter implements Preprocessor {
 
     private double standardDeviation = 0.05d;
@@ -37,33 +36,32 @@ public class DynamicBaselineFilter implements Preprocessor {
 
 
     @Override
-    public Ms2Experiment process(Ms2Experiment experiment) {
-        final ArrayList<Ms2SpectrumImpl> list = new ArrayList<Ms2SpectrumImpl>();
-        final ArrayList<Ms2Spectrum<? extends Peak>> newList = new ArrayList<Ms2Spectrum<? extends Peak>>();
-        for (Ms2Spectrum<? extends Peak> spec : experiment.getMs2Spectra()) {
-            if (spec instanceof Ms2SpectrumImpl) list.add((Ms2SpectrumImpl) spec);
-            else list.add(new Ms2SpectrumImpl(spec));
-        }
+    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile) {
+        final ArrayList<MutableMs2Spectrum> newList = new ArrayList<MutableMs2Spectrum>();
         final NormalDistribution dist = new NormalDistribution(0d, standardDeviation*standardDeviation);
         final double max = dist.getDensity(0d);
-        for (Ms2SpectrumImpl spec : list) {
+        for (MutableMs2Spectrum spec : experiment.getMs2Spectra()) {
             final boolean[] remove = new boolean[spec.size()];
             int counter = 0;
             counter = cleanSpectrum(dist, max, spec, remove, counter);
-            final SimpleMutableSpectrum newSpec = new SimpleMutableSpectrum(spec.size()-counter);
+            final MutableMs2Spectrum newSpec = new MutableMs2Spectrum();
+            newSpec.setCollisionEnergy(spec.getCollisionEnergy());
+            newSpec.setIonization(spec.getIonization());
+            newSpec.setMsLevel(spec.getMsLevel());
+            newSpec.setPrecursorMz(spec.getPrecursorMz());
+            newSpec.setTotalIonCount(spec.getTotalIonCount());
             for (int i=0; i < remove.length; ++i) {
                 if (!remove[i]) newSpec.addPeak(spec.getMzAt(i), spec.getIntensityAt(i));
             }
             if (counter > 0) {
-                newList.add(new Ms2SpectrumImpl(newSpec, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount()));
+                newList.add(newSpec);
             } else newList.add(spec);
         }
-        final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(experiment);
-        exp.setMs2Spectra(newList);
-        return exp;
+        experiment.setMs2Spectra(newList);
+        return experiment;
     }
 
-    private int cleanSpectrum(NormalDistribution dist, double max, Ms2SpectrumImpl spec, boolean[] remove, int counter) {
+    private int cleanSpectrum(NormalDistribution dist, double max, MutableMs2Spectrum spec, boolean[] remove, int counter) {
         max/=threshold;
         for (int k=0; k < spec.size(); ++k) {
             final double intensity = spec.getIntensityAt(k);

@@ -22,26 +22,23 @@ import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.MedianSlope;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.MS2Peak;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.MassDecomposer.Interval;
-import de.unijena.bioinf.babelms.GenericWriter;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -70,7 +67,7 @@ public class CleanupSpectrum {
     }
 
     public static void run(CleanupOptions options) {
-        final Profile profile;
+        /*final Profile profile;
         if (options.getProfile() != null) {
             try {
                 profile = new Profile(options.getProfile());
@@ -93,7 +90,7 @@ public class CleanupSpectrum {
         ((HypothesenDrivenRecalibration) profile.fragmentationPatternAnalysis.getRecalibrationMethod()).setDeviationScale(1d);//(2d/3d);
         for (File f : files) {
             try {
-                Ms2ExperimentImpl experiment = new Ms2ExperimentImpl(
+                MutableMs2Experiment experiment = new MutableMs2Experiment(
                         Main.parseFile(f, new MutableMeasurementProfile(profile.fragmentationPatternAnalysis.getDefaultProfile())));
 
                 if (options.getFormula() != null) {
@@ -105,7 +102,7 @@ public class CleanupSpectrum {
                 FTree tree = profile.fragmentationPatternAnalysis.computeTrees(profile.fragmentationPatternAnalysis.preprocessing(experiment)).withoutRecalibration().
                         onlyWith(Arrays.asList(experiment.getMolecularFormula())).optimalTree();
                 final ProcessedInput pinput = tree.getAnnotationOrThrow(ProcessedInput.class);
-                experiment = (Ms2ExperimentImpl) pinput.getExperimentInformation();
+                experiment =  pinput.getExperimentInformation();
                 if (tree == null) {
                     System.err.println("Can't find tree for " + f + " with " + experiment.getMolecularFormula() + " as formula");
                     continue;
@@ -133,17 +130,17 @@ public class CleanupSpectrum {
                 e.printStackTrace();
             }
         }
-
+        */
 
     }
 
-    private static void recalibrate(Ms2ExperimentImpl experiment, FTree tree, Profile profile) {
+    private static void recalibrate(MutableMs2Experiment experiment, FTree tree, Profile profile) {
         final RecalibrationMethod.Recalibration rec = profile.fragmentationPatternAnalysis.getRecalibrationFromTree(tree, false);
         final UnivariateFunction f = rec.recalibrationFunction();
         if (f == null || f instanceof Identity ||
                 rec.getCorrectedTree(profile.fragmentationPatternAnalysis).getAnnotationOrThrow(TreeScoring.class).getOverallScore() <=
                         tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) return;
-        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>();
+        final ArrayList<MutableMs2Spectrum> spectra = new ArrayList<MutableMs2Spectrum>();
         for (int k = 0; k < experiment.getMs2Spectra().size(); ++k) {
             final MutableMs2Spectrum spec;
             {
@@ -159,41 +156,41 @@ public class CleanupSpectrum {
         experiment.setMs2Spectra(spectra);
     }
 
-    private static void idealize(Ms2ExperimentImpl experiment, FTree tree, Profile profile) {
-        final HashMap<CollisionEnergy, Ms2SpectrumImpl> spectra = new HashMap<CollisionEnergy, Ms2SpectrumImpl>();
+    private static void idealize(MutableMs2Experiment experiment, FTree tree, Profile profile) {
+        final HashMap<CollisionEnergy, MutableMs2Spectrum> spectra = new HashMap<CollisionEnergy, MutableMs2Spectrum>();
         final double parentmass = experiment.getIonMass();
         final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (Fragment f : tree.getFragments()) {
             for (MS2Peak peak : peakAno.get(f).getOriginalPeaks()) {
                 final CollisionEnergy ce = peak.getSpectrum().getCollisionEnergy();
-                Ms2SpectrumImpl spec = spectra.get(ce);
+                MutableMs2Spectrum spec = spectra.get(ce);
                 if (spec == null) {
-                    spec = new Ms2SpectrumImpl(ce, parentmass);
+                    spec = new MutableMs2Spectrum(); spec.setCollisionEnergy(ce); spec.setPrecursorMz(parentmass);
                     spectra.put(ce, spec);
                 }
-                spec.getPeaks().add(new MS2Peak(spec, peakAno.get(f).getIon().addToMass(f.getFormula().getMass()), peak.getIntensity()));
+                spec.addPeak(new MS2Peak(spec, peakAno.get(f).getIon().addToMass(f.getFormula().getMass()), peak.getIntensity()));
             }
         }
-        for (Ms2SpectrumImpl spec : spectra.values()) {
-            Collections.sort(spec.getPeaks());
+        for (MutableMs2Spectrum spec : spectra.values()) {
+            Spectrums.sortSpectrumByMass(spec);
         }
-        experiment.setMs2Spectra(new ArrayList<Ms2Spectrum<? extends Peak>>(spectra.values()));
+        experiment.setMs2Spectra(new ArrayList<MutableMs2Spectrum>(spectra.values()));
 
     }
 
-    private static void filterPossible(Ms2ExperimentImpl experiment, FTree tree, Profile profile) {
-        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>();
-        final ChemicalAlphabet alphabet = experiment.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet();
+    private static void filterPossible(MutableMs2Experiment experiment, FTree tree, Profile profile) {
+        final ArrayList<MutableMs2Spectrum> spectra = new ArrayList<MutableMs2Spectrum>();
+        final ChemicalAlphabet alphabet = new ChemicalAlphabet(tree.getRoot().getFormula().elementArray());
         final MassToFormulaDecomposer decomposer = profile.fragmentationPatternAnalysis.getDecomposerFor(alphabet);
         final Map<Element, Interval> boundaries = alphabet.toMap();
         for (Element e : alphabet.getElements()) {
             boundaries.put(e, new Interval(0, experiment.getMolecularFormula().numberOf(e)));
         }
-        final Ionization ion = experiment.getIonization();
+        final Ionization ion = experiment.getPrecursorIonType().getIonization();
         for (Ms2Spectrum<? extends Peak> spec : experiment.getMs2Spectra()) {
             final MutableMs2Spectrum mspec = new MutableMs2Spectrum();
             for (Peak peak : spec) {
-                if (decomposer.decomposeToFormulas(ion.subtractFromMass(peak.getMass()), experiment.getMeasurementProfile().getAllowedMassDeviation(), boundaries).size() > 0) {
+                if (decomposer.decomposeToFormulas(ion.subtractFromMass(peak.getMass()), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), boundaries).size() > 0) {
                     mspec.addPeak(peak);
                 }
             }
@@ -206,7 +203,7 @@ public class CleanupSpectrum {
     }
 
     // TODO: loose of total ion count
-    private static void filterExplained(Ms2ExperimentImpl experiment, FTree tree, Profile profile) {
+    private static void filterExplained(MutableMs2Experiment experiment, FTree tree, Profile profile) {
         final HashMap<CollisionEnergy, MutableMs2Spectrum> spectra = new HashMap<CollisionEnergy, MutableMs2Spectrum>();
         for (Ms2Spectrum spec : experiment.getMs2Spectra()) {
             final MutableMs2Spectrum mspec = new MutableMs2Spectrum();
@@ -222,8 +219,8 @@ public class CleanupSpectrum {
                 spectra.get(peak.getSpectrum().getCollisionEnergy()).addPeak(peak);
             }
         }
-        experiment.setMs2Spectra(new ArrayList<Ms2Spectrum<? extends Peak>>());
-        for (Ms2Spectrum spec : spectra.values()) experiment.getMs2Spectra().add(spec);
+        experiment.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
+        for (MutableMs2Spectrum spec : spectra.values()) experiment.getMs2Spectra().add(spec);
     }
 
 

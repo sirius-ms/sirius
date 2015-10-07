@@ -20,12 +20,10 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2ExperimentImpl;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2SpectrumImpl;
+import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -80,21 +78,19 @@ public class NoiseThresholdFilter implements PostProcessor, Preprocessor {
     }
 
     @Override
-    public Ms2Experiment process(Ms2Experiment experiment) {
-        List<? extends Ms2Spectrum> specs = experiment.getMs2Spectra();
-        final ArrayList<Ms2Spectrum<? extends Peak>> spectra = new ArrayList<Ms2Spectrum<? extends Peak>>(specs.size());
-        final Deviation allowedDev = experiment.getMeasurementProfile().getAllowedMassDeviation();
+    public MutableMs2Experiment process(final MutableMs2Experiment experiment, MeasurementProfile profile) {
+        List<MutableMs2Spectrum> specs = experiment.getMs2Spectra();
+        final ArrayList<MutableMs2Spectrum> newList = new ArrayList<MutableMs2Spectrum>();
+        final Deviation allowedDev = profile.getAllowedMassDeviation();
         final Deviation parentWindow = new Deviation(allowedDev.getPpm(), Math.min(allowedDev.getAbsolute(), 0.1d));
-        for (Ms2Spectrum<? extends Peak> spec : specs) {
-            final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
-            for (Peak p : spec)
-                if (p.getIntensity() > threshold || parentWindow.inErrorWindow(experiment.getIonMass(), p.getMass()))
-                    ms.addPeak(p);
-            final Ms2SpectrumImpl ms2 = new Ms2SpectrumImpl(ms, spec.getCollisionEnergy(), spec.getPrecursorMz(), spec.getTotalIonCount());
-            spectra.add(ms2);
+        for (MutableMs2Spectrum spec : specs) {
+            Spectrums.filter(spec, new Spectrums.PeakPredicate() {
+                @Override
+                public boolean apply(double mz, double intensity) {
+                    return intensity > threshold || parentWindow.inErrorWindow(experiment.getIonMass(), mz);
+                }
+            });
         }
-        final Ms2ExperimentImpl exp = new Ms2ExperimentImpl(experiment);
-        exp.setMs2Spectra(spectra);
-        return exp;
+        return experiment;
     }
 }

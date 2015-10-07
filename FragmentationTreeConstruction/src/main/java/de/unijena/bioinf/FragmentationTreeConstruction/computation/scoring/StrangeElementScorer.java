@@ -18,7 +18,10 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
@@ -68,9 +71,9 @@ public class StrangeElementScorer implements LossScorer, MolecularFormulaScorer 
 
     @Override
     public double score(Loss loss, ProcessedInput input, Object precomputed) {
-        final Ionization ion = input.getExperimentInformation().getIonization();
+        final PrecursorIonType ion = input.getExperimentInformation().getPrecursorIonType();
         final int c;
-        if (ion instanceof Charge) {
+        if (ion.isIonizationUnknown()) {
             c = ion.getCharge();
         } else {
             c=0;

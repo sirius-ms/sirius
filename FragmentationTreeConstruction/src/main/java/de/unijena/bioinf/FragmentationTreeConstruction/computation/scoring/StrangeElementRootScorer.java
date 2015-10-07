@@ -18,7 +18,10 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -72,11 +75,11 @@ public class StrangeElementRootScorer implements DecompositionScorer<Element[]> 
                 }
             });
             assert !Double.isNaN(score[0]);
-            final Ionization ion = input.getExperimentInformation().getIonization();
-            if (ion instanceof Charge) {
-                final int i = (input.getExperimentInformation().getIonization().getCharge() > 0) ? 0 : 2;
+            final PrecursorIonType ion = input.getExperimentInformation().getPrecursorIonType();
+            if (ion.isIonizationUnknown()) {
+                final int i = (ion.getCharge() > 0) ? 0 : 2;
                 for (int j=0; j < 2; ++j) {
-                    if (formula.numberOf(precomputed[j+i]) == ion.chargeNumber()) {
+                    if (formula.numberOf(precomputed[j+i]) == ion.getIonization().chargeNumber()) {
                         score[0] -= penalty;
                         break;
                     }

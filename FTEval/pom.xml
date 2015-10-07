@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FTEval</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>3.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <parent>
         <groupId>de.unijena.bioinf</groupId>
         <artifactId>FragmentationTree</artifactId>
-        <version>3.0.3-SNAPSHOT</version>
+        <version>3.1-SNAPSHOT</version>
     </parent>
 
     <!--                                                               -->
     <developers>
         <developer>
-            <name>Kai D&#xFC;hrkop</name>
+            <name>Kai Dührkop</name>
             <email>kai.duehrkop@uni-jena.de</email>
             <organization>Jena University</organization>
             <organizationUrl>http://bio.informatik.uni-jena.de</organizationUrl>
@@ -37,27 +37,27 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>CLIBase</artifactId>
-            <version>3.0.3-SNAPSHOT</version>
+            <version>3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>3.0.3-SNAPSHOT</version>
+            <version>3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FTBlast</artifactId>
-            <version>2.0</version>
+            <version>2.1</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FTAlignmentTool</artifactId>
-            <version>2.0</version>
+            <version>2.1</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>SpectralAlignment</artifactId>
-            <version>2.0</version>
+            <version>2.1</version>
         </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>

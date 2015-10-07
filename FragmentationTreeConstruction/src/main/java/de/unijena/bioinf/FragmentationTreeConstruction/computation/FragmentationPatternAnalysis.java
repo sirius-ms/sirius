@@ -56,9 +56,40 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.util.*;
 
+/**
+ * FragmentationPatternAnalysis contains the pipeline for computing fragmentation trees
+ * This is done using the following steps:
+ * 1. Validate input and correct/fillin missing values
+ * 2. Preprocess input (add baseline, noise filters and so on)
+ * 3. Merge peaks within the same spectra, compute relative intensitities
+ * 4. Merge peaks from different spectra, compute a flat peak list
+ * 5. Postprocessing (delete peaks with low intensitities and so on)
+ * 6. Detect parent peak
+ * 7. Decompose each peak
+ * 8. Postprocesing
+ * 9. Score each peak and each pair of peaks
+ *
+ * Steps 1-9 are bundled within the method FragmentationPatternAnalysis#preprocessing
+ *
+ * Now for each Molecular formula candidate:
+ * 10. Compute Fragmentation Graph
+ * 11. Score losses and vertices in the graph
+ * 12. Compute Fragmentation tree
+ * 13. Recalibrate tree
+ * 14. Might repeat all steps with recalibration function
+ * 15. Postprocess tree
+ *
+ * Steps 10-15 are bundled within the method FragmentationPatternAnalysis#computeTree
+ *
+ * You can run each step individually. However, you have to run step 1. first to get a ProcessedInput object.
+ * This object contains the Ms2Experiment input and stores all intermediate values during the computation.
+ *
+ * Some (or, honestly, most) steps rely on certain properties and intermediate values computed in previous steps.
+ * So you have to be very careful when running a step separately. The recommended way is to run the whole pipeline.
+ *
+ *
+ */
 public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
-
-    public static final String ANALYZER_NAME = "FragmentationPatternAnalysis";
 
     private List<InputValidator> inputValidators;
     private Warning validatorWarning;
@@ -81,6 +112,418 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
 
+    /**
+     * Step 1-9: Preprocessing
+     */
+    public ProcessedInput preprocessing(Ms2Experiment experiment) {
+        return preprocessing(experiment, new MutableMeasurementProfile());
+    }
+
+    /**
+     * Step 1-9: Preprocessing
+     */
+    public ProcessedInput preprocessing(Ms2Experiment experiment, FormulaConstraints constraints) {
+        final MutableMeasurementProfile p = new MutableMeasurementProfile(getDefaultProfile());
+        p.setFormulaConstraints(constraints);
+        return preprocessing(experiment, p);
+    }
+
+    /**
+     * Step 1-9: Preprocessing
+     * Allows to use different values for decomposition
+     */
+    public ProcessedInput preprocessing(Ms2Experiment experiment, MeasurementProfile profile) {
+        ProcessedInput input = performValidation(experiment);
+        input.setMeasurementProfile(MutableMeasurementProfile.merge(input.getMeasurementProfile(), profile));
+        return performPeakScoring(performDecomposition(performParentPeakDetection(performPeakMerging(performNormalization(performPreprocessing(input))))));
+    }
+
+    public ProcessedInput preprocessing(Ms2Experiment experiment, MeasurementProfile profile, RecalibrationFunction function) {
+        ProcessedInput input = performValidation(experiment);
+        input.setMeasurementProfile(MutableMeasurementProfile.merge(input.getMeasurementProfile(), profile));
+        input = performPeakMerging(performNormalization(performPreprocessing(input)));
+        for (ProcessedPeak peak : input.getMergedPeaks()) {
+            peak.setOriginalMz(peak.getMz());
+            peak.setMz(function.apply(peak.getMz()));
+        }
+        return performPeakScoring(performDecomposition(performParentPeakDetection(input)));
+    }
+
+    /**
+     * Step 1. Validate Input
+     * Correct and fillin missing values
+     * @param originalExperiment
+     * @return A ProcessedInput object wrapping the original input
+     */
+    public ProcessedInput performValidation(Ms2Experiment originalExperiment) {
+        // first of all: insert default profile if no profile is given
+
+        MutableMs2Experiment input = new MutableMs2Experiment(originalExperiment);
+        Ms2Experiment exp = input;
+        for (InputValidator validator : inputValidators) {
+            exp = validator.validate(exp, validatorWarning, repairInput);
+        }
+
+        final ProcessedInput pinput =  new ProcessedInput(new MutableMs2Experiment(exp), originalExperiment, new MutableMeasurementProfile(defaultProfile));
+
+        if (originalExperiment.getMolecularFormula()!=null) {
+            pinput.getMeasurementProfile().setFormulaConstraints(pinput.getMeasurementProfile().getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(originalExperiment.getMolecularFormula())));
+        }
+
+        return pinput;
+    }
+
+    /**
+     * Step 2. Preprocessing
+     * Apply all preprocessing routines to the input
+     * @param experiment
+     * @return
+     */
+    public ProcessedInput performPreprocessing(ProcessedInput experiment) {
+        MutableMs2Experiment exp = experiment.getExperimentInformation();
+        for (Preprocessor proc : preprocessors) {
+            exp = proc.process(exp, experiment.getMeasurementProfile());
+        }
+        experiment.setExperimentInformation(exp);
+        return experiment;
+    }
+
+    /**
+     * Step 3. Normalizing
+     * Merge all peaks within a single spectrum
+     * Return a list of peaks (from all spectra) with relative intensities
+     */
+    public ProcessedInput performNormalization(ProcessedInput input) {
+        final Ms2Experiment experiment = input.getExperimentInformation();
+        final double parentMass = experiment.getIonMass();
+        final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
+        final Deviation mergeWindow = getDefaultProfile().getAllowedMassDeviation().divide(2d);
+        final Ionization ion = experiment.getPrecursorIonType().getIonization();
+        double globalMaxIntensity = 0d;
+        for (Ms2Spectrum s : experiment.getMs2Spectra()) {
+            // merge peaks: iterate them from highest to lowest intensity and remove peaks which
+            // are in the mass range of a high intensive peak
+            final MutableSpectrum<Peak> sortedByIntensity = new SimpleMutableSpectrum(s);
+            Spectrums.sortSpectrumByDescendingIntensity(sortedByIntensity);
+            // simple spectra are always ordered by mass
+            final SimpleSpectrum sortedByMass = new SimpleSpectrum(s);
+            final BitSet deletedPeaks = new BitSet(s.size());
+            for (int i = 0; i < s.size(); ++i) {
+                // get index of peak in mass-ordered spectrum
+                final double mz = sortedByIntensity.getMzAt(i);
+                final int index = Spectrums.binarySearch(sortedByMass, mz);
+                assert index >= 0;
+                if (deletedPeaks.get(index)) continue; // peak is already deleted
+                // delete all peaks within the mass range
+                for (int j = index - 1; j >= 0 && mergeWindow.inErrorWindow(mz, sortedByMass.getMzAt(j)); --j)
+                    deletedPeaks.set(j, true);
+                for (int j = index + 1; j < s.size() && mergeWindow.inErrorWindow(mz, sortedByMass.getMzAt(j)); ++j)
+                    deletedPeaks.set(j, true);
+            }
+            final int offset = peaklist.size();
+            // add all remaining peaks to the peaklist
+            for (int i = 0; i < s.size(); ++i) {
+                if (!deletedPeaks.get(i)) {
+                    final ProcessedPeak propeak = new ProcessedPeak(new MS2Peak(s, sortedByMass.getMzAt(i), sortedByMass.getIntensityAt(i)));
+                    propeak.setIon(ion);
+                    peaklist.add(propeak);
+
+                }
+            }
+            // now performNormalization spectrum. Ignore peaks near to the parent peak
+            final double lowerbound = parentMass - 0.1d;
+            double scale = 0d;
+            for (int i = offset; i < peaklist.size() && peaklist.get(i).getMz() < lowerbound; ++i) {
+                scale = Math.max(scale, peaklist.get(i).getIntensity());
+            }
+            // now set local relative intensities
+            for (int i = offset; i < peaklist.size(); ++i) {
+                final ProcessedPeak peak = peaklist.get(i);
+                peak.setLocalRelativeIntensity(peak.getIntensity() / scale);
+            }
+            // and adjust global relative intensity
+            globalMaxIntensity = Math.max(globalMaxIntensity, scale);
+        }
+        // now calculate global normalized intensities
+        for (ProcessedPeak peak : peaklist) {
+            peak.setGlobalRelativeIntensity(peak.getIntensity() / globalMaxIntensity);
+            peak.setRelativeIntensity(normalizationType == NormalizationType.GLOBAL ? peak.getGlobalRelativeIntensity() : peak.getLocalRelativeIntensity());
+        }
+        // finished!
+        input.setMergedPeaks(peaklist);
+
+        // postprocess
+        postProcess(PostProcessor.Stage.AFTER_NORMALIZING, input);
+        return input;
+    }
+
+    /**
+     *
+     * Step 4. Merging
+     * a set of peaks are merged if:
+     * - they are from different spectra
+     * - they are in the same mass range
+     */
+    public ProcessedInput performPeakMerging(ProcessedInput input) {
+        Ms2Experiment experiment = input.getExperimentInformation();
+        List<ProcessedPeak> peaklists = input.getMergedPeaks();
+        final ArrayList<ProcessedPeak> mergedPeaks = new ArrayList<ProcessedPeak>(peaklists.size());
+        peakMerger.mergePeaks(peaklists, experiment, getDefaultProfile().getAllowedMassDeviation().multiply(2), new Merger() {
+            @Override
+            public ProcessedPeak merge(List<ProcessedPeak> peaks, int index, double newMz) {
+                final ProcessedPeak newPeak = peaks.get(index);
+                // sum up global intensities, take maximum of local intensities
+                double local = 0d, global = 0d, relative = 0d;
+                for (ProcessedPeak p : peaks) {
+                    local = Math.max(local, p.getLocalRelativeIntensity());
+                    global += p.getGlobalRelativeIntensity();
+                    relative += p.getRelativeIntensity();
+                }
+                newPeak.setMz(newMz);
+                newPeak.setLocalRelativeIntensity(local);
+                newPeak.setGlobalRelativeIntensity(global);
+                newPeak.setRelativeIntensity(relative);
+                final MS2Peak[] originalPeaks = new MS2Peak[peaks.size()];
+                for (int i = 0; i < peaks.size(); ++i) originalPeaks[i] = peaks.get(i).getOriginalPeaks().get(0);
+                newPeak.setOriginalPeaks(Arrays.asList(originalPeaks));
+                mergedPeaks.add(newPeak);
+                return newPeak;
+            }
+        });
+        {
+            // DEBUGGING
+            Collections.sort(mergedPeaks);
+        }
+        input.setMergedPeaks(mergedPeaks);
+        postProcess(PostProcessor.Stage.AFTER_MERGING, input);
+        return input;
+    }
+
+    /**
+     * Step 5. Parent Peak Detection
+     * Scans the spectrum for the parent peak, delete all peaks with higher masses than the parent peak and
+     * (noise) peaks which are near the parent peak. If there is no parent peak found, a synthetic one is created.
+     * After cleaning, the processedPeaks list should contain the parent peak as last peak in the list. Furthermore,
+     * is is guaranteed, that the heaviest peak in the list is always the parent peak.
+     */
+    public ProcessedInput performParentPeakDetection(ProcessedInput input) {
+        final List<ProcessedPeak> processedPeaks = input.getMergedPeaks();
+        final Ms2Experiment experiment = input.getExperimentInformation();
+        // and sort the resulting peaklist by mass
+        Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
+
+        double parentmass = experiment.getIonMass();
+
+        Peak ms1parent = null;
+
+        // if ms1 spectra are available: use the parentpeak from them
+        if (!experiment.getMs1Spectra().isEmpty()) {
+            Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
+            if (spec == null) spec = experiment.getMs1Spectra().get(0);
+            final Deviation parentDeviation = getDefaultProfile().getAllowedMassDeviation();
+            final int i = Spectrums.mostIntensivePeakWithin(Spectrums.getMassOrderedSpectrum(spec), parentmass, parentDeviation);
+            if (i >= 0) {
+                ms1parent = spec.getPeakAt(i);
+            }
+        }
+        if (ms1parent!=null) {
+            parentmass = ms1parent.getMass();
+        }
+
+
+        // now search the parent peak. If it is not contained in the spectrum: create one!
+        // delete all peaks behind the parent, such that the parent is the heaviest peak in the spectrum
+        // Now we can access the parent peak by peaklist[peaklist.size-1]
+        final Deviation parentDeviation = getDefaultProfile().getAllowedMassDeviation();
+        for (int i = processedPeaks.size() - 1; i >= 0; --i) {
+            if (!parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
+                if (processedPeaks.get(i).getMz() < parentmass) {
+                    // parent peak is not contained. Create a synthetic one
+                    addSyntheticParent(experiment, processedPeaks, parentmass);
+                    break;
+                } else processedPeaks.remove(i);
+            } else break;
+        }
+        if (processedPeaks.isEmpty()) {
+            addSyntheticParent(experiment, processedPeaks, parentmass);
+        }
+
+        // set parent peak mass to ms1 parent mass
+        if (ms1parent!=null) {
+            processedPeaks.get(processedPeaks.size() - 1).setMz(ms1parent.getMass());
+            processedPeaks.get(processedPeaks.size() - 1).setOriginalMz(ms1parent.getMass());
+        }
+
+        assert parentDeviation.inErrorWindow(parentmass, processedPeaks.get(processedPeaks.size() - 1).getMz()) : "heaviest peak is parent peak";
+        // the heaviest fragment that is possible is M - H
+        // everything which is heavier is noise
+        final double threshold = parentmass + getDefaultProfile().getAllowedMassDeviation().absoluteFor(parentmass) - PeriodicTable.getInstance().getByName("H").getMass();
+        final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
+
+        // if ms1 peak present, use his mass and intensity as parent peak
+        /*
+        if (ms1parent != null) {
+            parentPeak.setMz(ms1parent.getMass());
+            parentPeak.setOriginalMz(ms1parent.getMass());
+        }
+        */
+
+        // delete all peaks between parentmass-H and parentmass except the parent peak itself
+        for (int i = processedPeaks.size() - 2; i >= 0; --i) {
+            if (processedPeaks.get(i).getMz() <= threshold) break;
+            processedPeaks.set(processedPeaks.size() - 2, parentPeak);
+            processedPeaks.remove(processedPeaks.size() - 1);
+        }
+
+        input.setParentPeak(parentPeak);
+
+        return input;
+    }
+
+    /**
+     * Step 6: Decomposition
+     * Decompose each peak as well as the parent peak
+     */
+    public ProcessedInput performDecomposition(ProcessedInput input) {
+        final FormulaConstraints constraints = input.getMeasurementProfile().getFormulaConstraints();
+        final Ms2Experiment experiment = input.getExperimentInformation();
+        final Deviation parentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
+        // sort again...
+        final ArrayList<ProcessedPeak> processedPeaks = new ArrayList<ProcessedPeak>(input.getMergedPeaks());
+        Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
+        final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
+        // decompose peaks
+        final PeakAnnotation<DecompositionList> decompositionList = input.getOrCreatePeakAnnotation(DecompositionList.class);
+        final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
+        final Ionization ion = experiment.getPrecursorIonType().getIonization();
+        final Deviation fragmentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
+        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(experiment.getPrecursorIonType().subtractIonAndAdduct(parentPeak.getOriginalMz()), parentDeviation, constraints);
+        // add adduct to molecular formula of the ion - because the adduct might get lost during fragmentation
+        {
+            final MolecularFormula adduct = experiment.getPrecursorIonType().getAdduct();
+            final ListIterator<MolecularFormula> iter = pmds.listIterator();
+            while (iter.hasNext()) {
+                final MolecularFormula f = iter.next();
+                iter.set(f.add(adduct));
+            }
+        }
+        decompositionList.set(parentPeak, DecompositionList.fromFormulas(pmds));
+        int j = 0;
+        for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size() - 1)) {
+            peak.setIndex(j++);
+            decompositionList.set(peak, DecompositionList.fromFormulas(decomposer.decomposeToFormulas(peak.getUnmodifiedMass(), fragmentDeviation, constraints)));
+        }
+        parentPeak.setIndex(processedPeaks.size() - 1);
+        assert parentPeak == processedPeaks.get(processedPeaks.size() - 1);
+        // important: for each two peaks which are within 2*massrange:
+        //  => make decomposition list disjoint
+        final Deviation window = fragmentDeviation.multiply(2);
+        for (int i = 1; i < processedPeaks.size() - 1; ++i) {
+            if (window.inErrorWindow(processedPeaks.get(i).getMz(), processedPeaks.get(i - 1).getMz())) {
+                final HashSet<MolecularFormula> right = new HashSet<MolecularFormula>(decompositionList.get(processedPeaks.get(i)).getFormulas());
+                final ArrayList<MolecularFormula> left = new ArrayList<MolecularFormula>(decompositionList.get(processedPeaks.get(i-1)).getFormulas());
+                final double leftMass = ion.subtractFromMass(processedPeaks.get(i - 1).getMass());
+                final double rightMass = ion.subtractFromMass(processedPeaks.get(i).getMass());
+                final Iterator<MolecularFormula> leftIter = left.iterator();
+                while (leftIter.hasNext()) {
+                    final MolecularFormula leftFormula = leftIter.next();
+                    if (right.contains(leftFormula)) {
+                        if (Math.abs(leftFormula.getMass() - leftMass) < Math.abs(leftFormula.getMass() - rightMass)) {
+                            right.remove(leftFormula);
+                        } else {
+                            leftIter.remove();
+                        }
+                    }
+                }
+                decompositionList.set(processedPeaks.get(i - 1), DecompositionList.fromFormulas(left));
+                decompositionList.set(processedPeaks.get(i), DecompositionList.fromFormulas(right));
+            }
+        }
+
+        return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, input);
+    }
+
+    /**
+     * Step 7: Peak Scoring
+     * Scores each peak. Expects a decomposition list
+     */
+    public ProcessedInput performPeakScoring(ProcessedInput input) {
+        final List<ProcessedPeak> processedPeaks = input.getMergedPeaks();
+        final ProcessedPeak parentPeak = input.getParentPeak();
+        final int n = processedPeaks.size();
+        input.getOrCreateAnnotation(Scoring.class).initializeScoring(n);
+        // score peak pairs
+        final double[][] peakPairScores = input.getAnnotationOrThrow(Scoring.class).getPeakPairScores();
+        for (PeakPairScorer scorer : peakPairScorers) {
+            scorer.score(processedPeaks, input, peakPairScores);
+        }
+        // score fragment peaks
+        final double[] peakScores = input.getAnnotationOrThrow(Scoring.class).getPeakScores();
+        for (PeakScorer scorer : fragmentPeakScorers) {
+            scorer.score(processedPeaks, input, peakScores);
+        }
+
+        final PeakAnnotation<DecompositionList> decomp = input.getPeakAnnotationOrThrow(DecompositionList.class);
+
+        // dont score parent peak
+        peakScores[peakScores.length - 1] = 0d;
+
+
+        // score peaks
+        {
+            final ArrayList<Object> preparations = new ArrayList<Object>(decompositionScorers.size());
+            for (DecompositionScorer<?> scorer : decompositionScorers) preparations.add(scorer.prepare(input));
+            for (int i = 0; i < processedPeaks.size() - 1; ++i) {
+                final DecompositionList decomps = decomp.get(processedPeaks.get(i));
+                final ArrayList<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>(decomps.getDecompositions().size());
+                for (MolecularFormula f : decomps.getFormulas()) {
+                    double score = 0d;
+                    int k = 0;
+                    for (DecompositionScorer<?> scorer : decompositionScorers) {
+                        score += ((DecompositionScorer<Object>) scorer).score(f, processedPeaks.get(i), input, preparations.get(k++));
+                    }
+                    scored.add(new ScoredMolecularFormula(f, score));
+                }
+                decomp.set(processedPeaks.get(i), new DecompositionList(scored));
+            }
+        }
+        // same with root
+        {
+            final ArrayList<Object> preparations = new ArrayList<Object>(rootScorers.size());
+            for (DecompositionScorer<?> scorer : rootScorers) preparations.add(scorer.prepare(input));
+            final ArrayList<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>(decomp.get(parentPeak).getDecompositions());
+            for (int j=0; j < scored.size(); ++j) {
+                double score = 0d;
+                int k = 0;
+                final MolecularFormula f = scored.get(j).getFormula();
+                for (DecompositionScorer<?> scorer : rootScorers) {
+                    score += ((DecompositionScorer<Object>) scorer).score(f, input.getParentPeak(), input, preparations.get(k++));
+                }
+                scored.set(j, new ScoredMolecularFormula(f, score));
+
+            }
+            Collections.sort(scored, Collections.reverseOrder());
+            decomp.set(parentPeak, new DecompositionList(scored));
+            input.addAnnotation(DecompositionList.class, decomp.get(parentPeak));
+        }
+        // set peak indizes
+        for (int i = 0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
+
+        return input;
+    }
+
+/*
+    public ProcessedInput preprocessingWithRecalibration(Ms2Experiment experiment, RecalibrationMethod.Recalibration recalibration) {
+        final ProcessedInput input = preprocessWithoutDecomposing(experiment);
+        final UnivariateFunction f = recalibration.recalibrationFunction();
+        for (ProcessedPeak peak : input.getMergedPeaks()) {
+            //peak.setOriginalMz(peak.getMz());
+            peak.setMz(f.value(peak.getOriginalMz()));
+        }
+        // decompose and score all peaks
+        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
+    }
+*/
     /**
      *
      */
@@ -367,7 +810,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         FTree tree = treeBuilder.buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
         if (tree == null) return null;
         addTreeAnnotations(graph, tree);
-        if (tree != null && recalibration) tree = recalibrate(tree);
+        if (recalibration) tree = recalibrate(tree);
         return tree;
     }
 
@@ -395,7 +838,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             lanos2.add(originalGraph.getLossAnnotationOrNull(la.getAnnotationType()));
         for (FragmentAnnotation<Object> fa : fanos)
             fanos2.add(originalGraph.getFragmentAnnotationOrNull(fa.getAnnotationType()));
-        tree.setAnnotation(Ionization.class, tree.getAnnotationOrThrow(ProcessedInput.class).getExperimentInformation().getIonization());
+        tree.setAnnotation(PrecursorIonType.class, tree.getAnnotationOrThrow(ProcessedInput.class).getExperimentInformation().getPrecursorIonType());
         FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
         FragmentAnnotation<CollisionEnergy[]> ces = tree.getOrCreateFragmentAnnotation(CollisionEnergy[].class);
 
@@ -515,7 +958,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         b.setRecalibrationBonus(bS-aS);
     }
 
-    private static RecalibrationFunction toPolynomial(UnivariateFunction func) {
+    static RecalibrationFunction toPolynomial(UnivariateFunction func) {
         if (func instanceof PolynomialFunction) {
             return new RecalibrationFunction(((PolynomialFunction) func).getCoefficients());
         }
@@ -680,9 +1123,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         final FragmentAnnotation<Score> fAno = tree.getOrCreateFragmentAnnotation(Score.class);
         final LossAnnotation<Score> lAno = tree.getOrCreateLossAnnotation(Score.class);
+        final LossAnnotation<InsourceFragmentation> isInsource = tree.getOrCreateLossAnnotation(InsourceFragmentation.class);
         final double[][] pseudoMatrix = new double[2][2];
         while (edges.hasNext()) {
             final Loss loss = edges.next();
+            if (isInsource.get(loss)!= null && isInsource.get(loss).isInsource()) continue;
             final Fragment u = loss.getSource();
             final Fragment v = loss.getTarget();
 
@@ -713,7 +1158,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             fAno.set(v, fscore);
         }
         // set root
-        final Fragment root = tree.getRoot();
+        Fragment root = tree.getRoot();
+        if (root.getOutDegree()==1 && isInsource.get(root.getOutgoingEdge(0))!=null && isInsource.get(root.getOutgoingEdge(0)).isInsource()) {
+            root = root.getChildren(0);
+        }
         final Score rootScore = new Score(rootScores);
         for (int k=0; k < rootScorers.size(); ++k) {
             final Object prepared = rootScorers.get(k).prepare(input);
@@ -726,11 +1174,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         double scoreSum = 0d;
         for (Loss l : tree.losses()) {
             Score s = lAno.get(l);
+            if (s==null) continue;
             scoreSum += s.sum();
             s = fAno.get(l.getTarget());
             scoreSum += s.sum();
         }
-        scoreSum += fAno.get(tree.getRoot()).sum();
+        scoreSum += fAno.get(root).sum();
         return Math.abs(scoreSum-tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) < 1e-8;
 
     }
@@ -780,228 +1229,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return graph;
     }
 
-    public ProcessedInput preprocessingWithRecalibration(Ms2Experiment experiment, RecalibrationMethod.Recalibration recalibration) {
-        final ProcessedInput input = preprocessWithoutDecomposing(experiment);
-        final UnivariateFunction f = recalibration.recalibrationFunction();
-        for (ProcessedPeak peak : input.getMergedPeaks()) {
-            //peak.setOriginalMz(peak.getMz());
-            peak.setMz(f.value(peak.getOriginalMz()));
-        }
-        // decompose and score all peaks
-        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
-    }
-
-    public ProcessedInput preprocessing(Ms2Experiment experiment) {
-        final ProcessedInput input = preprocessWithoutDecomposing(experiment);
-        // decompose and score all peaks
-        return decomposeAndScore(input.getExperimentInformation(), experiment, input.getMergedPeaks());
-    }
-
-    ProcessedInput preprocessWithoutDecomposing(Ms2Experiment experiment) {
-        // use a mutable experiment, such that we can easily modify it. Validate and preprocess input
-        Ms2Experiment input = wrapInput(preProcess(validate(experiment)));
-        // normalize all peaks and merge peaks within the same spectrum
-        // put peaks from all spectra together in a flatten list
-        List<ProcessedPeak> peaks = normalize(input);
-        peaks = postProcess(PostProcessor.Stage.AFTER_NORMALIZING, new ProcessedInput(input, experiment, peaks, null)).getMergedPeaks();
-        // merge peaks from different spectra
-        final List<ProcessedPeak> processedPeaks = mergePeaks(input, peaks);
-        final ProcessedPeak parentPeak = selectParentPeakAndCleanSpectrum(input, processedPeaks);
-        final List<ProcessedPeak> afterMerging =
-                postProcess(PostProcessor.Stage.AFTER_MERGING, new ProcessedInput(input, experiment, processedPeaks, parentPeak)).getMergedPeaks();
-        return new ProcessedInput(input, experiment, afterMerging, parentPeak);
-    }
-
-    /**
-     * Scans the spectrum for the parent peak, delete all peaks with higher masses than the parent peak and
-     * (noise) peaks which are near the parent peak. If there is no parent peak found, a synthetic one is created.
-     * After cleaning, the processedPeaks list should contain the parent peak as last peak in the list. Furthermore,
-     * is is guaranteed, that the heaviest peak in the list is always the parent peak.
-     *
-     * @param experiment     input data. Should be validated, normalized, merged and preprocessed
-     * @param processedPeaks list of merged peaks
-     * @return parent peak. Is also the last peak in the merged peaks list
-     */
-    ProcessedPeak selectParentPeakAndCleanSpectrum(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks) {
-        // and sort the resulting peaklist by mass
-        Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
-
-        double parentmass = experiment.getIonMass();
-
-        Peak ms1parent = null;
-
-        // if ms1 spectra are available: use the parentpeak from them
-        if (!experiment.getMs1Spectra().isEmpty()) {
-            Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
-            if (spec == null) spec = experiment.getMs1Spectra().get(0);
-            final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
-            final int i = Spectrums.mostIntensivePeakWithin(Spectrums.getMassOrderedSpectrum(spec), parentmass, parentDeviation);
-            if (i >= 0) {
-                ms1parent = spec.getPeakAt(i);
-            }
-        }
-        if (ms1parent!=null) {
-            parentmass = ms1parent.getMass();
-        }
-
-
-        // now search the parent peak. If it is not contained in the spectrum: create one!
-        // delete all peaks behind the parent, such that the parent is the heaviest peak in the spectrum
-        // Now we can access the parent peak by peaklist[peaklist.size-1]
-        final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
-        for (int i = processedPeaks.size() - 1; i >= 0; --i) {
-            if (!parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
-                if (processedPeaks.get(i).getMz() < parentmass) {
-                    // parent peak is not contained. Create a synthetic one
-                    addSyntheticParent(experiment, processedPeaks, parentmass);
-                    break;
-                } else processedPeaks.remove(i);
-            } else break;
-        }
-        if (processedPeaks.isEmpty()) {
-            addSyntheticParent(experiment, processedPeaks, parentmass);
-        }
-
-        // set parent peak mass to ms1 parent mass
-        if (ms1parent!=null) {
-            processedPeaks.get(processedPeaks.size() - 1).setMz(ms1parent.getMass());
-            processedPeaks.get(processedPeaks.size() - 1).setOriginalMz(ms1parent.getMass());
-        }
-
-        assert parentDeviation.inErrorWindow(parentmass, processedPeaks.get(processedPeaks.size() - 1).getMz()) : "heaviest peak is parent peak";
-        // the heaviest fragment that is possible is M - H
-        // everything which is heavier is noise
-        final double threshold = parentmass + experiment.getMeasurementProfile().getAllowedMassDeviation().absoluteFor(parentmass) - PeriodicTable.getInstance().getByName("H").getMass();
-        final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
-
-        // if ms1 peak present, use his mass and intensity as parent peak
-        /*
-        if (ms1parent != null) {
-            parentPeak.setMz(ms1parent.getMass());
-            parentPeak.setOriginalMz(ms1parent.getMass());
-        }
-        */
-
-        // delete all peaks between parentmass-H and parentmass except the parent peak itself
-        for (int i = processedPeaks.size() - 2; i >= 0; --i) {
-            if (processedPeaks.get(i).getMz() <= threshold) break;
-            processedPeaks.set(processedPeaks.size() - 2, parentPeak);
-            processedPeaks.remove(processedPeaks.size() - 1);
-        }
-        return parentPeak;
-    }
-
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
         final ProcessedPeak syntheticParent = new ProcessedPeak();
-        syntheticParent.setIon(experiment.getIonization());
+        syntheticParent.setIon(experiment.getPrecursorIonType().getIonization());
         syntheticParent.setMz(parentmass);
         syntheticParent.setOriginalMz(parentmass);
         processedPeaks.add(syntheticParent);
     }
 
-    ProcessedInput decomposeAndScore(Ms2Experiment experiment, Ms2Experiment originalExperiment, List<ProcessedPeak> processedPeaks) {
-        final Deviation parentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
-        // sort again...
-        processedPeaks = new ArrayList<ProcessedPeak>(processedPeaks);
-        Collections.sort(processedPeaks, new ProcessedPeak.MassComparator());
-        final ProcessedPeak parentPeak = processedPeaks.get(processedPeaks.size() - 1);
-        // decompose peaks
-        final FormulaConstraints constraints = experiment.getMeasurementProfile().getFormulaConstraints();
-        final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
-        final Ionization ion = experiment.getIonization();
-        final Deviation fragmentDeviation = experiment.getMeasurementProfile().getAllowedMassDeviation();
-        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(parentPeak.getUnmodifiedOriginalMass(), parentDeviation, constraints);
-        final ArrayList<List<MolecularFormula>> decompositions = new ArrayList<List<MolecularFormula>>(processedPeaks.size());
-        int j = 0;
-        for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size() - 1)) {
-            peak.setIndex(j++);
-            decompositions.add(decomposer.decomposeToFormulas(peak.getUnmodifiedMass(), fragmentDeviation, constraints));
-        }
-        parentPeak.setIndex(processedPeaks.size() - 1);
-        assert parentPeak == processedPeaks.get(processedPeaks.size() - 1);
-        // important: for each two peaks which are within 2*massrange:
-        //  => make decomposition list disjoint
-        final Deviation window = fragmentDeviation.multiply(2);
-        for (int i = 1; i < processedPeaks.size() - 1; ++i) {
-            if (window.inErrorWindow(processedPeaks.get(i).getMz(), processedPeaks.get(i - 1).getMz())) {
-                final HashSet<MolecularFormula> right = new HashSet<MolecularFormula>(decompositions.get(i));
-                final ArrayList<MolecularFormula> left = new ArrayList<MolecularFormula>(decompositions.get(i - 1));
-                final double leftMass = ion.subtractFromMass(processedPeaks.get(i - 1).getMass());
-                final double rightMass = ion.subtractFromMass(processedPeaks.get(i).getMass());
-                final Iterator<MolecularFormula> leftIter = left.iterator();
-                while (leftIter.hasNext()) {
-                    final MolecularFormula leftFormula = leftIter.next();
-                    if (right.contains(leftFormula)) {
-                        if (Math.abs(leftFormula.getMass() - leftMass) < Math.abs(leftFormula.getMass() - rightMass)) {
-                            right.remove(leftFormula);
-                        } else {
-                            leftIter.remove();
-                        }
-                    }
-                }
-                decompositions.set(i - 1, left);
-                decompositions.set(i, new ArrayList<MolecularFormula>(right));
-            }
-        }
-        final ProcessedInput preprocessed = new ProcessedInput(experiment, originalExperiment, processedPeaks, parentPeak);
-        final int n = processedPeaks.size();
-        preprocessed.getOrCreateAnnotation(Scoring.class).initializeScoring(n);
-        // score peak pairs
-        final double[][] peakPairScores = preprocessed.getAnnotationOrThrow(Scoring.class).getPeakPairScores();
-        for (PeakPairScorer scorer : peakPairScorers) {
-            scorer.score(processedPeaks, preprocessed, peakPairScores);
-        }
-        // score fragment peaks
-        final double[] peakScores = preprocessed.getAnnotationOrThrow(Scoring.class).getPeakScores();
-        for (PeakScorer scorer : fragmentPeakScorers) {
-            scorer.score(processedPeaks, preprocessed, peakScores);
-        }
-        // dont score parent peak
-        peakScores[peakScores.length - 1] = 0d;
 
-        final PeakAnnotation<DecompositionList> decompositionList = preprocessed.getOrCreatePeakAnnotation(DecompositionList.class);
-        // score peaks
-        {
-            final ArrayList<Object> preparations = new ArrayList<Object>(decompositionScorers.size());
-            for (DecompositionScorer<?> scorer : decompositionScorers) preparations.add(scorer.prepare(preprocessed));
-            for (int i = 0; i < processedPeaks.size() - 1; ++i) {
-                final List<MolecularFormula> decomps = decompositions.get(i);
-                final ArrayList<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>(decomps.size());
-                for (MolecularFormula f : decomps) {
-                    double score = 0d;
-                    int k = 0;
-                    for (DecompositionScorer<?> scorer : decompositionScorers) {
-                        score += ((DecompositionScorer<Object>) scorer).score(f, processedPeaks.get(i), preprocessed, preparations.get(k++));
-                    }
-                    scored.add(new ScoredMolecularFormula(f, score));
-                }
-                decompositionList.set(processedPeaks.get(i), new DecompositionList(scored));
-            }
-        }
-        // same with root
-        {
-            final ArrayList<Object> preparations = new ArrayList<Object>(rootScorers.size());
-            for (DecompositionScorer<?> scorer : rootScorers) preparations.add(scorer.prepare(preprocessed));
-            final ArrayList<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>(pmds.size());
-            for (MolecularFormula f : pmds) {
-                double score = 0d;
-                int k = 0;
-                for (DecompositionScorer<?> scorer : rootScorers) {
-                    score += ((DecompositionScorer<Object>) scorer).score(f, parentPeak, preprocessed, preparations.get(k++));
-                }
-                scored.add(new ScoredMolecularFormula(f, score));
-
-            }
-            Collections.sort(scored, Collections.reverseOrder());
-            decompositionList.set(parentPeak, new DecompositionList(scored));
-            preprocessed.addAnnotation(DecompositionList.class, decompositionList.get(parentPeak));
-        }
-        // set peak indizes
-        for (int i = 0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
-
-        // final processing
-        return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, preprocessed);
-    }
 
     /*
 
@@ -1014,111 +1250,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
      */
 
-    /**
-     * a set of peaks are merged if:
-     * - they are from different spectra
-     * - they they are in the same mass range
-     *
-     * @param experiment
-     * @param peaklists  a peaklist for each spectrum
-     * @return a list of merged peaks
-     */
-    public ArrayList<ProcessedPeak> mergePeaks(Ms2Experiment experiment, List<ProcessedPeak> peaklists) {
-        final ArrayList<ProcessedPeak> mergedPeaks = new ArrayList<ProcessedPeak>(peaklists.size());
-        peakMerger.mergePeaks(peaklists, experiment, experiment.getMeasurementProfile().getAllowedMassDeviation().multiply(2), new Merger() {
-            @Override
-            public ProcessedPeak merge(List<ProcessedPeak> peaks, int index, double newMz) {
-                final ProcessedPeak newPeak = peaks.get(index);
-                // sum up global intensities, take maximum of local intensities
-                double local = 0d, global = 0d, relative = 0d;
-                for (ProcessedPeak p : peaks) {
-                    local = Math.max(local, p.getLocalRelativeIntensity());
-                    global += p.getGlobalRelativeIntensity();
-                    relative += p.getRelativeIntensity();
-                }
-                newPeak.setMz(newMz);
-                newPeak.setLocalRelativeIntensity(local);
-                newPeak.setGlobalRelativeIntensity(global);
-                newPeak.setRelativeIntensity(relative);
-                final MS2Peak[] originalPeaks = new MS2Peak[peaks.size()];
-                for (int i = 0; i < peaks.size(); ++i) originalPeaks[i] = peaks.get(i).getOriginalPeaks().get(0);
-                newPeak.setOriginalPeaks(Arrays.asList(originalPeaks));
-                mergedPeaks.add(newPeak);
-                return newPeak;
-            }
-        });
-        {
-            // DEBUGGING
-            Collections.sort(mergedPeaks);
-        }
-        return mergedPeaks;
-    }
-
-    public ArrayList<ProcessedPeak> normalize(Ms2Experiment experiment) {
-        final double parentMass = experiment.getIonMass();
-        final ArrayList<ProcessedPeak> peaklist = new ArrayList<ProcessedPeak>(100);
-        final Deviation mergeWindow = experiment.getMeasurementProfile().getAllowedMassDeviation().divide(2d);
-        final Ionization ion = experiment.getIonization();
-        double globalMaxIntensity = 0d;
-        for (Ms2Spectrum s : experiment.getMs2Spectra()) {
-            // merge peaks: iterate them from highest to lowest intensity and remove peaks which
-            // are in the mass range of a high intensive peak
-            final MutableSpectrum<Peak> sortedByIntensity = new SimpleMutableSpectrum(s);
-            Spectrums.sortSpectrumByDescendingIntensity(sortedByIntensity);
-            // simple spectra are always ordered by mass
-            final SimpleSpectrum sortedByMass = new SimpleSpectrum(s);
-            final BitSet deletedPeaks = new BitSet(s.size());
-            for (int i = 0; i < s.size(); ++i) {
-                // get index of peak in mass-ordered spectrum
-                final double mz = sortedByIntensity.getMzAt(i);
-                final int index = Spectrums.binarySearch(sortedByMass, mz);
-                assert index >= 0;
-                if (deletedPeaks.get(index)) continue; // peak is already deleted
-                // delete all peaks within the mass range
-                for (int j = index - 1; j >= 0 && mergeWindow.inErrorWindow(mz, sortedByMass.getMzAt(j)); --j)
-                    deletedPeaks.set(j, true);
-                for (int j = index + 1; j < s.size() && mergeWindow.inErrorWindow(mz, sortedByMass.getMzAt(j)); ++j)
-                    deletedPeaks.set(j, true);
-            }
-            final int offset = peaklist.size();
-            // add all remaining peaks to the peaklist
-            for (int i = 0; i < s.size(); ++i) {
-                if (!deletedPeaks.get(i)) {
-                    final ProcessedPeak propeak = new ProcessedPeak(new MS2Peak(s, sortedByMass.getMzAt(i), sortedByMass.getIntensityAt(i)));
-                    propeak.setIon(ion);
-                    peaklist.add(propeak);
-
-                }
-            }
-            // now normalize spectrum. Ignore peaks near to the parent peak
-            final double lowerbound = parentMass - 0.1d;
-            double scale = 0d;
-            for (int i = offset; i < peaklist.size() && peaklist.get(i).getMz() < lowerbound; ++i) {
-                scale = Math.max(scale, peaklist.get(i).getIntensity());
-            }
-            // now set local relative intensities
-            for (int i = offset; i < peaklist.size(); ++i) {
-                final ProcessedPeak peak = peaklist.get(i);
-                peak.setLocalRelativeIntensity(peak.getIntensity() / scale);
-            }
-            // and adjust global relative intensity
-            globalMaxIntensity = Math.max(globalMaxIntensity, scale);
-        }
-        // now calculate global normalized intensities
-        for (ProcessedPeak peak : peaklist) {
-            peak.setGlobalRelativeIntensity(peak.getIntensity() / globalMaxIntensity);
-            peak.setRelativeIntensity(normalizationType == NormalizationType.GLOBAL ? peak.getGlobalRelativeIntensity() : peak.getLocalRelativeIntensity());
-        }
-        // finished!
-        return peaklist;
-    }
-
-    Ms2Experiment preProcess(Ms2Experiment experiment) {
-        for (Preprocessor proc : preprocessors) {
-            experiment = proc.process(experiment);
-        }
-        return experiment;
-    }
 
     ProcessedInput postProcess(PostProcessor.Stage stage, ProcessedInput input) {
         for (PostProcessor proc : postProcessors) {
@@ -1127,25 +1258,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
         }
         return input;
-    }
-
-    public Ms2Experiment validate(Ms2Experiment experiment) {
-        // first of all: insert default profile if no profile is given
-        Ms2ExperimentImpl input = new Ms2ExperimentImpl(experiment);
-        if (input.getMeasurementProfile() == null)
-            input.setMeasurementProfile(new MutableMeasurementProfile(defaultProfile));
-        else
-            input.setMeasurementProfile(MutableMeasurementProfile.merge(defaultProfile, input.getMeasurementProfile()));
-        experiment = input;
-        for (InputValidator validator : inputValidators) {
-            experiment = validator.validate(experiment, validatorWarning, repairInput);
-        }
-        return experiment;
-    }
-
-    protected Ms2ExperimentImpl wrapInput(Ms2Experiment exp) {
-        if (exp instanceof Ms2ExperimentImpl) return (Ms2ExperimentImpl) exp;
-        else return new Ms2ExperimentImpl(exp);
     }
 
     //////////////////////////////////////////
@@ -1291,6 +1403,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     private <T, G, D, L> void fillList(List<T> list, ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, String keyName) {
+        if (!document.hasKeyInDictionary(dictionary, keyName)) return;
         Iterator<G> ls = document.iteratorOfList(document.getListFromDictionary(dictionary, keyName));
         while (ls.hasNext()) {
             final G l = ls.next();
