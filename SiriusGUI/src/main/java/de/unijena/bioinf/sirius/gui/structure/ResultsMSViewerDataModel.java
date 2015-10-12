@@ -165,7 +165,6 @@ public class ResultsMSViewerDataModel implements MSViewerDataModel {
 		if(selectedSpectrum==null) return;
 		if(isMarked) this.isMarkedSet.add(index);
 		else this.isMarkedSet.remove(index);
-		System.out.println("setMarked "+index+" "+isMarked);
 	}
 	
 	public void removeMarkings(){

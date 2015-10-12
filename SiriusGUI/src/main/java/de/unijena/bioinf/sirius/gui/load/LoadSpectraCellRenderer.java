@@ -59,7 +59,7 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			
 			propertyFont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		try{
@@ -68,14 +68,13 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
 		selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
 		evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
 		disableBackground = UIManager.getColor("ComboBox.background");
-		System.out.println("Farbe: "+disableBackground);
 		unevenBackground = new Color(213,227,238);
 		activatedForeground = UIManager.getColor("List.foreground");
 		deactivatedForeground = Color.GRAY;

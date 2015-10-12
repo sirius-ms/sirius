@@ -20,7 +20,6 @@ public class TreeCopyTool {
 	}
 	
 	private static void copyTreeRek(TreeNode node, TreeNode newNode){
-		System.out.println("copy "+node.getMolecularFormula()+" "+newNode.getMolecularFormula());
 		for(TreeEdge edge : node.getOutEdges()){
 			TreeNode child = edge.getTarget();
 			DefaultTreeNode newChild = new DefaultTreeNode();

@@ -137,6 +137,7 @@ public class CollisionEnergyDialog extends JDialog implements ActionListener, Ch
 		cb.addActionListener(this);
 		
 		this.pack();
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 	

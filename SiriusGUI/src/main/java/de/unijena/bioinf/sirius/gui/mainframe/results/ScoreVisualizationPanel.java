@@ -39,7 +39,7 @@ public class ScoreVisualizationPanel extends JPanel {
 			valueFont = tempFont.deriveFont(10f);
 			
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 	}

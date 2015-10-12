@@ -17,6 +17,7 @@ import java.util.Deque;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -39,10 +40,12 @@ import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
+import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
@@ -62,6 +65,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 	
 	private SiriusResultElement sre;
 	
+	private ConfigStorage config;
+	
 	private static final NodeType[] NODE_TYPES = {NodeType.small, NodeType.big, NodeType.score};
 	
 //	private static final String[] COLOR_TYPES = {"RGB Score", "RGB Intensity", "RBG Score", "RBG Intensity", "RG Score", "RG Intensity", "BGR Score", "BGR Intensity", "none"};
@@ -70,10 +75,12 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		NodeColor.rwbScore,NodeColor.rwbIntensity,NodeColor.none};
 	
 	
-	public TreeVisualizationPanel(Frame owner){
+	public TreeVisualizationPanel(Frame owner,ConfigStorage config){
 		
 		this.owner = owner;
 		this.sre = null;
+		
+		this.config = config;
 		
 		this.setLayout(new BorderLayout());
 //		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"tree view"));
@@ -87,7 +94,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		colorType.addActionListener(this);
 		northPanel.add(new JLabel(" node color style "));
 		northPanel.add(colorType);
-		saveTreeB = new JButton("save tree");
+		saveTreeB = new JButton("Export tree",new ImageIcon("src/main/resources/icons/document-export.png"));
 		saveTreeB.addActionListener(this);
 		saveTreeB.setEnabled(false);
 		northPanel.add(new JLabel("  "));
@@ -161,14 +168,32 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 			this.svp.repaint();
 		}else if(e.getSource()== this.saveTreeB){
 			JFileChooser jfc = new JFileChooser();
+			jfc.setCurrentDirectory(config.getDefaultTreeExportPath());
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			jfc.setAcceptAllFileFilterUsed(false);
-			jfc.addChoosableFileFilter(new FTreeDotFilter());
-			jfc.addChoosableFileFilter(new FTreeGIFFilter());
-			jfc.addChoosableFileFilter(new FTreeJPGFilter());
-			jfc.addChoosableFileFilter(new FTreePNGFilter());
+			
+			FileFilter dotFilter = new FTreeDotFilter();
+			FileFilter gifFilter = new FTreeGIFFilter();
+			FileFilter jpgFilter = new FTreeJPGFilter();
+			FileFilter pngFilter = new FTreePNGFilter();
+			
+			
+			jfc.addChoosableFileFilter(dotFilter);
+			jfc.addChoosableFileFilter(gifFilter);
+			jfc.addChoosableFileFilter(jpgFilter);
+			jfc.addChoosableFileFilter(pngFilter);
 //			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 			
+			FileFormat defaultFF = config.getDefaultTreeFileFormat();
+			if(defaultFF==FileFormat.dot){
+				jfc.setFileFilter(dotFilter);
+			}else if(defaultFF==FileFormat.gif){
+				jfc.setFileFilter(gifFilter);
+			}else if(defaultFF==FileFormat.jpg){
+				jfc.setFileFilter(jpgFilter);
+			}else if(defaultFF==FileFormat.png){
+				jfc.setFileFilter(pngFilter);
+			}
 			
 			
 			File selectedFile = null;
@@ -179,28 +204,30 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 				if(returnval == JFileChooser.APPROVE_OPTION){
 					File selFile = jfc.getSelectedFile();
 					
+					config.setDefaultTreeExportPath(selFile.getParentFile());
+					
 					String name = selFile.getName();
-					if(jfc.getFileFilter() instanceof FTreeJsonFilter){
+					/*if(jfc.getFileFilter() instanceof FTreeJsonFilter){
 						ff = FileFormat.json;
 						if(!selFile.getAbsolutePath().endsWith(".json")){
 							selFile = new File(selFile.getAbsolutePath()+".json");
 						}
-					}else if(jfc.getFileFilter() instanceof FTreeDotFilter){
+					}else */if(jfc.getFileFilter() == dotFilter){
 						ff = FileFormat.dot;
 						if(!selFile.getAbsolutePath().endsWith(".dot")){
 							selFile = new File(selFile.getAbsolutePath()+".dot");
 						}
-					}else if(jfc.getFileFilter() instanceof FTreeGIFFilter){
+					}else if(jfc.getFileFilter() == gifFilter){
 						ff = FileFormat.gif;
 						if(!selFile.getAbsolutePath().endsWith(".gif")){
 							selFile = new File(selFile.getAbsolutePath()+".gif");
 						}
-					}else if(jfc.getFileFilter() instanceof FTreeJPGFilter){
+					}else if(jfc.getFileFilter() == jpgFilter){
 						ff = FileFormat.jpg;
 						if(!selFile.getAbsolutePath().endsWith(".jpg")){
 							selFile = new File(selFile.getAbsolutePath()+".jpg");
 						}
-					}else if(jfc.getFileFilter() instanceof FTreePNGFilter){
+					}else if(jfc.getFileFilter() == pngFilter){
 						ff = FileFormat.png;
 						if(!selFile.getAbsolutePath().endsWith(".png")){
 							selFile = new File(selFile.getAbsolutePath()+".png");
@@ -222,6 +249,10 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 				}else{
 					break;
 				}
+			}
+			
+			if(ff!=FileFormat.none){
+				config.setDefaultTreeFileFormat(ff);
 			}
 			
 			if(selectedFile!=null&&ff!=FileFormat.none){
@@ -260,19 +291,12 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		TreeNode root = TreeCopyTool.copyTree(this.sre.getTree());
 		NodeColor color = this.renderPanel.getNodeColor();
 		NodeType type = this.renderPanel.getNodeType();
-		System.out.println("root "+root);
-		System.out.println("color "+color);
-		System.out.println("type "+type);
 		TreeRenderPanel panel = new TreeRenderPanel();
-		System.out.println("1");
 		panel.showTree(root, type, color);
-		System.out.println("2");
 		Dimension dim = panel.getMinimumSize();
 		panel.setSize(new Dimension((int)dim.getWidth(),(int)dim.getHeight()));
 //		panel.setSize(new Dimension(1000,400));
 		panel.changeNodeType(type);
-		System.out.println("3");
-		System.out.println(dim.getWidth()+" "+dim.getHeight());
 		return panel.getImage();
 	}
 
@@ -344,6 +368,4 @@ class FTreePNGFilter extends FTreeFilter{
 	
 }
 
-enum FileFormat {
-	dot,json,jpg,png,gif,none;
-}
+

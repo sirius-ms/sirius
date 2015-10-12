@@ -101,7 +101,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		double maxInt = -1;
 		Object maxObj = null;
 		List<CompactSpectrum> ms1Spectra = ec.getMs1Spectra();
+		// falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
+		boolean useMS1;
 		if(!ms1Spectra.isEmpty()){
+			useMS1 = true;
 			CompactSpectrum sp = ms1Spectra.get(0);
 			for(int i=0;i<sp.getSize();i++){
 				if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
@@ -109,6 +112,17 @@ public class ComputeDialog extends JDialog implements ActionListener{
 					maxObj = sp.getPeak(i);
 				}
 				masses.add(sp.getPeak(i));
+			}
+		}else{
+			useMS1 = false;
+			for(CompactSpectrum sp : ec.getMs2Spectra()){
+				for(int i=0;i<sp.getSize();i++){
+					if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
+						maxInt = sp.getPeak(i).getAbsoluteIntensity();
+						maxObj = sp.getPeak(i);
+					}
+					masses.add(sp.getPeak(i));
+				}
 			}
 		}
 		box = new JComboBox<>(masses);
@@ -149,15 +163,19 @@ public class ComputeDialog extends JDialog implements ActionListener{
 //		msa = new MassSearchable(ec);
 //		autoComboBox = new AutocompleteJComboBox(msa);
 //		focMassPanel.add(autoComboBox);
-		autoDetectFM = new JButton("most intensive peak");
+		autoDetectFM = new JButton("Most intensive peak");
 		autoDetectFM.addActionListener(this);
 		if(masses.isEmpty()) autoDetectFM.setEnabled(false);
-		expFM = new JButton("file value");
+		expFM = new JButton("File value");
 		expFM.addActionListener(this);
 		if(ec.getDataFocusedMass()<=0)expFM.setEnabled(false);
 		
 		if(!masses.isEmpty()){
-			box.setSelectedItem(maxObj);
+			if(!useMS1&&ec.getDataFocusedMass()>0){
+				box.setSelectedItem(String.valueOf(ec.getDataFocusedMass()));
+			}else{
+				box.setSelectedItem(maxObj);
+			}
 		}else if(ec.getDataFocusedMass()>0){
 			box.setSelectedItem(String.valueOf(ec.getDataFocusedMass()));
 		}else{
@@ -189,11 +207,12 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		elements.add(iodine);
 		elements.add(selenium);
 		
-		elementAutoDetect = new JButton("auto detect");
+		elementAutoDetect = new JButton("Auto detect");
 		elementAutoDetect.addActionListener(this);
+		elementAutoDetect.setEnabled(false);
 		elementTF = new JTextField(10);
 		elementTF.setEditable(false);
-		elementButton = new JButton("more elements");
+		elementButton = new JButton("More elements");
 		elementButton.addActionListener(this);
 		
 		elements.add(elementAutoDetect);
@@ -255,15 +274,16 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		this.add(southPanel,BorderLayout.SOUTH);
-		compute = new JButton("compute");
+		compute = new JButton("Compute");
 		compute.addActionListener(this);
-		abort = new JButton("abort");
+		abort = new JButton("Abort");
 		abort.addActionListener(this);
 		southPanel.add(compute);
 		southPanel.add(abort);
 		
 		this.pack();
 		this.setResizable(false);
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 		
 	}
@@ -406,7 +426,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            	pm = Double.parseDouble(selected.toString());
 	            }
 	            
-	            System.err.println(pm);
+//	            System.err.println(pm);
 	            
 	            Ms2Experiment exp = this.convert(ec,(String) ionizationCB.getSelectedItem(),pm);
 	            
@@ -415,7 +435,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            ProgressDialog progDiag = new ProgressDialog(this);
 	            progDiag.start(sirius, exp, whiteset);
 	            if(progDiag.isSucessful()){
-	            	System.err.println("progDiag erfolgreich");
+//	            	System.err.println("progDiag erfolgreich");
 	            	this.success = true;
 	            	this.ec.setResults(SiriusResultElementConverter.convertResults(progDiag.getResults()));
 	            	this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
@@ -427,11 +447,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            		this.ec.setSelectedFocusedMass(p.getMass());
 	            	}
 	            	
-	            	System.out.println("predispose");
 	            	this.dispose();
-	            	System.out.println("postdispose");
 	            }else{
-	            	System.err.println("progDiag nicht erfolgreich");
+//	            	System.err.println("progDiag nicht erfolgreich");
 	            }
 	            
 //	            List<IdentificationResult> results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);
@@ -439,7 +457,6 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			}catch(IOException e2){
 				throw new RuntimeException(e2);
 			}
-			System.out.println("Ende computeDiag");
 		}
 	}
 	
@@ -547,7 +564,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
         	spNew.setMsLevel(2);
 //        	spNew.setPrecursorMz(ec.getFocusedMass()); //TODO
         	spNew.setPrecursorMz(pm);
-        	System.err.println(spNew.getPrecursorMz());
+//        	System.err.println(spNew.getPrecursorMz());
         	spNew.setCollisionEnergy(sp.getCollisionEnergy());
         	for(int i=0;i<sp.getSize();i++){
         		spNew.addPeak(sp.getMass(i), sp.getAbsoluteIntensity(i));

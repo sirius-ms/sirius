@@ -9,25 +9,38 @@ import de.unijena.bioinf.myxo.gui.msview.msviewer.MSViewerPanel;
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 
-public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener{
+public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
+				DropTargetListener, MouseListener{
 	
 	private JButton add, remove, ok, abort;
 	private JList<SpectrumContainer> msList;
 	private MSViewerPanel msviewer;
-	private JButton editCE,changeMSLevel;
+	private JButton editCE/*, changeMSLevel*/;
 	private JTextField cEField;
 	private JComboBox<String> msLevelBox;
 	
@@ -41,6 +54,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	private JTextField nameTF;
 	private JButton nameB;
+	
+	JPopupMenu spPopMenu;
+	JMenuItem addMI, removeMI;
 
 	public DefaultLoadDialog(JFrame owner){ 
 		super(owner,"load",true);
@@ -64,18 +80,20 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		listModel = new DefaultListModel<>();
 		
 		msList = new JList<SpectrumContainer>(listModel);
+		msList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		JScrollPane msPanel = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		msPanel.setViewportView(msList);
 		leftPanel.add(msPanel,BorderLayout.CENTER);
 		msList.setCellRenderer(new LoadSpectraCellRenderer());
 		
 		msList.addListSelectionListener(this);
+		msList.addMouseListener(this);
 		
 		
 		
 		JPanel msControls = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		add = new JButton("+");
-		remove = new JButton("-");
+		add = new JButton(new ImageIcon("src/main/resources/icons/list-add.png"));
+		remove = new JButton(new ImageIcon("src/main/resources/icons/list-remove.png"));
 		add.addActionListener(this);
 		remove.addActionListener(this);
 		remove.setEnabled(false);
@@ -95,34 +113,10 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 //		JSpinner maxspinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 100.0, 0.1));
 		
 		JPanel propsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		cEField = new JTextField(10);
-		cEField.setEditable(false);
-		cEField.setEnabled(false);
-		cEPanel.add(cEField);
-		cEPanel.add(new JLabel("eV"));
-		
-		editCE = new JButton("edit");
-		editCE.setEnabled(false);
-		editCE.addActionListener(this);
-		cEPanel.add(editCE);
-		
-		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"cE"));
-		propsPanel.add(cEPanel);
 		
 		JPanel msLevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		msLevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ms level"));
 		propsPanel.add(msLevelPanel);
-		
-		String[] msLevelVals = {"MS 1","MS 2"};
-		
-		msLevelBox = new JComboBox<>(msLevelVals);
-		msLevelBox.setEnabled(false);
-		msLevelPanel.add(msLevelBox);
-		changeMSLevel = new JButton("change");
-		changeMSLevel.addActionListener(this);
-		changeMSLevel.setEnabled(false);
-		msLevelPanel.add(changeMSLevel);
 		
 		JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiment name"));
@@ -130,11 +124,37 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		nameTF.setEditable(false);
 //		nameTF.setText("unknown");
 		namePanel.add(nameTF);
-		nameB = new JButton("change");
+		nameB = new JButton("Change");
 		nameB.addActionListener(this);
 		namePanel.add(nameB);
 		propsPanel.add(namePanel);
 		
+		JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		cEField = new JTextField(10);
+		cEField.setEditable(false);
+		cEField.setEnabled(false);
+		cEPanel.add(cEField);
+		cEPanel.add(new JLabel("eV"));
+		
+		editCE = new JButton("Edit");
+		editCE.setEnabled(false);
+		editCE.addActionListener(this);
+		cEPanel.add(editCE);
+		
+		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
+		propsPanel.add(cEPanel);
+		
+//		changeMSLevel = new JButton("change");
+//		changeMSLevel.addActionListener(this);
+//		changeMSLevel.setEnabled(false);
+//		msLevelPanel.add(changeMSLevel);
+		
+		String[] msLevelVals = {"MS 1","MS 2"};
+		
+		msLevelBox = new JComboBox<>(msLevelVals);
+		msLevelBox.setEnabled(false);
+		msLevelBox.addActionListener(this);
+		msLevelPanel.add(msLevelBox);
 		
 		
 		rightPanel.add(propsPanel,BorderLayout.SOUTH);
@@ -144,7 +164,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		mainPanel.add(rightPanel,BorderLayout.CENTER);
 		
 		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		controlPanel.setBorder(BorderFactory.createEtchedBorder());
+//		controlPanel.setBorder(BorderFactory.createEtchedBorder());
 		this.add(controlPanel,BorderLayout.SOUTH);
 		
 		ok = new JButton("OK");
@@ -154,14 +174,36 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		controlPanel.add(ok);
 		controlPanel.add(abort);
 		
+		DropTarget dropTarget = new DropTarget(this, this);
+		
+		constructSpectraListPopupMenu();
+		
 //		this.setSize(new Dimension(800,600));
 //		this.setVisible(true);
+	}
+	
+	
+	
+	public void constructSpectraListPopupMenu(){
+		spPopMenu = new JPopupMenu();
+		addMI = new JMenuItem("Add experiment(s)",new ImageIcon("src/main/resources/icons/list-add.png"));
+		removeMI = new JMenuItem("Remove experiment(s)",new ImageIcon("src/main/resources/icons/list-remove.png"));
+		
+		addMI.addActionListener(this);
+		removeMI.addActionListener(this);
+		
+		removeMI.setEnabled(false);
+		
+		spPopMenu.add(addMI);
+		spPopMenu.add(removeMI);
 	}
 	
 	private void updateCETextField(){
 		int index = msList.getSelectedIndex();
 		if(index==-1||listModel.size()<=index){
 			this.cEField.setText("");
+			this.cEField.setEnabled(false);
+			this.editCE.setEnabled(false);
 			return;
 		}
 		SpectrumContainer spcont = listModel.get(index);
@@ -173,9 +215,14 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			cEField.setEnabled(true);
 			editCE.setEnabled(true);
 			CollisionEnergy ce = spcont.getSpectrum().getCollisionEnergy();
-			double ceMin = ce.getMinEnergy();
-			double ceMax = ce.getMaxEnergy();
-			String ceString = ceMin == ceMax ? cEFormat.format(ceMin) : cEFormat.format(ceMin) + " - " + cEFormat.format(ceMax); 
+			String ceString = null;
+			if(ce==null){
+				ceString = "unknown";
+			}else{
+				double ceMin = ce.getMinEnergy();
+				double ceMax = ce.getMaxEnergy();
+				ceString = ceMin == ceMax ? cEFormat.format(ceMin) : cEFormat.format(ceMin) + " - " + cEFormat.format(ceMax);
+			}
 			cEField.setText(ceString);
 		}
 		
@@ -222,6 +269,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	@Override
 	public void showDialog(){
 		this.setSize(new Dimension(950,640));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 
@@ -229,21 +277,30 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==this.changeMSLevel){
-			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
-			for(LoadDialogListener ldl : listeners){
-				ldl.changeMSLevel(spcont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
+		if(e.getSource()==this.msLevelBox){
+			SpectrumContainer spCont = listModel.get(msList.getSelectedIndex());
+			int msLevel = msLevelBox.getSelectedIndex()+1;
+			if(spCont.getSpectrum().getMSLevel()!=msLevel){
+				for(LoadDialogListener ldl : listeners){
+					ldl.changeMSLevel(spCont.getSpectrum(), msLevelBox.getSelectedIndex()+1);
+				}
 			}
-		}else if(e.getSource()==this.remove){
-			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex());
-			for(LoadDialogListener ldl : listeners){
-				ldl.removeSpectrum(spcont.getSpectrum());
+		}else if(e.getSource()==this.remove || e.getSource()==this.removeMI){
+			int[] indices = msList.getSelectedIndices();
+			List<SpectrumContainer> conts = new ArrayList<SpectrumContainer>();
+			for(int index : indices){
+				conts.add(listModel.get(index));
+			}
+			for(SpectrumContainer spcont : conts){
+				for(LoadDialogListener ldl : listeners){
+					ldl.removeSpectrum(spcont.getSpectrum());
+				}
 			}
 		}else if(e.getSource()==this.editCE){
 			for(LoadDialogListener ldl : listeners){
 				ldl.changeCollisionEnergy(listModel.get(msList.getSelectedIndex()).getSpectrum());
 			}
-		}else if(e.getSource()==this.add){
+		}else if(e.getSource()==this.add || e.getSource()==this.addMI){
 			for(LoadDialogListener ldl : listeners){
 				ldl.addSpectra();
 			}
@@ -264,7 +321,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			if(diag.getReturnValue()==ReturnValue.Success){
 				String newName = diag.getNewName();
 				if(newName!=null && !newName.isEmpty()){
-					System.out.println(newName);
 					for(LoadDialogListener ldl : listeners){
 						ldl.experimentNameChanged(newName);
 					}
@@ -278,31 +334,35 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
-		updateCETextField();
-//		System.out.println(msList.getSelectedIndex());
-		if(msList.getSelectedIndex()<0){
-//			this.cEField.setText("");
-			this.msviewer.setData(new DummySpectrumContainer());
-			this.msviewer.repaint();
-			this.msLevelBox.setEnabled(false);
-			this.changeMSLevel.setEnabled(false);
-			this.remove.setEnabled(false);
-			return;
+		
+		int[] indices = msList.getSelectedIndices();
+		if(indices.length<=1){
+			updateCETextField();
+			if(msList.getSelectedIndex()<0){
+//				this.cEField.setText("");
+				this.msviewer.setData(new DummySpectrumContainer());
+				this.msviewer.repaint();
+				this.msLevelBox.setEnabled(false);
+//				this.changeMSLevel.setEnabled(false);
+				this.remove.setEnabled(false);
+				this.removeMI.setEnabled(false);
+				return;
+			}else{
+				this.remove.setEnabled(true);
+				this.removeMI.setEnabled(true);
+			}
+			SpectrumContainer spcont = listModel.get(msList.getSelectedIndex()); 
+			msviewer.setData(spcont);
+			msviewer.repaint();
+			msLevelBox.setEnabled(true);
+			msLevelBox.setSelectedIndex(spcont.getSpectrum().getMSLevel()-1);
 		}else{
-			this.remove.setEnabled(true);
+			this.cEField.setText("");
+			this.cEField.setEnabled(false);
+			this.editCE.setEnabled(false);
+			this.msLevelBox.setEnabled(false);
 		}
-		SpectrumContainer spcont = listModel.get(msList.getSelectedIndex()); 
-		msviewer.setData(spcont);
-		msviewer.repaint();
-//		CollisionEnergy ce = spcont.getSpectrum().getCollisionEnergy();
-//		double ceMin = ce.getMinEnergy();
-//		double ceMax = ce.getMaxEnergy();
-//		String ceString = ceMin == ceMax ? cEFormat.format(ceMin) : cEFormat.format(ceMin) + " - " + cEFormat.format(ceMax); 
-//		cEField.setText(ceString);
-//		System.out.println(spcont.getSpectrum().getMSLevel());
-		msLevelBox.setEnabled(true);
-		changeMSLevel.setEnabled(true);
-		msLevelBox.setSelectedIndex(spcont.getSpectrum().getMSLevel()-1);
+		
 	}
 
 	@Override
@@ -350,6 +410,101 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	@Override
 	public void experimentNameChanged(String name) {
 		nameTF.setText(name);
+	}
+	
+	/// drag and drop support...
+
+	@Override
+	public void dragEnter(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragOver(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dropActionChanged(DropTargetDragEvent dtde) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void dragExit(DropTargetEvent dte) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void drop(DropTargetDropEvent dtde) {
+		Transferable tr = dtde.getTransferable();
+	    DataFlavor[] flavors = tr.getTransferDataFlavors();
+	    List<File> newFiles = new ArrayList<File>();
+	    try{
+			for (int i = 0; i < flavors.length; i++) {
+				if (flavors[i].isFlavorJavaFileListType()) {
+					dtde.acceptDrop(dtde.getDropAction());
+					List files = (List) tr.getTransferData(flavors[i]);
+					for (Object o : files) {
+						File file = (File) o;
+						newFiles.add(file);
+					}
+				}
+				dtde.dropComplete(true);
+			}
+	    }catch(Exception e){
+	    	e.printStackTrace();
+	    	dtde.rejectDrop();
+	    }
+	    
+	    DataFormatIdentifier identifier = new DataFormatIdentifier();
+	    List<File> acceptedFiles = new ArrayList<>(newFiles.size());
+	    for(File file : newFiles){
+	    	if(identifier.identifyFormat(file)!=DataFormat.NotSupported){
+	    		acceptedFiles.add(file);
+	    	}
+	    }
+	    
+		if(acceptedFiles.size()>0){
+			for(LoadDialogListener li : listeners){
+				li.addSpectra(acceptedFiles);
+			}
+		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if(e.isPopupTrigger()){
+			this.spPopMenu.show(e.getComponent(), e.getX(), e.getY());			
+		}
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if(e.isPopupTrigger()){
+			this.spPopMenu.show(e.getComponent(), e.getX(), e.getY());			
+		}
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

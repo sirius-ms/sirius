@@ -92,9 +92,6 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 		this.setPreferredSize(new Dimension(idealWidth,15));
 		this.setMinimumSize(new Dimension(idealWidth,15));
 		
-		System.out.println("benoetigte Groesse: "+idealWidth+" 15");
-		
-//		System.out.println("Bestimmung: "+maxWidth+" "+maxWidth2);
 	}
 	
 	public void initColorsAndFonts(){
@@ -103,7 +100,7 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			textfont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		massColor = Color.BLACK;
@@ -139,35 +136,6 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 		Graphics2D g2 = (Graphics2D) g; 
 		
 		FontMetrics fm = g2.getFontMetrics(this.textfont);
-		
-//		if(!isInit){
-//			int maxMassWidth = 0;
-//			int maxIntWidth = 0;
-//			for(CompactPeak peak : peaks){
-//				String massS = String.valueOf(peak.getMass());
-//				String intS = numberFormat.format(peak.getAbsoluteIntensity()/maxInt);
-//				int massWidth = fm.stringWidth(massS);
-//				int intWidth  = fm.stringWidth(intS);
-//				if(massWidth>maxMassWidth) maxMassWidth = massWidth;
-//				if(intWidth>maxIntWidth) maxIntWidth = intWidth;
-////				int width = fm.stringWidth(massS)+fm.stringWidth(intS)+20;
-////				if(width>maxWidth) maxWidth = width;
-//			}
-//			
-//			int maxWidth = maxMassWidth + maxIntWidth + 20;
-////			int maxWidth = 140;
-//			this.intPos = 15 + maxMassWidth;
-//			
-//			this.setPreferredSize(new Dimension(maxWidth,15));
-//			this.setSize(new Dimension(maxWidth,15));
-//			this.setMinimumSize(new Dimension(maxWidth,15));
-//			isInit=true;
-//			
-//		}
-		
-//		System.out.println("S  "+ this.getSize().getWidth()+" "+this.getSize().getHeight());
-//		System.out.println("PS "+ this.getPreferredSize().getWidth()+" "+this.getPreferredSize().getHeight());
-//		System.out.println("Sollwert: "+this.idealWidth+" 15");
 		
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		

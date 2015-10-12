@@ -9,8 +9,10 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
@@ -53,9 +55,12 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 	private ReturnValue returnValue;
 	
 	private DefaultComboBoxModel<String> massModel, intModel;
+	private boolean multiCSV;
 	
-	public CSVDialog(JDialog owner,List<TDoubleArrayList> data) {
+	public CSVDialog(JDialog owner,List<TDoubleArrayList> data, boolean multiCSV) {
 		super(owner,"CSV",true);
+		
+		this.multiCSV = multiCSV;
 		
 		returnValue = ReturnValue.Success;
 		
@@ -66,7 +71,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		columnNumber = data.get(0).size();
 		rowNumber = data.size();
 		currentMassColumn = 0;
-		currentIntensityColumn = 0;
+		currentIntensityColumn = 1;
 		
 		massModel = new DefaultComboBoxModel<>();
 		intModel = new DefaultComboBoxModel<>();
@@ -102,12 +107,13 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		String[] msLevelVals = {"MS 1","MS 2"};
 		msLevelBox = new JComboBox<>(msLevelVals);
 		msLevelBox.setSelectedIndex(1);
+		
 		JPanel msTempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		msTempPanel.add(msLevelBox);
 		msLevelPanel.add(msTempPanel);
 		
 		JPanel cELevelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		cELevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy"));
+		cELevelPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
 		propertiesPanel.add(cELevelPanel);
 		
 		JPanel rampPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
@@ -130,7 +136,6 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		
 		cl = new CardLayout();
 		cEInnerPanel = new JPanel(cl);
-		
 		cEInnerPanel.add(singlePanel,SINGLE_S);
 		cEInnerPanel.add(rampPanel,RAMP_S);
 		cl.show(cEInnerPanel, SINGLE_S);
@@ -142,6 +147,14 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		JPanel cbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		cbPanel.add(cb);
 		cELevelPanel.add(cbPanel);
+		
+		if(multiCSV){
+			msLevelBox.setEnabled(false);
+			minEnergy.setEnabled(false);
+			maxEnergy.setEnabled(false);
+			colEnergy.setEnabled(false);
+			cb.setEnabled(false);
+		}
 		
 		dtm = new UneditableTableModel(rowNumber, columnNumber);
 		Vector<String> columnNames = new Vector<>();
@@ -160,10 +173,12 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		table = new JTable(dtm);
 		JScrollPane jsb = new JScrollPane(table);
 		columnPanel.add(jsb,BorderLayout.CENTER);
+		table.setDefaultRenderer(Object.class, new ColoredTableCellRenderer());
 		
-		ok = new JButton("ok");
+		
+		ok = new JButton("Ok");
 		ok.addActionListener(this);
-		abort = new  JButton("abort");
+		abort = new  JButton("Abort");
 		abort.addActionListener(this);
 		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		controlPanel.add(ok);
@@ -171,6 +186,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		this.add(controlPanel,BorderLayout.SOUTH);
 		
 		this.setSize(new Dimension(640,480));
+		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
 
@@ -199,10 +215,8 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 				}else{
 					massColumn.removeActionListener(this);
 					if(massIndex+1 > columnNumber-1){
-						System.out.println("way1: "+massIndex+" "+columnNumber);
 						massIndex--;
 					}else{
-						System.out.println("way2: "+massIndex+" "+columnNumber);
 						massIndex++;
 					}
 					massColumn.setSelectedIndex(massIndex);
@@ -212,8 +226,6 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 			
 			this.currentMassColumn = massIndex;
 			this.currentIntensityColumn = intIndex;
-			
-			System.out.println(currentMassColumn+" "+currentIntensityColumn);
 			
 			Vector<String> newNames = new Vector<>();
 			newNames.add("mass (column "+(currentMassColumn+1)+")");
@@ -237,8 +249,6 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 				}
 				counter++;
 			}
-			
-			System.out.println(massIndex+" "+intIndex);
 		}else if(e.getSource()==ok){
 			this.returnValue = ReturnValue.Success;
 			this.setVisible(false);
@@ -252,25 +262,27 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		return returnValue;
 	}
 	
-	public CompactSpectrum getSpectrum(){
+	public CSVDialogReturnContainer getResults(){
 		if(returnValue==ReturnValue.Abort){
 			return null;
 		}else{
-			double[] masses = new double[rowNumber];
-			double[] ints = new double[rowNumber];
-			for(int i=0;i<rowNumber;i++){
-				masses[i] = data.get(i).get(currentMassColumn);
-				ints[i] = data.get(i).get(currentIntensityColumn);
+			CSVDialogReturnContainer cont = new CSVDialogReturnContainer();
+			cont.setIntIndex(currentIntensityColumn);
+			cont.setMassIndex(currentMassColumn);
+			
+			if(!multiCSV){
+				cont.setMsLevel(msLevelBox.getSelectedIndex()+1);
+				
+				if(cb.isSelected()){
+					cont.setMinEnergy((Double) minEnergy.getValue());
+					cont.setMaxEnergy((Double) maxEnergy.getValue());
+				}else{
+					cont.setMinEnergy((Double) colEnergy.getValue());
+					cont.setMaxEnergy((Double) colEnergy.getValue());
+				}
 			}
-			DefaultCompactSpectrum sp = new DefaultCompactSpectrum(masses,ints);
-			sp.setMSLevel(msLevelBox.getSelectedIndex()+1);
-			if(cb.isSelected()){
-				sp.setCollisionEnergy(new CollisionEnergy((Double) minEnergy.getValue(), (Double) maxEnergy.getValue()));
-			}else{
-				double cE = (Double) colEnergy.getValue();
-				sp.setCollisionEnergy(new CollisionEnergy(cE,cE));
-			}
-			return sp;
+			
+			return cont;
 		}
 	}
 
@@ -295,4 +307,42 @@ class UneditableTableModel extends DefaultTableModel{
 	public boolean isCellEditable(int row, int column) {
         return false;
     }
+}
+
+class ColoredTableCellRenderer extends DefaultTableCellRenderer{
+	
+	private Color unevenColor;
+	private Color evenColor;
+	
+	public ColoredTableCellRenderer() {
+		unevenColor = new Color(213,227,238);
+		evenColor  = Color.white;
+//		evenColor = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
+	}
+
+	@Override
+	public Component getTableCellRendererComponent(JTable table, Object value,
+			boolean isSelected, boolean hasFocus, int row, int column) {
+		
+		if(isSelected){
+			return  super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
+		}else{
+			JLabel label = new JLabel(value.toString());
+			
+			if(row%2==1){
+				label.setBackground(unevenColor);
+			}else{
+				label.setBackground(evenColor);
+			}
+			label.setOpaque(true);
+			
+			if(column<2){
+				label.setForeground(Color.black);
+			}else{
+				label.setForeground(Color.gray);
+			}
+			return label;
+		}
+	}
+	
 }

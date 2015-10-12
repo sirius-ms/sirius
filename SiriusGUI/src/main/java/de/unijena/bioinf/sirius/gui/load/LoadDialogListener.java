@@ -1,10 +1,15 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import java.io.File;
+import java.util.List;
+
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 
 public interface LoadDialogListener {
 
 	public void addSpectra();
+	
+	public void addSpectra(List<File> files);
 	
 	public void removeSpectrum(CompactSpectrum sp);
 	
