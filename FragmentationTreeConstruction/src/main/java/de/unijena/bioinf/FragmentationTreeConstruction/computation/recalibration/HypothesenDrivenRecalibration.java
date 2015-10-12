@@ -152,7 +152,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 if (oldTree != null) mtc = mtc.withBackbones(oldTree);
                 correctedTree = mtc.optimalTree();
                 if (correctedTree == null) {
-                    assert !force;
+                    //assert !force;
                     correctedTree = tree;
                 }
                 if (deviationScale == 1) {

@@ -273,7 +273,7 @@ class DP {
             }
         }
         final List<Fragment> nodes = Lists.newArrayList(
-                new PostOrderTraversal<Fragment>(tree.getRoot(), FTree.treeAdapter()).iterator()
+                PostOrderTraversal.createSubtreeTraversal(tree.getRoot(), FTree.treeAdapter()).iterator()
         );
         for (int colorIndex = 0; colorIndex < remainings.length; ++colorIndex) {
             double bestScore = 0d;
@@ -460,7 +460,7 @@ class DP {
     private boolean computationIsCorrect(FTree result, FGraph graph) {
         double score = graph.getLoss(graph.getRoot(), result.getRoot().getFormula()).getWeight();
         final Iterator<Fragment> nodes =
-                new PostOrderTraversal<Fragment>(result.getRoot(), FTree.treeAdapter()).iterator();
+                PostOrderTraversal.createSubtreeTraversal(result.getRoot(), FTree.treeAdapter()).iterator();
         final BitSet colors = new BitSet(graph.maxColor() + 1);
         while (nodes.hasNext()) {
             final Fragment node = nodes.next();
@@ -478,7 +478,7 @@ class DP {
 
     private boolean isColorful(FTree result) {
         final Iterator<Fragment> nodes =
-                new PostOrderTraversal<Fragment>(result.getRoot(), FTree.treeAdapter()).iterator();
+                PostOrderTraversal.createSubtreeTraversal(result.getRoot(), FTree.treeAdapter()).iterator();
         final BitSet colors = new BitSet(graph.maxColor() + 1);
         while (nodes.hasNext()) {
             final int color = nodes.next().getColor();
