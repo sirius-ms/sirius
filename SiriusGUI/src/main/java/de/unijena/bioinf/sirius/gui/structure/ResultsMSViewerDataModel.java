@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.TreeSet;
 
-import sun.security.ec.ECParameters;
 import de.unijena.bioinf.myxo.gui.msview.data.DefaultPeakInformation;
 import de.unijena.bioinf.myxo.gui.msview.data.MSViewerDataModel;
 import de.unijena.bioinf.myxo.gui.msview.data.PeakInformation;

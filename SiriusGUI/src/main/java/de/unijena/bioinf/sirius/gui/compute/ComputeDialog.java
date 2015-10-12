@@ -535,17 +535,15 @@ public class ComputeDialog extends JDialog implements ActionListener{
 //		}else if(ec.getIonization() == Ionization.MPlusNa){
 //			val = "[M+Na]+";
 //		}
-		exp.setIonization(PeriodicTable.getInstance().ionByName(val));
+		exp.setPrecursorIonType(PeriodicTable.getInstance().ionByName(val));
 		FormulaConstraints constraints = null; //TODO
 		MutableMeasurementProfile profile = new MutableMeasurementProfile();
-        profile.setFormulaConstraints(constraints);
-        exp.setMeasurementProfile(profile);
         
         List<MutableMs2Spectrum> ms2spectra = new ArrayList<>();
         exp.setMs2Spectra(ms2spectra);
         for(CompactSpectrum sp : ec.getMs2Spectra()){
         	MutableMs2Spectrum spNew = new MutableMs2Spectrum();
-        	spNew.setIonization(exp.getIonization());
+        	spNew.setIonization(exp.getPrecursorIonType().getIonization());
         	spNew.setMsLevel(2);
 //        	spNew.setPrecursorMz(ec.getFocusedMass()); //TODO
         	spNew.setPrecursorMz(pm);

@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'application'
 
+mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
 sourceCompatibility = 1.7
 version = '0.1'
 jar {
