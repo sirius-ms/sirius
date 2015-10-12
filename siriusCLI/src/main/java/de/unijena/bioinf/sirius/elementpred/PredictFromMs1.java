@@ -45,6 +45,7 @@ public class PredictFromMs1 implements Judge {
     public void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile) {
         final Element Cl =PeriodicTable.getInstance().getByName("Cl");
         final Element Br = PeriodicTable.getInstance().getByName("Br");
+        boolean evidenceForClBr = false;
         if (experiment.getMs1Spectra().size() > 0) {
             for (Spectrum<Peak> spec : experiment.getMs1Spectra()) {
                 final List<IsotopePattern> extracted = extractor.extractPattern(profile, spec, experiment.getIonMass(), false);
@@ -64,9 +65,12 @@ public class PredictFromMs1 implements Judge {
                     }
                     if (int1==0 && int2 == 0) continue;
                     if (int1 > 0 && int2 == 0) {
-                        votes.adjustOrPutValue(Cl, -10, -10);
-                        votes.adjustOrPutValue(Br, -10, -10);
+                        if (!evidenceForClBr) {
+                            votes.adjustOrPutValue(Cl, -10, -10);
+                            votes.adjustOrPutValue(Br, -10, -10);
+                        }
                     } else if (int2 > int1) {
+                        evidenceForClBr = true;
                         if ((int2 / int1) <= 3 ) {
                             votes.adjustOrPutValue(Cl, 10, 10);
                             votes.adjustOrPutValue(Br, 3, 3);
@@ -74,9 +78,9 @@ public class PredictFromMs1 implements Judge {
                             votes.adjustOrPutValue(Cl, 5, 5);
                             votes.adjustOrPutValue(Br, 6, 6);
                         }
-                    } else {
+                    } else if (!evidenceForClBr) {
                         votes.adjustOrPutValue(Cl, -10, -10);
-                        votes.adjustOrPutValue(Br, -10,-10);
+                        votes.adjustOrPutValue(Br, -10, -10);
                     }
 
                 }

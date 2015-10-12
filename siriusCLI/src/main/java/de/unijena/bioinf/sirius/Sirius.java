@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
@@ -55,6 +56,7 @@ public class Sirius {
     private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
     private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
+    private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
 
     protected Profile profile;
     protected ElementPrediction elementPrediction;
@@ -145,10 +147,245 @@ public class Sirius {
      * @return a list of identified molecular formulas together with their tree
      */
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, Set<MolecularFormula> whiteList) {
+        if (whiteList==null||whiteList.isEmpty()) {
+            return identify(uexperiment,numberOfCandidates,recalibrating,deisotope);
+        }
+        // fix parentmass
+        final MutableMs2Experiment exp = detectParentPeakFromWhitelist(uexperiment, whiteList);
+        // split whitelist into sublists matching a certain ionization
+        final HashMap<PrecursorIonType, IonWhitelist> subsets = new HashMap<PrecursorIonType, IonWhitelist>();
+        final double absoluteError = profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation().absoluteFor(exp.getIonMass());
+        for (MolecularFormula f : whiteList) {
+            final PrecursorIonType usedIonType;
+            if (exp.getPrecursorIonType().isIonizationUnknown()) {
+                final double modification = exp.getIonMass()-f.getMass();
+                usedIonType = PeriodicTable.getInstance().ionByMass(modification, absoluteError, exp.getPrecursorIonType().getCharge());
+            } else if (Math.abs(exp.getPrecursorIonType().precursorMassToNeutralMass(exp.getIonMass())-f.getMass()) <= absoluteError) {
+                usedIonType = exp.getPrecursorIonType();
+            } else usedIonType = null;
+            if (usedIonType!=null) {
+                IonWhitelist iw = subsets.get(usedIonType);
+                if (iw==null) {
+                    iw = new IonWhitelist(usedIonType);
+                    subsets.put(usedIonType, iw);
+                }
+                iw.whitelist.add(f);
+            }
+        }
+        // now compute each subset separately...
+        // first MS
+        final HashMap<MolecularFormula, Double> isoScores = handleIsoAnalysisWithWhitelist(deisotope, exp, subsets);
+        // then MS/MS
+        final TreeSet<FTree> treeSet = new TreeSet<FTree>(TREE_SCORE_COMPARATOR);
+        final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
+        final double originalTreeSize = (treeSizeScorer!=null ? treeSizeScorer.getTreeSizeScore() : 0d);
+        double modifiedTreeSizeScore = originalTreeSize;
+        final double MAX_TREESIZE_SCORE = originalTreeSize+MAX_TREESIZE_INCREASE;
+        final ArrayList<FTree> computedTrees = new ArrayList<FTree>();
+        while (true) {
+            progress.init(whiteList.size());
+            int counter=0;
+            for (IonWhitelist wl : subsets.values()) {
+                final MutableMs2Experiment specificExp = exp.clone();
+                specificExp.setPrecursorIonType(wl.ionization);
+                final FormulaConstraints constraints = FormulaConstraints.allSubsetsOf(wl.whitelist);
+                final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(specificExp, constraints);
+                MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput).withoutRecalibration().inParallel();
+                if (!isoScores.isEmpty()) {
+                    trees = trees.onlyWith(isoScores.keySet());
+                } else {
+                    trees = trees.onlyWith(wl.whitelist);
+                }
+
+                final TreeIterator iter = trees.iterator(true);
+                while (iter.hasNext()) {
+                    final FTree tree = iter.next();
+                    if (tree != null) {
+                        if (deisotope == IsotopePatternHandling.score) addIsoScore(isoScores, tree);
+                        treeSet.add(tree);
+                        if (treeSet.size() > numberOfCandidates) treeSet.pollFirst();
+                    }
+                    if (iter.lastGraph()!=null)
+                        progress.update(++counter, whiteList.size(), iter.lastGraph().getRoot().getChildren(0).getFormula().toString() + " " + wl.ionization.toString());
+                }
+            }
+            progress.finished();
+            boolean satisfied = treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE;
+            if (!satisfied) {
+                final Iterator<FTree> treeIterator = treeSet.descendingIterator();
+                for (int k=0; k < MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY; ++k) {
+                    if (treeIterator.hasNext()) {
+                        final FTree tree = treeIterator.next();
+                        final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
+                        if (tree.numberOfVertices()>=MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
+                            satisfied=true; break;
+                        }
+                    } else break;
+                }
+            }
+            if (satisfied) {
+                computedTrees.addAll(treeSet.descendingSet());
+                break;
+            } else {
+                progress.info("Not enough peaks were explained. Repeat computation with less restricted constraints.");
+                modifiedTreeSizeScore += TREE_SIZE_INCREASE;
+                treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
+                computedTrees.clear();
+                treeSet.clear();
+            }
+        }
+        // recalibrate trees
+        if (recalibrating) {
+            // now recalibrate the trees and recompute them another time...
+            progress.info("recalibrate trees");
+            progress.init(computedTrees.size());
+            for (int k=0; k < computedTrees.size(); ++k) {
+                final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                if (deisotope== IsotopePatternHandling.score) addIsoScore(isoScores, recalibratedTree);
+                computedTrees.set(k, recalibratedTree);
+                progress.update(k+1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString());
+            }
+            progress.finished();
+        }
+
+        Collections.sort(computedTrees, Collections.reverseOrder(TREE_SCORE_COMPARATOR));
+
+
+        final ArrayList<IdentificationResult> list = new ArrayList<IdentificationResult>(numberOfCandidates);
+        for (int k=0; k < Math.min(numberOfCandidates, computedTrees.size()); ++k) {
+            final FTree tree = computedTrees.get(k);
+            profile.fragmentationPatternAnalysis.recalculateScores(tree);
+            list.add(new IdentificationResult(tree, k+1));
+        }
+
+        return list;
+    }
+
+    private HashMap<MolecularFormula, Double> handleIsoAnalysisWithWhitelist(IsotopePatternHandling deisotope, MutableMs2Experiment exp, HashMap<PrecursorIonType, IonWhitelist> subsets) {
+        final HashMap<MolecularFormula, Double> isoScores = new HashMap<MolecularFormula, Double>();
+        if (deisotope!=IsotopePatternHandling.omit) {
+            double bestScore = 0d;
+            final List<IsotopePattern> pattern = profile.isotopePatternAnalysis.extractPatterns(exp, exp.getIonMass(), false);
+            for (IonWhitelist wl : subsets.values()) {
+                final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(wl.whitelist);
+                final double[][] scores = new double[pattern.size()][];
+                for (int k=0; k < pattern.size(); ++k) {
+                    scores[k] = profile.isotopePatternAnalysis.scoreFormulas(pattern.get(k).getPattern(), formulas, exp, profile.isotopePatternAnalysis.getDefaultProfile());
+                }
+                for (int k=0; k < formulas.size(); ++k) {
+                    final MolecularFormula f = formulas.get(k);
+                    isoScores.put(f, 0d);
+                    for (int i=0; i < scores.length; ++i) {
+                        isoScores.put(f, Math.max(isoScores.get(f), scores[i][k]));
+                    }
+                    bestScore = Math.max(isoScores.get(f), bestScore);
+                }
+            }
+            if (bestScore <= 0d) {
+                // skip isotope analysis
+                isoScores.clear();
+            } else if (bestScore > 10) {
+                // delete every molecular formula with isotope score worse or equal to 0
+                for (Map.Entry<MolecularFormula, Double> e : isoScores.entrySet()) {
+                    if (e.getValue()<=0d) {
+                        for (IonWhitelist wl : subsets.values()) wl.whitelist.remove(e.getKey());
+                    }
+                }
+            }
+            if (deisotope==IsotopePatternHandling.filter) {
+                // set all scores to 0
+                final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(isoScores.keySet());
+                for (MolecularFormula f : formulas) isoScores.put(f, 0d);
+            }
+        }
+        return isoScores;
+    }
+
+    private static final class IonWhitelist {
+        private final PrecursorIonType ionization;
+        private final HashSet<MolecularFormula> whitelist;
+
+        private IonWhitelist(PrecursorIonType ionization) {
+            this.ionization = ionization;
+            this.whitelist = new HashSet<MolecularFormula>();
+        }
+    }
+
+    private MutableMs2Experiment detectParentPeakFromWhitelist(Ms2Experiment uexperiment, Set<MolecularFormula> whiteList) {
+        final MutableMs2Experiment exp = new MutableMs2Experiment(uexperiment);
+        final double pmz;
+        if (uexperiment.getIonMass()>0) {
+            pmz = uexperiment.getIonMass();
+        } else if (uexperiment.getPrecursorIonType().isIonizationUnknown() && autoIonMode) {
+            // try every ionization mode
+            double mz = 0;
+            for (PrecursorIonType ionType : PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(uexperiment.getPrecursorIonType().getCharge())) {
+                exp.setPrecursorIonType(ionType);
+                mz = detectParentPeakByWhitelistAndIonization(exp, whiteList);
+                if (mz > 0) {
+                    break;
+                }
+            }
+            pmz = mz;
+        } else {
+            // the ionmass is not given. Search for a appropiate ionmass in the spectrum
+            // with at least 5% relative intensity in MS/MS or MS
+            pmz = detectParentPeakByWhitelistAndIonization(uexperiment, whiteList);
+        }
+        if (pmz<=0d){
+            throw new IllegalArgumentException("Please provide mass of parent peak.");
+        }
+        exp.setIonMass(pmz);
+        return exp;
+    }
+
+    private double detectParentPeakByWhitelistAndIonization(Ms2Experiment uexperiment,Set<MolecularFormula> whiteList) {
+        // the ionmass is not given. Search for a appropiate ionmass in the spectrum
+        // with at least 5% relative intensity in MS/MS or MS
+        final SimpleSpectrum mergedms1 = uexperiment.getMergedMs1Spectrum();
+        final double[] rel = new double[uexperiment.getMs2Spectra().size()];
+        for (int k=0; k < uexperiment.getMs2Spectra().size(); ++k) {
+            rel[k] = Spectrums.getMaximalIntensity(uexperiment.getMs2Spectra().get(k));
+        }
+        final double relms1 = mergedms1==null ? 0 : Spectrums.getMaximalIntensity(mergedms1);
+        PrecursorIonType iontype = uexperiment.getPrecursorIonType();
+        final Deviation dev = profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation();
+        int k=0;
+        for (MolecularFormula f : whiteList) {
+            final double mz = iontype.neutralMassToPrecursorMass(f.getMass());
+            if (mergedms1!=null) {
+                k = Spectrums.mostIntensivePeakWithin(mergedms1, mz, dev);
+                if (k>=0 && mergedms1.getIntensityAt(k)/relms1 >= 0.05)
+                    return mz;
+            }
+            for (int i=0; i < uexperiment.getMs2Spectra().size(); ++i) {
+                final Ms2Spectrum<? extends Peak> spec = uexperiment.getMs2Spectra().get(i);
+                k = Spectrums.mostIntensivePeakWithin(spec, mz, dev);
+                if (k>=0 && spec.getIntensityAt(k)/rel[i] >= 0.05)
+                    return mz;
+            }
+        }
+        // cannot find ParentPeak
+        return 0d;
+    }
+
+
+    /**
+     *
+     * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
+     *
+     * @param uexperiment input data
+     * @param numberOfCandidates number of candidates to output
+     * @param recalibrating true if spectra should be recalibrated during tree computation
+     * @param deisotope set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
+     * @return a list of identified molecular formulas together with their tree
+     */
+    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.performValidation(uexperiment);
         final MutableMs2Experiment experiment = pinput.getExperimentInformation();
+        predictElements(pinput);
         // first check if MS data is present;
-        final List<IsotopePattern> candidates = lookAtMs1(experiment, deisotope!=IsotopePatternHandling.omit);
+        final List<IsotopePattern> candidates = lookAtMs1(pinput, deisotope!=IsotopePatternHandling.omit);
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
         final double optIsoScore;
@@ -163,15 +400,13 @@ public class Sirius {
             optIsoScore = filterCandidateList(pattern, isoFormulas);
         } else optIsoScore = 0d;
 
-        pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput());
+        pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput(), pinput.getMeasurementProfile());
 
         if (isoFormulas.size() > 0 && optIsoScore>10) {
             maxNumberOfFormulas = isoFormulas.size();
         } else {
             maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
         }
-
-        if (whiteList!=null && !whiteList.isEmpty()) maxNumberOfFormulas = Math.min(maxNumberOfFormulas, whiteList.size());
 
         final int outputSize = Math.min(maxNumberOfFormulas, numberOfCandidates);
         final int computeNTrees = Math.max(5, outputSize);
@@ -189,9 +424,6 @@ public class Sirius {
                 trees = trees.inParallel(3);
                 if (isoFormulas.size() > 0 && optIsoScore>10) {
                     trees = trees.onlyWith(isoFormulas.keySet());
-                }
-                if (whiteList.size() > 0) {
-                    trees = trees.onlyWith(whiteList);
                 }
                 trees = trees.computeMaximal(computeNTrees).withoutRecalibration();
 
@@ -236,7 +468,7 @@ public class Sirius {
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
                     computedTrees.clear();
                     // TODO!!!! find a smarter way to do this -_-
-                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput(), pinput.getMeasurementProfile());
                 }
             }
 
@@ -278,9 +510,10 @@ public class Sirius {
      */
     public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
         ProcessedInput validatedInput = profile.fragmentationPatternAnalysis.performValidation(uexperiment);
+        predictElements(validatedInput);
         final MutableMs2Experiment experiment = validatedInput.getExperimentInformation();
         // first check if MS data is present;
-        final List<IsotopePattern> candidates = lookAtMs1(experiment, deisotope!=IsotopePatternHandling.omit);
+        final List<IsotopePattern> candidates = lookAtMs1(validatedInput, deisotope!=IsotopePatternHandling.omit);
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
         final double optIsoScore;
@@ -401,10 +634,11 @@ public class Sirius {
         }
     }
 
-    public FormulaConstraints predictElements(Ms2Experiment experiment) {
-        ProcessedInput pinput = getMs2Analyzer().performValidation(experiment);
-        if (elementPrediction==null) return pinput.getMeasurementProfile().getFormulaConstraints();
-        return elementPrediction.extendConstraints(pinput.getMeasurementProfile().getFormulaConstraints(), pinput.getExperimentInformation(), pinput.getMeasurementProfile());
+    boolean predictElements(ProcessedInput input) {
+        if (elementPrediction!=null) {
+            input.getMeasurementProfile().setFormulaConstraints(elementPrediction.extendConstraints(input.getMeasurementProfile().getFormulaConstraints(), input.getExperimentInformation(), input.getMeasurementProfile()));
+            return true;
+        } else return false;
     }
 
     /**
@@ -413,11 +647,12 @@ public class Sirius {
      * If deisotope is set, start isotope pattern analysis
      * @return
      */
-    protected List<IsotopePattern> lookAtMs1(MutableMs2Experiment experiment, boolean deisotope) {
+    protected List<IsotopePattern> lookAtMs1(ProcessedInput pinput, boolean deisotope) {
+        final MutableMs2Experiment experiment = pinput.getExperimentInformation();
         if (experiment.getIonMass()==0) {
             if (experiment.getMs1Spectra().size()==0)
                 throw new RuntimeException("Please provide the parentmass of the measured compound");
-            List<IsotopePattern> candidates = profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass());
+            List<IsotopePattern> candidates = profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(), pinput.getMeasurementProfile());
             if (candidates.size() > 1) {
                 // check if there is only one candidate with positive score
                 IsotopePattern pattern = null;
@@ -433,7 +668,7 @@ public class Sirius {
             experiment.setIonMass(candidates.get(0).getMonoisotopicMass());
             return deisotope ? candidates : Collections.<IsotopePattern>emptyList();
         }
-        return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass()) : Collections.<IsotopePattern>emptyList();
+        return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment, experiment.getIonMass(),pinput.getMeasurementProfile()) : Collections.<IsotopePattern>emptyList();
     }
 
     protected void addIsoScore(HashMap<MolecularFormula, Double> isoFormulas, FTree tree) {
