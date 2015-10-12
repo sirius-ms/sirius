@@ -156,6 +156,7 @@ public class FTree extends AbstractFragmentationGraph {
     }
 
     public int deleteSubtree(Fragment root) {
+        assert !root.isDeleted();
         final Iterator<Fragment> iter = postOrderIterator(root);
         final ArrayList<Fragment> vertices = new ArrayList<Fragment>();
         while (iter.hasNext()) {
@@ -169,7 +170,7 @@ public class FTree extends AbstractFragmentationGraph {
 
     @Override
     public Iterator<Fragment> postOrderIterator(Fragment startingRoot) {
-        return new PostOrderTraversal.TreeIterator<Fragment>(TreeCursor.getCursor(startingRoot, FTree.treeAdapter()));
+        return PostOrderTraversal.createSubtreeTraversal(startingRoot, FTree.treeAdapter()).iterator();
     }
 
     @Override

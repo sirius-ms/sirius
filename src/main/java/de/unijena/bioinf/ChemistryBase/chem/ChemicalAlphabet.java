@@ -88,7 +88,7 @@ public class ChemicalAlphabet implements Iterable<Element> {
     }
 
     public static ChemicalAlphabet getExtendedAlphabet() {
-        return new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl", "Br", "I", "F", "Na", "Si"));
+        return new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C", "H", "N", "O", "P", "S", "Cl", "Br", "I", "F", "Na", "K", "Si"));
     }
 
     public static ChemicalAlphabet alphabetFor(Iterable<MolecularFormula> formulas) {

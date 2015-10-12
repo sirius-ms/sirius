@@ -166,6 +166,11 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
+    public <T> boolean hasAnnotation(Class<T> klass) {
+        return annotations.containsKey(klass);
+    }
+
+    @Override
     public <T> boolean setAnnotation(Class<T> klass, T value) {
         final T val = (T) annotations.put((Class<Object>)klass, value);
         return val != null;

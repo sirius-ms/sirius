@@ -152,6 +152,26 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return c;
     }
 
+    public static FormulaConstraints allSubsetsOf(Iterable<MolecularFormula> formulas) {
+        final HashSet<Element> elements = new HashSet<Element>();
+        for (MolecularFormula f : formulas) {
+            elements.addAll(f.elements());
+        }
+        final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(elements.toArray(new Element[elements.size()])));
+        for (Element e : elements) {
+            c.setUpperbound(e, 0);
+        }
+        for (MolecularFormula f : formulas) {
+            f.visit(new FormulaVisitor<Object>() {
+                @Override
+                public Object visit(Element element, int amount) {
+                    c.setUpperbound(element, Math.max(c.getUpperbound(element), amount)); return null;
+                }
+            });
+        }
+        return c;
+    }
+
     public FormulaConstraints() {
         this(new ChemicalAlphabet());
     }

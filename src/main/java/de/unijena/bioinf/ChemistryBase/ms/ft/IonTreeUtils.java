@@ -65,10 +65,12 @@ public class IonTreeUtils {
 
     private void reduceTree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct) {
         reduceSubtree(tree, iontype, adduct, tree.getRoot());
-
     }
 
     private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex) {
+        if (vertex.isDeleted()) {
+            System.out.println("????");
+        };
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
         // if adduct is lost: contract loss
         if (vertex.getInDegree() > 0 && vertex.getIncomingEdge().getFormula().equals(adduct)) {
@@ -88,7 +90,8 @@ public class IonTreeUtils {
         if (f.isAllPositiveOrZero() && !f.isEmpty()) {
             vertex.setFormula(f);
             fa.set(vertex, iontype);
-            for (Fragment g : vertex.getChildren()) {
+            final ArrayList<Fragment> childs = new ArrayList<Fragment>(vertex.getChildren());
+            for (Fragment g : childs) {
                 reduceSubtree(tree, iontype, adduct, g);
             }
         } else {

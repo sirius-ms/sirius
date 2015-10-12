@@ -122,6 +122,11 @@ public interface Ms2Experiment extends Cloneable {
     public <T> T getAnnotation(Class<T> klass, T defaultValue);
 
     /**
+     * @return true if the given annotation is present
+     */
+    public <T> boolean hasAnnotation(Class<T> klass);
+
+    /**
      * Set the annotation with the given key
      * @return true if there was no previous value for this annotation
      */

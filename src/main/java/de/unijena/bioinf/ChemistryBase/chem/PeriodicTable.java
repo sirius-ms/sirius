@@ -192,6 +192,34 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
     }
 
+    /**
+     * returns a list of PrecursorIonType instances with the given charge
+     * ion types at the beginning of the list are more common/likely than ion types
+     * at the end of the list
+     * @param charge
+     * @return
+     */
+    public Iterable<PrecursorIonType> getKnownLikelyPrecursorIonizations(int charge) {
+        if (Math.abs(charge)!=1) throw new IllegalArgumentException("Do not support multiple charges yet");
+        final HashSet<PrecursorIonType> ions = new HashSet<PrecursorIonType>(knownIonTypes.values());
+        final ArrayList<PrecursorIonType> likely = new ArrayList<PrecursorIonType>();
+
+        if (charge > 0) {
+            likely.add(ionByName("[M+H]+"));
+            likely.add(ionByName("[M]+"));
+            likely.add(ionByName("[M+H-H2O]+"));
+            likely.add(ionByName("[M+Na]+"));
+            for (PrecursorIonType i : likely) ions.remove(i);
+            likely.addAll(ions);
+        } else {
+            likely.add(ionByName("[M-H]-"));
+            likely.add(ionByName("[M]-"));
+            for (PrecursorIonType i : likely) ions.remove(i);
+            likely.addAll(ions);
+        }
+        return likely;
+    }
+
     private void addDefaultIons() {
         // ION MODES
         PROTONATION = new IonMode(1, "[M+H]+", MolecularFormula.parse("H"));
@@ -704,7 +732,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                 maxmz = Math.max(maxmz, diff);
             }
         }
-        final double a = monomz + peakOffset - minmz;
+        final double a = monomz + peakOffset + minmz;
         final double b = monomz + peakOffset + maxmz;
         return Range.closed(a - deviation.absoluteFor(a), b + deviation.absoluteFor(b));
     }
@@ -790,6 +818,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     private void parseUnstackedFormula(String formula, FormulaVisitor<?> visitor) {
         final int multiplier;
+        if (formula.isEmpty()) return;
         if (Character.isDigit(formula.charAt(0))) {
             int lastnum = 0;
             while (lastnum < formula.length() && Character.isDigit(formula.charAt(lastnum))) ++lastnum;
