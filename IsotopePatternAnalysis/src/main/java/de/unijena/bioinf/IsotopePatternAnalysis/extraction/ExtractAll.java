@@ -17,7 +17,9 @@
  */
 package de.unijena.bioinf.IsotopePatternAnalysis.extraction;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -34,7 +36,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.List;
 
 public class ExtractAll implements PatternExtractor {
@@ -98,7 +99,7 @@ public class ExtractAll implements PatternExtractor {
         }
         return candidates;
     }
-
+/*
     @Override
     public List<IsotopePattern> extractPattern(MeasurementProfile profile, Spectrum<Peak> spectrum, double targetMz, boolean allowAdducts) {
         // TODO: implement in more efficient way
@@ -115,6 +116,40 @@ public class ExtractAll implements PatternExtractor {
             }
         }
         return list;
+    }
+*/
+    @Override
+    public List<IsotopePattern> extractPattern(MeasurementProfile profile, Spectrum<Peak> spectrum, double targetMz, boolean allowAdducts) {
+        // TODO: implement in more efficient way
+        final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
+        final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(spectrum);
+        final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
+        final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
+        final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
+        spec.addPeak(massOrderedSpectrum.getPeakAt(index));
+        // add additional peaks
+        for (int k=1; k <= 5; ++k) {
+            final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, profile.getAllowedMassDeviation(), spec.getMzAt(0), k);
+            final double a = nextMz.lowerEndpoint();
+            final double b = nextMz.upperEndpoint();
+            final double m = a+(b-a)/2d;
+            final Deviation dev = Deviation.fromMeasurementAndReference(m, a);
+            final int nextIndex = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, m, dev);
+            if (nextIndex < 0) break;
+            else {
+                if (massOrderedSpectrum.getIntensityAt(nextIndex) > spec.getIntensityAt(spec.size()-1)) {
+                    // maybe a new pattern started?
+                    patterns.add(new SimpleSpectrum(spec));
+                }
+                spec.addPeak(massOrderedSpectrum.getPeakAt(nextIndex));
+            }
+        }
+        patterns.add(0, new SimpleSpectrum(spec));
+        final ArrayList<IsotopePattern> pats = new ArrayList<IsotopePattern>();
+        for (SimpleSpectrum s : patterns) {
+            pats.add(new IsotopePattern(s));
+        }
+        return pats;
     }
 
     @Override

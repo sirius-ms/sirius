@@ -245,7 +245,8 @@ public class IsotopePatternAnalysis implements Parameterized {
                 final List<MolecularFormula> formulas = decomposer.getDecomposer(profile.getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(pattern.getMonoisotopicMass()), profile.getAllowedMassDeviation(), profile.getFormulaConstraints());
                 final double[] scores = scoreFormulas(pattern.getPattern(), formulas, experiment, profile);
                 for (int k=0; k < formulas.size(); ++k) {
-                    ionFormulas.add(new ScoredMolecularFormula(formulas.get(k).add(ion.getAtoms()), scores[k]));
+                    if (!Double.isInfinite(scores[k]))
+                        ionFormulas.add(new ScoredMolecularFormula(formulas.get(k).add(ion.getAtoms()), scores[k]));
                 }
             }
             Collections.sort(ionFormulas, Collections.reverseOrder());
@@ -291,6 +292,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         final double[] scores = new double[formulas.size()];
         int k=0;
         for (MolecularFormula f : formulas) {
+            f = experiment.getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(f);
             final Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, experiment.getPrecursorIonType().getIonization());
             if (theoreticalSpectrum.size() < spec.size()) {
                 // TODO: Just a Workaround!!! Find something better
