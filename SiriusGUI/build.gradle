@@ -8,7 +8,7 @@ version = '0.1'
 jar {
     manifest {
         attributes 'Implementation-Title': 'Gradle Quickstart',
-                   'Implementation-Version': version
+                'Implementation-Version': version
     }
 }
 
@@ -26,8 +26,9 @@ dependencies {
             "de.unijena.bioinf:ChemistryBase:4.+",
             "de.unijena.bioinf:FragmentationTreeConstruction:3.+",
             "de.unijena.bioinf:Myxo:0.2-SNAPSHOT",
-            "de.unijena.bioinf:SiriusCLI:3.0.+"
-            
+            "de.unijena.bioinf:SiriusCLI:3.0.+",
+            "net.sf.opencsv:opencsv:2.3"
+
     testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
@@ -37,8 +38,8 @@ test {
 
 uploadArchives {
     repositories {
-       flatDir {
-           dirs 'repos'
-       }
+        flatDir {
+            dirs 'repos'
+        }
     }
 }

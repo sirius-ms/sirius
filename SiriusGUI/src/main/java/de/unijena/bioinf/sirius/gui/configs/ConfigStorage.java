@@ -1,62 +1,59 @@
 package de.unijena.bioinf.sirius.gui.configs;
 
-import java.io.*;
-
-import javax.swing.JFileChooser;
-
 import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 
+import java.io.File;
+
 public class ConfigStorage {
-	
-	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath;
-	private FileFormat treeFileFormat;
-	
 
-	public ConfigStorage() {
-		defaultLoadDialogPath = new File("/media/Ext4_log/gnps/gnps_ms/");
-		defaultTreeExportPath = null;
-		defaultSaveFilePath = null;
-		treeFileFormat = FileFormat.png;
-	}
-	
-	public void setDefaultTreeFileFormat(FileFormat fileFormat){
-		this.treeFileFormat = fileFormat;
-	}
-	
-	public FileFormat getDefaultTreeFileFormat(){
-		return this.treeFileFormat;
-	}
+    private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath;
+    private FileFormat treeFileFormat;
 
 
-	public File getDefaultLoadDialogPath() {
-		return defaultLoadDialogPath;
-	}
+    public ConfigStorage() {
+        defaultLoadDialogPath = new File("/media/Ext4_log/gnps/gnps_ms/");
+        defaultTreeExportPath = null;
+        defaultSaveFilePath = null;
+        treeFileFormat = FileFormat.png;
+    }
+
+    public void setDefaultTreeFileFormat(FileFormat fileFormat) {
+        this.treeFileFormat = fileFormat;
+    }
+
+    public FileFormat getDefaultTreeFileFormat() {
+        return this.treeFileFormat;
+    }
 
 
-	public void setDefaultLoadDialogPath(File defaultLoadDialogPath) {
-		this.defaultLoadDialogPath = defaultLoadDialogPath;
-	}
+    public File getDefaultLoadDialogPath() {
+        return defaultLoadDialogPath;
+    }
 
 
-	public File getDefaultTreeExportPath() {
-		return defaultTreeExportPath;
-	}
+    public void setDefaultLoadDialogPath(File defaultLoadDialogPath) {
+        this.defaultLoadDialogPath = defaultLoadDialogPath;
+    }
 
 
-	public void setDefaultTreeExportPath(File defaultTreeExportPath) {
-		this.defaultTreeExportPath = defaultTreeExportPath;
-	}
+    public File getDefaultTreeExportPath() {
+        return defaultTreeExportPath;
+    }
 
 
-	public File getDefaultSaveFilePath() {
-		return defaultSaveFilePath;
-	}
+    public void setDefaultTreeExportPath(File defaultTreeExportPath) {
+        this.defaultTreeExportPath = defaultTreeExportPath;
+    }
 
 
-	public void setDefaultSaveFilePath(File defaultSaveFilePath) {
-		this.defaultSaveFilePath = defaultSaveFilePath;
-	}
-	
-	
+    public File getDefaultSaveFilePath() {
+        return defaultSaveFilePath;
+    }
+
+
+    public void setDefaultSaveFilePath(File defaultSaveFilePath) {
+        this.defaultSaveFilePath = defaultSaveFilePath;
+    }
+
 
 }
