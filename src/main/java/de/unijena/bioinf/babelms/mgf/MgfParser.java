@@ -17,10 +17,7 @@
  */
 package de.unijena.bioinf.babelms.mgf;
 
-import de.unijena.bioinf.ChemistryBase.chem.Charge;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
@@ -28,9 +25,7 @@ import de.unijena.bioinf.babelms.SpectralParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,6 +59,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     }
 
     private MutableMs2Spectrum prototype;
+    private MutableMs2Experiment currentExperiment;
 
     public MgfParser() {
         this.prototype = new MutableMs2Spectrum();
@@ -105,6 +101,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     }
 
     private static Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
+    private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
+
 
     private void handleKeyword(MutableMs2Spectrum spec, String keyword, String value) throws IOException {
         if (keyword.equals("PEPMASS")) {
@@ -122,19 +120,32 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             else spec.setIonization(ion.getIonization());
         } else if (keyword.contains("LEVEL")) {
             spec.setMsLevel(Integer.parseInt(value));
-        } else {
-
+        } else if (currentExperiment!=null) {
+            if (NOT_AVAILABLE.matcher(value).matches()) return;
+            if (keyword.equalsIgnoreCase("INCHI")) {
+                currentExperiment.setAnnotation(InChI.class, new InChI(null, value));
+            } else if (keyword.equalsIgnoreCase("SMILES")) {
+                currentExperiment.setAnnotation(Smiles.class, new Smiles(value));
+            } else if (keyword.equalsIgnoreCase("NAME")) {
+                currentExperiment.setName(value);
+            } else {
+                if (!currentExperiment.hasAnnotation(Map.class)) {
+                    currentExperiment.setAnnotation(Map.class, new HashMap<String, String>());
+                }
+                currentExperiment.getAnnotationOrThrow(Map.class).put(keyword.toUpperCase(), value);
+            }
         }
     }
 
     private final ArrayDeque<Ms2Spectrum<Peak>> buffer = new ArrayDeque<Ms2Spectrum<Peak>>();
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader) throws IOException {
+    public synchronized Ms2Experiment parse(BufferedReader reader) throws IOException {
         final Iterator<Ms2Spectrum<Peak>> iter = parseSpectra(reader);
         while (iter.hasNext()) buffer.addLast(iter.next());
         if (buffer.isEmpty()) return null;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
+        this.currentExperiment = exp;
         exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
         exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
         exp.setIonMass(buffer.peekFirst().getPrecursorMz());
