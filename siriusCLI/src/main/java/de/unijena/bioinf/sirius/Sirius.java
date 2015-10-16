@@ -690,7 +690,7 @@ public class Sirius {
      * @return A single instance of IdentificationResult containing the computed fragmentation tree
      */
     public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, boolean recalibrating) {
-        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment, FormulaConstraints.allSubsetsOf(formula));
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer!=null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;
