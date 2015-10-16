@@ -17,9 +17,7 @@
  */
 package de.unijena.bioinf.babelms.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -32,6 +30,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JenaMsParser implements Parser<Ms2Experiment> {
+
+    public boolean WTF() {
+        return true;
+    }
 
     @Override
     public Ms2Experiment parse(BufferedReader reader) throws IOException {
@@ -58,6 +60,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private SimpleMutableSpectrum currentSpectrum;
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
+        private String inchi, inchikey, smiles;
 
         private MutableMs2Experiment parse() throws IOException {
             while (reader.ready()) {
@@ -105,6 +108,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setPrecursorIonType(ionization);
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
+            if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
+            if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
             return exp;
         }
 
@@ -142,10 +147,18 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equals("charge")) {
                 final Matcher m = FLOAT_PATTERN.matcher(value);
                 if (m.find()) {
-                    this.charge = (int)Double.parseDouble(m.group(1));
+                    this.charge = (int) Double.parseDouble(m.group(1));
                 } else {
                     error("Cannot parse charge '" + value + "'");
                 }
+            } else if (optionName.equalsIgnoreCase("inchi")) {
+                if (value.startsWith("InChI=")) {
+                    inchi = value;
+                }
+            } else if (optionName.equalsIgnoreCase("inchikey")) {
+                inchikey = value;
+            } else if (optionName.equalsIgnoreCase("smiles")) {
+                smiles = value;
             } else if (optionName.contains("collision") || optionName.contains("energy") || optionName.contains("ms2")) {
                 if (currentSpectrum.size()>0) newSpectrum();
                 if (currentEnergy != null) warn("Collision energy is set twice");

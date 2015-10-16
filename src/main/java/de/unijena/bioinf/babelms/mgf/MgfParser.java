@@ -31,24 +31,168 @@ import java.util.regex.Pattern;
 
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
+    private static class MgfSpec {
+        private MutableMs2Spectrum spectrum;
+        private PrecursorIonType ionType;
+        private HashMap<String, String> fields;
+        private String inchi, smiles, name;
+
+        public MgfSpec(MgfSpec s) {
+            this.spectrum=new MutableMs2Spectrum(s.spectrum);
+            this.ionType=s.ionType;
+            this.fields=new HashMap<String, String>(s.fields);
+            this.inchi = s.inchi;
+            this.smiles=s.smiles;
+            this.name = s.name;
+        }
+
+        public MgfSpec() {
+            this.spectrum = new MutableMs2Spectrum();
+            this.fields = new HashMap<String, String>();
+        }
+    }
+
+    private static class MgfParserInstance {
+        private final MgfSpec prototype;
+        private final ArrayDeque<MgfSpec> buffer;
+        private final BufferedReader reader;
+
+        public MgfParserInstance(BufferedReader reader) {
+            this.reader = reader;
+            this.prototype = new MgfSpec(); this.prototype.spectrum=new MutableMs2Spectrum();
+            this.buffer = new ArrayDeque<MgfSpec>();
+        }
+
+        public boolean hasNext() throws IOException {
+            addNextEntry();
+            return !buffer.isEmpty();
+        }
+
+        public MgfSpec peekNext() throws IOException {
+            addNextEntry();
+            return buffer.peekFirst();
+        }
+
+        public MgfSpec pollNext() throws IOException {
+            addNextEntry();
+            return buffer.pollFirst();
+        }
+
+        private void addNextEntry() throws IOException {
+            if (!buffer.isEmpty()) return;
+            MgfSpec s = readNext();
+            if (s!=null)
+                buffer.addLast(s);
+        }
+
+        private static Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
+        private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
+
+        private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {
+            keyword = keyword.toUpperCase();
+            value = value.trim();
+            if (value.isEmpty()) return;
+            if (value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') value = value.substring(1,value.length()-1);
+            if (keyword.equals("PEPMASS")) {
+                spec.spectrum.setPrecursorMz(Double.parseDouble(value.split("\\s+")[0]));
+            } else if (keyword.equals("CHARGE")) {
+                final Matcher m = CHARGE_PATTERN.matcher(value);
+                m.find();
+                int charge = ("-".equals(m.group(2))) ? -Integer.parseInt(m.group(1)) : Integer.parseInt(m.group(1));
+                if (charge==0) charge=1;
+                if (spec.spectrum.getIonization()==null || spec.spectrum.getIonization().getCharge() != charge)
+                    spec.spectrum.setIonization(new Charge(charge));
+                if (spec.ionType==null) spec.ionType = PrecursorIonType.unknown(charge);
+            } else if (keyword.startsWith("ION")) {
+                final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(value);
+                if (ion==null) throw new IOException("Unknown ion '" + value +"'");
+                else {
+                    spec.spectrum.setIonization(ion.getIonization());
+                    spec.ionType = ion;
+                }
+            } else if (keyword.contains("LEVEL")) {
+                spec.spectrum.setMsLevel(Integer.parseInt(value));
+            } else {
+                if (NOT_AVAILABLE.matcher(value).matches()) return;
+                if (keyword.equalsIgnoreCase("INCHI")) {
+                    spec.inchi = value;
+                } else if (keyword.equalsIgnoreCase("SMILES")) {
+                    spec.smiles = value;
+                } else if (keyword.equalsIgnoreCase("NAME")) {
+                    spec.name = value;
+                } else {
+                    spec.fields.put(keyword, value);
+                }
+            }
+        }
+
+        private MgfSpec readNext() throws IOException {
+            String line;
+            boolean reading=false;
+            MgfSpec spec = null;
+            while ((line=reader.readLine())!=null) {
+                try {
+                    if (line.isEmpty()) continue;
+                    if (!reading && line.startsWith("BEGIN IONS")) {
+                        spec =  new MgfSpec(prototype);
+                        reading=true;
+                    } else if (reading && line.startsWith("END IONS")) {
+                        return spec;
+                    } else if (reading) {
+                        if (Character.isDigit(line.charAt(0))) {
+                            final String[] parts = line.split("\\s+");
+                            spec.spectrum.addPeak(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+                        } else {
+                            final int i = line.indexOf('=');
+                            if (i>=0) handleKeyword(spec, line.substring(0, i), line.substring(i+1));
+                        }
+                    } else {
+                        final int i = line.indexOf('=');
+                        if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i+1));
+                    }
+                } catch (RuntimeException e) {
+                    System.err.println(e.getMessage());
+                    if (reading) {
+                        while ((line=reader.readLine())!=null) {
+                            if (line.startsWith("END IONS")) {
+                                reading = false;
+                                break;
+                            } else if (line.startsWith("BEGIN IONS")) {
+                                reading = true;
+                                spec =  new MgfSpec(prototype);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
     @Override
     public Iterator<Ms2Spectrum<Peak>> parseSpectra(final BufferedReader reader) throws IOException {
         return new Iterator<Ms2Spectrum<Peak>>() {
-            MutableMs2Spectrum spec = readNext(reader);
+
+            private final MgfParserInstance inst = new MgfParserInstance(reader);
+
             @Override
             public boolean hasNext() {
-                return spec!=null;
+                try {
+                    return inst.hasNext();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
             public Ms2Spectrum<Peak> next() {
-                final MutableMs2Spectrum o = spec;
                 try {
-                    spec = readNext(reader);
+                    if (!inst.hasNext()) throw new NoSuchElementException();
+                    return inst.pollNext().spectrum;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                return o;
             }
 
             @Override
@@ -58,102 +202,35 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         };
     }
 
-    private MutableMs2Spectrum prototype;
-    private MutableMs2Experiment currentExperiment;
-
-    public MgfParser() {
-        this.prototype = new MutableMs2Spectrum();
-    }
-
-    public void setCurrentLevel(int level) {
-        prototype.setMsLevel(level);
-    }
-
-    public void setIonization(Ionization ion) {
-        prototype.setIonization(ion);
-    }
-
-    private MutableMs2Spectrum readNext(BufferedReader reader) throws IOException {
-        String line;
-        boolean reading=false;
-        MutableMs2Spectrum spec = null;
-        while ((line=reader.readLine())!=null) {
-            if (line.isEmpty()) continue;
-            if (!reading && line.startsWith("BEGIN IONS")) {
-                spec = new MutableMs2Spectrum(prototype);
-                reading=true;
-            } else if (reading && line.startsWith("END IONS")) {
-                return spec;
-            } else if (reading) {
-                if (Character.isDigit(line.charAt(0))) {
-                    final String[] parts = line.split("\\s+");
-                    spec.addPeak(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-                } else {
-                    final int i = line.indexOf('=');
-                    if (i>=0) handleKeyword(spec, line.substring(0, i), line.substring(i+1));
-                }
-            } else {
-                final int i = line.indexOf('=');
-                if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i+1));
-            }
-        }
-        return null;
-    }
-
-    private static Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
-    private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
-
-
-    private void handleKeyword(MutableMs2Spectrum spec, String keyword, String value) throws IOException {
-        if (keyword.equals("PEPMASS")) {
-            spec.setPrecursorMz(Double.parseDouble(value.split("\\s+")[0]));
-        } else if (keyword.equals("CHARGE")) {
-            final Matcher m = CHARGE_PATTERN.matcher(value);
-            m.find();
-            int charge = ("-".equals(m.group(2))) ? -Integer.parseInt(m.group(1)) : Integer.parseInt(m.group(1));
-            if (charge==0) charge=1;
-            if (spec.getIonization()==null || spec.getIonization().getCharge() != charge)
-                spec.setIonization(new Charge(charge));
-        } else if (keyword.startsWith("ION")) {
-            final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(value);
-            if (ion==null) throw new IOException("Unknown ion '" + value +"'");
-            else spec.setIonization(ion.getIonization());
-        } else if (keyword.contains("LEVEL")) {
-            spec.setMsLevel(Integer.parseInt(value));
-        } else if (currentExperiment!=null) {
-            if (NOT_AVAILABLE.matcher(value).matches()) return;
-            if (keyword.equalsIgnoreCase("INCHI")) {
-                currentExperiment.setAnnotation(InChI.class, new InChI(null, value));
-            } else if (keyword.equalsIgnoreCase("SMILES")) {
-                currentExperiment.setAnnotation(Smiles.class, new Smiles(value));
-            } else if (keyword.equalsIgnoreCase("NAME")) {
-                currentExperiment.setName(value);
-            } else {
-                if (!currentExperiment.hasAnnotation(Map.class)) {
-                    currentExperiment.setAnnotation(Map.class, new HashMap<String, String>());
-                }
-                currentExperiment.getAnnotationOrThrow(Map.class).put(keyword.toUpperCase(), value);
-            }
-        }
-    }
-
-    private final ArrayDeque<Ms2Spectrum<Peak>> buffer = new ArrayDeque<Ms2Spectrum<Peak>>();
+    private MgfParserInstance inst;
 
     @Override
     public synchronized Ms2Experiment parse(BufferedReader reader) throws IOException {
-        final Iterator<Ms2Spectrum<Peak>> iter = parseSpectra(reader);
-        while (iter.hasNext()) buffer.addLast(iter.next());
-        if (buffer.isEmpty()) return null;
+        if (inst==null || inst.reader!=reader) inst = new MgfParserInstance(reader);
+        if (!inst.hasNext()) return null;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
-        this.currentExperiment = exp;
         exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
         exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
-        exp.setIonMass(buffer.peekFirst().getPrecursorMz());
-        while (!buffer.isEmpty() && Math.abs(buffer.peekFirst().getPrecursorMz()-exp.getIonMass()) < 0.002) {
-            final Ms2Spectrum<Peak> spec = buffer.pollFirst();
-            if (spec.getMsLevel()==1) exp.getMs1Spectra().add(new SimpleSpectrum(spec));
-            else exp.getMs2Spectra().add(new MutableMs2Spectrum(spec));
-            if (exp.getPrecursorIonType()==null && spec.getIonization()!=null) exp.setPrecursorIonType(PrecursorIonType.getPrecursorIonType(spec.getIonization()));
+        exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
+        exp.setName(inst.peekNext().name);
+        final HashMap<String,String> additionalFields = new HashMap<String, String>();
+        while (inst.hasNext() && Math.abs(inst.peekNext().spectrum.getPrecursorMz()-exp.getIonMass()) < 0.002 && inst.peekNext().name.equals(exp.getName())) {
+            final MgfSpec spec = inst.pollNext();
+            if (spec.spectrum.getMsLevel()==1) exp.getMs1Spectra().add(new SimpleSpectrum(spec.spectrum));
+            else exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
+            if (exp.getPrecursorIonType()==null) {
+                exp.setPrecursorIonType(spec.ionType);
+            }
+            if (spec.inchi!=null && spec.inchi.startsWith("InChI=")) {
+                exp.setAnnotation(InChI.class, new InChI(null, spec.inchi));
+            }
+            if (spec.smiles!=null) {
+                exp.setAnnotation(Smiles.class, new Smiles(spec.smiles));
+            }
+            additionalFields.putAll(spec.fields);
+        }
+        if (!additionalFields.isEmpty()) {
+            exp.setAnnotation(Map.class, additionalFields);
         }
         return exp;
     }

@@ -17,6 +17,9 @@
  */
 package de.unijena.bioinf.babelms.ms;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -24,16 +27,29 @@ import de.unijena.bioinf.babelms.DataWriter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException{
         writer.write(">compound ");
-        writer.write("NA");
-        writer.newLine();
+        writer.write(data.getName() == null ? "unknown" : data.getName()); writer.newLine();
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass()!=0d);
         writeIfAvailable(writer, ">ionization", data.getPrecursorIonType().toString());
+        final InChI i = data.getAnnotation(InChI.class);
+        if (i!=null) {
+            writeIfAvailable(writer, ">InChI", i.in2D);
+            writeIfAvailable(writer, ">InChIKey", i.key);
+        }
+        final Smiles sm = data.getAnnotation(Smiles.class);
+        writeIfAvailable(writer, ">smiles", sm==null ? null : sm.smiles);
+        final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());
+        for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
+            writer.write("#" + e.getKey() + " " + e.getValue());
+            writer.newLine();
+        }
         writer.newLine();
         for (Spectrum spec : data.getMs1Spectra()) {
             writeMs1(writer, spec);
@@ -58,8 +74,12 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
     }
     private void writeMs2(BufferedWriter writer, Ms2Spectrum spec) throws IOException{
         if (spec != null && spec.size()>0) {
-            writer.write(">collision ");
-            writer.write(spec.getCollisionEnergy().toString());
+            if (spec.getCollisionEnergy()==null || spec.getCollisionEnergy().equals(CollisionEnergy.none())) {
+                writer.write(">ms2peaks");
+            } else {
+                writer.write(">collision ");
+                writer.write(spec.getCollisionEnergy().toString());
+            }
             writer.newLine();
             for (int k=0; k < spec.size(); ++k) {
                 writer.write(String.valueOf(spec.getMzAt(k)));
