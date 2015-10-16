@@ -28,6 +28,10 @@ public class InChI {
         return MolecularFormula.parse(in2D.substring(a, b));
     }
 
+    public String key2D() {
+        return key.substring(0,14);
+    }
+
     private static Pattern inchi2dPattern = Pattern.compile("/[btmrsfi]");
     private static String inchi2d(String inchi) {
         final Matcher m = inchi2dPattern.matcher(inchi);
@@ -38,4 +42,22 @@ public class InChI {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InChI inChI = (InChI) o;
+
+        if (!in3D.equals(inChI.in3D)) return false;
+        return !(key != null ? !key.equals(inChI.key) : inChI.key != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = in3D.hashCode();
+        result = 31 * result + (key != null ? key.hashCode() : 0);
+        return result;
+    }
 }

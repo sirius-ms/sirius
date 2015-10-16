@@ -30,6 +30,10 @@ public class PrecursorIonType {
         return PeriodicTable.getInstance().getPrecursorIonTypeFromIonization(ion);
     }
 
+    public static PrecursorIonType unknown(int charge) {
+        return PeriodicTable.getInstance().getUnknownPrecursorIonType(charge);
+    }
+
     PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct) {
         this.ionization = ion;
         this.inSourceFragmentation = insource==null ? MolecularFormula.emptyFormula() : insource;
