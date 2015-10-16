@@ -111,8 +111,8 @@ public class SearchMatchingInputParentPeak implements ParentPeakDetector {
     protected static double getPrecision(double fp) {
         final double delta = 1e-9;
         int precision = 0;
-        while (Math.abs(fp - (int) fp) > delta) {
-            fp += 10;
+        while (Math.abs(fp - (long) fp) > delta) {
+            fp *= 10;
             ++precision;
         }
         return precision;
