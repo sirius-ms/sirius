@@ -1,178 +1,205 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.util.*;
-import java.util.List;
 
 /**
+
  * JComboBox with an autocomplete drop down menu. This class is hard-coded for String objects, but can be
- * <p/>
- * altered into a generic form to allow for any searchable item.
- *
+
+ * altered into a generic form to allow for any searchable item. 
+
  * @author G. Cope
+
+ *
+
  */
 
-public class AutocompleteJComboBox extends JComboBox {
+public class AutocompleteJComboBox extends JComboBox{
 
+	
 
-    static final long serialVersionUID = 4321421L;
+	static final long serialVersionUID = 4321421L;
 
+	
 
-    private final Searchable<String, String> searchable;
+	private final Searchable<String,String> searchable;
 
+	
 
-    /**
-     * Constructs a new object based upon the parameter searchable
-     *
-     * @param s
-     */
+	/**
 
-    public AutocompleteJComboBox(Searchable<String, String> s) {
+	 * Constructs a new object based upon the parameter searchable
 
-        super();
+	 * @param s
 
-        this.searchable = s;
+	 */
 
-        setEditable(true);
+	public AutocompleteJComboBox(Searchable<String,String> s){
 
-        Component c = getEditor().getEditorComponent();
+		super();
 
-        if (c instanceof JTextComponent) {
+		this.searchable = s;
 
-            final JTextComponent tc = (JTextComponent) c;
+		setEditable(true);
 
-            tc.getDocument().addDocumentListener(new DocumentListener() {
+		Component c = getEditor().getEditorComponent();
 
+		if ( c instanceof JTextComponent ){
 
-                @Override
+			final JTextComponent tc = (JTextComponent)c;
 
-                public void changedUpdate(DocumentEvent arg0) {
-                }
+			tc.getDocument().addDocumentListener(new DocumentListener(){
 
 
-                @Override
 
-                public void insertUpdate(DocumentEvent arg0) {
+				@Override
 
-                    update();
+				public void changedUpdate(DocumentEvent arg0) {}
 
-                }
 
 
-                @Override
+				@Override
 
-                public void removeUpdate(DocumentEvent arg0) {
+				public void insertUpdate(DocumentEvent arg0) {
 
-                    update();
+					update();
 
-                }
+				}
 
 
-                public void update() {
 
-                    //perform separately, as listener conflicts between the editing component
+				@Override
 
-                    //and JComboBox will result in an IllegalStateException due to editing
+				public void removeUpdate(DocumentEvent arg0) {
 
-                    //the component when it is locked.
+					update();
 
-                    SwingUtilities.invokeLater(new Runnable() {
+				}
 
+				
 
-                        @Override
+				public void update(){
 
-                        public void run() {
+					//perform separately, as listener conflicts between the editing component
 
-                            List<String> founds = new ArrayList<String>(searchable.search(tc.getText()));
+					//and JComboBox will result in an IllegalStateException due to editing 
 
-                            Set<String> foundSet = new HashSet<String>();
+					//the component when it is locked. 
 
-                            for (String s : founds) {
+					SwingUtilities.invokeLater(new Runnable(){
 
-                                foundSet.add(s.toLowerCase());
 
-                            }
 
-                            Collections.sort(founds);//sort alphabetically
+						@Override
 
+						public void run() {
 
-                            setEditable(false);
+							List<String> founds = new ArrayList<String>(searchable.search(tc.getText()));
 
-                            removeAllItems();
+							Set<String> foundSet = new HashSet<String>();
 
-                            //if founds contains the search text, then only add once.
+							for ( String s : founds ){
 
-                            if (!foundSet.contains(tc.getText().toLowerCase())) {
+								foundSet.add(s.toLowerCase());
 
-                                addItem(tc.getText());
+							}
 
-                            }
+							Collections.sort(founds);//sort alphabetically
 
+							
 
-                            for (String s : founds) {
+							
 
-                                addItem(s);
+							setEditable(false);
 
-                            }
+							removeAllItems();
 
-                            setEditable(true);
+							//if founds contains the search text, then only add once.
 
-                            setPopupVisible(true);
+							if ( !foundSet.contains( tc.getText().toLowerCase()) ){
 
-                        }
+								addItem( tc.getText() );
 
+							}
 
-                    });
+							
 
+							for (String s : founds) {
 
-                }
+								addItem(s);
 
+							}
 
-            });
+							setEditable(true);
 
-            //When the text component changes, focus is gained
+							setPopupVisible(true);
 
-            //and the menu disappears. To account for this, whenever the focus
+						}
 
-            //is gained by the JTextComponent and it has searchable values, we show the popup.
+						
 
-            tc.addFocusListener(new FocusListener() {
+					});
 
+					
 
-                @Override
+				}
 
-                public void focusGained(FocusEvent arg0) {
+				
 
-                    if (tc.getText().length() > 0) {
+			});
 
-                        setPopupVisible(true);
+			//When the text component changes, focus is gained 
 
-                    }
+			//and the menu disappears. To account for this, whenever the focus
 
-                }
+			//is gained by the JTextComponent and it has searchable values, we show the popup.
 
+			tc.addFocusListener(new FocusListener(){
 
-                @Override
 
-                public void focusLost(FocusEvent arg0) {
 
-                }
+				@Override
 
+				public void focusGained(FocusEvent arg0) {
 
-            });
+					if ( tc.getText().length() > 0 ){
 
-        } else {
+						setPopupVisible(true);
 
-            throw new IllegalStateException("Editing component is not a JTextComponent!");
+					}
 
-        }
+				}
 
-    }
+
+
+				@Override
+
+				public void focusLost(FocusEvent arg0) {						
+
+				}
+
+				
+
+			});
+
+		}else{
+
+			throw new IllegalStateException("Editing component is not a JTextComponent!");
+
+		}
+
+	}
 
 }
