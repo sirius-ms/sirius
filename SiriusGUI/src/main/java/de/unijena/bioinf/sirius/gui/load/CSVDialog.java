@@ -1,25 +1,16 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import gnu.trove.list.array.TDoubleArrayList;
-
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.myxo.structure.CompactExperiment;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Vector;
 

@@ -1,16 +1,11 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 public class ExperimentNameDialog extends JDialog implements ActionListener{
 

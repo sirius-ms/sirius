@@ -1,8 +1,11 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -10,20 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
-
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.WindowConstants;
-
-import de.unijena.bioinf.sirius.gui.io.DataFormat;
-import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 public class DropImportDialog extends JDialog implements ActionListener{
 	

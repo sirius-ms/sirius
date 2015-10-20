@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import de.unijena.bioinf.myxo.io.spectrum.SpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 
 public interface LoadDialog {

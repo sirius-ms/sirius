@@ -1,19 +1,11 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.Frame;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.UIManager;
-
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 public class QuestionDialog extends JDialog implements ActionListener{
 

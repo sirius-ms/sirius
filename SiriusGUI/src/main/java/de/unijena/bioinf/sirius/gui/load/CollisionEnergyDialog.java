@@ -1,14 +1,13 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class CollisionEnergyDialog extends JDialog implements ActionListener, ChangeListener{
 

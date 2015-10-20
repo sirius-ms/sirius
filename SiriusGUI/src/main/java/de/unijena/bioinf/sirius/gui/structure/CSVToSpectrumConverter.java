@@ -1,13 +1,12 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import gnu.trove.list.array.TDoubleArrayList;
-
-import java.util.List;
-
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
 import de.unijena.bioinf.sirius.gui.load.CSVDialogReturnContainer;
+import gnu.trove.list.array.TDoubleArrayList;
+
+import java.util.List;
 
 public class CSVToSpectrumConverter {
 	

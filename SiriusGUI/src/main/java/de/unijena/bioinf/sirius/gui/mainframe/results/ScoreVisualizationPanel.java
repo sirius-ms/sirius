@@ -1,12 +1,11 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
-import javax.swing.*;
-
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColorManager;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 
 public class ScoreVisualizationPanel extends JPanel {
 	
@@ -34,7 +33,7 @@ public class ScoreVisualizationPanel extends JPanel {
 //		}
 		
 		try{
-			File fontFile = new File("ttf/DejaVuSans.ttf");
+			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			valueFont = tempFont.deriveFont(10f);
 			

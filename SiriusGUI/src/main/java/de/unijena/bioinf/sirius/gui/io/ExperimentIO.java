@@ -1,8 +1,8 @@
 package de.unijena.bioinf.sirius.gui.io;
 
-import java.io.File;
-
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+
+import java.io.File;
 
 public interface ExperimentIO {
 

@@ -1,5 +1,15 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
+import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
+import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanelListener;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.ResultsMSViewerDataModel;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,20 +19,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
-
-import javax.swing.*;
-
-import org.apache.commons.math3.genetics.Chromosome;
-
-import de.unijena.bioinf.myxo.gui.msviewer.data.ExperimentInformationDataModel;
-import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
-import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanelListener;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.ResultsMSViewerDataModel;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener{
 

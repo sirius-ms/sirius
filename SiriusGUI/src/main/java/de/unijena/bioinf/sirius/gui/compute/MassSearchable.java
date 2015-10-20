@@ -1,10 +1,13 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import java.util.*;
-
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeSet;
 
 public class MassSearchable implements Searchable<String, String>{
 

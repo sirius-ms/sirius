@@ -1,24 +1,14 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import de.unijena.bioinf.myxo.structure.CompactPeak;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.Collection;
-
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
-import javax.swing.UIManager;
-
-import de.unijena.bioinf.myxo.structure.CompactPeak;
 
 class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>{
 	
@@ -96,7 +86,7 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 	
 	public void initColorsAndFonts(){
 		try{
-			File fontFile = new File("ttf/DejaVuSans.ttf");
+            InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			textfont = tempFont.deriveFont(12f);
 		}catch(Exception e){

@@ -1,10 +1,8 @@
 package de.unijena.bioinf.sirius.gui.configs;
 
-import java.io.*;
-
-import javax.swing.JFileChooser;
-
 import de.unijena.bioinf.sirius.gui.structure.FileFormat;
+
+import java.io.File;
 
 public class ConfigStorage {
 	

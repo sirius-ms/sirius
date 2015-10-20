@@ -1,12 +1,12 @@
 package de.unijena.bioinf.sirius.gui.io;
 
-import java.io.*;
-import java.util.*;
-
-import com.sun.tools.xjc.api.util.FilerCodeWriter;
-
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class DataFormatIdentifier {
 

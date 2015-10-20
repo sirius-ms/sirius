@@ -1,19 +1,12 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
-import java.awt.Color;
-import java.awt.Component;
+import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListModel;
-
-import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
-import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
-import de.unijena.bioinf.myxo.gui.tree.render.color.RGBScoreNodeColorManager;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 public class ResultTreeListThumbnailCellRenderers implements ListCellRenderer<SiriusResultElement> {
 	

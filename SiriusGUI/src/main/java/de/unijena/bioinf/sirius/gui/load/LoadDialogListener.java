@@ -1,9 +1,9 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+
 import java.io.File;
 import java.util.List;
-
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 
 public interface LoadDialogListener {
 

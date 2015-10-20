@@ -1,10 +1,12 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import java.util.*;
-
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class ExperimentContainer {
 	

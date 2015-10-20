@@ -1,14 +1,14 @@
 package de.unijena.bioinf.sirius.gui.io;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JenaMSConverter {
 	

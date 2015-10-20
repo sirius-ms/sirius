@@ -1,25 +1,12 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Paint;
-import java.awt.RenderingHints;
-import java.io.File;
-import java.text.DecimalFormat;
-
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
-import javax.swing.UIManager;
-
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.io.InputStream;
+import java.text.DecimalFormat;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<ExperimentContainer>{
 	
@@ -61,7 +48,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 //		}
 		
 		try{
-			File fontFile = new File("ttf/DejaVuSans-Bold.ttf");
+			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			compoundFont = tempFont.deriveFont(13f);
 			
@@ -71,7 +58,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		}
 		
 		try{
-			File fontFile = new File("ttf/DejaVuSans.ttf");
+			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			valueFont = tempFont.deriveFont(12f);
 			

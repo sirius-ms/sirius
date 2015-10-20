@@ -1,26 +1,13 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.io.File;
-import java.text.DecimalFormat;
-import java.util.List;
-
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
-import javax.swing.UIManager;
-
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.myxo.gui.msviewer.data.MolecularFormulaInformation;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.io.InputStream;
+import java.text.DecimalFormat;
 
 public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<SpectrumContainer>{
 	
@@ -52,8 +39,8 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 	
 	public void initColorsAndFonts(){
 		try{
-			File fontFile = new File("ttf/DejaVuSans-Bold.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
+			InputStream font = LoadSpectraCellRenderer.class.getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
+			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, font);
 			msLevelFont = tempFont.deriveFont(12f);
 			
 			propertyFont = tempFont.deriveFont(12f);
@@ -62,8 +49,8 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 		}
 		
 		try{
-			File fontFile = new File("ttf/DejaVuSans.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
+			InputStream font = LoadSpectraCellRenderer.class.getResourceAsStream("/ttf/DejaVuSans.ttf");
+			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, font);
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){

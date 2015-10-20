@@ -1,64 +1,29 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import java.util.*;
-import java.util.List;
-import java.util.zip.ZipOutputStream;
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDragEvent;
-import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.DropTargetEvent;
-import java.awt.dnd.DropTargetListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.File;
-import java.io.IOException;
+import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.dialogs.*;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
+import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
+import de.unijena.bioinf.sirius.gui.load.LoadController;
+import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
-
-import org.json.JSONException;
-
-import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
-
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
-import de.unijena.bioinf.myxo.structure.CompactExperiment;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.Progress;
-import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
-import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
-import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
-import de.unijena.bioinf.sirius.gui.dialogs.CloseExperimentDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialogReturnValue;
-import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
-import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
-import de.unijena.bioinf.sirius.gui.io.DataFormat;
-import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
-import de.unijena.bioinf.sirius.gui.io.MGFConverter;
-import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
-import de.unijena.bioinf.sirius.gui.load.DefaultLoadDialog;
-import de.unijena.bioinf.sirius.gui.load.LoadController;
-import de.unijena.bioinf.sirius.gui.load.LoadDialogListener;
-import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.cli.*;
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
+import java.awt.event.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener{
 	

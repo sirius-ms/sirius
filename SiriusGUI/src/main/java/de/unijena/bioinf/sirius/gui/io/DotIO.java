@@ -1,12 +1,18 @@
 package de.unijena.bioinf.sirius.gui.io;
 
-import java.text.DecimalFormat;
-import java.util.*;
-import java.io.*;
-
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.myxo.tools.MolecularFormulaTools;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class DotIO {
 

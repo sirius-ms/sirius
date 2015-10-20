@@ -1,19 +1,13 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.TreeSet;
-
-import sun.security.ec.ECParameters;
 import de.unijena.bioinf.myxo.gui.msviewer.data.DefaultPeakInformation;
 import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModel;
 import de.unijena.bioinf.myxo.gui.msviewer.data.PeakInformation;
-import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
-import de.unijena.bioinf.myxo.structure.DefaultMyxoPeak;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.TreeSet;
 
 public class ResultsMSViewerDataModel implements MSViewerDataModel {
 	

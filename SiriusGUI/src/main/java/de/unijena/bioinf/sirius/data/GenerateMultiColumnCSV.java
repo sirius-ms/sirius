@@ -1,7 +1,7 @@
 package de.unijena.bioinf.sirius.data;
 
 import java.io.*;
-import java.util.*;
+import java.util.Random;
 
 public class GenerateMultiColumnCSV {
 

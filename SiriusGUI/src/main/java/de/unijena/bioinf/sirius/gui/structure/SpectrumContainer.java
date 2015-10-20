@@ -1,14 +1,10 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import org.apache.commons.collections.map.HashedMap;
-
 import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModel;
-import de.unijena.bioinf.myxo.gui.msviewer.data.MolecularFormulaInformation;
 import de.unijena.bioinf.myxo.gui.msviewer.data.PeakInformation;
-import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 
-import java.util.*;
+import java.util.TreeMap;
 
 public class SpectrumContainer implements MSViewerDataModel{
 

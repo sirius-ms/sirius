@@ -1,14 +1,12 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
-import java.awt.*;
-import java.io.File;
-import java.text.DecimalFormat;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
-
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import java.awt.*;
+import java.io.File;
+import java.io.InputStream;
+import java.text.DecimalFormat;
 
 public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRenderer<SiriusResultElement> {
 
@@ -40,7 +38,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 	public void initColorsAndFonts(){
 		
 		try{
-			File fontFile = new File("ttf/DejaVuSans-Bold.ttf");
+			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			mfFont = tempFont.deriveFont(13f);
 			propertyFont = tempFont.deriveFont(12f);
@@ -50,7 +48,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 		}
 		
 		try{
-			File fontFile = new File("ttf/DejaVuSans.ttf");
+			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			valueFont = tempFont.deriveFont(12f);
 			

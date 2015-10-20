@@ -1,8 +1,7 @@
 package de.unijena.bioinf.sirius.gui.filefilter;
 
-import java.io.File;
-
 import javax.swing.filechooser.FileFilter;
+import java.io.File;
 
 public class SupportedDataFormatsFilter extends FileFilter{
 

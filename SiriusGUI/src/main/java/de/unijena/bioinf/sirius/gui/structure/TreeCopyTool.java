@@ -1,7 +1,5 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import java.util.ArrayDeque;
-
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;

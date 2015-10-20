@@ -1,20 +1,15 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.ChemistryBase.ms.ft.LossAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeNode;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SiriusResultElementConverter {
 	

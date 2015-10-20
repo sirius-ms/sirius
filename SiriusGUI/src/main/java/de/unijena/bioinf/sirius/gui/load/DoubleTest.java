@@ -1,7 +1,5 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import java.util.regex.Pattern;
-
 public class DoubleTest {
 
 	public static void main(String[] args){

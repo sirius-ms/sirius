@@ -1,18 +1,15 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
-import java.awt.*;
-import java.util.ArrayList;
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import org.jdesktop.swingx.calendar.DateSelectionModel.SelectionMode;
-
-import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import java.awt.*;
+import java.util.ArrayList;
 
 public class ResultPanel extends JPanel implements ListSelectionListener{
 	

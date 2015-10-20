@@ -1,19 +1,13 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
-import java.awt.Dimension;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
-import javax.swing.JList;
-import javax.swing.ListModel;
+import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import de.unijena.bioinf.myxo.gui.tree.render.DotReader;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ResultTreeListModel implements ListModel<SiriusResultElement> {
 	
