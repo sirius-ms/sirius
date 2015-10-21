@@ -18,15 +18,22 @@
 
 package de.unijena.bioinf.sirius.gui.io;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InvalidException;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactExperiment;
 import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
+import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+
+import java.util.ArrayList;
 
 /**
  * Convert Sirius Data structures to Myxobase data structures
@@ -36,8 +43,46 @@ import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
  */
 public class SiriusDataConverter {
 
+    public static Ms2Experiment validateInput(Ms2Experiment input) {
+        final MissingValueValidator validator = new MissingValueValidator();
+        try {
+            return validator.validate(input, new Warning.Noop(), true);
+        } catch (InvalidException e) {
+            return input;
+        }
+    }
 
-    public CompactExperiment siriusExperimentToCompactExperiment(Ms2Experiment sirius) {
+    public static ExperimentContainer siriusExperimentToExperimentContainer(Ms2Experiment sirius) {
+        sirius = validateInput(sirius);
+        final ExperimentContainer c = new ExperimentContainer();
+        c.setDataFocusedMass(sirius.getIonMass());
+        c.setName(sirius.getName());
+        c.setIonization(siriusIonizationToEnum(sirius.getPrecursorIonType()));
+        for (Spectrum<Peak> s : sirius.getMs1Spectra()) {
+            c.getMs1Spectra().add(siriusSpectrumToMyxoSpectrum(s));
+        }
+        for (Spectrum<Peak> s : sirius.getMs2Spectra()) {
+            c.getMs2Spectra().add(siriusSpectrumToMyxoSpectrum(s));
+        }
+        return c;
+    }
+
+    public static de.unijena.bioinf.sirius.gui.mainframe.Ionization siriusIonizationToEnum(PrecursorIonType ion) {
+        final PeriodicTable table = PeriodicTable.getInstance();
+        if (ion.isIonizationUnknown()) return Ionization.Unknown;
+        if (ion.equals(table.ionByName("[M+H]+"))) {
+            return Ionization.MPlusH;
+        } else if (ion.equals(table.ionByName("[M]+"))) {
+            return Ionization.M;
+        } else if (ion.equals(table.ionByName("[M+Na]+"))) {
+            return Ionization.MPlusNa;
+        } else if (ion.equals(table.ionByName("[M-H]-"))) {
+            return Ionization.MMinusH;
+        } else return Ionization.Unknown; // -_-
+    }
+
+    public static CompactExperiment siriusExperimentToCompactExperiment(Ms2Experiment sirius) {
+        sirius = validateInput(sirius);
         final DefaultCompactExperiment exp = new DefaultCompactExperiment();
         exp.setMolecularFormula(sirius.getMolecularFormula());
         exp.setCompoundName(sirius.getName());
@@ -50,7 +95,7 @@ public class SiriusDataConverter {
         return exp;
     }
 
-    public CompactSpectrum siriusSpectrumToMyxoSpectrum(Spectrum<? extends Peak> spec) {
+    public static CompactSpectrum siriusSpectrumToMyxoSpectrum(Spectrum<? extends Peak> spec) {
         final CompactSpectrum cs = new DefaultCompactSpectrum(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
         if (spec instanceof Ms2Spectrum) {
             final Ms2Spectrum<? extends Peak> ms2Spec = (Ms2Spectrum<? extends Peak>)spec;

@@ -1,10 +1,28 @@
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.edu.sc.seis.gradle:launch4j:1.5.1'
+    }
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'application'
+apply plugin: 'edu.sc.seis.launch4j'
 
 mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
 sourceCompatibility = 1.7
-version = '0.1'
+version = '3.1'
+
+launch4j {
+    mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
+    icon = file('src/main/resources/icons/sirius.ico')
+}
+
 jar {
     manifest {
         attributes 'Implementation-Title': 'Gradle Quickstart',

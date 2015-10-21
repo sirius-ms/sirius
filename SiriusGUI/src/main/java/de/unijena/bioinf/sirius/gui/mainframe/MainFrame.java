@@ -118,17 +118,17 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		newB = new JButton("Import experiment",new ImageIcon("src/main/resources/icons/document-new.png"));
+		newB = new JButton("Import experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-new.png")));
 		newB.addActionListener(this);
 		tempP.add(newB);
-		batchB = new JButton("Batch import",new ImageIcon("src/main/resources/icons/document-multiple.png"));
+		batchB = new JButton("Batch import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
 		batchB.addActionListener(this);
 		tempP.add(batchB);
-		editB = new JButton("Edit",new ImageIcon("src/main/resources/icons/document-edit.png"));
+		editB = new JButton("Edit",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
 		editB.addActionListener(this);
 		editB.setEnabled(false);
 		tempP.add(editB);
-		closeB = new JButton("Close",new ImageIcon("src/main/resources/icons/document-close.png"));
+		closeB = new JButton("Close",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
 		closeB.addActionListener(this);
 		closeB.setEnabled(false);
 		tempP.add(closeB);
@@ -137,10 +137,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		loadB = new JButton("Open",new ImageIcon("src/main/resources/icons/document-open.png"));
+		loadB = new JButton("Open",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
 		loadB.addActionListener(this);
 		tempP.add(loadB);
-		saveB = new JButton("Save",new ImageIcon("src/main/resources/icons/media-floppy.png"));
+		saveB = new JButton("Save",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
 		saveB.addActionListener(this);
 		saveB.setEnabled(false);
 		tempP.add(saveB);
@@ -149,7 +149,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		computeB = new JButton("Compute",new ImageIcon("src/main/resources/icons/applications-system.png"));
+		computeB = new JButton("Compute",new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 		computeB.addActionListener(this);
 		computeB.setEnabled(false);
 		tempP.add(computeB);
@@ -168,13 +168,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	public void constructExperimentListPopupMenu(){
 		expPopMenu = new JPopupMenu();
-		newExpMI = new JMenuItem("Import experiment",new ImageIcon("src/main/resources/icons/document-new.png"));
-		batchMI = new JMenuItem("Batch import",new ImageIcon("src/main/resources/icons/document-multiple.png"));
-		editMI = new JMenuItem("Edit experiment",new ImageIcon("src/main/resources/icons/document-edit.png"));
-		closeMI = new JMenuItem("Close experiment",new ImageIcon("src/main/resources/icons/document-close.png"));
-		openMI = new JMenuItem("Open",new ImageIcon("src/main/resources/icons/document-open.png"));
-		saveMI = new JMenuItem("Save",new ImageIcon("src/main/resources/icons/media-floppy.png"));
-		computeMI = new JMenuItem("Compute",new ImageIcon("src/main/resources/icons/applications-system.png"));
+		newExpMI = new JMenuItem("Import experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-new.png")));
+		batchMI = new JMenuItem("Batch import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
+		editMI = new JMenuItem("Edit experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
+		closeMI = new JMenuItem("Close experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
+		openMI = new JMenuItem("Open",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
+		saveMI = new JMenuItem("Save",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
+		computeMI = new JMenuItem("Compute",new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 		
 		newExpMI.addActionListener(this);
 		batchMI.addActionListener(this);
@@ -430,7 +430,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			
 		}else if(e.getSource()==batchB || e.getSource()==batchMI){
 			JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
-			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 			chooser.setMultiSelectionEnabled(true);
 			chooser.addChoosableFileFilter(new SupportedBatchDataFormatFilter());
 			chooser.setAcceptAllFileFilterUsed(false);
@@ -578,7 +578,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	    try{
 			for (int i = 0; i < flavors.length; i++) {
 				if (flavors[i].isFlavorJavaFileListType()) {
-					dtde.acceptDrop(dtde.getDropAction());
+					dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 					List files = (List) tr.getTransferData(flavors[i]);
 					for (Object o : files) {
 						File file = (File) o;
@@ -615,7 +615,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
-		if(csvFiles.size()>0||(csvFiles.size()+msFiles.size()+mgfFiles.size()==1)){   //nur CSV
+		if(csvFiles.size()>0&&(msFiles.size()+mgfFiles.size()==0)){   //nur CSV
 			LoadController lc = new LoadController(this, config);
 //			files
 			

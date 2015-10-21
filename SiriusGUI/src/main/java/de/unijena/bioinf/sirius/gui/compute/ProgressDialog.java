@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Progress;
+import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.Sirius;
 
 import javax.swing.*;
@@ -33,11 +34,12 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	private SimpleDateFormat sdf;
 	private int step;
 	private boolean successful;
+	private volatile boolean cancelComputation;
 
 	public ProgressDialog(JDialog owner) {
 		super(owner,true);
 		this.setTitle("Progress");
-		
+		this.cancelComputation = false;
 		this.successful = false;
 		this.setLayout(new BorderLayout());
 		this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -78,7 +80,7 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		sdf = new SimpleDateFormat("hh:mm:ss");
 	}
 	
-	public void start(Sirius sirius,Ms2Experiment exp,Set<MolecularFormula> whiteset){
+	public void start(Sirius sirius,Ms2Experiment exp){
 		sirius.setProgress(this);
 		this.setSize(new Dimension(700,210));
 		this.successful = false;
@@ -86,7 +88,7 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		step = 0;
 		lock = new ReentrantLock(true);
 		starttime = System.currentTimeMillis();
-		rt = new RunThread(sirius, exp, whiteset,this);
+		rt = new RunThread(sirius, exp,this);
 		t = new Thread(rt);
 		t.start();
 		setLocationRelativeTo(getParent());
@@ -123,12 +125,16 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	}
 
 	@Override
-	public void update(double current, double max, String details) {
+	public void update(double current, double max, String details, Feedback feedback) {
 		lock.lock();
 		int val = (int) (1000*current/max);
 //		System.out.println("update "+current+" "+max+" "+details+" "+val);
 		progBar.setValue(val);
 		timel.setText("compute element "+((int)current)+" of "+((int)max));
+		if (cancelComputation) {
+			feedback.cancelComputation();
+			this.successful=false;
+		}
 		lock.unlock();		
 //		System.err.println(this.getSize().getWidth()+" "+this.getSize().getHeight());
 	}
@@ -137,17 +143,19 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.abort){
 			try{
-				t.stop();
+				lock.lock();
+				cancelComputation = true;
+				lock.unlock();
 			}catch(Exception e2){
 				e2.printStackTrace();
 			}
-			this.setVisible(false);
 		}
 		
 	}
 	
-	public void computationComplete(){
-		this.successful = true;
+	public void computationComplete(boolean success){
+		this.successful = success;
+		this.setVisible(false);
 		this.dispose();
 		
 		
@@ -169,16 +177,14 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 class RunThread implements Runnable{
 	
 	private Sirius sirius;
-	private List<IdentificationResult> results;
+	private volatile List<IdentificationResult> results;
 	private Ms2Experiment exp;
-	private Set<MolecularFormula> whiteset;
 	private ProgressDialog pd;
 	
-	RunThread(Sirius sirius,Ms2Experiment exp,Set<MolecularFormula> whiteset,ProgressDialog pd){
+	RunThread(Sirius sirius,Ms2Experiment exp,ProgressDialog pd){
 		this.sirius = sirius;
 		this.results = null;
 		this.exp = exp;
-		this.whiteset = whiteset;
 		this.pd = pd;
 	}
 
@@ -190,8 +196,22 @@ class RunThread implements Runnable{
 //		}catch(Exception e){
 //			
 //		}
-		results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);
-		pd.computationComplete();
+		boolean success;
+		try {
+			results = sirius.identify(exp, 10, true, IsotopePatternHandling.score);
+			success = (results!=null);
+		} catch (Exception e) {
+			success = false;
+			e.printStackTrace();
+			pd.info("Error: " + e.getMessage());
+		}
+		final boolean s = success;
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				pd.computationComplete(s);
+			}
+		});
 	}
 	
 	List<IdentificationResult> getResults(){

@@ -109,6 +109,10 @@ public class ExperimentContainer {
 	public List<SiriusResultElement> getResults(){
 		return this.results;
 	}
-	
 
+
+	public double getFocusedMass() {
+		if (selectedFocusedMass > 0) return selectedFocusedMass;
+		else return dataFocusedMass;
+	}
 }

@@ -22,6 +22,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -230,13 +232,28 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		instrumentCB = new JComboBox<>(instruments);
 		otherPanel.add(new JLabel("  instrument"));
 		otherPanel.add(instrumentCB);
-		
-		this.snm = new SpinnerNumberModel(6,0,50,0.25);
+
+		this.snm = new SpinnerNumberModel(10,0.25,20,0.25);
 		this.ppmSpinner = new JSpinner(this.snm);
 		this.ppmSpinner.setMinimumSize(new Dimension(70,26));
 		this.ppmSpinner.setPreferredSize(new Dimension(70,26));
 		otherPanel.add(new JLabel("  ppm"));
 		otherPanel.add(this.ppmSpinner);
+
+		instrumentCB.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				final String name = (String)e.getItem();
+				final double recommendedPPM;
+
+				if (name.equals("Q-TOF")) recommendedPPM = 10;
+				else if (name.equals("Orbitrap")) recommendedPPM = 5;
+				else if (name.equals("FT-ICR")) recommendedPPM = 2;
+				else recommendedPPM = 10;
+
+				ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
+			}
+		});
 		
 		
 		mainPanel.add(otherPanel);
@@ -361,7 +378,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			try{
 				//entspricht setup() Methode
 				
-				Sirius sirius = new Sirius(instrument);
+				Sirius sirius = new Sirius(instrument); // TODO: sollte man vielleicht cachen...
 				final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
 	            final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
 	            final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
@@ -375,7 +392,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
 	            if (builder instanceof DPTreeBuilder) {
 	                System.err.println("Cannot load ILP solver. Please read the installation instructions.");
-	                System.exit(1);
+	                System.exit(1); // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	            }
 	            System.out.println("Compute trees using " + builder.getDescription());
 	 
@@ -398,11 +415,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 //	            System.err.println(pm);
 	            
 	            Ms2Experiment exp = this.convert(ec,(String) ionizationCB.getSelectedItem(),pm);
-	            
-	            Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
-	            
+
 	            ProgressDialog progDiag = new ProgressDialog(this);
-	            progDiag.start(sirius, exp, whiteset);
+	            progDiag.start(sirius, exp);
 	            if(progDiag.isSucessful()){
 //	            	System.err.println("progDiag erfolgreich");
 	            	this.success = true;

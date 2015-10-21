@@ -1,9 +1,9 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import de.unijena.bioinf.sirius.gui.io.DataFormat;
-import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
-import de.unijena.bioinf.sirius.gui.io.JenaMSConverter;
-import de.unijena.bioinf.sirius.gui.io.MGFConverter;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.sirius.gui.io.*;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
@@ -12,7 +12,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -260,51 +262,64 @@ class ImportExperimentsThread implements Runnable{
 	}
 	
 	void abortImport(){
-		lock.lock();
 		this.stop = true;
-		lock.unlock();
 	}
 
 	@Override
 	public void run() {
+
+		final MsExperimentParser parser = new MsExperimentParser();
+
 		int size = msFiles.size()+mgfFiles.size();
 		this.results = new ArrayList<>(size);
 		this.bid.fileImportInit(size);
 		int counter=0;
-		for(File msFile : msFiles){
-			this.bid.fileImportUpdate(counter, msFile.getName());
-			boolean trigger;
-			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
-			trigger = this.stop;
-			lock.unlock();
-			if(trigger){
-				bid.fileImportAborted();
-				return;
+		for(File f : msFiles){
+			this.bid.fileImportUpdate(counter, f.getName());
+
+			try (final CloseableIterator<Ms2Experiment> experiments = parser.getParser(f).parseFromFileIterator(f)) {
+				while (experiments.hasNext()) {
+					final Ms2Experiment exp = experiments.next();
+					final ExperimentContainer ec = SiriusDataConverter.siriusExperimentToExperimentContainer(exp);
+					results.add(ec);
+					boolean trigger;
+					trigger = this.stop;
+					if(trigger){
+						bid.fileImportAborted();
+						return;
+					}
+				}
+			} catch (IOException e) {
+				errors.add(f.getName()+": Invalid file format.");;
 			}
-			ExperimentContainer ec = readMSCompound(msFile);
-			if(ec!=null) results.add(ec);
 			counter++;
 		}
-		
-		for(File mgfFile : mgfFiles){
-			boolean trigger;
-			lock.lock(); //TODO Lock vermutlich ueberfluessig, da nur eine atomare Operation
-			trigger = this.stop;
-			lock.unlock();
-			this.bid.fileImportUpdate(counter, mgfFile.getName());
-			if(trigger){
-				bid.fileAnalysisAborted();
-				return;
+
+		for(File f : mgfFiles){
+			this.bid.fileImportUpdate(counter, f.getName());
+
+			try (final CloseableIterator<Ms2Experiment> experiments = parser.getParser(f).parseFromFileIterator(f)) {
+				while (experiments.hasNext()) {
+					final Ms2Experiment exp = experiments.next();
+					final ExperimentContainer ec = SiriusDataConverter.siriusExperimentToExperimentContainer(exp);
+					results.add(ec);
+					boolean trigger;
+					trigger = this.stop;
+					if(trigger){
+						bid.fileImportAborted();
+						return;
+					}
+				}
+			} catch (IOException e) {
+				errors.add(f.getName()+": Invalid file format.");;
 			}
-			ExperimentContainer ec = readMGFCompound(mgfFile);
-			if(ec!=null) results.add(ec);
 			counter++;
 		}
 		
 		bid.fileImportFinished();
 		
 	}
-	
+	/*
 	public ExperimentContainer readMSCompound(File file){
 		
 		JenaMSConverter conv = new JenaMSConverter();
@@ -332,6 +347,7 @@ class ImportExperimentsThread implements Runnable{
 		return ec;
 		
 	}
+	*/
 	
 	List<ExperimentContainer> getResults(){
 		return this.results;

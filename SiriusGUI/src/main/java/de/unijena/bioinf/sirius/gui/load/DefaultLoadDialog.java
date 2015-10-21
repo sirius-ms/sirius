@@ -79,8 +79,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		
 		
 		JPanel msControls = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		add = new JButton(new ImageIcon("src/main/resources/icons/list-add.png"));
-		remove = new JButton(new ImageIcon("src/main/resources/icons/list-remove.png"));
+		add = new JButton(new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-add.png")));
+		remove = new JButton(new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-remove.png")));
 		add.addActionListener(this);
 		remove.addActionListener(this);
 		remove.setEnabled(false);
@@ -173,8 +173,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	public void constructSpectraListPopupMenu(){
 		spPopMenu = new JPopupMenu();
-		addMI = new JMenuItem("Add experiment(s)",new ImageIcon("src/main/resources/icons/list-add.png"));
-		removeMI = new JMenuItem("Remove experiment(s)",new ImageIcon("src/main/resources/icons/list-remove.png"));
+		addMI = new JMenuItem("Add experiment(s)",new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-add.png")));
+		removeMI = new JMenuItem("Remove experiment(s)",new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-remove.png")));
 		
 		addMI.addActionListener(this);
 		removeMI.addActionListener(this);

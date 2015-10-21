@@ -1,16 +1,16 @@
 package de.unijena.bioinf.sirius.gui.load;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
-import de.unijena.bioinf.sirius.gui.io.DataFormat;
-import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
-import de.unijena.bioinf.sirius.gui.io.JenaMSConverter;
-import de.unijena.bioinf.sirius.gui.io.MGFConverter;
+import de.unijena.bioinf.sirius.gui.io.*;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -223,36 +223,33 @@ public class LoadController implements LoadDialogListener{
 				}
 			}
 		}
-			
+
+
+		final MsExperimentParser parser = new MsExperimentParser();
+
 		if(msFiles.size()>0){
 			for(File file : msFiles){
-				ExperimentContainer ec = null;
-				JenaMSConverter conv = new JenaMSConverter();
-				try{
-					ec = conv.convert(file);
-				}catch(Exception e){
+				try(CloseableIterator<Ms2Experiment> iter = parser.getParser(file).parseFromFileIterator(file)) {
+					while (iter.hasNext()) {
+						importExperimentContainer(SiriusDataConverter.siriusExperimentToExperimentContainer(iter.next()),errorStorage);
+					}
+				} catch (Exception e) {
 					errorStorage.add(file.getName()+": Invalid file format.");
 					continue;
 				}
-				
-				importExperimentContainer(ec,errorStorage);
-				
 			}
 		}
 			
 		if(mgfFiles.size()>0){
-			for(File file : mgfFiles){
-				MGFConverter conv = new MGFConverter();
-				ExperimentContainer ec = null;
-				
-				try{
-					ec = conv.convert(file);
-				}catch(RuntimeException e2){
+			for(File file : msFiles){
+				try(CloseableIterator<Ms2Experiment> iter = parser.getParser(file).parseFromFileIterator(file)) {
+					while (iter.hasNext()) {
+						importExperimentContainer(SiriusDataConverter.siriusExperimentToExperimentContainer(iter.next()),errorStorage);
+					}
+				} catch (Exception e) {
 					errorStorage.add(file.getName()+": Invalid file format.");
 					continue;
 				}
-				
-				importExperimentContainer(ec,errorStorage);
 			}
 		}
 		

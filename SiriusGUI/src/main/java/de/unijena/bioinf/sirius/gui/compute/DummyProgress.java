@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.Progress;
 
 public class DummyProgress implements Progress{
@@ -24,7 +25,7 @@ public class DummyProgress implements Progress{
 	}
 
 	@Override
-	public void update(double d1, double d2, String s3) {
+	public void update(double d1, double d2, String s3,Feedback f) {
 		System.out.println("update "+d1+" "+d2+" "+s3);
 	}
 
