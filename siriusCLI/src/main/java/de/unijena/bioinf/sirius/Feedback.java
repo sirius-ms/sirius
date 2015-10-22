@@ -15,39 +15,19 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.unijena.bioinf.sirius;
 
-public interface Progress {
+public interface Feedback {
 
-    public static class Quiet implements Progress {
+    /**
+     * cancel computation, throw away all intermediate results
+     */
+    public void cancelComputation();
 
-        @Override
-        public void init(double maxProgress) {
-
-        }
-
-        @Override
-        public void update(double currentProgress, double maxProgress, String value, Feedback feedback) {
-
-        }
-
-        @Override
-        public void finished() {
-
-        }
-
-        @Override
-        public void info(String message) {
-
-        }
-    };
-
-    public void init(double maxProgress);
-
-    public void update(double currentProgress, double maxProgress, String value, Feedback feedback);
-
-    public void finished();
-
-    public void info(String message);
+    /**
+     * stop the computation but keep the results you computed so far
+     */
+    public void stopComputationKeepResults();
 
 }

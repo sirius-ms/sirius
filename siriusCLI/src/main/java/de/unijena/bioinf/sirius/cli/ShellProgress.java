@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.sirius.cli;
 
+import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.Progress;
 
 import java.io.PrintStream;
@@ -59,7 +60,7 @@ public class ShellProgress implements Progress {
     }
 
     @Override
-    public void update(double currentProgress, double maxProgress, String value) {
+    public void update(double currentProgress, double maxProgress, String value, Feedback feedback) {
         if (!shellMode) {
             writer.println(value);
         } else {
