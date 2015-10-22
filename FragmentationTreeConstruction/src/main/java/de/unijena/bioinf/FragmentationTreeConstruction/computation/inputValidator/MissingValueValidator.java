@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -44,6 +46,7 @@ public class MissingValueValidator implements InputValidator {
     @Override
     public MutableMs2Experiment validate(Ms2Experiment originalInput, Warning warn, boolean repair) throws InvalidException {
         final MutableMs2Experiment input = new MutableMs2Experiment(originalInput);
+        checkInchi(warn, repair, input);
         if (input.getMs2Spectra() == null || input.getMs2Spectra().isEmpty())
             throw new InvalidException("Miss MS2 spectra");
         if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<SimpleSpectrum>());
@@ -53,6 +56,22 @@ public class MissingValueValidator implements InputValidator {
         checkIonMass(warn, repair, input);
         checkNeutralMass(warn, repair, input);
         return input;
+    }
+
+    private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
+        final InChI inchi = input.getAnnotation(InChI.class);
+        if (inchi==null) return;
+        final MolecularFormula formula = inchi.extractFormula();
+        if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {
+            warn.warn("InChI has different molecular formula than input formula");
+        }
+        if (input.getMoleculeNeutralMass() > 0 && Math.abs(formula.getMass()-input.getMoleculeNeutralMass()) > 0.01) {
+            warn.warn("neutral mass does not match to InChI formula");
+        }
+        if (repair) {
+            if (input.getMolecularFormula()==null) input.setMolecularFormula(formula);
+            if (input.getMoleculeNeutralMass()==0) input.setMoleculeNeutralMass(formula.getMass());
+        }
     }
 
     protected void checkNeutralMass(Warning warn, boolean repair, MutableMs2Experiment input) {
