@@ -37,7 +37,7 @@ public class MsExperimentParser {
         final String name = f.getName();
         final int i = name.lastIndexOf('.');
         if (i < 0) return null; // no parser found
-        final String extName = name.substring(i);
+        final String extName = name.substring(i).toLowerCase();
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
         if (pc==null) return null;
         try {

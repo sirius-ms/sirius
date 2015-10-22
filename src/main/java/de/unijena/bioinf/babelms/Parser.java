@@ -19,6 +19,7 @@ package de.unijena.bioinf.babelms;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URL;
 
 public interface Parser<T> {
 
@@ -37,6 +38,6 @@ public interface Parser<T> {
      * @return data element from the input stream
      * @throws IOException
      */
-    public <S extends T> S parse(BufferedReader reader) throws IOException;
+    public <S extends T> S parse(BufferedReader reader, URL source) throws IOException;
 
 }

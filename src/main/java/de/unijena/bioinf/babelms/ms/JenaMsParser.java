@@ -25,6 +25,7 @@ import de.unijena.bioinf.babelms.Parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,18 +37,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
     }
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader) throws IOException {
-        return new ParserInstance(reader).parse();
+    public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+        return new ParserInstance(source, reader).parse();
     }
 
     private static class ParserInstance {
 
-        private ParserInstance(BufferedReader reader) {
+        private ParserInstance(URL source, BufferedReader reader) {
+            this.source = source;
             this.reader = reader;
             lineNumber = 0;
             this.currentSpectrum = new SimpleMutableSpectrum();
         }
 
+        private final URL source;
         private final BufferedReader reader;
         private int lineNumber;
         private String compoundName = null;
@@ -108,6 +111,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setPrecursorIonType(ionization);
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
+            exp.setSource(source);
             if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
             if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
             return exp;

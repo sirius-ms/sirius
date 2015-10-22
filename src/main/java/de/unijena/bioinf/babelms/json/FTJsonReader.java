@@ -20,6 +20,7 @@ package de.unijena.bioinf.babelms.json;
 import com.google.common.collect.HashMultimap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.Parser;
@@ -29,6 +30,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,8 +42,13 @@ public class FTJsonReader implements Parser<FTree> {
     TODO: currently, only Peak and Ionization are parsed from input
      */
 
-    @Override
+    @Deprecated
     public FTree parse(BufferedReader reader) throws IOException {
+        return parse(reader,null);
+    }
+
+    @Override
+    public FTree parse(BufferedReader reader, URL source) throws IOException {
         final StringBuilder buffer = new StringBuilder(1024);
         String line=null;
         while ((line= reader.readLine())!=null) {
@@ -76,7 +83,8 @@ public class FTJsonReader implements Parser<FTree> {
                 for (MolecularFormula child : edges.get(u.getFormula())) {
                     final Fragment v = tree.addFragment(u, child);
                     stack.push(v);
-                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).getDouble("score"));
+                    if (incomingLossMap.get(child).has("score"))
+                        v.getIncomingEdge().setWeight(incomingLossMap.get(child).getDouble("score"));
                 }
             }
 
@@ -92,14 +100,17 @@ public class FTJsonReader implements Parser<FTree> {
                     ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(jsonfragment, g.getAnnotationType()));
                 }
                 // read peak data
-                peakAno.set(f, new Peak(jsonfragment.getDouble("mz"), jsonfragment.getDouble("intensity")));
-
+                if (jsonfragment.has("mz") && jsonfragment.has("intensity")) {
+                    peakAno.set(f, new Peak(jsonfragment.getDouble("mz"), jsonfragment.getDouble("intensity")));
+                }
             }
 
             // add tree annotation
             tree.addAnnotation(Ionization.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), Ionization.class));
+            tree.addAnnotation(PrecursorIonType.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), PrecursorIonType.class));
             tree.addAnnotation(RecalibrationFunction.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), RecalibrationFunction.class));
-            tree.addAnnotation(TreeScoring.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations").getJSONObject("score"), TreeScoring.class));
+            tree.addAnnotation(TreeScoring.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), TreeScoring.class));
+            if (source != null) tree.addAnnotation(URL.class, source);
             return tree;
         } catch (JSONException e) {
             throw new IOException(e);

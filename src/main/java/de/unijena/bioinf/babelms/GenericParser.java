@@ -18,8 +18,8 @@
 package de.unijena.bioinf.babelms;
 
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class GenericParser<T> implements Parser<T> {
@@ -31,9 +31,9 @@ public class GenericParser<T> implements Parser<T> {
     }
 
 
-    @Override
+    @Deprecated
     public <S extends T> S parse(BufferedReader reader) throws IOException {
-        return parser.parse(reader);
+        return parse(reader, null);
     }
 
     public <S extends T> S parse(InputStream input) throws IOException {
@@ -41,15 +41,30 @@ public class GenericParser<T> implements Parser<T> {
         return parse(reader);
     }
 
-    public <S extends T> Iterator<S> parseIterator(InputStream input) throws IOException {
+    @Deprecated
+    public <S extends T> CloseableIterator<S> parseIterator(InputStream input) throws IOException {
+        return parseIterator(input, null);
+    }
+
+    @Deprecated
+    public <S extends T> CloseableIterator<S> parseIterator(BufferedReader input) throws IOException {
+        return parseIterator(input, null);
+    }
+
+    public <S extends T> CloseableIterator<S> parseIterator(InputStream input, URL source) throws IOException {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
         return parseIterator(reader);
     }
 
-    public <S extends T> Iterator<S> parseIterator(final BufferedReader r) throws IOException {
-        return new Iterator<S>() {
+    public <S extends T> CloseableIterator<S> parseIterator(final BufferedReader r, final URL source) throws IOException {
+        return new CloseableIterator<S>() {
+            @Override
+            public void close() throws IOException {
+                tryclose();
+            }
+
             BufferedReader reader=r;
-            S elem = parse(reader);
+            S elem = parse(reader, source);
             @Override
             public boolean hasNext() {
                 return reader != null;
@@ -59,7 +74,7 @@ public class GenericParser<T> implements Parser<T> {
             public S next() {
                 S mem = elem;
                 try {
-                    elem = parse(reader);
+                    elem = parse(reader, source);
                 } catch (IOException e) {
                     tryclose();
                     throw new RuntimeException(e);
@@ -70,8 +85,10 @@ public class GenericParser<T> implements Parser<T> {
 
             private void tryclose() {
                 try {
-                    reader.close();
-                    reader=null;
+                    if (reader != null) {
+                        reader.close();
+                        reader=null;
+                    }
                 } catch (IOException e) {
 
                 }
@@ -84,21 +101,22 @@ public class GenericParser<T> implements Parser<T> {
         };
     }
 
-    public <S extends T> Iterator<S> parseFromFileIterator(File file) throws IOException {
+    public <S extends T> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
         final BufferedReader r = new BufferedReader(new FileReader(file));
-        return parseIterator(r);
+        return parseIterator(r, file.toURI().toURL());
     }
 
 
     public <S extends T> List<S> parseFromFile(File file) throws IOException {
         BufferedReader reader = null;
+        final URL source = file.toURI().toURL();
         try {
             reader = new BufferedReader(new FileReader(file));
             final ArrayList<S> list = new ArrayList<S>();
-            S elem = parse(reader);
+            S elem = parse(reader,source);
             while (elem!=null) {
                 list.add(elem);
-                elem = parse(reader);
+                elem = parse(reader,source);
             }
             return list;
         } catch (IOException e) {
@@ -112,14 +130,20 @@ public class GenericParser<T> implements Parser<T> {
     @Deprecated
     public <S extends T> S parseFile(File file) throws IOException {
         BufferedReader reader = null;
+        final URL source = file.toURI().toURL();
         try {
             reader = new BufferedReader(new FileReader(file));
-            return parse(reader);
+            return parse(reader,source);
         } catch (IOException e) {
             final IOException newOne = new IOException("Error while parsing " + file.getName(), e);
             throw newOne;
         } finally {
             if (reader != null) reader.close();
         }
+    }
+
+    @Override
+    public <S extends T> S parse(BufferedReader reader, URL source) throws IOException {
+        return parser.parse(reader, source);
     }
 }

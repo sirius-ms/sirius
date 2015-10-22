@@ -31,6 +31,7 @@ import org.json.JSONObject;
 import org.json.JSONWriter;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -100,7 +101,7 @@ class FTSpecials {
             @Override
             public PrecursorIonType readJSON(JSONObject obj) throws JSONException {
                 if (!obj.has("precursorIonType")) return null;
-                return PeriodicTable.getInstance().ionByName(obj.getString("ion"));
+                return PeriodicTable.getInstance().ionByName(obj.getString("precursorIonType"));
             }
         });
 
@@ -128,11 +129,21 @@ class FTSpecials {
             @Override
             public TreeScoring readJSON(JSONObject obj) throws JSONException {
                 if (obj.has("score")) {
+                    obj = obj.getJSONObject("score");
                     final TreeScoring scoring = new TreeScoring();
-                    scoring.setOverallScore(obj.getDouble("score"));
+                    scoring.setOverallScore(obj.getDouble("total"));
                     scoring.setRecalibrationBonus(obj.getDouble("recalibrationBonus"));
+                    final double treeScore = obj.getDouble("tree");
+                    final Iterator<String> keys = obj.keys();
+                    while (keys.hasNext()) {
+                        final String key = keys.next();
+                        if (key.equals("total") || key.equals("recalibrationBonus") || key.equals("tree")) continue;
+                        scoring.addAdditionalScore(key, obj.getDouble(key));
+                    }
                     return scoring;
-                } else return null;
+                } else {
+                    return null;
+                }
             }
         });
 

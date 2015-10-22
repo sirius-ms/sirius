@@ -25,6 +25,7 @@ import de.unijena.bioinf.babelms.SpectralParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -118,7 +119,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     spec.inchi = value;
                 } else if (keyword.equalsIgnoreCase("SMILES")) {
                     spec.smiles = value;
-                } else if (keyword.equalsIgnoreCase("NAME")) {
+                } else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
                     spec.name = value;
                 } else {
                     spec.fields.put(keyword, value);
@@ -205,7 +206,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private MgfParserInstance inst;
 
     @Override
-    public synchronized Ms2Experiment parse(BufferedReader reader) throws IOException {
+    public synchronized Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
         if (inst==null || inst.reader!=reader) inst = new MgfParserInstance(reader);
         if (!inst.hasNext()) return null;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
@@ -214,7 +215,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
         final HashMap<String,String> additionalFields = new HashMap<String, String>();
-        while (inst.hasNext() && Math.abs(inst.peekNext().spectrum.getPrecursorMz()-exp.getIonMass()) < 0.002 && inst.peekNext().name.equals(exp.getName())) {
+        while (inst.hasNext() && Math.abs(inst.peekNext().spectrum.getPrecursorMz()-exp.getIonMass()) < 0.002 && (inst.peekNext().name == exp.getName() || (inst.peekNext().name != null && inst.peekNext().name.equals(exp.getName())))) {
             final MgfSpec spec = inst.pollNext();
             if (spec.spectrum.getMsLevel()==1) exp.getMs1Spectra().add(new SimpleSpectrum(spec.spectrum));
             else exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
@@ -232,6 +233,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         if (!additionalFields.isEmpty()) {
             exp.setAnnotation(Map.class, additionalFields);
         }
+        exp.setSource(source);
         return exp;
     }
 }
