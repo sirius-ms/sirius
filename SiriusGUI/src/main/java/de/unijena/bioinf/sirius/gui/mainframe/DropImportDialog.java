@@ -12,7 +12,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class DropImportDialog extends JDialog implements ActionListener{
 	
@@ -113,21 +112,15 @@ class DataAnalyseThread implements Runnable {
 	private List<File> csvFiles, msFiles, mgfFiles, rawFiles;
 	private DataFormatIdentifier ident;
 	private DropImportDialog diag;
-	private ReentrantLock lock;
-	private boolean stop;
+	private transient boolean stop;
 	
 	public DataAnalyseThread(List<File> rawFiles, DropImportDialog diag) {
 		this.rawFiles = rawFiles;
 		this.diag = diag;
-		this.lock = lock;
 		stop = false;
-		this.lock = new ReentrantLock();
 	}
 	
 	public void abortProgress(){
-		lock.lock();
-		this.stop = true;
-		lock.unlock();
 	}
 	
 	@Override
@@ -142,17 +135,22 @@ class DataAnalyseThread implements Runnable {
 		ident = new DataFormatIdentifier();
 		
 		for(int i=0;i<rawFiles.size();i++){
-			
-			boolean trigger=false;
-			lock.lock();
-			if(stop) trigger=stop;
-			lock.unlock();
-			if(trigger){
-				diag.progressAborted();
+			if(stop){
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						diag.progressAborted();
+					}
+				});
 				return;
 			}
-			
-			diag.updateProgressBar(i);
+			final int progress = i;
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					diag.updateProgressBar(progress);
+				}
+			});
 			File file = rawFiles.get(i);
 			DataFormat df = ident.identifyFormat(file);
 			if(df==DataFormat.CSV){
@@ -166,7 +164,12 @@ class DataAnalyseThread implements Runnable {
 			}
 			
 		}
-		diag.progressFinished();
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				diag.progressFinished();
+			}
+		});
 	}
 	
 	List<File> getMSFiles(){

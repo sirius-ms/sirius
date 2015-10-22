@@ -433,7 +433,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	    try{
 			for (int i = 0; i < flavors.length; i++) {
 				if (flavors[i].isFlavorJavaFileListType()) {
-					dtde.acceptDrop(dtde.getDropAction());
+					dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 					List files = (List) tr.getTransferData(flavors[i]);
 					for (Object o : files) {
 						File file = (File) o;

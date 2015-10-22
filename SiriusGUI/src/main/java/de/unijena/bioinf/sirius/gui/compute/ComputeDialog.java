@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -56,6 +55,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		this.ec = ec;
 		this.success = false;
+
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		
 		additionalElements = new TreeSet<>();
 		
@@ -276,7 +277,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource() == autoDetectFM){
+		if (e.getSource()== abort) {
+			this.dispose();
+		} else if(e.getSource() == autoDetectFM){
 			
 //			box.getrender
 //			ListCellRenderer<CompactPeak> renderer = box.getRenderer();

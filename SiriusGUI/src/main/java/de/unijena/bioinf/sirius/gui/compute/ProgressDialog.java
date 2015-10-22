@@ -1,12 +1,7 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IsotopePatternHandling;
-import de.unijena.bioinf.sirius.Progress;
-import de.unijena.bioinf.sirius.Feedback;
-import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,9 +10,6 @@ import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	
@@ -27,13 +19,12 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	private Thread t;
 	private JTextArea details;
 	private StringBuilder sb;
-	private Lock lock;
 	private JButton abort;
 	private long starttime;
 	private JLabel timel;
 	private SimpleDateFormat sdf;
 	private int step;
-	private boolean successful;
+	private volatile boolean successful;
 	private volatile boolean cancelComputation;
 
 	public ProgressDialog(JDialog owner) {
@@ -86,7 +77,6 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		this.successful = false;
 		sb = new StringBuilder();
 		step = 0;
-		lock = new ReentrantLock(true);
 		starttime = System.currentTimeMillis();
 		rt = new RunThread(sirius, exp,this);
 		t = new Thread(rt);
@@ -97,58 +87,57 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 
 	@Override
 	public void finished() {
-//		lock.lock();
-//		sb.append(sdf.format(new Date())+" : step "+step+" finished.\n");
-//		details.setText(sb.toString());
-//		lock.unlock();
+
 	}
 
 	@Override
-	public void info(String info) {
-		lock.lock();
-		sb.append(sdf.format(new Date())+" : "+info+"\n");
-		details.setText(sb.toString());
-		lock.unlock();
+	public void info(final String info) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				sb.append(sdf.format(new Date())+" : "+info+"\n");
+				details.setText(sb.toString());
+			}
+		});
 	}
 
 	@Override
 	public void init(double maxVal) {
-		lock.lock();
-		progBar.setValue(0);
-		step++;
-		if(step==1){
-			sb.append(sdf.format(new Date())+" : Start tree computation.\n");
-			details.setText(sb.toString());
-		}
-		timel.setText("");
-		lock.unlock();
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				progBar.setValue(0);
+				step++;
+				if(step==1){
+					sb.append(sdf.format(new Date())+" : Start tree computation.\n");
+					details.setText(sb.toString());
+				}
+				timel.setText("");
+			}
+		});
+
 	}
 
 	@Override
-	public void update(double current, double max, String details, Feedback feedback) {
-		lock.lock();
-		int val = (int) (1000*current/max);
-//		System.out.println("update "+current+" "+max+" "+details+" "+val);
-		progBar.setValue(val);
-		timel.setText("compute element "+((int)current)+" of "+((int)max));
+	public void update(final double current, final double max, final String details, final Feedback feedback) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				int val = (int) (1000*current/max);
+				progBar.setValue(val);
+				timel.setText("compute element "+((int)current)+" of "+((int)max));
+			}
+		});
 		if (cancelComputation) {
 			feedback.cancelComputation();
-			this.successful=false;
+			successful=false;
 		}
-		lock.unlock();		
-//		System.err.println(this.getSize().getWidth()+" "+this.getSize().getHeight());
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.abort){
-			try{
-				lock.lock();
-				cancelComputation = true;
-				lock.unlock();
-			}catch(Exception e2){
-				e2.printStackTrace();
-			}
+			cancelComputation = true;
 		}
 		
 	}
@@ -190,20 +179,19 @@ class RunThread implements Runnable{
 
 	@Override
 	public void run() {
-//		System.out.println("starte Berechnung");
-//		try{
-//			Thread.sleep(500); //damit der Prozessdialog angezeigt wird bevor die Berechnung startet
-//		}catch(Exception e){
-//			
-//		}
 		boolean success;
 		try {
 			results = sirius.identify(exp, 10, true, IsotopePatternHandling.score);
 			success = (results!=null);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			success = false;
 			e.printStackTrace();
-			pd.info("Error: " + e.getMessage());
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					pd.info("Error: " + e.getMessage());
+				}
+			});
 		}
 		final boolean s = success;
 		SwingUtilities.invokeLater(new Runnable() {

@@ -20,8 +20,10 @@ package de.unijena.bioinf.sirius.gui.io;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InvalidException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
@@ -32,8 +34,6 @@ import de.unijena.bioinf.myxo.structure.DefaultCompactExperiment;
 import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-
-import java.util.ArrayList;
 
 /**
  * Convert Sirius Data structures to Myxobase data structures
@@ -101,6 +101,9 @@ public class SiriusDataConverter {
             final Ms2Spectrum<? extends Peak> ms2Spec = (Ms2Spectrum<? extends Peak>)spec;
             cs.setCollisionEnergy(ms2Spec.getCollisionEnergy());
             cs.setMSLevel(ms2Spec.getMsLevel());
+        } else {
+            cs.setMSLevel(1);
+            cs.setCollisionEnergy(null);
         }
         return cs;
     }

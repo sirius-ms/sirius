@@ -3,7 +3,9 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.sirius.gui.io.*;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 
@@ -14,20 +16,13 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class BatchImportDialog extends JDialog implements ActionListener{
 	
 	private JProgressBar progBar;
-//	private double minVal, maxVal;
 	ImportExperimentsThread importThread ;
-//	private Thread t;
-	private Lock lock;
 	private JButton abort;
-//	private boolean abortPressed;
 	private JLabel progressl;
 	private ReturnValue rv;
 	private AnalyseFileTypesThread analyseThread;
@@ -36,8 +31,6 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	public BatchImportDialog(JFrame owner) {
 		super(owner,true);
 		this.setTitle("Batch Import");
-		this.lock = new ReentrantLock(true);
-		
 		this.rv = ReturnValue.Abort;
 		this.setLayout(new BorderLayout());
 		this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -56,7 +49,6 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		progressLabelPanel.add(progressl);
 		progressPanel.add(progressLabelPanel,BorderLayout.SOUTH);
 		progressPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-//		progressPanel.setBorder(BorderFactory.createEtchedBorder());
 		centerPanel.add(progressPanel,BorderLayout.NORTH);
 		
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
@@ -64,8 +56,6 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		abort.addActionListener(this);
 		buttonPanel.add(abort);
 		this.add(buttonPanel, BorderLayout.SOUTH);
-		
-//		abortPressed = false;
 	}
 	
 	public void start(List<File> msFiles, List<File> mgfFiles){
@@ -82,7 +72,6 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 		errors = new ArrayList<>();
 		analyseThread = new AnalyseFileTypesThread(files, this, errors);
 		Thread thread = new Thread(analyseThread);
-		thread = new Thread(analyseThread);
 		thread.start();
 		this.setSize(new Dimension(300,125));
 		setLocationRelativeTo(getParent());
@@ -105,19 +94,15 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	/////// File import ///////////
 
 	void fileImportInit(int maxVal) {
-		lock.lock();
 		progBar.setMaximum(maxVal);
 		progBar.setMinimum(0);
 		progBar.setValue(0);
 		progressl.setText("");
-		lock.unlock();
 	}
 
 	void fileImportUpdate(int currentIndex, String currentFileName) {
-		lock.lock();
 		progBar.setValue(currentIndex);
 		progressl.setText("import \""+currentFileName+"\"");
-		lock.unlock();		
 	}
 	
 	void fileImportFinished() {
@@ -133,19 +118,15 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	///////////// fuer DF Analyse ////////////////////
 	
 	void fileAnalysisInit(int maxVal) {
-		lock.lock();
 		progBar.setMaximum(maxVal);
 		progBar.setMinimum(0);
 		progBar.setValue(0);
 		progressl.setText("Analysing data formats ...");
-		lock.unlock();
 	}
 
 	
 	void FileAnaysisUpdate(int currentIndex) {
-		lock.lock();
 		progBar.setValue(currentIndex);
-		lock.unlock();		
 	}
 	
 	void fileAnalysisAborted(){
@@ -168,7 +149,6 @@ public class BatchImportDialog extends JDialog implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource()==this.abort){
-//			abortPressed = true;
 			if(analyseThread!=null) analyseThread.abortProgress();
 			if(importThread!=null) importThread.abortImport();
 			this.dispose();
@@ -182,8 +162,7 @@ class AnalyseFileTypesThread implements Runnable{
 	
 	private File[] files;
 	private List<File> msFiles, mgfFiles;
-	private ReentrantLock lock;
-	private boolean stop;
+	private volatile boolean stop;
 	private BatchImportDialog bid;
 	private List<String> errors;
 	
@@ -192,16 +171,13 @@ class AnalyseFileTypesThread implements Runnable{
 		this.files = files;
 		this.bid = bid;
 		stop = false;
-		lock = new ReentrantLock();
 		msFiles = new ArrayList<>();
 		mgfFiles = new ArrayList<>();
 		this.errors = errors;
 	}	
 	
 	void abortProgress(){
-		lock.lock();
 		this.stop = true;
-		lock.unlock();
 	}
 	
 	List<File> getMSFiles(){
@@ -218,13 +194,22 @@ class AnalyseFileTypesThread implements Runnable{
 		int counter = 0;
 		this.bid.fileAnalysisInit(files.length);
 		for(File f : files){
-			lock.lock();
 			if(this.stop){
-				this.bid.fileAnalysisAborted();
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						bid.fileAnalysisAborted();
+					}
+				});
 				return;
 			}
-			lock.unlock();
-			this.bid.FileAnaysisUpdate(counter);
+			final int currentCounter = counter;
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					bid.FileAnaysisUpdate(currentCounter);
+				}
+			});
 			DataFormat df = dfi.identifyFormat(f);
 			if(df==DataFormat.JenaMS){
 				msFiles.add(f);
@@ -235,8 +220,13 @@ class AnalyseFileTypesThread implements Runnable{
 			}
 			counter++;
 		}
-		
-		bid.fileAnalysisFinished();
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				bid.fileAnalysisFinished();
+			}
+		});
 		
 	}
 	
@@ -246,8 +236,7 @@ class ImportExperimentsThread implements Runnable{
 	
 	private List<File> msFiles, mgfFiles;
 	private List<ExperimentContainer> results;
-	private boolean stop;
-	private ReentrantLock lock;
+	private volatile boolean stop;
 	private List<String> errors;
 	private BatchImportDialog bid;
 	
@@ -257,7 +246,6 @@ class ImportExperimentsThread implements Runnable{
 		this.results = new ArrayList<>();
 		this.errors = errors;
 		this.stop = false;
-		this.lock = new ReentrantLock(true);
 		this.bid = bid;
 	}
 	
@@ -270,22 +258,36 @@ class ImportExperimentsThread implements Runnable{
 
 		final MsExperimentParser parser = new MsExperimentParser();
 
-		int size = msFiles.size()+mgfFiles.size();
+		final int size = msFiles.size()+mgfFiles.size();
 		this.results = new ArrayList<>(size);
-		this.bid.fileImportInit(size);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				bid.fileImportInit(size);
+			}
+		});
 		int counter=0;
-		for(File f : msFiles){
-			this.bid.fileImportUpdate(counter, f.getName());
+		for(final File f : msFiles){
+			final int currentCounter = counter;
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					bid.fileImportUpdate(currentCounter, f.getName());
+				}
+			});
 
 			try (final CloseableIterator<Ms2Experiment> experiments = parser.getParser(f).parseFromFileIterator(f)) {
 				while (experiments.hasNext()) {
 					final Ms2Experiment exp = experiments.next();
 					final ExperimentContainer ec = SiriusDataConverter.siriusExperimentToExperimentContainer(exp);
 					results.add(ec);
-					boolean trigger;
-					trigger = this.stop;
-					if(trigger){
-						bid.fileImportAborted();
+					if(stop){
+						SwingUtilities.invokeLater(new Runnable() {
+							@Override
+							public void run() {
+								bid.fileImportAborted();
+							}
+						});
 						return;
 					}
 				}
@@ -295,18 +297,27 @@ class ImportExperimentsThread implements Runnable{
 			counter++;
 		}
 
-		for(File f : mgfFiles){
-			this.bid.fileImportUpdate(counter, f.getName());
+		for(final File f : mgfFiles){
+			final int currentCounter = counter;
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					bid.fileImportUpdate(currentCounter, f.getName());
+				}
+			});
 
 			try (final CloseableIterator<Ms2Experiment> experiments = parser.getParser(f).parseFromFileIterator(f)) {
 				while (experiments.hasNext()) {
 					final Ms2Experiment exp = experiments.next();
 					final ExperimentContainer ec = SiriusDataConverter.siriusExperimentToExperimentContainer(exp);
 					results.add(ec);
-					boolean trigger;
-					trigger = this.stop;
-					if(trigger){
-						bid.fileImportAborted();
+					if (stop) {
+						SwingUtilities.invokeLater(new Runnable() {
+							@Override
+							public void run() {
+								bid.fileImportAborted();
+							}
+						});
 						return;
 					}
 				}
@@ -315,8 +326,12 @@ class ImportExperimentsThread implements Runnable{
 			}
 			counter++;
 		}
-		
-		bid.fileImportFinished();
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				bid.fileImportFinished();
+			}
+		});
 		
 	}
 	/*

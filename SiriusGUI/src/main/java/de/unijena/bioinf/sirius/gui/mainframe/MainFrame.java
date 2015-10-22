@@ -22,6 +22,7 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -461,11 +462,27 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	public void importOneExperimentPerFile(File[] files){
 		BatchImportDialog batchDiag = new BatchImportDialog(this);
-		batchDiag.start(files);
+		batchDiag.start(resolveFileList(files));
 		
 		List<ExperimentContainer> ecs = batchDiag.getResults();
 		List<String> errors = batchDiag.getErrors(); 
 		importOneExperimentPerFileStep2(ecs, errors);
+	}
+
+	public File[] resolveFileList(File[] files) {
+		final ArrayList<File> filelist = new ArrayList<>();
+		for (File f : files) {
+			if (f.isDirectory()) {
+				final File[] fl = f.listFiles();
+				if (fl!=null) {
+					for (File g : fl)
+						if (!g.isDirectory()) filelist.add(g);
+				}
+			} else {
+				filelist.add(f);
+			}
+		}
+		return filelist.toArray(new File[filelist.size()]);
 	}
 	
 	public void importOneExperimentPerFileStep2(List<ExperimentContainer> ecs, List<String> errors){
@@ -583,7 +600,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 					for (Object o : files) {
 						File file = (File) o;
 						newFiles.add(file);
-//						System.out.println("drop: " + file.getAbsolutePath());
 					}
 				}
 				dtde.dropComplete(true);
@@ -594,7 +610,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	    }
 	    
 		if(newFiles.size()>0){
-			importDragAndDropFiles(newFiles);
+			importDragAndDropFiles(Arrays.asList(resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
 		}
 	}
 	
