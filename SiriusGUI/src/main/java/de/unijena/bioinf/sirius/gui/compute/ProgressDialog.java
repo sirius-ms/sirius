@@ -71,14 +71,14 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		sdf = new SimpleDateFormat("hh:mm:ss");
 	}
 	
-	public void start(Sirius sirius,Ms2Experiment exp){
+	public void start(Sirius sirius,Ms2Experiment exp, int candidates){
 		sirius.setProgress(this);
 		this.setSize(new Dimension(700,210));
 		this.successful = false;
 		sb = new StringBuilder();
 		step = 0;
 		starttime = System.currentTimeMillis();
-		rt = new RunThread(sirius, exp,this);
+		rt = new RunThread(sirius, exp,candidates, this);
 		t = new Thread(rt);
 		t.start();
 		setLocationRelativeTo(getParent());
@@ -169,19 +169,21 @@ class RunThread implements Runnable{
 	private volatile List<IdentificationResult> results;
 	private Ms2Experiment exp;
 	private ProgressDialog pd;
+	private int candidates;
 	
-	RunThread(Sirius sirius,Ms2Experiment exp,ProgressDialog pd){
+	RunThread(Sirius sirius,Ms2Experiment exp,int candidates, ProgressDialog pd){
 		this.sirius = sirius;
 		this.results = null;
 		this.exp = exp;
 		this.pd = pd;
+		this.candidates = candidates;
 	}
 
 	@Override
 	public void run() {
 		boolean success;
 		try {
-			results = sirius.identify(exp, 10, true, IsotopePatternHandling.score);
+			results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
 			success = (results!=null);
 		} catch (final Exception e) {
 			success = false;

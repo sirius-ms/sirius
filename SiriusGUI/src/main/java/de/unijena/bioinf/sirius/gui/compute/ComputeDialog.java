@@ -49,7 +49,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private ExperimentContainer ec;
 	private HashMap<String,Ionization> stringToIonMap;
 	private HashMap<Ionization,String> ionToStringMap;
-	
+	private final JSpinner candidatesSpinner;
+
 	public ComputeDialog(JFrame owner,ExperimentContainer ec) {
 		super(owner,"compute",true);
 		
@@ -241,6 +242,13 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		otherPanel.add(new JLabel("  ppm"));
 		otherPanel.add(this.ppmSpinner);
 
+		final SpinnerNumberModel candidatesNumberModel = new SpinnerNumberModel(10, 1, 1000, 1);
+		candidatesSpinner = new JSpinner(candidatesNumberModel);
+		candidatesSpinner.setMinimumSize(new Dimension(70, 26));
+		candidatesSpinner.setPreferredSize(new Dimension(70, 26));
+		otherPanel.add(new JLabel(" candidates"));
+		otherPanel.add(candidatesSpinner);
+
 		instrumentCB.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -414,13 +422,15 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            }else{
 	            	pm = Double.parseDouble(selected.toString());
 	            }
+
+				int candidates = ((Number)candidatesSpinner.getModel().getValue()).intValue();
 	            
 //	            System.err.println(pm);
 	            
 	            Ms2Experiment exp = this.convert(ec,(String) ionizationCB.getSelectedItem(),pm);
 
 	            ProgressDialog progDiag = new ProgressDialog(this);
-	            progDiag.start(sirius, exp);
+	            progDiag.start(sirius, exp, candidates);
 	            if(progDiag.isSucessful()){
 //	            	System.err.println("progDiag erfolgreich");
 	            	this.success = true;
