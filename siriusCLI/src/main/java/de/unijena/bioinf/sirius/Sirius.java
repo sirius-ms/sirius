@@ -32,8 +32,11 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -81,6 +84,64 @@ public class Sirius {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * set new constraints for the molecular formulas that should be considered by Sirius
+     * constraints consist of a set of allowed elements together with upperbounds for this elements
+     * You can set constraints as String with a format like "CHNOP[7]" where each bracket contains the upperbound
+     * for the preceeding element. Elements without upperbound are unbounded.
+     *
+     * The elemens CHNOPS will always be contained in the element set. However, you can change their upperbound which
+     * is unbounded by default.
+     * @param newConstraints
+     */
+    public void setFormulaConstraints(String newConstraints) {
+        setFormulaConstraints(new FormulaConstraints(newConstraints));
+    }
+
+    /**
+     * set new constraints for the molecular formulas that should be considered by Sirius
+     * constraints consist of a set of allowed elements together with upperbounds for this elements
+     *
+     * The elemens CHNOPS will always be contained in the element set. However, you can change their upperbound which
+     * is unbounded by default.
+     * @param constraints
+     */
+    public void setFormulaConstraints(FormulaConstraints constraints) {
+        final PeriodicTable tb = PeriodicTable.getInstance();
+        final Element[] chnops = new Element[]{tb.getByName("C"), tb.getByName("H"), tb.getByName("N"),tb.getByName("O"),tb.getByName("P"),
+                tb.getByName("S")};
+        final FormulaConstraints fc = constraints.getExtendedConstraints(chnops);
+        getMs1Analyzer().getDefaultProfile().setFormulaConstraints(fc);
+        getMs2Analyzer().getDefaultProfile().setFormulaConstraints(fc);
+    }
+
+    /**
+     * parses a file and return an iterator over all MS/MS experiments contained in this file
+     * An experiment consists of all MS and MS/MS spectra belonging to one feature (=compound).
+     *
+     * Supported file formats are .ms and .mgf
+     *
+     * The returned iterator supports the close method to close the input stream. The stream is closed automatically,
+     * after the last element is iterated. However, it is recommendet to use the following syntax (since java 7):
+     *
+     * <pre>
+     * {@code
+     * try ( CloseableIterator<Ms2Experiment> iter = sirius.parse(myfile) ) {
+     *   while (iter.hasNext()) {
+     *      Ms2Experiment experiment = iter.next();
+     *      // ...
+     *   }
+     * }
+     * </pre>
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public CloseableIterator<Ms2Experiment> parseExperiment(File file) throws IOException {
+        return new MsExperimentParser().getParser(file).parseFromFileIterator(file);
+    }
+
 
     public Progress getProgress() {
         return progress;
