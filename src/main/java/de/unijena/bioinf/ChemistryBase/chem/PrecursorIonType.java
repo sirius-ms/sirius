@@ -118,6 +118,10 @@ public class PrecursorIonType {
         return neutral.subtract(inSourceFragmentation).add(adduct);
     }
 
+    public MolecularFormula measuredNeutralMoleculeToNeutralMolecule(MolecularFormula measured) {
+        return measured.add(inSourceFragmentation).subtract(adduct);
+    }
+
 
     public MolecularFormula precursorIonToNeutralMolecule(MolecularFormula precursor) {
         return precursor.subtract(modification).subtract(ionization.getAtoms());

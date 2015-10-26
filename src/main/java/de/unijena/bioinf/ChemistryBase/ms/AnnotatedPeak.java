@@ -72,6 +72,10 @@ public final class AnnotatedPeak {
         this.collisionEnergies = collisionEnergies;
     }
 
+    public Deviation getMassDeviation() {
+        return Deviation.fromMeasurementAndReference(recalibratedMass, ionization.addToMass(getFormula.getMass()));
+    }
+
     public MolecularFormula getGetFormula() {
         return getFormula;
     }
