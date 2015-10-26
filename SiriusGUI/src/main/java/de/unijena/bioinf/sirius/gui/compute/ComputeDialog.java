@@ -1,5 +1,7 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -13,7 +15,6 @@ import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 
@@ -76,6 +77,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		List<CompactSpectrum> ms1Spectra = ec.getMs1Spectra();
 		// falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
 		boolean useMS1;
+		CompactPeak bestDataIon = null;
+		final Deviation dev = new Deviation(10);
+		final double focusedMass = ec.getDataFocusedMass();
 		if(!ms1Spectra.isEmpty()){
 			useMS1 = true;
 			CompactSpectrum sp = ms1Spectra.get(0);
@@ -83,6 +87,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
 					maxInt = sp.getPeak(i).getAbsoluteIntensity();
 					maxObj = sp.getPeak(i);
+				}
+				if (focusedMass> 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+					if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
+						bestDataIon = sp.getPeak(i);
 				}
 				masses.add(sp.getPeak(i));
 			}
@@ -95,9 +103,14 @@ public class ComputeDialog extends JDialog implements ActionListener{
 						maxObj = sp.getPeak(i);
 					}
 					masses.add(sp.getPeak(i));
+					if (focusedMass> 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+						if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
+							bestDataIon = sp.getPeak(i);
+					}
 				}
 			}
 		}
+		if (bestDataIon != null) masses.add(bestDataIon);
 		box = new JComboBox<>(masses);
 		
 //		box.setEditor(anEditor);
@@ -141,18 +154,18 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		if(masses.isEmpty()) autoDetectFM.setEnabled(false);
 		expFM = new JButton("File value");
 		expFM.addActionListener(this);
-		if(ec.getDataFocusedMass()<=0)expFM.setEnabled(false);
-		
-		if(!masses.isEmpty()){
-			if(!useMS1&&ec.getDataFocusedMass()>0){
-				box.setSelectedItem(String.valueOf(ec.getDataFocusedMass()));
+		if(ec.getDataFocusedMass()<=0) {
+			expFM.setEnabled(false);
+			if(masses.isEmpty()){
+				box.setSelectedItem("");
 			}else{
 				box.setSelectedItem(maxObj);
 			}
-		}else if(ec.getDataFocusedMass()>0){
-			box.setSelectedItem(String.valueOf(ec.getDataFocusedMass()));
-		}else{
-			box.setSelectedItem("");
+		}
+		else if (bestDataIon!=null) {
+			box.setSelectedItem(bestDataIon);
+		} else {
+			box.setSelectedItem(String.valueOf(focusedMass));
 		}
 		
 		focMassPanel.add(autoDetectFM);
@@ -430,11 +443,32 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	            Ms2Experiment exp = this.convert(ec,(String) ionizationCB.getSelectedItem(),pm);
 
 	            ProgressDialog progDiag = new ProgressDialog(this);
-	            progDiag.start(sirius, exp, candidates);
+				FormulaConstraints constraints;
+				{
+					HashSet<String> eles = new HashSet<>();
+					if(borone.isSelected()) eles.add("B");
+					if(bromine.isSelected()) eles.add("Br");
+					if(chlorine.isSelected()) eles.add("Cl");
+					if(fluorine.isSelected()) eles.add("F");
+					if(iodine.isSelected()) eles.add("I");
+					if(selenium.isSelected()) eles.add("Se");
+					eles.addAll(additionalElements);
+					Element[] elems = new Element[eles.size()];
+					int k=0;
+					final PeriodicTable tb = PeriodicTable.getInstance();
+					for (String s : eles) {
+						final Element elem = tb.getByName(s);
+						if (elem != null)
+							elems[k++] = elem;
+					}
+					if (k < elems.length) elems = Arrays.copyOf(elems, k);
+					constraints = new FormulaConstraints().getExtendedConstraints(elems);
+				}
+				progDiag.start(sirius, exp, constraints, candidates);
 	            if(progDiag.isSucessful()){
 //	            	System.err.println("progDiag erfolgreich");
 	            	this.success = true;
-	            	this.ec.setResults(SiriusResultElementConverter.convertResults(progDiag.getResults()));
+	            	this.ec.setRawResults(progDiag.getResults());
 	            	this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
 	            	Object o = box.getSelectedItem();
 	            	if(o instanceof String){

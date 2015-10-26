@@ -10,7 +10,9 @@ import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
-import de.unijena.bioinf.sirius.gui.io.*;
+import de.unijena.bioinf.sirius.gui.io.DataFormat;
+import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -99,7 +101,7 @@ public class LoadController implements LoadDialogListener{
 		sre.addAll(exp.getResults());
 		newExp.setMs1Spectra(newMS1);
 		newExp.setMs2Spectra(newMS2);
-		newExp.setResults(sre);
+		newExp.setRawResults(exp.getRawResults(), sre);
 		return newExp;
 	}
 
@@ -367,7 +369,7 @@ public class LoadController implements LoadDialogListener{
 		targetExp.setMs1Spectra(sourceExp.getMs1Spectra());
 		targetExp.setMs2Spectra(sourceExp.getMs2Spectra());
 		targetExp.setName(sourceExp.getName());
-		targetExp.setResults(sourceExp.getResults());
+		targetExp.setRawResults(sourceExp.getRawResults(), sourceExp.getResults());
 		targetExp.setSelectedFocusedMass(sourceExp.getSelectedFocusedMass());
 		targetExp.setSuffix(sourceExp.getSuffix());
 	}

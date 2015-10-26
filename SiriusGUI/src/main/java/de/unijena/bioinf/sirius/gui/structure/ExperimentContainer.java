@@ -102,12 +102,22 @@ public class ExperimentContainer {
 		this.dataFocusedMass = focusedMass;
 	}
 	
-	public void setResults(List<SiriusResultElement> results){
-		this.results = results;
-	}
-	
 	public List<SiriusResultElement> getResults(){
 		return this.results;
+	}
+
+	public List<IdentificationResult> getRawResults() {
+		return originalResults;
+	}
+
+	public void setRawResults(List<IdentificationResult> results) {
+		this.originalResults = results;
+		this.results = SiriusResultElementConverter.convertResults(originalResults);
+	}
+
+	public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
+		this.originalResults = results;
+		this.results = myxoresults;
 	}
 
 

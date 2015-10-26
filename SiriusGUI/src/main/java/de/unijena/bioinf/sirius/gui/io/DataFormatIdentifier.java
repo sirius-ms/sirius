@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius.gui.io;
 
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
-import de.unijena.bioinf.myxo.io.spectrum.MS2FormatSpectraReader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,21 +9,16 @@ import java.io.IOException;
 
 public class DataFormatIdentifier {
 
-	private MS2FormatSpectraReader ms;
 	private CSVFormatReader csv;
-	private MGFCompatibilityValidator mgf;
 	
 	public DataFormatIdentifier() {
-		ms = new MS2FormatSpectraReader();
 		csv = new CSVFormatReader();
-		mgf = new MGFCompatibilityValidator();
 	}
 	
 	public DataFormat identifyFormat(File f){
-//		if(f.getName().toLowerCase().endsWith(".ms")) return DataFormat.JenaMS;
-		if(ms.isCompatible(f)) return DataFormat.JenaMS;
+		if(f.getName().toLowerCase().endsWith(".ms")) return DataFormat.JenaMS;
 		else if(csv.isCompatible(f)) return DataFormat.CSV;
-		else if(mgf.isCompatible(f)) return DataFormat.MGF;
+		else if(f.getName().toLowerCase().endsWith(".mgf")) return DataFormat.MGF;
 		else return DataFormat.NotSupported;
 	}
 

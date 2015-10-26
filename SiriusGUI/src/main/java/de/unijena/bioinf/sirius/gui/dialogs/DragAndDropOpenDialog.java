@@ -25,9 +25,9 @@ public class DragAndDropOpenDialog extends JDialog implements ActionListener{
 		
 		this.add(northPanel,BorderLayout.CENTER);
 		JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		expB = new JButton("One experiment for all files");
+		expB = new JButton("As one experiment");
 		expB.addActionListener(this);
-		batchB = new JButton("One experiment per file");
+		batchB = new JButton("As multiple experiments");
 		batchB.addActionListener(this);
 		abortB = new JButton("Abort");
 		abortB.addActionListener(this);

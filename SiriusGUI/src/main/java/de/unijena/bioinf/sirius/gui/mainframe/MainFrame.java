@@ -4,7 +4,7 @@ import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
-import de.unijena.bioinf.sirius.gui.io.ZipExperimentIO;
+import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -21,9 +21,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener{
@@ -41,6 +39,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private static final String DUMMY_CARD = "dummy";
 	private static final String RESULTS_CARD = "results";
 	private ConfigStorage config;
+
+	private boolean removeWithoutWarning = false;
 	
 	private JPopupMenu expPopMenu;
 	private JMenuItem newExpMI, batchMI, editMI, closeMI, openMI, saveMI, computeMI;
@@ -173,8 +173,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		batchMI = new JMenuItem("Batch import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
 		editMI = new JMenuItem("Edit experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
 		closeMI = new JMenuItem("Close experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
-		openMI = new JMenuItem("Open",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
-		saveMI = new JMenuItem("Save",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
+		openMI = new JMenuItem("Load Workspace ",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
+		saveMI = new JMenuItem("Save Workspace",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
 		computeMI = new JMenuItem("Compute",new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 		
 		newExpMI.addActionListener(this);
@@ -264,7 +264,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 			this.compoundList.repaint();
 		}else if(e.getSource()==saveB || e.getSource()==saveMI){
-			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			
 			JFileChooser jfc = new JFileChooser();
 			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
@@ -304,8 +303,18 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			
 			if(selectedFile!=null){
 				try{
-					ZipExperimentIO io = new ZipExperimentIO();
-					io.save(ec, selectedFile);
+					WorkspaceIO io = new WorkspaceIO();
+					io.store(new AbstractList<ExperimentContainer>() {
+                        @Override
+                        public ExperimentContainer get(int index) {
+                            return compoundList.getModel().getElementAt(index);
+                        }
+
+                        @Override
+                        public int size() {
+                            return compoundList.getModel().getSize();
+                        }
+                    }, selectedFile);
 				}catch(Exception e2){
 					new ExceptionDialog(this, e2.getMessage());
 				}
@@ -323,13 +332,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			
 			int returnVal = jfc.showOpenDialog(this);
 			if(returnVal == JFileChooser.APPROVE_OPTION){
-				ZipExperimentIO io = new ZipExperimentIO();
+				WorkspaceIO io = new WorkspaceIO();
 				File selFile = jfc.getSelectedFile();
 				config.setDefaultSaveFilePath(selFile.getParentFile());
 				
 				try{
-					ExperimentContainer ec = io.load(selFile);
-					importCompound(ec);
+					List<ExperimentContainer> ec = io.load(selFile);
+					for (ExperimentContainer c : ec) importCompound(c);
 				}catch(Exception e2){
 					new ExceptionDialog(this, e2.getMessage());
 				}
@@ -338,68 +347,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==closeB || e.getSource()==closeMI){
 			int index = this.compoundList.getSelectedIndex();
 			ExperimentContainer cont = this.compoundModel.get(index);
-			
-			CloseExperimentDialog diag = new CloseExperimentDialog(this,"Save before closing \""+cont.getGUIName()+"\"?");
-			CloseDialogReturnValue val = diag.getReturnValue();
-			if(val==CloseDialogReturnValue.abort){
-				return;
-			}else if(val==CloseDialogReturnValue.no){
-				this.compoundModel.remove(index);
-				this.compoundList.setSelectedIndex(-1);
-				this.names.remove(cont.getGUIName());
-			}else{
-				JFileChooser jfc = new JFileChooser();
-				jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
-				jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				jfc.setAcceptAllFileFilterUsed(false);
-				jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
-				
-				File selectedFile = null;
-				
-				int returnval = jfc.showSaveDialog(this);
-				if(returnval == JFileChooser.APPROVE_OPTION){
-					File selFile = jfc.getSelectedFile();
-					config.setDefaultSaveFilePath(selFile.getParentFile());
-					
-					String name = selFile.getName();
-					if(!selFile.getAbsolutePath().endsWith(".sirius")){
-						selFile = new File(selFile.getAbsolutePath()+".sirius");
-					}
-					
-					if(selFile.exists()){
-						FilePresentDialog fpd = new FilePresentDialog(this, selFile.getName());
-						ReturnValue rv = fpd.getReturnValue();
-						if(rv==ReturnValue.Success){
-							selectedFile = selFile;
-						}else{
-							return;
-						}
-//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
-					}else{
-						selectedFile = selFile;	
-					}
-					
-					
-				}else{
-					return;
-				}
-				
-				boolean trigger = false;
-				try{
-					ZipExperimentIO io = new ZipExperimentIO();
-					io.save(cont, selectedFile);
-					trigger = true;
-				}catch(Exception e2){
-					new ExceptionDialog(this, e2.getMessage());
-				}
-				
-				if(trigger){
-					this.compoundModel.remove(index);
-					this.compoundList.setSelectedIndex(-1);
-					this.names.remove(cont.getGUIName());
-				}
+			if (cont.getResults()!=null && cont.getResults().size()>0) {
+				CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(this, "When removing this experiment you will loose the computed identification results for \""  +cont.getGUIName()+"\"?");
+				CloseDialogReturnValue val = diag.getReturnValue();
+				if (val==CloseDialogReturnValue.abort) return;
 			}
-			
+			this.compoundModel.remove(index);
+			this.compoundList.setSelectedIndex(-1);
+			this.names.remove(cont.getGUIName());
 		}else if(e.getSource()==editB || e.getSource()==editMI){
 			ExperimentContainer ec = this.compoundList.getSelectedValue();
 			String guiname = ec.getGUIName();

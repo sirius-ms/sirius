@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.sirius.*;
 
@@ -71,14 +72,14 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		sdf = new SimpleDateFormat("hh:mm:ss");
 	}
 	
-	public void start(Sirius sirius,Ms2Experiment exp, int candidates){
+	public void start(Sirius sirius,Ms2Experiment exp, FormulaConstraints constraints, int candidates){
 		sirius.setProgress(this);
 		this.setSize(new Dimension(700,210));
 		this.successful = false;
 		sb = new StringBuilder();
 		step = 0;
 		starttime = System.currentTimeMillis();
-		rt = new RunThread(sirius, exp,candidates, this);
+		rt = new RunThread(sirius, exp,candidates, constraints, this);
 		t = new Thread(rt);
 		t.start();
 		setLocationRelativeTo(getParent());
@@ -170,19 +171,22 @@ class RunThread implements Runnable{
 	private Ms2Experiment exp;
 	private ProgressDialog pd;
 	private int candidates;
+	private FormulaConstraints constraints;
 	
-	RunThread(Sirius sirius,Ms2Experiment exp,int candidates, ProgressDialog pd){
+	RunThread(Sirius sirius,Ms2Experiment exp,int candidates, FormulaConstraints constraints, ProgressDialog pd){
 		this.sirius = sirius;
 		this.results = null;
 		this.exp = exp;
 		this.pd = pd;
 		this.candidates = candidates;
+		this.constraints = constraints;
 	}
 
 	@Override
 	public void run() {
 		boolean success;
 		try {
+			sirius.setFormulaConstraints(constraints);
 			results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
 			success = (results!=null);
 		} catch (final Exception e) {
