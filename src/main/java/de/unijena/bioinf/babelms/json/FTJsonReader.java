@@ -105,6 +105,17 @@ public class FTJsonReader implements Parser<FTree> {
                 }
             }
 
+            for (Loss l : tree.losses()) {
+                final JSONObject jsonloss = incomingLossMap.get(l.getTarget().getFormula());
+                for (FragmentAnnotation<? extends Object> g : lossAnnotations) {
+                    ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(jsonfragment, g.getAnnotationType()));
+                }
+                // read peak data
+                if (jsonfragment.has("mz") && jsonfragment.has("intensity")) {
+                    peakAno.set(f, new Peak(jsonfragment.getDouble("mz"), jsonfragment.getDouble("intensity")));
+                }
+            }
+
             // add tree annotation
             tree.addAnnotation(Ionization.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), Ionization.class));
             tree.addAnnotation(PrecursorIonType.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), PrecursorIonType.class));
