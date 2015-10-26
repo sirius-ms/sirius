@@ -18,12 +18,12 @@
 package de.unijena.bioinf.babelms.json;
 
 import com.google.common.collect.HashMultimap;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.Parser;
+import de.unijena.bioinf.babelms.descriptor.Descriptor;
+import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,9 +32,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 public class FTJsonReader implements Parser<FTree> {
 
@@ -56,6 +54,10 @@ public class FTJsonReader implements Parser<FTree> {
         }
         reader.close();
         try {
+
+            final DescriptorRegistry registry = DescriptorRegistry.getInstance();
+            final JSONDocumentType JSON = new JSONDocumentType();
+
             final JSONObject json = new JSONObject(buffer.toString());
             final FTree tree = new FTree(MolecularFormula.parse(json.getString("molecularFormula")));
             final JSONArray fragments = json.getJSONArray("fragments");
@@ -88,39 +90,44 @@ public class FTJsonReader implements Parser<FTree> {
                 }
             }
 
-            // add annotations
-            final FragmentAnnotation<Peak> peakAno = tree.getOrCreateFragmentAnnotation(Peak.class);
-            final List<FragmentAnnotation<? extends Object>> fragmentannotations = Arrays.asList(
-                    tree.getOrCreateFragmentAnnotation(Ionization.class),
-                    tree.getOrCreateFragmentAnnotation(Score.class )
-            );
+            {
+                final JSONObject treeAnnotations = json.getJSONObject("annotations");
+                final String[] keywords = Iterators.toArray(treeAnnotations.keys(), String.class);
+                final Descriptor[] descriptors = registry.getByKeywords(FTree.class, keywords);
+                for (Descriptor<Object> descriptor : descriptors) {
+                    final Object annotation = descriptor.read(JSON, treeAnnotations);
+                    if (annotation!=null) {
+                        tree.addAnnotation(descriptor.getAnnotationClass(), annotation);
+                    }
+                }
+            }
+
             for (Fragment f : tree.getFragments()) {
                 final JSONObject jsonfragment = fragmentMap.get(f.getFormula());
-                for (FragmentAnnotation<? extends Object> g : fragmentannotations) {
-                    ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(jsonfragment, g.getAnnotationType()));
-                }
-                // read peak data
-                if (jsonfragment.has("mz") && jsonfragment.has("intensity")) {
-                    peakAno.set(f, new Peak(jsonfragment.getDouble("mz"), jsonfragment.getDouble("intensity")));
+                final String[] keywords = Iterators.toArray(jsonfragment.keys(), String.class);
+                final Descriptor[] descriptors = registry.getByKeywords(Fragment.class, keywords);
+                for (Descriptor<Object> descriptor : descriptors) {
+                    final Object annotation = descriptor.read(JSON, jsonfragment);
+                    if (annotation!=null) {
+                        FragmentAnnotation<Object> fano = tree.getOrCreateFragmentAnnotation(descriptor.getAnnotationClass());
+                        fano.set(f, annotation);
+                    }
                 }
             }
 
             for (Loss l : tree.losses()) {
                 final JSONObject jsonloss = incomingLossMap.get(l.getTarget().getFormula());
-                for (FragmentAnnotation<? extends Object> g : lossAnnotations) {
-                    ((FragmentAnnotation<Object>)g).set(f, FTSpecials.readSpecialAnnotation(jsonfragment, g.getAnnotationType()));
-                }
-                // read peak data
-                if (jsonfragment.has("mz") && jsonfragment.has("intensity")) {
-                    peakAno.set(f, new Peak(jsonfragment.getDouble("mz"), jsonfragment.getDouble("intensity")));
+                final String[] keywords = Iterators.toArray(jsonloss.keys(), String.class);
+                final Descriptor[] descriptors = registry.getByKeywords(Loss.class, keywords);
+                for (Descriptor<Object> descriptor : descriptors) {
+                    final Object annotation = descriptor.read(JSON, jsonloss);
+                    if (annotation!=null) {
+                        LossAnnotation<Object> lano = tree.getOrCreateLossAnnotation(descriptor.getAnnotationClass());
+                        lano.set(l, annotation);
+                    }
                 }
             }
 
-            // add tree annotation
-            tree.addAnnotation(Ionization.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), Ionization.class));
-            tree.addAnnotation(PrecursorIonType.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), PrecursorIonType.class));
-            tree.addAnnotation(RecalibrationFunction.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), RecalibrationFunction.class));
-            tree.addAnnotation(TreeScoring.class, FTSpecials.readSpecialAnnotation(json.getJSONObject("annotations"), TreeScoring.class));
             if (source != null) tree.addAnnotation(URL.class, source);
             return tree;
         } catch (JSONException e) {

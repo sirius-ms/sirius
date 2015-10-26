@@ -15,11 +15,7 @@ public class DescriptorRegistry {
     private static DescriptorRegistry SINGLETON;
     static {
         SINGLETON = new DescriptorRegistry();
-        addDefaultTypes(SINGLETON);
-    }
-
-    private static void addDefaultTypes(DescriptorRegistry singleton) {
-
+        DefaultDescriptors.addAll(SINGLETON);
     }
 
     public static DescriptorRegistry getInstance() {
