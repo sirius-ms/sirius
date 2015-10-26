@@ -52,7 +52,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     private PatternExtractor patternExtractor;
     private IsotopicDistribution isotopicDistribution;
     private IsotopePatternGenerator patternGenerator;
-    private MeasurementProfile defaultProfile;
+    private MutableMeasurementProfile defaultProfile;
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
@@ -327,11 +327,11 @@ public class IsotopePatternAnalysis implements Parameterized {
         return scoreFormulas(extractedSpectrum, 1, formulas, experiment,profile);
     }
 
-    public MeasurementProfile getDefaultProfile() {
+    public MutableMeasurementProfile getDefaultProfile() {
         return defaultProfile;
     }
 
-    public void setDefaultProfile(MeasurementProfile defaultProfile) {
+    public void setDefaultProfile(MutableMeasurementProfile defaultProfile) {
         this.defaultProfile = defaultProfile;
     }
 
