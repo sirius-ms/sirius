@@ -18,7 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -104,11 +104,14 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
         });
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
         final SimpleMutableSpectrum ref = new SimpleMutableSpectrum();
-        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+        final PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
         for (Fragment f : fragments) {
             if (peakAno.get(f)==null) continue;
             spec.addPeak(new Peak(peakAno.get(f).getOriginalMz(), peakAno.get(f).getRelativeIntensity()));
-            ref.addPeak(new Peak(ion.addToMass(f.getFormula().getMass()), peakAno.get(f).getRelativeIntensity()));
+
+            final double referenceMass = ion.getIonization().addToMass(f.getFormula().getMass());
+
+            ref.addPeak(new Peak(referenceMass, peakAno.get(f).getRelativeIntensity()));
         }
         final UnivariateFunction recalibrationFunction = method.recalibrate(spec, ref);
         return new Recalibration() {
@@ -173,7 +176,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 }
                 final ProcessedInput input = tree.getAnnotationOrThrow(ProcessedInput.class);
                 final Deviation dev = input.getMeasurementProfile().getStandardMs2MassDeviation();
-                final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+                final PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
                 double sc = 0d;
                 double distance = 0d;
                 final FragmentAnnotation<ProcessedPeak> peakAno = tree.getFragmentAnnotationOrThrow(ProcessedPeak.class);
@@ -182,7 +185,7 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                     final double oldMz = peakAno.get(f).getOriginalMz();
                     final double newMz = recalibrationFunction.value(oldMz);
                     distance += Math.abs(newMz - oldMz);
-                    final double theoreticalMz = ion.addToMass(f.getFormula().getMass());
+                    final double theoreticalMz = ion.getIonization().addToMass(f.getFormula().getMass());
                     final NormalDistribution dist = scorer.getDistribution(newMz, peakAno.get(f).getRelativeIntensity(), input);
                     final double newScore = Math.log(dist.getErrorProbability(newMz - theoreticalMz));
                     final double oldScore = Math.log(dist.getErrorProbability(oldMz - theoreticalMz));

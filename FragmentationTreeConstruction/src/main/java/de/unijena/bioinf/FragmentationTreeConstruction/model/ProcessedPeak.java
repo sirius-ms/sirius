@@ -19,16 +19,16 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
-import de.unijena.bioinf.ChemistryBase.algorithm.WriteIntoDataDocument;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 
 import java.util.*;
 
-public class ProcessedPeak extends Peak implements WriteIntoDataDocument {
+public class ProcessedPeak extends Peak {
 
     private final static Object[] EMPTY_ARRAY = new Object[0];
 
@@ -41,23 +41,6 @@ public class ProcessedPeak extends Peak implements WriteIntoDataDocument {
 
     private Object[] annotations;
 
-    @Override
-    public <G, D, L> void writeIntoDataDocument(DataDocument<G, D, L> document, D dictionary) {
-        /*
-        document.addToDictionary(dictionary, "mz", getMz());
-        document.addToDictionary(dictionary, "intensity", getIntensity());
-        */
-        document.addToDictionary(dictionary, "ion", ion.toString());
-        final L peaks = document.newList();
-        for (MS2Peak p : originalPeaks) {
-            final D peak = document.newDictionary();
-            document.addToDictionary(peak, "mz", p.getMz());
-            document.addToDictionary(peak, "int", p.getIntensity());
-            document.addDictionaryToList(peaks, peak);
-        }
-        document.addListToDictionary(dictionary, "peaks", peaks);
-    }
-
     public ProcessedPeak() {
         super(0, 0);
         this.annotations = EMPTY_ARRAY;
@@ -66,6 +49,19 @@ public class ProcessedPeak extends Peak implements WriteIntoDataDocument {
         this.globalRelativeIntensity = relativeIntensity = localRelativeIntensity = 0d;
         this.ion = null;
         this.originalMz = getMz();
+    }
+
+    public AnnotatedPeak toAnnotatedPeak(MolecularFormula formulaAnnotation) {
+        final CollisionEnergy[] energies = new CollisionEnergy[originalPeaks.size()];
+        final Peak[] opeaks = new Peak[originalPeaks.size()];
+        int k=0;
+        for (MS2Peak peak : originalPeaks) {
+            energies[k] = peak.getSpectrum().getCollisionEnergy();
+            if (energies[k]==null) energies[k] = CollisionEnergy.none();
+            opeaks[k] = new Peak(peak);
+            ++k;
+        }
+        return new AnnotatedPeak(formulaAnnotation, originalMz, mass, relativeIntensity,ion, opeaks, energies);
     }
 
     public ProcessedPeak(MS2Peak peak) {

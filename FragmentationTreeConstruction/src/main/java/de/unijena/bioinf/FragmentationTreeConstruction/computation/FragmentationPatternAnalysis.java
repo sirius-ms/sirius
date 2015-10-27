@@ -824,78 +824,56 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
     }
 
+    /**
+     * add annotations to the tree class
+     * basically, the annotation system allows you to put arbitrary meta information into the tree
+     * However, many of these information might be required by other algorithms (like the Peak annotation).
+     * Therefore, this method tries to add as much metainformation as possible into the tree.
+     * Only annotations that are registered in DescriptorRegistry (package BabelMs) will be serialized together
+     * with the tree. Feel free to add "temporary non-persistent" annotations. Annotations should be
+     * final immutable pojos.
+     * @param originalGraph
+     * @param tree
+     */
     protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
-        originalGraph.copyAnnotations(tree);
-        final List<FragmentAnnotation<Object>> fanos = new ArrayList<FragmentAnnotation<Object>>();
-        final List<LossAnnotation<Object>> lanos = new ArrayList<LossAnnotation<Object>>();
-        for (FragmentAnnotation<Object> f : tree.getFragmentAnnotations())
-            if (!f.isAlias()) fanos.add(f);
-        for (LossAnnotation<Object> l : tree.getLossAnnotations())
-            if (!l.isAlias()) lanos.add(l);
-        final ArrayList<LossAnnotation<Object>> lanos2 = new ArrayList<LossAnnotation<Object>>();
-        final ArrayList<FragmentAnnotation<Object>> fanos2 = new ArrayList<FragmentAnnotation<Object>>();
-        for (LossAnnotation<Object> la : lanos)
-            lanos2.add(originalGraph.getLossAnnotationOrNull(la.getAnnotationType()));
-        for (FragmentAnnotation<Object> fa : fanos)
-            fanos2.add(originalGraph.getFragmentAnnotationOrNull(fa.getAnnotationType()));
-        tree.setAnnotation(PrecursorIonType.class, tree.getAnnotationOrThrow(ProcessedInput.class).getExperimentInformation().getPrecursorIonType());
-        FragmentAnnotation<CollisionEnergy> ce = tree.getOrCreateFragmentAnnotation(CollisionEnergy.class);
-        FragmentAnnotation<CollisionEnergy[]> ces = tree.getOrCreateFragmentAnnotation(CollisionEnergy[].class);
+        tree.addAnnotation(ProcessedInput.class, originalGraph.getAnnotationOrNull(ProcessedInput.class));
 
-        // NOOOOOOOOO!!!!
-        // okay: Yet another quick'n dirty solution: delete Peak-Annotation from graph and set them yourself
-        // reason: we want to put the original mz into the Peak annotation and the processed m/z into ProcessedPeak
-        // annotation. However: That does not make any sense: Outside of the MS/MS analysis we don't know
-        // about the processed peaks but might still be interested into the processed/recalibrated m/z
-        tree.removeFragmentAnnotation(Peak.class);
-        FragmentAnnotation<Peak> p = tree.getOrCreateFragmentAnnotation(Peak.class);
-
-        FragmentAnnotation<ProcessedPeak> pp = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
-
-        final TreeScoring scoring = tree.getOrCreateAnnotation(TreeScoring.class);
-
-        final Fragment graphRoot = originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getTarget();
-        for (int i=0; i < fanos.size(); ++i) {
-            if (fanos2.get(i)!=null)
-                fanos.get(i).set(tree.getRoot(), fanos2.get(i).get(graphRoot));
+        // tree annotations
+        tree.addAnnotation(PrecursorIonType.class, originalGraph.getAnnotationOrNull(PrecursorIonType.class));
+        final TreeScoring treeScoring = new TreeScoring();
+        treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight());
+        // calculate overall score
+        double overallScore = 0d;
+        for (Loss l : tree.losses()) {
+            overallScore += l.getWeight();
         }
-        final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
-        stack.push(new Stackitem(tree.getRoot(), graphRoot));
-        while (!stack.isEmpty()) {
-            final Stackitem item = stack.pop();
-            for (int j = 0; j < item.treeNode.getOutDegree(); ++j) {
-                final Loss uv = item.treeNode.getOutgoingEdge(j);
-                final Loss uv2 = originalGraph.getLoss(item.graphNode, uv.getTarget().getFormula());
-                for (int i=0; i < lanos.size(); ++i) {
-                    if (lanos2.get(i)!=null)
-                        lanos.get(i).set(uv, lanos2.get(i).get(uv2));
-                }
-                for (int i=0; i < fanos.size(); ++i) {
-                    if (fanos2.get(i)!=null)
-                        fanos.get(i).set(uv.getTarget(), fanos2.get(i).get(uv2.getTarget()));
-                }
-                if (uv.getTarget().getOutDegree() > 0) stack.push(new Stackitem(uv.getTarget(), uv2.getTarget()));
-            }
-        }
+        treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
+        tree.addAnnotation(TreeScoring.class, treeScoring);
 
-        double weight = graphRoot.getIncomingEdge().getWeight();
+        // fragment annotations
+        final FragmentAnnotation<AnnotatedPeak> peakAnnotation = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
+        final FragmentAnnotation<Peak> simplePeakAnnotation = tree.getOrCreateFragmentAnnotation(Peak.class);
+        // non-persistent fragment annotation
+        final FragmentAnnotation<ProcessedPeak> peakAno = tree.getOrCreateFragmentAnnotation(ProcessedPeak.class);
 
+        final HashMap<MolecularFormula, Fragment> formula2graphFragment = new HashMap<MolecularFormula, Fragment>();
         for (Fragment f : tree) {
-            if (!f.isRoot())
-                weight += f.getIncomingEdge().getWeight();
-            final ProcessedPeak peak = pp.get(f);
-            p.set(f, new Peak(peak.getOriginalMz(), peak.getIntensity()));
-            ce.set(f, peak.getCollisionEnergy());
-            final Set<CollisionEnergy> energies = new TreeSet<CollisionEnergy>(CollisionEnergy.getMinEnergyComparator());
-            int k = 0;
-            for (MS2Peak op : peak.getOriginalPeaks()) {
-                if (op.getSpectrum().getCollisionEnergy()!=null && op.getSpectrum().getCollisionEnergy()!=CollisionEnergy.none())
-                    energies.add(op.getSpectrum().getCollisionEnergy());
-            }
-            ces.set(f, energies.toArray(new CollisionEnergy[energies.size()]));
+            formula2graphFragment.put(f.getFormula(), f);
         }
-        scoring.setOverallScore(weight);
-        scoring.setRootScore(graphRoot.getIncomingEdge().getWeight());
+        for (Fragment f : originalGraph) {
+            final MolecularFormula form = f.getFormula();
+            if (form != null && formula2graphFragment.containsKey(form))
+                formula2graphFragment.put(form, f);
+        }
+
+        final FragmentAnnotation<ProcessedPeak> graphPeakAno = originalGraph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        for (Fragment treeFragment : tree) {
+            final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
+            final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
+            peakAno.set(treeFragment, graphPeak);
+            simplePeakAnnotation.set(treeFragment, graphPeak);
+            peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula()));
+        }
     }
 
     /**
