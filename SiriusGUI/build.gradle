@@ -43,6 +43,7 @@ dependencies {
             "org.swinglabs.swingx:swingx-all:1.+",
             "de.unijena.bioinf:ChemistryBase:4.1-SNAPSHOT",
             "de.unijena.bioinf:FragmentationTreeConstruction:3.1-SNAPSHOT",
+            "de.unijena.bioinf:BabelMs:3.1-SNAPSHOT",
             "de.unijena.bioinf:Myxo:0.2-SNAPSHOT",
             "de.unijena.bioinf:SiriusCLI:3.1-SNAPSHOT",
             "net.sf.opencsv:opencsv:2.3"

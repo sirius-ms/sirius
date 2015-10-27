@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.myxo.gui.tree.structure.DefaultTreeEdge;
@@ -21,6 +22,7 @@ public class SiriusResultElementConverter {
 		
 		double maxInt = Double.NEGATIVE_INFINITY;
 		for(Fragment fragment : ft.getFragments()){
+			if (peakAno.get(fragment)==null) continue;
 			double fragInt = peakAno.get(fragment).getIntensity();
 			if(fragInt>maxInt) maxInt = fragInt;
 		}
@@ -98,10 +100,16 @@ public class SiriusResultElementConverter {
 		TreeNode rootM = new DefaultTreeNode();
 		rootM.setMolecularFormula(rootK.getFormula().toString());
 		rootM.setMolecularFormulaMass(rootK.getFormula().getMass());
-		rootM.setPeakMass(peakAno.get(rootK).getMass());
-		rootM.setPeakAbsoluteIntenstiy(peakAno.get(rootK).getIntensity());
-		rootM.setPeakRelativeIntensity(peakAno.get(rootK).getIntensity()/maxInt);
-		double tempScore = fscore.get(rootK).sum();
+		if (peakAno.get(rootK)==null) {
+			rootM.setPeakMass(ft.getAnnotationOrThrow(PrecursorIonType.class).getIonization().addToMass(rootK.getFormula().getMass()));
+			rootM.setPeakRelativeIntensity(0d);
+			rootM.setPeakAbsoluteIntenstiy(0d);
+		} else {
+			rootM.setPeakMass(peakAno.get(rootK).getMass());
+			rootM.setPeakAbsoluteIntenstiy(peakAno.get(rootK).getIntensity());
+			rootM.setPeakRelativeIntensity(peakAno.get(rootK).getIntensity()/maxInt);
+		}
+		double tempScore = fscore.get(rootK)==null ? 0d : fscore.get(rootK).sum();
 		rootM.setScore(tempScore);
 		
 		convertNode(ft, rootK, rootM, peakAno, lscore, fscore, maxInt);
@@ -116,17 +124,24 @@ public class SiriusResultElementConverter {
 			DefaultTreeNode targetM = new DefaultTreeNode();
 			targetM.setMolecularFormula(targetK.getFormula().toString());
 			targetM.setMolecularFormulaMass(targetK.getFormula().getMass());
-			targetM.setPeakMass(peakAno.get(targetK).getMass());
-			targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
-			targetM.setPeakRelativeIntensity(peakAno.get(targetK).getIntensity()/maxInt);
-			double tempScore = fscore.get(targetK).sum();
-			tempScore += lscore.get(edgeK).sum();
+
+			if (peakAno.get(targetK)==null) {
+				targetM.setPeakMass(ft.getAnnotationOrThrow(PrecursorIonType.class).getIonization().addToMass(targetK.getFormula().getMass()));
+				targetM.setPeakRelativeIntensity(0d);
+				targetM.setPeakAbsoluteIntenstiy(0d);
+			} else {
+				targetM.setPeakMass(peakAno.get(targetK).getMass());
+				targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
+				targetM.setPeakRelativeIntensity(peakAno.get(targetK).getIntensity()/maxInt);
+			}
+			double tempScore = fscore.get(targetK)==null ? 0d : fscore.get(targetK).sum();
+			tempScore += lscore.get(edgeK)==null ? edgeK.getWeight() : lscore.get(edgeK).sum();
 			targetM.setScore(tempScore);
 			
 			DefaultTreeEdge edgeM = new DefaultTreeEdge();
 			edgeM.setSource(sourceM);
 			edgeM.setTarget(targetM);
-			edgeM.setScore(lscore.get(edgeK).sum()); //TODO korrekt???
+			edgeM.setScore(lscore.get(edgeK)==null ? edgeK.getWeight() : lscore.get(edgeK).sum());
 			MolecularFormula mfSource = sourceK.getFormula();
 			MolecularFormula mfTarget = targetK.getFormula();
 			MolecularFormula mfLoss = mfSource.subtract(mfTarget);

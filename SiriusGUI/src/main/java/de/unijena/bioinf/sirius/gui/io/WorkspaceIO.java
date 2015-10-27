@@ -31,9 +31,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -41,18 +39,23 @@ import java.util.zip.ZipOutputStream;
 public class WorkspaceIO {
 
     public List<ExperimentContainer> load(File file) throws IOException {
+        final ArrayDeque<ExperimentContainer> queue = new ArrayDeque<>();
+        load(file, queue);
+        return new ArrayList<>(queue);
+    }
+
+    public void load(File file, Queue<ExperimentContainer> queue) throws IOException {
         try (final ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)))) {
 
             ZipEntry entry;
             final TreeMap<Integer, IdentificationResult> results = new TreeMap<>();
             Ms2Experiment currentExperiment = null;
-            final TreeMap<Integer, ExperimentContainer> containers = new TreeMap<>();
             int currentExpId = -1;
             while ((entry=zin.getNextEntry())!=null) {
                 final String name = entry.getName();
                 if (name.endsWith("/")) {
                     if (currentExpId>=0 && currentExperiment!=null)
-                        containers.put(currentExpId, SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<>(results.values())));
+                        if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<>(results.values())))) return;
                     currentExpId = Integer.parseInt(name.substring(0,name.length()-1));
                     currentExperiment = null;
                     results.clear();
@@ -65,8 +68,7 @@ public class WorkspaceIO {
                 }
             }
             if (currentExpId>=0 && currentExperiment!=null)
-                containers.put(currentExpId, SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<IdentificationResult>(results.values())));
-            return new ArrayList<>(containers.values());
+                if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<IdentificationResult>(results.values())))) return;
         }
     }
 

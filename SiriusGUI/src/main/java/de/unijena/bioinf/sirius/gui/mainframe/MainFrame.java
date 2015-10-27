@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -43,10 +44,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private boolean removeWithoutWarning = false;
 	
 	private JPopupMenu expPopMenu;
-	private JMenuItem newExpMI, batchMI, editMI, closeMI, openMI, saveMI, computeMI;
+	private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI;
 	
 	public MainFrame(){
-		super("Sirius Prototype");
+		super(Sirius.VERSION_STRING);
 		
 		try {
 		    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -138,10 +139,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		loadB = new JButton("Open",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
+		loadB = new JButton("Open Workspace",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
 		loadB.addActionListener(this);
 		tempP.add(loadB);
-		saveB = new JButton("Save",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
+		saveB = new JButton("Save Workspace",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
 		saveB.addActionListener(this);
 		saveB.setEnabled(false);
 		tempP.add(saveB);
@@ -173,21 +174,16 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		batchMI = new JMenuItem("Batch import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
 		editMI = new JMenuItem("Edit experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
 		closeMI = new JMenuItem("Close experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
-		openMI = new JMenuItem("Load Workspace ",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
-		saveMI = new JMenuItem("Save Workspace",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
 		computeMI = new JMenuItem("Compute",new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 		
 		newExpMI.addActionListener(this);
 		batchMI.addActionListener(this);
 		editMI.addActionListener(this);
 		closeMI.addActionListener(this);
-		openMI.addActionListener(this);
-		saveMI.addActionListener(this);
 		computeMI.addActionListener(this);
 		
 		editMI.setEnabled(false);
 		closeMI.setEnabled(false);
-		saveMI.setEnabled(false);
 		computeMI.setEnabled(false);
 		
 		expPopMenu.add(computeMI);
@@ -198,8 +194,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		expPopMenu.add(editMI);
 		expPopMenu.add(closeMI);
 		expPopMenu.addSeparator();
-		expPopMenu.add(openMI);
-		expPopMenu.add(saveMI);
 	}
 	
 	public static void main(String[] args){
@@ -263,7 +257,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				}
 			}
 			this.compoundList.repaint();
-		}else if(e.getSource()==saveB || e.getSource()==saveMI){
+		}else if(e.getSource()==saveB){
 			
 			JFileChooser jfc = new JFileChooser();
 			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
@@ -322,7 +316,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 			
 			
-		}else if(e.getSource()==loadB || e.getSource()==openMI){
+		}else if(e.getSource()==loadB){
 			
 			JFileChooser jfc = new JFileChooser();
 			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
@@ -335,20 +329,18 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				WorkspaceIO io = new WorkspaceIO();
 				File selFile = jfc.getSelectedFile();
 				config.setDefaultSaveFilePath(selFile.getParentFile());
-				
-				try{
-					List<ExperimentContainer> ec = io.load(selFile);
-					for (ExperimentContainer c : ec) importCompound(c);
-				}catch(Exception e2){
-					new ExceptionDialog(this, e2.getMessage());
-				}
+				ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(this);
+				final WorkspaceWorker worker = new WorkspaceWorker(this, workspaceDialog,selFile);
+				worker.execute();
+				workspaceDialog.setVisible(true);
+				worker.flushBuffer();
 			}
 			
 		}else if(e.getSource()==closeB || e.getSource()==closeMI){
 			int index = this.compoundList.getSelectedIndex();
 			ExperimentContainer cont = this.compoundModel.get(index);
-			if (cont.getResults()!=null && cont.getResults().size()>0) {
-				CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(this, "When removing this experiment you will loose the computed identification results for \""  +cont.getGUIName()+"\"?");
+			if (cont.getResults()!=null && cont.getResults().size()>0 && !config.isCloseNeverAskAgain()) {
+				CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(this, "When removing this experiment you will loose the computed identification results for \""  +cont.getGUIName()+"\"?", config);
 				CloseDialogReturnValue val = diag.getReturnValue();
 				if (val==CloseDialogReturnValue.abort) return;
 			}
@@ -379,9 +371,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 						}
 					}
 				}
-				
 				this.compoundList.repaint();
-				
 			}
 			
 		}else if(e.getSource()==batchB || e.getSource()==batchMI){
@@ -405,7 +395,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		
 	}
-	
+
 	public void importOneExperimentPerFile(List<File> msFiles, List<File> mgfFiles){
 		BatchImportDialog batchDiag = new BatchImportDialog(this);
 		batchDiag.start(msFiles,mgfFiles);
@@ -483,6 +473,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		this.compoundList.setSelectedValue(ec, true);
 	}
 
+	public void clearWorkspace() {
+		this.names.clear();
+		this.compoundModel.removeAllElements();
+	}
+
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		if(e.getSource()==this.compoundList){
@@ -495,7 +490,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 				closeMI.setEnabled(false);
 				editMI.setEnabled(false);
-				saveMI.setEnabled(false);
 				computeMI.setEnabled(false);
 				this.showResultsPanel.changeData(null);
 			}else{
@@ -506,7 +500,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 				closeMI.setEnabled(true);
 				editMI.setEnabled(true);
-				saveMI.setEnabled(true);
 				computeMI.setEnabled(true);
 				this.showResultsPanel.changeData(compoundModel.getElementAt(index));
 				resultsPanelCL.show(resultsPanel,RESULTS_CARD);
@@ -545,12 +538,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
 		Transferable tr = dtde.getTransferable();
-	    DataFlavor[] flavors = tr.getTransferDataFlavors();
+		dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+		DataFlavor[] flavors = tr.getTransferDataFlavors();
 	    List<File> newFiles = new ArrayList<File>();
 	    try{
 			for (int i = 0; i < flavors.length; i++) {
 				if (flavors[i].isFlavorJavaFileListType()) {
-					dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 					List files = (List) tr.getTransferData(flavors[i]);
 					for (Object o : files) {
 						File file = (File) o;

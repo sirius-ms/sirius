@@ -8,13 +8,15 @@ public class ConfigStorage {
 	
 	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath;
 	private FileFormat treeFileFormat;
+	private boolean closeNeverAskAgain;
 	
 
 	public ConfigStorage() {
-		defaultLoadDialogPath = new File("/media/Ext4_log/gnps/gnps_ms/");
+		defaultLoadDialogPath = null;
 		defaultTreeExportPath = null;
 		defaultSaveFilePath = null;
 		treeFileFormat = FileFormat.png;
+		closeNeverAskAgain = false;
 	}
 	
 	public void setDefaultTreeFileFormat(FileFormat fileFormat){
@@ -54,7 +56,12 @@ public class ConfigStorage {
 	public void setDefaultSaveFilePath(File defaultSaveFilePath) {
 		this.defaultSaveFilePath = defaultSaveFilePath;
 	}
-	
-	
 
+	public boolean isCloseNeverAskAgain() {
+		return closeNeverAskAgain;
+	}
+
+	public void setCloseNeverAskAgain(boolean closeNeverAskAgain) {
+		this.closeNeverAskAgain = closeNeverAskAgain;
+	}
 }

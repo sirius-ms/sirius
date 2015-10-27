@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
@@ -148,12 +149,14 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 			FileFilter gifFilter = new FTreeGIFFilter();
 			FileFilter jpgFilter = new FTreeJPGFilter();
 			FileFilter pngFilter = new FTreePNGFilter();
+			FileFilter jsonFilter = new FTreeJSONFilter();
 			
 			
 			jfc.addChoosableFileFilter(dotFilter);
 			jfc.addChoosableFileFilter(gifFilter);
 			jfc.addChoosableFileFilter(jpgFilter);
 			jfc.addChoosableFileFilter(pngFilter);
+			jfc.addChoosableFileFilter(jsonFilter);
 //			jfc.addChoosableFileFilter(new FTreeJsonFilter());
 			
 			FileFormat defaultFF = config.getDefaultTreeFileFormat();
@@ -165,6 +168,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 				jfc.setFileFilter(jpgFilter);
 			}else if(defaultFF==FileFormat.png){
 				jfc.setFileFilter(pngFilter);
+			} else if (defaultFF==FileFormat.json) {
+				jfc.setFileFilter(jsonFilter);
 			}
 			
 			
@@ -179,12 +184,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 					config.setDefaultTreeExportPath(selFile.getParentFile());
 					
 					String name = selFile.getName();
-					/*if(jfc.getFileFilter() instanceof FTreeJsonFilter){
-						ff = FileFormat.json;
-						if(!selFile.getAbsolutePath().endsWith(".json")){
-							selFile = new File(selFile.getAbsolutePath()+".json");
-						}
-					}else */if(jfc.getFileFilter() == dotFilter){
+					if(jfc.getFileFilter() == dotFilter){
 						ff = FileFormat.dot;
 						if(!selFile.getAbsolutePath().endsWith(".dot")){
 							selFile = new File(selFile.getAbsolutePath()+".dot");
@@ -199,10 +199,15 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 						if(!selFile.getAbsolutePath().endsWith(".jpg")){
 							selFile = new File(selFile.getAbsolutePath()+".jpg");
 						}
-					}else if(jfc.getFileFilter() == pngFilter){
+					}else if(jfc.getFileFilter() == pngFilter) {
 						ff = FileFormat.png;
-						if(!selFile.getAbsolutePath().endsWith(".png")){
-							selFile = new File(selFile.getAbsolutePath()+".png");
+						if (!selFile.getAbsolutePath().endsWith(".png")) {
+							selFile = new File(selFile.getAbsolutePath() + ".png");
+						}
+					} else if (jfc.getFileFilter() == jsonFilter) {
+						ff = FileFormat.json;
+						if (!selFile.getAbsolutePath().endsWith(".json")) {
+							selFile = new File(selFile.getAbsolutePath() + ".json");
 						}
 					}else{
 						throw new RuntimeException(jfc.getFileFilter().getClass().getName());
@@ -238,6 +243,8 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 						RasterGraphicsIO.writeJPG(selectedFile, getTreeImage());
 					}else if(ff==FileFormat.png){
 						RasterGraphicsIO.writePNG(selectedFile, getTreeImage());
+					} else if (ff == FileFormat.json) {
+						new FTJsonWriter().writeTreeToFile(selectedFile, sre.getRawTree());
 					}
 				}catch(Exception e2){
 					ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
@@ -338,6 +345,13 @@ class FTreePNGFilter extends FTreeFilter{
 		super(".png","PNG");
 	}
 	
+}
+
+class FTreeJSONFilter extends FTreeFilter {
+
+	public FTreeJSONFilter() {
+		super(".json", "JSON");
+	}
 }
 
 
