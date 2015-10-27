@@ -41,6 +41,7 @@ public class CollisionEnergy {
     }
 
     public static CollisionEnergy fromString(String value) {
+        if (value.equals("none")) return NONE;
         final int k = value.indexOf('-');
         if (k >= 0) {
             final double x = Double.parseDouble(value.substring(0, k));
@@ -103,6 +104,7 @@ public class CollisionEnergy {
 
     @Override
     public String toString() {
+        if (this.equals(NONE)) return "none";
         if (minEnergy == maxEnergy) return stringify(minEnergy);
         return stringify(minEnergy) + " - " + stringify(maxEnergy);
     }

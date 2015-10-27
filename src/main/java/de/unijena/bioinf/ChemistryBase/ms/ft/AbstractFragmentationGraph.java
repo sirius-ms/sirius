@@ -260,6 +260,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         } else return false;
     }
 
+    /*
     public void copyAnnotations(AbstractFragmentationGraph otherGraph) {
         for (FragmentAnnotation<Object> entry : fragmentAnnotations.values()) {
            if (!entry.isAlias()) {
@@ -286,6 +287,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         }
         otherGraph.aliases.addAll(aliases);
     }
+    */
 
     public boolean removeFragmentAnnotation(Class<? extends Object> klass) {
         final FragmentAnnotation<Object> ano = fragmentAnnotations.get(klass);

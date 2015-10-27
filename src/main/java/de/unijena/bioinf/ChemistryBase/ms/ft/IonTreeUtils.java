@@ -3,6 +3,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 
 import java.util.ArrayList;
@@ -68,16 +69,30 @@ public class IonTreeUtils {
     }
 
     private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex) {
-        if (vertex.isDeleted()) {
-            System.out.println("????");
-        };
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
+        final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
+        final LossAnnotation<Score> lossAno = tree.getLossAnnotationOrNull(Score.class);
         // if adduct is lost: contract loss
         if (vertex.getInDegree() > 0 && vertex.getIncomingEdge().getFormula().equals(adduct)) {
             final PrecursorIonType newIonType = iontype.withoutAdduct();
             // delete this vertex
             final List<Fragment> children = new ArrayList<Fragment>(vertex.getChildren());
-            for (Fragment f : children) tree.swapLoss(f, vertex.getParent());
+            for (Fragment f : children) {
+                Loss oldLoss = f.getIncomingEdge();
+                Loss contractedLoss = vertex.getIncomingEdge();
+                Loss newLoss = tree.swapLoss(f, vertex.getParent());
+                if (lossAno!=null) {
+                    final Score oldScore = lossAno.get(oldLoss);
+                    final Score contrScore = lossAno.get(contractedLoss);
+                    if (oldScore != null && contrScore!=null) {
+                        final Score newScore = oldScore.extend("adductSubstitution");
+                        newScore.set("adductSubstitution", contrScore.sum());
+                        lossAno.set(f.getIncomingEdge(), newScore);
+                    } else if (oldScore!=null) {
+                        lossAno.set(f.getIncomingEdge(), oldScore);
+                    }
+                }
+            }
             tree.deleteVertex(vertex);
             for (Fragment f : children) {
                 setPrecursorToEachNode(tree, f, newIonType);
@@ -89,6 +104,8 @@ public class IonTreeUtils {
         final MolecularFormula f = vertex.getFormula().subtract(adduct);
         if (f.isAllPositiveOrZero() && !f.isEmpty()) {
             vertex.setFormula(f);
+            if (peakAno.get(vertex)!=null)
+                peakAno.set(vertex, peakAno.get(vertex).withFormula(f));
             fa.set(vertex, iontype);
             final ArrayList<Fragment> childs = new ArrayList<Fragment>(vertex.getChildren());
             for (Fragment g : childs) {

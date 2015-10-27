@@ -30,6 +30,42 @@ public class Score extends AbstractMap<String, Double> {
         this.values = new double[names.length];
     }
 
+    public Score extend(String... newNames) {
+
+        final ArrayList<String> toAdd = new ArrayList<String>(Arrays.asList(newNames));
+        toAdd.removeAll(Arrays.asList(names));
+
+        final String[] allNames = Arrays.copyOf(names, names.length+toAdd.size());
+        for (int k=names.length,n=names.length+toAdd.size(); k < n; ++k) {
+            allNames[k] = toAdd.get(k-names.length);
+        }
+        final Score newScore = new Score(allNames);
+        for (int k=0; k < names.length; ++k) {
+            newScore.set(k, values[k]);
+        }
+        return newScore;
+    }
+
+    public void set(String key, double value) {
+        for (int i=0; i < names.length; ++i) {
+            if (names[i].equals(key)) {
+                values[i] = value; return;
+            }
+        }
+    }
+
+    @Override
+    public Double put(String key, Double value) {
+        for (int i=0; i < names.length; ++i) {
+            if (names[i].equals(key)) {
+                double oldVal = values[i];
+                values[i] = value;
+                return oldVal;
+            }
+        }
+        return null;
+    }
+
     public double get(int k) {
         return values[k];
     }

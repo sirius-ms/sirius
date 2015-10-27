@@ -29,12 +29,12 @@ public final class AnnotatedPeak {
     /**
      * The molecular formula that is assigned to this peak
      */
-    private final MolecularFormula getFormula;
+    private final MolecularFormula molecularFormula;
 
     /**
      * the mass of the peak after peak merging
      */
-    private final double getMass;
+    private final double mass;
 
     /**
      * the mass of the peak after recalibration
@@ -63,8 +63,8 @@ public final class AnnotatedPeak {
     private final CollisionEnergy[] collisionEnergies;
 
     public AnnotatedPeak(MolecularFormula getFormula, double getMass, double recalibratedMass, double relativeIntensity, Ionization ionization, Peak[] originalPeaks, CollisionEnergy[] collisionEnergies) {
-        this.getFormula = getFormula;
-        this.getMass = getMass;
+        this.molecularFormula = getFormula;
+        this.mass = getMass;
         this.recalibratedMass = recalibratedMass;
         this.relativeIntensity = relativeIntensity;
         this.ionization = ionization;
@@ -72,16 +72,12 @@ public final class AnnotatedPeak {
         this.collisionEnergies = collisionEnergies;
     }
 
-    public Deviation getMassDeviation() {
-        return Deviation.fromMeasurementAndReference(recalibratedMass, ionization.addToMass(getFormula.getMass()));
+    public MolecularFormula getMolecularFormula() {
+        return molecularFormula;
     }
 
-    public MolecularFormula getGetFormula() {
-        return getFormula;
-    }
-
-    public double getGetMass() {
-        return getMass;
+    public double getMass() {
+        return mass;
     }
 
     public double getRecalibratedMass() {
@@ -102,5 +98,13 @@ public final class AnnotatedPeak {
 
     public CollisionEnergy[] getCollisionEnergies() {
         return collisionEnergies;
+    }
+
+    public AnnotatedPeak withFormula(MolecularFormula newFormula) {
+        return new AnnotatedPeak(newFormula, mass, recalibratedMass, relativeIntensity, ionization, originalPeaks, collisionEnergies);
+    }
+
+    public AnnotatedPeak withIonization(Ionization ion) {
+        return new AnnotatedPeak(molecularFormula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks, collisionEnergies);
     }
 }
