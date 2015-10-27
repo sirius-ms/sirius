@@ -354,8 +354,8 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, AnnotatedPeak annotation) {
             if (!document.hasKeyInDictionary(dictionary, "molecularFormula"))
-                document.addToDictionary(dictionary, "molecularFormula", annotation.getGetFormula().toString());
-            document.addToDictionary(dictionary, "mz", annotation.getGetMass());
+                document.addToDictionary(dictionary, "molecularFormula", annotation.getMolecularFormula().toString());
+            document.addToDictionary(dictionary, "mz", annotation.getMass());
             document.addToDictionary(dictionary, "relativeIntensity", annotation.getRelativeIntensity());
             document.addToDictionary(dictionary, "recalibratedMass", annotation.getRecalibratedMass());
             document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.babelms.descriptor;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import java.util.HashMap;
@@ -62,6 +63,7 @@ public class DescriptorRegistry {
 
         public DescriptorMap() {
             this.hashmap = new HashMap<Class, Descriptor<Object>>();
+            this.keywordMap = ArrayListMultimap.create(16, 4);
         }
 
         private <Annotation> void put(Class<Annotation> key, Descriptor<Annotation> descriptor, String[] keywords) {

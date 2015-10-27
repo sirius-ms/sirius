@@ -93,7 +93,8 @@ public class FTJsonWriter {
             for (FragmentAnnotation<Object> fano : fragmentAnnotations) {
                 if (fano.get(f)!=null) {
                     Descriptor<Object> d = registry.get(Fragment.class, fano.getAnnotationType());
-                    d.write(JSON, fragment, fano.get(f));
+                    if (d != null)
+                        d.write(JSON, fragment, fano.get(f));
                 }
             }
         }
@@ -111,7 +112,8 @@ public class FTJsonWriter {
             for (LossAnnotation<Object> lano : lossAnnotations) {
                 if (lano.get(l)!=null) {
                     Descriptor<Object> d = registry.get(Loss.class, lano.getAnnotationType());
-                    d.write(JSON, loss, lano.get(l));
+                    if (d != null)
+                        d.write(JSON, loss, lano.get(l));
                 }
             }
         }

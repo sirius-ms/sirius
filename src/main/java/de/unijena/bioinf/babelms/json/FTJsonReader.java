@@ -29,8 +29,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 
@@ -39,6 +42,14 @@ public class FTJsonReader implements Parser<FTree> {
     /*
     TODO: currently, only Peak and Ionization are parsed from input
      */
+
+    public static void main(String[] args) {
+        try (BufferedReader r = Files.newBufferedReader(new File("/home/kaidu/1.json").toPath(), Charset.forName("UTF-8"))) {
+            new FTJsonReader().parse(r);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Deprecated
     public FTree parse(BufferedReader reader) throws IOException {
