@@ -148,6 +148,52 @@ public class Spectrums {
         return spectrum;
     }
 
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum mergePeaksWithinSpectrum(S msms, Deviation mergeWindow, boolean sumIntensities) {
+        final SimpleSpectrum massOrdered = new SimpleSpectrum(msms);
+        final SimpleMutableSpectrum intensityOrdered = new SimpleMutableSpectrum(msms);
+        sortSpectrumByDescendingIntensity(intensityOrdered);
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(msms.size()/4);
+        final boolean[] chosen = new boolean[massOrdered.size()];
+        for (int k=0; k < intensityOrdered.size(); ++k) {
+            if (chosen[k]) continue;
+            final double mz = intensityOrdered.getMzAt(k);
+            final int a = indexOfFirstPeakWithin(massOrdered, mz, mergeWindow);
+            final double threshold = mz + Math.abs(mergeWindow.absoluteFor(mz));
+            for (int b=a; b < massOrdered.size(); ++b) {
+                if (massOrdered.getMzAt(b) > threshold) break;
+                chosen[b]=true;
+            }
+            buffer.addPeak(mz, intensityOrdered.getIntensityAt(k));
+        }
+        return new SimpleSpectrum(buffer);
+    }
+
+    public static<P extends Peak, S extends MutableSpectrum<P>>  void cutByMassThreshold(S msms, double maximalMass) {
+        int k=0;
+        for (int i=0; i < msms.size(); ++i) {
+            if (msms.getMzAt(i) <= maximalMass) {
+                msms.swap(i, k);
+                ++k;
+            }
+        }
+        for (int i=msms.size()-1; i >= k; --i) {
+            msms.removePeakAt(i);
+        }
+    }
+
+    public static<P extends Peak, S extends MutableSpectrum<P>>  void applyBaseline(S msms, double intensityThreshold) {
+        int k=0;
+        for (int i=0; i < msms.size(); ++i) {
+            if (msms.getIntensityAt(i) >= intensityThreshold) {
+                msms.swap(i, k);
+                ++k;
+            }
+        }
+        for (int i=msms.size()-1; i >= k; --i) {
+            msms.removePeakAt(i);
+        }
+    }
+
 
     public static interface Transformation<P1 extends Peak, P2 extends Peak> {
         public P2 transform(P1 input);
