@@ -18,6 +18,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.RecalibrationFunction;
@@ -29,12 +30,31 @@ import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.util.List;
 
 public class IdentificationResult implements Cloneable {
 
     protected FTree tree;
     protected int rank;
     protected double score;
+
+    public static void writeIdentifications(Writer writer, Ms2Experiment input, List<IdentificationResult> results) throws IOException {
+        final StringBuilder buffer = new StringBuilder();
+        buffer.append(input.getName());
+        buffer.append('\t');
+        buffer.append(input.getIonMass());
+        buffer.append('\t');
+        buffer.append(input.getPrecursorIonType().toString());
+        for (IdentificationResult r : results) {
+            buffer.append('\t');
+            buffer.append(r.getMolecularFormula().toString());
+            buffer.append('\t');
+            buffer.append(r.getScore());
+        }
+        buffer.append('\n');
+        writer.write(buffer.toString());
+    }
 
     public IdentificationResult(FTree tree, int rank) {
         this.tree = tree;
