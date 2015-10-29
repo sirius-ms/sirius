@@ -37,14 +37,7 @@
       <url>http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html</url>
     </license>
   </licenses>
-  
-  <!-- Defines the svn url of this software -->
-  <scm>
-    <url>https://bio.informatik.uni-jena.de/svnrep/trunk/software/MassDecomposer</url>
-    <connection>scm:svn:https://bio.informatik.uni-jena.de/svnrep/trunk/software/mass_spec/MassDecomposition</connection>
-    <tag>HEAD</tag>
-  </scm>
-  
+
   <!-- Defines how to compile this software -->
   <build>
     <plugins>
@@ -52,8 +45,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3</version>
         <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>1.7</source>
+          <target>1.7</target>
           <encoding>utf-8</encoding>
         </configuration>
       </plugin>
@@ -119,6 +112,12 @@
         <uniqueVersion>false</uniqueVersion>
     </snapshotRepository>
   </distributionManagement>
+
+  <repositories><repository>
+    <id>bioinf-jena</id>
+    <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
+    <name>Bioinf Jena</name>
+  </repository></repositories>
   
   <properties>
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
