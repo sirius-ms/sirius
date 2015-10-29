@@ -33,13 +33,21 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
     private final ImportWorkspaceDialog dialog;
     private final MainFrame mainFrame;
     private final ArrayDeque<ExperimentContainer> buffer;
-    private final File file;
+    private final List<File> files;
 
     public WorkspaceWorker(MainFrame mainFrame, ImportWorkspaceDialog dialog, File file) {
         this.dialog = dialog;
         this.mainFrame = mainFrame;
         this.buffer = new ArrayDeque<>();
-        this.file = file;
+        this.files = new ArrayList<>();
+        this.files.add(file);
+    }
+
+    public WorkspaceWorker(MainFrame mainFrame, ImportWorkspaceDialog dialog, List<File> files) {
+        this.dialog = dialog;
+        this.mainFrame = mainFrame;
+        this.buffer = new ArrayDeque<>();
+        this.files = files;
     }
 
     @Override
@@ -99,7 +107,9 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
                 return null;
             }
         };
-        new WorkspaceIO().load(file, publishingQueue);
+        for (File file : files) {
+            new WorkspaceIO().load(file, publishingQueue);
+        }
         return all;
     }
 }

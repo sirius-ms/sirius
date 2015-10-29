@@ -110,11 +110,11 @@ public class SiriusDataConverter {
         return exp;
     }
 
-    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo) {
+    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, String ionization, double ionMass) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(myxo.getName());
-        exp.setIonMass(myxo.getDataFocusedMass());
-        exp.setPrecursorIonType(enumToSiriusIonization(myxo.getIonization()));
+        exp.setIonMass(ionMass);
+        exp.setPrecursorIonType(PeriodicTable.getInstance().ionByName(ionization));
         for (CompactSpectrum cs : myxo.getMs1Spectra()) {
             exp.getMs1Spectra().add(myxoMs1ToSiriusMs1(cs));
         }
@@ -124,14 +124,18 @@ public class SiriusDataConverter {
         return exp;
     }
 
+    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo) {
+        return experimentContainerToSiriusExperiment(myxo, enumToSiriusIonization(myxo.getIonization()).toString(), myxo.getFocusedMass());
+    }
+
     public static SiriusResultElement siriusResultToMyxoResult(IdentificationResult ir) {
         return SiriusResultElementConverter.convertResult(ir);
     }
 
     public static ExperimentContainer siriusToMyxoContainer(Ms2Experiment experiment, List<IdentificationResult> results) {
         final ExperimentContainer c = siriusExperimentToExperimentContainer(experiment);
-        c.setRawResults(results);
         if (results.size()>0) {
+            c.setRawResults(results);
             final FTree tree = results.get(0).getTree();
             if (tree!=null) {
                 final Precursor parentmass = tree.getAnnotationOrNull(Precursor.class);

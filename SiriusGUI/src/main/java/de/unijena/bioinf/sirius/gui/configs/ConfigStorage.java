@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ConfigStorage {
 	
-	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath;
+	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath, csvExportPath;
 	private FileFormat treeFileFormat;
 	private boolean closeNeverAskAgain;
 	
@@ -15,11 +15,21 @@ public class ConfigStorage {
 		defaultLoadDialogPath = null;
 		defaultTreeExportPath = null;
 		defaultSaveFilePath = null;
+		csvExportPath= null;
 		treeFileFormat = FileFormat.png;
 		closeNeverAskAgain = false;
 	}
-	
-	public void setDefaultTreeFileFormat(FileFormat fileFormat){
+
+    public File getCsvExportPath() {
+        return csvExportPath;
+    }
+
+    public void setCsvExportPath(File csvExportPath) {
+        this.csvExportPath = csvExportPath;
+        setAllStoragePaths(csvExportPath);
+    }
+
+    public void setDefaultTreeFileFormat(FileFormat fileFormat){
 		this.treeFileFormat = fileFormat;
 	}
 	
@@ -45,16 +55,24 @@ public class ConfigStorage {
 
 	public void setDefaultTreeExportPath(File defaultTreeExportPath) {
 		this.defaultTreeExportPath = defaultTreeExportPath;
+        setAllStoragePaths(defaultTreeExportPath);
 	}
 
+    private void setAllStoragePaths(File path) {
+        if (defaultTreeExportPath==null) defaultTreeExportPath=path;
+        if (defaultSaveFilePath == null) defaultSaveFilePath = path;
+        if (csvExportPath==null) csvExportPath = path;
+    }
 
-	public File getDefaultSaveFilePath() {
+
+    public File getDefaultSaveFilePath() {
 		return defaultSaveFilePath;
 	}
 
 
 	public void setDefaultSaveFilePath(File defaultSaveFilePath) {
 		this.defaultSaveFilePath = defaultSaveFilePath;
+        setAllStoragePaths(defaultSaveFilePath);
 	}
 
 	public boolean isCloseNeverAskAgain() {

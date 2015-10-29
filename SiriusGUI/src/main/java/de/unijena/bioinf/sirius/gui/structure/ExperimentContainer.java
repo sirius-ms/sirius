@@ -9,17 +9,19 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExperimentContainer {
-	
+
 	private List<CompactSpectrum> ms1Spectra, ms2Spectra;
-	
+
 	private Ionization ionization;
 	private double selectedFocusedMass;
 	private double dataFocusedMass;
 	private String name,guiName;
 	private int suffix;
+	private volatile ComputingStatus computeState;
+	private String errorMessage;
 	
-	private List<SiriusResultElement> results;
-	private List<IdentificationResult> originalResults;
+	private volatile List<SiriusResultElement> results;
+	private volatile List<IdentificationResult> originalResults;
 
 	public ExperimentContainer() {
 		ms1Spectra = new ArrayList<CompactSpectrum>();
@@ -32,6 +34,7 @@ public class ExperimentContainer {
 		suffix = 1;
 		results = Collections.emptyList();
 		originalResults = Collections.emptyList();
+		this.computeState = ComputingStatus.UNCOMPUTED;
 	}
 
 	public String getName() {
@@ -113,11 +116,14 @@ public class ExperimentContainer {
 	public void setRawResults(List<IdentificationResult> results) {
 		this.originalResults = results;
 		this.results = SiriusResultElementConverter.convertResults(originalResults);
+		this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
 	}
 
 	public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
 		this.originalResults = results;
 		this.results = myxoresults;
+		this.computeState=ComputingStatus.COMPUTED;
+        this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
 	}
 
 
@@ -125,4 +131,40 @@ public class ExperimentContainer {
 		if (selectedFocusedMass > 0) return selectedFocusedMass;
 		else return dataFocusedMass;
 	}
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public boolean isComputed() {
+		return computeState==ComputingStatus.COMPUTED;
+	}
+
+	public boolean isComputing() {
+		return computeState == ComputingStatus.COMPUTING;
+	}
+
+	public boolean isUncomputed() {
+		return computeState == ComputingStatus.UNCOMPUTED;
+	}
+
+	public ComputingStatus getComputeState() {
+		return computeState;
+	}
+
+	public void setComputeState(ComputingStatus st) {
+		this.computeState = st;
+	}
+
+	public boolean isFailed() {
+		return this.computeState==ComputingStatus.FAILED;
+	}
+
+    public boolean isQueued() {
+        return computeState == ComputingStatus.QUEUED;
+    }
 }

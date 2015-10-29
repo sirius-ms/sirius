@@ -72,6 +72,15 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
         setLocationRelativeTo(getParent());
     }
 
+    public void start() {
+        if (mainFrame.numberOfCompounds() > 0) {
+            setVisible(true);
+        } else {
+            decision = Decision.MERGE;
+            return;
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==replace) {

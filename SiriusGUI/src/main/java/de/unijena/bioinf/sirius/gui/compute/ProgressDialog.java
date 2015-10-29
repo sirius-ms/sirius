@@ -3,6 +3,8 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,14 +74,14 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		sdf = new SimpleDateFormat("hh:mm:ss");
 	}
 	
-	public void start(Sirius sirius,Ms2Experiment exp, FormulaConstraints constraints, int candidates){
+	public void start(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, FormulaConstraints constraints, int candidates){
 		sirius.setProgress(this);
 		this.setSize(new Dimension(700,210));
 		this.successful = false;
 		sb = new StringBuilder();
 		step = 0;
 		starttime = System.currentTimeMillis();
-		rt = new RunThread(sirius, exp,candidates, constraints, this);
+		rt = new RunThread(sirius, ec, exp,candidates, constraints, this);
 		t = new Thread(rt);
 		t.start();
 		setLocationRelativeTo(getParent());
@@ -172,14 +174,16 @@ class RunThread implements Runnable{
 	private ProgressDialog pd;
 	private int candidates;
 	private FormulaConstraints constraints;
+    private ExperimentContainer ec;
 	
-	RunThread(Sirius sirius,Ms2Experiment exp,int candidates, FormulaConstraints constraints, ProgressDialog pd){
+	RunThread(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, int candidates, FormulaConstraints constraints, ProgressDialog pd){
 		this.sirius = sirius;
 		this.results = null;
 		this.exp = exp;
 		this.pd = pd;
 		this.candidates = candidates;
 		this.constraints = constraints;
+        this.ec = ec;
 	}
 
 	@Override
@@ -196,6 +200,8 @@ class RunThread implements Runnable{
 				@Override
 				public void run() {
 					pd.info("Error: " + e.getMessage());
+                    ec.setComputeState(ComputingStatus.FAILED);
+                    ec.setErrorMessage(e.getMessage());
 				}
 			});
 		}

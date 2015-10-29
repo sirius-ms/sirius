@@ -4,7 +4,6 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 
@@ -15,6 +14,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 	private Color backColor, foreColor;
 	
 	private Font valueFont, compoundFont, propertyFont;
+
+	private static Image icon;
 	
 //	private int index;
 	
@@ -26,7 +27,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 //	private DecimalFormat massFormat, ppmFormat, intFormat;
 	
 	private DecimalFormat numberFormat;
-	
+	private ImageIcon loadingGif;
+
 	public CompoundCellRenderer(){
 		this.setPreferredSize(new Dimension(200,86));
 		initColorsAndFonts();
@@ -73,7 +75,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		unevenBackground = new Color(213,227,238);
 		activatedForeground = UIManager.getColor("List.foreground");
 		deactivatedForeground = Color.GRAY;
-		
 	}
 	
 	@Override
@@ -177,8 +178,19 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			ms2String = ms2No+" ms2 "+ms2String;
 			g2.drawString(ms2String, 4, yPos);
 		}
-		
-		
+
+		if (ec.isComputed()) {
+			g2.drawString("\u2713", getWidth()-16, getHeight()-8);
+		} else if (ec.isComputing()) {
+			g2.drawString("\u2699", getWidth()-16, getHeight()-8);
+		} else if (ec.isFailed()){
+			final Color prevCol = g2.getColor();
+			g2.setColor(Color.RED);
+			g2.drawString("\u2718", getWidth()-16, getHeight()-8);
+			g2.setColor(prevCol);
+		} else if (ec.isQueued()) {
+            g2.drawString("...", getWidth()-16, getHeight()-8);
+        }
 	}
 
 }

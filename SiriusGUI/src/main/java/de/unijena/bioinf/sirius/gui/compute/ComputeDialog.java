@@ -3,8 +3,9 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -13,7 +14,9 @@ import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
@@ -38,6 +41,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private JCheckBox bromine, borone, selenium, chlorine, iodine, fluorine;
 	private JTextField elementTF;
 	private JButton elementButton, elementAutoDetect;
+	private MainFrame owner;
 	
 	private TreeSet<String> additionalElements;
 	
@@ -52,9 +56,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private HashMap<Ionization,String> ionToStringMap;
 	private final JSpinner candidatesSpinner;
 
-	public ComputeDialog(JFrame owner,ExperimentContainer ec) {
+	public ComputeDialog(MainFrame owner,ExperimentContainer ec) {
 		super(owner,"compute",true);
-		
+		this.owner = owner;
 		this.ec = ec;
 		this.success = false;
 
@@ -288,7 +292,30 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		abort.addActionListener(this);
 		southPanel.add(compute);
 		southPanel.add(abort);
-		
+
+		{
+			InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+			KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+			KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
+			String enterAction = "compute";
+			String escAction = "abort";
+			inputMap.put(enterKey, enterAction);
+			inputMap.put(escKey, escAction);
+			getRootPane().getActionMap().put(enterAction, new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					startComputing();
+				}
+			});
+			getRootPane().getActionMap().put(escAction, new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					abortComputation();
+				}
+			});
+		}
+
+
 		this.pack();
 		this.setResizable(false);
 		setLocationRelativeTo(getParent());
@@ -296,10 +323,14 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 	}
 
+	private void abortComputation() {
+		this.dispose();
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource()== abort) {
-			this.dispose();
+			abortComputation();
 		} else if(e.getSource() == autoDetectFM){
 			
 //			box.getrender
@@ -388,219 +419,133 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				
 			}
 		}else if(e.getSource() == this.compute){
-			String val = (String) instrumentCB.getSelectedItem();
-			String instrument = "";
-			if(val.equals("Q-TOF")){
-				instrument = "qtof";
-			}else if(val.equals("Orbitrap")){
-				instrument = "orbitrap";
-			}else if(val.equals("FT-ICR")){
-				instrument = "fticr";
-			}else{
-				throw new RuntimeException("no valid instrument");
+			startComputing();
+		}
+	}
+
+	public void startComputing() {
+		String val = (String) instrumentCB.getSelectedItem();
+		String instrument = "";
+		if(val.equals("Q-TOF")){
+			instrument = "qtof";
+		}else if(val.equals("Orbitrap")){
+			instrument = "orbitrap";
+		}else if(val.equals("FT-ICR")){
+			instrument = "fticr";
+		}else{
+			throw new RuntimeException("no valid instrument");
+		}
+		try{
+			//entspricht setup() Methode
+
+			Sirius sirius = new Sirius(instrument); // TODO: sollte man vielleicht cachen...
+			final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
+			final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
+			final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
+			final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
+
+			double ppm = snm.getNumber().doubleValue();
+
+			ms2Prof.setAllowedMassDeviation(new Deviation(ppm));
+			ms1Prof.setAllowedMassDeviation(new Deviation(ppm));
+
+			final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
+			if (builder instanceof DPTreeBuilder) {
+				System.err.println("Cannot load ILP solver. Please read the installation instructions.");
+				System.exit(1); // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			}
-			try{
-				//entspricht setup() Methode
-				
-				Sirius sirius = new Sirius(instrument); // TODO: sollte man vielleicht cachen...
-				final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
-	            final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
-	            final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
-	            final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
-	 
-	            double ppm = snm.getNumber().doubleValue();
-	            
-	            ms2Prof.setAllowedMassDeviation(new Deviation(ppm));
-                ms1Prof.setAllowedMassDeviation(new Deviation(ppm));
-	            
-	            final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
-	            if (builder instanceof DPTreeBuilder) {
-	                System.err.println("Cannot load ILP solver. Please read the installation instructions.");
-	                System.exit(1); // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	            }
-	            System.out.println("Compute trees using " + builder.getDescription());
-	 
-	            sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
-	            sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
-	            
-	            //Ende setup() Methode
-	            
+			System.out.println("Compute trees using " + builder.getDescription());
+
+			sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
+			sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
+
+			//Ende setup() Methode
+
 //	            sirius.setProgress(new DummyProgress());
-	            
-	            Object selected = box.getSelectedItem();
-	            double pm=0;
-	            if(selected instanceof CompactPeak){
-	            	CompactPeak cp = (CompactPeak) selected;
-	            	pm = cp.getMass();
-	            }else{
-	            	pm = Double.parseDouble(selected.toString());
-	            }
 
-				int candidates = ((Number)candidatesSpinner.getModel().getValue()).intValue();
-	            
-//	            System.err.println(pm);
-	            
-	            Ms2Experiment exp = this.convert(ec,(String) ionizationCB.getSelectedItem(),pm);
-
-	            ProgressDialog progDiag = new ProgressDialog(this);
-				FormulaConstraints constraints;
-				{
-					HashSet<String> eles = new HashSet<>();
-					if(borone.isSelected()) eles.add("B");
-					if(bromine.isSelected()) eles.add("Br");
-					if(chlorine.isSelected()) eles.add("Cl");
-					if(fluorine.isSelected()) eles.add("F");
-					if(iodine.isSelected()) eles.add("I");
-					if(selenium.isSelected()) eles.add("Se");
-					eles.addAll(additionalElements);
-					Element[] elems = new Element[eles.size()];
-					int k=0;
-					final PeriodicTable tb = PeriodicTable.getInstance();
-					for (String s : eles) {
-						final Element elem = tb.getByName(s);
-						if (elem != null)
-							elems[k++] = elem;
-					}
-					if (k < elems.length) elems = Arrays.copyOf(elems, k);
-					constraints = new FormulaConstraints().getExtendedConstraints(elems);
-				}
-				progDiag.start(sirius, exp, constraints, candidates);
-	            if(progDiag.isSucessful()){
-//	            	System.err.println("progDiag erfolgreich");
-	            	this.success = true;
-	            	this.ec.setRawResults(progDiag.getResults());
-	            	this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
-	            	Object o = box.getSelectedItem();
-	            	if(o instanceof String){
-	            		this.ec.setSelectedFocusedMass(Double.parseDouble((String)box.getSelectedItem()));
-	            	}else{
-	            		DefaultCompactPeak p = (DefaultCompactPeak) o;
-	            		this.ec.setSelectedFocusedMass(p.getMass());
-	            	}
-	            	
-	            	this.dispose();
-	            }else{
-//	            	System.err.println("progDiag nicht erfolgreich");
-	            }
-	            
-//	            List<IdentificationResult> results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);
-	            
-			}catch(IOException e2){
-				throw new RuntimeException(e2);
+			Object selected = box.getSelectedItem();
+			double pm=0;
+			if(selected instanceof CompactPeak){
+				CompactPeak cp = (CompactPeak) selected;
+				pm = cp.getMass();
+			}else{
+				pm = Double.parseDouble(selected.toString());
 			}
+
+			int candidates = ((Number)candidatesSpinner.getModel().getValue()).intValue();
+
+//	            System.err.println(pm);
+
+			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, (String)ionizationCB.getSelectedItem(), pm);
+
+			ProgressDialog progDiag = new ProgressDialog(this);
+			FormulaConstraints constraints;
+			{
+				HashSet<String> eles = new HashSet<>();
+				if(borone.isSelected()) eles.add("B");
+				if(bromine.isSelected()) eles.add("Br");
+				if(chlorine.isSelected()) eles.add("Cl");
+				if(fluorine.isSelected()) eles.add("F");
+				if(iodine.isSelected()) eles.add("I");
+				if(selenium.isSelected()) eles.add("Se");
+				eles.addAll(additionalElements);
+				Element[] elems = new Element[eles.size()];
+				int k=0;
+				final PeriodicTable tb = PeriodicTable.getInstance();
+				for (String s : eles) {
+					final Element elem = tb.getByName(s);
+					if (elem != null)
+						elems[k++] = elem;
+				}
+				if (k < elems.length) elems = Arrays.copyOf(elems, k);
+				constraints = new FormulaConstraints().getExtendedConstraints(elems);
+			}
+
+            // cancel the corresponding task in background
+            owner.getBackgroundComputation().cancel(ec);
+
+			progDiag.start(sirius, ec, exp, constraints, candidates);
+			if(progDiag.isSucessful()){
+//	            	System.err.println("progDiag erfolgreich");
+				this.success = true;
+				this.ec.setRawResults(progDiag.getResults());
+				this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
+				Object o = box.getSelectedItem();
+				if(o instanceof String){
+					this.ec.setSelectedFocusedMass(Double.parseDouble((String)box.getSelectedItem()));
+				}else{
+					DefaultCompactPeak p = (DefaultCompactPeak) o;
+					this.ec.setSelectedFocusedMass(p.getMass());
+				}
+			} else {
+				owner.refreshCompound(ec);
+			}
+			owner.refreshCompound(ec);
+			this.dispose();
+
+//	            List<IdentificationResult> results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);
+
+		}catch(IOException e2){
+			throw new RuntimeException(e2);
 		}
 	}
 	
 	public boolean isSuccessful(){
 		return this.success;
 	}
-	
-//	private static List<SiriusResultElement> convertResults(List<IdentificationResult> in){
-//		List<SiriusResultElement> outs = new ArrayList<>();
-//		for(IdentificationResult res : in){
-//			SiriusResultElement out = new SiriusResultElement();
-//			out.setMolecularFormula(res.getMolecularFormula());
-//			out.setRank(res.getRank());
-//			out.setScore(res.getScore());
-//			
-//			FTree ft = res.getTree();
-//			out.setRawTree(ft);
-//			
-//			FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
-//			LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);
-//			FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrNull(Score.class);
-//			
-//			double maxInt = Double.NEGATIVE_INFINITY;
-//			for(Fragment fragment : ft.getFragments()){
-//				double fragInt = peakAno.get(fragment).getIntensity();
-//				if(fragInt>maxInt) maxInt = fragInt;
-//			}
-//			
-//			TreeNode root = initConvertNode(ft, peakAno, lscore, fscore, maxInt);
-//			out.setTree(root);	
-//			outs.add(out);
-//		}
-//		return outs;
-//	}
-//	
-//	public static TreeNode initConvertNode(FTree ft,FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
-//		Fragment rootK = ft.getRoot();
-//		TreeNode rootM = new DefaultTreeNode();
-//		rootM.setMolecularFormula(rootK.getFormula().toString());
-//		rootM.setMolecularFormulaMass(rootK.getFormula().getMass());
-//		rootM.setPeakMass(peakAno.get(rootK).getMass());
-//		rootM.setPeakAbsoluteIntenstiy(peakAno.get(rootK).getIntensity());
-//		rootM.setPeakRelativeIntensity(peakAno.get(rootK).getIntensity()/maxInt);
-//		double tempScore = fscore.get(rootK).sum();
-//		rootM.setScore(tempScore);
-//		
-//		convertNode(ft, rootK, rootM, peakAno, lscore, fscore, maxInt);
-//		
-//		return rootM;
-//	}
-//	
-//	private static void convertNode(FTree ft, Fragment sourceK, TreeNode sourceM, FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
-//		for(Loss edgeK : sourceK.getOutgoingEdges()){
-//			Fragment targetK = edgeK.getTarget();
-//			
-//			DefaultTreeNode targetM = new DefaultTreeNode();
-//			targetM.setMolecularFormula(targetK.getFormula().toString());
-//			targetM.setMolecularFormulaMass(targetK.getFormula().getMass());
-//			targetM.setPeakMass(peakAno.get(targetK).getMass());
-//			targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
-//			targetM.setPeakRelativeIntensity(peakAno.get(targetK).getIntensity()/maxInt);
-//			double tempScore = fscore.get(targetK).sum();
-//			tempScore += lscore.get(edgeK).sum();
-//			targetM.setScore(tempScore);
-//			
-//			DefaultTreeEdge edgeM = new DefaultTreeEdge();
-//			edgeM.setSource(sourceM);
-//			edgeM.setTarget(targetM);
-//			edgeM.setScore(lscore.get(edgeK).sum()); //TODO korrekt???
-//			MolecularFormula mfSource = sourceK.getFormula();
-//			MolecularFormula mfTarget = targetK.getFormula();
-//			MolecularFormula mfLoss = mfSource.subtract(mfTarget);
-//			edgeM.setLossFormula(mfLoss.toString());
-//			edgeM.setLossMass(targetM.getPeakMass()-sourceM.getPeakMass());
-//			
-//			sourceM.addOutEdge(edgeM);
-//			targetM.setInEdge(edgeM);
-//			
-//			convertNode(ft,targetK,targetM,peakAno,lscore,fscore,maxInt);
-//			
-//		}
-//	}
-	
+
+	/*
 	private Ms2Experiment convert(ExperimentContainer ec,String ionization, double pm){
 		MutableMs2Experiment exp = new MutableMs2Experiment();
 		String val = ionization;
-//		if(ec.getIonization() == Ionization.M){
-//			val = "[M]+";
-//		}else if(ec.getIonization() == Ionization.MMinusH){
-//			val = "[M-H]-";
-//		}else if(ec.getIonization() == Ionization.MPlusH){
-//			val = "[M+H]+";
-//		}else if(ec.getIonization() == Ionization.MPlusNa){
-//			val = "[M+Na]+";
-//		}
 		exp.setPrecursorIonType(PeriodicTable.getInstance().ionByName(val));
-		
-//		FormulaConstraints constraints = null; //TODO
-//		MutableMeasurementProfile profile = new MutableMeasurementProfile();
-//        profile.setFormulaConstraints(constraints);
-//        exp.setMeasurementProfile(profile);
-		System.err.println("ComputeDialog: setMeasurementProfile entfernt");
-        
         List<MutableMs2Spectrum> ms2spectra = new ArrayList<>();
         exp.setMs2Spectra(ms2spectra);
         for(CompactSpectrum sp : ec.getMs2Spectra()){
         	MutableMs2Spectrum spNew = new MutableMs2Spectrum();
-        	System.err.println("ComputeDialog: setIonization nach Verdacht gesetzt");
         	spNew.setIonization(exp.getPrecursorIonType().getIonization());
         	spNew.setMsLevel(2);
-//        	spNew.setPrecursorMz(ec.getFocusedMass()); //TODO
         	spNew.setPrecursorMz(pm);
-//        	System.err.println(spNew.getPrecursorMz());
         	spNew.setCollisionEnergy(sp.getCollisionEnergy());
         	for(int i=0;i<sp.getSize();i++){
         		spNew.addPeak(sp.getMass(i), sp.getAbsoluteIntensity(i));
@@ -626,6 +571,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
         
 		return exp;
 	}
+	*/
 
 }
 
