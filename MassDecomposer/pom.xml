@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.unijena.bioinf</groupId>
   <artifactId>MassDecomposer</artifactId>
-  <version>3.1-SNAPSHOT</version>
+  <version>3.1</version>
   <parent>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>MassDecomposition</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.1</version>
   </parent>
   
   <dependencies>
