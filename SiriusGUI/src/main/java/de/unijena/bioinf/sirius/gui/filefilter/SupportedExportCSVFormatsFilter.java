@@ -24,11 +24,12 @@ import java.io.File;
 public class SupportedExportCSVFormatsFilter extends FileFilter{
     @Override
     public boolean accept(File f) {
+        if(f.isDirectory()) return true;
         return f.getName().toLowerCase().endsWith(".csv");
     }
 
     @Override
     public String getDescription() {
-        return "csv";
+        return ".csv";
     }
 }

@@ -291,8 +291,9 @@ class ImportExperimentsThread implements Runnable{
 						return;
 					}
 				}
-			} catch (IOException e) {
-				errors.add(f.getName()+": Invalid file format.");;
+			} catch (RuntimeException | IOException e) {
+				errors.add(f.getName()+": Invalid file format.");
+				errors.add(e.getMessage());
 			}
 			counter++;
 		}

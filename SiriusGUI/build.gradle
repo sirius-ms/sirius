@@ -18,9 +18,17 @@ mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
 sourceCompatibility = 1.7
 version = '3.1'
 
+project.version = '3.1'
+
 launch4j {
     mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
     icon = file('src/main/resources/icons/sirius.ico')
+    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena. Kai Dührkop and Marvin Meusel"
+    version = "3.1"
+    textVersion = "3.1"
+    initialHeapSize = 250
+    maxHeapSize = 1024
+    maxHeapPercent = 75
 }
 
 jar {

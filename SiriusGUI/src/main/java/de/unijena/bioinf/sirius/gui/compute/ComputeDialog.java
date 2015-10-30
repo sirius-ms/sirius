@@ -533,46 +533,6 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	public boolean isSuccessful(){
 		return this.success;
 	}
-
-	/*
-	private Ms2Experiment convert(ExperimentContainer ec,String ionization, double pm){
-		MutableMs2Experiment exp = new MutableMs2Experiment();
-		String val = ionization;
-		exp.setPrecursorIonType(PeriodicTable.getInstance().ionByName(val));
-        List<MutableMs2Spectrum> ms2spectra = new ArrayList<>();
-        exp.setMs2Spectra(ms2spectra);
-        for(CompactSpectrum sp : ec.getMs2Spectra()){
-        	MutableMs2Spectrum spNew = new MutableMs2Spectrum();
-        	spNew.setIonization(exp.getPrecursorIonType().getIonization());
-        	spNew.setMsLevel(2);
-        	spNew.setPrecursorMz(pm);
-        	spNew.setCollisionEnergy(sp.getCollisionEnergy());
-        	for(int i=0;i<sp.getSize();i++){
-        		spNew.addPeak(sp.getMass(i), sp.getAbsoluteIntensity(i));
-        	}
-        	ms2spectra.add(spNew);
-        }
-        
-        List<CompactSpectrum> ms1 = ec.getMs1Spectra();
-        if(ms1!=null && !ms1.isEmpty()){
-        	CompactSpectrum ms11 = ms1.get(0);
-        	double[] masses = new double[ms11.getSize()];
-        	double[] ints = new double[ms11.getSize()];
-        	for(int i=0;i<masses.length;i++){
-        		masses[i] = ms11.getMass(i);
-        		ints[i] = ms11.getAbsoluteIntensity(i);
-        	}
-        	SimpleSpectrum ms = new SimpleSpectrum(masses,ints);
-        	exp.setMergedMs1Spectrum(ms);
-        	List<SimpleSpectrum> temp = new ArrayList<>();
-        	temp.add(ms);
-        	exp.setMs1Spectra(temp);
-        }
-        
-		return exp;
-	}
-	*/
-
 }
 
 

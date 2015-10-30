@@ -59,7 +59,7 @@ public class SiriusDataConverter {
         final ExperimentContainer c = new ExperimentContainer();
         c.setDataFocusedMass(sirius.getIonMass());
         c.setName(sirius.getName());
-        c.setIonization(siriusIonizationToEnum(sirius.getPrecursorIonType()));
+        c.setIonization(siriusIonizationToEnum(sirius.getPrecursorIonType()==null ? PeriodicTable.getInstance().getUnknownPrecursorIonType(1) : sirius.getPrecursorIonType()));
         for (Spectrum<Peak> s : sirius.getMs1Spectra()) {
             c.getMs1Spectra().add(siriusSpectrumToMyxoSpectrum(s));
         }

@@ -39,7 +39,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB;
+	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB;
 	
 	private HashSet<String> names;
 	private int nameCounter;
@@ -134,23 +134,23 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 		
-		newB = new JButton("Import Experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-new.png")));
+		newB = new JButton("Import",new ImageIcon(MainFrame.class.getResource("/icons/document-new.png")));
 		newB.addActionListener(this);
-        newB.setToolTipText("Import measurements of a single compound");
+        //newB.setToolTipText("Import measurements of a single compound");
 		tempP.add(newB);
 		batchB = new JButton("Batch Import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
 		batchB.addActionListener(this);
-        batchB.setToolTipText("Import measurements of several compounds");
+        //batchB.setToolTipText("Import measurements of several compounds");
 		tempP.add(batchB);
 		editB = new JButton("Edit",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
 		editB.addActionListener(this);
 		editB.setEnabled(false);
-        editB.setToolTipText("Edit an experiment");
+        //editB.setToolTipText("Edit an experiment");
 		tempP.add(editB);
 		closeB = new JButton("Close",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
 		closeB.addActionListener(this);
 		closeB.setEnabled(false);
-        closeB.setToolTipText("Remove an experiment together with its results from the workspace");
+        //closeB.setToolTipText("Remove an experiment together with its results from the workspace");
 		tempP.add(closeB);
 		controlPanel.add(tempP);
 		
@@ -159,10 +159,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		loadB = new JButton("Open Workspace",new ImageIcon(MainFrame.class.getResource("/icons/document-open.png")));
 		loadB.addActionListener(this);
-        loadB.setToolTipText("Load all experiments and computed results from a previously saved workspace.");
+        //loadB.setToolTipText("Load all experiments and computed results from a previously saved workspace.");
 		tempP.add(loadB);
 		saveB = new JButton("Save Workspace",new ImageIcon(MainFrame.class.getResource("/icons/media-floppy.png")));
-        saveB.setToolTipText("Save the entire workspace (all experiments and computed results).");
+        //saveB.setToolTipText("Save the entire workspace (all experiments and computed results).");
 		saveB.addActionListener(this);
 		saveB.setEnabled(false);
 		tempP.add(saveB);
@@ -180,17 +180,26 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		computeAllB = new JButton("Compute All", new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 		computeAllB.addActionListener(this);
 		computeAllB.setEnabled(true);
-        computeAllB.setToolTipText("Compute all compounds asynchronously");
+        //computeAllB.setToolTipText("Compute all compounds asynchronously");
 		tempP.add(computeAllB);
 
         exportResultsB = new JButton("Export Results", new ImageIcon(MainFrame.class.getResource("/icons/document-export.png")));
         exportResultsB.addActionListener(this);
         exportResultsB.setEnabled(false);
-        exportResultsB.setToolTipText("Export identified molecular formulas into a CSV file.");
+        //exportResultsB.setToolTipText("Export identified molecular formulas into a CSV file.");
         tempP.add(exportResultsB);
+        controlPanel.add(tempP);
 
-		controlPanel.add(tempP);
-		
+        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+        tempP.setBorder(BorderFactory.createEtchedBorder());
+
+        aboutB = new JButton("About", new ImageIcon(MainFrame.class.getResource("/icons/help.png")));
+        aboutB.addActionListener(this);
+        aboutB.setEnabled(true);
+        tempP.add(aboutB);
+
+        controlPanel.add(tempP);
+
 		mainPanel.add(controlPanel,BorderLayout.NORTH);
 		
 		this.dropTarget = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
@@ -412,26 +421,27 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 			
 			
-		}else if(e.getSource()==loadB){
-			
-			JFileChooser jfc = new JFileChooser();
-			jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
-			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			jfc.setAcceptAllFileFilterUsed(false);
-			jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
-			
-			int returnVal = jfc.showOpenDialog(this);
-			if(returnVal == JFileChooser.APPROVE_OPTION){
-				WorkspaceIO io = new WorkspaceIO();
-				File selFile = jfc.getSelectedFile();
-				config.setDefaultSaveFilePath(selFile.getParentFile());
-				ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(this);
-				final WorkspaceWorker worker = new WorkspaceWorker(this, workspaceDialog,selFile);
-				worker.execute();
-				workspaceDialog.start();
-				worker.flushBuffer();
-			}
-			
+		}else if(e.getSource()==loadB) {
+
+            JFileChooser jfc = new JFileChooser();
+            jfc.setCurrentDirectory(config.getDefaultSaveFilePath());
+            jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            jfc.setAcceptAllFileFilterUsed(false);
+            jfc.addChoosableFileFilter(new SiriusSaveFileFilter());
+
+            int returnVal = jfc.showOpenDialog(this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                WorkspaceIO io = new WorkspaceIO();
+                File selFile = jfc.getSelectedFile();
+                config.setDefaultSaveFilePath(selFile.getParentFile());
+                ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(this);
+                final WorkspaceWorker worker = new WorkspaceWorker(this, workspaceDialog, selFile);
+                worker.execute();
+                workspaceDialog.start();
+                worker.flushBuffer();
+            }
+        } else if (e.getSource()==aboutB) {
+            new AboutDialog(this);
 		}else if(e.getSource()==closeB || e.getSource()==closeMI){
 			deleteCurrentCompound();
 		}else if(e.getSource()==editB || e.getSource()==editMI){
@@ -485,27 +495,58 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 
     private void exportResults() {
-        JFileChooser chooser = new JFileChooser(config.getCsvExportPath());
-        chooser.setDialogType(JFileChooser.SAVE_DIALOG);
-        chooser.setFileFilter(new SupportedExportCSVFormatsFilter());
-        int returnVal = chooser.showOpenDialog(this);
-        if(returnVal == JFileChooser.APPROVE_OPTION){
-            File file = chooser.getSelectedFile();
-            try {
-                final BufferedWriter fw = new BufferedWriter(new FileWriter(file));
-                final Enumeration<ExperimentContainer> ecs = getCompounds();
-                while (ecs.hasMoreElements()) {
-                    final ExperimentContainer ec = ecs.nextElement();
-                    if (ec.isComputed() && ec.getResults().size()>0) {
-                        IdentificationResult.writeIdentifications(fw, SiriusDataConverter.experimentContainerToSiriusExperiment(ec), ec.getRawResults());
-                    }
-                }
-                fw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                new ErrorListDialog(this, Arrays.asList(e.getMessage()));
-            }
-        }
+
+		JFileChooser jfc = new JFileChooser();
+		jfc.setCurrentDirectory(config.getCsvExportPath());
+		jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		jfc.setAcceptAllFileFilterUsed(false);
+		jfc.addChoosableFileFilter(new SupportedExportCSVFormatsFilter());
+
+		File selectedFile = null;
+
+		while(selectedFile==null){
+			int returnval = jfc.showSaveDialog(this);
+			if(returnval == JFileChooser.APPROVE_OPTION){
+				File selFile = jfc.getSelectedFile();
+				config.setCsvExportPath(selFile.getParentFile());
+
+				String name = selFile.getName();
+				if(!selFile.getAbsolutePath().endsWith(".csv") && !selFile.getName().endsWith(".tsv")){
+					selFile = new File(selFile.getAbsolutePath()+".csv");
+				}
+
+				if(selFile.exists()){
+					FilePresentDialog fpd = new FilePresentDialog(this, selFile.getName());
+					ReturnValue rv = fpd.getReturnValue();
+					if(rv==ReturnValue.Success){
+						selectedFile = selFile;
+					}
+//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
+				}else{
+					selectedFile = selFile;
+				}
+
+
+			}else{
+				break;
+			}
+		}
+
+		if(selectedFile!=null){
+			try {
+				try (final BufferedWriter fw = new BufferedWriter(new FileWriter(selectedFile))) {
+					final Enumeration<ExperimentContainer> ecs = getCompounds();
+					while (ecs.hasMoreElements()) {
+						final ExperimentContainer ec = ecs.nextElement();
+						if (ec.isComputed() && ec.getResults().size()>0) {
+							IdentificationResult.writeIdentifications(fw, SiriusDataConverter.experimentContainerToSiriusExperiment(ec), ec.getRawResults());
+						}
+					}
+				}
+			} catch (IOException e) {
+				new ExceptionDialog(this, e.toString());
+			}
+		}
     }
 
     private void computeCurrentCompound() {
@@ -699,7 +740,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 	    }catch(Exception e){
 	    	e.printStackTrace();
-	    	dtde.rejectDrop();
+	    	try {
+                dtde.rejectDrop();
+            } catch (Exception e2) {
+                e.printStackTrace();
+            }
 	    }
 	    
 		if(newFiles.size()>0){

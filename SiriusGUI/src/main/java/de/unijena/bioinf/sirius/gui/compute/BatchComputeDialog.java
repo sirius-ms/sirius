@@ -193,6 +193,29 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         southPanel.add(compute);
         southPanel.add(abort);
 
+        {
+            InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+            KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+            KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
+            String enterAction = "compute";
+            String escAction = "abort";
+            inputMap.put(enterKey, enterAction);
+            inputMap.put(escKey, escAction);
+            getRootPane().getActionMap().put(enterAction, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    startComputing();
+                }
+            });
+            getRootPane().getActionMap().put(escAction, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    abortComputing();
+                }
+            });
+        }
+
+
         this.pack();
         this.setResizable(false);
         setLocationRelativeTo(getParent());
@@ -264,62 +287,70 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
             }
         }else if(e.getSource() == this.compute){
-            String val = (String) instrumentCB.getSelectedItem();
-            String instrument = "";
-            if(val.equals("Q-TOF")){
-                instrument = "qtof";
-            }else if(val.equals("Orbitrap")){
-                instrument = "orbitrap";
-            }else if(val.equals("FT-ICR")){
-                instrument = "fticr";
-            }else{
-                throw new RuntimeException("no valid instrument");
-            }
-            FormulaConstraints constraints;
-            {
-                HashSet<String> eles = new HashSet<>();
-                if(borone.isSelected()) eles.add("B");
-                if(bromine.isSelected()) eles.add("Br");
-                if(chlorine.isSelected()) eles.add("Cl");
-                if(fluorine.isSelected()) eles.add("F");
-                if(iodine.isSelected()) eles.add("I");
-                if(selenium.isSelected()) eles.add("Se");
-                eles.addAll(additionalElements);
-                Element[] elems = new Element[eles.size()];
-                int k=0;
-                final PeriodicTable tb = PeriodicTable.getInstance();
-                for (String s : eles) {
-                    final Element elem = tb.getByName(s);
-                    if (elem != null)
-                        elems[k++] = elem;
-                }
-                if (k < elems.length) elems = Arrays.copyOf(elems, k);
-                constraints = new FormulaConstraints().getExtendedConstraints(elems);
-            }
-
-            final double ppm = snm.getNumber().doubleValue();
-
-            final int candidates = ((Number)candidatesSpinner.getModel().getValue()).intValue();
-
-            //entspricht setup() Methode
-            final BackgroundComputation bgc = owner.getBackgroundComputation();
-            final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
-            final ArrayList<BackgroundComputation.Task> tasks = new ArrayList<>();
-            final ArrayList<ExperimentContainer> compoundList = new ArrayList<>();
-            while (compounds.hasMoreElements()) {
-                final ExperimentContainer ec = compounds.nextElement();
-                if (ec.isUncomputed()) {
-                    final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates);
-                    tasks.add(task);
-                    compoundList.add(ec);
-                }
-            }
-            bgc.addAll(tasks);
-            for (ExperimentContainer ec : compoundList) {
-                owner.refreshCompound(ec);
-            }
-            dispose();
+            startComputing();
         }
+    }
+
+    private void abortComputing() {
+        this.dispose();
+    }
+
+    private void startComputing() {
+        String val = (String) instrumentCB.getSelectedItem();
+        String instrument = "";
+        if(val.equals("Q-TOF")){
+            instrument = "qtof";
+        }else if(val.equals("Orbitrap")){
+            instrument = "orbitrap";
+        }else if(val.equals("FT-ICR")){
+            instrument = "fticr";
+        }else{
+            throw new RuntimeException("no valid instrument");
+        }
+        FormulaConstraints constraints;
+        {
+            HashSet<String> eles = new HashSet<>();
+            if(borone.isSelected()) eles.add("B");
+            if(bromine.isSelected()) eles.add("Br");
+            if(chlorine.isSelected()) eles.add("Cl");
+            if(fluorine.isSelected()) eles.add("F");
+            if(iodine.isSelected()) eles.add("I");
+            if(selenium.isSelected()) eles.add("Se");
+            eles.addAll(additionalElements);
+            Element[] elems = new Element[eles.size()];
+            int k=0;
+            final PeriodicTable tb = PeriodicTable.getInstance();
+            for (String s : eles) {
+                final Element elem = tb.getByName(s);
+                if (elem != null)
+                    elems[k++] = elem;
+            }
+            if (k < elems.length) elems = Arrays.copyOf(elems, k);
+            constraints = new FormulaConstraints().getExtendedConstraints(elems);
+        }
+
+        final double ppm = snm.getNumber().doubleValue();
+
+        final int candidates = ((Number)candidatesSpinner.getModel().getValue()).intValue();
+
+        //entspricht setup() Methode
+        final BackgroundComputation bgc = owner.getBackgroundComputation();
+        final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
+        final ArrayList<BackgroundComputation.Task> tasks = new ArrayList<>();
+        final ArrayList<ExperimentContainer> compoundList = new ArrayList<>();
+        while (compounds.hasMoreElements()) {
+            final ExperimentContainer ec = compounds.nextElement();
+            if (ec.isUncomputed()) {
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates);
+                tasks.add(task);
+                compoundList.add(ec);
+            }
+        }
+        bgc.addAll(tasks);
+        for (ExperimentContainer ec : compoundList) {
+            owner.refreshCompound(ec);
+        }
+        dispose();
     }
 
     public boolean isSuccessful(){
