@@ -38,10 +38,12 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.SiriusResultWriter;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -68,6 +70,13 @@ public class CLI {
 
     public void compute() {
         try {
+            final SiriusResultWriter siriusResultWriter;
+            if (isUsingSiriusFormat()) {
+                final FileOutputStream fout = new FileOutputStream(options.getOutput());
+                siriusResultWriter = new SiriusResultWriter(fout);
+            } else {
+                siriusResultWriter = null;
+            }
             sirius.setProgress(progress);
             final Iterator<Instance> instances = handleInput(options);
             while (instances.hasNext()) {
@@ -108,14 +117,22 @@ public class CLI {
                     for (IdentificationResult result : results) {
                         printf("%" + n + "d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree()) * 100);
                     }
-                    output(i, results);
+                    if (siriusResultWriter==null) output(i, results);
                 } else {
-                    outputSingle(i, results.get(0), whiteset.iterator().next());
+                    if (siriusResultWriter==null) outputSingle(i, results.get(0), whiteset.iterator().next());
+                }
+                if (siriusResultWriter!=null) {
+                    siriusResultWriter.add(i.experiment, results);
                 }
             }
+            if (siriusResultWriter!=null) siriusResultWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean isUsingSiriusFormat() {
+        return options.getFormat().toLowerCase().contains("sirius") || options.getOutput().getName().toLowerCase().endsWith(".sirius");
     }
 
     private Integer getNumberOfCandidates() {

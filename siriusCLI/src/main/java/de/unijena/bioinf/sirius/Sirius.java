@@ -44,16 +44,54 @@ public class Sirius {
 
     public final static String VERSION_STRING = "Sirius 3.1";
 
-    public final static String CITATION = "Sebastian Böcker and Florian Rasche\n" +
-            "Towards de novo identification of metabolites by analyzing tandem mass spectra.\n" +
-            "Bioinformatics, 24:I49-I55, 2008. Proc. of European Conference on Computational Biology (ECCB 2008).\n" +
-            "\n" +
-            "Kerstin Scheubert, Franziska Hufsky, Florian Rasche and Sebastian Böcker\n" +
-            "Computing fragmentation trees from metabolite multiple mass spectrometry data.\n" +
-            "In Proc. of Research in Computational Molecular Biology (RECOMB 2011), volume 6577 of Lect Notes Comput Sci, pages 377-391. Springer, Berlin, 2011.\n\n" +
-            "Kai Dührkop and Sebastian Böcker\n" +
+    public final static String CITATION = "Kai Dührkop and Sebastian Böcker\n" +
             "Fragmentation trees reloaded.\n" +
-            "In Proc. of Research in Computational Molecular Biology (RECOMB 2015), volume 9029 of Lect Notes Comput Sci, pages 65-79. 2015.";
+            "In Proc. of Research in Computational Molecular Biology (RECOMB 2015), volume 9029 of Lect Notes Comput Sci, pages 65-79. 2015.\n" +
+            "\n" +
+            "Sebastian Böcker, Matthias Letzel, Zsuzsanna Lipták and Anton Pervukhin\n" +
+            "SIRIUS: Decomposing isotope patterns for metabolite identification.\n" +
+            "Bioinformatics, 25(2):218-224, 2009.\n" +
+            "\n" +
+            "Sebastian Böcker and Florian Rasche\n" +
+            "Towards de novo identification of metabolites by analyzing tandem mass spectra.\n" +
+            "Bioinformatics, 24:I49-I55, 2008. Proc. of European Conference on Computational Biology (ECCB 2008).";
+
+    public final static String CITATION_BIBTEX = "@Inproceedings{duehrkop15fragmentation,\n" +
+            "author = {Kai D\\\"uhrkop and Sebastian B\\\"ocker},\n" +
+            "title = {Fragmentation trees reloaded},\n" +
+            "booktitle = {Proc. of Research in Computational Molecular Biology (RECOMB 2015)},\n" +
+            "year = {2015},\n" +
+            "volume = {9029},\n" +
+            "pages = {65--79},\n" +
+            "series = {Lect Notes Comput Sci},\n" +
+            "organization = {Springer, Berlin},\n" +
+            "doi = {10.1007/978-3-319-16706-0_10},\n" +
+            "abstract = {Metabolites, small molecules that are involved in cellular reactions, provide a direct functional signature of cellular state. Untargeted metabolomics experiments usually relies on tandem mass spectrometry to identify the thousands of compounds in a biological sample. Today, the vast majority of metabolites remain unknown. Fragmentation trees have become a powerful tool for the interpretation of tandem mass spectrometry data of small molecules. These trees are found by combinatorial optimization, and aim at explaining the experimental data via fragmentation cascades. To obtain biochemically meaningful results requires an elaborate optimization function. We present a new scoring for computing fragmentation trees, transforming the combinatorial optimization into a maximum a~posteriori estimator. We demonstrate the superiority of the new scoring for two tasks: Both for the de novo identification of molecular formulas of unknown compounds, and for searching a database for structurally similar compounds, our methods performs significantly better than the previous scoring, as well as other methods for this task. Our method can expedite the workflow for untargeted metabolomics, allowing researchers to investigate unknowns using automated computational methods.},\n" +
+            "} \n" +
+            "@Article{boecker09sirius,\n" +
+            "author = {Sebastian B\\\"ocker and Matthias Letzel and {\\relax Zs}uzsanna Lipt{\\'a}k and Anton Pervukhin},\n" +
+            "title = {{SIRIUS}: Decomposing isotope patterns for metabolite identification},\n" +
+            "journal = {Bioinformatics},\n" +
+            "year = {2009},\n" +
+            "volume = {25},\n" +
+            "number = {2},\n" +
+            "pages = {218--224},\n" +
+            "url = {http://bioinformatics.oxfordjournals.org/cgi/content/full/25/2/218},\n" +
+            "doi = {10.1093/bioinformatics/btn603},\n" +
+            "pmid = {19015140},\n" +
+            "abstract = {Motivation: High-resolution mass spectrometry (MS) is among the most widely used technologies in metabolomics. Metabolites participate in almost all cellular processes, but most metabolites still remain uncharacterized. Determination of the sum formula is a crucial step in the identification of an unknown metabolite, as it reduces its possible structures to a hopefully manageable set. Results: We present a method for determining the sum formula of a metabolite solely from its mass and the natural distribution of its isotopes. Our input is a measured isotope pattern from a high resolution mass spectrometer, and we want to find those molecules that best match this pattern. Our method is computationally efficient, and results on experimental data are very promising: For orthogonal time-of-flight mass spectrometry, we correctly identify sum formulas for more than 90% of the molecules, ranging in mass up to 1000 Da. Availability: SIRIUS is available under the LGPL license at http://bio.informatik.uni-jena.de/sirius/. Contact: anton.pervukhin@minet.uni-jena.de},\n" +
+            "} \n" +
+            "@Article{boecker08towards,\n" +
+            "author = {Sebastian B\\\"ocker and Florian Rasche},\n" +
+            "title = {Towards de novo identification of metabolites by analyzing tandem mass spectra},\n" +
+            "journal = {Bioinformatics},\n" +
+            "year = {2008},\n" +
+            "volume = {24},\n" +
+            "pages = {I49-I55},\n" +
+            "doi = {10.1093/bioinformatics/btn270},\n" +
+            "pmid = {18689839},\n" +
+            "note = {Proc. of \\emph{European Conference on Computational Biology} (ECCB 2008)},\n" +
+            "}";
 
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
