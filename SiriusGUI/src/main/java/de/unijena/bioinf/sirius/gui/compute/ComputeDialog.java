@@ -220,7 +220,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"other"));
-		ionizations = new Vector<>();
+
+        ionizations = new Vector<>();
 		ionizations.add("[M+H]+");
 		ionizations.add("[M+Na]+");
 		ionizations.add("M+");
@@ -242,6 +243,13 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		ionToStringMap.put(Ionization.MMinusH,"M-");
 		
 		ionizationCB = new JComboBox<>(ionizations);
+        {
+            final String ion = ionToStringMap.get(ec.getIonization());
+            if (ion!=null)
+                ionizationCB.setSelectedItem(ion);
+            else
+                ionizationCB.setSelectedItem("[M+H]+");
+        }
 		otherPanel.add(new JLabel("ionization"));
 		otherPanel.add(ionizationCB);
 		instruments = new Vector<>();

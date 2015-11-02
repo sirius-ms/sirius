@@ -23,7 +23,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
-
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -616,6 +615,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		int index = this.compoundList.getSelectedIndex();
 		if (index < 0) return;
 		ExperimentContainer cont = this.compoundModel.get(index);
+        backgroundComputation.cancel(cont);
 		if (cont.getResults()!=null && cont.getResults().size()>0 && !config.isCloseNeverAskAgain()) {
 			CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(this, "When removing this experiment you will loose the computed identification results for \""  +cont.getGUIName()+"\"?", config);
 			CloseDialogReturnValue val = diag.getReturnValue();
@@ -753,13 +753,17 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 	
 	public void computationComplete(){
+        // check if computation is complete
 		this.computeAllActive = false;
 		this.computeAllB.setText("Compute All");
 		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 	}
 	
 	public void cancelComputation(){
-		//TODO BackgroundComputation abbrechen
+        for (ExperimentContainer c : backgroundComputation.cancelAll()) {
+            refreshCompound(c);
+        }
+        computationCanceled();
 	}
 	
 	public void computationCanceled(){

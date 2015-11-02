@@ -21,11 +21,6 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -120,30 +115,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
         otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"other"));
-        ionizations = new Vector<>();
-        ionizations.add("[M+H]+");
-        ionizations.add("[M+Na]+");
-        ionizations.add("M+");
-        ionizations.add("[M-H]-");
-        ionizations.add("M-");
-
-        stringToIonMap = new HashMap<>();
-        stringToIonMap.put("[M+H]+", Ionization.MPlusH);
-        stringToIonMap.put("[M+Na]+", Ionization.MPlusNa);
-        stringToIonMap.put("M+", Ionization.M);
-        stringToIonMap.put("[M-H]-", Ionization.MMinusH);
-        stringToIonMap.put("M-", Ionization.MMinusH);
-
-        ionToStringMap = new HashMap<>();
-        ionToStringMap.put(Ionization.MPlusH,"[M+H]+");
-        ionToStringMap.put(Ionization.MPlusNa,"[M+Na]+");
-        ionToStringMap.put(Ionization.M,"M+");
-        ionToStringMap.put(Ionization.MMinusH,"[M-H]-");
-        ionToStringMap.put(Ionization.MMinusH,"M-");
-
-        ionizationCB = new JComboBox<>(ionizations);
-        otherPanel.add(new JLabel("ionization"));
-        otherPanel.add(ionizationCB);
         instruments = new Vector<>();
         instruments.add("Q-TOF");
         instruments.add("Orbitrap");
@@ -358,136 +329,5 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return this.success;
     }
 
-//	private static List<SiriusResultElement> convertResults(List<IdentificationResult> in){
-//		List<SiriusResultElement> outs = new ArrayList<>();
-//		for(IdentificationResult res : in){
-//			SiriusResultElement out = new SiriusResultElement();
-//			out.setMolecularFormula(res.getMolecularFormula());
-//			out.setRank(res.getRank());
-//			out.setScore(res.getScore());
-//
-//			FTree ft = res.getTree();
-//			out.setRawTree(ft);
-//
-//			FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
-//			LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);
-//			FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrNull(Score.class);
-//
-//			double maxInt = Double.NEGATIVE_INFINITY;
-//			for(Fragment fragment : ft.getFragments()){
-//				double fragInt = peakAno.get(fragment).getIntensity();
-//				if(fragInt>maxInt) maxInt = fragInt;
-//			}
-//
-//			TreeNode root = initConvertNode(ft, peakAno, lscore, fscore, maxInt);
-//			out.setTree(root);
-//			outs.add(out);
-//		}
-//		return outs;
-//	}
-//
-//	public static TreeNode initConvertNode(FTree ft,FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
-//		Fragment rootK = ft.getRoot();
-//		TreeNode rootM = new DefaultTreeNode();
-//		rootM.setMolecularFormula(rootK.getFormula().toString());
-//		rootM.setMolecularFormulaMass(rootK.getFormula().getMass());
-//		rootM.setPeakMass(peakAno.get(rootK).getMass());
-//		rootM.setPeakAbsoluteIntenstiy(peakAno.get(rootK).getIntensity());
-//		rootM.setPeakRelativeIntensity(peakAno.get(rootK).getIntensity()/maxInt);
-//		double tempScore = fscore.get(rootK).sum();
-//		rootM.setScore(tempScore);
-//
-//		convertNode(ft, rootK, rootM, peakAno, lscore, fscore, maxInt);
-//
-//		return rootM;
-//	}
-//
-//	private static void convertNode(FTree ft, Fragment sourceK, TreeNode sourceM, FragmentAnnotation<Peak> peakAno, LossAnnotation<Score> lscore, FragmentAnnotation<Score> fscore, double maxInt){
-//		for(Loss edgeK : sourceK.getOutgoingEdges()){
-//			Fragment targetK = edgeK.getTarget();
-//
-//			DefaultTreeNode targetM = new DefaultTreeNode();
-//			targetM.setMolecularFormula(targetK.getFormula().toString());
-//			targetM.setMolecularFormulaMass(targetK.getFormula().getMass());
-//			targetM.setPeakMass(peakAno.get(targetK).getMass());
-//			targetM.setPeakAbsoluteIntenstiy(peakAno.get(targetK).getIntensity());
-//			targetM.setPeakRelativeIntensity(peakAno.get(targetK).getIntensity()/maxInt);
-//			double tempScore = fscore.get(targetK).sum();
-//			tempScore += lscore.get(edgeK).sum();
-//			targetM.setScore(tempScore);
-//
-//			DefaultTreeEdge edgeM = new DefaultTreeEdge();
-//			edgeM.setSource(sourceM);
-//			edgeM.setTarget(targetM);
-//			edgeM.setScore(lscore.get(edgeK).sum()); //TODO korrekt???
-//			MolecularFormula mfSource = sourceK.getFormula();
-//			MolecularFormula mfTarget = targetK.getFormula();
-//			MolecularFormula mfLoss = mfSource.subtract(mfTarget);
-//			edgeM.setLossFormula(mfLoss.toString());
-//			edgeM.setLossMass(targetM.getPeakMass()-sourceM.getPeakMass());
-//
-//			sourceM.addOutEdge(edgeM);
-//			targetM.setInEdge(edgeM);
-//
-//			convertNode(ft,targetK,targetM,peakAno,lscore,fscore,maxInt);
-//
-//		}
-//	}
-
-    private Ms2Experiment convert(ExperimentContainer ec,String ionization, double pm){
-        MutableMs2Experiment exp = new MutableMs2Experiment();
-        String val = ionization;
-//		if(ec.getIonization() == Ionization.M){
-//			val = "[M]+";
-//		}else if(ec.getIonization() == Ionization.MMinusH){
-//			val = "[M-H]-";
-//		}else if(ec.getIonization() == Ionization.MPlusH){
-//			val = "[M+H]+";
-//		}else if(ec.getIonization() == Ionization.MPlusNa){
-//			val = "[M+Na]+";
-//		}
-        exp.setPrecursorIonType(PeriodicTable.getInstance().ionByName(val));
-
-//		FormulaConstraints constraints = null; //TODO
-//		MutableMeasurementProfile profile = new MutableMeasurementProfile();
-//        profile.setFormulaConstraints(constraints);
-//        exp.setMeasurementProfile(profile);
-        System.err.println("ComputeDialog: setMeasurementProfile entfernt");
-
-        java.util.List<MutableMs2Spectrum> ms2spectra = new ArrayList<>();
-        exp.setMs2Spectra(ms2spectra);
-        for(CompactSpectrum sp : ec.getMs2Spectra()){
-            MutableMs2Spectrum spNew = new MutableMs2Spectrum();
-            System.err.println("ComputeDialog: setIonization nach Verdacht gesetzt");
-            spNew.setIonization(exp.getPrecursorIonType().getIonization());
-            spNew.setMsLevel(2);
-//        	spNew.setPrecursorMz(ec.getFocusedMass()); //TODO
-            spNew.setPrecursorMz(pm);
-//        	System.err.println(spNew.getPrecursorMz());
-            spNew.setCollisionEnergy(sp.getCollisionEnergy());
-            for(int i=0;i<sp.getSize();i++){
-                spNew.addPeak(sp.getMass(i), sp.getAbsoluteIntensity(i));
-            }
-            ms2spectra.add(spNew);
-        }
-
-        java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
-        if(ms1!=null && !ms1.isEmpty()){
-            CompactSpectrum ms11 = ms1.get(0);
-            double[] masses = new double[ms11.getSize()];
-            double[] ints = new double[ms11.getSize()];
-            for(int i=0;i<masses.length;i++){
-                masses[i] = ms11.getMass(i);
-                ints[i] = ms11.getAbsoluteIntensity(i);
-            }
-            SimpleSpectrum ms = new SimpleSpectrum(masses,ints);
-            exp.setMergedMs1Spectrum(ms);
-            java.util.List<SimpleSpectrum> temp = new ArrayList<>();
-            temp.add(ms);
-            exp.setMs1Spectra(temp);
-        }
-
-        return exp;
-    }
 
 }

@@ -28,10 +28,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BackgroundComputation {
@@ -42,6 +39,7 @@ public class BackgroundComputation {
     private volatile Worker worker;
     protected final HashMap<String, Sirius> siriusPerProfile;
     private final ConcurrentLinkedQueue<ExperimentContainer> cancel;
+    private ExperimentContainer currentComputation;
 
     public BackgroundComputation(MainFrame owner) {
         this.owner = owner;
@@ -61,6 +59,19 @@ public class BackgroundComputation {
         }
         container.setComputeState(ComputingStatus.UNCOMPUTED);
         cancel.add(container);
+    }
+
+    public List<ExperimentContainer> cancelAll() {
+        final ArrayList<ExperimentContainer> canceled = new ArrayList<>();
+        final Iterator<Task> iter = queue.iterator();
+        while (iter.hasNext()) {
+            final Task t = iter.next();
+            canceled.add(t.exp);
+            iter.remove();
+            t.exp.setComputeState(ComputingStatus.UNCOMPUTED);
+        }
+        if (currentComputation!=null) cancel(currentComputation);
+        return canceled;
     }
 
     public void add(Task containers) {
@@ -130,9 +141,16 @@ public class BackgroundComputation {
                 c.exp.setComputeState(c.state);
                 if (c.state==ComputingStatus.COMPUTED) {
                     c.exp.setRawResults(c.results);
+                } else if (c.state == ComputingStatus.COMPUTING) {
+                    currentComputation = c.exp;
                 }
                 owner.refreshCompound(c.exp);
             }
+        }
+
+        @Override
+        protected void done() {
+            owner.computationComplete();
         }
 
         @Override
@@ -187,6 +205,10 @@ public class BackgroundComputation {
             final List<IdentificationResult> results = sirius.identify(SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp),
                     container.numberOfCandidates, true, IsotopePatternHandling.score);
             container.results = results;
+        }
+
+        public void cancelCurrent() {
+
         }
     }
 
