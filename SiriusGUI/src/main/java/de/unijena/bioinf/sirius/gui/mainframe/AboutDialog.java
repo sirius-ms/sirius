@@ -88,6 +88,7 @@ public class AboutDialog extends JDialog{
         defineActions();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
+        setLocationRelativeTo(getParent());
         setVisible(true);
 
     }
