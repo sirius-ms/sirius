@@ -350,6 +350,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         for (ExperimentContainer ec : compoundList) {
             owner.refreshCompound(ec);
         }
+        owner.computationStarted();
         dispose();
     }
 

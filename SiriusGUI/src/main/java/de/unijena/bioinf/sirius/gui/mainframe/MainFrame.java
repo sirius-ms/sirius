@@ -62,6 +62,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private JPopupMenu expPopMenu;
 	private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI, cancelMI;
 	private JLabel aboutL;
+	private boolean computeAllActive;
 	
 	public MainFrame(){
 		super(Sirius.VERSION_STRING);
@@ -75,6 +76,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		} catch (Exception e) {
 		    // If Nimbus is not available, you can set the GUI to another look and feel.
 		}
+		
+		computeAllActive = false;
 
 
 		this.config = new ConfigStorage();
@@ -383,7 +386,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==computeB || e.getSource()==computeMI) {
 			computeCurrentCompound();
 		} else if (e.getSource() == computeAllB) {
-            final BatchComputeDialog dia = new BatchComputeDialog(this);
+			System.out.println(computeAllActive);
+			if(computeAllActive){
+				cancelComputation();
+			}else{
+				final BatchComputeDialog dia = new BatchComputeDialog(this);
+			}
         } else if (e.getSource() == cancelMI) {
             final ExperimentContainer ec = compoundList.getSelectedValue();
             if (ec!=null)
@@ -738,6 +746,28 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}
 	}
 	
+	public void computationStarted(){
+		this.computeAllActive = true;
+		this.computeAllB.setText("Cancel Computation");
+		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/cancel.png")));
+	}
+	
+	public void computationComplete(){
+		this.computeAllActive = false;
+		this.computeAllB.setText("Compute All");
+		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+	}
+	
+	public void cancelComputation(){
+		//TODO BackgroundComputation abbrechen
+	}
+	
+	public void computationCanceled(){
+		this.computeAllActive = false;
+		this.computeAllB.setText("Compute All");
+		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+	}
+	
 	//////////////////////////////////////////////////
 	////////////////// drag and drop /////////////////
 	//////////////////////////////////////////////////
@@ -826,7 +856,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
 		if( (csvFiles.size()>0&&(msFiles.size()+mgfFiles.size()==0)) || 
-				(csvFiles.size()+msFiles.size()+mgfFiles.size()==1) ){   //nur CSV bzw. nur ein File
+				(csvFiles.size()==0&&msFiles.size()==1&&mgfFiles.size()==0) ){   //nur CSV bzw. nur ein File
 			LoadController lc = new LoadController(this, config);
 //			files
 			
