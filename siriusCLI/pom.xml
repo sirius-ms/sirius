@@ -163,7 +163,8 @@
                             </classPath>
                             <jre>
                                 <minVersion>1.7.0</minVersion>
-                                <maxHeapSize>2048</maxHeapSize>
+                                <maxHeapPercent>80</maxHeapPercent>
+                                <maxHeapSize>1024</maxHeapSize>
                                 <opts>
                                     <opt>-Djava.library.path="%EXEDIR%;%PATH%;%GUROBI_HOME%/lib"</opt>
                                 </opts>

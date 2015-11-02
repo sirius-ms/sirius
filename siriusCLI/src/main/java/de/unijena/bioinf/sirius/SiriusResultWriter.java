@@ -39,15 +39,19 @@ public class SiriusResultWriter implements Closeable {
         this.entries = 0;
     }
 
-    public void add(Ms2Experiment experiment, List<IdentificationResult> results) throws IOException {
+    public synchronized void add(Ms2Experiment experiment, List<IdentificationResult> results) throws IOException {
         storeEntry(experiment, results, ++entries, zout);
     }
 
     private static void storeEntry(final Ms2Experiment exp, final List<IdentificationResult> results, int i, ZipOutputStream stream) throws IOException {
+
         final String prefix = i + "/";
         final ZipEntry dir = new ZipEntry(prefix);
         stream.putNextEntry(dir);
+        stream.closeEntry();
+
         // write INPUT data
+
         final ZipEntry msfile = new ZipEntry(prefix + "experiment.ms");
         stream.putNextEntry(msfile);
         stream.write(buffer(new Function<BufferedWriter, Void>() {
@@ -57,15 +61,18 @@ public class SiriusResultWriter implements Closeable {
                 try {
                     writer.write(input, exp);
                 } catch (IOException e) {
+                    e.printStackTrace();
                     throw new RuntimeException();
                 }
                 return null;
             }
         }).getBytes(Charset.forName("UTF-8")));
+        stream.closeEntry();
+
         // if results available, write trees
         if (results.size()>0) {
             for (final IdentificationResult ir : results) {
-                final ZipEntry tree = new ZipEntry(prefix + ir.getRank() + ".json");
+                final ZipEntry tree = new ZipEntry(prefix + (ir.getRank()+1) + ".json");
                 stream.putNextEntry(tree);
                 stream.write(buffer(new Function<BufferedWriter, Void>() {
                     @Override
@@ -73,17 +80,19 @@ public class SiriusResultWriter implements Closeable {
                         try {
                             new FTJsonWriter().writeTree(input,ir.getTree());
                         } catch (IOException e) {
+                            e.printStackTrace();
                             throw new RuntimeException(e);
                         }
                         return null;
                     }
                 }).getBytes(Charset.forName("UTF-8")));
+                stream.closeEntry();
             }
         }
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         zout.close();
     }
 
@@ -93,9 +102,11 @@ public class SiriusResultWriter implements Closeable {
             final BufferedWriter bw = new BufferedWriter(sw);
             f.apply(bw);
             bw.close();
+            sw.close();
             return sw.toString();
         } catch (IOException e) {
             assert false; // StringIO should not raise IO exceptions
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

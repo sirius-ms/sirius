@@ -12,10 +12,11 @@ SIRIUS expects **processed peak lists**. It does not contain routines for peak p
 
 The main purpose of SIRIUS is to identify the molecular formula of the measured ion. Beside this, the software also annotates the spectrum providing a molecular formula for each fragment peak as well as detecting noise peaks. A **fragmentation tree** is predicted. This tree contains the predicted fragmentation reaction leading to the fragment peaks.
 
-SIRIUS does not identify the (2D or 3D) structure of compounds, nor does it look up compounds in databases. There are other tools for this purpose, e.g. FingerId, MetFrag, CFM, and MAGMa.
+SIRIUS does not identify the (2D or 3D) structure of compounds, nor does it look up compounds in databases. There are other tools for this purpose, e.g. CSI:FingerId, MetFrag, CFM, and MAGMa.
 
 SIRIUS can be used within an analysis pipeline. For example you can identify the molecular formula of the ion and the fragment peaks and use this information as input for other tools like FingerID or MAGMa to identify the 2D structure of the measured compound. For this purpose you can also use the SIRIUS library directly, instead of the command line interface. See :doc:`library`.
 
+Since Sirius 3.1 our software ships with an **user interface**. The user interface, however, have to be downloaded separately. If you want to use an user interface, use the file **SiriusGUI.exe** instead of sirius.exe.
 
 Modelling the fragmentation process as tree comes with some flaws: Namely **pull-ups** and **parallelograms**. A pull-up is a fragment which is inserted too deep into the trees. Due to our combinatorial model SIRIUS will always try to generate very deep trees, claiming that there are many small fragmentation steps instead of few larger ones. SIRIUS will for example prefer three consecuting C2H2 losses to a single C6H6 loss. This does not affect the quality of the molecular formula identification. But when interpreting fragmentation trees you should keep this side-effect of the optimization in mind.
 **Parallelograms** are consecutive fragmentation processes that might happen in different orders. SIRIUS will always decide for one order of this fragmentation reactions, as this is the only valid way to model the fragmentation as tree.

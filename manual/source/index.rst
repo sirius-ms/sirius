@@ -11,6 +11,7 @@ Welcome to SIRIUS's documentation!
 
    introduction
    install
+   gui
    commandline
    library
    faq

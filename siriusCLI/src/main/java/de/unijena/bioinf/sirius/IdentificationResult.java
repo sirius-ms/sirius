@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class IdentificationResult implements Cloneable {
 
@@ -39,9 +40,19 @@ public class IdentificationResult implements Cloneable {
     protected int rank;
     protected double score;
 
+    private final static Pattern NeedToEscape = Pattern.compile("[\t\n\"]");
     public static void writeIdentifications(Writer writer, Ms2Experiment input, List<IdentificationResult> results) throws IOException {
         final StringBuilder buffer = new StringBuilder();
-        buffer.append(input.getName());
+        String name = input.getName();
+        // escape quotation marks
+        {
+            if (name.indexOf('"') >=0) {
+                name = "\"" + name.replaceAll("\"","\"\"") + "\"";
+            } else if (name.indexOf('\t')>=0 || name.indexOf('\n')>=0) {
+                name="\""+name+"\"";
+            }
+        }
+        buffer.append(name);
         buffer.append('\t');
         buffer.append(input.getIonMass());
         buffer.append('\t');

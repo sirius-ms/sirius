@@ -2,10 +2,15 @@
 Installation
 ##############
 
+User Interface
+---------
+
+The SiriusGUI.exe should hopefully work out of the box. Just run the SiriusGUI.exe on Windows or Sirius.sh on Linux.
+
 Windows
 ---------
 
-The sirius.exe should hopefully work out of the box. To execute SIRIUS from every location you have to add the location of the sirius.exe to your PATH environment variable.
+The sirius.exe as well as SiriusGUI.exe should hopefully work out of the box. To execute SIRIUS from every location you have to add the location of the sirius.exe to your PATH environment variable. This is not necessary for the user interface SiriusGUI.exe.
 
 Linux and MacOSX
 -------------------

@@ -56,6 +56,11 @@ public class CLI {
     protected ShellProgress progress;
 
     public static void main(String[] args) {
+        if (args.length==0) {
+            help(CliFactory.createCli(SiriusOptions.class).getHelpMessage());
+            cite();
+            System.exit(1);
+        }
         final CLI cli = new CLI();
         cli.setArgs(args);
         cli.compute();
@@ -69,10 +74,12 @@ public class CLI {
     SiriusOptions options;
 
     public void compute() {
+        SiriusResultWriter siriusResultWriter=null;
         try {
-            final SiriusResultWriter siriusResultWriter;
             if (isUsingSiriusFormat()) {
-                final FileOutputStream fout = new FileOutputStream(options.getOutput());
+                File siriusOut = options.getOutput();
+                if (siriusOut==null) siriusOut = new File("results.sirius");
+                final FileOutputStream fout = new FileOutputStream(siriusOut);
                 siriusResultWriter = new SiriusResultWriter(fout);
             } else {
                 siriusResultWriter = null;
@@ -117,22 +124,29 @@ public class CLI {
                     for (IdentificationResult result : results) {
                         printf("%" + n + "d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree()) * 100);
                     }
-                    if (siriusResultWriter==null) output(i, results);
+                    output(i, results);
                 } else {
-                    if (siriusResultWriter==null) outputSingle(i, results.get(0), whiteset.iterator().next());
+                    outputSingle(i, results.get(0), whiteset.iterator().next());
                 }
                 if (siriusResultWriter!=null) {
                     siriusResultWriter.add(i.experiment, results);
                 }
             }
-            if (siriusResultWriter!=null) siriusResultWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+
+            if (siriusResultWriter!=null) try {
+                siriusResultWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 
     private boolean isUsingSiriusFormat() {
-        return options.getFormat().toLowerCase().contains("sirius") || options.getOutput().getName().toLowerCase().endsWith(".sirius");
+        return (options.getFormat() !=null && (options.getFormat().toLowerCase().contains("sirius")) || (options.getFormat()==null && options.getOutput().getName().toLowerCase().endsWith(".sirius")));
     }
 
     private Integer getNumberOfCandidates() {
@@ -151,6 +165,8 @@ public class CLI {
                     new FTJsonWriter().writeTreeToFile(name, result.getTree());
                 } else if (format.equalsIgnoreCase("dot")) {
                     new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(name, result.getTree());
+                } else if (format.equalsIgnoreCase("sirius")) {
+                    // do nothing
                 } else {
                     throw new RuntimeException("Unknown format '" + format + "'");
                 }
@@ -163,7 +179,7 @@ public class CLI {
 
     }
 
-    protected void cite() {
+    protected static void cite() {
         System.out.println("Please cite the following paper when using our method:");
         System.out.println(Sirius.CITATION);
     }
@@ -181,7 +197,7 @@ public class CLI {
         final int i = n.lastIndexOf('.');
         if (i >= 0) {
             final String ext = n.substring(i+1);
-            if (ext.equals("json") || ext.equals("dot")) {
+            if (ext.equals("json") || ext.equals("dot") || ext.equalsIgnoreCase("sirius")) {
                 format = ext;
             } else format = "dot";
         } else {
@@ -200,6 +216,8 @@ public class CLI {
             new FTJsonWriter().writeTreeToFile(target, result.getTree());
         } else if (format.equalsIgnoreCase("dot")) {
             new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(target, result.getTree());
+        } else if (format.equalsIgnoreCase("sirius")) {
+            // do nothing
         } else {
             throw new RuntimeException("Unknown format '" + format + "'");
         }
@@ -236,7 +254,7 @@ public class CLI {
                 System.exit(0);
             }
         } catch (HelpRequestedException e) {
-            System.out.println(e.getMessage());
+            help(e.getMessage());
             System.out.println("");
             cite();
             System.exit(0);
@@ -250,19 +268,25 @@ public class CLI {
         // validate
         final File target = options.getOutput();
         if (target != null) {
-            if (target.exists() && !target.isDirectory()) {
+            if (target.exists() && !target.isDirectory() && !isUsingSiriusFormat()) {
                 System.err.println("Specify a directory name as output directory");
                 System.exit(1);
-            } else if (target.getName().indexOf('.') < 0){
+            } else if (target.getName().indexOf('.') < 0 && !isUsingSiriusFormat()){
                 target.mkdirs();
             }
         }
 
         final String format = options.getFormat();
-        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot")) {
+        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot") && !format.equalsIgnoreCase("sirius")) {
             System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
             System.exit(1);
         }
+    }
+
+    private static void help(String message) {
+        System.out.println(Sirius.VERSION_STRING);
+        System.out.println("Usage example:\nsirius -p qtof -e CHNOPSCl[3]I[3] -1 ms1.csv -2 ms2.csv\n");
+        System.out.println(message);
     }
 
     public void setup(SiriusOptions opts) {
