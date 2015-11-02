@@ -45,7 +45,7 @@ public class WorkspaceIO {
     }
 
     public void load(File file, Queue<ExperimentContainer> queue) throws IOException {
-        try (final ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)))) {
+        try (final ZipInputStream zin = new ZipInputStream(new FileInputStream(file))) {
 
             ZipEntry entry;
             final TreeMap<Integer, IdentificationResult> results = new TreeMap<>();

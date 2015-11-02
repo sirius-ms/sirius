@@ -77,7 +77,6 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
             setVisible(true);
         } else {
             decision = Decision.MERGE;
-            return;
         }
     }
 

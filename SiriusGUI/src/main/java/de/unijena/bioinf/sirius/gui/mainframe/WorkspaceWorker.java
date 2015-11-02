@@ -35,12 +35,22 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
     private final ArrayDeque<ExperimentContainer> buffer;
     private final List<File> files;
 
+    private volatile String errorMessage;
+
     public WorkspaceWorker(MainFrame mainFrame, ImportWorkspaceDialog dialog, File file) {
         this.dialog = dialog;
         this.mainFrame = mainFrame;
         this.buffer = new ArrayDeque<>();
         this.files = new ArrayList<>();
         this.files.add(file);
+    }
+
+    public boolean hasErrorMessage() {
+        return errorMessage!=null;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     public WorkspaceWorker(MainFrame mainFrame, ImportWorkspaceDialog dialog, List<File> files) {
@@ -71,6 +81,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
 
     public void flushBuffer() {
         if (dialog.getDecision() == ImportWorkspaceDialog.Decision.ABORT || dialog.getDecision() == ImportWorkspaceDialog.Decision.NONE) return;
+        if (errorMessage!=null) return;
         while (!buffer.isEmpty()) {
             mainFrame.importCompound(buffer.pollFirst());
         }
@@ -108,7 +119,13 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
             }
         };
         for (File file : files) {
-            new WorkspaceIO().load(file, publishingQueue);
+            try {
+                new WorkspaceIO().load(file, publishingQueue);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.errorMessage = e.toString();
+                return null;
+            }
         }
         return all;
     }

@@ -34,6 +34,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener, KeyListener{
 	
@@ -431,14 +432,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
             int returnVal = jfc.showOpenDialog(this);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                WorkspaceIO io = new WorkspaceIO();
                 File selFile = jfc.getSelectedFile();
                 config.setDefaultSaveFilePath(selFile.getParentFile());
-                ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(this);
-                final WorkspaceWorker worker = new WorkspaceWorker(this, workspaceDialog, selFile);
-                worker.execute();
-                workspaceDialog.start();
-                worker.flushBuffer();
+				importWorkspace(Arrays.asList(selFile));
             }
         } else if (e.getSource()==aboutB) {
             new AboutDialog(this);
@@ -494,7 +490,26 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 	}
 
-    private void exportResults() {
+	private void importWorkspace(List<File> selFile) {
+		ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(this);
+		final WorkspaceWorker worker = new WorkspaceWorker(this, workspaceDialog, selFile);
+		worker.execute();
+		workspaceDialog.start();
+		worker.flushBuffer();
+		try {
+			worker.get();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		} catch (ExecutionException e1) {
+			e1.printStackTrace();
+		}
+		worker.flushBuffer();
+		if (worker.hasErrorMessage()) {
+			new ExceptionDialog(this, worker.getErrorMessage());
+		}
+	}
+
+	private void exportResults() {
 
 		JFileChooser jfc = new JFileChooser();
 		jfc.setCurrentDirectory(config.getCsvExportPath());
@@ -764,11 +779,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 		}
 		if (siriusFiles.size() > 0 ) {
-			final ImportWorkspaceDialog wd = new ImportWorkspaceDialog(this);
-			final WorkspaceWorker io = new WorkspaceWorker(this, wd, siriusFiles);
-			io.execute();
-			wd.start();
-			io.flushBuffer();
+			importWorkspace(siriusFiles);
 		}
 
 		DropImportDialog dropDiag = new DropImportDialog(this, rawFiles);
