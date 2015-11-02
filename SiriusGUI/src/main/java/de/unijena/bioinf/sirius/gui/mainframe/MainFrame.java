@@ -23,6 +23,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -60,6 +61,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	private JPopupMenu expPopMenu;
 	private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI, cancelMI;
+	private JLabel aboutL;
 	
 	public MainFrame(){
 		super(Sirius.VERSION_STRING);
@@ -129,7 +131,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		mainPanel.add(compoundPanel,BorderLayout.WEST);
 
-		JPanel controlPanel = new JPanel(new WrapLayout(FlowLayout.LEFT,3,0));
+//		JPanel controlPanel = new JPanel(new WrapLayout(FlowLayout.LEFT,3,0));
+		JPanel leftControlPanel = new JPanel(new WrapLayout(FlowLayout.LEFT,3,0));
 //		controlPanel.setBorder(BorderFactory.createEtchedBorder());
 		
 		JPanel tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
@@ -153,7 +156,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		closeB.setEnabled(false);
         //closeB.setToolTipText("Remove an experiment together with its results from the workspace");
 		tempP.add(closeB);
-		controlPanel.add(tempP);
+		leftControlPanel.add(tempP);
 		
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
@@ -167,7 +170,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		saveB.addActionListener(this);
 		saveB.setEnabled(false);
 		tempP.add(saveB);
-		controlPanel.add(tempP);
+		leftControlPanel.add(tempP);
 		
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
@@ -189,17 +192,39 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         exportResultsB.setEnabled(false);
         //exportResultsB.setToolTipText("Export identified molecular formulas into a CSV file.");
         tempP.add(exportResultsB);
-        controlPanel.add(tempP);
+        leftControlPanel.add(tempP);
 
-        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
-        tempP.setBorder(BorderFactory.createEtchedBorder());
+//        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+//        tempP.setBorder(BorderFactory.createEtchedBorder());
+        JPanel rightControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,2,2));
+//        rightControlPanel.setBorder(Borderfac);
 
-        aboutB = new JButton("About", new ImageIcon(MainFrame.class.getResource("/icons/help.png")));
-        aboutB.addActionListener(this);
-        aboutB.setEnabled(true);
-        tempP.add(aboutB);
+//        aboutB = new JButton(new ImageIcon(MainFrame.class.getResource("/icons/help-about.png")));
+//        aboutB.addActionListener(this);
+//        aboutB.setEnabled(true);
+//        
+//        aboutB.setBorderPainted(false);
+//        aboutB.setOpaque(false);
+//        aboutB.setFocusPainted(false);
+//        aboutB.setContentAreaFilled(false);
+//        aboutB.setMargin(new Insets(0, 0, 0, 0));
+        
+        AboutMouseAdapter adapter = new AboutMouseAdapter(this);
+        
+        aboutL = new JLabel(new ImageIcon(MainFrame.class.getResource("/icons/help-about.png"))); 
+        aboutL.addMouseListener(this);
+        
+        aboutL.addMouseListener(adapter);
+        
+        rightControlPanel.add(aboutL);
+        
 
-        controlPanel.add(tempP);
+        Box controlPanel = Box.createHorizontalBox();
+//        JPanel controlPanel = new JPanel(new BorderLayout());
+        controlPanel.add(leftControlPanel);
+        controlPanel.add(Box.createHorizontalGlue());
+        controlPanel.add(rightControlPanel);
+        
 
 		mainPanel.add(controlPanel,BorderLayout.NORTH);
 		
@@ -901,4 +926,17 @@ class SiriusSaveFileFilter extends FileFilter{
 		return ".sirius";
 	}
 	
+}
+
+class AboutMouseAdapter extends MouseAdapter{
+	
+	private JFrame owner;
+	
+	public AboutMouseAdapter(JFrame owner) {
+		this.owner = owner;
+	}
+	
+	public void mousePressed(MouseEvent m){
+		new AboutDialog(owner);
+	}
 }
