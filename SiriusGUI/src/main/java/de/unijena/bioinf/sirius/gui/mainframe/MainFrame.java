@@ -180,7 +180,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		*/
 		computeAllB = new JButton("Compute All", new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
 		computeAllB.addActionListener(this);
-		computeAllB.setEnabled(true);
+		computeAllB.setEnabled(false);
         //computeAllB.setToolTipText("Compute all compounds asynchronously");
 		tempP.add(computeAllB);
 
@@ -681,6 +681,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		if(e.getSource()==this.compoundList){
+			if(this.compoundModel.size()>0){
+				this.computeAllB.setEnabled(true);
+			}else{
+				this.computeAllB.setEnabled(false);
+			}
 			int index = compoundList.getSelectedIndex();
             refreshComputationMenuItem();
 			if(index<0){
