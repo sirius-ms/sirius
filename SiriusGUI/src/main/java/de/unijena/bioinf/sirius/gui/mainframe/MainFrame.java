@@ -293,7 +293,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		expPopMenu.addSeparator();
 		expPopMenu.add(editMI);
 		expPopMenu.add(closeMI);
-		expPopMenu.addSeparator();
+//		expPopMenu.addSeparator();
 	}
 
 	public BackgroundComputation getBackgroundComputation() {
@@ -825,7 +825,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
-		if(csvFiles.size()>0&&(msFiles.size()+mgfFiles.size()==0)){   //nur CSV
+		if( (csvFiles.size()>0&&(msFiles.size()+mgfFiles.size()==0)) || 
+				(csvFiles.size()+msFiles.size()+mgfFiles.size()==1) ){   //nur CSV bzw. nur ein File
 			LoadController lc = new LoadController(this, config);
 //			files
 			
