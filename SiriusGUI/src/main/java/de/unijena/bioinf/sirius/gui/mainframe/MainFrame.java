@@ -798,8 +798,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
-		Transferable tr = dtde.getTransferable();
 		dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+		Transferable tr = dtde.getTransferable();
 		DataFlavor[] flavors = tr.getTransferDataFlavors();
 	    List<File> newFiles = new ArrayList<File>();
 	    try{
