@@ -18,39 +18,50 @@ SI
  
  \section{Getting started.}
  
- TODO Bild vom Hauptfenster, Buttons hervorheben, Kurzbeschreibung fuer jeden Button. Für die Funktion der meisten Buttons sollte das ausreichen
+ \subsection{Overview}
  
- M1 Import experiment
- M2 Batch import
- M3 Edit
- M4 Close
+ \includegraphics[width=0.9\linewidth]{pics/mainframe.png}
  
- M5 Open workspace
- M6 Close workspace
- M7 Compute 
+ \begin{description}
+  \item[M1 Import dialog:] see \ref{sec:import-experiment}
+  \item[M2 Batch Import:] see \ref{sec:import-batch}
+  \item[M3 Edit-dialog:] Edit the properties of an experiment. Spectra can be added and removed, compound name, ms levels and collision energies can edited.
+  \item[M4 Close:] Closes the selected experiment.
+  \item[M5 Open workspace:] Opens a workspace
+  \item[M6 Save workspace:] Saves the current workspace
+  \item[M7 Compute All Dialog:] Opens an dialog to compute all experiments, see \ref{sec:compute-all}
+  \item[M8 Export Results:] Exports for every experiment in the workspace the molecular formulas with scores into a textfile.
+ \end{description} 
  
  \subsection{Data import}
  
- The Sirius GUI offers two types of data import, ''import experiment'' (M1) and ''batch impor'' (M2). 
+ The Sirius GUI offers two types of data import, ''import experiment'' (M1) and ''batch import'' (M2). 
  With ''import experiment'' it is possible to combine  several files to one experiment. 
  ''Batch import'' serves to import several experiments in a fast way while every file is assigned to one experiment. 
  Drag and Drop is supported for both operations.
  
  \subsubsection{Import experiment}
+ \label{sec:import-experiment}
+ 
+ \includegraphics[width=0.9\linewidth]{pics/load.png}
  
  This dialog is used to combine one or more files to one experiment. Adding spectra to the experiment is done via 
  the ''+'' Button or Drag and Drop. It is important for each spectra that the correct ms mode is set.  
  Only one MS1 spectrum is allowed per experiment. If multiple MS1 spectra should be used, the spectra must be merged externally.  
  The compound name and collision energies are optional and have no effect on the algorithm. 
- Both are used  for a better distinction of experiments and spectra. 
+ Both are used for a better distinction of experiments and spectra. 
  
  \subsubsection{Batch import}
+ \label{sec:import-batch}
  
  The batch import is used to import several experiments at once. For this, every file is assigned to one experiment. 
  Compound name, ms levels and collision energies are taken from input files. Wrong values can be changed afterwards with the edit dialog (M3).  
  Since CSVs do not contain the necessary information, they are not supported in this mode.
  
  \subsection{Computation of molecular formulas and fragmentation trees}
+ \label{sec:compute-all}
+ 
+ \includegraphics[width=0.9\linewidth]{pics/compute_dialog.png} 
  
  The computation of the molecular formulas and fragmentation trees is controlled over the compute all dialog (M7).
  This dialog computed all experiments in the workspace. Information about rare elements and instrument settings are needed.
@@ -81,7 +92,11 @@ SI
  
  \subsection{Visualization of results}
  
- %TODO Bild von Ergebnispanel einfuegen, MF List und beide tabs hervorheben + Kurzerklaerung
+ \includegraphics[width=0.9\linewidth]{pics/tree_view.png}
+ 
+ \includegraphics[width=0.9\linewidth]{pics/spectra_view.png}
+ 
+ %TODO Bilder untereinander an passender Stelle anordnen
  
  The molecular formula list contains the best molecular formulas, sorted by score. For every molecular formula, 
  the corresponding fragmentation tree is visualized in the „tree view“ tab. Alternatively, the „spectra view“ 
