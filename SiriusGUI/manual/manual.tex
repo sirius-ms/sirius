@@ -18,7 +18,7 @@ SI
  
  \section{Getting started.}
  
- TODO Bild vom Hauptfenster, Buttons hervorheben, Kurzbeschreibung fuer jeden Button
+ TODO Bild vom Hauptfenster, Buttons hervorheben, Kurzbeschreibung fuer jeden Button. Für die Funktion der meisten Buttons sollte das ausreichen
  
  M1 Import experiment
  M2 Batch import
@@ -31,9 +31,9 @@ SI
  
  \subsection{Data import}
  
- The Sirius GUI offers two types of data import, ''import experiment'' (M1) and „batch import“ (M2). 
+ The Sirius GUI offers two types of data import, ''import experiment'' (M1) and ''batch impor'' (M2). 
  With ''import experiment'' it is possible to combine  several files to one experiment. 
- ''Batch import'' serves to import several experiments in a fast way. Every file is assigned to one experiment. 
+ ''Batch import'' serves to import several experiments in a fast way while every file is assigned to one experiment. 
  Drag and Drop is supported for both operations.
  
  \subsubsection{Import experiment}
@@ -41,7 +41,7 @@ SI
  This dialog is used to combine one or more files to one experiment. Adding spectra to the experiment is done via 
  the ''+'' Button or Drag and Drop. It is important for each spectra that the correct ms mode is set.  
  Only one MS1 spectrum is allowed per experiment. If multiple MS1 spectra should be used, the spectra must be merged externally.  
- The compound name and the collision energies are optional and have no effect on the algorithm. 
+ The compound name and collision energies are optional and have no effect on the algorithm. 
  Both are used  for a better distinction of experiments and spectra. 
  
  \subsubsection{Batch import}
@@ -52,8 +52,12 @@ SI
  
  \subsection{Computation of molecular formulas and fragmentation trees}
  
- The computation of the molecular formulas and fragmentation trees is controlled over the compute dialog (M7). 
- Information about the focused mass, rare elements and instrument settings are needed for a correct function.
+ The computation of the molecular formulas and fragmentation trees is controlled over the compute all dialog (M7).
+ This dialog computed all experiments in the workspace. Information about rare elements and instrument settings are needed.
+ The focused mass is selected automatically (TODO: Wir sollten in der subsubsection schreiben nach welchen Regeln die FM gewählt wird?!)
+ Furthermore, it is possible to compute a selected experiment by using the compute option in the context menu.
+ This option should be used if the user wants to adapt the used focused mass or if the selected experiment differs from the other experiments in
+ the workspace in terms of rare elements or instrument settings.
  
  \subsubsection{Focused mass}
  
@@ -69,10 +73,6 @@ SI
  If it is assumed that the compound contains other rare elements, this elements should be added. To considered wrong elements will not lead necessarily 
  to wrong results. But they will increase the size of the search space, which will increase the running time and can lead to in some cases 
  to wrong molecular formulas that explain the data better than the real molecular formula.
- %The program offers an auto-detection for the rare element chlorine (Cl), bromine (Br), borone (B) and selenium (Se) (TODO???). 
- %Because the shape of the isotope pattern is used for the analysis, a MS1 spectrum with isotopic patterns must be given. 
- %The current version of this detection is comparable simple. The results of the analysis should be treated with caution. 
- %An improved version of this auto-detection will be implemented in the next version.
  
  \subsubsection{Instrument settings}
  
