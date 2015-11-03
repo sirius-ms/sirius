@@ -146,7 +146,7 @@ public class CLI {
     }
 
     private boolean isUsingSiriusFormat() {
-        return (options.getFormat() !=null && (options.getFormat().toLowerCase().contains("sirius")) || (options.getFormat()==null && options.getOutput().getName().toLowerCase().endsWith(".sirius")));
+        return (options.getFormat() !=null && (options.getFormat().toLowerCase().contains("sirius")) || (options.getFormat()==null && options.getOutput()!=null && options.getOutput().getName().toLowerCase().endsWith(".sirius")));
     }
 
     private Integer getNumberOfCandidates() {
