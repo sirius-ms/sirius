@@ -19,6 +19,7 @@ public class DataFormatIdentifier {
 		if(f.getName().toLowerCase().endsWith(".ms")) return DataFormat.JenaMS;
 		else if(csv.isCompatible(f)) return DataFormat.CSV;
 		else if(f.getName().toLowerCase().endsWith(".mgf")) return DataFormat.MGF;
+		else if (f.getName().toLowerCase().endsWith(".txt")) return DataFormat.CSV;
 		else return DataFormat.NotSupported;
 	}
 

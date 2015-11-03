@@ -5,6 +5,7 @@ import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 
@@ -20,6 +21,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
 				DropTargetListener, MouseListener{
@@ -30,6 +32,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	private JButton editCE/*, changeMSLevel*/;
 	private JTextField cEField;
 	private JComboBox<String> msLevelBox;
+	private Vector<Ionization> ionizations;
+	private JComboBox<Ionization> ionizationCB;
 	
 	private DefaultListModel<SpectrumContainer> listModel;
 	
@@ -115,8 +119,18 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		nameB.addActionListener(this);
 		namePanel.add(nameB);
 		propsPanel.add(namePanel);
-		
+
 		JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ionization"));
+		ionizations = new Vector<>();
+		for (Ionization i : Ionization.values()) {
+			ionizations.add(i);
+		}
+		ionizationCB = new JComboBox<>(ionizations);
+		cEPanel.add(ionizationCB);
+		propsPanel.add(cEPanel);
+
+		cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		cEField = new JTextField(10);
 		cEField.setEditable(false);
 		cEField.setEnabled(false);
@@ -130,7 +144,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		
 		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
 		propsPanel.add(cEPanel);
-		
+
 //		changeMSLevel = new JButton("change");
 //		changeMSLevel.addActionListener(this);
 //		changeMSLevel.setEnabled(false);
@@ -222,7 +236,13 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		
 	}
 
-	@Override
+    @Override
+    public void ionizationChanged(Ionization ionization) {
+        if (ionization!=null)
+            ionizationCB.setSelectedItem(ionization);
+    }
+
+    @Override
 	public void spectraAdded(CompactSpectrum sp) {
 		listModel.addElement(new SpectrumContainer(sp));
 	}
@@ -295,6 +315,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			this.returnValue = ReturnValue.Success;
 			this.setVisible(false);
 			for(LoadDialogListener ldl : listeners){
+				ldl.setIonization((Ionization)ionizationCB.getSelectedItem());
 				ldl.completeProcess();
 			}
 		}else if(e.getSource()==this.abort){
@@ -427,13 +448,13 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
+		dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 		Transferable tr = dtde.getTransferable();
 	    DataFlavor[] flavors = tr.getTransferDataFlavors();
 	    List<File> newFiles = new ArrayList<File>();
 	    try{
 			for (int i = 0; i < flavors.length; i++) {
 				if (flavors[i].isFlavorJavaFileListType()) {
-					dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 					List files = (List) tr.getTransferData(flavors[i]);
 					for (Object o : files) {
 						File file = (File) o;

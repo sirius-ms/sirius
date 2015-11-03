@@ -26,7 +26,7 @@ public class ExperimentContainer {
 	public ExperimentContainer() {
 		ms1Spectra = new ArrayList<CompactSpectrum>();
 		ms2Spectra = new ArrayList<CompactSpectrum>();
-		ionization = Ionization.Unknown;
+		ionization = Ionization.UnknownPlus;
 		selectedFocusedMass = -1;
 		dataFocusedMass = -1;
 		name = "";
@@ -116,14 +116,15 @@ public class ExperimentContainer {
 	public void setRawResults(List<IdentificationResult> results) {
 		this.originalResults = results;
 		this.results = SiriusResultElementConverter.convertResults(originalResults);
-		this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
+		if (this.computeState==ComputingStatus.COMPUTING)
+			this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
 	}
 
 	public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
 		this.originalResults = results;
 		this.results = myxoresults;
-		this.computeState=ComputingStatus.COMPUTED;
-        this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
+        if (this.computeState==ComputingStatus.COMPUTING)
+			this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
 	}
 
 

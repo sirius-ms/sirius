@@ -70,30 +70,11 @@ public class SiriusDataConverter {
     }
 
     public static de.unijena.bioinf.sirius.gui.mainframe.Ionization siriusIonizationToEnum(PrecursorIonType ion) {
-        final PeriodicTable table = PeriodicTable.getInstance();
-        if (ion.isIonizationUnknown()) return Ionization.Unknown;
-        if (ion.equals(table.ionByName("[M+H]+"))) {
-            return Ionization.MPlusH;
-        } else if (ion.equals(table.ionByName("[M]+"))) {
-            return Ionization.M;
-        } else if (ion.equals(table.ionByName("[M+Na]+"))) {
-            return Ionization.MPlusNa;
-        } else if (ion.equals(table.ionByName("[M-H]-"))) {
-            return Ionization.MMinusH;
-        } else return Ionization.Unknown; // -_-
+        return Ionization.fromSirius(ion);
     }
 
     public static PrecursorIonType enumToSiriusIonization(de.unijena.bioinf.sirius.gui.mainframe.Ionization aenum)  {
-        final PeriodicTable pt = PeriodicTable.getInstance();
-        switch (aenum) {
-            case Unknown: return pt.ionByName("[M+?]+");
-            case MMinusH: return pt.ionByName("[M-H]-");
-            case MPlusH: return pt.ionByName("[M+H]+");
-            case M: return pt.ionByName("[M]+");
-            case MPlusNa: return pt.ionByName("[M+Na]+");
-            default: return pt.ionByName("[M+?]+");
-
-        }
+        return aenum.toRealIonization();
     }
 
     public static CompactExperiment siriusExperimentToCompactExperiment(Ms2Experiment sirius) {
@@ -110,11 +91,11 @@ public class SiriusDataConverter {
         return exp;
     }
 
-    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, String ionization, double ionMass) {
+    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, Ionization ionization, double ionMass) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(myxo.getName());
         exp.setIonMass(ionMass);
-        exp.setPrecursorIonType(PeriodicTable.getInstance().ionByName(ionization));
+        exp.setPrecursorIonType(ionization.toRealIonization());
         for (CompactSpectrum cs : myxo.getMs1Spectra()) {
             exp.getMs1Spectra().add(myxoMs1ToSiriusMs1(cs));
         }
@@ -125,7 +106,7 @@ public class SiriusDataConverter {
     }
 
     public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo) {
-        return experimentContainerToSiriusExperiment(myxo, enumToSiriusIonization(myxo.getIonization()).toString(), myxo.getFocusedMass());
+        return experimentContainerToSiriusExperiment(myxo, myxo.getIonization(), myxo.getFocusedMass());
     }
 
     public static SiriusResultElement siriusResultToMyxoResult(IdentificationResult ir) {

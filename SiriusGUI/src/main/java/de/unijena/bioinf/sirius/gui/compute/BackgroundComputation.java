@@ -139,8 +139,9 @@ public class BackgroundComputation {
             super.process(chunks);
             for (Task c : chunks) {
                 c.exp.setComputeState(c.state);
-                if (c.state==ComputingStatus.COMPUTED) {
+                if (c.state==ComputingStatus.COMPUTED || c.state==ComputingStatus.FAILED) {
                     c.exp.setRawResults(c.results);
+                    c.exp.setComputeState(c.state);
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                 }
@@ -160,8 +161,9 @@ public class BackgroundComputation {
                 task.state = ComputingStatus.COMPUTING;
                 publish(task);
                 compute(task);
-                if (task.state == ComputingStatus.COMPUTING)
+                if (task.state == ComputingStatus.COMPUTING) {
                     task.state = ComputingStatus.COMPUTED;
+                }
                 publish(task);
             }
             return null;
@@ -202,13 +204,17 @@ public class BackgroundComputation {
             sirius.setFormulaConstraints(container.constraints);
             sirius.getMs2Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
             sirius.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
-            final List<IdentificationResult> results = sirius.identify(SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp),
-                    container.numberOfCandidates, true, IsotopePatternHandling.score);
-            container.results = results;
-        }
 
-        public void cancelCurrent() {
-
+            try {
+                final List<IdentificationResult> results = sirius.identify(SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp),
+                        container.numberOfCandidates, true, IsotopePatternHandling.score);
+                container.results = results;
+                if (results==null || results.size()==0) container.state = ComputingStatus.FAILED;
+            } catch (Exception e) {
+                e.printStackTrace();
+                container.state = ComputingStatus.FAILED;
+                container.results=new ArrayList<>();
+            }
         }
     }
 

@@ -138,7 +138,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		int ms2No = ec.getMs2Spectra().size();
 		
 		String ionizationProp = "ionization";
-		String focMassProp = "focused mass";
+		String focMassProp = "parent mass";
 		int ionLength = propertyFm.stringWidth(ionizationProp);
 		int focLength = propertyFm.stringWidth(focMassProp);
 		
@@ -148,13 +148,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		
 		int xPos = Math.max(ionLength,focLength)+15;
 		
-		String ionValue = null;
-		Ionization ioni = ec.getIonization();
-		if(ioni == Ionization.M) ionValue = "M+";
-		else if(ioni == Ionization.MMinusH) ionValue = "[M-H]-";
-		else if(ioni == Ionization.MPlusH) ionValue = "[M+H]+";
-		else if(ioni == Ionization.MPlusNa) ionValue = "[M+Na]+";
-		if(ionValue==null||ionValue.isEmpty()) ionValue = "unknown";
+		String ionValue = ec.getIonization().toString();
 		double focD = ec.getFocusedMass();
 		String focMass = focD>0 ? numberFormat.format(focD)+" Da" : "unknown";
 		

@@ -45,16 +45,25 @@ public class LoadController implements LoadDialogListener{
 		this.owner = owner;
 		
 		this.inputExp = exp;
+        loadDialog = new DefaultLoadDialog(owner);
+
 		if(exp==null){
 			this.workingExp = new ExperimentContainer();
 		}else{
 			this.workingExp = copyExperiment(exp);
+            if(exp.getIonization()!=null){
+                workingExp.setIonization(exp.getIonization());
+                loadDialog.ionizationChanged(exp.getIonization());
+            }
+            String name = exp.getName();
+            if(name!=null&&!name.isEmpty()){
+                this.workingExp.setName(name);
+                loadDialog.experimentNameChanged(this.workingExp.getName());
+            }
 		}
 		
 		
 		this.config = config;
-		
-		loadDialog = new DefaultLoadDialog(owner);
 		
 		List<CompactSpectrum> ms1Spectrum = this.workingExp.getMs1Spectra();
 		List<CompactSpectrum> ms2Spectrum = this.workingExp.getMs2Spectra();
@@ -71,10 +80,8 @@ public class LoadController implements LoadDialogListener{
 			}
 		}
 		
-		
-		
 		loadDialog.addLoadDialogListener(this);
-		if(this.workingExp.getName()!=null||this.workingExp.getName().isEmpty()) loadDialog.experimentNameChanged(this.workingExp.getName());
+		if(this.workingExp.getName()!=null && !this.workingExp.getName().isEmpty()) loadDialog.experimentNameChanged(this.workingExp.getName());
 //		loadDialog.showDialog();
 	}
 	
@@ -243,12 +250,13 @@ public class LoadController implements LoadDialogListener{
 		}
 			
 		if(mgfFiles.size()>0){
-			for(File file : msFiles){
+			for(File file : mgfFiles){
 				try(CloseableIterator<Ms2Experiment> iter = parser.getParser(file).parseFromFileIterator(file)) {
 					while (iter.hasNext()) {
 						importExperimentContainer(SiriusDataConverter.siriusExperimentToExperimentContainer(iter.next()),errorStorage);
 					}
 				} catch (Exception e) {
+                    e.printStackTrace();
 					errorStorage.add(file.getName()+": Invalid file format.");
 					continue;
 				}
@@ -264,8 +272,9 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	public void importExperimentContainer(ExperimentContainer ec, List<String> errorStorage){
-		if(workingExp.getIonization()==Ionization.Unknown && ec.getIonization()!=Ionization.Unknown){
+		if(workingExp.getIonization().isUnknown() && ec.getIonization()!=null && !ec.getIonization().isUnknown()){
 			workingExp.setIonization(ec.getIonization());
+			loadDialog.ionizationChanged(ec.getIonization());
 		}
 		
 		if(workingExp.getName()==null || workingExp.getName().isEmpty()){
@@ -275,7 +284,7 @@ public class LoadController implements LoadDialogListener{
 				loadDialog.experimentNameChanged(this.workingExp.getName());
 			}
 		}
-		
+
 		List<CompactSpectrum> newSP = new ArrayList<>();
 		
 		double ecFM = ec.getDataFocusedMass();
@@ -341,7 +350,7 @@ public class LoadController implements LoadDialogListener{
 		if(workingExp.getMs1Spectra().isEmpty()&&workingExp.getMs2Spectra().isEmpty()){
 			workingExp.setDataFocusedMass(-1);
 			workingExp.setSelectedFocusedMass(-1);
-			workingExp.setIonization(Ionization.Unknown);
+			workingExp.setIonization(Ionization.UnknownPlus);
 			workingExp.setName("");
 			this.loadDialog.experimentNameChanged("");
 		}
@@ -394,6 +403,11 @@ public class LoadController implements LoadDialogListener{
 				loadDialog.newCollisionEnergy(sp);
 			}
 		}
+	}
+
+	@Override
+	public void setIonization(Ionization ionization) {
+		workingExp.setIonization(ionization);
 	}
 
 	@Override
