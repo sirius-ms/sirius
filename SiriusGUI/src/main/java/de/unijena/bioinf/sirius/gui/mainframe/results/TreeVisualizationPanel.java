@@ -72,7 +72,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		saveTreeB.setEnabled(false);
 		northPanel.add(new JLabel("  "));
 		northPanel.add(saveTreeB);
-		
+
 		this.add(northPanel,BorderLayout.NORTH);
 		
 		renderPanel = new TreeRenderPanel(); 

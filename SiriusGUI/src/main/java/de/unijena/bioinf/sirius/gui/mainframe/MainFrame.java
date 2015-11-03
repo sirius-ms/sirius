@@ -859,7 +859,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		//Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
 		
-		if( (csvFiles.size()>0&&(msFiles.size()+mgfFiles.size()==0)) || 
+		if( (csvFiles.size()>0&&(msFiles.size()+mgfFiles.size()==0)) ||
 				(csvFiles.size()==0&&msFiles.size()==1&&mgfFiles.size()==0) ){   //nur CSV bzw. nur ein File
 			LoadController lc = new LoadController(this, config);
 //			files
@@ -872,7 +872,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 				
 				importCompound(ec);
 			}
-		}else{
+		} else if (csvFiles.size()==0 && mgfFiles.size()==0 && msFiles.size()>0) {
+            importOneExperimentPerFile(msFiles,mgfFiles);
+		} else {
 			DragAndDropOpenDialog diag = new DragAndDropOpenDialog(this);
 			DragAndDropOpenDialogReturnValue rv = diag.getReturnValue();
 			if(rv==DragAndDropOpenDialogReturnValue.abort){

@@ -17,6 +17,7 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
@@ -45,15 +46,15 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	
 	private TreeSet<String> additionalElements;
 	
-	private Vector<String> ionizations, instruments;
-	private JComboBox<String> ionizationCB, instrumentCB;
+	private Vector<Ionization> ionizations;
+    private Vector<String> instruments;
+	private JComboBox<Ionization> ionizationCB;
+    private JComboBox<String> instrumentCB;
 	private JSpinner ppmSpinner;
 	private SpinnerNumberModel snm;
 	
 	private boolean success;
 	private ExperimentContainer ec;
-	private HashMap<String,Ionization> stringToIonMap;
-	private HashMap<Ionization,String> ionToStringMap;
 	private final JSpinner candidatesSpinner;
 
 	public ComputeDialog(MainFrame owner,ExperimentContainer ec) {
@@ -222,33 +223,16 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"other"));
 
         ionizations = new Vector<>();
-		ionizations.add("[M+H]+");
-		ionizations.add("[M+Na]+");
-		ionizations.add("M+");
-		ionizations.add("[M-H]-");
-		ionizations.add("M-");
-		
-		stringToIonMap = new HashMap<>();
-		stringToIonMap.put("[M+H]+", Ionization.MPlusH);
-		stringToIonMap.put("[M+Na]+", Ionization.MPlusNa);
-		stringToIonMap.put("M+", Ionization.M);
-		stringToIonMap.put("[M-H]-", Ionization.MMinusH);
-		stringToIonMap.put("M-", Ionization.MMinusH);
-		
-		ionToStringMap = new HashMap<>();
-		ionToStringMap.put(Ionization.MPlusH,"[M+H]+");
-		ionToStringMap.put(Ionization.MPlusNa,"[M+Na]+");
-		ionToStringMap.put(Ionization.M,"M+");
-		ionToStringMap.put(Ionization.MMinusH,"[M-H]-");
-		ionToStringMap.put(Ionization.MMinusH,"M-");
+		for (Ionization ion : Ionization.values()) {
+			ionizations.add(ion);
+		}
+
 		
 		ionizationCB = new JComboBox<>(ionizations);
-        {
-            final String ion = ionToStringMap.get(ec.getIonization());
-            if (ion!=null)
-                ionizationCB.setSelectedItem(ion);
-            else
-                ionizationCB.setSelectedItem("[M+H]+");
+        if (ec.getIonization()!=null) {
+            ionizationCB.setSelectedItem(ec.getIonization());
+        } else {
+            ionizationCB.setSelectedItem(Ionization.MPlusH);
         }
 		otherPanel.add(new JLabel("ionization"));
 		otherPanel.add(ionizationCB);
@@ -484,7 +468,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
 //	            System.err.println(pm);
 
-			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, (String)ionizationCB.getSelectedItem(), pm);
+			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, (Ionization)ionizationCB.getSelectedItem(), pm);
 
 			ProgressDialog progDiag = new ProgressDialog(this);
 			FormulaConstraints constraints;
@@ -517,7 +501,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 //	            	System.err.println("progDiag erfolgreich");
 				this.success = true;
 				this.ec.setRawResults(progDiag.getResults());
-				this.ec.setIonization(stringToIonMap.get((String) ionizationCB.getSelectedItem()));
+                this.ec.setComputeState(progDiag.getResults()==null || progDiag.getResults().size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
+                Ionization ion = (Ionization)ionizationCB.getSelectedItem();
+                if (ion==null) ion = Ionization.MPlusH;
+				this.ec.setIonization(ion);
 				Object o = box.getSelectedItem();
 				if(o instanceof String){
 					this.ec.setSelectedFocusedMass(Double.parseDouble((String)box.getSelectedItem()));
