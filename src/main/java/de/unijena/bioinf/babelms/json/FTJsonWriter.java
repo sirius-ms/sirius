@@ -58,11 +58,12 @@ public class FTJsonWriter {
     protected JSONObject tree2json(FTree tree) throws JSONException {
         final JSONDocumentType JSON = new JSONDocumentType();
         final JSONObject j = new JSONObject();
-        final PrecursorIonType ionType = tree.getAnnotationOrNull(PrecursorIonType.class);
-
-        if (ionType!=null) {
+        final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
+        final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
+        if (generalIonType!=null) {
             final MolecularFormula formula = tree.getRoot().getFormula();
-            final MolecularFormula neutral = ionType.measuredNeutralMoleculeToNeutralMolecule(formula);
+            final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
+            final MolecularFormula neutral = fragmentIon.measuredNeutralMoleculeToNeutralMolecule(formula);
             j.put("molecularFormula", neutral.toString());
             j.put("root", formula.toString());
         } else {
@@ -119,6 +120,11 @@ public class FTJsonWriter {
         }
 
         return j;
+    }
+
+    private PrecursorIonType getFragmentIon(FragmentAnnotation<PrecursorIonType> ionPerFragment, Fragment vertex, PrecursorIonType generalIonType) {
+        if (ionPerFragment==null || ionPerFragment.get(vertex)==null) return generalIonType;
+        else return ionPerFragment.get(vertex);
     }
 
 }

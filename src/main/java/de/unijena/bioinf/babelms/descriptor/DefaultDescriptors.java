@@ -17,7 +17,7 @@ class DefaultDescriptors {
     static void addAll(DescriptorRegistry registry) {
         registry.put(FTree.class, Ionization.class, new IonizationDescriptor());
         registry.put(FTree.class, InChI.class, new InChIDescriptor());
-        registry.put(FTree.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor());
+        registry.put(FTree.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("precursorIonType"));
         registry.put(FTree.class, RecalibrationFunction.class, new RecalibrationFunctionDescriptor());
         registry.put(FTree.class, Smiles.class, new SmilesDescriptor());
         registry.put(FTree.class, TreeScoring.class, new TreeScoringDescriptor());
@@ -25,6 +25,7 @@ class DefaultDescriptors {
         registry.put(Fragment.class, Peak.class, new PeakDescriptor());
         registry.put(Fragment.class, AnnotatedPeak.class, new AnnotatedPeakDescriptor());
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
+        registry.put(Fragment.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("ion"));
 
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
         registry.put(Loss.class, InsourceFragmentation.class, new InsourceDescriptor());
@@ -141,9 +142,15 @@ class DefaultDescriptors {
 
     private static class PrecursorIonTypeDescriptor implements Descriptor<PrecursorIonType> {
 
+        private final String keywordName;
+
+        public PrecursorIonTypeDescriptor(String keywordName) {
+            this.keywordName = keywordName;
+        }
+
         @Override
         public String[] getKeywords() {
-            return new String[]{"precursorIonType"};
+            return new String[]{keywordName};
         }
 
         @Override
@@ -153,12 +160,12 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> PrecursorIonType read(DataDocument<G, D, L> document, D dictionary) {
-            return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "precursorIonType"));
+            return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, keywordName));
         }
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, PrecursorIonType annotation) {
-            document.addToDictionary(dictionary, "precursorIonType", annotation.toString());
+            document.addToDictionary(dictionary, keywordName, annotation.toString());
         }
     }
 
@@ -316,6 +323,9 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> AnnotatedPeak read(DataDocument<G, D, L> document, D dictionary) {
+            if (!(document.hasKeyInDictionary(dictionary, "mz") && document.hasKeyInDictionary(dictionary, "relativeIntensity") && document.hasKeyInDictionary(dictionary, "molecularFormula") && document.hasKeyInDictionary(dictionary, "ion"))) {
+                return null;
+            }
             final MolecularFormula formula = MolecularFormula.parse(document.getStringFromDictionary(dictionary, "molecularFormula"));
             final double mass = document.getDoubleFromDictionary(dictionary, "mz");
             final double relativeIntensity = document.hasKeyInDictionary(dictionary, "relativeIntensity") ?
@@ -325,26 +335,29 @@ class DefaultDescriptors {
             final Ionization ion = PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
 
             final ArrayList<Peak> originalPeaks = new ArrayList<Peak>();
+            if (document.hasKeyInDictionary(dictionary, "peaks")) {
+                final L peakList = document.getListFromDictionary(dictionary, "peaks");
+                for (int i=0, n=document.sizeOfList(peakList); i < n; ++i) {
+                    final D peakData = document.getDictionaryFromList(peakList, i);
 
-            final L peakList = document.getListFromDictionary(dictionary, "peaks");
-            for (int i=0, n=document.sizeOfList(peakList); i < n; ++i) {
-                final D peakData = document.getDictionaryFromList(peakList, i);
+                    final double intensity;
+                    final double mz;
+                    if (document.hasKeyInDictionary(peakData, "intensity")) {
+                        intensity = document.getDoubleFromDictionary(peakData, "intensity");
+                    } else intensity = document.getDoubleFromDictionary(peakData, "int");
 
-                final double intensity;
-                final double mz;
-                if (document.hasKeyInDictionary(peakData, "intensity")) {
-                    intensity = document.getDoubleFromDictionary(peakData, "intensity");
-                } else intensity = document.getDoubleFromDictionary(peakData, "int");
-
-                originalPeaks.add(new Peak(document.getDoubleFromDictionary(peakData, "mz"), intensity));
+                    originalPeaks.add(new Peak(document.getDoubleFromDictionary(peakData, "mz"), intensity));
+                }
             }
 
             final ArrayList<CollisionEnergy> energies = new ArrayList<CollisionEnergy>();
             if (document.hasKeyInDictionary(dictionary, "collisionEnergies")) {
-                final L energyList = document.getListFromDictionary(dictionary, "collisionEnergies");
-                for (int i=0, n=document.sizeOfList(energyList); i < n; ++i) {
-                    final CollisionEnergy energy = CollisionEnergy.fromString(document.getStringFromList(energyList, i));
-                    energies.add(energy);
+                if (document.hasKeyInDictionary(dictionary, "collisionEnergies")) {
+                    final L energyList = document.getListFromDictionary(dictionary, "collisionEnergies");
+                    for (int i=0, n=document.sizeOfList(energyList); i < n; ++i) {
+                        final CollisionEnergy energy = CollisionEnergy.fromString(document.getStringFromList(energyList, i));
+                        energies.add(energy);
+                    }
                 }
             }
 
