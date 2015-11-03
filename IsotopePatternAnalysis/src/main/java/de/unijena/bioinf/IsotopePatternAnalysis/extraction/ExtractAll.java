@@ -99,25 +99,7 @@ public class ExtractAll implements PatternExtractor {
         }
         return candidates;
     }
-/*
-    @Override
-    public List<IsotopePattern> extractPattern(MeasurementProfile profile, Spectrum<Peak> spectrum, double targetMz, boolean allowAdducts) {
-        // TODO: implement in more efficient way
-        final List<IsotopePattern> list = extractPattern(profile, spectrum);
-        final PeriodicTable table = PeriodicTable.getInstance();
-        final Iterator<IsotopePattern> iter = list.iterator();
-        final double threshold = profile.getAllowedMassDeviation().multiply(1.25).absoluteFor(targetMz);
-        while (iter.hasNext()) {
-            final IsotopePattern pattern = iter.next();
-            final double mono = pattern.getMonoisotopicMass();
-            // TODO: use adducts!
-            if (Math.abs(mono-targetMz) > threshold) {
-                iter.remove();
-            }
-        }
-        return list;
-    }
-*/
+
     @Override
     public List<IsotopePattern> extractPattern(MeasurementProfile profile, Spectrum<Peak> spectrum, double targetMz, boolean allowAdducts) {
         // TODO: implement in more efficient way
@@ -125,6 +107,7 @@ public class ExtractAll implements PatternExtractor {
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(spectrum);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
+        if (index < 0) return new ArrayList<IsotopePattern>();
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
         spec.addPeak(massOrderedSpectrum.getPeakAt(index));
         // add additional peaks
