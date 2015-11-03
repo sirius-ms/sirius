@@ -137,7 +137,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			}
 		});
 		focMassPanel.add(box);
-		focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"focused mass"));
+		focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"parent mass"));
 		
 		
 		
