@@ -107,4 +107,19 @@ public final class AnnotatedPeak {
     public AnnotatedPeak withIonization(Ionization ion) {
         return new AnnotatedPeak(molecularFormula, mass, recalibratedMass, relativeIntensity, ion, originalPeaks, collisionEnergies);
     }
+
+    public double getMaximalIntensity() {
+        double m = 0d;
+        for (Peak p : originalPeaks) {
+            if (p!=null) m = Math.max(p.getIntensity(), m);
+        }
+        return m;
+    }
+    public double getSumedIntensity() {
+        double m = 0d;
+        for (Peak p : originalPeaks) {
+            if (p!=null) m += p.getIntensity();
+        }
+        return m;
+    }
 }
