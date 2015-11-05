@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FTEval</artifactId>
-    <version>3.1</version>
+    <version>3.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <parent>
         <groupId>de.unijena.bioinf</groupId>
         <artifactId>FragmentationTree</artifactId>
-        <version>3.1</version>
+        <version>3.1-SNAPSHOT</version>
     </parent>
 
     <!--                                                               -->
@@ -37,12 +37,12 @@
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>CLIBase</artifactId>
-            <version>3.1</version>
+            <version>3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
             <artifactId>FragmentationTreeConstruction</artifactId>
-            <version>3.1</version>
+            <version>3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.unijena.bioinf</groupId>
