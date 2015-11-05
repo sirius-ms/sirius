@@ -779,6 +779,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.fragmentPeakScorers = new ArrayList<PeakScorer>();
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
+        this.defaultProfile = new MutableMeasurementProfile();
 
         this.reduction = new SimpleReduction();
 
