@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.unijena.bioinf</groupId>
   <artifactId>IsotopePattern</artifactId>
-  <version>3.1</version>
+  <version>3.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
     <module>IsotopePatternAnalysis</module>
