@@ -63,7 +63,7 @@ public class FTJsonReader implements Parser<FTree> {
         while ((line= reader.readLine())!=null) {
             buffer.append(line).append('\n');
         }
-        reader.close();
+        if (buffer.length()==0) return null;
         try {
 
             final DescriptorRegistry registry = DescriptorRegistry.getInstance();
