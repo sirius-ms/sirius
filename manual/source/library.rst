@@ -111,6 +111,11 @@ Sirius provides the following functions to create the basic data structures:
   :param constraints: string representation of the constraint, e.g. "CHNOP[5]S[20]"
   :return: formula constraint object
 
+.. java:method:: public CloseableIterator<Ms2Experiment> parseExperiment(File file) throws IOException
+
+  parses a file and return an iterator over all MS/MS experiments contained in this file.
+  An experiment consists of all MS and MS/MS spectra belonging to one feature (=compound). Supported file formats are .ms and .mgf. The returned iterator supports the close method to close the input stream. The stream is closed automatically, after iterating the last element. However, it is recommended to use the try-close syntax from Java 7 to ensure a proper closing of the stream.
+
 
 Provided Algorithms
 **********************

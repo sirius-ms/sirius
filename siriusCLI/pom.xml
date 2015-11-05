@@ -155,6 +155,18 @@
                             <outfile>target/sirius.exe</outfile>
                             <jar>target/sirius.jar</jar>
                             <errTitle>sirius</errTitle>
+                            <versionInfo>
+    <fileVersion>3.1.0.0</fileVersion>
+    <txtFileVersion>3.1</txtFileVersion>
+    <fileDescription>Sirius</fileDescription>
+    <copyright>Kai Dührkop</copyright>
+    <productVersion>3.1.0.0</productVersion>
+    <txtProductVersion>3.1</txtProductVersion>
+    <productName>Sirius</productName>
+    <companyName></companyName>
+    <internalName>Sirius</internalName>
+    <originalFilename>Sirius.exe</originalFilename>
+                            </versionInfo>
                             <icon>${project.basedir}/src/main/resources/sirius.ico</icon>
                             <classPath>
                                 <mainClass>de.unijena.bioinf.sirius.cli.CLI</mainClass>

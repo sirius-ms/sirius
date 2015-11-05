@@ -10,7 +10,7 @@ You can always use the ``--help`` option to get a documentation about the availa
 
   sirius -1 MSpos_Challenge0.txt -2 MSMSpos_Challenge0.txt
 
-*************************
+.. _inputFormats:
 Supported Input Formats
 *************************
 
@@ -161,7 +161,7 @@ SIRIUS recognizes the following options:
 
 .. option:: -O <format>, --format <format>
 
-  Specify the format of the output of the fragmentation trees. This can be either json (machine readable) or dot (visualizable)
+  Specify the format of the output of the fragmentation trees. This can be either **json** (machine readable), **dot** (visualizable) or **sirius** (can be viewed with the Sirius User Interface).
 
 .. option:: -f [list of formulas], --formula [list of formulas]
 
@@ -239,7 +239,7 @@ If you already know the correct molecular formula and just want to compute a tre
 Visualizing Fragmentation Trees
 ********************************
 
-SIRIUS supports two output formats for fragmentation trees: dot (graphviz format) and json (machine readable format). The commandline tool Graphviz [#graphviz]_ can transform dot files into image formats (pdf, svg, png etc.). After installing Graphviz you can display tree files as follows::
+SIRIUS supports three output formats for fragmentation trees: dot (graphviz format), json (machine readable format), and sirius (can be viewed with the Sirius User Interface). The commandline tool Graphviz [#graphviz]_ can transform dot files into image formats (pdf, svg, png etc.). After installing Graphviz you can display tree files as follows::
 
   sirius -p orbitrap -f C20H17NO6 -o trees demo-data/ms/Bicuculline.ms
   dot -Tpdf -O trees/Bicuculline.dot
@@ -310,7 +310,6 @@ The txt folder contains simple peaklist files. Such file formats can be easily e
 The demo data contain a clean MS spectrum (e.g. there is only one isotope pattern contained in the MS spectrum). In such cases, SIRIUS can infer the correct parent mass from the MS data (by simply using the monoisotopic mass of the isotope pattern as parent mass). So you can omit the *-z* option in this cases.
 
 .. rubric:: Footnotes
-
 
 .. [#gnps] http://gnps.ucsd.edu/
 
