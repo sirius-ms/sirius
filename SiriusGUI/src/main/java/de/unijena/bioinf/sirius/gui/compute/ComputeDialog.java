@@ -13,7 +13,10 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -443,8 +446,17 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
 			final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
 			if (builder instanceof DPTreeBuilder) {
-				System.err.println("Cannot load ILP solver. Please read the installation instructions.");
-				System.exit(1); // TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				dispose();
+				// try go get exception object
+				try {
+
+					System.loadLibrary("glpk_4_55_java");
+				} catch (Throwable t) {
+					new StacktraceDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ", t);
+					return;
+				}
+				new ExceptionDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ");
+				return;
 			}
 			System.out.println("Compute trees using " + builder.getDescription());
 
@@ -513,7 +525,11 @@ public class ComputeDialog extends JDialog implements ActionListener{
 					this.ec.setSelectedFocusedMass(p.getMass());
 				}
 			} else {
+                ec.setRawResults(Collections.<IdentificationResult>emptyList());
+                ec.setComputeState(ComputingStatus.FAILED);
 				owner.refreshCompound(ec);
+                if (progDiag.getException()!=null)
+                    new StacktraceDialog(this, "Computation failed", progDiag.getException());
 			}
 			owner.refreshCompound(ec);
 			this.dispose();

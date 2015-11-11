@@ -21,6 +21,11 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -303,6 +308,35 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final double ppm = snm.getNumber().doubleValue();
 
         final int candidates = ((Number)candidatesSpinner.getModel().getValue()).intValue();
+
+        // CHECK ILP SOLVER
+        {
+            TreeBuilder builder=null;
+            try {
+                builder = new Sirius().getMs2Analyzer().getTreeBuilder();
+            } catch (Exception e) {
+                new StacktraceDialog(this, "Could not instantiate Sirius solver", e);
+                dispose(); return;
+            }
+            if (builder==null) {
+                new ExceptionDialog(this, "Could not instantiate Sirius solver");
+                dispose();
+                return;
+            }
+            if (builder instanceof DPTreeBuilder) {
+                dispose();
+                // try go get exception object
+                try {
+                    TreeBuilder solver =((Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver")).newInstance();
+                    solver.getDescription();
+                } catch (Throwable t) {
+                    new StacktraceDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ", t);
+                    return;
+                }
+                new ExceptionDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ");
+                return;
+            }
+        }
 
         //entspricht setup() Methode
         final BackgroundComputation bgc = owner.getBackgroundComputation();

@@ -346,11 +346,18 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 	public void refreshCompound(ExperimentContainer c) {
 		compoundModel.refresh(c);
+		refreshResultListFor(c);
         refreshComputationMenuItem();
         refreshExportMenuButton();
 	}
 
-    private void refreshExportMenuButton() {
+	private void refreshResultListFor(ExperimentContainer c) {
+		if (compoundList.getSelectedValue()==c) {
+			showResultsPanel.changeData(c);
+		}
+	}
+
+	private void refreshExportMenuButton() {
         final Enumeration<ExperimentContainer> ecs = getCompounds();
         while (ecs.hasMoreElements()) {
             final ExperimentContainer e = ecs.nextElement();

@@ -27,6 +27,7 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 	private JLabel timel;
 	private SimpleDateFormat sdf;
 	private int step;
+    private Exception exception;
 	private volatile boolean successful;
 	private volatile boolean cancelComputation;
 
@@ -73,8 +74,16 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		
 		sdf = new SimpleDateFormat("hh:mm:ss");
 	}
-	
-	public void start(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, FormulaConstraints constraints, int candidates){
+
+    public Exception getException() {
+        return exception;
+    }
+
+    public void setException(Exception exception) {
+        this.exception = exception;
+    }
+
+    public void start(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, FormulaConstraints constraints, int candidates){
 		sirius.setProgress(this);
 		this.setSize(new Dimension(700,210));
 		this.successful = false;
@@ -192,7 +201,7 @@ class RunThread implements Runnable{
 		try {
 			sirius.setFormulaConstraints(constraints);
 			results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
-			success = (results!=null);
+			success = (results!=null && results.size()>0);
 		} catch (final Exception e) {
 			success = false;
 			e.printStackTrace();
@@ -202,6 +211,7 @@ class RunThread implements Runnable{
 					pd.info("Error: " + e.getMessage());
                     ec.setComputeState(ComputingStatus.FAILED);
                     ec.setErrorMessage(e.getMessage());
+                    pd.setException(e);
 				}
 			});
 		}
