@@ -45,6 +45,12 @@ public class LeaveOutParentPeakMaxNormalizer implements Normalizer {
             for (int i=0; i < peaklist.size() && peaks.get(i).getMz() < lowerbound; ++i) {
                 scale = Math.max(scale, peaks.get(i).getIntensity());
             }
+
+            // this happens if the spectrum contains only one peak...
+            if (scale == 0) {
+                scale = peaks.get(0).getIntensity();
+            }
+
             // now set local relative intensities
             for (int i=0; i < peaklist.size(); ++i) {
                 final ProcessedPeak peak = peaks.get(i);

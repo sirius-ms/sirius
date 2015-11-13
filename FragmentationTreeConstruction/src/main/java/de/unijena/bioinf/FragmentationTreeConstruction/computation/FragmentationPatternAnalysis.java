@@ -236,6 +236,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (int i = offset; i < peaklist.size() && peaklist.get(i).getMz() < lowerbound; ++i) {
                 scale = Math.max(scale, peaklist.get(i).getIntensity());
             }
+            if (scale==0) scale = peaklist.get(0).getIntensity(); // happens for spectra with only one peak
             // now set local relative intensities
             for (int i = offset; i < peaklist.size(); ++i) {
                 final ProcessedPeak peak = peaklist.get(i);
