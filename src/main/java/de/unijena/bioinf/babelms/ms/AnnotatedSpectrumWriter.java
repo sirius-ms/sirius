@@ -17,7 +17,7 @@
  */
 package de.unijena.bioinf.babelms.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -39,7 +39,7 @@ public class AnnotatedSpectrumWriter {
     public void write(Writer writer, FTree tree) throws IOException {
         final BufferedWriter bw = (writer instanceof BufferedWriter) ? (BufferedWriter)writer : new BufferedWriter(writer);
 
-        final Ionization ion = tree.getAnnotationOrThrow(Ionization.class);
+        final PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final List<Fragment> fragments = new ArrayList<Fragment>(tree.getFragments());
         Collections.sort(fragments);
@@ -53,7 +53,7 @@ public class AnnotatedSpectrumWriter {
             bw.write('\t');
             bw.write(String.format(Locale.US, "%.2f", 100d*p.getRelativeIntensity()));
             bw.write('\t');
-            bw.write(String.format(Locale.US, "%.6f", ion.addToMass(f.getFormula().getMass())));
+            bw.write(String.format(Locale.US, "%.6f", ion.getIonization().addToMass(f.getFormula().getMass())));
             bw.write('\t');
             bw.write(f.getFormula().toString());
             bw.write('\n');
