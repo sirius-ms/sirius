@@ -43,10 +43,12 @@ public class PrecursorIonType {
     }
 
     public boolean equals(PrecursorIonType other) {
+        if (other==null) return false;
         return this.ionization.equals(other.ionization) && this.modification.equals(other.modification);
     }
 
     public boolean equals(Object other) {
+        if (other==null) return false;
         if (other instanceof PrecursorIonType) {
             return equals((PrecursorIonType)other);
         } else return false;
