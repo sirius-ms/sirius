@@ -72,7 +72,15 @@ public class CLI {
         try {
             final SiriusResultWriter siriusResultWriter;
             if (isUsingSiriusFormat()) {
-                final FileOutputStream fout = new FileOutputStream(options.getOutput());
+                File output = options.getOutput();
+                if (output == null) {
+                    if (options.getInput().size()==1) {
+                        output = new File(".",fileNameWithoutExtension(new File(options.getInput().get(0))) + ".sirius");
+                    } else {
+                        output = new File(".",new File(".").getAbsoluteFile().getName() + ".sirius");
+                    }
+                }
+                final FileOutputStream fout = new FileOutputStream(output);
                 siriusResultWriter = new SiriusResultWriter(fout);
             } else {
                 siriusResultWriter = null;
@@ -141,9 +149,10 @@ public class CLI {
 
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
         final int c = getNumberOfCandidates();
-        final File target = options.getOutput();
+        File target = options.getOutput();
         String format = options.getFormat();
         if (format==null) format = "dot";
+        else if (target==null) target = new File("."); // at least one of both have to be specified
         for (IdentificationResult result : results) {
             if (target!=null) {
                 final File name = getTargetName(target, instance, result, format,c);
@@ -177,9 +186,13 @@ public class CLI {
         File target = options.getOutput();
         String format = null;
 
+        if (options.getFormat() != null) {
+            format = options.getFormat();
+        }
+
         if (target==null) {
-            target = new File(instance.file.getName());
-        } else {
+            target = getTargetName(new File("."), instance, result, format==null ? "dot" : format, 1);
+        } else if (format==null){
             final String n = target.getName();
             final int i = n.lastIndexOf('.');
             if (i >= 0) {
@@ -188,9 +201,6 @@ public class CLI {
                     format = ext;
                 } else format = "dot";
             } else format = "dot";
-        }
-        if (options.getFormat() != null) {
-            format = options.getFormat();
         }
 
         if (format==null) format = "dot";
@@ -231,6 +241,11 @@ public class CLI {
     }
 
     public void setArgs(String[] args) {
+        if (args.length==0) {
+            System.out.println(Sirius.VERSION_STRING);
+            System.out.println(CliFactory.createCli(SiriusOptions.class).getHelpMessage());
+            System.exit(0);
+        }
         try {
             this.options = CliFactory.createCli(SiriusOptions.class).parseArguments(args);
             if (options.isCite()) {
@@ -261,7 +276,7 @@ public class CLI {
         }
 
         final String format = options.getFormat();
-        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot")) {
+        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot") && !format.equalsIgnoreCase("sirius")) {
             System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
             System.exit(1);
         }
@@ -540,5 +555,12 @@ public class CLI {
     public FormulaConstraints getDefaultElementSet(SiriusOptions opts) {
         final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
         return cf;
+    }
+
+    private static String fileNameWithoutExtension(File file) {
+        final String name = file.getName();
+        final int i = name.lastIndexOf('.');
+        if (i>=0) return name.substring(0, i);
+        else return name;
     }
 }
