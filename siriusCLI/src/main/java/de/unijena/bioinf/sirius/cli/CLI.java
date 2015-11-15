@@ -175,22 +175,25 @@ public class CLI {
         }
         result.getTree().normalizeStructure();
         File target = options.getOutput();
-        if (target==null) target = new File(".");
-        String format;
-        final String n = target.getName();
-        final int i = n.lastIndexOf('.');
-        if (i >= 0) {
-            final String ext = n.substring(i+1);
-            if (ext.equals("json") || ext.equals("dot")) {
-                format = ext;
-            } else format = "dot";
+        String format = null;
+
+        if (target==null) {
+            target = new File(instance.file.getName());
         } else {
-            if (!target.exists()) target.mkdirs();
-            format = "dot";
+            final String n = target.getName();
+            final int i = n.lastIndexOf('.');
+            if (i >= 0) {
+                final String ext = n.substring(i + 1).toLowerCase();
+                if (ext.equals("json") || ext.equals("dot")) {
+                    format = ext;
+                } else format = "dot";
+            } else format = "dot";
         }
         if (options.getFormat() != null) {
             format = options.getFormat();
         }
+
+        if (format==null) format = "dot";
 
         if (target.isDirectory()) {
             target = getTargetName(target, instance, result, format, 1);
@@ -207,7 +210,6 @@ public class CLI {
             final File anoName = getTargetName(target, instance, result, "csv", 1);
             new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
         }
-
     }
 
     private File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
