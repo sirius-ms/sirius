@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+import java.util.regex.Pattern;
 
 public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
 				DropTargetListener, MouseListener{
@@ -31,6 +32,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	private MSViewerPanel msviewer;
 	private JButton editCE/*, changeMSLevel*/;
 	private JTextField cEField;
+	private JTextField parentMzField;
 	private JComboBox<String> msLevelBox;
 	private Vector<Ionization> ionizations;
 	private JComboBox<Ionization> ionizationCB;
@@ -48,6 +50,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	JPopupMenu spPopMenu;
 	JMenuItem addMI, removeMI;
+
+    private static Pattern NUMPATTERN = Pattern.compile("^[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?$");
 
 	public DefaultLoadDialog(JFrame owner){ 
 		super(owner,"load",true);
@@ -143,6 +147,24 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		cEPanel.add(editCE);
 		
 		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"collision energy (optional)"));
+
+        cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"parent mass"));
+
+        parentMzField = new JTextField(12);
+        parentMzField.setEditable(true);
+        parentMzField.setEnabled(true);
+        parentMzField.setInputVerifier(new InputVerifier() {
+            @Override
+            public boolean verify(JComponent input) {
+                JTextField tf = (JTextField) input;
+                final String text = tf.getText().trim();
+                return NUMPATTERN.matcher(text).matches();
+            }
+        });
+        cEPanel.add(parentMzField);
+        cEPanel.add(new JLabel("m/z"));
+
 		propsPanel.add(cEPanel);
 
 //		changeMSLevel = new JButton("change");
@@ -316,6 +338,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			this.setVisible(false);
 			for(LoadDialogListener ldl : listeners){
 				ldl.setIonization((Ionization)ionizationCB.getSelectedItem());
+                if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
+                    ldl.setParentmass(Double.parseDouble(parentMzField.getText()));
+                }
 				ldl.completeProcess();
 			}
 		}else if(e.getSource()==this.abort){
@@ -419,8 +444,13 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	public void experimentNameChanged(String name) {
 		nameTF.setText(name);
 	}
-	
-	/// drag and drop support...
+
+    @Override
+    public void parentMassChanged(double newMz) {
+        parentMzField.setText(String.valueOf(newMz));
+    }
+
+    /// drag and drop support...
 
 	@Override
 	public void dragEnter(DropTargetDragEvent dtde) {

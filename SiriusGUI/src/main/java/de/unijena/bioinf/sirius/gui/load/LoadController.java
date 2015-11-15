@@ -55,6 +55,10 @@ public class LoadController implements LoadDialogListener{
                 workingExp.setIonization(exp.getIonization());
                 loadDialog.ionizationChanged(exp.getIonization());
             }
+            if (!Double.isNaN(exp.getDataFocusedMass()) && exp.getDataFocusedMass()>0) {
+                workingExp.setDataFocusedMass(exp.getDataFocusedMass());
+                loadDialog.parentMassChanged(exp.getDataFocusedMass());
+            }
             String name = exp.getName();
             if(name!=null&&!name.isEmpty()){
                 this.workingExp.setName(name);
@@ -276,7 +280,12 @@ public class LoadController implements LoadDialogListener{
 			workingExp.setIonization(ec.getIonization());
 			loadDialog.ionizationChanged(ec.getIonization());
 		}
-		
+
+        if (!Double.isNaN(ec.getDataFocusedMass()) && ec.getDataFocusedMass()>0 && workingExp.getDataFocusedMass() < 0) {
+            workingExp.setDataFocusedMass(ec.getDataFocusedMass());
+            loadDialog.parentMassChanged(ec.getDataFocusedMass());
+        }
+
 		if(workingExp.getName()==null || workingExp.getName().isEmpty()){
 			String name = ec.getName();
 			if(name!=null&&!name.isEmpty()){
@@ -381,6 +390,7 @@ public class LoadController implements LoadDialogListener{
 		targetExp.setRawResults(sourceExp.getRawResults(), sourceExp.getResults());
 		targetExp.setSelectedFocusedMass(sourceExp.getSelectedFocusedMass());
 		targetExp.setSuffix(sourceExp.getSuffix());
+		targetExp.setDataFocusedMass(sourceExp.getDataFocusedMass());
 	}
 
 	@Override
@@ -447,6 +457,11 @@ public class LoadController implements LoadDialogListener{
 			this.workingExp.setName(name);
 			loadDialog.experimentNameChanged(this.workingExp.getName());
 		}
+	}
+
+	@Override
+	public void setParentmass(double mz) {
+		workingExp.setDataFocusedMass(mz);
 	}
 
 	@Override

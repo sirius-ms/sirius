@@ -26,4 +26,5 @@ public interface LoadDialogListener {
 	
 	public void experimentNameChanged(String name);
 
+	void setParentmass(double mz);
 }
