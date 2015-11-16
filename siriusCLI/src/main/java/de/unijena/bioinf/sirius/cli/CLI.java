@@ -56,11 +56,6 @@ public class CLI {
     protected ShellProgress progress;
 
     public static void main(String[] args) {
-        if (args.length==0) {
-            help(CliFactory.createCli(SiriusOptions.class).getHelpMessage());
-            cite();
-            System.exit(1);
-        }
         final CLI cli = new CLI();
         cli.setArgs(args);
         cli.compute();
@@ -74,13 +69,18 @@ public class CLI {
     SiriusOptions options;
 
     public void compute() {
-        SiriusResultWriter siriusResultWriter=null;
         try {
             final SiriusResultWriter siriusResultWriter;
             if (isUsingSiriusFormat()) {
-                File siriusOut = options.getOutput();
-                if (siriusOut==null) siriusOut = new File("results.sirius");
-                final FileOutputStream fout = new FileOutputStream(siriusOut);
+                File output = options.getOutput();
+                if (output == null) {
+                    if (options.getInput().size()==1) {
+                        output = new File(".",fileNameWithoutExtension(new File(options.getInput().get(0))) + ".sirius");
+                    } else {
+                        output = new File(".",new File(".").getAbsoluteFile().getName() + ".sirius");
+                    }
+                }
+                final FileOutputStream fout = new FileOutputStream(output);
                 siriusResultWriter = new SiriusResultWriter(fout);
             } else {
                 siriusResultWriter = null;
@@ -136,19 +136,11 @@ public class CLI {
             if (siriusResultWriter!=null) siriusResultWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-
-            if (siriusResultWriter!=null) try {
-                siriusResultWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
         }
     }
 
     private boolean isUsingSiriusFormat() {
-        return (options.getFormat() !=null && (options.getFormat().toLowerCase().contains("sirius")) || (options.getFormat()==null && options.getOutput()!=null && options.getOutput().getName().toLowerCase().endsWith(".sirius")));
+        return (options.getFormat()!=null && options.getFormat().toLowerCase().contains("sirius")) || (options.getOutput()!=null && options.getOutput().getName().toLowerCase().endsWith(".sirius"));
     }
 
     private Integer getNumberOfCandidates() {
@@ -157,7 +149,7 @@ public class CLI {
 
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
         final int c = getNumberOfCandidates();
-        final File target = options.getOutput();
+        File target = options.getOutput();
         String format = options.getFormat();
         if (format==null) format = "dot";
         for (IdentificationResult result : results) {
@@ -167,8 +159,6 @@ public class CLI {
                     new FTJsonWriter().writeTreeToFile(name, result.getTree());
                 } else if (format.equalsIgnoreCase("dot")) {
                     new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(name, result.getTree());
-                } else if (format.equalsIgnoreCase("sirius")) {
-                    // do nothing
                 } else {
                     throw new RuntimeException("Unknown format '" + format + "'");
                 }
@@ -181,7 +171,7 @@ public class CLI {
 
     }
 
-    protected static void cite() {
+    protected void cite() {
         System.out.println("Please cite the following paper when using our method:");
         System.out.println(Sirius.CITATION);
     }
@@ -193,22 +183,26 @@ public class CLI {
         }
         result.getTree().normalizeStructure();
         File target = options.getOutput();
-        if (target==null) target = new File(".");
-        String format;
-        final String n = target.getName();
-        final int i = n.lastIndexOf('.');
-        if (i >= 0) {
-            final String ext = n.substring(i+1);
-            if (ext.equals("json") || ext.equals("dot") || ext.equalsIgnoreCase("sirius")) {
-                format = ext;
-            } else format = "dot";
-        } else {
-            if (!target.exists()) target.mkdirs();
-            format = "dot";
-        }
+        String format = null;
+
         if (options.getFormat() != null) {
             format = options.getFormat();
         }
+
+        if (target==null) {
+            target = getTargetName(new File("."), instance, result, format==null ? "dot" : format, 1);
+        } else if (format==null){
+            final String n = target.getName();
+            final int i = n.lastIndexOf('.');
+            if (i >= 0) {
+                final String ext = n.substring(i + 1).toLowerCase();
+                if (ext.equals("json") || ext.equals("dot")) {
+                    format = ext;
+                } else format = "dot";
+            } else format = "dot";
+        }
+
+        if (format==null) format = "dot";
 
         if (target.isDirectory()) {
             target = getTargetName(target, instance, result, format, 1);
@@ -218,8 +212,6 @@ public class CLI {
             new FTJsonWriter().writeTreeToFile(target, result.getTree());
         } else if (format.equalsIgnoreCase("dot")) {
             new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(target, result.getTree());
-        } else if (format.equalsIgnoreCase("sirius")) {
-            // do nothing
         } else {
             throw new RuntimeException("Unknown format '" + format + "'");
         }
@@ -227,7 +219,6 @@ public class CLI {
             final File anoName = getTargetName(target, instance, result, "csv", 1);
             new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
         }
-
     }
 
     private File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
@@ -249,6 +240,11 @@ public class CLI {
     }
 
     public void setArgs(String[] args) {
+        if (args.length==0) {
+            System.out.println(Sirius.VERSION_STRING);
+            System.out.println(CliFactory.createCli(SiriusOptions.class).getHelpMessage());
+            System.exit(0);
+        }
         try {
             this.options = CliFactory.createCli(SiriusOptions.class).parseArguments(args);
             if (options.isCite()) {
@@ -256,7 +252,7 @@ public class CLI {
                 System.exit(0);
             }
         } catch (HelpRequestedException e) {
-            help(e.getMessage());
+            System.out.println(e.getMessage());
             System.out.println("");
             cite();
             System.exit(0);
@@ -270,10 +266,10 @@ public class CLI {
         // validate
         final File target = options.getOutput();
         if (target != null) {
-            if (target.exists() && !target.isDirectory() && !isUsingSiriusFormat()) {
+            if (target.exists() && !target.isDirectory()) {
                 System.err.println("Specify a directory name as output directory");
                 System.exit(1);
-            } else if (target.getName().indexOf('.') < 0 && !isUsingSiriusFormat()){
+            } else if (target.getName().indexOf('.') < 0){
                 target.mkdirs();
             }
         }
@@ -283,12 +279,6 @@ public class CLI {
             System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
             System.exit(1);
         }
-    }
-
-    private static void help(String message) {
-        System.out.println(Sirius.VERSION_STRING);
-        System.out.println("Usage example:\nsirius -p qtof -e CHNOPSCl[3]I[3] -1 ms1.csv -2 ms2.csv\n");
-        System.out.println(message);
     }
 
     public void setup(SiriusOptions opts) {
@@ -564,5 +554,12 @@ public class CLI {
     public FormulaConstraints getDefaultElementSet(SiriusOptions opts) {
         final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
         return cf;
+    }
+
+    private static String fileNameWithoutExtension(File file) {
+        final String name = file.getName();
+        final int i = name.lastIndexOf('.');
+        if (i>=0) return name.substring(0, i);
+        else return name;
     }
 }
