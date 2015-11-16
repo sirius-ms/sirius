@@ -76,6 +76,7 @@ public class CLI {
     public void compute() {
         SiriusResultWriter siriusResultWriter=null;
         try {
+            final SiriusResultWriter siriusResultWriter;
             if (isUsingSiriusFormat()) {
                 File siriusOut = options.getOutput();
                 if (siriusOut==null) siriusOut = new File("results.sirius");
@@ -132,6 +133,7 @@ public class CLI {
                     siriusResultWriter.add(i.experiment, results);
                 }
             }
+            if (siriusResultWriter!=null) siriusResultWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

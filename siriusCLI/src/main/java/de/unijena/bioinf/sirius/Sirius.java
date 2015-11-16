@@ -32,6 +32,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
@@ -42,7 +43,7 @@ import java.util.*;
 
 public class Sirius {
 
-    public final static String VERSION_STRING = "Sirius 3.1";
+    public final static String VERSION_STRING = "Sirius 3.1.1";
 
     public final static String CITATION = "Kai Dührkop and Sebastian Böcker\n" +
             "Fragmentation trees reloaded.\n" +
@@ -1038,9 +1039,18 @@ public class Sirius {
         return getMs1Analyzer().getPatternGenerator().simulatePattern(compound, ion);
     }
 
-
-
-
+    /**
+     * Simulates an isotope pattern for the given molecular formula and the chosen ionization
+     * @param compound neutral molecular formula
+     * @param ion ionization mode (might be a Charge)
+     * @param numberOfPeaks number of peaks in simulated pattern
+     * @return spectrum containing the theoretical isotope pattern of this compound
+     */
+    public Spectrum<Peak> simulateIsotopePattern(MolecularFormula compound, Ionization ion, int numberOfPeaks) {
+        IsotopePatternGenerator gen = getMs1Analyzer().getPatternGenerator();
+        gen.setMaximalNumberOfPeaks(numberOfPeaks);
+        return gen.simulatePattern(compound, ion);
+    }
 
     private double filterCandidateList(IsotopePattern candidate, HashMap<MolecularFormula, Double> formulas) {
         if (candidate.getCandidates().size()==0) return 0d;
