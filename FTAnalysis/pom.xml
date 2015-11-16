@@ -3,12 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.unijena.bioinf</groupId>
   <artifactId>FTAnalysis</artifactId>
-  <version>3.1-SNAPSHOT</version>
+  <version>3.1.1</version>
   <packaging>jar</packaging>
   <parent>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>FragmentationTree</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.1.1</version>
   </parent>
   
   <!--                                                               -->
@@ -32,17 +32,17 @@
     <dependency>
       <groupId>de.unijena.bioinf</groupId>
       <artifactId>FragmentationTreeConstruction</artifactId>
-      <version>3.1-SNAPSHOT</version>
+      <version>3.1.1</version>
     </dependency>
       <dependency>
           <groupId>de.unijena.bioinf</groupId>
           <artifactId>BabelMs</artifactId>
-          <version>3.1-SNAPSHOT</version>
+          <version>3.1.1</version>
       </dependency>
       <dependency>
           <groupId>de.unijena.bioinf</groupId>
           <artifactId>IsotopePatternAnalysis</artifactId>
-          <version>3.1-SNAPSHOT</version>
+          <version>3.1.1</version>
       </dependency>
       <dependency>
           <groupId>com.lexicalscope.jewelcli</groupId>
