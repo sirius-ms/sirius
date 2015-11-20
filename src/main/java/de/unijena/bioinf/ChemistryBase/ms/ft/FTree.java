@@ -233,7 +233,7 @@ public class FTree extends AbstractFragmentationGraph {
         else return null;
     }
 
-    public final TreeCursor getCursor() {
+    public final TreeCursor<Fragment> getCursor() {
         return TreeCursor.getCursor(root, FTree.treeAdapter());
     }
 

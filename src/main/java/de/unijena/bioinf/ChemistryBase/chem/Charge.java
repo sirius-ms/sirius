@@ -50,7 +50,7 @@ public class Charge extends Ionization {
 
 	@Override
 	public String getName() {
-		return charge > 0 ? "[M+?]+" : (charge < 0 ? "[M+?]-" : "[M+?]"); 
+		return charge > 0 ? "[M+?]+" : (charge < 0 ? "[M+?]-" : "[M+?]");
 	}
 	
 	

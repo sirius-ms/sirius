@@ -179,7 +179,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
 
     private IonMode[] POSITIVE_ION_MODES, NEGATIVE_ION_MODES;
     private Charge POSITIVE_IONIZATION, NEGATIVE_IONIZATION;
-    private IonMode PROTONATION, DEPROTONATION;
+    private IonMode PROTONATION, DEPROTONATION, INTRINSICALLY_CHARGED_POSITIVE, INTRINSICALLY_CHARGED_NEGATIVE;
     private Ionization ELECTRON_IONIZATION;
     private PrecursorIonType EI_TYPE, UNKNOWN_POSITIVE_IONTYPE, UNKNOWN_NEGATIVE_IONTYPE;
 
@@ -237,6 +237,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         };
         this.POSITIVE_IONIZATION = new Charge(1);
         this.NEGATIVE_IONIZATION = new Charge(-1);
+        this.INTRINSICALLY_CHARGED_NEGATIVE = new IonMode(-1, "[M]-", MolecularFormula.emptyFormula());
+        this.INTRINSICALLY_CHARGED_POSITIVE = new IonMode(1, "[M]+", MolecularFormula.emptyFormula());
         this.ELECTRON_IONIZATION = new ElectronIonization();
         this.EI_TYPE = new PrecursorIonType(ELECTRON_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula());
         // ADDUCTS
@@ -398,7 +400,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             if (usedIonMode != null) break;
         }
         if (usedIonMode == null) {
-            usedIonMode = charge > 0 ? POSITIVE_IONIZATION : NEGATIVE_IONIZATION;
+            usedIonMode = charge > 0 ? INTRINSICALLY_CHARGED_POSITIVE : INTRINSICALLY_CHARGED_NEGATIVE;
         }
         MolecularFormula adduct = MolecularFormula.emptyFormula();
         for (MolecularFormula f : adducts) adduct = adduct.add(f);

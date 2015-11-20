@@ -73,6 +73,9 @@ public class PrecursorIonType {
     }
 
     private String formatToString() {
+        if (isIonizationUnknown()) {
+            return ionization.toString();
+        }
         final StringBuilder buf = new StringBuilder(128);
         buf.append("[M");
         MolecularFormula ion = MolecularFormula.emptyFormula();
