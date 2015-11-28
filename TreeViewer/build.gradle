@@ -1,5 +1,0 @@
-dependencies() {
-    compile 'org.apache.xmlgraphics:batik-swing:1.7',
-            "org.jdom:jdom:2.0.2",
-            "de.unijena.bioinf:BabelMs:1.0-SNAPSHOT"
-}
