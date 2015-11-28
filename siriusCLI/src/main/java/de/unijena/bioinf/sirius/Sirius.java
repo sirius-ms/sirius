@@ -95,7 +95,7 @@ public class Sirius {
             "}";
 
     private static final double MAX_TREESIZE_INCREASE = 3d;
-    private static final double TREE_SIZE_INCREASE = 0.5d;
+    private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
     private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
     private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
