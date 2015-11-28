@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.unijena.bioinf</groupId>
     <artifactId>BabelMs</artifactId>
-    <version>3.1.2</version>
+    <version>3.1.2-SNAPSHOT</version>
 
     <!--                                                               -->
     <developers>
@@ -20,7 +20,7 @@
         <dependency>
             <artifactId>ChemistryBase</artifactId>
             <groupId>de.unijena.bioinf</groupId>
-            <version>4.1.2</version>
+            <version>4.1.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
