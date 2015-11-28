@@ -43,7 +43,7 @@ import java.util.*;
 
 public class Sirius {
 
-    public final static String VERSION_STRING = "Sirius 3.1.1";
+    public final static String VERSION_STRING = "Sirius 3.1.2";
 
     public final static String CITATION = "Kai Dührkop and Sebastian Böcker\n" +
             "Fragmentation trees reloaded.\n" +
