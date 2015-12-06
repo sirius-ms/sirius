@@ -52,6 +52,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     private static int threadLocal;
     private final static Pattern IONTYPE_PATTERN = Pattern.compile("[\\[\\]()+-]");
     private final static Pattern IONTYPE_NUM_PATTERN = Pattern.compile("^\\d+$");
+    private final static Pattern IONTYPE_NUM_PATTERN_LEFT = Pattern.compile("^\\d+");
 
     /**
      * @return current enabled periodic table instance
@@ -245,7 +246,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         final String[] adductsPositive = new String[]{
                 "[M+H]+", "[M]+", "[M+K]+", "[M+K-2H]+", "[M+OH]+",
                 "[M+Na]+", "[M+H-H2O]+", "[M-H+Na]+", "[M+Na2-H]+", "[M+Na2-H]+", "[M+NH3+H]+", "[(M+NH3)+H]+", "[M+NH4]+",
-                "[M+H-C6H10O4]+", "[M+H-C6H10O5]+"
+                "[M+H-C6H10O4]+", "[M+H-C6H10O5]+", "[M - MeOH + H]+"
         };
         final String[] adductsNegative = new String[]{
                 "[M-H]-", "[M]-", "[M-2H]-", "[M+K-2H]-",
@@ -315,18 +316,36 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                         break;
                     }
                 case 'M':
-                    if (number != 1) {
-                        throw new IllegalArgumentException("Do not support multimeres: '" + name + "'");
-                    } else if (!isAdd) {
-                        throw new IllegalArgumentException("Invalid format of ion type: '" + name + "'");
-                    } else break;
+                    if (token.length() <= 1 || !(Character.isDigit(token.charAt(1)) || Character.isAlphabetic(token.charAt(1)))) {
+                        if (number != 1) {
+                            throw new IllegalArgumentException("Do not support multimeres: '" + name + "'");
+                        } else if (!isAdd) {
+                            throw new IllegalArgumentException("Invalid format of ion type: '" + name + "'");
+                        } else break;
+                    }
                 default: {
                     if (IONTYPE_NUM_PATTERN.matcher(token).find()) {
                         // is a number
                         number = Integer.parseInt(token);
                     } else {
+                        final String formulaString;
+                        final Matcher numm = IONTYPE_NUM_PATTERN_LEFT.matcher(token);
+                        if (numm.matches()) {
+                            if (number != 1) {
+                                throw new IllegalArgumentException("Do not support nested groups in formula string: '" + name + "'");
+                            }
+                            number = Integer.parseInt(numm.group());
+                            formulaString = token.substring(numm.group().length());
+                        } else {
+                            formulaString = token;
+                        }
                         // should be a molecular formula
-                        MolecularFormula f = MolecularFormula.parse(token);
+                        MolecularFormula f;
+                        if (formulaString.equals("MeOH")) {
+                            f = MolecularFormula.parse("CH4O");
+                        } else {
+                            f = MolecularFormula.parse(formulaString);
+                        }
                         if (number != 1) {
                             f = f.multiply(number);
                         }
