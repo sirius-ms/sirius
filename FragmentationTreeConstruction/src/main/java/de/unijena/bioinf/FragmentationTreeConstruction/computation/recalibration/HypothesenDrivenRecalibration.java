@@ -213,11 +213,16 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         method = (RecalibrationStrategy) helper.unwrap(document, document.getFromDictionary(dictionary, "method"));
         distanceThreshold = document.getDoubleFromDictionary(dictionary, "threshold");
+        if (document.hasKeyInDictionary(dictionary, "deviationScale"))
+            deviationScale = document.getDoubleFromDictionary(dictionary, "deviationScale");
+        else
+            deviationScale = 1d;
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "method", helper.wrap(document, method));
         document.addToDictionary(dictionary, "threshold", distanceThreshold);
+        document.addToDictionary(dictionary, "deviationScale", deviationScale);
     }
 }
