@@ -41,7 +41,8 @@ public class CollisionEnergy {
     }
 
     public static CollisionEnergy fromString(String value) {
-        if (value.equals("none")) return NONE;
+        value = value.trim().toLowerCase();
+        if (value.isEmpty() || value.equals("none")) return NONE;
         final int k = value.indexOf('-');
         if (k >= 0) {
             final double x = Double.parseDouble(value.substring(0, k));
