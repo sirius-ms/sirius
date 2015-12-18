@@ -33,12 +33,17 @@ public class Profile {
     public final IsotopePatternAnalysis isotopePatternAnalysis;
 
     public Profile(String name) throws IOException {
+        final boolean oldSirius = name.startsWith("oldSirius");
+        if (oldSirius) {
+            name = name.split(":")[1];
+        }
         final JSONObject json = JSONDocumentType.getJSON("/profiles/" + name.toLowerCase() + ".json", name);
         final JSONDocumentType document = new JSONDocumentType();
         if (document.hasKeyInDictionary(json, "FragmentationPatternAnalysis")) this.fragmentationPatternAnalysis = FragmentationPatternAnalysis.loadFromProfile(document, json);
         else fragmentationPatternAnalysis=null;
         if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
         else isotopePatternAnalysis=null;
+        fragmentationPatternAnalysis.makeToOldSiriusAnalyzer();
     }
 
     public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
