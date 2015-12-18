@@ -47,6 +47,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
@@ -552,6 +553,68 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     /**
      * Construct a new FragmentationPatternAnaylsis with default scorers
      */
+    public void makeToOldSiriusAnalyzer() {
+        // peak pair scorers
+        final RelativeLossSizeScorer lossSize = new RelativeLossSizeScorer();
+        final List<PeakPairScorer> peakPairScorers = new ArrayList<PeakPairScorer>();
+        peakPairScorers.add(new CollisionEnergyEdgeScorer(0.1, 0.8));
+        peakPairScorers.add(lossSize);
+
+        // loss scorers
+        final List<LossScorer> lossScorers = new ArrayList<LossScorer>();
+        lossScorers.add(FreeRadicalEdgeScorer.getRadicalScorerWithDefaultSet());
+        lossScorers.add(new DBELossScorer());
+        lossScorers.add(new PureCarbonNitrogenLossScorer());
+        //lossScorers.add(new ChemicalPriorEdgeScorer(new Hetero2CarbonScorer(new NormalDistribution(0.5886335d, 0.5550574d)), 0d, 0d));
+        //lossScorers.add(new StrangeElementScorer());
+        final CommonLossEdgeScorer alesscorer = new CommonLossEdgeScorer();
+        alesscorer.setRecombinator(new CommonLossEdgeScorer.LegacyOldSiriusRecombinator());
+
+        final double GAMMA = 2d;
+
+        for (String s : CommonLossEdgeScorer.ales_list) {
+            alesscorer.addCommonLoss(MolecularFormula.parse(s), GAMMA);
+        }
+
+        alesscorer.addImplausibleLosses(Math.log(0.25));
+
+        lossScorers.add(new ChemicalPriorEdgeScorer(new Hetero2CarbonScorer(Hetero2CarbonScorer.getHeteroToCarbonDistributionFromKEGG()), 0d, 0d));
+
+        lossScorers.add(alesscorer);
+
+        // peak scorers
+        final List<PeakScorer> peakScorers = new ArrayList<PeakScorer>();
+        peakScorers.add(new PeakIsNoiseScorer(ExponentialDistribution.getMedianEstimator()));
+        peakScorers.add(new TreeSizeScorer(0d));
+
+        // root scorers
+        final List<DecompositionScorer<?>> rootScorers = new ArrayList<DecompositionScorer<?>>();
+        rootScorers.add(new ChemicalPriorScorer(new Hetero2CarbonScorer(Hetero2CarbonScorer.getHeteroToCarbonDistributionFromKEGG()), 0d, 0d));
+        rootScorers.add(new MassDeviationVertexScorer());
+
+        // fragment scorers
+        final List<DecompositionScorer<?>> fragmentScorers = new ArrayList<DecompositionScorer<?>>();
+        fragmentScorers.add(new MassDeviationVertexScorer());
+        //fragmentScorers.add(CommonFragmentsScore.getLearnedCommonFragmentScorer());
+
+        // setup
+        setLossScorers(lossScorers);
+        setRootScorers(rootScorers);
+        setDecompositionScorers(fragmentScorers);
+        setFragmentPeakScorers(peakScorers);
+        setPeakPairScorers(peakPairScorers);
+
+        setPeakMerger(new HighIntensityMerger(0.01d));
+        getPostProcessors().add(new NoiseThresholdFilter(0.005d));
+        getPreprocessors().add(new NormalizeToSumPreprocessor());
+
+        getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
+
+        //analysis.setTreeBuilder(new DPTreeBuilder(15));
+        setTreeBuilder(new GurobiSolver());
+
+        getDefaultProfile().setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.4d).getMedian());
+    }
     public static FragmentationPatternAnalysis oldSiriusAnalyzer() {
         final FragmentationPatternAnalysis analysis = new FragmentationPatternAnalysis();
 
@@ -612,6 +675,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
+        analysis.setTreeBuilder(new GurobiSolver());
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
 
@@ -853,6 +917,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             overallScore += l.getWeight();
         }
         treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
+
         tree.addAnnotation(TreeScoring.class, treeScoring);
 
         // fragment annotations
@@ -879,6 +944,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             simplePeakAnnotation.set(treeFragment, graphPeak);
             peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula()));
         }
+
+        // add statistics
+        treeScoring.setExplainedIntensity(getIntensityRatioOfExplainedPeaks(tree));
+        treeScoring.setExplainedIntensityOfExplainablePeaks(getIntensityRatioOfExplainablePeaks(tree));
+        treeScoring.setRatioOfExplainedPeaks((double)tree.numberOfVertices() / (double)originalGraph.getAnnotationOrThrow(ProcessedInput.class).getMergedPeaks().size());
     }
 
     /**
