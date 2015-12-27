@@ -1,7 +1,8 @@
 package de.unijena.bioinf.babelms.binary;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
@@ -59,12 +60,19 @@ public class FTreeBinaryWriter {
             out.writeInt(tree.numberOfEdges());
             out.writeInt(formulaToInt.get(tree.getRoot().getFormula()));
             // write underlying peaks
-            final FragmentAnnotation<Peak> fano = tree.getFragmentAnnotationOrThrow(Peak.class);
+            final FragmentAnnotation<AnnotatedPeak> fano2 = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
             assert tree.getFragmentAt(0)==tree.getRoot();
             for (Fragment f : tree.getFragments()) {
-                final Peak p = fano.get(f);
-                out.writeDouble(p.getMass());
-                out.writeDouble(p.getIntensity());
+                final AnnotatedPeak p = fano2.get(f);
+                if (p==null) {
+                    // peak is synthetic...
+                    final double theoreticalMz = tree.getAnnotationOrThrow(PrecursorIonType.class).neutralMassToPrecursorMass(f.getFormula().getMass());
+                    out.writeDouble(theoreticalMz);
+                    out.writeDouble(0d);
+                } else {
+                    out.writeDouble(p.getRecalibratedMass());
+                    out.writeDouble(p.getRelativeIntensity());
+                }
             }
             // write losses
             for (Fragment f : tree.getFragmentsWithoutRoot()) {

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.babelms.binary;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -90,11 +91,18 @@ public class FTreeBinaryReader {
         }
         // add peaks
         final FragmentAnnotation<Peak> peakAno = tree.addFragmentAnnotation(Peak.class);
+        final FragmentAnnotation<AnnotatedPeak> pano = tree.addFragmentAnnotation(AnnotatedPeak.class);
         peakAno.set(tree.getRoot(), peaks[0]);
+        pano.set(tree.getRoot(), getPeakAnnotation(tree.getRoot(), peaks[0]));
         for (int i=0; i < numberOfEdges; ++i) {
             peakAno.set(treemap.get(edgeTarget[i]), peaks[i+1]);
+            pano.set(treemap.get(edgeTarget[i]), getPeakAnnotation(treemap.get(edgeTarget[i]), peaks[i+1]));
         }
         return tree;
+    }
+
+    private static AnnotatedPeak getPeakAnnotation(Fragment f, Peak peak) {
+        return new AnnotatedPeak(f.getFormula(), peak.getMass(), peak.getMass(), peak.getIntensity(), null, null, null);
     }
 
 }
