@@ -435,7 +435,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (selection != otherSelection) {
             final Counter counter = new Counter(other);
             visit(counter);
-            return counter.count;
+            final int hydrogenDifference = Math.abs(other.numberOfHydrogens()-numberOfHydrogens());
+            return counter.count-hydrogenDifference;
         } else {
             final int hydrogenIndex = selection.hydrogenIndex();
             for (int k = 0; k < Math.min(amounts.length, otherAmounts.length); ++k) {
@@ -444,6 +445,35 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             final short[] bigger = amounts.length > otherAmounts.length ? amounts : otherAmounts;
             for (int k = Math.min(amounts.length, otherAmounts.length); k < bigger.length; ++k) {
                 if (k != hydrogenIndex) count += bigger[k];
+            }
+            return count;
+        }
+    }
+
+    /*
+        Returns the number of difference non-hydrogen atoms in both molecules
+     */
+    public int numberOfDifferentNonCarbonHydrogenAtoms(MolecularFormula other) {
+        final short[] amounts = buffer();
+        final TableSelection selection = getTableSelection();
+        final short[] otherAmounts = other.buffer();
+        final TableSelection otherSelection = other.getTableSelection();
+        int count = 0;
+        if (selection != otherSelection) {
+            final Counter counter = new Counter(other);
+            visit(counter);
+            final int hydrogenDifference = Math.abs(other.numberOfHydrogens()-numberOfHydrogens());
+            final int carbonDifference = Math.abs(other.numberOfCarbons()-numberOfCarbons());
+            return counter.count-(hydrogenDifference+carbonDifference);
+        } else {
+            final int hydrogenIndex = selection.hydrogenIndex();
+            final int carbonIndex = selection.carbonIndex();
+            for (int k = 0; k < Math.min(amounts.length, otherAmounts.length); ++k) {
+                if (k != hydrogenIndex && k != carbonIndex) count += Math.abs(amounts[k] - otherAmounts[k]);
+            }
+            final short[] bigger = amounts.length > otherAmounts.length ? amounts : otherAmounts;
+            for (int k = Math.min(amounts.length, otherAmounts.length); k < bigger.length; ++k) {
+                if (k != hydrogenIndex && k != carbonIndex) count += bigger[k];
             }
             return count;
         }
