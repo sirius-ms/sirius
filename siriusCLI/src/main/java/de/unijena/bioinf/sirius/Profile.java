@@ -43,7 +43,6 @@ public class Profile {
         else fragmentationPatternAnalysis=null;
         if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) this.isotopePatternAnalysis = IsotopePatternAnalysis.loadFromProfile(document, json);
         else isotopePatternAnalysis=null;
-        fragmentationPatternAnalysis.makeToOldSiriusAnalyzer();
     }
 
     public Profile(IsotopePatternAnalysis ms1, FragmentationPatternAnalysis ms2) {
