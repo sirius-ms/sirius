@@ -715,6 +715,16 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return 1;
     }
 
+    /**
+     * @return a copy of this molecular formula with number of hydrogen is set to zero
+     */
+    public MolecularFormula withoutHydrogen() {
+        final TableSelection sel = getTableSelection();
+        final short[] copy = buffer().clone();
+        copy[sel.hydrogenIndex()] = 0;
+        return new ImmutableMolecularFormula(sel,copy);
+    }
+
     private final static class Counter implements FormulaVisitor<Object> {
         private int count = 0;
         private MolecularFormula other;
