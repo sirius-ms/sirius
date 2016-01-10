@@ -721,7 +721,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public MolecularFormula withoutHydrogen() {
         final TableSelection sel = getTableSelection();
         final short[] copy = buffer().clone();
-        copy[sel.hydrogenIndex()] = 0;
+        final int hi = sel.hydrogenIndex();
+        if (hi < copy.length) copy[sel.hydrogenIndex()] = 0;
         return new ImmutableMolecularFormula(sel,copy);
     }
 
