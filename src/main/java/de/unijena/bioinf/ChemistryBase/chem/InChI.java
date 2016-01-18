@@ -33,7 +33,7 @@ public class InChI {
     }
 
     private static Pattern inchi2dPattern = Pattern.compile("/[btmrsfi]");
-    private static String inchi2d(String inchi) {
+    public static String inchi2d(String inchi) {
         final Matcher m = inchi2dPattern.matcher(inchi);
         if (m.find()) {
             return inchi.substring(0, m.start());
