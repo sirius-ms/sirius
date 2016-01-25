@@ -75,6 +75,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		} catch (Exception e) {
 		    // If Nimbus is not available, you can set the GUI to another look and feel.
 		}
+
+
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		
 		computeAllActive = false;
 
