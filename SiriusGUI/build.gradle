@@ -16,16 +16,16 @@ apply plugin: 'edu.sc.seis.launch4j'
 
 mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
 sourceCompatibility = 1.7
-version = '3.1.1'
+version = '3.1.3'
 
-project.version = '3.1.1'
+project.version = '3.1.3'
 
 launch4j {
     mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
     icon = file('src/main/resources/icons/sirius.ico')
     copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena. Kai Dührkop and Marvin Meusel"
-    version = "3.1.1"
-    textVersion = "3.1.1"
+    version = "3.1.3"
+    textVersion = "3.1.3"
     initialHeapSize = 256
     maxHeapSize = 1024
     maxHeapPercent = 60
@@ -48,11 +48,11 @@ repositories {
 }
 
 dependencies {
-    compile "de.unijena.bioinf:ChemistryBase:4.1.1",
-            "de.unijena.bioinf:FragmentationTreeConstruction:3.1.1",
-            "de.unijena.bioinf:BabelMs:3.1.1",
+    compile "de.unijena.bioinf:ChemistryBase:4.1.3",
+            "de.unijena.bioinf:FragmentationTreeConstruction:3.1.3",
+            "de.unijena.bioinf:BabelMs:3.1.3",
             "de.unijena.bioinf:Myxo:0.2",
-            "de.unijena.bioinf:SiriusCLI:3.1.1",
+            "de.unijena.bioinf:SiriusCLI:3.1.3",
             "net.sf.opencsv:opencsv:2.3",
             "org.swinglabs.swingx:swingx-all:1.+"
 
