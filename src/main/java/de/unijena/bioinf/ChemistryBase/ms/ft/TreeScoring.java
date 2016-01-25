@@ -31,6 +31,12 @@ public class TreeScoring {
     private double overallScore;
     private TObjectDoubleHashMap<String> additionalScores;
 
+    // meta info
+    private double explainedIntensity;
+    private double explainedIntensityOfExplainablePeaks;
+    private double ratioOfExplainedPeaks;
+
+
     public TreeScoring() {
         this.additionalScores = null;
     }
@@ -76,6 +82,30 @@ public class TreeScoring {
         for (String k : additionalScores.keySet())
             sum += additionalScores.get(k);
         return sum;
+    }
+
+    public double getExplainedIntensityOfExplainablePeaks() {
+        return explainedIntensityOfExplainablePeaks;
+    }
+
+    public void setExplainedIntensityOfExplainablePeaks(double explainedIntensityOfExplainablePeaks) {
+        this.explainedIntensityOfExplainablePeaks = explainedIntensityOfExplainablePeaks;
+    }
+
+    public double getExplainedIntensity() {
+        return explainedIntensity;
+    }
+
+    public void setExplainedIntensity(double explainedIntensity) {
+        this.explainedIntensity = explainedIntensity;
+    }
+
+    public double getRatioOfExplainedPeaks() {
+        return ratioOfExplainedPeaks;
+    }
+
+    public void setRatioOfExplainedPeaks(double ratioOfExplainedPeaks) {
+        this.ratioOfExplainedPeaks = ratioOfExplainedPeaks;
     }
 
     public double getRootScore() {
