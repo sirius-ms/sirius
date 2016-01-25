@@ -197,6 +197,17 @@ class DefaultDescriptors {
                 scoring.addAdditionalScore(key, document.getDoubleFromDictionary(score, key));
             }
 
+            if (document.hasKeyInDictionary(dictionary, "ratioOfExplainedPeaks")) {
+                scoring.setRatioOfExplainedPeaks(document.getDoubleFromDictionary(dictionary, "ratioOfExplainedPeaks"));
+            }
+            if (document.hasKeyInDictionary(dictionary, "explainedIntensity")) {
+                scoring.setExplainedIntensity(document.getDoubleFromDictionary(dictionary, "explainedIntensity"));
+            }
+            if (document.hasKeyInDictionary(dictionary, "explainedIntensityOfExplainablePeaks")) {
+                scoring.setExplainedIntensityOfExplainablePeaks(document.getDoubleFromDictionary(dictionary, "explainedIntensityOfExplainablePeaks"));
+            }
+
+
             return scoring;
         }
 
@@ -213,6 +224,10 @@ class DefaultDescriptors {
             }
             document.addToDictionary(score, "tree", annotation.getOverallScore()-sum);
             document.addDictionaryToDictionary(dictionary, "score", score);
+
+            document.addToDictionary(dictionary, "ratioOfExplainedPeaks", annotation.getRatioOfExplainedPeaks());
+            document.addToDictionary(dictionary, "explainedIntensity", annotation.getExplainedIntensity());
+            document.addToDictionary(dictionary, "explainedIntensityOfExplainablePeaks", annotation.getExplainedIntensityOfExplainablePeaks());
         }
     }
 

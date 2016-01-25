@@ -105,12 +105,25 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     spec.spectrum.setIonization(new Charge(charge));
                 if (spec.ionType==null) spec.ionType = PrecursorIonType.unknown(charge);
             } else if (keyword.startsWith("ION")) {
-                final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(value);
-                if (ion==null) throw new IOException("Unknown ion '" + value +"'");
-                else {
-                    spec.spectrum.setIonization(ion.getIonization());
-                    spec.ionType = ion;
+                final PrecursorIonType ion;
+                final Matcher cm = CHARGE_PATTERN.matcher(value);
+                if (value.toLowerCase().startsWith("pos")) {
+                    ion = PrecursorIonType.unknown(1);
+                } else if (value.toLowerCase().startsWith("neg")) {
+                    ion = PrecursorIonType.unknown(-1);
+                } else if (cm.matches()) {
+                    int v = Integer.parseInt(cm.group(1));
+                    if ("-".equals(cm.group(2))) ion = PrecursorIonType.unknown(-1);
+                    else ion = PrecursorIonType.unknown(1);
+                } else {
+                    ion = PeriodicTable.getInstance().ionByName(value);
+                    if (ion==null) throw new IOException("Unknown ion '" + value +"'");
+                    else {
+
+                    }
                 }
+                spec.spectrum.setIonization(ion.getIonization());
+                spec.ionType = ion;
             } else if (keyword.contains("LEVEL")) {
                 spec.spectrum.setMsLevel(Integer.parseInt(value));
             } else {
