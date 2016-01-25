@@ -19,6 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -31,13 +32,17 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 public class IntrinsicallyChargedScorer implements DecompositionScorer {
 
     private double penalty;
+    private final PrecursorIonType intrinsicPlus, intrinsicNeg;
 
     public IntrinsicallyChargedScorer() {
-        this(Math.log(0.1));
+        this(Math.log(0.001));
     }
 
     public IntrinsicallyChargedScorer(double penalty) {
         this.penalty = penalty;
+        final PeriodicTable table = PeriodicTable.getInstance();
+        intrinsicPlus = table.ionByName("[M]+");
+        intrinsicNeg = table.ionByName("[M]-");
     }
 
     @Override
@@ -48,10 +53,9 @@ public class IntrinsicallyChargedScorer implements DecompositionScorer {
     @Override
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
         final PrecursorIonType ion = input.getExperimentInformation().getPrecursorIonType();
-        // if ion is intrinsically charged, behave as if you wouldn't know it
-
-        if (!formula.maybeCharged() == (ion.isIonizationUnknown())) return penalty;
-        else return 0d;
+        if (ion.equals(intrinsicNeg) || ion.equals(intrinsicPlus)){
+            return formula.maybeCharged() ? 0d : penalty;
+        } else return formula.maybeCharged() ? penalty : 0d;
     }
 
     @Override

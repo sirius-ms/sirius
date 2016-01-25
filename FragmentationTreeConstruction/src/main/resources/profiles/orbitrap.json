@@ -147,7 +147,7 @@
       },
       {
         "$name": "IntrinsicallyChargedScorer",
-        "score": -2.3025850929940455
+        "score": -4.605170185988091
       },
       {
         "$name": "PhosphorScorer"
