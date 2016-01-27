@@ -45,8 +45,16 @@
             <artifactId>GraphUtils</artifactId>
             <version>1.1</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.0.4</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -92,8 +100,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                     <encoding>utf-8</encoding>
                 </configuration>
             </plugin>

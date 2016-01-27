@@ -19,14 +19,14 @@ package de.unijena.bioinf.ChemistryBase.chem.utils;
 
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Iterator;
 
 public class PeriodicTableJSONReader extends PeriodicTableReader {
 
@@ -50,24 +50,20 @@ public class PeriodicTableJSONReader extends PeriodicTableReader {
 
     @Override
     public void read(PeriodicTable table, Reader reader) throws IOException {
-        final String content = readString(reader);
-        try {
-            final JSONObject data = new JSONObject(content);
-            for (Iterator<?> keys = data.keys(); keys.hasNext();) {
-                final String key = keys.next().toString();
-                final JSONObject element = (JSONObject)data.get(key);
-                final String elementName = (String)element.get("name");
-                final Integer elementValence = (Integer)element.get("valence");
-                final JSONObject isotopes = (JSONObject)element.get("isotopes");
-                final double[] masses = toDoubleArray((JSONArray) isotopes.get("mass"));
-                final double[] abundances = toDoubleArray((JSONArray) isotopes.get("abundance"));
+        try (final JsonReader jreader = Json.createReader(new BufferedReader(reader))) {
+            final JsonObject data = jreader.readObject();
+            for (String key : data.keySet()) {
+                final JsonObject element = data.getJsonObject(key);
+                final String elementName = element.getString("name");
+                final int elementValence = element.getInt("valence");
+                final JsonObject isotopes = element.getJsonObject("isotopes");
+                final double[] masses = toDoubleArray(isotopes.getJsonArray("mass"));
+                final double[] abundances = toDoubleArray(isotopes.getJsonArray("abundance"));
                 final Isotopes iso = new Isotopes(masses, abundances);
                 if (overrideElements || table.getByName(key) == null)
-                    table.addElement(elementName, key, iso.getMass(0), elementValence );
+                    table.addElement(elementName, key, iso.getMass(0), elementValence);
                 table.getDistribution().addIsotope(key, iso);
             }
-        } catch (JSONException e) {
-            throw new IOException(e);
         }
     }
 
@@ -75,22 +71,9 @@ public class PeriodicTableJSONReader extends PeriodicTableReader {
         return overrideElements;
     }
 
-    private static double[] toDoubleArray(JSONArray ary) throws JSONException {
-        final double[] array = new double[ary.length()];
-        for (int i=0; i < ary.length(); ++i) array[i] = ary.getDouble(i);
+    private static double[] toDoubleArray(JsonArray ary) {
+        final double[] array = new double[ary.size()];
+        for (int i=0; i < ary.size(); ++i) array[i] = ary.getJsonNumber(i).doubleValue();
         return array;
-    }
-
-    private static String readString(Reader reader) throws IOException {
-        final StringBuilder buffer = new StringBuilder();
-        final BufferedReader bufReader = new BufferedReader(reader);
-        try {
-            while (bufReader.ready()) {
-                buffer.append(bufReader.readLine()).append("\n");
-            }
-        } finally {
-            bufReader.close();
-        }
-        return buffer.toString();
     }
 }
