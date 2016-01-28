@@ -283,6 +283,34 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return result;
     }
 
+    public boolean isSatisfied(MolecularFormula formula) {
+        final boolean[] violation = new boolean[1];
+        formula.visit(new FormulaVisitor<Object>() {
+            @Override
+            public Object visit(Element element, int amount) {
+                if (violation[0]) return null;
+                if (getUpperbound(element) < amount) {
+                    violation[0] = true;
+                }
+                return null;
+            }
+        });
+        return violation[0];
+    }
+    public boolean isSatisfied(ChemicalAlphabet formula) {
+        for (Element e : formula.getElements()) {
+            if (getUpperbound(e) <= 0) return false;
+        }
+        return true;
+    }
+
+    public boolean isViolated(MolecularFormula formula) {
+        return !isSatisfied(formula);
+    }
+    public boolean isViolated(ChemicalAlphabet formula) {
+        return !isSatisfied(formula);
+    }
+
     @Override
     public FormulaConstraints clone() {
         return new FormulaConstraints(this);
