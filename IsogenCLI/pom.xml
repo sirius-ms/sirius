@@ -16,7 +16,7 @@
     <repositories>
         <repository>
             <id>bioinf-jena</id>
-            <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/repo</url>
             <name>Bioinf Jena</name>
         </repository>
     </repositories>
