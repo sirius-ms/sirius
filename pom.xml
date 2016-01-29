@@ -12,13 +12,13 @@
             <name>Kai Duehrkop</name>
             <email>kai.duehrkop@uni-jena.de</email>
             <organization>Jena University</organization>
-            <organizationUrl>http://bio.informatik.uni-jena.de</organizationUrl>
+            <organizationUrl>https://bio.informatik.uni-jena.de</organizationUrl>
         </developer>
         <developer>
             <name>Martin Engler</name>
             <email>martin.engler@uni-jena.de</email>
             <organization>Jena University</organization>
-            <organizationUrl>http://bio.informatik.uni-jena.de</organizationUrl>
+            <organizationUrl>https://bio.informatik.uni-jena.de</organizationUrl>
         </developer>
     </developers>
 
@@ -88,7 +88,7 @@
     <repositories>
         <repository>
             <id>bioinf-jena</id>
-            <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/repo</url>
             <name>Bioinf Jena</name>
         </repository>
     </repositories>
@@ -103,14 +103,6 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <encoding>utf-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-plugin</artifactId>
-                <version>1.5</version>
-                <configuration>
-                    <connectionType>connection</connectionType>
                 </configuration>
             </plugin>
             <!-- create a jar file with mvn package -->
@@ -149,12 +141,12 @@
         <repository>
             <id>bioinf-jena</id>
             <name>bioinf-jena-releases</name>
-            <url>http://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
         </repository>
         <snapshotRepository>
             <id>bioinf-jena</id>
             <name>bioinf-jena-snapshots</name>
-            <url>http://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
