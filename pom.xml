@@ -36,7 +36,7 @@
     <repositories>
         <repository>
             <id>bioinf-jena</id>
-            <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/repo</url>
             <name>Bioinf Jena</name>
         </repository>
         <repository>
@@ -138,12 +138,12 @@
         <repository>
             <id>bioinf-jena</id>
             <name>bioinf-jena-releases</name>
-            <url>http://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
         </repository>
         <snapshotRepository>
             <id>bioinf-jena</id>
             <name>bioinf-jena-snapshots</name>
-            <url>http://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
+            <url>https://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
