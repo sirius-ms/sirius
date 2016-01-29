@@ -17,7 +17,7 @@
       <name>Marcus Ludwig</name>
       <email>m.ludwig@uni-jena.de</email>
       <organization>Jena University</organization>
-      <organizationUrl>http://bio.informatik.uni-jena.de</organizationUrl>
+      <organizationUrl>https://bio.informatik.uni-jena.de</organizationUrl>
     </developer>
   </developers>
   
@@ -103,19 +103,19 @@
     <repository>
         <id>bioinf-jena</id>
         <name>bioinf-jena-releases</name>
-        <url>http://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
+        <url>https://bio.informatik.uni-jena.de/artifactory/libs-releases-local</url>
     </repository>
     <snapshotRepository>
         <id>bioinf-jena</id>
         <name>bioinf-jena-snapshots</name>
-        <url>http://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
+        <url>https://bio.informatik.uni-jena.de/artifactory/libs-snapshots-local</url>
         <uniqueVersion>false</uniqueVersion>
     </snapshotRepository>
   </distributionManagement>
 
   <repositories><repository>
     <id>bioinf-jena</id>
-    <url>http://bio.informatik.uni-jena.de/artifactory/repo</url>
+    <url>https://bio.informatik.uni-jena.de/artifactory/repo</url>
     <name>Bioinf Jena</name>
   </repository></repositories>
   
