@@ -12,7 +12,7 @@ public class InChI {
     public InChI(String inchikey, String inchi) {
         this.in3D = inchi;
         this.key = inchikey;
-        this.in2D = inchi2d(inchi);
+        this.in2D = inchi==null ? null : inchi2d(inchi);
     }
 
     public MolecularFormula extractFormula() {

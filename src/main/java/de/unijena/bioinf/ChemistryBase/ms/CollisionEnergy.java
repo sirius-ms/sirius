@@ -44,7 +44,7 @@ public class CollisionEnergy {
         value = value.trim().toLowerCase();
         if (value.isEmpty() || value.equals("none")) return NONE;
         final int k = value.indexOf('-');
-        if (k >= 0) {
+        if (k > 0) {
             final double x = Double.parseDouble(value.substring(0, k));
             final double y = Double.parseDouble(value.substring(k + 1));
             return new CollisionEnergy(x, y);
