@@ -383,20 +383,26 @@ public class Sirius {
         if (deisotope!=IsotopePatternHandling.omit) {
             double bestScore = 0d;
             final List<IsotopePattern> pattern = profile.isotopePatternAnalysis.extractPatterns(exp, exp.getIonMass(), false);
-            for (IonWhitelist wl : subsets.values()) {
-                final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(wl.whitelist);
-                final double[][] scores = new double[pattern.size()][];
-                for (int k=0; k < pattern.size(); ++k) {
-                    scores[k] = profile.isotopePatternAnalysis.scoreFormulas(pattern.get(k).getPattern(), formulas, exp, profile.isotopePatternAnalysis.getDefaultProfile());
-                }
-                for (int k=0; k < formulas.size(); ++k) {
-                    final MolecularFormula f = formulas.get(k);
-                    isoScores.put(f, 0d);
-                    for (int i=0; i < scores.length; ++i) {
-                        isoScores.put(f, Math.max(isoScores.get(f), scores[i][k]));
+            final PrecursorIonType before = exp.getPrecursorIonType();
+            try {
+                for (IonWhitelist wl : subsets.values()) {
+                    final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(wl.whitelist);
+                    final double[][] scores = new double[pattern.size()][];
+                    exp.setPrecursorIonType(wl.ionization);
+                    for (int k=0; k < pattern.size(); ++k) {
+                        scores[k] = profile.isotopePatternAnalysis.scoreFormulas(pattern.get(k).getPattern(), formulas, exp, profile.isotopePatternAnalysis.getDefaultProfile());
                     }
-                    bestScore = Math.max(isoScores.get(f), bestScore);
+                    for (int k=0; k < formulas.size(); ++k) {
+                        final MolecularFormula f = formulas.get(k);
+                        isoScores.put(f, 0d);
+                        for (int i=0; i < scores.length; ++i) {
+                            isoScores.put(f, Math.max(isoScores.get(f), scores[i][k]));
+                        }
+                        bestScore = Math.max(isoScores.get(f), bestScore);
+                    }
                 }
+            } finally {
+                exp.setPrecursorIonType(before);
             }
             if (bestScore <= 0d) {
                 // skip isotope analysis
