@@ -283,8 +283,8 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return result;
     }
 
-    public boolean isSatisfied(MolecularFormula formula) {
-        final boolean[] violation = new boolean[1];
+    public boolean isViolated(MolecularFormula formula) {
+        final boolean[] violation = new boolean[]{false};
         formula.visit(new FormulaVisitor<Object>() {
             @Override
             public Object visit(Element element, int amount) {
@@ -297,18 +297,18 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         });
         return violation[0];
     }
-    public boolean isSatisfied(ChemicalAlphabet formula) {
+    public boolean isViolated(ChemicalAlphabet formula) {
         for (Element e : formula.getElements()) {
             if (getUpperbound(e) <= 0) return false;
         }
         return true;
     }
 
-    public boolean isViolated(MolecularFormula formula) {
-        return !isSatisfied(formula);
+    public boolean isSatiesfied(MolecularFormula formula) {
+        return !isViolated(formula);
     }
-    public boolean isViolated(ChemicalAlphabet formula) {
-        return !isSatisfied(formula);
+    public boolean isSatiesfied(ChemicalAlphabet formula) {
+        return !isViolated(formula);
     }
 
     @Override
