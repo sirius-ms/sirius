@@ -38,7 +38,7 @@ public class Deviation implements Cloneable{
 
     public Deviation(double ppm) {
         this.ppm = ppm;
-        this.absolute = 1e-4*ppm; // set absolute to 100 Da with given ppm
+        this.absolute = 2e-4*ppm; // set absolute to 200 Da with given ppm
     }
 
     public Deviation(@Parameter("ppm") double ppm, @Parameter("absolute") double absolute) {
