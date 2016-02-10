@@ -66,8 +66,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private String inchi, inchikey, smiles;
 
         private MutableMs2Experiment parse() throws IOException {
-            while (reader.ready()) {
-                final String line = reader.readLine();
+            String line;
+            while ((line=reader.readLine())!=null) {
                 try {
                     ++lineNumber;
                     if (line.isEmpty()) {
