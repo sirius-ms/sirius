@@ -10,6 +10,8 @@ import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -37,10 +39,12 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener, KeyListener{
-	
-	private CompoundModel compoundModel;
+
+    private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB;
+	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID;
+
+	protected CSIFingerIdComputation compoundStorage = new CSIFingerIdComputation();
 	
 	private HashSet<String> names;
 	private int nameCounter;
@@ -199,6 +203,15 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         tempP.add(exportResultsB);
         leftControlPanel.add(tempP);
 
+        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+        tempP.setBorder(BorderFactory.createEtchedBorder());
+
+        configFingerID = new JButton("CSI:FingerId",new ImageIcon(MainFrame.class.getResource("/icons/fingerprint.png")));
+        configFingerID.addActionListener(this);
+
+        tempP.add(configFingerID);
+        leftControlPanel.add(tempP);
+
 //        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 //        tempP.setBorder(BorderFactory.createEtchedBorder());
         JPanel rightControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,2,2));
@@ -301,6 +314,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		expPopMenu.addSeparator();
 	}
 
+	@Override
+	public void dispose() {
+        showResultsPanel.dispose();
+        super.dispose();
+	}
+
 	public BackgroundComputation getBackgroundComputation() {
 		return backgroundComputation;
 	}
@@ -382,7 +401,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==newB || e.getSource()==newExpMI) {
+        if (e.getSource()==configFingerID) {
+            new FingerIdDialog(this, compoundStorage, null, true);
+        } else if(e.getSource()==newB || e.getSource()==newExpMI) {
             LoadController lc = new LoadController(this, config);
             lc.showDialog();
             if (lc.getReturnValue() == ReturnValue.Success) {

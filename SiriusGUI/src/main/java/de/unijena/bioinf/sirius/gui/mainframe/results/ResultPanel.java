@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -18,13 +19,18 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 //	private ResultTreeListThumbnailCellRenderers listRenderer;
 	private TreeVisualizationPanel tvp;
 	private SpectraVisualizationPanel svp;
+	private CompoundCandidateView ccv;
 	
 	private ExperimentContainer ec;
 	
 	private Frame owner;
 	
 	private ConfigStorage config;
-	
+
+	public void dispose() {
+		ccv.dispose();
+	}
+
 	public ResultPanel(Frame owner, ConfigStorage config) {
 		this(null, owner, config);
 	}
@@ -66,24 +72,18 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		
 		svp = new SpectraVisualizationPanel(ec);
 		centerPane.addTab("spectra view",svp);
+
+        ccv = new CompoundCandidateView(owner);
+        centerPane.addTab("CSI:FingerId", ccv);
 		
 		this.add(centerPane,BorderLayout.CENTER);
-		
-		
-//		this.add(new JLabel("Dummy^2"), BorderLayout.CENTER);
+
 		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"results"));
-//		resultsJList.set
 	}
 	
 	public void changeData(ExperimentContainer ec){
 		this.ec = ec;
-		
-//		if(this.ec!=null){
-//			listRenderer.updateData(ec.getResults());
-//		}else{
-//			listRenderer.updateData(new ArrayList<SiriusResultElement>());
-//		}
-		
+
 		SiriusResultElement sre = null;
 		resultsJList.removeListSelectionListener(this);
 		if(this.ec!=null&&!this.ec.getResults().isEmpty()){
@@ -92,7 +92,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 				this.resultsJList.setSelectedIndex(0);
 				sre = ec.getResults().get(0);
 			}
-//			tvp.showTree(ec.getResults().get(0).getTree());
 		}else{
 			this.listModel.setData(new ArrayList<SiriusResultElement>());
 		}
@@ -100,6 +99,8 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		svp.changeExperiment(this.ec,sre);
 		if(sre==null) tvp.showTree(null);
 		else tvp.showTree(sre);
+        ccv.changeData(ec, sre);
+
 	}
 
 	@Override
@@ -108,9 +109,11 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		if(sre==null){
 			tvp.showTree(null);
 			svp.changeSiriusResultElement(null);
+            ccv.changeData(ec, sre);
 		}else{
 			tvp.showTree(sre);
 			svp.changeSiriusResultElement(sre);
+            ccv.changeData(ec, sre);
 		}
 	}
 

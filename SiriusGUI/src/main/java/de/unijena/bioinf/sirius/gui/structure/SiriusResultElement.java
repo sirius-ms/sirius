@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.gui.structure;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
 
 public class SiriusResultElement {
 	
@@ -12,6 +13,8 @@ public class SiriusResultElement {
 	private double score;
 	private MolecularFormula mf;
 
+	protected FingerIdData fingerIdData;
+
 	public SiriusResultElement() {
 		this.tree = null;
 		this.rank = Integer.MAX_VALUE;
@@ -20,7 +23,15 @@ public class SiriusResultElement {
 		this.ft = null;
 	}
 
-	public TreeNode getTree() {
+    public FingerIdData getFingerIdData() {
+        return fingerIdData;
+    }
+
+    public void setFingerIdData(FingerIdData fingerIdData) {
+        this.fingerIdData = fingerIdData;
+    }
+
+    public TreeNode getTree() {
 		return tree;
 	}
 
