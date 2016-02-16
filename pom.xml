@@ -55,11 +55,13 @@
             <artifactId>javax.json</artifactId>
             <version>1.0.4</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.13</version>
         </dependency>
+        -->
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
