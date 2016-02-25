@@ -29,6 +29,14 @@ public class FTree extends AbstractFragmentationGraph {
 
     protected Fragment root;
 
+    /**
+     * The absolute score of this tree.
+     * It is recommended to using tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() instead
+     * This score is the raw result of the underlying optimization problem and might differ from the final
+     * score (e.g. there might be orthogonal scores that are added later).
+     */
+    protected double treeWeight;
+
     public FTree(MolecularFormula rootFormula) {
         this.root = addFragment(rootFormula);
     }
@@ -56,6 +64,14 @@ public class FTree extends AbstractFragmentationGraph {
         f.setVertexId(0);
         root = f;
         return f;
+    }
+
+    public double getTreeWeight() {
+        return treeWeight;
+    }
+
+    public void setTreeWeight(double weight) {
+        this.treeWeight = weight;
     }
 
     /*
