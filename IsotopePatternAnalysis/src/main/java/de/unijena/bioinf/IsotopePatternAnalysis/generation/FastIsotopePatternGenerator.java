@@ -56,7 +56,8 @@ public class FastIsotopePatternGenerator extends IsotopePatternGenerator {
             formula = formula.add(adduct);
             diff = ion.getMass() - adduct.getMass();
         } else diff = ion.getMass();
-        final SimpleMutableSpectrum spec = foldFormula(formula);
+        final SimpleMutableSpectrum spec = foldFormula(formula, this.maximalNumberOfPeaks, this.minimalProbabilityThreshold);
+        Spectrums.normalize(spec, mode);
         final double mono = formula.getIntMass();
         for (int k = 0; k < spec.size(); ++k) {
             spec.setMzAt(k, k + spec.getMzAt(k) + mono + diff);
@@ -64,7 +65,7 @@ public class FastIsotopePatternGenerator extends IsotopePatternGenerator {
         return new SimpleSpectrum(spec);
     }
 
-    protected SimpleMutableSpectrum foldFormula(MolecularFormula formula) {
+    protected SimpleMutableSpectrum foldFormula(MolecularFormula formula, int maxNumberOfPeaks, double minimalIntensity) {
         ArrayWrapperSpectrum candidateDistribution = null;
         for (Element e : formula) {
             final Isotopes iso = distribution.getIsotopesFor(e);
@@ -104,30 +105,29 @@ public class FastIsotopePatternGenerator extends IsotopePatternGenerator {
             //helper list is always folded twice
             //list is just folded if binary exponent is 1 at the current position
             for (int i = 1; i < expLength; i++) {
-                helper = fold(helper, helper);
+                helper = fold(helper, helper, maxNumberOfPeaks);
                 if (isBitSet(exp, i)) {
-                    list = fold(list, helper);
+                    list = fold(list, helper, maxNumberOfPeaks);
                 }
             }
             // folding all elements to the candidate peaks
             // fold returns only list if candidatePeaks is still null
-            candidateDistribution = fold(candidateDistribution, list);
+            candidateDistribution = fold(candidateDistribution, list, maxNumberOfPeaks);
         }
         final SimpleMutableSpectrum finalSpectrum = new SimpleMutableSpectrum(candidateDistribution);
         for (int k = finalSpectrum.size() - 1; k >= 0; --k) {
-            if (finalSpectrum.getIntensityAt(k) < minimalProbabilityThreshold) {
+            if (finalSpectrum.getIntensityAt(k) < minimalIntensity) {
                 finalSpectrum.removePeakAt(k);
             }
         }
-        Spectrums.normalize(finalSpectrum, mode);
         return finalSpectrum;
     }
 
-    protected ArrayWrapperSpectrum fold(ArrayWrapperSpectrum left, ArrayWrapperSpectrum right) {
+    protected ArrayWrapperSpectrum fold(ArrayWrapperSpectrum left, ArrayWrapperSpectrum right, int maxNumberOfPeaks) {
         if (left == null) return right;
         if (right == null) return left;
         //folding 2 spectra with n and m non-monoisotopic peaks results in a new spectra with n+m non-monoisootopic peaks
-        final int len = Math.min((left.size() + right.size()) - 1, maximalNumberOfPeaks);
+        final int len = Math.min((left.size() + right.size()) - 1, maxNumberOfPeaks);
         final double[] mz = new double[len];
         final double[] intensities = new double[len];
 
