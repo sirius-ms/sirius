@@ -14,6 +14,7 @@ public class SiriusResultElement {
 	private MolecularFormula mf;
 
 	protected FingerIdData fingerIdData;
+	public volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
 	public SiriusResultElement() {
 		this.tree = null;

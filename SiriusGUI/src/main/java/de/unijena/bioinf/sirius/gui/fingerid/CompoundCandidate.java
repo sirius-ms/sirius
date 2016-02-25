@@ -77,7 +77,6 @@ public class CompoundCandidate {
         final HashMap<IAtom, Integer> colorMap = new HashMap<>();
         if (computation.relativeIndex2Smarts[index]==null) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
-            System.err.println(index);
             return false;
         }
         SMARTSQueryTool tool = new SMARTSQueryTool(computation.relativeIndex2Smarts[index], DefaultChemObjectBuilder.getInstance());

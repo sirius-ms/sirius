@@ -20,6 +20,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -29,6 +30,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
 public class CompoundCandidateView extends JPanel {
 
@@ -38,11 +40,11 @@ public class CompoundCandidateView extends JPanel {
     protected CandidateJList list;
 
     protected CardLayout layout;
-    private Frame frame;
+    private MainFrame frame;
 
-    public CompoundCandidateView(Frame owner) {
+    public CompoundCandidateView(MainFrame owner) {
         this.frame = owner;
-        this.storage = new CSIFingerIdComputation();
+        this.storage = owner.getCsiFingerId();
         refresh();
     }
 
@@ -55,7 +57,7 @@ public class CompoundCandidateView extends JPanel {
         setLayout(layout);
         add(new JPanel(), "empty");
         add(new ComputeElement(), "computeButton");
-        list = new CandidateJList(storage, resultElement==null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList(frame, storage, frame.getConfig(), resultElement==null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
         changeData(null,null);
@@ -78,25 +80,40 @@ public class CompoundCandidateView extends JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!storage.configured) {
-                        if (!new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), false).run()) return;
+                        if (new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), false).run() == FingerIdDialog.CANCELED) return;
                     }
-                    (new SwingWorker<Void,Void>() {
+                    frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    final SwingWorker<String,Void> worker = new SwingWorker<String,Void>() {
                         @Override
-                        public Void doInBackground() {
+                        public String doInBackground() {
                             try {
-                                storage.compute(SiriusDataConverter.experimentContainerToSiriusExperiment(experimentContainer), resultElement);
+                                if (storage.synchronousPredictionTask(experimentContainer, resultElement)) {
+                                    return null;
+                                } else {
+                                    return "Timeout occured. The compute cluster is too busy to process your job. Please try again at later time.";
+                                }
                             } catch (IOException e1) {
-                                new ErrorListDialog(frame, Arrays.asList(e1.getMessage()));
+                                return e1.getMessage();
                             }
-                            return null;
                         }
 
                         @Override
                         protected void done() {
                             super.done();
+                            frame.setCursor(Cursor.getDefaultCursor());
                             changeData(experimentContainer, resultElement);
+                            String msg;
+                            try {
+                                msg = get();
+                            } catch (InterruptedException | ExecutionException e1) {
+                                msg = e1.getMessage();
+                            }
+                            if (msg!=null) {
+                                new ErrorListDialog(frame, Arrays.asList(msg));
+                            }
                         }
-                    }).run();
+                    };
+                    worker.run();
                 }
             });
             setVisible(true);

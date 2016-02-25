@@ -18,6 +18,16 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.sirius.gui.io.DotIO;
+import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
+import de.unijena.bioinf.sirius.gui.structure.FileFormat;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -28,13 +38,17 @@ import org.openscience.cdk.renderer.visitor.AWTDrawVisitor;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileFilter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -48,12 +62,14 @@ public class CandidateJList extends JPanel implements MouseListener {
     private static final int MIN_CELL_SIZE = 3;
 
     protected CSIFingerIdComputation computation;
+    private ConfigStorage config;
     protected FingerIdData data;
     protected JList<CompoundCandidate> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
     protected Font nameFont, propertyFont, rankFont;
+    protected Frame owner;
 
     protected int highlightMissing=-1, highlightAgree=-1, highlightedCandidate=-1;
 
@@ -70,13 +86,25 @@ public class CandidateJList extends JPanel implements MouseListener {
         }
     }
 
-    public CandidateJList(CSIFingerIdComputation computation, FingerIdData data) {
+    public CandidateJList(Frame owner, CSIFingerIdComputation computation, ConfigStorage config, FingerIdData data) {
         this.computation = computation;
+        this.config = config;
+        this.owner = owner;
         initFonts();
         setLayout(new BorderLayout());
         this.data = data;
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
         add(northPanel, BorderLayout.NORTH);
+
+        final JButton exportToCSV = new JButton("export list", new ImageIcon(CandidateJList.class.getResource("/icons/document-export.png")));
+        exportToCSV.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doExport();
+            }
+        });
+        northPanel.add(exportToCSV);
+
         candidateList = new JList<CompoundCandidate>(new ListModel());
         candidateList.setCellRenderer(new CandidateCellRenderer());
         candidateList.setPrototypeCellValue(new CompoundCandidate(Compound.getPrototypeCompound(), 0d, 1, 0));
@@ -90,12 +118,52 @@ public class CandidateJList extends JPanel implements MouseListener {
         setVisible(true);
     }
 
+    private void doExport() {
+        JFileChooser jfc = new JFileChooser();
+        jfc.setCurrentDirectory(config.getDefaultTreeExportPath());
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        jfc.setAcceptAllFileFilterUsed(false);
+        FileFilter csvFileFilter = new SupportedExportCSVFormatsFilter();
+        jfc.addChoosableFileFilter(csvFileFilter);
+        File selectedFile = null;
+        while(selectedFile==null){
+            int returnval = jfc.showSaveDialog(this);
+            if(returnval == JFileChooser.APPROVE_OPTION){
+                File selFile = jfc.getSelectedFile();
+
+                config.setDefaultCompoundsExportPath(selFile.getParentFile());
+
+                String name = selFile.getName();
+                if(selFile.exists()){
+                    FilePresentDialog fpd = new FilePresentDialog(owner, selFile.getName());
+                    ReturnValue rv = fpd.getReturnValue();
+                    if(rv==ReturnValue.Success){
+                        selectedFile = selFile;
+                    }
+                }else{
+                    selectedFile = selFile;
+                }
+            }else{
+                break;
+            }
+        }
+
+        if(selectedFile!=null){
+
+            try{
+                new CSVExporter().exportToFile(selectedFile, data);
+            }catch(Exception e2){
+                ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
+                e2.printStackTrace();
+            }
+        }
+    }
+
     public void dispose() {
         structureSearcher.stop();
     }
 
     public void refresh(FingerIdData data) {
-        System.err.println("REFRESH!!!!!!!!!!!!!!!!!!!");
         this.data = data;
         ((ListModel)candidateList.getModel()).change();
         this.structureSearcher.reloadList((ListModel) candidateList.getModel(), -1);
@@ -276,7 +344,6 @@ public class CandidateJList extends JPanel implements MouseListener {
         @Override
         public void paint(Graphics g) {
             super.paint(g);
-            System.out.println("PAINT " + molecule.index);
             final Graphics2D gg = (Graphics2D)g;
             StructureDiagramGenerator sdg = new StructureDiagramGenerator();
             sdg.setMolecule(molecule.compound.getMolecule(), false);

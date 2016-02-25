@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
@@ -11,6 +12,8 @@ import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
+import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
@@ -19,6 +22,9 @@ import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -34,17 +40,21 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener, KeyListener{
 
+    private Logger logger = LoggerFactory.getLogger(MainFrame.class);
+
     private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
 	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID;
 
-	protected CSIFingerIdComputation compoundStorage = new CSIFingerIdComputation();
+	protected CSIFingerIdComputation csiFingerId;
 	
 	private HashSet<String> names;
 	private int nameCounter;
@@ -66,10 +76,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI, cancelMI;
 	private JLabel aboutL;
 	private boolean computeAllActive;
-	
-	public MainFrame(){
+
+
+    public ConfigStorage getConfig() {
+        return config;
+    }
+
+    public MainFrame(){
 		super(Sirius.VERSION_STRING);
-		
 		try {
 		    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
 		        if ("Nimbus".equals(info.getName())) {
@@ -79,6 +93,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		} catch (Exception e) {
 		    // If Nimbus is not available, you can set the GUI to another look and feel.
 		}
+
+        csiFingerId = new CSIFingerIdComputation(new CSIFingerIdComputation.Callback() {
+            @Override
+            public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
+                refreshCompound(container);
+            }
+        });
 
 
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -277,8 +298,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 		this.setVisible(true);
 	}
-	
-	public void constructExperimentListPopupMenu(){
+
+    public CSIFingerIdComputation getCsiFingerId() {
+        return csiFingerId;
+    }
+
+    public void constructExperimentListPopupMenu(){
 		expPopMenu = new JPopupMenu();
 		newExpMI = new JMenuItem("Import Experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-new.png")));
 		batchMI = new JMenuItem("Batch Import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
@@ -317,6 +342,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	@Override
 	public void dispose() {
         showResultsPanel.dispose();
+        csiFingerId.shutdown();
         super.dispose();
 	}
 
@@ -402,7 +428,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource()==configFingerID) {
-            new FingerIdDialog(this, compoundStorage, null, true);
+            final FingerIdDialog dialog = new FingerIdDialog(this, csiFingerId, null, true);
+			final int returnState = dialog.run();
+            if (returnState==FingerIdDialog.COMPUTE_ALL) {
+                csiFingerId.computeAll(getCompounds());
+            }
         } else if(e.getSource()==newB || e.getSource()==newExpMI) {
             LoadController lc = new LoadController(this, config);
             lc.showDialog();
@@ -580,51 +610,125 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		jfc.setAcceptAllFileFilterUsed(false);
 		jfc.addChoosableFileFilter(new SupportedExportCSVFormatsFilter());
 
+        final ExporterAccessory accessory = new ExporterAccessory(jfc);
+        jfc.setAccessory(accessory);
+
 		File selectedFile = null;
 
 		while(selectedFile==null){
 			int returnval = jfc.showSaveDialog(this);
 			if(returnval == JFileChooser.APPROVE_OPTION){
 				File selFile = jfc.getSelectedFile();
-				config.setCsvExportPath(selFile.getParentFile());
+                if (selFile==null) continue;
+				config.setCsvExportPath((selFile.exists() && selFile.isDirectory()) ? selFile : selFile.getParentFile());
 
-				String name = selFile.getName();
-				if(!selFile.getAbsolutePath().endsWith(".csv") && !selFile.getName().endsWith(".tsv")){
-					selFile = new File(selFile.getAbsolutePath()+".csv");
-				}
+                if (accessory.isSingleFile()) {
+                    String name = selFile.getName();
+                    if(!name.endsWith(".csv") && !name.endsWith(".tsv")){
+                        selFile = new File(selFile.getAbsolutePath()+".csv");
+                    }
 
-				if(selFile.exists()){
-					FilePresentDialog fpd = new FilePresentDialog(this, selFile.getName());
-					ReturnValue rv = fpd.getReturnValue();
-					if(rv==ReturnValue.Success){
-						selectedFile = selFile;
-					}
-//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
-				}else{
-					selectedFile = selFile;
-				}
+                    if(selFile.exists()){
+                        FilePresentDialog fpd = new FilePresentDialog(this, selFile.getName());
+                        ReturnValue rv = fpd.getReturnValue();
+                        if(rv==ReturnValue.Success){
+                            selectedFile = selFile;
+                        }
+                    }else{
+                        selectedFile = selFile;
+                    }
 
-
+                } else {
+                    if (!selFile.exists()) {
+                        selFile.mkdirs();
+                    }
+                }
+                selectedFile = selFile;
+                break;
 			}else{
 				break;
 			}
 		}
 
-		if(selectedFile!=null){
-			try {
-				try (final BufferedWriter fw = new BufferedWriter(new FileWriter(selectedFile))) {
-					final Enumeration<ExperimentContainer> ecs = getCompounds();
-					while (ecs.hasMoreElements()) {
-						final ExperimentContainer ec = ecs.nextElement();
-						if (ec.isComputed() && ec.getResults().size()>0) {
-							IdentificationResult.writeIdentifications(fw, SiriusDataConverter.experimentContainerToSiriusExperiment(ec), ec.getRawResults());
-						}
-					}
-				}
-			} catch (IOException e) {
-				new ExceptionDialog(this, e.toString());
-			}
-		}
+        if (selectedFile==null) return;
+        if (accessory.isSingleFile()) {
+            try (final BufferedWriter fw = new BufferedWriter(new FileWriter(selectedFile))) {
+                final Enumeration<ExperimentContainer> ecs = getCompounds();
+                while (ecs.hasMoreElements()) {
+                    final ExperimentContainer ec = ecs.nextElement();
+                    if (ec.isComputed() && ec.getResults().size()>0) {
+                        IdentificationResult.writeIdentifications(fw, SiriusDataConverter.experimentContainerToSiriusExperiment(ec), ec.getRawResults());
+                    }
+                }
+            } catch (IOException e) {
+                new ExceptionDialog(this, e.toString());
+            }
+        } else {
+            try {
+                writeMultiFiles(selectedFile, accessory.isExportingSirius(), accessory.isExportingFingerId());
+            } catch (IOException e) {
+                new ExceptionDialog(this, e.toString());
+            }
+        }
+    }
+
+    private void writeMultiFiles(File selectedFile, boolean withSirius, boolean withFingerid) throws IOException {
+        final Enumeration<ExperimentContainer> containers = getCompounds();
+        final HashSet<String> names = new HashSet<>();
+        while (containers.hasMoreElements()) {
+            final ExperimentContainer container = containers.nextElement();
+            if (container.getResults()==null || container.getResults().size()==0) continue;
+            final String name;
+            {
+                String origName = escapeFileName(container.getName());
+                String aname = origName;
+                int i=0;
+                while (names.contains(aname)) {
+                    aname = origName + (++i);
+                }
+                name = aname;
+                names.add(name);
+            }
+
+            if (withSirius) {
+
+                final File resultFile = new File(selectedFile, name + "_formula_candidates.csv");
+                try (final BufferedWriter bw = Files.newBufferedWriter(resultFile.toPath(), Charset.defaultCharset())) {
+                    bw.write("formula\trank\tscore\ttreeScore\tisoScore\texplainedPeaks\texplainedIntensity\n");
+                    for (IdentificationResult result : container.getRawResults()) {
+                        bw.write(result.getMolecularFormula().toString());
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getRank()));
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getScore()));
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getTreeScore()));
+                        bw.write('\t');
+                        bw.write(String.valueOf(result.getIsotopeScore()));
+                        bw.write('\t');
+                        final TreeScoring scoring = result.getTree().getAnnotationOrNull(TreeScoring.class);
+                        bw.write(String.valueOf(result.getTree().numberOfVertices()));
+                        bw.write('\t');
+                        bw.write(scoring == null ? "\"\"" : String.valueOf(scoring.getExplainedIntensity()));
+                        bw.write('\n');
+                    }
+                }
+            }
+            if (withFingerid) {
+                for (SiriusResultElement elem : container.getResults()) {
+                    if (elem.getFingerIdData()==null) continue;
+                    final File resultFile = new File(selectedFile, name + "_" + elem.getMolecularFormula().toString() +".csv");
+                    new CSVExporter().exportToFile(resultFile, elem.getFingerIdData());
+                }
+            }
+        }
+    }
+
+    private String escapeFileName(String name) {
+        final String n = name.replaceAll("[:\\\\/*\"?|<>']", "");
+        if (n.length() > 128) {
+            return n.substring(0,128);
+        } else return n;
     }
 
     private void computeCurrentCompound() {
@@ -975,6 +1079,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	public void keyReleased(KeyEvent e) {
 
 	}
+
+    public void fingerIdComputationComplete() {
+
+    }
 }
 
 class SiriusSaveFileFilter extends FileFilter{

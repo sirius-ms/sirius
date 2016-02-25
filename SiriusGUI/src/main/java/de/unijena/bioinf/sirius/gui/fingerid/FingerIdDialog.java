@@ -26,10 +26,12 @@ import java.io.File;
 
 public class FingerIdDialog extends JDialog {
 
+    public static final int APROVED=1, CANCELED=0, COMPUTE_ALL=2;
+
     protected CSIFingerIdComputation storage;
     protected FingerIdData data;
     protected boolean showComputeButton;
-    protected boolean approved = false;
+    protected int returnState = CANCELED;
 
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, FingerIdData data, boolean showComputeButton) {
         super(owner, "Search with CSI:FingerId", true);
@@ -38,10 +40,9 @@ public class FingerIdDialog extends JDialog {
         this.showComputeButton = showComputeButton;
     }
 
-    public boolean run() {
+    public int run() {
         refresh();
-        System.err.println(approved);
-        return approved;
+        return returnState;
     }
 
     public void refresh() {
@@ -87,6 +88,15 @@ public class FingerIdDialog extends JDialog {
 
         if (showComputeButton) {
             final JButton computeAll = new JButton("Search all");
+            computeAll.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    storage.setDirectory(new File(field.getText()));
+                    storage.configured = true;
+                    returnState = COMPUTE_ALL;
+                    dispose();
+                }
+            });
             southPanel.add(computeAll);
         }
 
@@ -96,7 +106,7 @@ public class FingerIdDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 storage.setDirectory(new File(field.getText()));
                 storage.configured = true;
-                approved = true;
+                returnState = APROVED;
                 dispose();
             }
         });

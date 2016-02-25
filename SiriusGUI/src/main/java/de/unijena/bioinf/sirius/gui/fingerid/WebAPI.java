@@ -55,88 +55,114 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-public class WebAPI {
+public class WebAPI implements Closeable {
 
-    private final static String HOST = // ""http://www.csi-fingerid.org"
-            "http://localhost:8080/csi_fingerid_frontend";
+    protected final static boolean DEBUG = false;
 
-    protected final static boolean DEBUG = true;
-
+    private final CloseableHttpClient client;
 
     public WebAPI() {
+        client = HttpClients.createDefault();
+    }
 
+    public static void SHUT_UP_STUPID_LOGGING() {
+        java.util.logging.Logger.getLogger("org.apache.http.wire").setLevel(java.util.logging.Level.FINEST);
+        java.util.logging.Logger.getLogger("org.apache.http.headers").setLevel(java.util.logging.Level.FINEST);
+        System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+        System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+        System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire", "ERROR");
+        System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http", "ERROR");
+        System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.headers", "ERROR");
+    }
+
+    static {
+        SHUT_UP_STUPID_LOGGING();
     }
 
     protected static URIBuilder getFingerIdURI(String path) {
         URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : "www.csi-fingerid.org");
         if (DEBUG) b = b.setPort(8080).setPath("/csi_fingerid_frontend" + path);
+        else b.setPath(path);
         return b;
+    }
+
+    public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
+        final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
+        try (CloseableHttpResponse response = client.execute(get)) {
+            try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
+                final JsonObject obj = json.readObject();
+                if (obj.containsKey("prediction")) {
+                    final byte[] bytes = Base64.decode(obj.getString("prediction"));
+                    final TDoubleArrayList platts = new TDoubleArrayList(2000);
+                    final ByteBuffer buf = ByteBuffer.wrap(bytes);
+                    buf.order(ByteOrder.LITTLE_ENDIAN);
+                    while (buf.position() < buf.limit()) {
+                        platts.add(buf.getDouble());
+                    }
+                    job.prediction = platts.toArray();
+                    return true;
+                } else {
+                    job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
+                }
+            }
+        }
+        return false;
+    }
+
+    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree) throws IOException, URISyntaxException {
+        final HttpPost post = new HttpPost(getFingerIdURI("/webapi/predict.json").build());
+        final String stringMs, jsonTree;
+        {
+            final JenaMsWriter writer = new JenaMsWriter();
+            final StringWriter sw = new StringWriter();
+            try (final BufferedWriter bw = new BufferedWriter(sw)) {
+                writer.write(bw, experiment);
+            }
+            stringMs = sw.toString();
+        }
+        {
+            final FTJsonWriter writer = new FTJsonWriter();
+            final StringWriter sw = new StringWriter();
+            writer.writeTree(new BufferedWriter(sw), ftree);
+            jsonTree = sw.toString();
+        }
+
+        final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
+        final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
+
+        final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree));
+        post.setEntity(params);
+
+        final String securityToken;
+        final long jobId;
+        // SUBMIT JOB
+        try (CloseableHttpResponse response = client.execute(post)) {
+            if (response.getStatusLine().getStatusCode()==200) {
+                try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
+                    final JsonObject obj = json.readObject();
+                    securityToken = obj.getString("securityToken");
+                    jobId =obj.getInt("jobId");
+                    return new FingerIdJob(jobId, securityToken);
+                }
+            } else {
+                throw new RuntimeException(response.getStatusLine().getReasonPhrase());
+            }
+        }
     }
 
     public Future<double[]> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree) {
         return service.submit(new Callable<double[]>() {
             @Override
             public double[] call() throws Exception {
-                final HttpPost post = new HttpPost(getFingerIdURI("/webapi/predict.json").build());
-                final String stringMs, jsonTree;
-                {
-                    final JenaMsWriter writer = new JenaMsWriter();
-                    final StringWriter sw = new StringWriter();
-                    try (final BufferedWriter bw = new BufferedWriter(sw)) {
-                        writer.write(bw, experiment);
-                    }
-                    stringMs = sw.toString();
-                }
-                {
-                    final FTJsonWriter writer = new FTJsonWriter();
-                    final StringWriter sw = new StringWriter();
-                    writer.writeTree(new BufferedWriter(sw), tree);
-                    jsonTree = sw.toString();
-                }
-
-                final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
-                final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
-
-                final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree));
-                post.setEntity(params);
-
-                final String securityToken;
-                final long jobId;
-                // SUBMIT JOB
-                try (CloseableHttpClient client = HttpClients.createDefault()) {
-                    try (CloseableHttpResponse response = client.execute(post)) {
-                        if (response.getStatusLine().getStatusCode()==200) {
-                            try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
-                                final JsonObject obj = json.readObject();
-                                securityToken = obj.getString("securityToken");
-                                jobId =obj.getInt("jobId");
-                            }
-                        } else {
-                            throw new RuntimeException(response.getStatusLine().getReasonPhrase());
-                        }
-                    }
-                }
+                final FingerIdJob job = submitJob(experiment, tree);
                 // RECEIVE RESULTS
-                final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(jobId)).setParameter("securityToken", securityToken).build());
+                final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
                 for (int k=0; k < 60; ++k) {
                     Thread.sleep(3000);
-                    try (CloseableHttpClient client = HttpClients.createDefault()) {
-                        try (CloseableHttpResponse response = client.execute(get)) {
-                            try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
-                                final JsonObject obj = json.readObject();
-                                System.err.println(new ArrayList<>(obj.keySet()).toString());
-                                if (obj.containsKey("prediction")) {
-                                    final byte[] bytes = Base64.decode(obj.getString("prediction"));
-                                    final TDoubleArrayList platts = new TDoubleArrayList(2000);
-                                    final ByteBuffer buf = ByteBuffer.wrap(bytes);
-                                    buf.order(ByteOrder.LITTLE_ENDIAN);
-                                    while (buf.position() < buf.limit()) {
-                                        platts.add(buf.getDouble());
-                                    }
-                                    return platts.toArray();
-                                }
-                            }
-                        }
+                    if (updateJobStatus(job)) {
+                        return job.prediction;
+                    } else if (job.state=="CRASHED") {
+                        throw new RuntimeException("Job crashed");
                     }
                 }
                 throw new TimeoutException("Reached timeout");
@@ -164,16 +190,14 @@ public class WebAPI {
         final TIntArrayList[] lists = new TIntArrayList[5];
         for (int k=1; k < 5; ++k) lists[k] = new TIntArrayList();
         lists[0] = fingerprintIndizes;
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            try (CloseableHttpResponse response = client.execute(get)) {
-                HttpEntity e = response.getEntity();
-                final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
-                String line = br.readLine();
-                while ((line=br.readLine())!=null) {
-                    String[] tabs = line.split("\t");
-                    for (int k=0; k < 5; ++k) {
-                        lists[k].add(Integer.parseInt(tabs[k]));
-                    }
+        try (CloseableHttpResponse response = client.execute(get)) {
+            HttpEntity e = response.getEntity();
+            final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
+            String line = br.readLine();
+            while ((line=br.readLine())!=null) {
+                String[] tabs = line.split("\t");
+                for (int k=0; k < 5; ++k) {
+                    lists[k].add(Integer.parseInt(tabs[k]));
                 }
             }
         }
@@ -190,17 +214,19 @@ public class WebAPI {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(get.getURI().toString());
         final ArrayList<Compound> compounds = new ArrayList<>(100);
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            try (CloseableHttpResponse response = client.execute(get)) {
-                try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new FileOutputStream(output))) {
-                    try (final JsonParser parser = Json.createParser(io)) {
-                        return Compound.parseCompounds(fingerprintIndizes, compounds, parser);
-                    }
+        try (CloseableHttpResponse response = client.execute(get)) {
+            try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new FileOutputStream(output))) {
+                try (final JsonParser parser = Json.createParser(io)) {
+                    return Compound.parseCompounds(fingerprintIndizes, compounds, parser);
                 }
             }
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        client.close();
     }
 
     private static class MultiplexerFileAndIO extends InputStream implements Closeable {

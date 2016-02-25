@@ -19,8 +19,10 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
+import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -28,39 +30,71 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import javax.json.Json;
 import javax.json.stream.JsonParser;
 import java.io.*;
+import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * keeps all compounds in memory
  */
 public class CSIFingerIdComputation {
 
+    public interface Callback {
+        public void computationFinished(ExperimentContainer container, SiriusResultElement element);
+    }
+
     protected FingerprintStatistics statistics;
     protected int[] fingerprintIndizes;
     protected TIntObjectHashMap<String> absoluteIndex2Smarts;
     protected String[] relativeIndex2Smarts;
     protected HashMap<String, Compound> compounds;
-    protected HashMap<MolecularFormula, List<Compound>> compoundsPerFormula;
+    protected ConcurrentHashMap<MolecularFormula, List<Compound>> compoundsPerFormula;
     protected boolean configured = false;
     protected MarvinsScoring scoring = new MarvinsScoring();
     protected File directory;
-    protected ExecutorService service;
+    protected Callback callback;
 
-    public CSIFingerIdComputation() {
+    protected final Thread blastThread, formulaThread, jobThread;
+    protected final BackgroundThreadBlast blastWorker;
+    protected final BackgroundThreadFormulas formulaWorker;
+    protected final BackgroundThreadJobs jobWorker;
+
+    protected final ReentrantLock globalLock;
+    protected final Condition globalCondition;
+
+    private final ConcurrentLinkedQueue<FingerIdTask> formulaQueue, jobQueue, blastQueue;
+
+    public CSIFingerIdComputation(Callback callback) {
         setDirectory(getDefaultDirectory());
+        globalLock = new ReentrantLock();
+        globalCondition = globalLock.newCondition();
         this.compounds = new HashMap<>(32768);
-        this.compoundsPerFormula = new HashMap<>(128);
-        this.service = Executors.newSingleThreadExecutor();
+        this.compoundsPerFormula = new ConcurrentHashMap<>(128);
         absoluteIndex2Smarts=new TIntObjectHashMap<>(4096);
+        this.formulaQueue = new ConcurrentLinkedQueue<>();
+        this.blastQueue = new ConcurrentLinkedQueue<>();
+        this.jobQueue = new ConcurrentLinkedQueue<>();
+        this.callback = callback;
+
         try {
             readSmarts();
         } catch (IOException e) {
             throw new RuntimeException(e); // TODO: Fix
         }
+
+        this.blastWorker = new BackgroundThreadBlast();
+        this.blastThread = new Thread(blastWorker);
+        blastThread.start();
+
+        this.formulaWorker = new BackgroundThreadFormulas();
+        this.formulaThread = new Thread(formulaWorker);
+        formulaThread.start();
+
+        this.jobWorker = new BackgroundThreadJobs();
+        this.jobThread = new Thread(jobWorker);
+        jobThread.start();
     }
 
     public double[] getFScores() {
@@ -79,42 +113,37 @@ public class CSIFingerIdComputation {
         }
     }
 
-    public void compute(Ms2Experiment experiment, SiriusResultElement elem) throws IOException {
-        if (statistics==null) {
-
-            final TIntArrayList list = new TIntArrayList(4096);
-            this.statistics = new WebAPI().getStatistics(list);
-            this.fingerprintIndizes = list.toArray();
-            this.relativeIndex2Smarts = new String[fingerprintIndizes.length];
-            for (int i=0; i < fingerprintIndizes.length; ++i) {
-                relativeIndex2Smarts[i] = absoluteIndex2Smarts.get(fingerprintIndizes[i]);
-            }
-        }
-        final MolecularFormula formula = elem.getMolecularFormula();
-        final List<Compound> compounds = getCompoundsForGivenMolecularFormula(formula);
-        final Future<double[]> platts = new WebAPI().predictFingerprint(service, experiment, elem.getRawTree());
-        final Scorer scorer = scoring.getScorer(statistics);
-        try {
-            final double[] plattScores = platts.get();
-            final TreeMap<Double, Compound> map = new TreeMap<>();
-            final Query query = new Query("_query_", null, plattScores);
-            scorer.preprocessQuery(query, statistics);
-            for (Compound c : compounds) {
-                map.put(scorer.score(query, new Candidate(c.inchi.in2D, c.fingerprint), statistics), c);
-            }
-            final double[] scores = new double[map.size()];
-            final Compound[] comps = new Compound[map.size()];
-            int k=0;
-            for (Map.Entry<Double, Compound> entry : map.descendingMap().entrySet()) {
-                scores[k] = entry.getKey();
-                comps[k] = entry.getValue();
-                ++k;
-            }
-            elem.setFingerIdData(new FingerIdData(comps, scores, plattScores));
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+    private void loadStatistics(WebAPI webAPI) throws IOException {
+        final TIntArrayList list = new TIntArrayList(4096);
+        this.statistics = webAPI.getStatistics(list);
+        this.fingerprintIndizes = list.toArray();
+        this.relativeIndex2Smarts = new String[fingerprintIndizes.length];
+        for (int i=0; i < fingerprintIndizes.length; ++i) {
+            relativeIndex2Smarts[i] = absoluteIndex2Smarts.get(fingerprintIndizes[i]);
         }
     }
+
+    private FingerIdData blast(SiriusResultElement elem, double[] plattScores) {
+        final MolecularFormula formula = elem.getMolecularFormula();
+        final List<Compound> compounds = compoundsPerFormula.get(formula);
+        final Scorer scorer = scoring.getScorer(statistics);
+        final TreeMap<Double, Compound> map = new TreeMap<>();
+        final Query query = new Query("_query_", null, plattScores);
+        scorer.preprocessQuery(query, statistics);
+        for (Compound c : compounds) {
+            map.put(scorer.score(query, new Candidate(c.inchi.in2D, c.fingerprint), statistics), c);
+        }
+        final double[] scores = new double[map.size()];
+        final Compound[] comps = new Compound[map.size()];
+        int k=0;
+        for (Map.Entry<Double, Compound> entry : map.descendingMap().entrySet()) {
+            scores[k] = entry.getKey();
+            comps[k] = entry.getValue();
+            ++k;
+        }
+        return new FingerIdData(comps, scores, plattScores);
+    }
+
 
     public File getDirectory() {
         return directory;
@@ -126,15 +155,10 @@ public class CSIFingerIdComputation {
         return new File(System.getProperty("user.home"), "csi_fingerid_cache");
     }
 
-    public List<Compound> getCompoundsForGivenMolecularFormula(MolecularFormula formula) throws IOException {
-        final List<Compound> formulas = compoundsPerFormula.get(formula);
-        if (formulas==null) {
-            loadCompoundsForGivenMolecularFormula(formula);
-            return compoundsPerFormula.get(formula);
-        } else return formulas;
-    }
-
-    public void loadCompoundsForGivenMolecularFormula(MolecularFormula formula) throws IOException {
+    private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula) throws IOException {
+        if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
+        globalLock.lock();
+        if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
         if (!directory.exists()) {
             directory.mkdir();
         }
@@ -146,12 +170,20 @@ public class CSIFingerIdComputation {
                 Compound.parseCompounds(fingerprintIndizes, compounds, parser);
             }
         } else {
-            compounds = new WebAPI().getCompoundsFor(formula, mfile, fingerprintIndizes);
+            if (webAPI==null) {
+                try (final WebAPI webAPI2 = new WebAPI()) {
+                    compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintIndizes);
+                }
+            } else {
+                compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintIndizes);
+            }
         }
         for (Compound c : compounds) {
             this.compounds.put(c.inchi.key2D(), c);
         }
-        this.compoundsPerFormula.put(formula, compounds);
+        compoundsPerFormula.put(formula, compounds);
+        globalLock.unlock();
+        return compounds;
     }
 
     public Compound getCompound(String inchiKey2D) {
@@ -161,5 +193,278 @@ public class CSIFingerIdComputation {
     public void setDirectory(File directory) {
         this.directory = directory;
         this.compounds = new HashMap<>();
+    }
+
+    public void computeAll(Enumeration<ExperimentContainer> compounds) {
+        final ArrayList<FingerIdTask> tasks = new ArrayList<>();
+        while (compounds.hasMoreElements()) {
+            final ExperimentContainer c = compounds.nextElement();
+            if (c != null && c.isComputed() && c.getResults()!=null && c.getResults().size()>0) {
+                tasks.add(new FingerIdTask(c, c.getResults().get(0)));
+            }
+        }
+        computeAll(tasks);
+    }
+
+    public void computeAll(Collection<FingerIdTask> compounds) {
+        for (FingerIdTask task : compounds) {
+            final ComputingStatus status = task.result.fingerIdComputeState;
+            if (status == ComputingStatus.UNCOMPUTED || status == ComputingStatus.FAILED) {
+                task.result.fingerIdComputeState = ComputingStatus.COMPUTING;
+                formulaQueue.add(task);
+                jobQueue.add(task);
+            }
+        }
+        synchronized (formulaWorker) {formulaWorker.notifyAll();};
+        synchronized (jobWorker) {jobWorker.notifyAll();};
+    }
+
+    public void shutdown() {
+        formulaWorker.shutdown=true;
+        blastWorker.shutdown=true;
+        jobWorker.shutdown=true;
+        formulaQueue.clear(); blastQueue.clear(); jobQueue.clear();
+        synchronized (formulaWorker) {
+            formulaWorker.notifyAll();
+        }
+        synchronized (blastWorker) {
+            blastWorker.notifyAll();
+        }
+        synchronized (jobWorker) {
+            jobWorker.notifyAll();
+        }
+        try {
+            if (globalLock.tryLock(100, TimeUnit.MILLISECONDS)) {
+                globalCondition.signalAll();
+                globalLock.unlock();
+            }
+        } catch (InterruptedException e) {
+            // just give up
+        }
+    }
+
+    public boolean synchronousPredictionTask(ExperimentContainer container, SiriusResultElement resultElement) throws IOException {
+        // first: delete this job from all queues
+        final FingerIdTask task = new FingerIdTask(container, resultElement);
+        formulaQueue.remove(task);
+        jobQueue.remove(task);
+        blastQueue.remove(task);
+        final WebAPI webAPI = new WebAPI();
+        if (statistics==null) {
+            globalLock.lock();
+            if (statistics==null) {
+                loadStatistics(webAPI);
+                globalCondition.signalAll();
+            }
+            globalLock.unlock();
+        }
+        // second: push job to cluster
+        final double[] prediction;
+        FingerIdJob job = null;
+        if (jobWorker.jobs.containsKey(task)) {
+            job = jobWorker.jobs.get(task);
+        }
+        try {
+            if (job == null) {
+                job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getRawTree());
+            }
+            final List<Compound> compounds;
+            if (compoundsPerFormula.containsKey(resultElement.getMolecularFormula()))
+                compounds = compoundsPerFormula.get(resultElement.getMolecularFormula());
+            else
+                compounds = loadCompoundsForGivenMolecularFormula(null, resultElement.getMolecularFormula());
+
+            double[] platts=null;
+            for (int k=0; k < 60; ++k) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (webAPI.updateJobStatus(job)) {
+                    platts=job.prediction;
+                    break;
+                }
+            }
+            if (platts==null) {
+                return false;
+            }
+            final FingerIdData data = blast(resultElement, platts);
+            resultElement.setFingerIdData(data); // todo: etwas kritisch... dürfte aber keine Probleme geben... oder?
+            return true;
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
+    }
+
+    protected class BackgroundThreadFormulas implements Runnable {
+
+        protected volatile boolean shutdown;
+
+        @Override
+        public void run() {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            final WebAPI webAPI = new WebAPI();
+            // first read statistics
+            globalLock.lock();
+            try {
+                if (statistics==null) loadStatistics(webAPI);
+                globalCondition.signalAll();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                globalLock.unlock();
+            }
+            while ((!shutdown)) {
+                final FingerIdTask container = formulaQueue.poll();
+                if (container==null) {
+                    try {
+                        synchronized (this) {
+                            this.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    // download molecular formulas
+                    try {
+                        final MolecularFormula formula = container.result.getMolecularFormula();
+                        loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula());
+                        synchronized (blastWorker) {blastWorker.notifyAll();}
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    protected class BackgroundThreadJobs implements Runnable {
+
+        protected volatile boolean shutdown;
+
+        protected final ConcurrentHashMap<FingerIdTask, FingerIdJob> jobs;
+
+        public BackgroundThreadJobs() {
+            this.jobs = new ConcurrentHashMap<>();
+        }
+
+        @Override
+        public void run() {
+            // wait until statistics are loaded
+            globalLock.lock();
+            try {
+                globalCondition.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                globalLock.unlock();
+            }
+            WebAPI webAPI = new WebAPI();
+            while ((!shutdown)) {
+                boolean nothingToDo = true;
+                for(int c=0; c < 20; ++c) {
+                    final FingerIdTask container = jobQueue.poll();
+                    if (container!=null) {
+                        nothingToDo=false;
+                        try {
+                            final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getRawTree());
+                            jobs.put(container, job);
+                        } catch (IOException e) {
+                            jobQueue.add(container);
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                final Iterator<Map.Entry<FingerIdTask, FingerIdJob>> iter = jobs.entrySet().iterator();
+                while (iter.hasNext()) {
+                    nothingToDo=false;
+                    final Map.Entry<FingerIdTask, FingerIdJob> entry = iter.next();
+                    try {
+                        if (webAPI.updateJobStatus(entry.getValue())) {
+                            entry.getKey().prediction = entry.getValue().prediction;
+                            iter.remove();
+                            blastQueue.add(entry.getKey());
+                            synchronized (blastWorker) {
+                                blastWorker.notifyAll();
+                            }
+                        } else if (entry.getValue().state=="CRASHED"){
+                            iter.remove();
+                        }
+                    } catch (URISyntaxException e) {
+                        iter.remove();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                if (nothingToDo) {
+                    try {
+                        synchronized (this) {wait();};
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
+    }
+
+    protected class BackgroundThreadBlast implements Runnable {
+
+        protected volatile boolean shutdown;
+
+        @Override
+        public void run() {
+            // wait until statistics are loaded
+            globalLock.lock();
+            try {
+                globalCondition.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                globalLock.unlock();
+            }
+            while ((!shutdown)) {
+                final FingerIdTask container = blastQueue.poll();
+                try {
+                    if (container==null) {
+                        synchronized (this) {this.wait();}
+                        continue;
+                    } else if (!compoundsPerFormula.containsKey(container.result.getMolecularFormula())) {
+                        final boolean queueIsEmpty = blastQueue.isEmpty();
+                        blastQueue.add(container);
+                        if (queueIsEmpty) {
+                            synchronized (this) {
+                                this.wait();
+                            }
+                        }
+                        continue;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                // blast this compound
+                final FingerIdData data = blast(container.result, container.prediction);
+                final ExperimentContainer experiment = container.experiment;
+                final SiriusResultElement resultElement = container.result;
+                resultElement.setFingerIdData(data);
+                resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
+                callback.computationFinished(experiment, resultElement);
+
+            }
+        }
     }
 }

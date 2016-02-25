@@ -56,6 +56,8 @@ public class AboutDialog extends JDialog{
                 htmlText = buf.toString();
             }
             final JTextPane textPane = new JTextPane();
+            final JScrollPane scroll = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            scroll.setPreferredSize(new Dimension(500, Integer.MAX_VALUE));
             textPane.setContentType("text/html");
             textPane.setText(htmlText);
             textPane.setEditable(false);
@@ -71,7 +73,8 @@ public class AboutDialog extends JDialog{
                     }
                 }
             });
-            add(textPane, BorderLayout.CENTER);
+            textPane.setCaretPosition(0);
+            add(scroll, BorderLayout.CENTER);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -128,12 +131,65 @@ public class AboutDialog extends JDialog{
         clipboard.setAction(copyPlainA);
     }
 
+    private static String FINGERID_CITATION = "Kai Dührkop, Huibin Shen, Marvin Meusel, Juho Rousu and Sebastian Böcker\nSearching molecular structure databases with tandem mass spectra using CSI:FingerID. \nProc Natl Acad Sci U S A, 112(41):12580-12585, 2015." +
+            "Huibin Shen, Kai Dührkop, Sebastian Böcker and Juho Rousu\nMetabolite Identification through Multiple Kernel Learning on Fragmentation Trees.\nBioinformatics, 30(12):i157-i164, 2014. Proc. of Intelligent Systems for Molecular Biology (ISMB 2014)." +
+            "Markus Heinonen, Huibin Shen, Nicola Zamboni and Juho Rousu\nMetabolite identification and molecular fingerprint prediction through machine learning\nBioinformatics (2012) 28 (18): 2333-2341.Proc. of European Conference on Computational Biology (ECCB 2012).";
+
+    private static String FINGERID_BIBTEX = "@Article{duehrkop15searching,\n" +
+            "  Title                    = {Searching molecular structure databases with tandem mass spectra using {CSI:FingerID}},\n" +
+            "  Author                   = {Kai D\\\"uhrkop and Huibin Shen and Marvin Meusel and Juho Rousu and Sebastian B\\\"ocker},\n" +
+            "  Journal                  = PNAS,\n" +
+            "  Year                     = {2015},\n" +
+            "  Note                     = {Accepted for publication},\n" +
+            "\n" +
+            "  Owner                    = {Sebastian},\n" +
+            "  Timestamp                = {2015.08.12}\n" +
+            "}\n" +
+            "@Article{shen14metabolite,\n" +
+            "  Title                    = {Metabolite Identification through Multiple Kernel Learning on Fragmentation Trees},\n" +
+            "  Author                   = {Huibin Shen and Kai D\\\"uhrkop and Sebastian B\\\"ocker and Juho Rousu},\n" +
+            "  Journal                  = {Bioinformatics},\n" +
+            "  Year                     = {2014},\n" +
+            "  Note                     = {Proc.\\ of \\emph{Intelligent Systems for Molecular Biology} (ISMB 2014)},\n" +
+            "  Number                   = {12},\n" +
+            "  Pages                    = {i157-i164},\n" +
+            "  Volume                   = {30},\n" +
+            "\n" +
+            "  Abstract                 = {Metabolite identification from tandem mass spectrometric data is a key task in metabolomics. Various computational methods has been proposed for the identification of metabolites from tandem mass spectra. Fragmentation tree methods explore the space of possible ways the metabolite can fragment, and base the metabolite identification on scoring of these fragmentation trees. Machine learning methods has been used to map mass spectra to molecular fingerprints; predicted fingerprints, in turn, can be used to score candidate molecular structures. Here, we combine fragmentation tree computations with kernel-based machine learning to predict molecular fingerprints and identify molecular structures. We introduce a family of kernels capturing the similarity of fragmentation trees, and combine these kernels using recently proposed multiple kernel learning approaches. Experiments on two large reference datasets show that the new methods significantly improve molecular fingerprint prediction accuracy. These improvements result in better metabolite identification, doubling the number of metabolites ranked at the top position of the candidates list.},\n" +
+            "  Doi                      = {10.1093/bioinformatics/btu275},\n" +
+            "  File                     = {ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:2014/ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:PDF},\n" +
+            "  Keywords                 = {jena; IDUN; MS; tandem MS;},\n" +
+            "  Owner                    = {fhufsky},\n" +
+            "  Pmid                     = {24931979},\n" +
+            "  Timestamp                = {2014.02.11},\n" +
+            "  Url                      = {http://bioinformatics.oxfordjournals.org/content/30/12/i157.full}\n" +
+            "}\n" +
+            "@Article{shen14metabolite,\n" +
+            "  Title                    = {Metabolite Identification through Multiple Kernel Learning on Fragmentation Trees},\n" +
+            "  Author                   = {Huibin Shen and Kai D\\\"uhrkop and Sebastian B\\\"ocker and Juho Rousu},\n" +
+            "  Journal                  = {Bioinformatics},\n" +
+            "  Year                     = {2014},\n" +
+            "  Note                     = {Proc.\\ of \\emph{Intelligent Systems for Molecular Biology} (ISMB 2014)},\n" +
+            "  Number                   = {12},\n" +
+            "  Pages                    = {i157-i164},\n" +
+            "  Volume                   = {30},\n" +
+            "\n" +
+            "  Abstract                 = {Metabolite identification from tandem mass spectrometric data is a key task in metabolomics. Various computational methods has been proposed for the identification of metabolites from tandem mass spectra. Fragmentation tree methods explore the space of possible ways the metabolite can fragment, and base the metabolite identification on scoring of these fragmentation trees. Machine learning methods has been used to map mass spectra to molecular fingerprints; predicted fingerprints, in turn, can be used to score candidate molecular structures. Here, we combine fragmentation tree computations with kernel-based machine learning to predict molecular fingerprints and identify molecular structures. We introduce a family of kernels capturing the similarity of fragmentation trees, and combine these kernels using recently proposed multiple kernel learning approaches. Experiments on two large reference datasets show that the new methods significantly improve molecular fingerprint prediction accuracy. These improvements result in better metabolite identification, doubling the number of metabolites ranked at the top position of the candidates list.},\n" +
+            "  Doi                      = {10.1093/bioinformatics/btu275},\n" +
+            "  File                     = {ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:2014/ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:PDF},\n" +
+            "  Keywords                 = {jena; IDUN; MS; tandem MS;},\n" +
+            "  Owner                    = {fhufsky},\n" +
+            "  Pmid                     = {24931979},\n" +
+            "  Timestamp                = {2014.02.11},\n" +
+            "  Url                      = {http://bioinformatics.oxfordjournals.org/content/30/12/i157.full}\n" +
+            "}";
+
     private void copyBibTex() {
-        copyPlainText(Sirius.CITATION_BIBTEX);
+        copyPlainText(Sirius.CITATION_BIBTEX + "\n" + FINGERID_BIBTEX);
     }
 
     private void copyPlainText() {
-        copyPlainText(Sirius.CITATION);
+        copyPlainText(Sirius.CITATION + "\n" + FINGERID_CITATION);
     }
 
     private void copyPlainText(String text) {

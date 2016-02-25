@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -31,11 +32,11 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		ccv.dispose();
 	}
 
-	public ResultPanel(Frame owner, ConfigStorage config) {
+	public ResultPanel(MainFrame owner, ConfigStorage config) {
 		this(null, owner, config);
 	}
 	
-	public ResultPanel(ExperimentContainer ec, Frame owner, ConfigStorage config) {
+	public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
 		this.setLayout(new BorderLayout());
 		this.ec = ec;
 		this.owner = owner;

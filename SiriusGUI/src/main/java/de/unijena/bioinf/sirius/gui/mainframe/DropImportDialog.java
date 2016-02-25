@@ -112,7 +112,7 @@ class DataAnalyseThread implements Runnable {
 	private List<File> csvFiles, msFiles, mgfFiles, rawFiles;
 	private DataFormatIdentifier ident;
 	private DropImportDialog diag;
-	private transient boolean stop;
+	private volatile boolean stop;
 	
 	public DataAnalyseThread(List<File> rawFiles, DropImportDialog diag) {
 		this.rawFiles = rawFiles;
