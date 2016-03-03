@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 
@@ -443,7 +444,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         --edgeNum;
     }
 
-    protected void deleteFragmentsKeepTopologicalOrder(Iterable<Fragment> todelete) {
+    protected void deleteFragmentsKeepTopologicalOrder(Iterable<Fragment> todelete, TIntArrayList idsFrom, TIntArrayList idsTo) {
         for (Fragment fragment : todelete) {
             if (fragments.get(fragment.vertexId) != fragment)
                 throw new NoSuchElementException("The given fragment is not part of this graph");
@@ -452,7 +453,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
             edgeNum -= out;
             for (int i=0; i < in; ++i) {
                 final Loss l = fragment.getIncomingEdge(i);
-                deleteOutEdgeInternal(l.source, l);
+                deleteOutEdgeInternalKeepTopologicalOrder(l.source, l);
             }
             for (int i=0; i < out; ++i) {
                 final Loss l = fragment.getOutgoingEdge(i);
@@ -469,6 +470,10 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
                 if (k > i) {
                     fragments.set(i, fragments.get(k));
                     fragments.set(k, null);
+                    if (idsFrom!=null) {
+                        idsFrom.add(k);
+                        idsTo.add(i);
+                    }
                     fragments.get(i).vertexId = i;
                 }
                 ++i;
@@ -476,6 +481,21 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         }
         for (int k=fragments.size()-1; k >= 0; --k)
             if (fragments.get(k)==null) fragments.remove(k);
+    }
+
+    private void deleteOutEdgeInternalKeepTopologicalOrder(Fragment source, Loss l) {
+        if (l.sourceEdgeOffset+1 == source.outDegree) {
+            source.outgoingEdges[--source.outDegree] = null;
+        } else {
+
+            final int moveFrom = l.sourceEdgeOffset+1;
+            for (int i=moveFrom; i < source.outDegree; ++i) {
+                final int newIndex = i-1;
+                source.outgoingEdges[newIndex] = source.outgoingEdges[i];
+                source.outgoingEdges[newIndex].sourceEdgeOffset = newIndex;
+            }
+            source.outgoingEdges[--source.outDegree]=null;
+        }
     }
 
     protected void deleteFragment(Fragment fragment) {

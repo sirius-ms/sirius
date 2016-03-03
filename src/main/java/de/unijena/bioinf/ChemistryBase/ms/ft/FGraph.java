@@ -19,6 +19,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 
@@ -139,7 +140,68 @@ public class FGraph extends AbstractFragmentationGraph {
     }
 
     public void deleteFragmentsKeepTopologicalOrder(Iterable<Fragment> todelete) {
-        super.deleteFragmentsKeepTopologicalOrder(todelete);
+        super.deleteFragmentsKeepTopologicalOrder(todelete, null,null);
+    }
+
+    public void deleteFragmentsKeepTopologicalOrder(Iterable<Fragment> todelete, TIntArrayList idsFrom, TIntArrayList idsTo) {
+        super.deleteFragmentsKeepTopologicalOrder(todelete, idsFrom, idsTo);
+    }
+
+    public boolean isConnectedGraph() {
+        final boolean[] connectedVertices = new boolean[numberOfVertices()];
+        connectedVertices[getRoot().getVertexId()] = true;
+        for (int i=0; i < numberOfVertices(); ++i) {
+            Fragment u = getFragmentAt(i);
+            while (!connectedVertices[u.getVertexId()]) {
+                if (u.inDegree==0) return false;
+                u = u.getParent();
+            }
+            connectedVertices[i]=true;
+        }
+        for (final boolean val : connectedVertices) {
+            if (!val) return false;
+        }
+        return true;
+    }
+
+    public boolean isValidNumbered() {
+        for (int i=0; i < numberOfVertices(); ++i) {
+            final Fragment u = fragments.get(i);
+            if (u.getVertexId()!=i) {
+                assert false;
+                return false;
+            }
+            for (int l=0; l < u.outDegree; ++l) {
+                if (u.getOutgoingEdge(l).sourceEdgeOffset != l) {
+                    assert false;
+                    return false;
+                }
+            }
+            for (int l=0; l < u.inDegree; ++l) {
+                if (u.getIncomingEdge(l).targetEdgeOffset != l) {
+                    assert false;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public boolean isTopologicalOrdered()  {
+        if (!getFragmentAt(0).isRoot()) return false;
+        for (int k=2; k < numberOfVertices(); ++k) {
+            final Fragment u = getFragmentAt(k-1);
+            final Fragment v = getFragmentAt(k);
+            if (u.color > v.color) return false;
+            final int N = u.outDegree;
+            for (int i=1; i < N; ++i) {
+                final Loss a = u.getOutgoingEdge(i-1);
+                final Loss b = u.getOutgoingEdge(i);
+                if (a.getTarget().color > b.getTarget().color) return false;
+            }
+        }
+        return true;
+
     }
 
     public Fragment addRootVertex(MolecularFormula formula) {
@@ -209,6 +271,47 @@ public class FGraph extends AbstractFragmentationGraph {
 
     public Iterator<Fragment> preOrderIterator(Fragment startingRoot, BitSet allowedColors) {
         return new PreOrderIterator(this, startingRoot, (BitSet) allowedColors.clone());
+    }
+
+    /**
+     * Fast method to delete outgoing losses of fragment u. Be careful! Losses to delete
+     * have to be in topological order! This method guarantees to keep the topological
+     * order for outgoing edges in fragment u
+     * @param u
+     * @param toDelete
+     */
+    public void deleteLossesKeepTopologialOrder(Fragment u, ArrayList<Loss> toDelete) {
+        final int N = u.getOutDegree();
+        int l = 0;
+        int i = toDelete.get(0).sourceEdgeOffset;
+        int j = i;
+        while(j < N) {
+            while (l < toDelete.size() && j==toDelete.get(l).sourceEdgeOffset) {
+                ++j;
+                ++l;
+            }
+            if (j < N) {
+                u.outgoingEdges[i] = u.outgoingEdges[j];
+                u.outgoingEdges[i].sourceEdgeOffset = i;
+            } else {
+                u.outgoingEdges[i] = null;
+            }
+            ++i; ++j;
+        }
+        if (i < N) Arrays.fill(u.outgoingEdges, i, N, null);
+        u.outDegree -= toDelete.size();
+        // now free losses of childs
+        // this time we do not have to care about topological ordering
+        for (Loss loss : toDelete) {
+            final Fragment child = loss.getTarget();
+            if (loss.targetEdgeOffset+1 < child.inDegree) {
+                final Loss lastLoss = child.incomingEdges[child.inDegree-1];
+                child.incomingEdges[loss.targetEdgeOffset] = lastLoss;
+                lastLoss.targetEdgeOffset = loss.targetEdgeOffset;
+            }
+            assert child.incomingEdges[child.inDegree-1] != null;
+            child.incomingEdges[--child.inDegree] = null;
+        }
     }
 
     private final static class PostOrderIterator implements Iterator<Fragment> {
