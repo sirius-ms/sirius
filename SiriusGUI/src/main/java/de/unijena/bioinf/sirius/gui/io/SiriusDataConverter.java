@@ -18,7 +18,6 @@
 
 package de.unijena.bioinf.sirius.gui.io;
 
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -59,7 +58,7 @@ public class SiriusDataConverter {
         final ExperimentContainer c = new ExperimentContainer();
         c.setDataFocusedMass(sirius.getIonMass());
         c.setName(sirius.getName());
-        c.setIonization(siriusIonizationToEnum(sirius.getPrecursorIonType()==null ? PeriodicTable.getInstance().getUnknownPrecursorIonType(1) : sirius.getPrecursorIonType()));
+        c.setIonization(siriusIonizationToEnum(sirius.getPrecursorIonType()==null ? PrecursorIonType.getPrecursorIonType("[M+H]+") : sirius.getPrecursorIonType()));
         for (Spectrum<Peak> s : sirius.getMs1Spectra()) {
             c.getMs1Spectra().add(siriusSpectrumToMyxoSpectrum(s));
         }

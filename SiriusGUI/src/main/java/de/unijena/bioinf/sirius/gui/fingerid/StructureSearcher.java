@@ -70,10 +70,8 @@ public class StructureSearcher implements Runnable {
                     if (c.compound==null) wait();
                 }
                 if (c.compound==null) continue;
-                System.out.println("fetch " + c.index);
                 c.compoundLock.lock();
                 try {
-                    System.err.println("highlight " + c.index);
                     c.highlightFingerprint(computation, highlight);
                 } finally {
                     c.compoundLock.unlock();
@@ -83,7 +81,6 @@ public class StructureSearcher implements Runnable {
             } catch (InterruptedException e) {
             }
         }
-        System.out.println("SHUTDOWN!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
 
     private static class Update implements Runnable, Cloneable {
@@ -91,7 +88,6 @@ public class StructureSearcher implements Runnable {
         private CandidateJList.ListModel model;
         @Override
         public void run() {
-            System.out.println("CHANGE! " + id);
             model.change(id);
         }
         public Update clone() {

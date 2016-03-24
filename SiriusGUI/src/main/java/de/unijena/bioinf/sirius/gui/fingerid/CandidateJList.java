@@ -18,16 +18,11 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.sirius.gui.io.DotIO;
-import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
-import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -40,6 +35,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -51,12 +48,12 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.*;
 
-public class CandidateJList extends JPanel implements MouseListener {
+public class CandidateJList extends JPanel implements MouseListener, ActionListener {
 
     private final static int CELL_SIZE = 15;
     private static final int MIN_CELL_SIZE = 3;
@@ -71,7 +68,11 @@ public class CandidateJList extends JPanel implements MouseListener {
     protected Font nameFont, propertyFont, rankFont;
     protected Frame owner;
 
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
+    protected JPopupMenu popupMenu;
+
     protected int highlightMissing=-1, highlightAgree=-1, highlightedCandidate=-1;
+    protected int selectedCompoundId;
 
     protected void initFonts() {
         try {
@@ -105,7 +106,8 @@ public class CandidateJList extends JPanel implements MouseListener {
         });
         northPanel.add(exportToCSV);
 
-        candidateList = new JList<CompoundCandidate>(new ListModel());
+        candidateList = new InnerList(new ListModel());
+        ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer());
         candidateList.setPrototypeCellValue(new CompoundCandidate(Compound.getPrototypeCompound(), 0d, 1, 0));
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -115,7 +117,57 @@ public class CandidateJList extends JPanel implements MouseListener {
         this.structureSearcher = new StructureSearcher(computation, data==null ? 0 : data.compounds.length);
         this.structureSearcherThread = new Thread(structureSearcher);
         structureSearcherThread.start();
+
+        ///// add popup menu
+        popupMenu = new JPopupMenu();
+        CopyInchiKey = new JMenuItem("Copy 2D InChIKey");
+        CopyInchi = new JMenuItem("Copy 2D InChI");
+        OpenInBrowser1 = new JMenuItem("Open in PubChem");
+        OpenInBrowser2 = new JMenuItem("Open in all databases");
+        CopyInchi.addActionListener(this);
+        CopyInchiKey.addActionListener(this);
+        OpenInBrowser1.addActionListener(this);
+        OpenInBrowser2.addActionListener(this);
+        popupMenu.add(CopyInchiKey);
+        popupMenu.add(CopyInchi);
+        popupMenu.add(OpenInBrowser1);
+        popupMenu.add(OpenInBrowser2);
         setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (selectedCompoundId < 0) return;
+        final CompoundCandidate c = candidateList.getModel().getElementAt(selectedCompoundId);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        if (e.getSource() == CopyInchiKey) {
+            System.err.println("Copy inchi key: " + c.compound.inchi.key2D());
+            clipboard.setContents(new StringSelection(c.compound.inchi.key2D()), null);
+        } else if (e.getSource() == CopyInchi) {
+            clipboard.setContents(new StringSelection(c.compound.inchi.in2D), null);
+        } else if (e.getSource() == OpenInBrowser1) {
+            try {
+                Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.compound.inchi.key2D() + "%22[InChIKey]"));
+            } catch (IOException | URISyntaxException e1) {
+                e1.printStackTrace();
+            }
+        } else if (e.getSource() == OpenInBrowser2) {
+            if (c.compound.databases==null) return;
+            for (Map.Entry<String,String> entry : c.compound.databases.entries()) {
+                System.out.println(entry.getKey());
+                final DatasourceService2.Sources s = DatasourceService2.getFromName(entry.getKey());
+                if (s==null || s.URI == null) continue;
+                try {
+                    if (s.URI.contains("%s")) {
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), "UTF-8"))));
+                    } else {
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(entry.getValue()))));
+                    }
+                } catch (IOException | URISyntaxException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
     }
 
     private void doExport() {
@@ -171,11 +223,13 @@ public class CandidateJList extends JPanel implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+        if (e.isPopupTrigger()) return;
         highlightedCandidate=-1;
         highlightAgree=-1;
         highlightMissing=-1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
+        selectedCompoundId = index;
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.rank;
@@ -196,6 +250,7 @@ public class CandidateJList extends JPanel implements MouseListener {
             final int row = ry/ CELL_SIZE;
             final int col = rx/ CELL_SIZE;
             highlightAgree = candidate.agreement.indexAt(row, col);
+            System.out.println(row + " / " + col + " => "+ highlightAgree);
             structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree);
         } else {
             final Rectangle box = candidate.missings.getBounds();
@@ -209,19 +264,100 @@ public class CandidateJList extends JPanel implements MouseListener {
                 final int row = ry/ CELL_SIZE;
                 final int col = rx/ CELL_SIZE;
                 highlightMissing = candidate.missings.indexAt(row, col);
+                System.out.println(row + " / " + col + " => "+ highlightMissing);
                 structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing);
             }
         }
     }
 
+    public class InnerList extends JList<CompoundCandidate> {
+
+        public InnerList(ListModel dataModel) {
+            super(dataModel);
+        }
+
+        @Override
+        public String getToolTipText(MouseEvent e) {
+            final Point point = e.getPoint();
+            final int index = candidateList.locationToIndex(point);
+            selectedCompoundId = index;
+            if (index < 0) return null;
+            final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
+            highlightedCandidate = candidate.rank;
+            final Rectangle relativeRect = candidateList.getCellBounds(index, index);
+            final boolean in;
+            int rx, ry;
+            {
+                final Rectangle box = candidate.agreement.getBounds();
+                final int absX = box.x+relativeRect.x;
+                final int absY = box.y+relativeRect.y;
+                final int absX2 = box.width+absX;
+                final int absY2 = box.height+absY;
+                in=point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
+                rx = point.x-absX;
+                ry = point.y-absY;
+            }
+            int fpindex = -1;
+            if (in) {
+                final int row = ry/ CELL_SIZE;
+                final int col = rx/ CELL_SIZE;
+                fpindex = candidate.agreement.indexAt(row, col);
+            } else {
+                final Rectangle box = candidate.missings.getBounds();
+                final int absX = box.x+relativeRect.x;
+                final int absY = box.y+relativeRect.y;
+                final int absX2 = box.width+absX;
+                final int absY2 = box.height+absY;
+                if (point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2) {
+                    rx = point.x-absX;
+                    ry = point.y-absY;
+                    final int row = ry/ CELL_SIZE;
+                    final int col = rx/ CELL_SIZE;
+                    fpindex = candidate.missings.indexAt(row, col);
+                }
+            }
+            if (fpindex>=0) {
+                return computation.relativeIndex2Smarts[fpindex];
+            } else return null;
+
+        }
+    }
+
+    private void popup(MouseEvent e, CompoundCandidate candidate) {
+        System.err.println("################  SHOW POPUP ############################");
+        popupMenu.show(candidateList, e.getX(), e.getY());
+    }
+
     @Override
     public void mousePressed(MouseEvent e) {
-
+        highlightedCandidate=-1;
+        highlightAgree=-1;
+        highlightMissing=-1;
+        final Point point = e.getPoint();
+        final int index = candidateList.locationToIndex(point);
+        selectedCompoundId = index;
+        if (index < 0) return;
+        final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
+        highlightedCandidate = candidate.rank;
+        if(e.isPopupTrigger()){
+            popup(e, candidate);
+        }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-
+        highlightedCandidate=-1;
+        highlightAgree=-1;
+        highlightMissing=-1;
+        final Point point = e.getPoint();
+        final int index = candidateList.locationToIndex(point);
+        selectedCompoundId = index;
+        if (index < 0) return;
+        final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
+        highlightedCandidate = candidate.rank;
+        if(e.isPopupTrigger()){
+            popup(e, candidate);
+        }
     }
 
     @Override
