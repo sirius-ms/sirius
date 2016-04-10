@@ -1,9 +1,12 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
+
+import java.util.regex.Pattern;
 
 public class SiriusResultElement {
 	
@@ -66,6 +69,22 @@ public class SiriusResultElement {
 
 	public MolecularFormula getMolecularFormula() {
 		return mf;
+	}
+
+	private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
+	public String getFormulaAndIonText() {
+		final PrecursorIonType ionType = ft.getAnnotationOrThrow(PrecursorIonType.class);
+		String niceName = ionType.toString();
+		niceName = pat.matcher(niceName).replaceAll("");
+		if (ionType.isIonizationUnknown()) {
+			return mf.toString();
+		} else {
+			return mf.toString() + " " + niceName;
+		}
+	}
+
+	public int getCharge() {
+		return ft.getAnnotationOrThrow(PrecursorIonType.class).getCharge();
 	}
 
 	public void setMolecularFormula(MolecularFormula mf) {

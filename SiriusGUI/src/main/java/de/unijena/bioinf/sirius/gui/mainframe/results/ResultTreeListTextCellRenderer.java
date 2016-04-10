@@ -4,7 +4,6 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 
@@ -105,14 +104,19 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 		FontMetrics rankFm = g2.getFontMetrics(this.rankFont);
 		
 		g2.setColor(this.foreColor);
-		
-		int mfLength = mfFm.stringWidth(sre.getMolecularFormula().toString())+4;
+
+		final String formulaText = sre.getFormulaAndIonText();
+		final int charge = sre.getCharge();
+
+
+		int mfLength = mfFm.stringWidth(formulaText)+4;
 		int rankLength = rankFm.stringWidth(Integer.toString(sre.getRank()));
 		
 		g2.drawLine(13+rankLength, 17, 15+mfLength+rankLength, 17);
 		
 		g2.setFont(mfFont);
-		g2.drawString(sre.getMolecularFormula().toString(), 15+rankLength, 13);
+		g2.drawString(formulaText, 15+rankLength, 13);
+		g2.drawString(charge>0 ? "+" : "-", 15+mfLength+rankLength-4, 13-4);
 		
 		g2.setFont(rankFont);
 		g2.drawString(Integer.toString(sre.getRank()),2,15);

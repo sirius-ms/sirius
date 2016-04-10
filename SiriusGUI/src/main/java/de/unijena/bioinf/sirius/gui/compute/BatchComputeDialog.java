@@ -21,11 +21,13 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -117,9 +119,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 //		elementPanel.add(Box.createVerticalGlue());
 
         /////////////////////////////////////////////
+        JPanel stack = new JPanel();
+        stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
+        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"other"));
 
         JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-        otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"other"));
         instruments = new Vector<>();
         instruments.add("Q-TOF");
         instruments.add("Orbitrap");
@@ -156,9 +160,21 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
             }
         });
+        stack.add(otherPanel);
+
+        //
+        otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+        ionizations = new Vector<>();
+        ionizations.add("treat as protonation");
+        ionizations.add("do not resolve ionization");
+        ionizationCB = new JComboBox<>(ionizations);
+        otherPanel.add(new JLabel("  fallback for unknown ionizations"));
+        otherPanel.add(ionizationCB);
+        stack.add(otherPanel);
 
 
-        mainPanel.add(otherPanel);
+        mainPanel.add(stack);
+        ///
 
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
         this.add(southPanel,BorderLayout.SOUTH);
@@ -338,6 +354,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         }
 
+        // treatment of unknown ionization
+        final boolean treatAsHydrogen;
+        treatAsHydrogen = (((String)ionizationCB.getSelectedItem()).equals("treat as protonation"));
+
         //entspricht setup() Methode
         final BackgroundComputation bgc = owner.getBackgroundComputation();
         final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
@@ -346,6 +366,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         while (compounds.hasMoreElements()) {
             final ExperimentContainer ec = compounds.nextElement();
             if (ec.isUncomputed()) {
+
+                if (treatAsHydrogen && ec.getIonization().isUnknown()) {
+                    if (ec.getIonization()==null || ec.getIonization().toRealIonization().getCharge()>0) {
+                        ec.setIonization(SiriusDataConverter.siriusIonizationToEnum(PrecursorIonType.getPrecursorIonType("[M+H]+")));
+                    } else {
+                        ec.setIonization(SiriusDataConverter.siriusIonizationToEnum(PrecursorIonType.getPrecursorIonType("[M-H]-")));
+                    }
+                }
+
                 final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates);
                 tasks.add(task);
                 compoundList.add(ec);

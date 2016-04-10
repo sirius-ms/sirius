@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -32,7 +33,9 @@ import javax.json.stream.JsonParser;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -155,6 +158,23 @@ public class CSIFingerIdComputation {
         return new File(System.getProperty("user.home"), "csi_fingerid_cache");
     }
 
+    private List<MolecularFormula> getFormulasForDifferentIonizationVariants(MolecularFormula formula) {
+        // TODO: make this user-configurable
+        final PrecursorIonType[] allowedIontypes = new PrecursorIonType[]{
+          PrecursorIonType.getPrecursorIonType("[M+H]+"),
+                PrecursorIonType.getPrecursorIonType("[M]+"),
+                PrecursorIonType.getPrecursorIonType("[M+Na]+"),
+                PrecursorIonType.getPrecursorIonType("[M+K]+")
+        };
+        final ArrayList<MolecularFormula> formulas = new ArrayList<>();
+        for (PrecursorIonType ionType : allowedIontypes) {
+            final MolecularFormula neutralFormula = ionType.precursorIonToNeutralMolecule(formula);
+            if (!neutralFormula.isAllPositiveOrZero()) continue;
+            formulas.add(neutralFormula);
+        }
+        return formulas;
+    }
+
     private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula) throws IOException {
         if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
         globalLock.lock();
@@ -269,6 +289,7 @@ public class CSIFingerIdComputation {
                 job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getRawTree());
             }
             final List<Compound> compounds;
+
             if (compoundsPerFormula.containsKey(resultElement.getMolecularFormula()))
                 compounds = compoundsPerFormula.get(resultElement.getMolecularFormula());
             else
