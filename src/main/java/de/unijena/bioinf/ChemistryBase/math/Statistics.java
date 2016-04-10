@@ -118,7 +118,7 @@ public class Statistics {
      * permutes the array randomly
      */
     public static void shuffle(double[] array) {
-        shuffle(array, 0, array.length, array.length);
+        shuffle(array, array.length, 0, array.length);
     }
 
     /**
@@ -139,7 +139,7 @@ public class Statistics {
      * permutes the array randomly
      */
     public static void shuffle(Object[] array) {
-        shuffle(array, 0, array.length, array.length);
+        shuffle(array, array.length, 0, array.length);
     }
 
     /**
@@ -185,7 +185,7 @@ public class Statistics {
     }
 
     public static void shuffle(int[] array) {
-        shuffle(array, 0, array.length, array.length);
+        shuffle(array, array.length, 0, array.length);
     }
 
     public static void shuffle(int[] array, int number, int offset, int length) {
