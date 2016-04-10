@@ -264,6 +264,17 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
         knownIonTypes.putAll(positiveIonTypes);
         knownIonTypes.putAll(negativeIonTypes);
+
+        // add common misspelled aliases...
+        final PrecursorIonType hplus = knownIonTypes.get("[M+H]+");
+        final PrecursorIonType hminus = knownIonTypes.get("[M-H]-");
+        knownIonTypes.put("M+H", hplus);
+        knownIonTypes.put("M+H+", hplus);
+        knownIonTypes.put("[M+H]", hplus);
+        knownIonTypes.put("M-H", hminus);
+        knownIonTypes.put("M-H-", hminus);
+        knownIonTypes.put("[M-H]", hminus);
+
         //knownIonTypes.put("[M+?]+", UNKNOWN_POSITIVE_IONTYPE);
         //knownIonTypes.put("[M+?]-", UNKNOWN_NEGATIVE_IONTYPE);
     }
