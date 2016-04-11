@@ -156,7 +156,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             for (Map.Entry<String,String> entry : c.compound.databases.entries()) {
                 System.out.println(entry.getKey());
                 final DatasourceService2.Sources s = DatasourceService2.getFromName(entry.getKey());
-                if (s==null || s.URI == null) continue;
+                if (entry.getValue() == null || s==null || s.URI == null) continue;
                 try {
                     if (s.URI.contains("%s")) {
                         Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), "UTF-8"))));

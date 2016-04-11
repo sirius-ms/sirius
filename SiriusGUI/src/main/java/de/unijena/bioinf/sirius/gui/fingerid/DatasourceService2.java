@@ -40,7 +40,8 @@ public class DatasourceService2 {
         MACONDA("Maconda", 1024,"SELECT maconda_id FROM ref.maconda WHERE inchi_key_1 = ?", "http://www.maconda.bham.ac.uk/contaminant.php?id="),
         METACYC("Metacyc", 2048,"SELECT metacyc_id FROM ref.metacyc WHERE inchi_key_1 = ?", "http://metacyc.org/META/new-image?object=%s"),
         GNPS("GNPS", 4096,      "SELECT id FROM ref.gnps WHERE inchi_key_1 = ?", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
-        ZINCBIO("ZINC bio", 8192,"SELECT zinc_id FROM ref.zincbio WHERE inchi_key_1 = ?", "http://zinc.docking.org/substance/%s");
+        ZINCBIO("ZINC bio", 8192,"SELECT zinc_id FROM ref.zincbio WHERE inchi_key_1 = ?", "http://zinc.docking.org/substance/%s"),
+        TRAIN("training set", 16384, null,null);
 
         public final int flag; public final String name; public final String sqlQuery;
         public final String URI;

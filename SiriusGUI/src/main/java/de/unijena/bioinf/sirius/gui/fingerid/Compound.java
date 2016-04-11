@@ -35,6 +35,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 import javax.json.JsonException;
 import javax.json.stream.JsonParser;
 import java.util.List;
+import java.util.Set;
 
 public class Compound {
 
@@ -104,6 +105,7 @@ public class Compound {
     public static Compound parseFromJSON(JsonParser parser, int[] fingerprintIndizes) {
         final Compound compound = new Compound();
         String inchi = null, inchikey = null;
+        int flags=0;
         while (true) {
             final JsonParser.Event event = parser.next();
             switch (event) {
@@ -120,14 +122,34 @@ public class Compound {
                             compound.smiles = new Smiles(expectString(parser)); break;
                         case "fingerprint":
                             compound.fingerprint = stringToBoolean(expectString(parser), fingerprintIndizes); break;
+                        case "bitset":
+                            flags = expectInt(parser); break;
                         case "links":
                             parseLinks(compound, parser); break;
                     }; break;
                 case END_OBJECT:
                     compound.inchi = new InChI(inchikey, inchi);
+                    // add databases without links
+                    final Set<String> names = DatasourceService2.getDataSourcesFromBitFlags(flags);
+                    names.remove(DatasourceService2.Sources.PUBCHEM.name);
+                    if (compound.databases!=null) {
+                        for (String aname : names) {
+                            if (!compound.databases.containsKey(aname))
+                                compound.databases.put(aname, null);
+                        }
+                    } else {
+                        compound.databases = ArrayListMultimap.create(names.size(), 1);
+                        for (String aname : names) compound.databases.put(aname,null);
+                    }
                     return compound;
             }
         }
+    }
+
+    private static int expectInt(JsonParser parser) {
+        final JsonParser.Event event = parser.next();
+        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        return parser.getInt();
     }
 
     private static void parseLinks(Compound compound, JsonParser parser) {
