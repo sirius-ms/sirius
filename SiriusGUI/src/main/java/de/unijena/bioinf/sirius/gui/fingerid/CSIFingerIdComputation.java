@@ -30,7 +30,9 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.zip.GZIPInputStream;
 
 /**
  * keeps all compounds in memory
@@ -52,12 +55,15 @@ public class CSIFingerIdComputation {
     protected int[] fingerprintIndizes;
     protected TIntObjectHashMap<String> absoluteIndex2Smarts;
     protected String[] relativeIndex2Smarts;
+    protected String[] relativeIndex2Comments;
     protected HashMap<String, Compound> compounds;
     protected ConcurrentHashMap<MolecularFormula, List<Compound>> compoundsPerFormula;
     protected boolean configured = false;
     protected MarvinsScoring scoring = new MarvinsScoring();
     protected File directory;
     protected Callback callback;
+
+    protected boolean enforceBio;
 
     protected final Thread blastThread, formulaThread, jobThread;
     protected final BackgroundThreadBlast blastWorker;
@@ -80,13 +86,6 @@ public class CSIFingerIdComputation {
         this.blastQueue = new ConcurrentLinkedQueue<>();
         this.jobQueue = new ConcurrentLinkedQueue<>();
         this.callback = callback;
-
-        try {
-            readSmarts();
-        } catch (IOException e) {
-            throw new RuntimeException(e); // TODO: Fix
-        }
-
         this.blastWorker = new BackgroundThreadBlast();
         this.blastThread = new Thread(blastWorker);
         blastThread.start();
@@ -104,25 +103,16 @@ public class CSIFingerIdComputation {
         return statistics.f;
     }
 
-    private void readSmarts() throws IOException {
-        final BufferedReader br = new BufferedReader(new InputStreamReader(CSIFingerIdComputation.class.getResourceAsStream("/sirius/features_smarts.tsv")));
-        String line;
-        while ((line=br.readLine())!=null) {
-            final int tabI = line.indexOf('\t');
-            if (tabI < 0) continue;
-            final int index = Integer.parseInt(line.substring(0,tabI));
-            final String smarts = line.substring(tabI+1);
-            absoluteIndex2Smarts.put(index, smarts);
-        }
-    }
-
     private void loadStatistics(WebAPI webAPI) throws IOException {
         final TIntArrayList list = new TIntArrayList(4096);
-        this.statistics = webAPI.getStatistics(list);
+        ArrayList<String> cs = new ArrayList<>(4096);
+        ArrayList<String> sm = new ArrayList<>(4096);
+        this.statistics = webAPI.getStatistics(list, sm, cs);
+        this.relativeIndex2Comments = cs.toArray(new String[cs.size()]);
+        this.relativeIndex2Smarts = sm.toArray(new String[sm.size()]);
         this.fingerprintIndizes = list.toArray();
-        this.relativeIndex2Smarts = new String[fingerprintIndizes.length];
         for (int i=0; i < fingerprintIndizes.length; ++i) {
-            relativeIndex2Smarts[i] = absoluteIndex2Smarts.get(fingerprintIndizes[i]);
+            absoluteIndex2Smarts.put(fingerprintIndizes[i], sm.get(i));
         }
     }
 
@@ -158,6 +148,14 @@ public class CSIFingerIdComputation {
         return new File(System.getProperty("user.home"), "csi_fingerid_cache");
     }
 
+    public boolean isEnforceBio() {
+        return enforceBio;
+    }
+
+    public void setEnforceBio(boolean enforceBio) {
+        this.enforceBio = enforceBio;
+    }
+
     private List<MolecularFormula> getFormulasForDifferentIonizationVariants(MolecularFormula formula) {
         // TODO: make this user-configurable
         final PrecursorIonType[] allowedIontypes = new PrecursorIonType[]{
@@ -177,25 +175,31 @@ public class CSIFingerIdComputation {
 
     private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula) throws IOException {
         if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
+        final List<Compound> compounds;
         globalLock.lock();
-        if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        final File mfile = new File(directory, formula.toString() + ".json");
+        compounds = loadCompoundsForGivenMolecularFormula(webAPI, formula, true);
+        if (!enforceBio) compounds.addAll(loadCompoundsForGivenMolecularFormula(webAPI, formula, false));
+        globalLock.unlock();
+        return compounds;
+    }
+
+    private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio) throws IOException {
+        final File dir = new File(directory, "biodb");
+        if (!dir.exists()) dir.mkdirs();
+        final File mfile = new File(dir, formula.toString() + ".json.gz");
         final List<Compound> compounds;
         if (mfile.exists()) {
-            try (final JsonParser parser = Json.createParser(new BufferedInputStream(new FileInputStream(mfile)))) {
+            try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(mfile)))) {
                 compounds = new ArrayList<>();
                 Compound.parseCompounds(fingerprintIndizes, compounds, parser);
             }
         } else {
             if (webAPI==null) {
                 try (final WebAPI webAPI2 = new WebAPI()) {
-                    compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintIndizes);
+                    compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintIndizes, bio);
                 }
             } else {
-                compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintIndizes);
+                compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintIndizes, bio);
             }
         }
         for (Compound c : compounds) {

@@ -117,6 +117,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         this.structureSearcher = new StructureSearcher(computation, data==null ? 0 : data.compounds.length);
         this.structureSearcherThread = new Thread(structureSearcher);
         structureSearcherThread.start();
+        this.structureSearcher.reloadList((ListModel) candidateList.getModel());
 
         ///// add popup menu
         popupMenu = new JPopupMenu();
@@ -218,7 +219,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     public void refresh(FingerIdData data) {
         this.data = data;
         ((ListModel)candidateList.getModel()).change();
-        this.structureSearcher.reloadList((ListModel) candidateList.getModel(), -1);
+        this.structureSearcher.reloadList((ListModel) candidateList.getModel());
     }
 
     @Override
@@ -251,7 +252,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final int col = rx/ CELL_SIZE;
             highlightAgree = candidate.agreement.indexAt(row, col);
             System.out.println(row + " / " + col + " => "+ highlightAgree);
-            structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree);
+            structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate);
         } else {
             final Rectangle box = candidate.missings.getBounds();
             final int absX = box.x+relativeRect.x;
@@ -265,7 +266,16 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 final int col = rx/ CELL_SIZE;
                 highlightMissing = candidate.missings.indexAt(row, col);
                 System.out.println(row + " / " + col + " => "+ highlightMissing);
-                structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing);
+                structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing,highlightedCandidate);
+            } else {
+                if (highlightAgree>=0) {
+                    highlightAgree=-1;
+                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate);
+                }
+                if (highlightMissing>=0) {
+                    highlightMissing=-1;
+                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing, highlightedCandidate);
+                }
             }
         }
     }
@@ -317,7 +327,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 }
             }
             if (fpindex>=0) {
-                return computation.relativeIndex2Smarts[fpindex];
+                final String sm = computation.relativeIndex2Smarts[fpindex];
+                if (sm==null || sm.isEmpty()) {
+                    final String sf = computation.relativeIndex2Comments[fpindex];
+                    return sf;
+                } else return sm;
             } else return null;
 
         }
@@ -474,31 +488,35 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
             // setup the renderer
             this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
+            renderer.getRenderer2DModel().set(HighlightGenerator.HighlightPalette.class,
+                    HighlightGenerator.createPalette(new Color(0, 100, 255, 128), new Color(100, 100, 255, 64).brighter()));
             setVisible(true);
         }
 
         @Override
         public void paint(Graphics g) {
             super.paint(g);
-            final Graphics2D gg = (Graphics2D)g;
-            StructureDiagramGenerator sdg = new StructureDiagramGenerator();
-            sdg.setMolecule(molecule.compound.getMolecule(), false);
-            try {
-                sdg.generateCoordinates();
-            } catch (CDKException e) {
-                e.printStackTrace();
+            if (molecule.compound.molecule!=null) {
+                final Graphics2D gg = (Graphics2D)g;
+                StructureDiagramGenerator sdg = new StructureDiagramGenerator();
+                sdg.setMolecule(molecule.compound.getMolecule(), false);
+                try {
+                    sdg.generateCoordinates();
+                } catch (CDKException e) {
+                    e.printStackTrace();
+                }
+                renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
+                synchronized (molecule.compound) {
+                    renderer.paint(molecule.compound.getMolecule(), new AWTDrawVisitor(gg),
+                            new Rectangle2D.Double(7, 14, 360, 200), true);
+                }
+                if (molecule.compound.name!=null) {
+                    gg.setFont(nameFont);
+                    gg.drawString(molecule.compound.name, 3, 16);
+                }
+                gg.setFont(rankFont);
+                gg.drawString(String.valueOf(molecule.rank), 3, 100);
             }
-            renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
-            synchronized (molecule.compound) {
-                renderer.paint(molecule.compound.getMolecule(), new AWTDrawVisitor(gg),
-                        new Rectangle2D.Double(7, 14, 360, 200), true);
-            }
-            if (molecule.compound.name!=null) {
-                gg.setFont(nameFont);
-                gg.drawString(molecule.compound.name, 3, 16);
-            }
-            gg.setFont(rankFont);
-            gg.drawString(String.valueOf(molecule.rank), 3, 100);
         }
     }
 

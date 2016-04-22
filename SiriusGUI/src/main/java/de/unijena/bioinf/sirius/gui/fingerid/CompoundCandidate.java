@@ -24,7 +24,6 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.generators.HighlightGenerator;
-import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +31,8 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundCandidate {
+
+    private final static double THRESHOLD_FP = 1d/3d;
 
     protected Compound compound;
     protected double score;
@@ -75,11 +76,11 @@ public class CompoundCandidate {
         }
 
         final HashMap<IAtom, Integer> colorMap = new HashMap<>();
-        if (computation.relativeIndex2Smarts[index]==null) {
+        if (computation.relativeIndex2Smarts[index]==null || computation.relativeIndex2Smarts[index].isEmpty()) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
         }
-        SMARTSQueryTool tool = new SMARTSQueryTool(computation.relativeIndex2Smarts[index], DefaultChemObjectBuilder.getInstance());
+        FasterSmartsQueryTool tool = new FasterSmartsQueryTool(computation.relativeIndex2Smarts[index], DefaultChemObjectBuilder.getInstance());
         try {
             if (tool.matches(molecule)) {
                 final List<List<Integer>> mappings = tool.getUniqueMatchingAtoms();
@@ -87,7 +88,7 @@ public class CompoundCandidate {
                 for (List<Integer> mapping : mappings) {
                     for (Integer i : mapping) {
                         if (!colorMap.containsKey(molecule.getAtom(i)))
-                            colorMap.put(molecule.getAtom(i), k);
+                            colorMap.put(molecule.getAtom(i), Math.min(1,k));
 
                     }
                     ++k;
@@ -101,15 +102,25 @@ public class CompoundCandidate {
     }
 
     public FingerprintAgreement getAgreement(CSIFingerIdComputation computations, double[] prediction) {
-        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction, compound.fingerprint, computations.getFScores(), 0.75);
+        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction, compound.fingerprint, computations.getFScores(), 1-THRESHOLD_FP);
         return agreement;
     }
 
     public FingerprintAgreement getMissings(CSIFingerIdComputation computations,  double[] prediction) {
-        if (missings==null) missings = FingerprintAgreement.getMissing(prediction, compound.fingerprint,computations.getFScores(),  0.25);
+        if (missings==null) missings = FingerprintAgreement.getMissing(prediction, compound.fingerprint,computations.getFScores(),  THRESHOLD_FP);
         return missings;
     }
 
 
+    public void parseAndPrepare() {
+        try {
+            System.out.println("parse and prepare " + compound.inchi.in2D);
+            // we do not want to search anything in the compound but just "enforce initialization" of the molecule
+            final FasterSmartsQueryTool tool = new FasterSmartsQueryTool("Br", DefaultChemObjectBuilder.getInstance());
+            tool.matches(compound.getMolecule());
+        } catch (CDKException e) {
+            e.printStackTrace();
+        }
 
+    }
 }

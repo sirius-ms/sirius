@@ -9,6 +9,8 @@ public class ConfigStorage {
 	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath, csvExportPath, defaultCompoundsExportPath;
 	private FileFormat treeFileFormat;
 	private boolean closeNeverAskAgain;
+
+	private boolean enforceBio;
 	
 
 	public ConfigStorage() {
@@ -19,6 +21,7 @@ public class ConfigStorage {
         defaultCompoundsExportPath=null;
 		treeFileFormat = FileFormat.png;
 		closeNeverAskAgain = false;
+		enforceBio = true;
 	}
 
     public File getCsvExportPath() {
@@ -48,6 +51,13 @@ public class ConfigStorage {
 		this.defaultLoadDialogPath = defaultLoadDialogPath;
 	}
 
+	public boolean isEnforceBio() {
+		return enforceBio;
+	}
+
+	public void setEnforceBio(boolean enforceBio) {
+		this.enforceBio = enforceBio;
+	}
 
 	public File getDefaultTreeExportPath() {
 		return defaultTreeExportPath;

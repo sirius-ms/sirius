@@ -54,6 +54,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
 
@@ -178,7 +179,7 @@ public class WebAPI implements Closeable {
      * @return
      * @throws IOException
      */
-    public FingerprintStatistics getStatistics(TIntArrayList fingerprintIndizes) throws IOException {
+    public FingerprintStatistics getStatistics(TIntArrayList fingerprintIndizes, List<String> fingerprintSmarts, List<String> fingerprintComments) throws IOException {
         fingerprintIndizes.clear();
         final HttpGet get;
         try {
@@ -193,12 +194,16 @@ public class WebAPI implements Closeable {
         try (CloseableHttpResponse response = client.execute(get)) {
             HttpEntity e = response.getEntity();
             final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
-            String line = br.readLine();
+            String line; //br.readLine();
             while ((line=br.readLine())!=null) {
                 String[] tabs = line.split("\t");
+                System.out.println(tabs.length);
                 for (int k=0; k < 5; ++k) {
                     lists[k].add(Integer.parseInt(tabs[k]));
                 }
+                fingerprintSmarts.add(tabs[5]);
+                if (tabs.length > 6) fingerprintComments.add(tabs[6].trim());
+                else fingerprintComments.add(null);
             }
         }
         final FingerprintStatistics stats = new FingerprintStatistics(lists[1].toArray(), lists[2].toArray(), lists[3].toArray(), lists[4].toArray());
@@ -207,16 +212,16 @@ public class WebAPI implements Closeable {
         return stats;
     }
 
-    public List<Compound> getCompoundsFor(MolecularFormula formula, File output, int[] fingerprintIndizes) throws IOException {
+    public List<Compound> getCompoundsFor(MolecularFormula formula, File output, int[] fingerprintIndizes, boolean bio) throws IOException {
         final HttpGet get;
         try {
-            get = new HttpGet(getFingerIdURI("/webapi/compounds/" + formula.toString() + ".json").build());
+            get = new HttpGet(getFingerIdURI("/webapi/compounds/" + (bio ? "bio/" : "not-bio/") + formula.toString() + ".json").build());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
         final ArrayList<Compound> compounds = new ArrayList<>(100);
         try (CloseableHttpResponse response = client.execute(get)) {
-            try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new FileOutputStream(output))) {
+            try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(new FileOutputStream(output)))) {
                 try (final JsonParser parser = Json.createParser(io)) {
                     return Compound.parseCompounds(fingerprintIndizes, compounds, parser);
                 }

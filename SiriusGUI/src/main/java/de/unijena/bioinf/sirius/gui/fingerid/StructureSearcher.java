@@ -33,7 +33,7 @@ public class StructureSearcher implements Runnable {
     private boolean shutdown = false;
 
     public StructureSearcher(CSIFingerIdComputation computation, int ncandidates) {
-        this.queue = new ArrayBlockingQueue<CompoundCandidate>(10+ncandidates);
+        this.queue = new ArrayBlockingQueue<CompoundCandidate>(10 + ncandidates);
         this.updater = new Update();
         this.computation = computation;
     }
@@ -42,19 +42,39 @@ public class StructureSearcher implements Runnable {
         this.shutdown = true;
     }
 
-    public void reloadList(CandidateJList.ListModel candidateList, int highlight) {
-        queue.add(new CompoundCandidate(null,0,0,0)); // TODO: bad hack
+    public void reloadList(CandidateJList.ListModel candidateList) {
+        queue.add(new CompoundCandidate(null, 0, 0, 0)); // TODO: bad hack
+        synchronized (this) {
+            this.currentModel = candidateList;
+            updater.model = currentModel;
+            this.queue.clear();
+            queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize() + 10);
+            queue.addAll(candidateList.candidates);
+            notifyAll();
+        }
+    }
+
+    public void reloadList(CandidateJList.ListModel candidateList, int highlight, int activeCandidate) {
+        queue.add(new CompoundCandidate(null, 0, 0, 0)); // TODO: bad hack
         synchronized (this) {
             this.currentModel = candidateList;
             updater.model = currentModel;
             this.highlight = highlight;
-            if (highlight<0) {
+            if (highlight < 0 || activeCandidate < 0) {
                 this.queue.clear();
             } else {
                 this.queue.clear();
-                queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize()+10);
-                for (int k=0; k < candidateList.getSize(); ++k)
-                    queue.add(candidateList.getElementAt(k));
+                queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize() + 10);
+
+                int i = activeCandidate, j = activeCandidate - 1, n = candidateList.getSize();
+                while (j >= 0 && i < n) {
+                    if (i < n) {
+                        queue.add(candidateList.getElementAt(i++));
+                    }
+                    if (j >= 0) {
+                        queue.add(candidateList.getElementAt(j--));
+                    }
+                }
             }
             notifyAll();
         }
@@ -67,18 +87,21 @@ public class StructureSearcher implements Runnable {
                 final CompoundCandidate c;
                 synchronized (this) {
                     c = queue.take();
-                    if (c.compound==null) wait();
+                    if (c.compound == null) wait();
                 }
-                if (c.compound==null) continue;
+                if (c.compound == null) continue;
                 c.compoundLock.lock();
                 try {
-                    c.highlightFingerprint(computation, highlight);
+                    System.out.println(c.compound.inchi.key2D());
+                    if (c.compound.molecule == null) c.parseAndPrepare();
+                    if (highlight >= 0) c.highlightFingerprint(computation, highlight);
                 } finally {
                     c.compoundLock.unlock();
                 }
                 updater.id = c.index;
                 SwingUtilities.invokeLater(updater.clone());
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -86,13 +109,15 @@ public class StructureSearcher implements Runnable {
     private static class Update implements Runnable, Cloneable {
         private int id;
         private CandidateJList.ListModel model;
+
         @Override
         public void run() {
             model.change(id);
         }
+
         public Update clone() {
             try {
-                return (Update)super.clone();
+                return (Update) super.clone();
             } catch (CloneNotSupportedException e) {
                 throw new RuntimeException(e);
             }
