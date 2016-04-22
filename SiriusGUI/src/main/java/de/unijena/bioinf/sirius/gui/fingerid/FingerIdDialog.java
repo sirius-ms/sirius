@@ -23,6 +23,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Arrays;
+import java.util.Vector;
 
 public class FingerIdDialog extends JDialog {
 
@@ -32,6 +34,7 @@ public class FingerIdDialog extends JDialog {
     protected FingerIdData data;
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
+    protected String db;
 
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, FingerIdData data, boolean showComputeButton) {
         super(owner, "Search with CSI:FingerId", true);
@@ -80,8 +83,19 @@ public class FingerIdDialog extends JDialog {
         field.setToolTipText(tooltip);
         changeDir.setToolTipText(tooltip);
 
-        mainPanel.add(dirForm);
+        final JPanel dbForm = new JPanel();
+        dbForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"search database"));
+        final JComboBox<String> database = new JComboBox<>(new Vector(Arrays.asList("bio db", "PubChem")));
+        database.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                db = (String)database.getSelectedItem();
+            }
+        });
+        dbForm.add(database);
 
+        mainPanel.add(dirForm);
+        mainPanel.add(dbForm);
 
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
         this.add(southPanel,BorderLayout.SOUTH);
@@ -92,6 +106,7 @@ public class FingerIdDialog extends JDialog {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     storage.setDirectory(new File(field.getText()));
+                    storage.setEnforceBio(db.equals("bio db"));
                     storage.configured = true;
                     returnState = COMPUTE_ALL;
                     dispose();
@@ -106,6 +121,7 @@ public class FingerIdDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 storage.setDirectory(new File(field.getText()));
                 storage.configured = true;
+                storage.setEnforceBio(db.equals("bio db"));
                 returnState = APROVED;
                 dispose();
             }

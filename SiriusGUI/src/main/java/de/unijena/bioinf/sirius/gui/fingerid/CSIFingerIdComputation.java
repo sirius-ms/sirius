@@ -176,10 +176,13 @@ public class CSIFingerIdComputation {
     private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula) throws IOException {
         if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
         final List<Compound> compounds;
-        globalLock.lock();
-        compounds = loadCompoundsForGivenMolecularFormula(webAPI, formula, true);
-        if (!enforceBio) compounds.addAll(loadCompoundsForGivenMolecularFormula(webAPI, formula, false));
-        globalLock.unlock();
+        try {
+            globalLock.lock();
+            compounds = loadCompoundsForGivenMolecularFormula(webAPI, formula, true);
+            if (!enforceBio) compounds.addAll(loadCompoundsForGivenMolecularFormula(webAPI, formula, false));
+        } finally {
+            globalLock.unlock();
+        }
         return compounds;
     }
 
@@ -206,7 +209,6 @@ public class CSIFingerIdComputation {
             this.compounds.put(c.inchi.key2D(), c);
         }
         compoundsPerFormula.put(formula, compounds);
-        globalLock.unlock();
         return compounds;
     }
 
