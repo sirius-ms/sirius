@@ -36,6 +36,8 @@ public class FingerIdDialog extends JDialog {
     protected int returnState = CANCELED;
     protected String db;
 
+    protected final static String BIO="bio database", ALL = "PubChem";
+
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, FingerIdData data, boolean showComputeButton) {
         super(owner, "Search with CSI:FingerId", true);
         this.data = data;
@@ -84,15 +86,23 @@ public class FingerIdDialog extends JDialog {
         changeDir.setToolTipText(tooltip);
 
         final JPanel dbForm = new JPanel();
-        dbForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"search database"));
-        final JComboBox<String> database = new JComboBox<>(new Vector(Arrays.asList("bio db", "PubChem")));
+        dbForm.setLayout(new BoxLayout(dbForm, BoxLayout.Y_AXIS));
+        final JPanel inner2 = new JPanel();
+        inner2.setLayout(new BoxLayout(inner2, BoxLayout.X_AXIS));
+        final JComboBox<String> database = new JComboBox<>(new Vector(Arrays.asList(BIO, ALL
+        )));
+        database.setPreferredSize(new Dimension(150, 26));
+        database.setSelectedIndex(0);
+        db = BIO;
         database.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 db = (String)database.getSelectedItem();
             }
         });
-        dbForm.add(database);
+        inner2.add(database);
+        dbForm.add(inner2);
+        dbForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"search database"));
 
         mainPanel.add(dirForm);
         mainPanel.add(dbForm);
@@ -106,7 +116,7 @@ public class FingerIdDialog extends JDialog {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     storage.setDirectory(new File(field.getText()));
-                    storage.setEnforceBio(db.equals("bio db"));
+                    storage.setEnforceBio(db.equals(BIO));
                     storage.configured = true;
                     returnState = COMPUTE_ALL;
                     dispose();
@@ -121,7 +131,7 @@ public class FingerIdDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 storage.setDirectory(new File(field.getText()));
                 storage.configured = true;
-                storage.setEnforceBio(db.equals("bio db"));
+                storage.setEnforceBio(db.equals(BIO));
                 returnState = APROVED;
                 dispose();
             }

@@ -76,7 +76,7 @@ public class CompoundCandidate {
         }
 
         final HashMap<IAtom, Integer> colorMap = new HashMap<>();
-        if (computation.relativeIndex2Smarts[index]==null || computation.relativeIndex2Smarts[index].isEmpty()) {
+        if (computation.relativeIndex2Smarts[index]==null || computation.relativeIndex2Smarts[index].isEmpty() || computation.relativeIndex2Smarts[index].equals("?")) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
         }

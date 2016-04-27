@@ -156,16 +156,9 @@ public class CSIFingerIdComputation {
         this.enforceBio = enforceBio;
     }
 
-    private List<MolecularFormula> getFormulasForDifferentIonizationVariants(MolecularFormula formula) {
-        // TODO: make this user-configurable
-        final PrecursorIonType[] allowedIontypes = new PrecursorIonType[]{
-          PrecursorIonType.getPrecursorIonType("[M+H]+"),
-                PrecursorIonType.getPrecursorIonType("[M]+"),
-                PrecursorIonType.getPrecursorIonType("[M+Na]+"),
-                PrecursorIonType.getPrecursorIonType("[M+K]+")
-        };
+    private List<MolecularFormula> getFormulasForDifferentIonizationVariants(MolecularFormula formula, PrecursorIonType... variants) {
         final ArrayList<MolecularFormula> formulas = new ArrayList<>();
-        for (PrecursorIonType ionType : allowedIontypes) {
+        for (PrecursorIonType ionType : variants) {
             final MolecularFormula neutralFormula = ionType.precursorIonToNeutralMolecule(formula);
             if (!neutralFormula.isAllPositiveOrZero()) continue;
             formulas.add(neutralFormula);

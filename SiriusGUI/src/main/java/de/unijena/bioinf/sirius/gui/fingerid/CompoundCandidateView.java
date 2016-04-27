@@ -19,7 +19,6 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -38,6 +37,7 @@ public class CompoundCandidateView extends JPanel {
     protected SiriusResultElement resultElement;
     protected CSIFingerIdComputation storage;
     protected CandidateJList list;
+    protected JButton searchCSIButton;
 
     protected CardLayout layout;
     private MainFrame frame;
@@ -70,13 +70,15 @@ public class CompoundCandidateView extends JPanel {
         if (resultElement==null) layout.show(this, "empty");
         else if (resultElement.getFingerIdData()==null) layout.show(this, "computeButton");
         else layout.show(this, "list");
+        searchCSIButton.setEnabled((resultElement!=null));
     }
 
     public class ComputeElement extends JPanel {
         public ComputeElement() {
-            final JButton button = new JButton("Search online search with CSI:FingerId");
-            add(button);
-            button.addActionListener(new ActionListener() {
+            searchCSIButton = new JButton("Search online search with CSI:FingerId");
+            add(searchCSIButton);
+            searchCSIButton.setEnabled((resultElement!=null));
+            searchCSIButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (!storage.configured) {
