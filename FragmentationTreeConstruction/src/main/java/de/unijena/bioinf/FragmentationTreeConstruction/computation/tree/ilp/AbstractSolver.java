@@ -18,6 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import com.google.common.collect.BiMap;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -388,11 +389,18 @@ abstract public class AbstractSolver {
             if (g.getParent() == pseudoRoot) {
                 score -= g.getIncomingEdge().getWeight();
             } else {
-                final Loss in = e.getKey().getIncomingEdge();
+                if (t.getFormula().isEmpty()) continue;
+                final Loss in = t.getIncomingEdge();
                 for (int k = 0; k < g.getInDegree(); ++k)
                     if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
                         score -= g.getIncomingEdge(k).getWeight();
                     }
+            }
+        }
+        // just trust pseudo edges
+        for (Fragment pseudo : tree.getFragments()) {
+            if (pseudo.getFormula().isEmpty()) {
+                score -= pseudo.getIncomingEdge().getWeight();
             }
         }
         return Math.abs(score) < 1e-9d;

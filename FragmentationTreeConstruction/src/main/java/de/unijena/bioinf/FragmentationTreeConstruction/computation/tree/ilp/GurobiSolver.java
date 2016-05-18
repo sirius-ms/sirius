@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver.isComputationCorrect;
+
 public class GurobiSolver implements TreeBuilder {
 
     private GRBEnv env;
@@ -236,7 +238,7 @@ public class GurobiSolver implements TreeBuilder {
             model.getEnv().set(GRB.DoubleParam.TimeLimit, timeLimit);
             built = false;
         }
-
+/*
         protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
             final Fragment pseudoRoot = graph.getRoot();
             final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
@@ -256,7 +258,7 @@ public class GurobiSolver implements TreeBuilder {
             }
             return Math.abs(score) < 1e-9d;
         }
-
+*/
         public void build() {
             try {
                 defineVariables();
@@ -480,9 +482,11 @@ public class GurobiSolver implements TreeBuilder {
             return -model.get(GRB.DoubleAttr.ObjVal);
         }
 
+
         protected FTree buildSolution() throws GRBException {
             final double score = getOptimalScore();
             final boolean[] edesAreUsed = getVariableAssignment();
+            /*
             Fragment graphRoot = null;
             double rootScore = 0d;
             // get root
@@ -514,6 +518,52 @@ public class GurobiSolver implements TreeBuilder {
                         final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
                         child.getIncomingEdge().setWeight(l.getWeight());
                         stack.push(new Stackitem(child, l.getTarget()));
+                    }
+                    ++offset;
+                }
+            }
+            return tree;
+            */
+            try {
+                return buildSolution(score, edesAreUsed, offsets);
+            } catch (Exception e) {
+                throw new GRBException(e.getMessage());
+            }
+        }
+
+
+        protected FTree buildSolution(double score, boolean[] edesAreUsed, int[] edgeOffsets) throws Exception {
+            Fragment graphRoot = null;
+            double rootScore = 0d;
+            // get root
+            {
+                int offset = edgeOffsets[graph.getRoot().getVertexId()];
+                for (int j = 0; j < graph.getRoot().getOutDegree(); ++j) {
+                    if (edesAreUsed[edgeIds[offset]]) {
+                        final Loss l = losses.get(edgeIds[offset]);
+                        graphRoot = l.getTarget();
+                        rootScore = l.getWeight();
+                        break;
+                    }
+                    ++offset;
+                }
+            }
+            assert graphRoot != null;
+            if (graphRoot == null) return null;
+
+            final FTree tree = new FTree(graphRoot.getFormula());
+            final ArrayDeque<AbstractSolver.Stackitem> stack = new ArrayDeque<AbstractSolver.Stackitem>();
+            stack.push(new AbstractSolver.Stackitem(tree.getRoot(), graphRoot));
+            while (!stack.isEmpty()) {
+                final AbstractSolver.Stackitem item = stack.pop();
+                final int u = item.graphNode.getVertexId();
+                int offset = edgeOffsets[u];
+                for (int j = 0; j < item.graphNode.getOutDegree(); ++j) {
+                    if (edesAreUsed[edgeIds[offset]]) {
+                        final Loss l = losses.get(edgeIds[offset]);
+                        final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
+                        child.getIncomingEdge().setWeight(l.getWeight());
+                        stack.push(new AbstractSolver.Stackitem(child, l.getTarget()));
                     }
                     ++offset;
                 }
