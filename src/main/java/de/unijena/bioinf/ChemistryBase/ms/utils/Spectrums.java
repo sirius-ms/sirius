@@ -25,6 +25,7 @@ import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public class Spectrums {
@@ -33,6 +34,35 @@ public class Spectrums {
 
     public static Spectrum<Peak> wrap(double[] mz, double[] intensities) {
         return new ArrayWrapperSpectrum(mz, intensities);
+    }
+
+    public static <P extends Peak> Spectrum<P> wrap(final List<P> peaks) {
+        return new Spectrum<P>() {
+            @Override
+            public double getMzAt(int index) {
+                return peaks.get(index).getMass();
+            }
+
+            @Override
+            public double getIntensityAt(int index) {
+                return peaks.get(index).getIntensity();
+            }
+
+            @Override
+            public P getPeakAt(int index) {
+                return peaks.get(index);
+            }
+
+            @Override
+            public int size() {
+                return peaks.size();
+            }
+
+            @Override
+            public Iterator<P> iterator() {
+                return peaks.iterator();
+            }
+        };
     }
 
     public static <P extends Peak, S extends Spectrum<P>>
@@ -126,7 +156,7 @@ public class Spectrums {
         for (int i=0; i < keep.size(); ++i) {
             if (i != keep.get(i)) spectrum.swap(keep.get(i), i);
         }
-        for (int i=n; i >= keep.size(); ++i) {
+        for (int i=spectrum.size()-1; i >= keep.size() ; --i) {
             spectrum.removePeakAt(i);
         }
         return spectrum;
@@ -142,7 +172,7 @@ public class Spectrums {
         for (int i=0; i < keep.size(); ++i) {
             if (i != keep.get(i)) spectrum.swap(keep.get(i), i);
         }
-        for (int i=n; i >= keep.size(); ++i) {
+        for (int i=spectrum.size()-1; i >= keep.size() ; --i) {
             spectrum.removePeakAt(i);
         }
         return spectrum;

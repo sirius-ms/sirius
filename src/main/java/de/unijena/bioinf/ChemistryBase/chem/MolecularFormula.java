@@ -193,6 +193,15 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     }
 
     /**
+     * returns the number of atoms the formula contains for a given element
+     * This method is slower than #numberOf(Element)!
+     */
+    public int numberOf(String element) {
+        final int index = getTableSelection().getIndexIfExist(PeriodicTable.getInstance().getByName(element));
+        return (index < 0 || index >= buffer().length) ? 0 : buffer()[index];
+    }
+
+    /**
      * The ring-double-bond-equation is the maximal number of free electron/valence-pairs in any molecular
      * graph of this formula. It is the halve of the {{@link #doubledRDBE()}.
      *
@@ -578,8 +587,9 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (formula == this) return true;
         if (formula == null) return false;
         final short[] amounts = buffer();
-        final TableSelection selection = getTableSelection();
         final short[] otherAmounts = formula.buffer();
+        if (amounts.length==0 && otherAmounts.length==0) return true;
+        final TableSelection selection = getTableSelection();
         final TableSelection otherSelection = formula.getTableSelection();
         if ((long) getMass() != (long) formula.getMass()) return false;
         if (selection == otherSelection) {
