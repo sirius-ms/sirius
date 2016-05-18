@@ -33,6 +33,11 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
 
     protected double sigmaA, sigmaR;
 
+    public NormalDistributedIntensityScorer(double sigmaR, double sigmaA) {
+        this.sigmaA = sigmaA;
+        this.sigmaR = sigmaR;
+    }
+
     public NormalDistributedIntensityScorer() {
         this.sigmaA = 0.03;
         this.sigmaR = 0.1;

@@ -90,14 +90,38 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
     }
 
     public SimpleSpectrum simulatePattern(Spectrum<Peak> ms1, MolecularFormula parent, MolecularFormula loss, Ionization ionization) {
+        return simulatePattern(ms1,parent,loss,ionization,false);
+    }
+
+    /**
+     * Simulates the isotope pattern of the fragment while considering the bias in the MS1 isotope pattern
+     * @param ms1 ms1 pattern
+     * @param parent molecular formula of parent
+     * @param loss the loss between the ion formula and the fragment formula
+     * @param ionization ionization of the peaks
+     * @param simulateExactMasses if false, consider also mass biases. This might make sense if MS1 and MS/MS have the same mass shift bias
+     * @return
+     */
+    public SimpleSpectrum simulatePattern(Spectrum<Peak> ms1, MolecularFormula parent, MolecularFormula loss, Ionization ionization, boolean simulateExactMasses) {
         final SimpleMutableSpectrum parentSpectrum = new SimpleMutableSpectrum(ms1.size());
         for (int k=0; k < ms1.size(); ++k) {
             parentSpectrum.addPeak(ionization.subtractFromMass(ms1.getMzAt(k)), ms1.getIntensityAt(k));
         }
 
-        final int mono=parent.getIntMass();
-        for (int k=0; k < parentSpectrum.size(); ++k) {
-            parentSpectrum.setMzAt(k, parentSpectrum.getMzAt(k)-mono - k);
+        if (simulateExactMasses) {
+            final FastIsotopePatternGenerator gen = new FastIsotopePatternGenerator(distribution, mode);
+            gen.setMaximalNumberOfPeaks(ms1.size());
+            gen.setMinimalProbabilityThreshold(0d);
+            final SimpleSpectrum exactMasses = gen.simulatePattern(parent,ionization);
+            final int mono=parent.getIntMass();
+            for (int k=0; k < parentSpectrum.size(); ++k) {
+                parentSpectrum.setMzAt(k, ionization.subtractFromMass(exactMasses.getMzAt(k))-mono - k);
+            }
+        } else {
+            final int mono=parent.getIntMass();
+            for (int k=0; k < parentSpectrum.size(); ++k) {
+                parentSpectrum.setMzAt(k, parentSpectrum.getMzAt(k)-mono - k);
+            }
         }
 
 
