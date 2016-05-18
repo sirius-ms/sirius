@@ -91,6 +91,7 @@ public class FTDotWriter {
             writer.write("\";\n");
         }
 
+        final FragmentAnnotation<Ms2IsotopePattern> pattern = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
         for (Fragment f : tree.getFragments()) {
             final PrecursorIonType ftion = (ionPerFragment==null ? null : ionPerFragment.get(f));
             final MolecularFormula formula = f.getFormula();
@@ -99,7 +100,11 @@ public class FTDotWriter {
             else exactIonFormula = ion.getAtoms().add(formula);
             writer.write("\t");
             writer.write(exactIonFormula.toString());
-            writer.write(" [label=");
+            writer.write(" [");
+            if (pattern!=null && pattern.get(f)!=null && pattern.get(f).getPeaks().length>1) {
+                writer.write(" fillcolor=\"#40e0d0\" style=filled ");
+            }
+            writer.write("label=");
             writer.write(htmlStart());
             if (ftion!=null)
                 writer.write(htmlFormula(formula,ftion));
@@ -121,6 +126,7 @@ public class FTDotWriter {
                 writer.write(htmlEndSmall());
             }
             writer.write(htmlEnd());
+
             writer.write("];\n");
         }
         writer.write("\n");

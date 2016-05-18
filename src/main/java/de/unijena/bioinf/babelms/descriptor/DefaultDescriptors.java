@@ -4,10 +4,12 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -21,7 +23,7 @@ class DefaultDescriptors {
         registry.put(FTree.class, RecalibrationFunction.class, new RecalibrationFunctionDescriptor());
         registry.put(FTree.class, Smiles.class, new SmilesDescriptor());
         registry.put(FTree.class, TreeScoring.class, new TreeScoringDescriptor());
-
+        registry.put(Fragment.class, Ms2IsotopePattern.class, new IsotopePatternDescriptor());
         registry.put(Fragment.class, Peak.class, new PeakDescriptor());
         registry.put(Fragment.class, AnnotatedPeak.class, new AnnotatedPeakDescriptor());
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
@@ -166,6 +168,48 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, PrecursorIonType annotation) {
             document.addToDictionary(dictionary, keywordName, annotation.toString());
+        }
+    }
+
+    private static class IsotopePatternDescriptor implements Descriptor<Ms2IsotopePattern> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"isotopes"};
+        }
+
+        @Override
+        public Class<Ms2IsotopePattern> getAnnotationClass() {
+            return Ms2IsotopePattern.class;
+        }
+
+        @Override
+        public <G, D, L> Ms2IsotopePattern read(DataDocument<G, D, L> document, D dictionary) {
+            final List<Peak> peaks = new ArrayList<>();
+            final D isotopes = document.getDictionaryFromDictionary(dictionary, "isotopes");
+            final L mzs = document.getListFromDictionary(isotopes, "mz"), ints = document.getListFromDictionary(isotopes, "relInt");
+            if (mzs==null || ints==null) return null;
+            for (int k=0, n=Math.min(document.sizeOfList(mzs), document.sizeOfList(ints)); k < n; ++k) {
+                peaks.add(new Peak(document.getDoubleFromList(mzs, k), document.getDoubleFromList(ints, k)));
+            }
+
+            double score = document.hasKeyInDictionary(isotopes, "score") ? document.getDoubleFromDictionary(isotopes, "score") : 0d;
+            return new Ms2IsotopePattern(peaks.toArray(new Peak[peaks.size()]), score);
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Ms2IsotopePattern annotation) {
+            final D isotopes = document.newDictionary();
+            final L mzs = document.newList(), ints = document.newList();
+            final Peak[] peaks = annotation.getPeaks();
+            for (Peak p : peaks) {
+                document.addToList(mzs, p.getMass());
+                document.addToList(ints, p.getIntensity());
+            }
+            document.addDictionaryToDictionary(dictionary, "isotopes", isotopes);
+            document.addToDictionary(isotopes, "score", annotation.getScore());
+            document.addListToDictionary(isotopes, "mz", mzs);
+            document.addListToDictionary(isotopes, "relInt", ints);
         }
     }
 
@@ -386,6 +430,8 @@ class DefaultDescriptors {
             document.addToDictionary(dictionary, "mz", annotation.getMass());
             document.addToDictionary(dictionary, "relativeIntensity", annotation.getRelativeIntensity());
             document.addToDictionary(dictionary, "recalibratedMass", annotation.getRecalibratedMass());
+            document.addToDictionary(dictionary, "massDeviation", Deviation.fromMeasurementAndReference(annotation.getMass(), annotation.getIonization().addToMass(annotation.getMolecularFormula().getMass())).toString());
+            document.addToDictionary(dictionary, "recalibratedMassDeviation", Deviation.fromMeasurementAndReference(annotation.getRecalibratedMass(), annotation.getIonization().addToMass(annotation.getMolecularFormula().getMass())).toString());
             document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
 
             final Peak[] peaks = annotation.getOriginalPeaks();
