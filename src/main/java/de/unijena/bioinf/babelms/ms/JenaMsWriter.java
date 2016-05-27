@@ -19,10 +19,7 @@ package de.unijena.bioinf.babelms.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.babelms.DataWriter;
 
 import java.io.BufferedWriter;
@@ -45,6 +42,8 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         }
         final Smiles sm = data.getAnnotation(Smiles.class);
         writeIfAvailable(writer, ">smiles", sm==null ? null : sm.smiles);
+        final Splash splash = data.getAnnotation(Splash.class);
+        writeIfAvailable(writer, ">splash", splash==null ? null : splash.getSplash());
         final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());
         for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());
