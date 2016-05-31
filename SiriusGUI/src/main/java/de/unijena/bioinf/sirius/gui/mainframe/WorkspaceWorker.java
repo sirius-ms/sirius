@@ -18,7 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import com.sun.xml.xsom.impl.scd.Iterators;
+import com.google.common.collect.Iterators;
 import de.unijena.bioinf.sirius.gui.dialogs.ImportWorkspaceDialog;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -93,7 +93,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
         final Queue<ExperimentContainer> publishingQueue = new AbstractQueue<ExperimentContainer>() {
             @Override
             public Iterator<ExperimentContainer> iterator() {
-                return Iterators.empty();
+                return Iterators.emptyIterator();
             }
 
             @Override
