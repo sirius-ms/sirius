@@ -1,0 +1,10 @@
+{
+	"EtOx": "C5H9NO",
+	"EPOx": "C13H23NO",
+	"PEG": "C2H6O2",
+	"PMMA": "C5H8O2",
+	"PMA": "C4H6O2",
+	"PAA": "C3H5O2",
+	"PnBA": "C7H12O2",
+	"DMAM": "C5H9NO"
+}
