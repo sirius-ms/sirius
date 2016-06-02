@@ -1,0 +1,7 @@
+dependencies() {
+    compile     "de.unijena.bioinf:ChemistryBase:4-SNAPSHOT",
+    			"com.lexicalscope.jewelcli:jewelcli:0.8+",
+    			"de.unijena.bioinf:BabelMs:1.0-SNAPSHOT"
+
+    testCompile "junit:junit:4.+"                           // testing framework
+}
