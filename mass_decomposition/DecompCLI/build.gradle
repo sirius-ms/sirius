@@ -1,0 +1,5 @@
+
+dependencies {
+	compile project(":MassDecomposer"),
+			"com.lexicalscope.jewelcli:jewelcli:0.8.+"
+}
