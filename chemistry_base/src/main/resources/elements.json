@@ -1,0 +1,192 @@
+{
+    "H": {
+        "name": "Hydrogen",
+        "valence": 1,
+        "average": 1.0079407539657785,
+        "isotopes": {
+            "mass": [1.00782503214, 2.01410177804],
+            "intmass": [1, 2],
+            "abundance": [0.99984426, 0.00015574]
+        }
+    },
+    "D": {
+        "name": "Deuterium",
+        "valence": 1,
+        "average": 2.014102,
+        "isotopes": {
+            "mass": [2.014102],
+            "intmass": [2],
+            "abundance": [1.0]
+        }
+    },
+    "F": {
+        "name": "Fluor",
+        "valence": 1,
+        "average": 18.998403207,
+        "isotopes": {
+            "mass": [18.998403207],
+            "intmass": [19],
+            "abundance": [1.0]
+        }
+    },
+    "C": {
+        "name": "Carbon",
+        "valence": 4,
+        "average": 12.010735896764567,
+        "isotopes": {
+            "mass": [12, 13.00335483781],
+            "intmass": [12, 13],
+            "abundance": [0.988922, 0.011078]
+        }
+    },
+    "N": {
+        "name": "Nitrogen",
+        "valence": 3,
+        "average": 14.006743093696977,
+        "isotopes": {
+            "mass": [14.00307400529, 15.00010889849],
+            "intmass": [14, 15],
+            "abundance": [0.996337, 0.003663]
+        }
+    },
+    "O": {
+        "name": "Oxygen",
+        "valence": 2,
+        "average": 15.999404928558597,
+        "isotopes": {
+            "mass": [15.994914622115, 16.9991315022, 17.99916049],
+            "intmass": [16, 17, 18],
+            "abundance": [0.9976206, 0.0003790, 0.0020004]
+        }
+    },
+    "Na": {
+        "name": "Sodium",
+        "valence": 1,
+        "average": 22.9897696723,
+        "isotopes": {
+            "mass": [22.9897696723],
+            "intmass": [23],
+            "abundance": [1.0]
+        }
+    },
+    "Mg": {
+        "name": "Magnesium",
+        "valence": 2,
+        "average": 24.30505179452501,
+        "isotopes": {
+            "mass": [23.985042, 24.985837, 25.982593],
+            "intmass": [24, 25, 26],
+            "abundance": [0.78992, 0.10003, 0.11005]
+        }
+    },
+    "P": {
+        "name": "Phosphorus",
+        "valence": 3,
+        "average": 30.973761512,
+        "isotopes": {
+            "mass": [30.973761512],
+            "intmass": [31],
+            "abundance": [1.0]
+        }
+    },
+    "S": {
+        "name": "Sulphur",
+        "valence": 2,
+        "average": 32.06608469499597,
+        "isotopes": {
+            "mass": [31.9720706912, 32.9714585012, 33.9678668311, 35.9670808825],
+            "intmass": [32, 33, 34, 36],
+            "abundance": [0.9504074, 0.0074869, 0.0419599, 0.00014579]
+        }
+    },
+    "Cl": {
+        "name": "Chlorine",
+        "valence": 1,
+        "average": 35.4525381976002,
+        "isotopes": {
+            "mass": [34.968853, 36.965903],
+            "intmass": [35, 37],
+            "abundance": [0.75771, 0.24229]
+        }
+    },
+    "Fe": {
+        "name": "Iron",
+        "valence": 1,
+        "average": 55.84515022389856,
+        "isotopes": {
+            "mass": [53.939615, 55.934942, 56.935399, 57.933280],
+            "intmass": [54, 56, 57, 58],
+            "abundance": [0.05845, 0.91754, 0.021191, 0.002819]
+        }
+    },
+    "Mn": {
+        "name": "Manganese",
+        "valence": 2,
+        "average": 54.938049614,
+        "isotopes": {
+            "mass": [54.938050],
+            "intmass": [55],
+            "abundance": [1.0]
+        }
+    },
+    "Zn": {
+        "name": "Zinc",
+        "valence": 2,
+        "average": 65.39556658526189,
+        "isotopes": {
+            "mass": [63.929147, 65.926037, 66.927131, 67.924848, 69.925325],
+            "intmass": [64, 66, 67, 68, 70],
+            "abundance": [0.491704, 0.27731, 0.040401, 0.184483, 0.006106]
+        }
+    },
+    "Br": {
+        "name": "Bromine",
+        "valence": 7,
+        "average": 79.9035281174,
+        "isotopes": {
+            "mass": [78.918337, 80.916291],
+            "intmass": [79, 81],
+            "abundance": [0.5069, 0.4931]
+        }
+    },
+    "I": {
+        "name": "Iodine",
+        "valence": 7,
+        "average": 126.9044684,
+        "isotopes": {
+            "mass": [126.904468],
+            "intmass": [127],
+            "abundance": [1.0]
+        }
+    },
+    "K": {
+        "name": "Potassium",
+        "valence": 1,
+        "average": 39.09830137195245,
+        "isotopes": {
+            "mass": [38.96370693, 39.9639986729, 40.9618259728],
+            "intmass": [39, 40, 41],
+            "abundance": [93.2581, 0.0117, 6.7302]
+        }
+    },
+    "B": {
+        "name": "Boron",
+        "valence": 2,
+        "average": 10.81102821651,
+        "isotopes": {
+            "mass": [10.01293704, 11.00930555],
+            "intmass": [10, 11],
+            "abundance": [19.9, 80.1]
+        }
+    },
+    "Cu": {
+        "name": "Cupper",
+        "valence": 2,
+        "average": 63.545643894813196,
+        "isotopes": {
+            "mass": [62.929601115, 64.927793719],
+            "intmass": [63, 64],
+            "abundance": [69.17, 30.83]
+        }
+    }
+}
