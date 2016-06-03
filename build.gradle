@@ -1,8 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 
-
-
 dependencies {
     compile project(':chemistry_base')
     compile project(':fragmentation_tree')
@@ -15,6 +13,9 @@ dependencies {
 
 
 allprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
 
@@ -29,6 +30,10 @@ allprojects {
         }
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+        }
+        maven {
+            url "https://www.xypron.de/repository" //glpk repo
+            //only usede by fragmentation_tree_construction but has to be global
         }
     }
 

@@ -1,6 +1,3 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-
 dependencies() {
     compile "com.lexicalscope.jewelcli:jewelcli:0.8.+"
     compile project(":io")

@@ -1,11 +1,12 @@
 *.class
 
-.gradle
-gradle
-gradlew
-gradlew.bat
+**/.gradle
+**/gradle
+**/gradlew
+**/gradlew.bat
+**/build
 .idea
-
+**/*.iml
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
