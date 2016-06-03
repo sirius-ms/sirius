@@ -10,5 +10,6 @@ include 'chemistry_base',
             'mass_decomposition:mass_decomposer',
         'io',
         'sirius_frontend'
-            'sirius_frontend:sirius_cli'//not meeded if parent project is part of it
             'sirius_frontend:cli_base' //not meeded if parent project is part of it
+            'sirius_frontend:sirius_cli'//not meeded if parent project is part of it
+            'sirius_frontend:sirius_gui' //not meeded if parent project is part of it

@@ -1,9 +1,2 @@
 apply plugin: 'java'
 apply plugin: 'maven'
-
-dependencies() {
-    compile project(':chemistry_base')
-    compile project(':mass_decomposition:mass_decomposer')
-
-    compile "org.apache.commons:commons-math3:3.+"
-}
