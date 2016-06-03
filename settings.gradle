@@ -1,15 +1,15 @@
 rootProject.name = 'sirius'
-include 'chemistry_base',
-        'fragmentation_tree',
-            'fragmentation_tree:fragmentation_tree_construction',//not meeded if parent project is part of it
-        'isotope_pattern',
-            'isotope_pattern:isotope_pattern_analysis',
-            'isotope_pattern:isogen_cli',
-        'mass_decomposition',
-            'mass_decomposition:decomp_cli',
-            'mass_decomposition:mass_decomposer',
-        'io',
-        'sirius_frontend'
-            'sirius_frontend:cli_base' //not meeded if parent project is part of it
-            'sirius_frontend:sirius_cli'//not meeded if parent project is part of it
-            'sirius_frontend:sirius_gui' //not meeded if parent project is part of it
+include ':chemistry_base'
+include ':fragmentation_tree'
+	include ':fragmentation_tree:fragmentation_tree_construction'
+include ':isotope_pattern'
+	include ':isotope_pattern:isotope_pattern_analysis'
+    include ':isotope_pattern:isogen_cli'
+include ':mass_decomposition'
+    include ':mass_decomposition:decomp_cli'
+    include ':mass_decomposition:mass_decomposer'
+include ':io'
+include ':sirius_frontend'
+    include ':sirius_frontend:cli_base'
+    include ':sirius_frontend:sirius_cli'
+    include ':sirius_frontend:sirius_gui'
