@@ -52,29 +52,30 @@ repositories {
 }
 
 dependencies {
-    compile "de.unijena.bioinf:ChemistryBase:4.1.4-SNAPSHOT",
-            "de.unijena.bioinf:FragmentationTreeConstruction:3.1.4-SNAPSHOT",
-            "de.unijena.bioinf:BabelMs:3.1.4-SNAPSHOT",
-            "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT",
-            "de.unijena.bioinf:Myxo:0.2",
-            "de.unijena.bioinf:SiriusCLI:3.1.4-SNAPSHOT",
-            "net.sf.opencsv:opencsv:2.3",
-            "org.swinglabs.swingx:swingx-all:1.+",
-            "org.openscience.cdk:cdk-silent:1.5.10",
-            "org.openscience.cdk:cdk-render:1.5.10",
-            "org.openscience.cdk:cdk-renderextra:1.5.10",
-            "org.openscience.cdk:cdk-renderawt:1.5.10",
-            "org.openscience.cdk:cdk-data:1.5.10",
-            "org.openscience.cdk:cdk-core:1.5.10",
-            "org.openscience.cdk:cdk-interfaces:1.5.10",
-            "org.openscience.cdk:cdk-inchi:1.5.10",
-            "org.openscience.cdk:cdk-smiles:1.5.10",
-            "org.openscience.cdk:cdk-sdg:1.5.10",
-            "org.openscience.cdk:cdk-smarts:1.5.10",
-            "org.apache.httpcomponents:httpclient:4.5.1"
+//project
+    compile project(':chemistry_base')
+    compile project(':io')
+    compile project(':isotope_pattern:isotope_pattern_analysis')
+    compile project(':fragmentation_tree:fragmentation_tree_construction')
 
-
-    testCompile group: 'junit', name: 'junit', version: '4.+'
+//internal
+    compile "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT",
+    compile "de.unijena.bioinf:Myxo:0.2"
+//external
+    compile "net.sf.opencsv:opencsv:2.3"
+    compile "org.swinglabs.swingx:swingx-all:1.+"
+    compile "org.openscience.cdk:cdk-silent:1.5.10"
+    compile "org.openscience.cdk:cdk-render:1.5.10"
+    compile "org.openscience.cdk:cdk-renderextra:1.5.10"
+    compile "org.openscience.cdk:cdk-renderawt:1.5.10"
+    compile "org.openscience.cdk:cdk-data:1.5.10"
+    compile "org.openscience.cdk:cdk-core:1.5.10"
+    compile "org.openscience.cdk:cdk-interfaces:1.5.10"
+    compile "org.openscience.cdk:cdk-inchi:1.5.10"
+    compile "org.openscience.cdk:cdk-smiles:1.5.10"
+    compile "org.openscience.cdk:cdk-sdg:1.5.10"
+    compile "org.openscience.cdk:cdk-smarts:1.5.10"
+    compile "org.apache.httpcomponents:httpclient:4.5.1"
 }
 
 test {

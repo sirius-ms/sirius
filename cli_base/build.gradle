@@ -4,6 +4,7 @@ apply plugin: 'maven'
 
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version:'0.8.9'
-    compile group: 'de.unijena.bioinf', name: 'ChemistryBase', version:'4.1.4-SNAPSHOT'
-    compile group: 'de.unijena.bioinf', name: 'BabelMs', version:'3.1.4-SNAPSHOT'
+
+    compile project(':chemistry_base')
+    compile project(':io')
 }
