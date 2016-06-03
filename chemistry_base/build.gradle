@@ -1,0 +1,10 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+dependencies {
+    compile 'com.lexicalscope.jewelcli:jewelcli:0.8.9'
+    compile 'org.json:json:1.0'
+    compile 'de.unijena.bioinf:GraphUtils:1.1'
+
+    compile project(':chemistry_base')
+}
