@@ -1,5 +1,8 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
 dependencies() {
-    compile "com.lexicalscope.jewelcli:jewelcli:0.8.+",
-            "de.unijena.bioinf:BabelMs:1.0-SNAPSHOT",
-            project(":IsotopePatternAnalysis")
+    compile "com.lexicalscope.jewelcli:jewelcli:0.8.+"
+    compile project(":io")
+    compile project(":isotope_pattern:isotope_pattern_analysis")
 }

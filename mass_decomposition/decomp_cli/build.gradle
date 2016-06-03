@@ -1,13 +1,9 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 
-description = """"""
 
-repositories {
-
-     maven { url "https://bio.informatik.uni-jena.de/artifactory/repo" }
-     maven { url "http://repo.maven.apache.org/maven2" }
-}
 dependencies {
-    compile group: 'de.unijena.bioinf', name: 'ChemistryBase', version:'4.1.4-SNAPSHOT'
+    compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version:'0.8.9'
+
+    compile project(':mass_decomposition:mass_decomposer')
 }
