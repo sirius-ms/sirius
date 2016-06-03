@@ -1,0 +1,90 @@
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.edu.sc.seis.gradle:launch4j:1.5.1'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'application'
+apply plugin: 'edu.sc.seis.launch4j'
+
+mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
+sourceCompatibility = 1.7
+version = '3.1.3'
+
+project.version = '3.1.3' //todo should be the same as the line above
+
+launch4j {
+    mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
+    icon = file('src/main/resources/icons/sirius.ico')
+    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena. Kai Dührkop and Marvin Meusel"
+    version = "3.1.3"
+    textVersion = "3.1.3"
+    initialHeapSize = 256
+    maxHeapSize = 1024
+    maxHeapPercent = 60
+    jreRuntimeBits = "64"
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart',
+                'Implementation-Version': version
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "http://bio.informatik.uni-jena.de/artifactory/repo"
+    }
+    maven {
+        url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+    }
+}
+
+dependencies {
+    compile "de.unijena.bioinf:ChemistryBase:4.1.4-SNAPSHOT",
+            "de.unijena.bioinf:FragmentationTreeConstruction:3.1.4-SNAPSHOT",
+            "de.unijena.bioinf:BabelMs:3.1.4-SNAPSHOT",
+            "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT",
+            "de.unijena.bioinf:Myxo:0.2",
+            "de.unijena.bioinf:SiriusCLI:3.1.4-SNAPSHOT",
+            "net.sf.opencsv:opencsv:2.3",
+            "org.swinglabs.swingx:swingx-all:1.+",
+            "org.openscience.cdk:cdk-silent:1.5.10",
+            "org.openscience.cdk:cdk-render:1.5.10",
+            "org.openscience.cdk:cdk-renderextra:1.5.10",
+            "org.openscience.cdk:cdk-renderawt:1.5.10",
+            "org.openscience.cdk:cdk-data:1.5.10",
+            "org.openscience.cdk:cdk-core:1.5.10",
+            "org.openscience.cdk:cdk-interfaces:1.5.10",
+            "org.openscience.cdk:cdk-inchi:1.5.10",
+            "org.openscience.cdk:cdk-smiles:1.5.10",
+            "org.openscience.cdk:cdk-sdg:1.5.10",
+            "org.openscience.cdk:cdk-smarts:1.5.10",
+            "org.apache.httpcomponents:httpclient:4.5.1"
+
+
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+test {
+    systemProperties 'property': 'value'
+}
+
+uploadArchives {
+    repositories {
+        flatDir {
+            dirs 'repos'
+        }
+    }
+}
