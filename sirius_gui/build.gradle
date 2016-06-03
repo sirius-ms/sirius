@@ -19,6 +19,7 @@ dependencies {
     compile project(':io')
     compile project(':isotope_pattern:isotope_pattern_analysis')
     compile project(':fragmentation_tree:fragmentation_tree_construction')
+    compile project(':sirius_frontend:sirius_cli')
 
 //internal
     compile "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT"
@@ -67,7 +68,7 @@ jar {
 
 
 
-/**test {
+test {
     systemProperties 'property': 'value'
 }
 
@@ -78,4 +79,3 @@ uploadArchives {
         }
     }
 }
-**/
