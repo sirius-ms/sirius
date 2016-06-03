@@ -1,6 +1,3 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version:'0.8.9'
 

@@ -1,6 +1,6 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-
 dependencies {
-
+    compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:'1.1'
+    compile group: 'javax.json', name: 'javax.json-api', version:'1.0'
+    compile group: 'org.glassfish', name: 'javax.json', version:'1.0.4'
+    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.13'
 }
