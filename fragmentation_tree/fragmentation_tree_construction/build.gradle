@@ -12,7 +12,7 @@ dependencies {
     compile project(':mass_decomposition:mass_decomposer')
 //internal
     compile group: 'de.unijena.bioinf', name: 'Recalibration', version:'1.0'
-    compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:'1.1'
+    compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
 //external
     compile "org.apache.commons:commons-math3:$math3_version"
     compile group: 'org.gnu.glpk', name: 'glpk-java', version:"$glpk_version"

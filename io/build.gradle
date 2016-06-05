@@ -4,7 +4,7 @@ apply plugin: 'maven'
 dependencies {
     compile "com.lexicalscope.jewelcli:jewelcli:$jewelcli_version"
     compile "org.json:json:$json_version"
-    compile 'de.unijena.bioinf:GraphUtils:1.1'
+    compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
 
     compile project(':chemistry_base')
 }
