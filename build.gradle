@@ -1,15 +1,3 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-
-dependencies {
-    compile project(':chemistry_base')
-    compile project(':fragmentation_tree')
-    compile project(':isotope_pattern')
-    compile project(':mass_decomposition')
-    compile project(':io')
-    compile project(':sirius_frontend')
-}
-
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
