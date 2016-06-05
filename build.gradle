@@ -1,3 +1,15 @@
+//Global Properties
+ext{
+    //version for external libraries
+    slf4j_version = '1.7.13'
+    json_version = '1.0'
+    math3_version = '3.+'
+    glpk_version = '1.0.37'
+    jewelcli_version = '0.8.+'
+    gurobi_version = '6.0'
+}
+
+
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
