@@ -1,5 +1,5 @@
 dependencies() {
-    compile "com.lexicalscope.jewelcli:jewelcli:0.8.+"
+    compile "com.lexicalscope.jewelcli:jewelcli:$jewelcli_version"
     compile project(":io")
     compile project(":isotope_pattern:isotope_pattern_analysis")
 }
