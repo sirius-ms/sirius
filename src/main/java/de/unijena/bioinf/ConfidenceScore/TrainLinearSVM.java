@@ -1,10 +1,10 @@
 package de.unijena.bioinf.ConfidenceScore;
 
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ConfidenceScore.svm.LinearSVMPredictor;
 import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
 import de.unijena.bioinf.fingerid.OptimizationStrategy;
-import de.unijena.bioinf.fingerid.PredictionPerformance;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
 
@@ -27,11 +27,11 @@ public class TrainLinearSVM  implements Closeable {
 
     public static class Model implements Comparable<Model> {
         private static Comparator<PredictionPerformance> comp = new OptimizationStrategy.ByFScore().getComparator();
-        private final PredictionPerformanceWrapper performance;
+        private final PredictionPerformance performance;
         private final double c;
         private final int featureSize;
 
-        public Model(PredictionPerformanceWrapper performance, double c, int featureSize) {
+        public Model(PredictionPerformance performance, double c, int featureSize) {
             this.performance = performance;
             this.c = c;
             this.featureSize = featureSize;
@@ -39,7 +39,7 @@ public class TrainLinearSVM  implements Closeable {
 
         @Override
         public int compareTo(Model o) {
-            return comp.compare(performance.getPredictionPerformance(), o.performance.getPredictionPerformance());
+            return comp.compare(performance, o.performance);
         }
 
         @Override
@@ -136,7 +136,7 @@ public class TrainLinearSVM  implements Closeable {
                 fmodels.add(executorService.submit(new Callable<Model>() {
                     @Override
                     public Model call() throws Exception {
-                        final PredictionPerformanceWrapper performance = trainAndEvaluate(problem, parameter, currentEval);
+                        final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
                         final Model model = new Model(performance, parameter.C, featureSize);
                         return model;
                     }
@@ -171,9 +171,9 @@ public class TrainLinearSVM  implements Closeable {
     }
 
 
-    private PredictionPerformanceWrapper trainAndEvaluate(SVMInterface.svm_problem problem, SVMInterface.svm_parameter parameter, List<Compound> currentEval){
+    private PredictionPerformance trainAndEvaluate(SVMInterface.svm_problem problem, SVMInterface.svm_parameter parameter, List<Compound> currentEval){
         final SVMInterface.svm_model svm_model = svmInterface.svm_train(problem, parameter);
-        final PredictionPerformanceWrapper performance = evaluate(svm_model, currentEval);
+        final PredictionPerformance performance = evaluate(svm_model, currentEval);
         return performance;
     }
 
@@ -308,7 +308,7 @@ public class TrainLinearSVM  implements Closeable {
         List<Model> mergedModels = new ArrayList<>();
         for (List<Model> modelList : map.valueCollection()) {
             assert modelList.size()==FOLDS;
-            PredictionPerformanceWrapper performance = new PredictionPerformanceWrapper(0,0,0,0);
+            PredictionPerformance performance = new PredictionPerformance(0,0,0,0);
             for (Model model : modelList) {
                 performance.merge(model.performance);
             }
@@ -415,10 +415,10 @@ public class TrainLinearSVM  implements Closeable {
     }
 
     private Model trainAndEvaluateCrossFolds(SVMInterface.svm_problem[] problems, SVMInterface.svm_parameter param, List<Compound>[] evals) {
-        final PredictionPerformanceWrapper performance = new PredictionPerformanceWrapper();
+        final PredictionPerformance performance = new PredictionPerformance();
         for (int fold=0; fold < problems.length; ++fold) {
             final SVMInterface.svm_model model = svmInterface.svm_train(problems[fold], param);
-            final PredictionPerformanceWrapper performance2 = evaluate(model, evals[fold]);
+            final PredictionPerformance performance2 = evaluate(model, evals[fold]);
             performance.merge(performance2);
         }
         performance.calc();
@@ -542,7 +542,7 @@ public class TrainLinearSVM  implements Closeable {
 
 
 
-    private PredictionPerformanceWrapper evaluate(SVMInterface.svm_model model, List<Compound> compounds) {
+    private PredictionPerformance evaluate(SVMInterface.svm_model model, List<Compound> compounds) {
         int tp=0,fp=0,tn=0,fn=0;
         for (int k=0; k < compounds.size(); ++k) {
             final Compound c = compounds.get(k);
@@ -561,7 +561,7 @@ public class TrainLinearSVM  implements Closeable {
                 }
             }
         }
-        return new PredictionPerformanceWrapper(tp, fp, tn, fn);
+        return new PredictionPerformance(tp, fp, tn, fn);
     }
 
     private boolean svmPredict(SVMInterface.svm_model model, Compound c) {
