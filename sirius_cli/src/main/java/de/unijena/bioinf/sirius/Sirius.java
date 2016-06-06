@@ -17,8 +17,8 @@
  */
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -1062,7 +1062,7 @@ public class Sirius {
         if (candidate.getCandidates().size()==0) return 0d;
         if (candidate.getBestScore() <= 0) return 0d;
         final double optscore = candidate.getBestScore();
-        final ArrayList<ScoredMolecularFormula> xs = new ArrayList<ScoredMolecularFormula>(candidate.getCandidates());
+        final ArrayList<Scored<MolecularFormula>> xs = new ArrayList<Scored<MolecularFormula>>(candidate.getCandidates());
         Collections.sort(xs, Collections.reverseOrder());
         int n = 1;
         for (; n < xs.size(); ++n) {
@@ -1070,7 +1070,7 @@ public class Sirius {
             final double prev = xs.get(n-1).getScore();
             if (score <= 0 || score/optscore < 0.666 || score/prev < 0.5) break;
         }
-        for (int i=0; i < n; ++i) formulas.put(xs.get(i).getFormula(), xs.get(i).getScore());
+        for (int i=0; i < n; ++i) formulas.put(xs.get(i).getCandidate(), xs.get(i).getScore());
         return optscore;
     }
 
