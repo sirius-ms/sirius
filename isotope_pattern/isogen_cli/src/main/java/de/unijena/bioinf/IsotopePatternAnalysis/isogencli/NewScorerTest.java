@@ -18,8 +18,8 @@
 
 package de.unijena.bioinf.IsotopePatternAnalysis.isogencli;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -33,9 +33,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 public class NewScorerTest {
 
@@ -99,8 +97,8 @@ public class NewScorerTest {
 
             final SimpleSpectrum spectrum = Spectrums.getNormalizedSpectrum(patterns.getPattern(), norm);
             int k=1;
-            for (ScoredMolecularFormula formula : patterns.getCandidates()) {
-                if (formula.getFormula().equals(experiment.getMolecularFormula())) {
+            for (Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula> formula : patterns.getCandidates()) {
+                if (formula.getCandidate().equals(experiment.getMolecularFormula())) {
                     gen.setMaximalNumberOfPeaks(patterns.getPattern().size());
                     gen.setMinimalProbabilityThreshold(0d);
                     final SimpleSpectrum theoreticalPattern = Spectrums.getNormalizedSpectrum(gen.simulatePattern(experiment.getMolecularFormula(), experiment.getPrecursorIonType().getIonization()), norm);

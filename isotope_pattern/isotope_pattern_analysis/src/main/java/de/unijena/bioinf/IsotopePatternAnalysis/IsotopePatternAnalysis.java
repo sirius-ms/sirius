@@ -19,9 +19,9 @@ package de.unijena.bioinf.IsotopePatternAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.IsotopicDistribution;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -238,7 +238,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         final PrecursorIonType ionization = experiment.getPrecursorIonType();
         if (ionization.isIonizationUnknown()) {
             // try different ionization types
-            final List<ScoredMolecularFormula> ionFormulas = new ArrayList<ScoredMolecularFormula>();
+            final List<Scored<MolecularFormula>> ionFormulas = new ArrayList<Scored<MolecularFormula>>();
             final int charge = ionization.getCharge();
             final Iterable<Ionization> ionModes = PeriodicTable.getInstance().getKnownIonModes(charge);
             for (Ionization ion : ionModes) {
@@ -246,20 +246,20 @@ public class IsotopePatternAnalysis implements Parameterized {
                 final double[] scores = scoreFormulas(pattern.getPattern(), formulas, experiment, profile);
                 for (int k=0; k < formulas.size(); ++k) {
                     if (!Double.isInfinite(scores[k]))
-                        ionFormulas.add(new ScoredMolecularFormula(formulas.get(k).add(ion.getAtoms()), scores[k]));
+                        ionFormulas.add(new Scored<MolecularFormula>(formulas.get(k).add(ion.getAtoms()), scores[k]));
                 }
             }
             Collections.sort(ionFormulas, Collections.reverseOrder());
             return new IsotopePattern(pattern.getPattern(), ionFormulas);
         } else {
             // use given ionization
-            final List<ScoredMolecularFormula> neutralFormulas = new ArrayList<ScoredMolecularFormula>();
+            final List<Scored<MolecularFormula>> neutralFormulas = new ArrayList<Scored<MolecularFormula>>();
             final List<MolecularFormula> formulas = decomposer.getDecomposer(profile.getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(ionization.precursorMassToNeutralMass(pattern.getMonoisotopicMass()), profile.getAllowedMassDeviation(), profile.getFormulaConstraints());
             final double[] scores = scoreFormulas(pattern.getPattern(), formulas, experiment, profile);
             for (int k=0; k < formulas.size(); ++k) {
-                neutralFormulas.add(new ScoredMolecularFormula(formulas.get(k), scores[k]));
+                neutralFormulas.add(new Scored<MolecularFormula>(formulas.get(k), scores[k]));
             }
-            Collections.sort(neutralFormulas, Collections.<ScoredMolecularFormula>reverseOrder());
+            Collections.sort(neutralFormulas, Scored.<MolecularFormula>desc());
             return new IsotopePattern(pattern.getPattern(), neutralFormulas);
         }
     }

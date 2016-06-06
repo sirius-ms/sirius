@@ -21,8 +21,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.Hetero2CarbonScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
@@ -49,10 +49,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBu
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2IsotopePatternMatch;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -480,14 +478,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (DecompositionScorer<?> scorer : decompositionScorers) preparations.add(scorer.prepare(input));
             for (int i = 0; i < processedPeaks.size() - 1; ++i) {
                 final DecompositionList decomps = decomp.get(processedPeaks.get(i));
-                final ArrayList<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>(decomps.getDecompositions().size());
+                final ArrayList<Scored<MolecularFormula>> scored = new ArrayList<Scored<MolecularFormula>>(decomps.getDecompositions().size());
                 for (MolecularFormula f : decomps.getFormulas()) {
                     double score = 0d;
                     int k = 0;
                     for (DecompositionScorer<?> scorer : decompositionScorers) {
                         score += ((DecompositionScorer<Object>) scorer).score(f, processedPeaks.get(i), input, preparations.get(k++));
                     }
-                    scored.add(new ScoredMolecularFormula(f, score));
+                    scored.add(new Scored<MolecularFormula>(f, score));
                 }
                 decomp.set(processedPeaks.get(i), new DecompositionList(scored));
             }
@@ -496,15 +494,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         {
             final ArrayList<Object> preparations = new ArrayList<Object>(rootScorers.size());
             for (DecompositionScorer<?> scorer : rootScorers) preparations.add(scorer.prepare(input));
-            final ArrayList<ScoredMolecularFormula> scored = new ArrayList<ScoredMolecularFormula>(decomp.get(parentPeak).getDecompositions());
+            final ArrayList<Scored<MolecularFormula>> scored = new ArrayList<Scored<MolecularFormula>>(decomp.get(parentPeak).getDecompositions());
             for (int j=0; j < scored.size(); ++j) {
                 double score = 0d;
                 int k = 0;
-                final MolecularFormula f = scored.get(j).getFormula();
+                final MolecularFormula f = scored.get(j).getCandidate();
                 for (DecompositionScorer<?> scorer : rootScorers) {
                     score += ((DecompositionScorer<Object>) scorer).score(f, input.getParentPeak(), input, preparations.get(k++));
                 }
-                scored.set(j, new ScoredMolecularFormula(f, score));
+                scored.set(j, new Scored<MolecularFormula>(f, score));
 
             }
             Collections.sort(scored, Collections.reverseOrder());
@@ -1096,7 +1094,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.reduction = reduction;
     }
 
-    public FGraph buildGraph(ProcessedInput input, ScoredMolecularFormula candidate) {
+    public FGraph buildGraph(ProcessedInput input, Scored<MolecularFormula> candidate) {
         // build Graph
         final FGraph graph = graphBuilder.fillGraph(
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
@@ -1115,7 +1113,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return reduction.reduce(fragments, 0d);
     }
 
-    public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<ScoredMolecularFormula>> candidatesPerParentPeak) {
+    public FGraph buildGraph(ProcessedInput input, List<ProcessedPeak> parentPeaks, List<List<Scored<MolecularFormula>>> candidatesPerParentPeak) {
         // build Graph
         FGraph graph = graphBuilder.initializeEmptyGraph(input);
         for (int i = 0; i < parentPeaks.size(); ++i) {
@@ -1138,8 +1136,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         eachPeak:
         for (ProcessedPeak p : input.getMergedPeaks())
             if (p != input.getParentPeak()) {
-                for (ScoredMolecularFormula f : decomp.get(p).getDecompositions()) {
-                    if (parent.isSubtractable(f.getFormula())) {
+                for (Scored<MolecularFormula> f : decomp.get(p).getDecompositions()) {
+                    if (parent.isSubtractable(f.getCandidate())) {
                         maxIntensity += p.getRelativeIntensity();
                         continue eachPeak;
                     }

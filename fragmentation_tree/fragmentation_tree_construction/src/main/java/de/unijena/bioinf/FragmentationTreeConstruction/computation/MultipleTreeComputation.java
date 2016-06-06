@@ -19,8 +19,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.algorithm.BoundedDoubleQueue;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -37,13 +37,13 @@ public class MultipleTreeComputation {
     private final double lowerbound;
     private final int maximalNumber;
     private final int numberOfThreads;
-    private final List<ScoredMolecularFormula> formulas;
+    private final List<Scored<MolecularFormula>> formulas;
     private final FragmentationPatternAnalysis analyzer;
     private final ProcessedInput input;
     private final boolean recalibration;
     private final HashMap<MolecularFormula, FTree> backbones;
 
-    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<ScoredMolecularFormula> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration, HashMap<MolecularFormula, FTree> backbones) {
+    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<Scored<MolecularFormula>> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration, HashMap<MolecularFormula, FTree> backbones) {
         this.analyzer = analyzer;
         this.input = input;
         this.formulas = formulas;
@@ -77,9 +77,9 @@ public class MultipleTreeComputation {
         final HashSet<MolecularFormula> whitelist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) whitelist.add(iter.next());
-        final List<ScoredMolecularFormula> pmds = new ArrayList<ScoredMolecularFormula>(whitelist.size());
-        for (ScoredMolecularFormula f : this.formulas) {
-            if (whitelist.contains(f.getFormula())) {
+        final List<Scored<MolecularFormula>> pmds = new ArrayList<Scored<MolecularFormula>>(whitelist.size());
+        for (Scored<MolecularFormula> f : this.formulas) {
+            if (whitelist.contains(f.getCandidate())) {
                 pmds.add(f);
             }
         }
@@ -90,17 +90,17 @@ public class MultipleTreeComputation {
         final HashSet<MolecularFormula> whitelist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) whitelist.add(input.getExperimentInformation().getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(iter.next()));
-        final List<ScoredMolecularFormula> pmds = new ArrayList<ScoredMolecularFormula>(whitelist.size());
-        for (ScoredMolecularFormula f : this.formulas) {
-            if (whitelist.contains(f.getFormula())) {
+        final List<Scored<MolecularFormula>> pmds = new ArrayList<Scored<MolecularFormula>>(whitelist.size());
+        for (Scored<MolecularFormula> f : this.formulas) {
+            if (whitelist.contains(f.getCandidate())) {
                 pmds.add(f);
             }
         }
         return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
-    public MultipleTreeComputation withRoots(Collection<ScoredMolecularFormula> formulas) {
-        return new MultipleTreeComputation(analyzer, input, new ArrayList<ScoredMolecularFormula>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
+    public MultipleTreeComputation withRoots(Collection<Scored<MolecularFormula>> formulas) {
+        return new MultipleTreeComputation(analyzer, input, new ArrayList<Scored<MolecularFormula>>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation without(Iterable<MolecularFormula> formulas) {
@@ -108,9 +108,9 @@ public class MultipleTreeComputation {
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) blacklist.add(input.getExperimentInformation().getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(iter.next()));
         if (blacklist.isEmpty()) return this;
-        final List<ScoredMolecularFormula> pmds = new ArrayList<ScoredMolecularFormula>(Math.max(0, this.formulas.size() - blacklist.size()));
-        for (ScoredMolecularFormula f : this.formulas) {
-            if (!blacklist.contains(f.getFormula())) {
+        final List<Scored<MolecularFormula>> pmds = new ArrayList<Scored<MolecularFormula>>(Math.max(0, this.formulas.size() - blacklist.size()));
+        for (Scored<MolecularFormula> f : this.formulas) {
+            if (!blacklist.contains(f.getCandidate())) {
                 pmds.add(f);
             }
         }
@@ -331,10 +331,10 @@ public class MultipleTreeComputation {
 
     abstract class GraphBuildingQueue implements Iterator<FGraph> {
 
-        protected final List<ScoredMolecularFormula> stack;
+        protected final List<Scored<MolecularFormula>> stack;
 
         protected GraphBuildingQueue() {
-            stack = new ArrayList<ScoredMolecularFormula>(formulas);
+            stack = new ArrayList<Scored<MolecularFormula>>(formulas);
             Collections.reverse(stack);
         }
 
@@ -359,11 +359,11 @@ public class MultipleTreeComputation {
         }
     }
 
-    class MultithreadedGraphBuildingQueue extends MultithreadedWorkingQueue<ScoredMolecularFormula, FGraph> {
+    class MultithreadedGraphBuildingQueue extends MultithreadedWorkingQueue<Scored<MolecularFormula>, FGraph> {
         MultithreadedGraphBuildingQueue() {
-            super(formulas, new Function<ScoredMolecularFormula, FGraph>() {
+            super(formulas, new Function<Scored<MolecularFormula>, FGraph>() {
                 @Override
-                public FGraph apply(ScoredMolecularFormula mf) {
+                public FGraph apply(Scored<MolecularFormula> mf) {
                     return analyzer.buildGraph(input, mf);
                 }
             }, numberOfThreads, 1); // TODO: better documentation. in general it doesn't make sense to use more than one thread for graph building
