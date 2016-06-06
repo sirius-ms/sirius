@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.ms.fp;
+package de.unijena.bioinf.ChemistryBase.fp;
 
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.map.hash.TShortShortHashMap;
@@ -63,7 +63,7 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         this.mask = (BitSet) mask.clone();
         this.allowedIndizes = new int[mask.cardinality()];
         int k=0;
-        for (int i = mask.nextSetBit(0); i < mask.size(); i = mask.nextSetBit(i+1)) {
+        for (int i = mask.nextSetBit(0); i >= 0 && i < mask.size(); i = mask.nextSetBit(i+1)) {
             allowedIndizes[k++] = i;
         }
         this.mapping = new TShortShortHashMap(allowedIndizes.length);

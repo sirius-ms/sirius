@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import de.unijena.bioinf.ChemistryBase.ms.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import gnu.trove.list.array.TIntArrayList;
 import org.junit.Test;
 

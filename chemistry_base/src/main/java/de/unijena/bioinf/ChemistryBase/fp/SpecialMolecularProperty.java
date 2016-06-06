@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.ms.fp;
+package de.unijena.bioinf.ChemistryBase.fp;
 
 /**
  * Created by kaidu on 31.05.16.
