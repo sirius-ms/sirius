@@ -19,23 +19,23 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
 
 import java.util.*;
 
 public class DecompositionList {
 
-    private final List<ScoredMolecularFormula> decompositions;
+    private final List<Scored<MolecularFormula>> decompositions;
 
     public static DecompositionList fromFormulas(Iterable<MolecularFormula> formulas) {
-        final ArrayList<ScoredMolecularFormula> decompositions = new ArrayList<ScoredMolecularFormula>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
-        for (MolecularFormula f : formulas) decompositions.add(new ScoredMolecularFormula(f,0d));
+        final ArrayList<Scored<MolecularFormula>> decompositions = new ArrayList<Scored<MolecularFormula>>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
+        for (MolecularFormula f : formulas) decompositions.add(new Scored<MolecularFormula>(f,0d));
         return new DecompositionList(decompositions);
 
     }
 
-    public DecompositionList(List<ScoredMolecularFormula> decompositions) {
+    public DecompositionList(List<Scored<MolecularFormula>> decompositions) {
         this.decompositions = decompositions;
     }
 
@@ -43,10 +43,10 @@ public class DecompositionList {
         return new AbstractCollection<MolecularFormula>() {
             @Override
             public Iterator<MolecularFormula> iterator() {
-                return Iterators.transform(decompositions.iterator(), new Function<ScoredMolecularFormula, MolecularFormula>() {
+                return Iterators.transform(decompositions.iterator(), new Function<Scored<MolecularFormula>, MolecularFormula>() {
                     @Override
-                    public MolecularFormula apply(ScoredMolecularFormula input) {
-                        return input.getFormula();
+                    public MolecularFormula apply(Scored<MolecularFormula> input) {
+                        return input.getCandidate();
                     }
                 });
             }
@@ -58,7 +58,7 @@ public class DecompositionList {
         };
     }
 
-    public List<ScoredMolecularFormula> getDecompositions() {
+    public List<Scored<MolecularFormula>> getDecompositions() {
         return decompositions;
     }
 }

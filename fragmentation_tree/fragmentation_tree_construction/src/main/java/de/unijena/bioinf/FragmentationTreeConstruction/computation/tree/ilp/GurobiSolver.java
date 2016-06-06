@@ -250,7 +250,7 @@ public class GurobiSolver implements TreeBuilder {
                 } else {
                     final Loss in = e.getKey().getIncomingEdge();
                     for (int k = 0; k < g.getInDegree(); ++k)
-                        if (in.getSource().getFormula().equals(g.getIncomingEdge(k).getSource().getFormula())) {
+                        if (in.getSource().getCandidate().equals(g.getIncomingEdge(k).getSource().getCandidate())) {
                             score -= g.getIncomingEdge(k).getWeight();
                             break;
                         }
@@ -505,7 +505,7 @@ public class GurobiSolver implements TreeBuilder {
             assert graphRoot != null;
             if (graphRoot == null) return null;
 
-            final FTree tree = new FTree(graphRoot.getFormula());
+            final FTree tree = new FTree(graphRoot.getCandidate());
             final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
             stack.push(new Stackitem(tree.getRoot(), graphRoot));
             while (!stack.isEmpty()) {
@@ -515,7 +515,7 @@ public class GurobiSolver implements TreeBuilder {
                 for (int j = 0; j < item.graphNode.getOutDegree(); ++j) {
                     if (edesAreUsed[edgeIds[offset]]) {
                         final Loss l = losses.get(edgeIds[offset]);
-                        final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
+                        final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getCandidate());
                         child.getIncomingEdge().setWeight(l.getWeight());
                         stack.push(new Stackitem(child, l.getTarget()));
                     }

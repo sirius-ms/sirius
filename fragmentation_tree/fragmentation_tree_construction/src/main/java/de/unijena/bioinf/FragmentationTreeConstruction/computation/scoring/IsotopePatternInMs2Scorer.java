@@ -84,9 +84,9 @@ public class IsotopePatternInMs2Scorer {
                     }
                     /////// DEBUG
                     /*
-                    System.out.println(f.getFormula());
+                    System.out.println(f.getCandidate());
                     System.out.println(simulated);
-                    System.out.println(normalizeByFirstPeak(generator.simulatePattern(f.getFormula(), ion)));
+                    System.out.println(normalizeByFirstPeak(generator.simulatePattern(f.getCandidate(), ion)));
                     */
                     /////////////
 
