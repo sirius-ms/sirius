@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.ms.fp;
+package de.unijena.bioinf.ChemistryBase.fp;
 
 /**
  * consists of a MASK that determines which bits are used and a list of Fingerprint types that determine which bits are

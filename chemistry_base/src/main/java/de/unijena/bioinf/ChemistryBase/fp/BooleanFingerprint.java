@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ChemistryBase.ms.fp;
+package de.unijena.bioinf.ChemistryBase.fp;
 
 import gnu.trove.list.array.TShortArrayList;
 
