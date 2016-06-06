@@ -3,6 +3,7 @@ ext{
     //version for external libraries
     slf4j_version = '1.7.13'
     json_version = '1.0'
+    json_impl_version = "1.0.4"
     math3_version = '3.+'
     glpk_version = '1.0.37'
     jewelcli_version = '0.8.+'

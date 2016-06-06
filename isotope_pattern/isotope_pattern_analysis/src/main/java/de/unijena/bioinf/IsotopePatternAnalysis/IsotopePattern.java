@@ -17,7 +17,8 @@
  */
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
-import de.unijena.bioinf.ChemistryBase.chem.utils.ScoredMolecularFormula;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -28,18 +29,18 @@ import java.util.List;
 public class IsotopePattern {
 
     private final SimpleSpectrum pattern;
-    private final List<ScoredMolecularFormula> candidates;
+    private final List<Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula>> candidates;
     private final double bestScore;
 
     public IsotopePattern(Spectrum<Peak> pattern) {
-        this(pattern, Collections.<ScoredMolecularFormula>emptyList());
+        this(pattern, Collections.<Scored<MolecularFormula>>emptyList());
     }
 
-    public IsotopePattern(Spectrum<Peak> pattern, List<ScoredMolecularFormula> candidates) {
+    public IsotopePattern(Spectrum<Peak> pattern, List<Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula>> candidates) {
         this.pattern = new SimpleSpectrum(pattern);
         this.candidates = candidates;
         double bestScore = Double.NEGATIVE_INFINITY;
-        for (ScoredMolecularFormula f : candidates) bestScore = Math.max(f.getScore(), bestScore);
+        for (Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula> f : candidates) bestScore = Math.max(f.getScore(), bestScore);
         this.bestScore = bestScore;
     }
 
@@ -47,7 +48,7 @@ public class IsotopePattern {
         return bestScore;
     }
 
-    public List<ScoredMolecularFormula> getCandidates() {
+    public List<Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula>> getCandidates() {
         return candidates;
     }
 
