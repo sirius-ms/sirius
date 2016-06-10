@@ -50,6 +50,8 @@ public class MassDeviationScorer implements IsotopePatternScorer {
             throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
         // remove peaks from theoretical pattern until the length of both spectra is equal
         final MutableSpectrum<Peak> theoreticalSpectrum = new SimpleMutableSpectrum(theoretical);
+        if (measured.size()==0)
+            throw new IllegalArgumentException("Cannot score empty spectrum");
         while (measured.size() < theoreticalSpectrum.size()) {
             theoreticalSpectrum.removePeakAt(theoreticalSpectrum.size()-1);
         }

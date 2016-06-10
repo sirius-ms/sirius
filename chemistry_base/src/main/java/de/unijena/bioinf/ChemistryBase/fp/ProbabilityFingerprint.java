@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import com.google.common.base.Joiner;
+
 import java.util.Iterator;
 
 public class ProbabilityFingerprint extends AbstractFingerprint {
@@ -21,6 +23,16 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
     @Override
     public ProbabilityFingerprint asProbabilistic() {
         return this;
+    }
+
+    @Override
+    public String toTabSeparatedString() {
+        return Joiner.on('\t').join(this);
+    }
+
+    @Override
+    public double[] toProbabilityArray() {
+        return fingerprint.clone();
     }
 
     @Override
@@ -67,6 +79,7 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
     @Override
     public FPIter2 foreachPair(AbstractFingerprint fp) {
         if (fp instanceof ProbabilityFingerprint) return new PairwiseIterator(this, (ProbabilityFingerprint) fp, -1, -1);
+        else if (fp instanceof BooleanFingerprint) return new PairwiseProbBoolean(this,(BooleanFingerprint)fp, -1);
         else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
         // We cannot express this in javas type system -_- In theory somebody could just implement a pairwise iterator
         // for mixed types
@@ -151,6 +164,10 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         @Override
         public MolecularProperty getMolecularProperty() {
             return fingerprintVersion.getMolecularProperty(fingerprintVersion.getAbsoluteIndexOf(offset));
+        }
+
+        public String toString() {
+            return String.valueOf(fingerprint[offset]);
         }
 
         @Override
@@ -280,7 +297,140 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         public PairwiseIntersectionIterator clone() {
             return new PairwiseIntersectionIterator(left,right,current,next);
         }
+    }
 
+    protected static class PairwiseBooleanProb implements FPIter2 {
+        private final BooleanFingerprint left;
+        private final ProbabilityFingerprint right;
+        private int offset;
 
+        public PairwiseBooleanProb(BooleanFingerprint left, ProbabilityFingerprint right,int offset) {
+            this.left = left;
+            this.right = right;
+            this.offset=offset;
+        }
+
+        @Override
+        public FPIter2 clone() {
+            return new PairwiseBooleanProb(left,right,offset);
+        }
+
+        @Override
+        public double getLeftProbability() {
+            return left.fingerprint[offset] ? 1 : 0;
+        }
+
+        @Override
+        public double getRightProbability() {
+            return right.fingerprint[offset];
+        }
+
+        @Override
+        public boolean isLeftSet() {
+            return left.fingerprint[offset];
+        }
+
+        @Override
+        public boolean isRightSet() {
+            return right.fingerprint[offset]>=0.5d;
+        }
+
+        @Override
+        public int getIndex() {
+            return left.fingerprintVersion.getAbsoluteIndexOf(offset);
+        }
+
+        @Override
+        public MolecularProperty getMolecularProperty() {
+            return left.getFingerprintVersion().getMolecularProperty(getIndex());
+        }
+
+        @Override
+        public Iterator<FPIter2> iterator() {
+            return clone();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return offset < left.fingerprint.length;
+        }
+
+        @Override
+        public FPIter2 next() {
+            ++offset;
+            return this;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+    protected static class PairwiseProbBoolean implements FPIter2 {
+        private final BooleanFingerprint right;
+        private final ProbabilityFingerprint left;
+        private int offset;
+
+        public PairwiseProbBoolean(ProbabilityFingerprint left, BooleanFingerprint right,int offset) {
+            this.left = left;
+            this.right = right;
+            this.offset=offset;
+        }
+
+        @Override
+        public FPIter2 clone() {
+            return new PairwiseProbBoolean(left,right,offset);
+        }
+
+        @Override
+        public double getLeftProbability() {
+            return left.fingerprint[offset];
+        }
+
+        @Override
+        public double getRightProbability() {
+            return right.fingerprint[offset] ? 1 : 0;
+        }
+
+        @Override
+        public boolean isLeftSet() {
+            return left.fingerprint[offset]>=0.5d;
+        }
+
+        @Override
+        public boolean isRightSet() {
+            return right.fingerprint[offset];
+        }
+
+        @Override
+        public int getIndex() {
+            return left.fingerprintVersion.getAbsoluteIndexOf(offset);
+        }
+
+        @Override
+        public MolecularProperty getMolecularProperty() {
+            return left.getFingerprintVersion().getMolecularProperty(getIndex());
+        }
+
+        @Override
+        public Iterator<FPIter2> iterator() {
+            return clone();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return offset < left.fingerprint.length;
+        }
+
+        @Override
+        public FPIter2 next() {
+            ++offset;
+            return this;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

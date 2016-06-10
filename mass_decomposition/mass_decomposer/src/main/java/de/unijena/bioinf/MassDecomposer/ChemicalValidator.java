@@ -19,7 +19,6 @@ package de.unijena.bioinf.MassDecomposer;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.ChemicalAlphabetWrapper;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class ChemicalValidator implements DecompositionValidator<Element>, FormulaFilter {
 
@@ -69,7 +68,7 @@ public class ChemicalValidator implements DecompositionValidator<Element>, Formu
     @Override
     public boolean validate(int[] compomere, int[] characterIds, Alphabet<Element> alphabet) {
         if (alphabet instanceof ChemicalAlphabetWrapper) return validate(compomere, characterIds, ((ChemicalAlphabetWrapper)alphabet).getAlphabet());
-        else throw new NotImplementedException(); // TODO: Implement
+        else throw new UnsupportedOperationException(); // TODO: Implement
     }
 
     public boolean validate(int[] compomere, int[] characterIds, ChemicalAlphabet alphabet) {

@@ -9,14 +9,20 @@ public final class PredictionPerformance {
 
     public final static class Modify {
 
-        private  Modify(int tp, int fp, int tn, int fn) {
+        private Modify(int tp, int fp, int tn, int fn, double pseudoCount) {
             this.tp = tp;
             this.fp = fp;
             this.tn = tn;
             this.fn = fn;
+            this.pseudoCount = pseudoCount;
+        }
+
+        private Modify(int tp, int fp, int tn, int fn) {
+            this(tp,fp,tn,fn,0);
         }
 
         private int tp,fp,tn,fn;
+        private double pseudoCount;
 
         public PredictionPerformance done() {
             return new PredictionPerformance(tp,fp,tn,fn);
@@ -27,11 +33,17 @@ public final class PredictionPerformance {
             return performance;
         }
 
-        public void update(boolean[] truths, boolean[] predictions) {
-            for (int k=0; k < truths.length; ++k) update(truths[k], predictions[k]);
+        public Modify setPseudoCount(double pseudoCount) {
+            this.pseudoCount = pseudoCount;
+            return this;
         }
 
-        public void update(boolean truth, boolean predicted) {
+        public Modify update(boolean[] truths, boolean[] predictions) {
+            for (int k=0; k < truths.length; ++k) update(truths[k], predictions[k]);
+            return this;
+        }
+
+        public Modify update(boolean truth, boolean predicted) {
             if (truth) {
                 if (predicted) {
                     ++tp;
@@ -45,6 +57,7 @@ public final class PredictionPerformance {
                     ++tn;
                 }
             }
+            return this;
         }
 
         public int getTp() {
@@ -78,10 +91,15 @@ public final class PredictionPerformance {
         public void setFn(int fn) {
             this.fn = fn;
         }
+
+        public double getPseudoCount() {
+            return pseudoCount;
+        }
     }
 
     private int tp, fp, tn, fn;
-    private double f, precision, recall, accuracy;
+    private double pseudoCount;
+    private double f, precision, recall, accuracy, specitivity;
 
     @Override
     public String toString() {
@@ -98,6 +116,10 @@ public final class PredictionPerformance {
         this.tn = tn;
         this.fn = fn;
         calc();
+    }
+
+    public PredictionPerformance withPseudoCount(double pseudoCount) {
+        return new PredictionPerformance(tp,fp,tn,fn, pseudoCount);
     }
 
     public void set(PredictionPerformance other) {
@@ -144,14 +166,26 @@ public final class PredictionPerformance {
         this.fp=perf.getFp();
         this.tn=perf.getTn();
         this.fn=perf.getFn();
+        this.pseudoCount = perf.pseudoCount;
         calc();
     }
+
     public PredictionPerformance(int tp, int fp, int tn, int fn) {
+        this(tp, fp, tn, fn, 0d);
+    }
+
+    public PredictionPerformance(int tp, int fp, int tn, int fn, double pseudoCount) {
         this.tp = tp;
         this.fp = fp;
         this.tn = tn;
         this.fn = fn;
+        this.pseudoCount = pseudoCount;
         calc();
+    }
+
+    public boolean getSmallerClass() {
+        if (tp +fn > tn+fp) return false;
+        else return true;
     }
 
     public int getTp() {
@@ -186,6 +220,20 @@ public final class PredictionPerformance {
         return accuracy;
     }
 
+    public double getSpecitivity() {return specitivity;}
+
+    public double getPseudoCount() {
+        return pseudoCount;
+    }
+
+    public int numberOfSamples() {
+        return tp+fp+tn+fn;
+    }
+
+    public double numberOfSamplesWithPseudocounts() {
+        return tp+fp+tn+fn+4*pseudoCount;
+    }
+
     public void reset() {
         tp = fp = tn = fn = 0;
         accuracy=0d; precision=0d; recall=0d;
@@ -199,24 +247,29 @@ public final class PredictionPerformance {
         calc();
     }
 
+
+
     public void calc() {
 
         // first take the smaller class
         final int positive = tp+fn;
         final int negative = tn+fp;
-        final int TP, FP, TN, FN;
+        final double TP, FP, TN, FN;
         if (positive > negative) {
-            TP = tn; FP = fn; TN = tp; FN = fp;
+            TP = tn+pseudoCount; FP = fn+pseudoCount; TN = tp+pseudoCount; FN = fp+pseudoCount;
         } else {
-            TP=tp; FP=fp; TN=tn; FN=fn;
+            TP=tp+pseudoCount; FP=fp+pseudoCount; TN=tn+pseudoCount; FN=fn+pseudoCount;
         }
+
         // now calculate F score related to the smaller class
 
-        accuracy = ((double) TP + TN) / (TP + FP + TN + FN);
+        accuracy = (TP + TN) / (TP + FP + TN + FN);
         if (TP + FN == 0) recall = 0d;
         else recall = ((double) tp) / (tp + fn);
+        if (TN+FP == 0) specitivity = 0d;
+        else specitivity = TN/(TN+FP);
         if (TP + FP == 0) precision = 0d;
-        else precision = ((double) TP) / (TP + FP);
+        else precision = (TP) / (TP + FP);
         if (precision != 0 && recall != 0) {
             f = (2 * precision * recall) / (precision + recall);
         } else {

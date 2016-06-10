@@ -19,6 +19,10 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         return other.fingerprintVersion.compatible(fingerprintVersion);
     }
 
+    public abstract String toTabSeparatedString();
+
+    public abstract double[] toProbabilityArray();
+
     public abstract boolean isSet(int index);
 
     public abstract int cardinality();

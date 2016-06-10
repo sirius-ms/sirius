@@ -1,12 +1,13 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import com.google.common.base.Joiner;
 import gnu.trove.list.array.TShortArrayList;
 
 import java.util.Iterator;
 
 public class BooleanFingerprint extends Fingerprint {
 
-    private final boolean[] fingerprint;
+    protected final boolean[] fingerprint;
 
     public BooleanFingerprint(FingerprintVersion version, boolean[] fp) {
         super(version);
@@ -28,10 +29,27 @@ public class BooleanFingerprint extends Fingerprint {
         return this;
     }
 
+    @Override
+    public String toOneZeroString() {
+        final char[] buf = new char[fingerprintVersion.size()];
+        for (int k=0; k < fingerprint.length; ++k) {
+            buf[k] = fingerprint[k] ? '1' : '0';
+        }
+        return new String(buf);
+    }
 
     @Override
-    public double tanimoto(Fingerprint other) {
-        return 0;
+    public boolean[] toBooleanArray() {
+        return fingerprint.clone();
+    }
+
+    @Override
+    public short[] toIndizesArray() {
+        TShortArrayList indizes = new TShortArrayList(400);
+        for (int k=0; k < fingerprint.length; ++k) {
+            if (fingerprint[k]) indizes.add((short)fingerprintVersion.getAbsoluteIndexOf(k));
+        }
+        return indizes.toArray();
     }
 
     @Override
@@ -46,6 +64,20 @@ public class BooleanFingerprint extends Fingerprint {
             if (fingerprint[i])
                 values[i] = 1d;
         return new ProbabilityFingerprint(fingerprintVersion, values);
+    }
+
+    @Override
+    public String toTabSeparatedString() {
+        return Joiner.on('\t').join(this);
+    }
+
+    @Override
+    public double[] toProbabilityArray() {
+        final double[] ary = new double[fingerprintVersion.size()];
+        for (int k=0; k < fingerprint.length; ++k) {
+            if (fingerprint[k]) ary[k] = 1d;
+        }
+        return ary;
     }
 
     @Override
@@ -81,6 +113,7 @@ public class BooleanFingerprint extends Fingerprint {
     @Override
     public FPIter2 foreachPair(AbstractFingerprint fp) {
         if (fp instanceof BooleanFingerprint) return new PairwiseIterator(this, (BooleanFingerprint) fp, -1, -1);
+        else if (fp instanceof ProbabilityFingerprint) return new ProbabilityFingerprint.PairwiseBooleanProb(this, (ProbabilityFingerprint)fp, -1);
         else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
         // We cannot express this in javas type system -_- In theory somebody could just implement a pairwise iterator
         // for mixed types
@@ -184,6 +217,10 @@ public class BooleanFingerprint extends Fingerprint {
         @Override
         public boolean hasNext() {
             return offset+1 < fingerprint.length;
+        }
+
+        public String toString() {
+            return isSet() ? "1" : "0";
         }
 
         @Override
