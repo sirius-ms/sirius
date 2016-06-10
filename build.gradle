@@ -2,7 +2,7 @@ dependencies {
 
 	//project
     compile project(':fingerid')
-    compile project(':fingerblast:fingerblast_nodb')
+    compile project(':fingerblast')
     compile project(':chemical_db')
 
 	//internal
