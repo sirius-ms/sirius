@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import com.google.common.base.Joiner;
+
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -25,8 +27,53 @@ public class ArrayFingerprint extends Fingerprint {
     }
 
     @Override
+    public String toOneZeroString() {
+        final char[] buffer = new char[fingerprintVersion.size()];
+        for (short index : indizes) {
+            buffer[fingerprintVersion.getRelativeIndexOf(index)] = '1';
+        }
+        return new String(buffer);
+    }
+
+    @Override
+    public boolean[] toBooleanArray() {
+        final boolean[] buffer = new boolean[fingerprintVersion.size()];
+        for (short index : indizes) {
+            buffer[fingerprintVersion.getRelativeIndexOf(index)] = true;
+        }
+        return buffer;
+    }
+
+    @Override
+    public short[] toIndizesArray() {
+        return indizes.clone();
+    }
+
+    @Override
     public double tanimoto(Fingerprint other) {
-        return 0;
+        if (other instanceof ArrayFingerprint) return tanimoto((ArrayFingerprint)other);
+        else return super.tanimoto(other);
+    }
+
+    private double tanimoto(ArrayFingerprint other) {
+        final short[] as = indizes, bs=other.indizes;
+        int a=0, b=0, union=0;
+        while(a < as.length && b < bs.length) {
+            if (as[a]==bs[b]) {
+                ++union;
+                ++a; ++b;
+            } else if (as[a] > bs[b]) {
+                ++b;
+            } else {
+                ++a;
+            }
+        }
+
+        // |A n B| = (|A| + |B|) - |A u B|
+        final int intersection = as.length + bs.length - union;
+
+        // Jaccard := |(A n B)| / (A u B)
+        return ((double)intersection)/union;
     }
 
     @Override
@@ -39,6 +86,18 @@ public class ArrayFingerprint extends Fingerprint {
         final double[] values = new double[fingerprintVersion.size()];
         for (int index : indizes) values[fingerprintVersion.getRelativeIndexOf(index)] = 1d;
         return new ProbabilityFingerprint(fingerprintVersion, values);
+    }
+
+    @Override
+    public String toTabSeparatedString() {
+        return Joiner.on('\t').join(this);
+    }
+
+    @Override
+    public double[] toProbabilityArray() {
+        final double[] ary = new double[fingerprintVersion.size()];
+        for (int index : indizes) ary[fingerprintVersion.getRelativeIndexOf(index)] = 1d;
+        return ary;
     }
 
     @Override
@@ -162,6 +221,8 @@ public class ArrayFingerprint extends Fingerprint {
         public boolean hasNext() {
             return absolute < fingerprintVersion.size();
         }
+
+        public String toString() {return isSet() ? "1" : "0";}
 
         @Override
         public FPIter next() {

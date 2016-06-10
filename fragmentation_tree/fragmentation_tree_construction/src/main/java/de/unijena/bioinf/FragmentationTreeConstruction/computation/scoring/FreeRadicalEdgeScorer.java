@@ -101,7 +101,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     }
 
     @Override
-    public double score(Loss loss, ProcessedInput input, Object _) {
+    public double score(Loss loss, ProcessedInput input, Object x_) {
         return score(loss.getFormula()) - normalization;
     }
 
