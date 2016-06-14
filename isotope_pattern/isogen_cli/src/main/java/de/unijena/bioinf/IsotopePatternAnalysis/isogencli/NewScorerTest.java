@@ -18,9 +18,11 @@
 
 package de.unijena.bioinf.IsotopePatternAnalysis.isogencli;
 
+import com.google.gson.JsonObject;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
@@ -29,7 +31,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGen
 import de.unijena.bioinf.IsotopePatternAnalysis.scoring.*;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class NewScorerTest {
     }
 
     public static IsotopePatternAnalysis readProfile() throws IOException {
-        final JSONObject json = JSONDocumentType.getJSON("/profiles/orbitrap.json", "/home/kaidu/Documents/temp/test.json");
+        final JsonObject json = JSONDocumentType.getJSON("/profiles/orbitrap.json", "/home/kaidu/Documents/temp/test.json");
         final JSONDocumentType document = new JSONDocumentType();
         if (document.hasKeyInDictionary(json, "IsotopePatternAnalysis")) return IsotopePatternAnalysis.loadFromProfile(document, json);
         return null;

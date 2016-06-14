@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.fp;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 
 public class CompoundWithFingerprint {
 

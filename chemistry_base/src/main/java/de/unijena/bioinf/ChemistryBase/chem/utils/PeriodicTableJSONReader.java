@@ -17,16 +17,17 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Map;
 
 public class PeriodicTableJSONReader extends PeriodicTableReader {
 
@@ -50,20 +51,19 @@ public class PeriodicTableJSONReader extends PeriodicTableReader {
 
     @Override
     public void read(PeriodicTable table, Reader reader) throws IOException {
-        try (final JsonReader jreader = Json.createReader(new BufferedReader(reader))) {
-            final JsonObject data = jreader.readObject();
-            for (String key : data.keySet()) {
-                final JsonObject element = data.getJsonObject(key);
-                final String elementName = element.getString("name");
-                final int elementValence = element.getInt("valence");
-                final JsonObject isotopes = element.getJsonObject("isotopes");
-                final double[] masses = toDoubleArray(isotopes.getJsonArray("mass"));
-                final double[] abundances = toDoubleArray(isotopes.getJsonArray("abundance"));
-                final Isotopes iso = new Isotopes(masses, abundances);
-                if (overrideElements || table.getByName(key) == null)
-                    table.addElement(elementName, key, iso.getMass(0), elementValence);
-                table.getDistribution().addIsotope(key, iso);
-            }
+        final JsonParser jreader = new JsonParser();
+        final JsonObject data = jreader.parse(new BufferedReader(reader)).getAsJsonObject();
+        for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
+            final JsonObject element = entry.getValue().getAsJsonObject();
+            final String elementName = element.get("name").getAsString();
+            final int elementValence = element.getAsJsonPrimitive("valence").getAsInt();
+            final JsonObject isotopes = element.getAsJsonObject("isotopes");
+            final double[] masses = toDoubleArray(isotopes.getAsJsonArray("mass"));
+            final double[] abundances = toDoubleArray(isotopes.getAsJsonArray("abundance"));
+            final Isotopes iso = new Isotopes(masses, abundances);
+            if (overrideElements || table.getByName(entry.getKey()) == null)
+                table.addElement(elementName, entry.getKey(), iso.getMass(0), elementValence);
+            table.getDistribution().addIsotope(entry.getKey(), iso);
         }
     }
 
@@ -73,7 +73,7 @@ public class PeriodicTableJSONReader extends PeriodicTableReader {
 
     private static double[] toDoubleArray(JsonArray ary) {
         final double[] array = new double[ary.size()];
-        for (int i=0; i < ary.size(); ++i) array[i] = ary.getJsonNumber(i).doubleValue();
+        for (int i = 0; i < ary.size(); ++i) array[i] = ary.get(i).getAsDouble();
         return array;
     }
 }

@@ -17,60 +17,52 @@
  */
 package de.unijena.bioinf.babelms.json;
 
+import com.google.gson.*;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.io.*;
-import java.math.BigDecimal;
-import java.util.AbstractSet;
-import java.util.Iterator;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-public class JSONDocumentType extends DataDocument<Object, JSONObject, JSONArray> {
+
+public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, JsonArray> {
+    private final static JsonParser PARSER =  new JsonParser();
+
 
     public static void writeParameters(Object o, Writer out) throws IOException {
         final ParameterHelper helper = ParameterHelper.getParameterHelper();
         final JSONDocumentType json = new JSONDocumentType();
-        final Object value = helper.wrap(json, o);
+        final JsonElement value = helper.wrap(json, o);
         writeJson(json, value, out);
     }
 
     public static <G, D, L> void writeJson(DataDocument<G, D, L> document, G value, Writer out) throws IOException {
         final JSONDocumentType json = new JSONDocumentType();
-        final Object object = DataDocument.transform(document, json, value);
-        try {
-            out.write(JSONObject.valueToString(object));
-        } catch (JSONException e) {
-            throw new IOException(e);
-        }
+        final JsonElement object = DataDocument.transform(document, json, value);
+
+        out.write(object.toString()); //write to JSON string
     }
 
-    public static JSONObject readFromFile(File fileName) throws IOException {
+    public static JsonObject readFromFile(File fileName) throws IOException {
         final FileReader reader = new FileReader(fileName);
-        final JSONObject o = read(reader);
+        final JsonObject o = read(reader);
         reader.close();
         return o;
     }
 
-    public static JSONObject read(Reader reader) throws IOException {
-        try {
-            return new JSONObject(new JSONTokener(reader));
-        } catch (JSONException e) {
-            throw new IOException(e);
-        }
+    public static JsonObject read(Reader reader) {
+        return PARSER.parse(reader).getAsJsonObject();
     }
 
-    public static JSONObject getJSON(String cpName, String fileName) throws IOException {
+    public static JsonObject getJSON(String cpName, String fileName) throws IOException {
         // 1. check for resource with same name
         final InputStream stream = JSONDocumentType.class.getResourceAsStream(cpName);
         if (stream != null) {
             final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
             try {
-                final JSONObject obj = JSONDocumentType.read(reader);
+                final JsonObject obj = JSONDocumentType.read(reader);
                 return obj;
             } finally {
                 reader.close();
@@ -82,185 +74,174 @@ public class JSONDocumentType extends DataDocument<Object, JSONObject, JSONArray
     }
 
     @Override
-    public boolean isDictionary(Object document) {
-        return document instanceof JSONObject;
+    public boolean isDictionary(JsonElement document) {
+        return document.isJsonObject();
     }
 
     @Override
-    public boolean isList(Object document) {
-        return document instanceof JSONArray;
+    public boolean isList(JsonElement document) {
+        return document.isJsonArray();
+    }
+
+    public boolean isNumber(JsonElement document) {
+        if (!document.isJsonPrimitive())
+            return false;
+        return document.getAsJsonPrimitive().isNumber();
     }
 
     @Override
-    public boolean isInteger(Object document) {
-        return (document instanceof Number) && !(document instanceof Float || document instanceof Double || document instanceof BigDecimal);
+    public boolean isInteger(JsonElement document) {
+        return isNumber(document) && document.getAsBigDecimal().scale() == 0;
     }
 
     @Override
-    public boolean isDouble(Object document) {
-        return (document instanceof Number);
+    public boolean isDouble(JsonElement document) {
+        return isNumber(document) && document.getAsBigDecimal().scale() >= 0;
     }
 
     @Override
-    public boolean isBoolean(Object document) {
-        return document instanceof Boolean;
+    public boolean isBoolean(JsonElement document) {
+        return document.isJsonPrimitive() && document.getAsJsonPrimitive().isBoolean();
     }
 
     @Override
-    public boolean isString(Object document) {
-        return document instanceof String;
+    public boolean isString(JsonElement document) {
+        return document.isJsonPrimitive() && document.getAsJsonPrimitive().isString();
     }
 
     @Override
-    public boolean isNull(Object document) {
-        return document == null;
+    public boolean isNull(JsonElement document) {
+        return document == null || document.isJsonNull();
     }
 
     @Override
-    public long getInt(Object document) {
-        return ((Number)document).longValue();
+    public long getInt(JsonElement document) {
+        return document.getAsInt();
     }
 
     @Override
-    public double getDouble(Object document) {
-        return ((Number)document).doubleValue();
+    public double getDouble(JsonElement document) {
+        return document.getAsDouble();
     }
 
     @Override
-    public boolean getBoolean(Object document) {
-        return (Boolean)document;
+    public boolean getBoolean(JsonElement document) {
+        return document.getAsBoolean();
     }
 
     @Override
-    public String getString(Object document) {
-        return (String)document;
+    public String getString(JsonElement document) {
+        return document.getAsString();
     }
 
 
     @Override
-    public JSONObject getDictionary(Object document) {
-        return (JSONObject)document;
+    public JsonObject getDictionary(JsonElement document) {
+        return document.getAsJsonObject();
     }
 
     @Override
-    public JSONArray getList(Object document) {
-        return (JSONArray)document;
+    public JsonArray getList(JsonElement document) {
+        return document.getAsJsonArray();
     }
 
     @Override
-    public void addToList(JSONArray jsonArray, Object value) {
-        jsonArray.put(value);
+    public void addToList(JsonArray jsonArray, JsonElement value) {
+        jsonArray.add(value);
     }
 
     @Override
-    public Object getFromList(JSONArray jsonArray, int index) {
-        try {
-            return jsonArray.get(index);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+    public JsonElement getFromList(JsonArray jsonArray, int index) {
+        return jsonArray.get(index);
     }
 
     @Override
-    public void setInList(JSONArray jsonArray, int index, Object value) {
-        try {
-            jsonArray.put(index, value);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+    public void setInList(JsonArray jsonArray, int index, JsonElement value) {
+        jsonArray.set(index, value);
     }
 
     @Override
-    public Object wrap(long value) {
-        return value;
+    public JsonPrimitive wrap(long value) {
+        return wrap((Number)value);
     }
 
     @Override
-    public Object wrap(double value) {
-        return value;
+    public JsonPrimitive wrap(double value) {
+        return wrap((Number)value);
+    }
+
+    public JsonPrimitive wrap(Number value) {
+        return new JsonPrimitive(value);
     }
 
     @Override
-    public Object wrap(boolean value) {
-        return value;
+    public JsonPrimitive wrap(boolean value) {
+        return new JsonPrimitive(value);
     }
 
     @Override
-    public Object getNull() {
-        return null;
+    public JsonNull getNull() {
+        return JsonNull.INSTANCE;
     }
 
     @Override
-    public Object wrap(String value) {
-        return value;
+    public JsonPrimitive wrap(String value) {
+        return new JsonPrimitive(value);
     }
 
     @Override
-    public Object wrapDictionary(JSONObject dict) {
+    public JsonObject wrapDictionary(JsonObject dict) {
         return dict;
     }
 
     @Override
-    public Object wrapList(JSONArray dict) {
+    public JsonArray wrapList(JsonArray dict) {
         return dict;
     }
 
     @Override
-    public JSONObject newDictionary() {
-        return new JSONObject();
+    public JsonObject newDictionary() {
+        return new JsonObject();
     }
 
     @Override
-    public JSONArray newList() {
-        return new JSONArray();
+    public JsonArray newList() {
+        return new JsonArray();
     }
 
     @Override
-    public Object getFromDictionary(JSONObject dict, String key) {
-        try {
-            return dict.get(key);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+    public JsonElement getFromDictionary(final JsonObject dict, final String key) {
+        return dict.get(key);
     }
 
     @Override
-    public void deleteFromList(JSONArray jsonArray, int index) {
-        jsonArray.remove(index);
+    public JsonElement deleteFromList(final JsonArray jsonArray, final int index) {
+        return jsonArray.remove(index);
     }
 
     @Override
-    public void addToDictionary(JSONObject dict, String key, Object value) {
-        try {
-            dict.put(key, value);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+    public void addToDictionary(final JsonObject dict, String key, JsonElement value) {
+        dict.add(key, value);
     }
 
     @Override
-    public Object deleteFromDictionary(JSONObject dict, String key) {
+    public JsonElement deleteFromDictionary(final JsonObject dict, String key) {
         return dict.remove(key);
     }
 
     @Override
-    public Set<String> keySetOfDictionary(final JSONObject dict) {
-        return new AbstractSet<String>() {
-            @Override
-            public Iterator<String> iterator() {
-                return dict.keys();
-            }
-
-            @Override
-            public int size() {
-                return dict.length();
-            }
-        };
+    public Set<String> keySetOfDictionary(final JsonObject dict) {
+        Set<Map.Entry<String, JsonElement>> e = dict.entrySet();
+        Set<String> s = new HashSet<>(e.size());
+        for (Map.Entry<String, JsonElement> entry : e) {
+            s.add(entry.getKey());
+        }
+        return s;
     }
 
     @Override
-    public int sizeOfList(JSONArray jsonArray) {
-        return jsonArray.length();
+    public int sizeOfList(final JsonArray jsonArray) {
+        return jsonArray.size();
     }
 
 

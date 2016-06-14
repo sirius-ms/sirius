@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.ChemistryBase.data;
 
-import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 
