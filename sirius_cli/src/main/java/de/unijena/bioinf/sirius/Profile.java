@@ -18,11 +18,10 @@
 package de.unijena.bioinf.sirius;
 
 
+import com.google.gson.JsonObject;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,7 +36,7 @@ public class Profile {
         if (oldSirius) {
             name = name.split(":")[1];
         }
-        final JSONObject json = JSONDocumentType.getJSON("/profiles/" + name.toLowerCase() + ".json", name);
+        final JsonObject json = JSONDocumentType.getJSON("/profiles/" + name.toLowerCase() + ".json", name);
         final JSONDocumentType document = new JSONDocumentType();
         if (document.hasKeyInDictionary(json, "FragmentationPatternAnalysis")) this.fragmentationPatternAnalysis = FragmentationPatternAnalysis.loadFromProfile(document, json);
         else fragmentationPatternAnalysis=null;
@@ -57,7 +56,7 @@ public class Profile {
     public void writeToFile(File name) throws IOException {
         final FileWriter writer = new FileWriter(name);
         final JSONDocumentType json = new JSONDocumentType();
-        final JSONObject obj = json.newDictionary();
+        final JsonObject obj = json.newDictionary();
         if (fragmentationPatternAnalysis != null) {
             fragmentationPatternAnalysis.writeToProfile(json, obj);
         }
