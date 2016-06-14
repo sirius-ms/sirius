@@ -1,6 +1,8 @@
 dependencies {
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
 
-    compile group: 'com.google.code.gson', name: 'gson', version: "$json_version"
+//    compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"
+//    compile group: 'org.glassfish', name: 'javax.json', version:"$json_impl_version"
+    compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
     compile group: 'org.slf4j', name: 'slf4j-api', version:"$slf4j_version"
 }
