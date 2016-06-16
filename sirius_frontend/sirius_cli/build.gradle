@@ -6,3 +6,18 @@ dependencies {
     compile project(':isotope_pattern:isotope_pattern_analysis')
     compile project(':fragmentation_tree:fragmentation_tree_construction')
 }
+
+assemble{
+    println('writing properties file...')
+    Properties properties = new Properties()
+    File propertiesFile = new File("$projectDir/src/main/resources/DefaultSirius.properties")
+    propertiesFile.withInputStream {
+        properties.load(it)
+    }
+    properties.setProperty("sirius-version", "$version");
+    propertiesFile = new File("$projectDir/src/main/resources/Sirius.properties")
+    propertiesFile.withOutputStream{
+        properties.store(it,"")
+    }
+    println('done')
+}

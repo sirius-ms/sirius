@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import com.google.common.collect.BiMap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -33,7 +32,6 @@ import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver.isComputationCorrect;
 
