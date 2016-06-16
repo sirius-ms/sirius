@@ -37,7 +37,7 @@ public class AboutDialog extends JDialog{
 
     public AboutDialog(Frame owner) {
         super(owner, true);
-        setTitle("SIRIUS 3");
+        setTitle(Sirius.VERSION_STRING);
         this.setLayout(new BorderLayout());
         setPreferredSize(new Dimension(500, 800));
         // SIRIUS logo

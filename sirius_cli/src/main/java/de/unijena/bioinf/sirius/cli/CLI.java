@@ -49,7 +49,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CLI {
+public class CLI<Options extends SiriusOptions> {
 
     protected Sirius sirius;
     protected final boolean shellMode;
@@ -57,7 +57,7 @@ public class CLI {
 
     public static void main(String[] args) {
         final CLI cli = new CLI();
-        cli.setArgs(args);
+        cli.parseArgsAndInit(args);
         cli.compute();
     }
 
@@ -66,7 +66,7 @@ public class CLI {
         this.progress = new ShellProgress(System.out, shellMode);
     }
 
-    SiriusOptions options;
+    Options options;
 
     public void compute() {
         try {
@@ -239,14 +239,24 @@ public class CLI {
         }
     }
 
-    public void setArgs(String[] args) {
+    protected void parseArgsAndInit(String[] args) {
+        parseArgs(args);
+        setup();
+        validate();
+    }
+
+    public void parseArgs(String[] args) {
+        parseArgs(args, (Class<Options>) SiriusOptions.class);
+    }
+
+    public void parseArgs(String[] args, Class<Options> optionsClass ) {
         if (args.length==0) {
             System.out.println(Sirius.VERSION_STRING);
-            System.out.println(CliFactory.createCli(SiriusOptions.class).getHelpMessage());
+            System.out.println(CliFactory.createCli(optionsClass).getHelpMessage());
             System.exit(0);
         }
         try {
-            this.options = CliFactory.createCli(SiriusOptions.class).parseArguments(args);
+            this.options = CliFactory.createCli(optionsClass).parseArguments(args);
             if (options.isCite()) {
                 cite();
                 System.exit(0);
@@ -262,53 +272,37 @@ public class CLI {
             cite();
             System.exit(0);
         }
-        setup(options);
-        // validate
-        final File target = options.getOutput();
-        if (target != null) {
-            if (target.exists() && !target.isDirectory()) {
-                System.err.println("Specify a directory name as output directory");
-                System.exit(1);
-            } else if (target.getName().indexOf('.') < 0){
-                target.mkdirs();
-            }
-        }
 
-        final String format = options.getFormat();
-        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot") && !format.equalsIgnoreCase("sirius")) {
-            System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
-            System.exit(1);
-        }
     }
 
-    public void setup(SiriusOptions opts) {
+    public void setup() {
         try {
-            this.sirius = new Sirius(opts.getProfile());
+            this.sirius = new Sirius(options.getProfile());
             final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
             final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
             final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
             final MutableMeasurementProfile ms2Prof = new MutableMeasurementProfile(ms2.getDefaultProfile());
 
-            if (opts.getElements()==null) {
+            if (options.getElements()==null) {
                 // autodetect and use default set
-                ms1Prof.setFormulaConstraints(getDefaultElementSet(opts));
-                ms2Prof.setFormulaConstraints(getDefaultElementSet(opts));
+                ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
+                ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
                 sirius.setElementPrediction(new ElementPrediction(sirius.getMs1Analyzer()));
             } else {
-                ms2Prof.setFormulaConstraints(opts.getElements());
-                ms1Prof.setFormulaConstraints(opts.getElements());
+                ms2Prof.setFormulaConstraints(options.getElements());
+                ms1Prof.setFormulaConstraints(options.getElements());
             }
 
-            if (opts.isAutoCharge()) {
+            if (options.isAutoCharge()) {
                 sirius.setAutoIonMode(true);
             }
 
-            if (opts.getMedianNoise()!=null) {
-                ms2Prof.setMedianNoiseIntensity(opts.getMedianNoise());
+            if (options.getMedianNoise()!=null) {
+                ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
             }
-            if (opts.getPPMMax() != null) {
-                ms2Prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
-                ms1Prof.setAllowedMassDeviation(new Deviation(opts.getPPMMax()));
+            if (options.getPPMMax() != null) {
+                ms2Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
+                ms1Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
             }
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
             if (builder instanceof DPTreeBuilder) {
@@ -329,8 +323,27 @@ public class CLI {
             });
             */
         } catch (IOException e) {
-            System.err.println("Cannot load profile '" + opts.getProfile() + "':\n");
+            System.err.println("Cannot load profile '" + options.getProfile() + "':\n");
             e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    public void validate(){
+        // validate
+        final File target = options.getOutput();
+        if (target != null) {
+            if (target.exists() && !target.isDirectory()) {
+                System.err.println("Specify a directory name as output directory");
+                System.exit(1);
+            } else if (target.getName().indexOf('.') < 0){
+                target.mkdirs();
+            }
+        }
+
+        final String format = options.getFormat();
+        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot") && !format.equalsIgnoreCase("sirius")) {
+            System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
             System.exit(1);
         }
     }

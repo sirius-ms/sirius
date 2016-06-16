@@ -351,7 +351,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 
 	public static void main(String[] args){
-		MainFrame mf = new MainFrame();
+		new MainFrame();
 	}
 
 	public void windowOpened(WindowEvent e) {
