@@ -8,16 +8,24 @@ ext{
     math3_version = '3.+'
     glpk_version = '1.0.37'
     jewelcli_version = '0.8.+'
-    gurobi_version = '6.0'
+
+    gurobi_version = '6.+'
+    gurobi_artifact = ''
 
 
     graphUtils_version = '1.1'
+
+    //locations of runtime libraries
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
 }
+
+
 
 
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
+//    apply plugin: 'nebula.provided-base'
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -46,4 +54,13 @@ allprojects {
 
         testCompile group: 'junit', name: 'junit', version: '4.+'
     }
+
+    configurations {
+        provided
+//        isolated
+        compileOnly.extendsFrom provided
+//        provided.extendsFrom isolated
+    }
+
+
 }
