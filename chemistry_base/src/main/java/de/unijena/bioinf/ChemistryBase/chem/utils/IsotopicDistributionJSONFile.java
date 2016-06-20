@@ -17,36 +17,36 @@
  */
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Map;
 
 public class IsotopicDistributionJSONFile extends DistributionReader {
 
-	public IsotopicDistribution read(Reader json) throws IOException{
-		final IsotopicDistribution dist = new IsotopicDistribution(PeriodicTable.getInstance());
+    public IsotopicDistribution read(Reader json) throws IOException {
+        final IsotopicDistribution dist = new IsotopicDistribution(PeriodicTable.getInstance());
         final BufferedReader reader = new BufferedReader(json);
-		try (final JsonReader jreader = Json.createReader(reader)) {
-            JsonObject jobj = jreader.readObject();
-            for (String key : jobj.keySet()) {
-                final Isotopes prev = PeriodicTable.getInstance().getDistribution().getIsotopesFor(key);
-                final JsonArray jabundances = jobj.getJsonArray(key);
-                final double[] abundances = new double[jabundances.size()];
-                final double[] masses = new double[jabundances.size()];
-                for (int i=0; i < prev.getNumberOfIsotopes(); ++i) {  // TODO: fix!!!
-                    abundances[i] = jabundances.getJsonNumber(i).doubleValue();
-                    masses[i] = prev.getMass(i);
-                }
-                dist.addIsotope(key, masses, abundances);
+        final JsonParser jreader = new JsonParser();
+        JsonObject jobj = jreader.parse(reader).getAsJsonObject();
+        for (Map.Entry<String, JsonElement> entry : jobj.entrySet()) {
+            final Isotopes prev = PeriodicTable.getInstance().getDistribution().getIsotopesFor(entry.getKey());
+            final JsonArray jabundances = entry.getValue().getAsJsonArray();
+            final double[] abundances = new double[jabundances.size()];
+            final double[] masses = new double[jabundances.size()];
+            for (int i = 0; i < prev.getNumberOfIsotopes(); ++i) {  // TODO: fix!!!
+                abundances[i] = jabundances.get(i).getAsDouble();
+                masses[i] = prev.getMass(i);
             }
+            dist.addIsotope(entry.getKey(), masses, abundances);
         }
         return dist;
-	}
+    }
 }

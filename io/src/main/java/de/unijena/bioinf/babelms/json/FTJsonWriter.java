@@ -17,63 +17,60 @@
  */
 package de.unijena.bioinf.babelms.json;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.internal.Streams;
+import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
 public class FTJsonWriter {
 
+
     private DescriptorRegistry registry = DescriptorRegistry.getInstance();
 
     public void writeTree(Writer writer, FTree tree) throws IOException {
-        try {
-            writer.write(tree2json(tree).toString(4));
-        } catch (JSONException e) {
-            throw new IOException(e);
-        } finally {
-            writer.close();
-        }
+        final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        writer.write(gson.toJson(tree2json(tree)));
     }
 
     public void writeTreeToFile(File f, FTree tree) throws IOException {
-        try (final FileWriter fileWriter = new FileWriter(f)) {
-            fileWriter.write(tree2json(tree).toString(4));
-        } catch (JSONException e) {
-            throw new IOException(e);
-        }
+        writeTree(Files.newBufferedWriter(f.toPath(), Charset.defaultCharset()),tree);
     }
 
-    protected JSONObject tree2json(FTree tree) throws JSONException {
+    protected JsonObject tree2json(FTree tree){
         final JSONDocumentType JSON = new JSONDocumentType();
-        final JSONObject j = new JSONObject();
+        final JsonObject j = new JsonObject();
         final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
         final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
         if (generalIonType!=null) {
             final MolecularFormula formula = tree.getRoot().getFormula();
             final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
             final MolecularFormula neutral = fragmentIon.measuredNeutralMoleculeToNeutralMolecule(formula);
-            j.put("molecularFormula", neutral.toString());
-            j.put("root", formula.toString());
+            j.addProperty("molecularFormula", neutral.toString());
+            j.addProperty("root", formula.toString());
         } else {
             final String f = tree.getRoot().getFormula().toString();
-            j.put("molecularFormula", f);
-            j.put("root", f);
+            j.addProperty("molecularFormula", f);
+            j.addProperty("root", f);
         }
 
-        final JSONObject ano = new JSONObject();
-        j.put("annotations", ano);
+        final JsonObject ano = new JsonObject();
+        j.add("annotations", ano);
 
         for (Map.Entry<Class<Object>, Object> anot : tree.getAnnotations().entrySet()) {
             Descriptor<Object> d = registry.get(FTree.class, anot.getKey());
@@ -82,15 +79,15 @@ public class FTJsonWriter {
             }
         }
 
-        final JSONArray fragmentList = new JSONArray();
-        j.put("fragments", fragmentList);
+        final JsonArray fragmentList = new JsonArray();
+        j.add("fragments", fragmentList);
 
         final List<FragmentAnnotation<Object>> fragmentAnnotations = tree.getFragmentAnnotations();
         for (Fragment f : tree.getFragments()) {
-            final JSONObject fragment = new JSONObject();
-            fragmentList.put(fragment);
-            fragment.put("id", f.getVertexId());
-            fragment.put("molecularFormula", f.getFormula().toString());
+            final JsonObject fragment = new JsonObject();
+            fragmentList.add(fragment);
+            fragment.addProperty("id", f.getVertexId());
+            fragment.addProperty("molecularFormula", f.getFormula().toString());
             for (FragmentAnnotation<Object> fano : fragmentAnnotations) {
                 if (fano.get(f)!=null) {
                     Descriptor<Object> d = registry.get(Fragment.class, fano.getAnnotationType());
@@ -100,16 +97,16 @@ public class FTJsonWriter {
             }
         }
 
-        final JSONArray lossList = new JSONArray();
-        j.put("losses", lossList);
+        final JsonArray lossList = new JsonArray();
+        j.add("losses", lossList);
 
         final List<LossAnnotation<Object>> lossAnnotations = tree.getLossAnnotations();
         for (Loss l : tree.losses()) {
-            final JSONObject loss = new JSONObject();
-            lossList.put(loss);
-            loss.put("source", l.getSource().getFormula());
-            loss.put("target", l.getTarget().getFormula());
-            loss.put("molecularFormula", l.getFormula().toString());
+            final JsonObject loss = new JsonObject();
+            lossList.add(loss);
+            loss.addProperty("source", l.getSource().getFormula().toString());
+            loss.addProperty("target", l.getTarget().getFormula().toString());
+            loss.addProperty("molecularFormula", l.getFormula().toString());
             for (LossAnnotation<Object> lano : lossAnnotations) {
                 if (lano.get(l)!=null) {
                     Descriptor<Object> d = registry.get(Loss.class, lano.getAnnotationType());
