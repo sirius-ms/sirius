@@ -6,7 +6,7 @@ ext{
     json_version = '1.0'
     json_impl_version = "1.0.4"
     math3_version = '3.+'
-    glpk_version = '1.0.37'
+    glpk_version = '1.7.0'//'1.0.37'
     jewelcli_version = '0.8.+'
 
     gurobi_version = '6.+'
