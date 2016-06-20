@@ -53,119 +53,137 @@ dependencies {
     provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
-def linSuffix = 'Linux'
-def winSuffix = 'Win'
-
-mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
-project.ext.set("arch", "64")
-project.ext.set("appName", "sirius3")
-project.ext.set("os", linSuffix)
-
-jar{
-    println(configurations.getNames())
-}
-
-
-
 shadowJar {
 
     configurations = [project.configurations.compile]
     classifier = 'fat'
     manifest {
         attributes 'Class-Path': "$runtimeClasspath"
-//        attributes 'Class-Path': "/home/fleisch/software/gurobi651/linux64/lib/gurobi.jar"
     }
 }
+
+
+def linSuffix = 'linux'
+def winSuffix = 'win'
+
+mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+project.ext.set("arch", "64,32")
+project.ext.set("type", "gui,console")
+project.ext.set("appName", "sirius3")
+project.ext.set("os", linSuffix)
 
 launch4j {
     mainClassName = project.mainClassName
+    mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
+
     icon = file('src/main/resources/icons/sirius.ico')
-    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena. Kai Dührkop and Marvin Meusel"
+    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
     companyName = "Friedrich-Schiller-University Jena"
     version = project.version
     textVersion = project.version
+    supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+
+    dontWrapJar = true
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+
     initialHeapPercent = 50
     maxHeapPercent = 80
     jdkPreference = "preferJre"
-    jreRuntimeBits = '64/32'
+
+    guiCLIArgument = '--gui'
+
     outfile = "${project.appName}.exe"
-    classPath = ["${runtimeClasspath.replace('${','%').replace('}','%')}"]
-//    libraryDir = "./"
-    copyConfigurable = project.tasks.shadowJar.outputs.files
-    jar = "lib/${project.tasks.shadowJar.archiveName}"
-//    println("lib/${project.tasks.jar.archiveName}")
+    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
+    jar = "lib/${project.tasks.jar.archiveName}"
 }
+
+createExe.dependsOn 'installDist'
 
 startScripts {
     applicationName = "${project.appName}"
+
     doLast {
-        unixScript.text = unixScript.text.replace("CLASSPATH=", "CLASSPATH=${runtimeClasspath}:")
-        windowsScript.text = windowsScript.text.replace("set CLASSPATH=", "set CLASSPATH=${runtimeClasspath.replace('${','%').replace('}','%')};")
+        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""' + "${System.lineSeparator()}" + 'export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$APP_HOME/lib:$LD_LIBRARY_PATH')
     }
 }
 
 
-
-
 def fatJarFile = project.tasks.shadowJar.outputs.files.singleFile
-/*println(fatJarFile.toString())
+
 
 distributions {
+    project.arch.split(',').each { ar ->
+        def n = "${linSuffix}${ar}"
+        create(n, {
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from("build/install/${project.name}/lib")
+                    from("../glpk/l${ar}/")
+                }
 
-    linux {
-        baseName = project.getName() + linSuffix
-        contents {
-            from { 'src/main/resources/dist/' }
-            from { fatJarFile }
-            from { 'src/main/resources/dist-linux/' }
-        }
+                into('bin') {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                }
+            }
+        })
     }
 
-    win {
-        baseName = project.getName() + winSuffix
-        contents {
-            from { 'src/main/resources/dist/' }
-            from { 'build/launch4j/' }
-            from { fatJarFile }
-        }
+    //crete win32And64 zip tasks
+    project.arch.split(',').each { ar ->
+        def n = "${winSuffix}${ar}"
+        create(n, {
+
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from('build/launch4j/lib')
+                }
+                from { "../glpk/w${ar}/" }
+                from('build/launch4j') {
+                    include("*-${ar}.exe")
+                }
+                //todo add doc
+                /* into('doc') {
+                     from{}
+                 }*/
+            }
+        })
     }
 
-    jar {
+    /*jar {
         baseName = project.getName()
         contents {
             from { 'src/main/resources/dist/' }
             from { fatJarFile }
         }
-    }
-
-
+    }*/
 }
 
-task distribute(*//*type: distributions*//*) {}
-distribute.dependsOn 'linuxDistZip', 'winDistZip', 'jarDistZip'
+/*task distribute(type: distributions) {}
+distribute.dependsOn 'linux32DistZip', 'linux64DistZip', 'win32DistZip', 'win64DistZip'*/
 
-
-linuxDistZip.doLast {
-    File file = project.tasks.linuxDistZip.outputs.files.singleFile
-    println(file)
-    file.renameTo(file.toString().replace((linSuffix + "-" + version + "."), "-" + version + linSuffix + "."))
-}
-
-winDistZip.doLast {
-    File file = project.tasks.winDistZip.outputs.files.singleFile
-    println(file)
-    file.renameTo(file.toString().replace((winSuffix + "-" + version + "."), "-" + version + winSuffix + "."))
-}
-
-distZip.dependsOn 'shadowJar'
+/*distZip.dependsOn 'shadowJar'
 distTar.dependsOn 'shadowJar'
-installDist.dependsOn 'shadowJar'
+installDist.dependsOn 'shadowJar'*/
 
-linuxDistZip.dependsOn 'shadowJar'
-linuxDistTar.dependsOn 'shadowJar'
-installLinuxDist.dependsOn 'shadowJar'
+linux32DistZip.dependsOn 'installDist'
+linux32DistTar.dependsOn 'installDist'
+installLinux32Dist.dependsOn 'installDist'
 
-winDistZip.dependsOn 'createExe'
-winDistTar.dependsOn 'createExe'
-installWinDist.dependsOn 'createExe'*/
+linux64DistZip.dependsOn 'installDist'
+linux64DistTar.dependsOn 'installDist'
+installLinux64Dist.dependsOn 'installDist'
+
+win32DistZip.dependsOn 'createExe'
+win32DistTar.dependsOn 'createExe'
+installWin32Dist.dependsOn 'createExe'
+
+win64DistZip.dependsOn 'createExe'
+win64DistTar.dependsOn 'createExe'
+installWin64Dist.dependsOn 'createExe'
 

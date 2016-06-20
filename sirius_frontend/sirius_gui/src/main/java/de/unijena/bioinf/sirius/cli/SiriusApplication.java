@@ -9,6 +9,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.Guro
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import gurobi.GRBEnv;
 import gurobi.GRBException;
+import org.gnu.glpk.GLPK;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -16,21 +17,23 @@ import gurobi.GRBException;
 public class SiriusApplication {
 
     public static void main(String[] args) throws GRBException {
+        //todo remove debugging
+        System.out.println("check gurobi");
         GurobiSolver s = new GurobiSolver();
         GRBEnv e = s.getEnv();
+        System.out.println("check GLPK");
+        System.out.println(GLPK.glp_version());
         e.resetParams();
-        if (args == null || args.length == 0) {
-           new MainFrame();
-        }else {
-            final CLI<SiriusGUIOptions> cli = new CLI<>();
-            cli.parseArgs(args, SiriusGUIOptions.class);
-            if (cli.options.isGUI()) {
-                new MainFrame();
-            } else {
-                cli.setup();
-                cli.validate();
-                cli.compute();
-            }
+
+
+        final CLI<SiriusGUIOptions> cli = new CLI<>();
+        cli.parseArgs(args, SiriusGUIOptions.class);
+        if (cli.options.isGUI()) {
+            new MainFrame();
+        } else {
+            cli.setup();
+            cli.validate();
+            cli.compute();
         }
     }
 }
