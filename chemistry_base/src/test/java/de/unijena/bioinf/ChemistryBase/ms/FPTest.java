@@ -73,10 +73,11 @@ public class FPTest {
         ArrayFingerprint l3,r3;
         {
             // F1={2,5,8}, inv(F1) = {0,1,3,4,6,7,9}
-            final boolean[] a = new boolean[]{false, false, true, false, false, true, false, false, true, false};
             // F2={5,7,9}, inv(F2) = {0,1,2,3,4,6,8}
+            final boolean[] a = new boolean[]{false, false, true, false, false, true, false, false, true, false};
             // F1 u F2 = {2,5,7,8,9}
             // F1 n F2 = {5}
+
             final boolean[] b = new boolean[]{false, false, false, false, false, true, false, true, false, true};
             l1 = new BooleanFingerprint(tv, a);
             r1 = new BooleanFingerprint(tv,b);
@@ -87,7 +88,7 @@ public class FPTest {
         }
 
         final TIntArrayList indizes = new TIntArrayList();
-
+        final ArrayList<Boolean> values = new ArrayList<>();
         for (FPIter iter : l1) {
             if (iter.isSet()) indizes.add(iter.getIndex());
         }
@@ -192,6 +193,136 @@ public class FPTest {
         }
         assertArrayEquals("union (boolean) takes union of all indizes", unionAry, is.toArray());
         is.clear();
+
+        //////////////////
+        // test pairwise
+        //////////////////
+        // F1={2,5,8}, inv(F1) = {0,1,3,4,6,7,9}
+        // F2={5,7,9}, inv(F2) = {0,1,2,3,4,6,8}
+
+        final Boolean[] expectedValues = new Boolean[]{
+                false,false,    // 0
+                false,false,    // 1
+                true,false,     // 2
+                false,false,    // 3
+                false,false,    // 4
+                true,true,      // 5
+                false,false,    // 6
+                false,true,     // 7
+                true,false,     // 8
+                false,true      // 9
+        };
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l1.foreachPair(r1)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l2.foreachPair(r2)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l3.foreachPair(r3)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l1.foreachPair(r2)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l1.foreachPair(r3)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l2.foreachPair(r3)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l2.foreachPair(r1)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+        indizes.clear();
+        values.clear();
+        for (FPIter2 iter : l3.foreachPair(r1)) {
+            indizes.add(iter.getIndex());
+            values.add(iter.isLeftSet());
+            values.add(iter.isRightSet());
+        }
+        assertArrayEquals("union (boolean) takes union of all indizes", new int[]{0,1,2,3,4,5,6,7,8,9}, indizes.toArray());
+        assertArrayEquals("union (boolean) takes union of all indizes", expectedValues, values.toArray());
+
+
+        //////////////////
+        // test mask
+        //////////////////
+        final MaskedFingerprintVersion fm = MaskedFingerprintVersion.buildMaskFor(tv).disableAll().enable(0).enable(2).enable(4).enable(8).toMask();
+        indizes.clear();
+
+        for (FPIter2 inter : fm.mask(l1).foreachUnion(fm.mask(r1))) {
+            indizes.add(inter.getIndex());
+        }
+        assertArrayEquals("masked union (indizes) takes union of all masked indizes", new int[]{2,8}, indizes.toArray());
+        indizes.clear();
+
+        for (FPIter2 inter : fm.mask(l2).foreachUnion(fm.mask(r2))) {
+            indizes.add(inter.getIndex());
+        }
+        assertArrayEquals("masked union (indizes) takes union of all masked indizes", new int[]{2,8}, indizes.toArray());
+        indizes.clear();
+
+        for (FPIter2 inter : fm.mask(l3).foreachUnion(fm.mask(r3))) {
+            indizes.add(inter.getIndex());
+        }
+        assertArrayEquals("masked union (indizes) takes union of all masked indizes", new int[]{2,8}, indizes.toArray());
+        indizes.clear();
 
 
 

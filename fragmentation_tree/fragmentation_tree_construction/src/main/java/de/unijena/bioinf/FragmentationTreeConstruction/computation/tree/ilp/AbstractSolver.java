@@ -18,7 +18,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import com.google.common.collect.BiMap;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -267,7 +266,7 @@ abstract public class AbstractSolver {
 
     /**
      * - for each color, take only one incoming edge
-     * - the sum of all edges going into color c is equal or less than 1
+     * - the sum of all edges going into color relative is equal or less than 1
      * @throws Exception
      */
     abstract protected void setColorConstraint() throws Exception;
