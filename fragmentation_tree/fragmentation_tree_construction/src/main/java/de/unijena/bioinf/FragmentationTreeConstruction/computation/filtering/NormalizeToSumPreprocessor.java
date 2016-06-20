@@ -53,7 +53,7 @@ public class NormalizeToSumPreprocessor implements Preprocessor {
         final double basePeakIntensity = Spectrums.getMaximalIntensity(specs.get(0));
         final double delta = Math.min(Spectrums.getMinimalIntensity(specs.get(0))/10d, 0.001);
         for (Ms2Spectrum spec : specs) {
-            if ((Spectrums.getMaximalIntensity(spec) - basePeakIntensity) > delta) return false;
+            if (Math.abs(Spectrums.getMaximalIntensity(spec) - basePeakIntensity) > delta) return false;
         }
         return true;
     }

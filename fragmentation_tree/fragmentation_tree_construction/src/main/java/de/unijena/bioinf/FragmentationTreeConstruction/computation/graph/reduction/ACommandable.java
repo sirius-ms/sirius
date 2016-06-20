@@ -15,8 +15,8 @@ import java.util.LinkedList;
  * Interface holding some method declarations
  *
  * USAGE OF IMPLEMENTING COMMANDS IN THIS COMMAND-PARSER
- * ~ executeMethod MUST return Ci + c, c >= 0
- * ~ Ci shall be increase equally by the amount of arguments a command used => increase c by every argument used
+ * ~ executeMethod MUST return Ci + relative, relative >= 0
+ * ~ Ci shall be increase equally by the amount of arguments a command used => increase relative by every argument used
  * ~ check, if the argument list 'arg' is large enough to contain arguments, if you need them
  * ~ description is the method that is called whenever 'help' is used or you feel like telling the user how to use the command
  */

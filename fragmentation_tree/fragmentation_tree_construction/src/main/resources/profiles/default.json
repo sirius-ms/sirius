@@ -211,6 +211,10 @@
     },
     "$name": "FragmentationPatternAnalysis",
     "preProcessing": [
+{
+        "$name": "NormalizeToSumPreprocessor",
+        "onlyForRelativeIntensities": true
+      },
       {
         "$name": "DynamicBaselineFilter",
         "standardDeviation": 0.05,

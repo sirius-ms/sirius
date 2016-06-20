@@ -130,10 +130,10 @@ public class GurobiJniSolver implements TreeBuilder {
 
 
         /**
-         * - Returns the c reference as long of the newly create environment
+         * - Returns the relative reference as long of the newly create environment
          * - That value will be needed for the Gurobi Jni Interface
          * @param logfilename
-         * @return: Long representing the GRBEnv address within the c area
+         * @return: Long representing the GRBEnv address within the relative area
          */
         public long getDefaultEnv(String logfilename) {
 
@@ -329,7 +329,7 @@ public class GurobiJniSolver implements TreeBuilder {
         @Override
         /**
          * for each color, take only one incoming edge
-         * the sum of all edges going into color c is equal or less than 1
+         * the sum of all edges going into color relative is equal or less than 1
          * TODO: optimize
          */
         protected void setColorConstraint() {

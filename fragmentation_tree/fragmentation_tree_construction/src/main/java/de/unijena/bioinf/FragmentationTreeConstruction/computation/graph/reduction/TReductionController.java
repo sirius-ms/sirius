@@ -671,7 +671,7 @@ public class TReductionController implements GraphReduction {
 		protected String description( ) {
 
 			return " ~ delVert \n" +
-					" ~ [a b c ...] \n" +
+					" ~ [a b relative ...] \n" +
 				    " ~ deletes one or more vertices by the given ID (using vertex search)\n";
 		}
 	}

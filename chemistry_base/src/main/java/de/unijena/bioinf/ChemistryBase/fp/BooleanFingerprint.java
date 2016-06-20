@@ -114,7 +114,7 @@ public class BooleanFingerprint extends Fingerprint {
     public FPIter2 foreachPair(AbstractFingerprint fp) {
         if (fp instanceof BooleanFingerprint) return new PairwiseIterator(this, (BooleanFingerprint) fp, -1, -1);
         else if (fp instanceof ProbabilityFingerprint) return new ProbabilityFingerprint.PairwiseBooleanProb(this, (ProbabilityFingerprint)fp, -1);
-        else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
+        else return super.foreachPair(fp);
         // We cannot express this in javas type system -_- In theory somebody could just implement a pairwise iterator
         // for mixed types
     }
@@ -286,7 +286,7 @@ public class BooleanFingerprint extends Fingerprint {
 
         @Override
         public int getIndex() {
-            return current;
+            return left.getFingerprintVersion().getAbsoluteIndexOf(current);
         }
 
         @Override

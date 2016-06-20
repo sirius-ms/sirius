@@ -82,7 +82,7 @@ class IsotopologueTable implements Isotopologues {
         }
     }
     /*
-    private static int generateIsotopologues(Element element, Isotopologue[] list, int c, short[] vector, int maximalAmount, double[] isoMasses, double[] isoProbabilities, double currentMass, double currentProbability) {
+    private static int generateIsotopologues(Element element, Isotopologue[] list, int relative, short[] vector, int maximalAmount, double[] isoMasses, double[] isoProbabilities, double currentMass, double currentProbability) {
         for (int i = vector.length - 1; i >= 0; --i) {
             // increase vector[i]
             ++vector[i];
@@ -90,10 +90,10 @@ class IsotopologueTable implements Isotopologues {
             currentMass += isoMasses[i];
             currentProbability += isoProbabilities[i];
             // add to list
-            list[c++] = new Isotopologue(vector.clone(), currentMass, currentProbability);
+            list[relative++] = new Isotopologue(vector.clone(), currentMass, currentProbability);
             // recursive call
             if (maximalAmount > 0) {
-                c = generateIsotopologues(element, list, c, vector, maximalAmount, isoMasses, isoProbabilities, currentMass, currentProbability);
+                relative = generateIsotopologues(element, list, relative, vector, maximalAmount, isoMasses, isoProbabilities, currentMass, currentProbability);
             }
             // redo
             --vector[i];
@@ -102,7 +102,7 @@ class IsotopologueTable implements Isotopologues {
             currentProbability -= isoProbabilities[i];
             if (vector[i] != 0) break;
         }
-        return c;
+        return relative;
     }
     */
 
@@ -119,7 +119,7 @@ class IsotopologueTable implements Isotopologues {
             currentMass += isoMasses[k];
         }
         list[c++] = new Isotopologue(vector.clone(), currentMass, currentProb);
-        //check(list[c-1], isoProbabilities);
+        //check(list[relative-1], isoProbabilities);
         vector[k] = 0;
         return c;
     }
@@ -131,7 +131,7 @@ class IsotopologueTable implements Isotopologues {
             x += isotopologue.amounts[i] * isoProbabilities[i];
             c += isotopologue.amounts[i];
         }
-        //assert c == atomNumber : "expect " + atomNumber + " atoms but " + c + " is given";
+        //assert relative == atomNumber : "expect " + atomNumber + " atoms but " + relative + " is given";
         assert Math.abs(x - isotopologue.logAbundance) < 1e-14 : "expect " + x + " but " + isotopologue.logAbundance + " given";
     }
 

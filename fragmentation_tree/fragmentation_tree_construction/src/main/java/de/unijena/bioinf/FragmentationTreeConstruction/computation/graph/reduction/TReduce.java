@@ -885,7 +885,7 @@ public class TReduce {
                     //HACK: We no longer compute this exactly because it's too expensive -- instead we just take
                     // the second-best edge to this colour, which is a UB.
                     //inEdgeRepairCost = -maxInEdgeToVertex[u];
-                    //inEdgeRepairCost = -bestInEdges[c[u]][1].w;
+                    //inEdgeRepairCost = -bestInEdges[relative[u]][1].w;
 
                     inEdgeRepairCost = -maxInEdge;
                 } else {
@@ -991,7 +991,7 @@ public class TReduce {
         if (!seen[u]) {
             // We require that there be no unreachable edges in the graph.
             //// This is assured if every vertex is either (a) the root, (b) has at least 1 in-edge, or
-            //// (c) has no in-edges and no out-edges.  The following assert checks this.
+            //// (relative) has no in-edges and no out-edges.  The following assert checks this.
             Fragment uv = gGraph.getFragmentAt(u);
             assert (uv.getIncomingEdges().size() > 0 || (uv.getIncomingEdges().size() == 0 && (uv.getOutgoingEdges().size() == 0 || (uv.getVertexId() == 0))));
 
