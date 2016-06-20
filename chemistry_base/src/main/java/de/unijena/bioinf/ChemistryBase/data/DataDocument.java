@@ -217,7 +217,7 @@ public abstract class DataDocument<General, Dictionary, List> {
         setInList(list, index, wrapList(value));
     }
 
-    public abstract void deleteFromList(List list, int index);
+    public abstract General deleteFromList(List list, int index);
 
     public abstract void addToDictionary(Dictionary dict, String key, General value);
 

@@ -154,8 +154,8 @@ public class JDKDocument extends DataDocument<Object, Map<String, Object>, List<
     }
 
     @Override
-    public void deleteFromList(List<Object> objects, int index) {
-        objects.remove(index);
+    public Object deleteFromList(List<Object> objects, int index) {
+        return  objects.remove(index);
     }
 
     @Override
