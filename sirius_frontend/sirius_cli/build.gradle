@@ -1,3 +1,7 @@
+apply plugin: "application"
+
+mainClassName = "de.unijena.bioinf.sirius.cli.CLI"
+
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
 

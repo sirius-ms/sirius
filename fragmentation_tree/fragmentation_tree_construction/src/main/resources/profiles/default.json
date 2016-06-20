@@ -227,7 +227,7 @@
     },
     "fragmentScorers": [
       {
-        "$name": "MassDeviationVertexScorer",
+        "$name": "MassDeviationVertexScorer"
       },
       {
         "$name": "PhosphorScorer"

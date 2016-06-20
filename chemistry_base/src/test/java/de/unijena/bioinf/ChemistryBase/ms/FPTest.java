@@ -40,6 +40,11 @@ public class FPTest {
 
     protected static final class TestVersion extends FingerprintVersion {
 
+        private final int size;
+        public TestVersion(int size) {
+            this.size=size;
+        }
+
         @Override
         public MolecularProperty getMolecularProperty(int index) {
             return new PseudoProperty(index);
@@ -47,7 +52,7 @@ public class FPTest {
 
         @Override
         public int size() {
-            return 10;
+            return size;
         }
 
         @Override
@@ -57,17 +62,8 @@ public class FPTest {
     }
 
     @Test
-    public void testMasking() {
-        final TestVersion tv = new TestVersion();
-        // an empty mask allows everything
-        {
-            final MaskedFingerprintVersion m = MaskedFingerprintVersion.buildMaskFor(tv).toMask();
-        }
-    }
-
-    @Test
     public void testIterators() {
-        final TestVersion tv = new TestVersion();
+        final TestVersion tv = new TestVersion(10);
         BooleanFingerprint l1, r1;
         ProbabilityFingerprint l2,r2;
         ArrayFingerprint l3,r3;
@@ -323,9 +319,36 @@ public class FPTest {
         }
         assertArrayEquals("masked union (indizes) takes union of all masked indizes", new int[]{2,8}, indizes.toArray());
         indizes.clear();
+    }
 
+    @Test
+    public void testTanimoto() {
+        final short[] list1 = new short[]{0,  2,  5,7,10,   12,15,16,17};
+        final short[] list2 = new short[]{0,1,2,3,    10,11,12,   16,17};
+        final FingerprintVersion testVersion = new TestVersion(18);
+        final Fingerprint a = new ArrayFingerprint(testVersion, list1);
+        final Fingerprint b = new ArrayFingerprint(testVersion, list2);
+        final Fingerprint[] left = new Fingerprint[]{a,a.asBooleans()};
+        final Fingerprint[] right = new Fingerprint[]{b,b.asBooleans()};
 
+        for (Fingerprint l : left) {
+            for (Fingerprint r : right) {
+                final double tanimoto = l.tanimoto(r);
+                assertEquals(l.getClass().getSimpleName() + " <-> " +  r.getClass().getSimpleName() + " tanimoto: ", 6d/12d, tanimoto, 0.005);
+            }
+        }
 
+        // and now with masking
+
+        final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(testVersion);
+        builder.enableAll().disable(1).disable(10).disable(15);
+        final MaskedFingerprintVersion fm = builder.toMask();
+        for (Fingerprint l : left) {
+            for (Fingerprint r : right) {
+                final double tanimoto = fm.mask(l).tanimoto(fm.mask(r));
+                assertEquals("Masked " + l.getClass().getSimpleName() + " <-> " +  r.getClass().getSimpleName() + " tanimoto: ",5d/9d, tanimoto, 0.005);
+            }
+        }
 
     }
 

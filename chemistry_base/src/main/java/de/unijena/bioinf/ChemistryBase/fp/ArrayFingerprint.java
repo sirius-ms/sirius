@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayFingerprint extends Fingerprint {
 
@@ -357,34 +358,96 @@ public class ArrayFingerprint extends Fingerprint {
         }
     }
 
-    private static class PairwiseUnionIterator extends PairwiseIterator {
-        private final int max;
+    private static class PairwiseUnionIterator implements FPIter2 {
+        private int l, r, a;
+        private ArrayFingerprint left, right;
         public PairwiseUnionIterator(ArrayFingerprint left, ArrayFingerprint right, int c, int l, int r) {
-            super(left, right, c, l, r);
-            if (left.indizes.length==0) {
-                if (right.indizes.length==0) max=-1;
-                else max = right.indizes[right.indizes.length-1];
-            } else if (right.indizes.length==0) max=left.indizes[left.indizes.length-1];
-            else max = Math.max(left.indizes[left.indizes.length-1],right.indizes[right.indizes.length-1]);
+            this.l = l;
+            this.r = r;
+            this.a = c;
+            this.left = left;
+            this.right = right;
+        }
+
+        private void findNext() {
+            if (l >= left.indizes.length) {
+                if (r >= right.indizes.length) {
+                    throw new NoSuchElementException();
+                } else {
+                    a = right.indizes[r++];
+                }
+            } else if (r >= right.indizes.length) {
+                a = left.indizes[l++];
+            } else {
+                if (left.indizes[l] > right.indizes[r]) {
+                    a = right.indizes[r++];
+                } else if (left.indizes[l] < right.indizes[r]) {
+                    a = left.indizes[l++];
+                } else {
+                    a = left.indizes[l++];
+                    r++;
+                }
+            }
         }
 
         @Override
         public PairwiseUnionIterator clone() {
-            return new PairwiseUnionIterator(left,right,relative,l,r);
+            return new PairwiseUnionIterator(left,right,a,l,r);
+        }
+
+        @Override
+        public double getLeftProbability() {
+            if (l > 0 && a==left.indizes[l-1]) return 1d;
+            else return 0d;
+        }
+
+        @Override
+        public double getRightProbability() {
+            if (r > 0 && a==right.indizes[r-1]) return 1d;
+            else return 0d;
+        }
+
+        @Override
+        public boolean isLeftSet() {
+            if (l > 0 && a==left.indizes[l-1]) return true;
+            else return false;
+        }
+
+        @Override
+        public boolean isRightSet() {
+            if (r > 0 && a==right.indizes[r-1]) return true;
+            else return false;
+        }
+
+        @Override
+        public int getIndex() {
+            return a;
+        }
+
+        @Override
+        public MolecularProperty getMolecularProperty() {
+            return left.fingerprintVersion.getMolecularProperty(a);
         }
 
         @Override
         public FPIter2 next() {
-            ++relative;
-            if (l < left.indizes.length && relative > left.indizes[l]) ++l;
-            if (r < right.indizes.length &&  relative > right.indizes[r]) ++r;
-            relative = Math.min(l >= left.indizes.length ? Integer.MAX_VALUE : left.indizes[l], r >= right.indizes.length ? Integer.MAX_VALUE : right.indizes[r]);
+            findNext();
             return this;
         }
 
         @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public boolean hasNext() {
-            return relative < max;
+            return l < left.indizes.length || r < right.indizes.length;
+        }
+
+        @Override
+        public Iterator<FPIter2> iterator() {
+            return clone();
         }
     }
 

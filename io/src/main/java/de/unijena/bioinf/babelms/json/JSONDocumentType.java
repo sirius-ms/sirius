@@ -96,7 +96,7 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
 
     @Override
     public boolean isDouble(JsonElement document) {
-        return isNumber(document) && document.getAsBigDecimal().scale() >= 0;
+        return isNumber(document);/* && document.getAsBigDecimal().scale() >= 0; */ // TODO: What does this mean?
     }
 
     @Override
