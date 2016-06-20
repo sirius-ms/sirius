@@ -12,6 +12,15 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     private int[] allowedIndizes;
     private TShortShortHashMap mapping;
 
+    public static MaskedFingerprintVersion fromString(String s) {
+        MaskedFingerprintVersion.Builder b = buildMaskFor(CdkFingerprintVersion.getDefault());
+        int k=0;
+        for (String token : s.split("\t")) {
+            b.set(k++, token.equalsIgnoreCase("x"));
+        }
+        return b.toMask();
+    }
+
     public static MaskedFingerprintVersion.Builder buildMaskFor(FingerprintVersion version) {
         if (version instanceof MaskedFingerprintVersion) {
             throw new IllegalArgumentException("Fingerprint is already masked. Use #modify instead!");
@@ -33,10 +42,13 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
                 int i=0, j=0;
                 final TShortArrayList list = new TShortArrayList(Math.min(fingerprint.cardinality(), allowedIndizes.length));
                 final short[] indizes = ((ArrayFingerprint) fingerprint).indizes;
-                while (i < allowedIndizes.length && j < list.size()) {
+                while (i < allowedIndizes.length && j < indizes.length) {
                     if (allowedIndizes[i] < indizes[j]) ++i;
                     else if (allowedIndizes[i] > indizes[j]) ++j;
-                    else list.add((short)allowedIndizes[i]);
+                    else {
+                        list.add((short)allowedIndizes[i]);
+                        ++i; ++j;
+                    }
                 }
                 return (T)new ArrayFingerprint(this, list.toArray());
             } else if (fingerprint instanceof BooleanFingerprint) {
@@ -66,7 +78,7 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         for (int i = mask.nextSetBit(0); i >= 0 && i < mask.size(); i = mask.nextSetBit(i+1)) {
             allowedIndizes[k++] = i;
         }
-        this.mapping = new TShortShortHashMap(allowedIndizes.length);
+        this.mapping = new TShortShortHashMap(allowedIndizes.length, 0.75f, (short)-1, (short)-1);
         k=0;
         for (int allowedIndex : allowedIndizes) {
             mapping.put((short)allowedIndex, (short)k++);
@@ -82,8 +94,8 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     }
 
     @Override
-    public MolecularProperty getMolecularProperty(int index) {
-        return innerVersion.getMolecularProperty(allowedIndizes[index]);
+    public MolecularProperty getMolecularProperty(int absoluteIndex) {
+        return innerVersion.getMolecularProperty(absoluteIndex);
     }
 
     @Override

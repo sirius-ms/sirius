@@ -30,8 +30,45 @@ public abstract class Fingerprint extends AbstractFingerprint {
         return fromOneZeroString(CdkFingerprintVersion.getDefault(), fp);
     }
 
+    /**
+     * Computes the dot product of two fingerprints represented as -1|1 vector
+     */
+    public double plusMinusdotProduct(Fingerprint other) {
+        final int length = fingerprintVersion.size();
+        short union=0, intersection=0;
+        for (FPIter2 pairwise : foreachPair(other)) {
+            final boolean a = pairwise.isLeftSet();
+            final boolean b = pairwise.isRightSet();
+
+            if (a || b) ++union;
+            if (a && b) ++intersection;
+        }
+        // number of (1,1) pairs: intersection
+        // number of {-1,1} pairs: union  - intersection
+        // number of (-1,-1) pairs: length - union
+        // dot product is intersection + (length-union) - (union - intersection)
+
+        return intersection + (length-union) - (union-intersection);
+    }
+
+    /**
+     * Computes the dot product of two fingerprints represented as 0|1 vector
+     */
+    public double dotProduct(Fingerprint other) {
+        long union=0;
+        short left=0, right=0;
+        for (FPIter2 pairwise : foreachPair(other)) {
+            final boolean a = pairwise.isLeftSet();
+            if (a) ++left;
+            final boolean b = pairwise.isRightSet();
+            if (b) ++right;
+            if (a || b) ++union;
+        }
+        return union;
+    }
+
     public double tanimoto(Fingerprint other) {
-        long union=0, intersection=0;
+        short union=0, intersection=0;
         for (FPIter2 pairwise : foreachPair(other)) {
             final boolean a = pairwise.isLeftSet();
             final boolean b = pairwise.isRightSet();

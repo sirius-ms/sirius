@@ -80,7 +80,7 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
     public FPIter2 foreachPair(AbstractFingerprint fp) {
         if (fp instanceof ProbabilityFingerprint) return new PairwiseIterator(this, (ProbabilityFingerprint) fp, -1, -1);
         else if (fp instanceof BooleanFingerprint) return new PairwiseProbBoolean(this,(BooleanFingerprint)fp, -1);
-        else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
+        else return super.foreachPair(fp);
         // We cannot express this in javas type system -_- In theory somebody could just implement a pairwise iterator
         // for mixed types
     }
@@ -154,6 +154,11 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         @Override
         public boolean isSet() {
             return fingerprint[offset]>=0.5;
+        }
+
+        @Override
+        public double getProbability() {
+            return fingerprint[offset];
         }
 
         @Override
@@ -244,7 +249,7 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
 
         @Override
         public int getIndex() {
-            return current;
+            return left.fingerprintVersion.getAbsoluteIndexOf(current);
         }
 
         @Override
@@ -352,7 +357,7 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
 
         @Override
         public boolean hasNext() {
-            return offset < left.fingerprint.length;
+            return (offset+1) < left.fingerprint.length;
         }
 
         @Override
@@ -419,7 +424,7 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
 
         @Override
         public boolean hasNext() {
-            return offset < left.fingerprint.length;
+            return (offset+1) < left.fingerprint.length;
         }
 
         @Override

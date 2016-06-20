@@ -9,7 +9,7 @@ public final class PredictionPerformance {
 
     public final static class Modify {
 
-        private Modify(int tp, int fp, int tn, int fn, double pseudoCount) {
+        private Modify(double tp, double fp, double tn, double fn, double pseudoCount) {
             this.tp = tp;
             this.fp = fp;
             this.tn = tn;
@@ -17,11 +17,11 @@ public final class PredictionPerformance {
             this.pseudoCount = pseudoCount;
         }
 
-        private Modify(int tp, int fp, int tn, int fn) {
+        private Modify(double tp, double fp, double tn, double fn) {
             this(tp,fp,tn,fn,0);
         }
 
-        private int tp,fp,tn,fn;
+        private double tp,fp,tn,fn;
         private double pseudoCount;
 
         public PredictionPerformance done() {
@@ -43,52 +43,61 @@ public final class PredictionPerformance {
             return this;
         }
 
+        public Modify update(boolean[] truths, boolean[] predictions,double weight) {
+            for (int k=0; k < truths.length; ++k) update(truths[k], predictions[k],weight);
+            return this;
+        }
+
         public Modify update(boolean truth, boolean predicted) {
+            return update(truth,predicted,1d);
+        }
+
+        public Modify update(boolean truth, boolean predicted, double weight) {
             if (truth) {
                 if (predicted) {
-                    ++tp;
+                    tp+=weight;
                 } else {
-                    ++fn;
+                    fn+=weight;
                 }
             } else{
                 if (predicted) {
-                    ++fp;
+                    fp+=weight;
                 } else {
-                    ++tn;
+                    tn+=weight;
                 }
             }
             return this;
         }
 
-        public int getTp() {
+        public double getTp() {
             return tp;
         }
 
-        public void setTp(int tp) {
+        public void setTp(double tp) {
             this.tp = tp;
         }
 
-        public int getFp() {
+        public double getFp() {
             return fp;
         }
 
-        public void setFp(int fp) {
+        public void setFp(double fp) {
             this.fp = fp;
         }
 
-        public int getTn() {
+        public double getTn() {
             return tn;
         }
 
-        public void setTn(int tn) {
+        public void setTn(double tn) {
             this.tn = tn;
         }
 
-        public int getFn() {
+        public double getFn() {
             return fn;
         }
 
-        public void setFn(int fn) {
+        public void setFn(double fn) {
             this.fn = fn;
         }
 
@@ -97,20 +106,20 @@ public final class PredictionPerformance {
         }
     }
 
-    private int tp, fp, tn, fn;
+    private double tp, fp, tn, fn;
     private double pseudoCount;
     private double f, precision, recall, accuracy, specitivity;
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "tp=%d\tfp=%d\ttn=%d\tfn=%d\tf1=%f\tprecision=%f\trecall=%f\taccuracy=%f", tp,fp,tn,fn,f,precision,recall,accuracy);
+        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.2f\tprecision=%.2f\trecall=%.2f\taccuracy=%.2f", tp,fp,tn,fn,f,precision,recall,accuracy);
     }
 
     public Modify modify() {
         return new Modify(tp,fp,tn,fn);
     }
 
-    public void set(int tp, int fp, int tn, int fn) {
+    public void set(double tp, double fp, double tn, double fn) {
         this.tp = tp;
         this.fp = fp;
         this.tn = tn;
@@ -139,13 +148,13 @@ public final class PredictionPerformance {
 
     public static PredictionPerformance fromString(String string) {
         String[] parts = string.split("\t");
-        int tp=0, fp=0, tn=0, fn=0;
+        double tp=0, fp=0, tn=0, fn=0;
         for (String s : parts) {
             final int p = s.indexOf('=');
             if ( p < 0) throw new IllegalArgumentException();
             final String token = s.substring(0, p);
             final String value = s.substring(p+1);
-            final int v = Integer.parseInt(value);
+            final double v = Double.parseDouble(value);
             switch (token) {
                 case "tp": tp = v; break;
                 case "fp": fp = v; break;
@@ -170,11 +179,11 @@ public final class PredictionPerformance {
         calc();
     }
 
-    public PredictionPerformance(int tp, int fp, int tn, int fn) {
+    public PredictionPerformance(double tp, double fp, double tn, double fn) {
         this(tp, fp, tn, fn, 0d);
     }
 
-    public PredictionPerformance(int tp, int fp, int tn, int fn, double pseudoCount) {
+    public PredictionPerformance(double tp, double fp, double tn, double fn, double pseudoCount) {
         this.tp = tp;
         this.fp = fp;
         this.tn = tn;
@@ -188,19 +197,23 @@ public final class PredictionPerformance {
         else return true;
     }
 
-    public int getTp() {
+    public double getSmallerClassSize() {
+        return Math.min(tp+fn, tn+fp);
+    }
+
+    public double getTp() {
         return tp;
     }
 
-    public int getFp() {
+    public double getFp() {
         return fp;
     }
 
-    public int getTn() {
+    public double getTn() {
         return tn;
     }
 
-    public int getFn() {
+    public double getFn() {
         return fn;
     }
 
@@ -226,7 +239,7 @@ public final class PredictionPerformance {
         return pseudoCount;
     }
 
-    public int numberOfSamples() {
+    public double numberOfSamples() {
         return tp+fp+tn+fn;
     }
 
@@ -252,8 +265,8 @@ public final class PredictionPerformance {
     public void calc() {
 
         // first take the smaller class
-        final int positive = tp+fn;
-        final int negative = tn+fp;
+        final double positive = tp+fn;
+        final double negative = tn+fp;
         final double TP, FP, TN, FN;
         if (positive > negative) {
             TP = tn+pseudoCount; FP = fn+pseudoCount; TN = tp+pseudoCount; FN = fp+pseudoCount;
@@ -265,7 +278,7 @@ public final class PredictionPerformance {
 
         accuracy = (TP + TN) / (TP + FP + TN + FN);
         if (TP + FN == 0) recall = 0d;
-        else recall = ((double) tp) / (tp + fn);
+        else recall = (TP) / (TP + FN);
         if (TN+FP == 0) specitivity = 0d;
         else specitivity = TN/(TN+FP);
         if (TP + FP == 0) precision = 0d;
