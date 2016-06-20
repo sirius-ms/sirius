@@ -29,7 +29,6 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 @Called("Free Radical")
@@ -115,10 +114,10 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        final Iterator<Map.Entry<String, G>> iter = document.iteratorOfDictionary(document.getDictionaryFromDictionary(dictionary, "commonRadicals"));
-        while (iter.hasNext()) {
-            final Map.Entry<String, G> v = iter.next();
-            addRadical(MolecularFormula.parse(v.getKey()), (Double) v.getValue());
+        final D dict = document.getDictionaryFromDictionary(dictionary, "commonRadicals");
+        for (String key : document.keySetOfDictionary(dict)) {
+            final double value = document.getDoubleFromDictionary(dict, key);
+            addRadical(MolecularFormula.parse(key), value);
         }
         setGeneralRadicalScore(document.getDoubleFromDictionary(dictionary, "radicalPenalty"));
         setNormalization(document.getDoubleFromDictionary(dictionary, "normalization"));
