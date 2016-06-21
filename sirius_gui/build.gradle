@@ -1,3 +1,6 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
 /*plugins {
 //    id 'edu.sc.seis.launch4j' version '1.6.1'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
@@ -110,10 +113,12 @@ startScripts {
 }
 
 
-def fatJarFile = project.tasks.shadowJar.outputs.files.singleFile
+//def fatJarFile = project.tasks.shadowJar.outputs.files.singleFile
 
+task distribute {}
 
 distributions {
+
     project.arch.split(',').each { ar ->
         def n = "${linSuffix}${ar}"
         create(n, {
@@ -128,9 +133,20 @@ distributions {
                     from("build/install/${project.name}/bin") {
                         exclude("*.bat")
                     }
+                    from('../dist')
+                }
+                into('doc') {
+                    from("../manual/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("../manual/build/singleText")
+                }
+                into('doc/html') {
+                    from("../manual/build/html")
                 }
             }
         })
+        distribute.dependsOn "${n}DistZip"
     }
 
     //crete win32And64 zip tasks
@@ -144,32 +160,83 @@ distributions {
                     from('build/launch4j/lib')
                 }
                 from { "../glpk/w${ar}/" }
+                from('../dist') {
+                    exclude('sirius3-gui')
+                }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }
-                //todo add doc
-                /* into('doc') {
-                     from{}
-                 }*/
+                into('doc') {
+                    from("../manual/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("../manual/build/singleText")
+                }
+                into('doc/html') {
+                    from("../manual/build/html")
+                }
             }
         })
+        distribute.dependsOn "${n}DistZip"
     }
-
-    /*jar {
-        baseName = project.getName()
-        contents {
-            from { 'src/main/resources/dist/' }
-            from { fatJarFile }
-        }
-    }*/
 }
 
-/*task distribute(type: distributions) {}
-distribute.dependsOn 'linux32DistZip', 'linux64DistZip', 'win32DistZip', 'win64DistZip'*/
 
-/*distZip.dependsOn 'shadowJar'
-distTar.dependsOn 'shadowJar'
-installDist.dependsOn 'shadowJar'*/
+task cleanDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file('../manual')
+    commandLine(['make', 'clean'])
+}
+
+task htmlDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file('../manual')
+    commandLine(['make', 'html'])
+}
+htmlDoku.mustRunAfter cleanDoku
+
+task mdDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file('../manual')
+    commandLine(['make', 'text'])
+}
+mdDoku.mustRunAfter cleanDoku
+
+
+task pdfDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file('../manual')
+    commandLine(['make', 'latexpdf'])
+}
+pdfDoku.mustRunAfter cleanDoku
+
+task buildDoku() {
+    group = 'documentation'
+}
+buildDoku.doLast {
+    def f = file('../manual/source/index.rst').readLines()
+    File out = file('../manual/build/singleText/sirius.md')
+    out.toPath().getParent().toFile().mkdirs();
+    out.createNewFile()
+
+    /*file("../manual/build/text/index.txt").withInputStream() {
+        out << it
+    } //todo do we want the index file here?*/
+
+    f.each {
+        File ff = file("../manual/build/text/${it.trim()}.txt")
+        if (ff.exists()) {
+            logger.lifecycle("Appending File: ${ff}")
+            ff.withInputStream() {
+                out << it
+            }
+        }
+    }
+    logger.lifecycle("copying SIRIUS.md to preject root")
+    Files.copy(out.toPath(),file('../../README.md').toPath(),StandardCopyOption.REPLACE_EXISTING)
+}
+buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
+jar.dependsOn buildDoku
 
 linux32DistZip.dependsOn 'installDist'
 linux32DistTar.dependsOn 'installDist'
