@@ -25,7 +25,6 @@ ext{
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
-//    apply plugin: 'nebula.provided-base'
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -44,7 +43,6 @@ allprojects {
         }
         maven {
             url "https://www.xypron.de/repository" //glpk repo
-            //only usede by fragmentation_tree_construction but has to be global
         }
     }
 
@@ -55,11 +53,10 @@ allprojects {
         testCompile group: 'junit', name: 'junit', version: '4.+'
     }
 
+    //to build shadowJar without provided libs
     configurations {
         provided
-//        isolated
         compileOnly.extendsFrom provided
-//        provided.extendsFrom isolated
     }
 
 
