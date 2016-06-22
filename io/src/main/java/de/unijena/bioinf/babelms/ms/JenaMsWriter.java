@@ -41,7 +41,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             writeIfAvailable(writer, ">InChIKey", i.key);
         }
         final Smiles sm = data.getAnnotation(Smiles.class);
-        writeIfAvailable(writer, ">smiles", sm==null ? null : sm.smiles);
+        writeIfAvailable(writer, ">smarts", sm==null ? null : sm.smiles);
         final Splash splash = data.getAnnotation(Splash.class);
         writeIfAvailable(writer, ">splash", splash==null ? null : splash.getSplash());
         final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());

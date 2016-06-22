@@ -9,10 +9,13 @@ public abstract class FingerprintVersion {
     public abstract int size();
     public abstract boolean compatible(FingerprintVersion fingerprintVersion);
 
-    protected int getRelativeIndexOf(int absoluteIndex) {
+    public int getRelativeIndexOf(int absoluteIndex) {
         return absoluteIndex;
     }
-    protected int getAbsoluteIndexOf(int relativeIndex) {
+    public int getAbsoluteIndexOf(int relativeIndex) {
         return relativeIndex;
+    }
+    public boolean hasProperty(int absoluteIndex) {
+        return absoluteIndex < size();
     }
 }

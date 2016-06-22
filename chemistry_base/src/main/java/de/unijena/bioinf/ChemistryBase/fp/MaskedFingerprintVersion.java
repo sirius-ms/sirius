@@ -29,6 +29,16 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         }
     }
 
+    public ArrayFingerprint mask(short[] values) {
+        return mask(new ArrayFingerprint(innerVersion, values));
+    }
+    public BooleanFingerprint mask(boolean[] values) {
+        return mask(new BooleanFingerprint(innerVersion, values));
+    }
+    public ProbabilityFingerprint mask(double[] values) {
+        return mask(new ProbabilityFingerprint(innerVersion, values));
+    }
+
     public <T extends AbstractFingerprint> T mask(T fingerprint) {
         if (!innerVersion.compatible(fingerprint.getFingerprintVersion()))
             throw new RuntimeException("Fingerprint is not compatible to mask.");
@@ -63,11 +73,16 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     }
 
     @Override
-    protected int getRelativeIndexOf(int absoluteIndex) {
+    public int getRelativeIndexOf(int absoluteIndex) {
         return (short)mapping.get((short)absoluteIndex);
     }
-    protected int getAbsoluteIndexOf(int relativeIndex) {
+    public int getAbsoluteIndexOf(int relativeIndex) {
         return allowedIndizes[relativeIndex];
+    }
+
+    @Override
+    public boolean hasProperty(int absoluteIndex) {
+        return mapping.containsKey((short)absoluteIndex);
     }
 
     protected MaskedFingerprintVersion(FingerprintVersion innerVersion, BitSet mask) {

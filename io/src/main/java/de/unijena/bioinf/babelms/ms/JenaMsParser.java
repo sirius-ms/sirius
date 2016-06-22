@@ -32,10 +32,6 @@ import java.util.regex.Pattern;
 
 public class JenaMsParser implements Parser<Ms2Experiment> {
 
-    public boolean WTF() {
-        return true;
-    }
-
     @Override
     public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
         return new ParserInstance(source, reader).parse();
@@ -162,7 +158,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             } else if (optionName.equalsIgnoreCase("inchikey")) {
                 inchikey = value;
-            } else if (optionName.equalsIgnoreCase("smiles")) {
+            } else if (optionName.equalsIgnoreCase("smarts") || optionName.equalsIgnoreCase("smiles")) {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
                 splash = value;

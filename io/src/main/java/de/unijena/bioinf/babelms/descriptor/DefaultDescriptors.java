@@ -119,7 +119,7 @@ class DefaultDescriptors {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"smiles"};
+            return new String[]{"smarts"};
         }
 
         @Override
@@ -129,15 +129,15 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> Smiles read(DataDocument<G, D, L> document, D dictionary) {
-            if (document.hasKeyInDictionary(dictionary, "smiles")) {
-                return new Smiles(document.getStringFromDictionary(dictionary, "smiles"));
+            if (document.hasKeyInDictionary(dictionary, "smarts")) {
+                return new Smiles(document.getStringFromDictionary(dictionary, "smarts"));
             } else return null;
         }
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Smiles annotation) {
             if (annotation.smiles!=null){
-                document.addToDictionary(dictionary, "smiles", annotation.smiles);
+                document.addToDictionary(dictionary, "smarts", annotation.smiles);
             }
         }
     }

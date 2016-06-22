@@ -10,7 +10,9 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
 
     public ProbabilityFingerprint(FingerprintVersion fingerprintVersion, double[] fingerprint) {
         super(fingerprintVersion);
-        this.fingerprint = fingerprint;
+        this.fingerprint = fingerprint.clone();
+        if (fingerprint.length != fingerprintVersion.size()) throw new IllegalArgumentException("fp length does not match fingerprint version length: " + fingerprint.length + " vs. " + fingerprintVersion.size());
+
     }
 
     @Override

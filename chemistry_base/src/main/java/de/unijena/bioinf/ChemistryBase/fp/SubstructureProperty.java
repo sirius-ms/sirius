@@ -2,33 +2,33 @@ package de.unijena.bioinf.ChemistryBase.fp;
 
 public class SubstructureProperty extends MolecularProperty {
 
-    protected final String smiles, description;
+    protected final String smarts, description;
 
-    public SubstructureProperty(String smiles) {
-        this(smiles,null);
+    public SubstructureProperty(String smarts) {
+        this(smarts,null);
     }
 
-    public SubstructureProperty(String smiles, String description) {
-        this.smiles = smiles;
+    public SubstructureProperty(String smarts, String description) {
+        this.smarts = smarts;
         this.description = description;
     }
 
-    public String getSmiles() {
-        return smiles;
+    public String getSmarts() {
+        return smarts;
     }
 
     @Override
     public String getDescription() {
         if (description!=null) {
-            return smiles + " (" + description + ")";
+            return smarts + " (" + description + ")";
         } else {
-            return smiles;
+            return smarts;
         }
     }
 
     @Override
     public String toString() {
-        return smiles;
+        return smarts;
     }
 
 

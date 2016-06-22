@@ -18,16 +18,21 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+
 public class FingerIdJob {
 
     protected final String securityToken;
     protected final long jobId;
 
     protected String state;
-    protected double[] prediction;
+    protected ProbabilityFingerprint prediction;
+    protected MaskedFingerprintVersion version;
 
-    public FingerIdJob(long jobId, String securityToken) {
+    public FingerIdJob(long jobId, String securityToken, MaskedFingerprintVersion version) {
         this.securityToken = securityToken;
         this.jobId = jobId;
+        this.version = version;
     }
 }

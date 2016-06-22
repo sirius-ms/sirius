@@ -18,15 +18,24 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.DatabaseException;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
@@ -51,15 +60,14 @@ public class CSIFingerIdComputation {
         public void computationFinished(ExperimentContainer container, SiriusResultElement element);
     }
 
-    protected FingerprintStatistics statistics;
     protected int[] fingerprintIndizes;
-    protected TIntObjectHashMap<String> absoluteIndex2Smarts;
-    protected String[] relativeIndex2Smarts;
-    protected String[] relativeIndex2Comments;
+    protected double[] fscores;
+    protected PredictionPerformance[] performances;
+    protected MaskedFingerprintVersion fingerprintVersion;
     protected HashMap<String, Compound> compounds;
     protected ConcurrentHashMap<MolecularFormula, List<Compound>> compoundsPerFormula;
+    protected RESTDatabase restDatabase;
     protected boolean configured = false;
-    protected MarvinsScoring scoring = new MarvinsScoring();
     protected File directory;
     protected Callback callback;
 
@@ -81,7 +89,8 @@ public class CSIFingerIdComputation {
         globalCondition = globalLock.newCondition();
         this.compounds = new HashMap<>(32768);
         this.compoundsPerFormula = new ConcurrentHashMap<>(128);
-        absoluteIndex2Smarts=new TIntObjectHashMap<>(4096);
+        this.restDatabase = WebAPI.DEBUG ? new RESTDatabase(directory, BioFilter.ALL, "http://localhost:8080/frontend") :  new RESTDatabase(directory, BioFilter.ALL);
+
         this.formulaQueue = new ConcurrentLinkedQueue<>();
         this.blastQueue = new ConcurrentLinkedQueue<>();
         this.jobQueue = new ConcurrentLinkedQueue<>();
@@ -99,42 +108,54 @@ public class CSIFingerIdComputation {
         jobThread.start();
     }
 
+    public MaskedFingerprintVersion getFingerprintVersion() {
+        return fingerprintVersion;
+    }
+
     public double[] getFScores() {
-        return statistics.f;
+        return fscores;
     }
 
     private void loadStatistics(WebAPI webAPI) throws IOException {
         final TIntArrayList list = new TIntArrayList(4096);
-        ArrayList<String> cs = new ArrayList<>(4096);
-        ArrayList<String> sm = new ArrayList<>(4096);
-        this.statistics = webAPI.getStatistics(list, sm, cs);
-        this.relativeIndex2Comments = cs.toArray(new String[cs.size()]);
-        this.relativeIndex2Smarts = sm.toArray(new String[sm.size()]);
+        this.performances = webAPI.getStatistics(list);
+
+        final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
+        v.disableAll();
+
         this.fingerprintIndizes = list.toArray();
-        for (int i=0; i < fingerprintIndizes.length; ++i) {
-            absoluteIndex2Smarts.put(fingerprintIndizes[i], sm.get(i));
+
+        for (int index : fingerprintIndizes) {
+            v.enable(index);
         }
+
+        this.fingerprintVersion = v.toMask();
+
+        fscores = new double[fingerprintIndizes.length];
+        for (int k=0; k < performances.length; ++k)
+            fscores[k] = performances[k].getF();
     }
 
-    private FingerIdData blast(SiriusResultElement elem, double[] plattScores) {
+    private FingerIdData blast(SiriusResultElement elem, ProbabilityFingerprint plattScores) {
         final MolecularFormula formula = elem.getMolecularFormula();
-        final List<Compound> compounds = compoundsPerFormula.get(formula);
-        final Scorer scorer = scoring.getScorer(statistics);
-        final TreeMap<Double, Compound> map = new TreeMap<>();
-        final Query query = new Query("_query_", null, plattScores);
-        scorer.preprocessQuery(query, statistics);
-        for (Compound c : compounds) {
-            map.put(scorer.score(query, new Candidate(c.inchi.in2D, c.fingerprint), statistics), c);
+        final Fingerblast blaster = new Fingerblast(restDatabase);
+        restDatabase.setBioFilter(isEnforceBio() ? BioFilter.ONLY_BIO : BioFilter.ALL);
+        blaster.setScoring(new CSIFingerIdScoring(performances));
+        try {
+            List<Scored<FingerprintCandidate>> candidates = blaster.search(formula, plattScores);
+            final double[] scores = new double[candidates.size()];
+            final Compound[] comps = new Compound[candidates.size()];
+            int k=0;
+            for (Scored<FingerprintCandidate> candidate : candidates) {
+                scores[k] = candidate.getScore();
+                comps[k] = this.compounds.get(candidate.getCandidate().getInchiKey2D());
+                if (comps[k]==null) comps[k] = new Compound(candidate.getCandidate());
+                ++k;
+            }
+            return new FingerIdData(comps, scores, plattScores);
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e); // TODO: handle
         }
-        final double[] scores = new double[map.size()];
-        final Compound[] comps = new Compound[map.size()];
-        int k=0;
-        for (Map.Entry<Double, Compound> entry : map.descendingMap().entrySet()) {
-            scores[k] = entry.getKey();
-            comps[k] = entry.getValue();
-            ++k;
-        }
-        return new FingerIdData(comps, scores, plattScores);
     }
 
 
@@ -180,22 +201,23 @@ public class CSIFingerIdComputation {
     }
 
     private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio) throws IOException {
-        final File dir = new File(directory, "biodb");
+        final File dir = new File(directory, bio ? "bio" : "not-bio");
         if (!dir.exists()) dir.mkdirs();
         final File mfile = new File(dir, formula.toString() + ".json.gz");
         final List<Compound> compounds;
         if (mfile.exists()) {
             try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(mfile)))) {
                 compounds = new ArrayList<>();
-                Compound.parseCompounds(fingerprintIndizes, compounds, parser);
+                Compound.parseCompounds(fingerprintVersion, compounds, parser);
+                System.out.println(compounds.size());
             }
         } else {
             if (webAPI==null) {
                 try (final WebAPI webAPI2 = new WebAPI()) {
-                    compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintIndizes, bio);
+                    compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
                 }
             } else {
-                compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintIndizes, bio);
+                compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
             }
         }
         for (Compound c : compounds) {
@@ -269,14 +291,6 @@ public class CSIFingerIdComputation {
         jobQueue.remove(task);
         blastQueue.remove(task);
         final WebAPI webAPI = new WebAPI();
-        if (statistics==null) {
-            globalLock.lock();
-            if (statistics==null) {
-                loadStatistics(webAPI);
-                globalCondition.signalAll();
-            }
-            globalLock.unlock();
-        }
         // second: push job to cluster
         final double[] prediction;
         FingerIdJob job = null;
@@ -284,8 +298,18 @@ public class CSIFingerIdComputation {
             job = jobWorker.jobs.get(task);
         }
         try {
+            // first read statistics
+            globalLock.lock();
+            try {
+                if (performances==null || this.fingerprintVersion==null) loadStatistics(webAPI);
+                globalCondition.signalAll();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                globalLock.unlock();
+            }
             if (job == null) {
-                job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getRawTree());
+                job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getRawTree(), this.fingerprintVersion);
             }
             final List<Compound> compounds;
 
@@ -294,7 +318,7 @@ public class CSIFingerIdComputation {
             else
                 compounds = loadCompoundsForGivenMolecularFormula(null, resultElement.getMolecularFormula());
 
-            double[] platts=null;
+            ProbabilityFingerprint platts=null;
             for (int k=0; k < 60; ++k) {
                 try {
                     Thread.sleep(1000);
@@ -334,7 +358,7 @@ public class CSIFingerIdComputation {
             // first read statistics
             globalLock.lock();
             try {
-                if (statistics==null) loadStatistics(webAPI);
+                if (performances==null) loadStatistics(webAPI);
                 globalCondition.signalAll();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -394,7 +418,7 @@ public class CSIFingerIdComputation {
                     if (container!=null) {
                         nothingToDo=false;
                         try {
-                            final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getRawTree());
+                            final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getRawTree(), fingerprintVersion);
                             jobs.put(container, job);
                         } catch (IOException e) {
                             jobQueue.add(container);
