@@ -162,11 +162,6 @@ launch4j {
     jar = "lib/${project.tasks.jar.archiveName}"
 }
 
-createExe.dependsOn 'installDist'
-
-
-
-
 /*################### Linux release Stuff ################### */
 startScripts {
     applicationName = "${project.appName}"
