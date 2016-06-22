@@ -7,8 +7,10 @@ dependencies {
     compile internal(':fragmentation_tree:fragmentation_tree_construction',version)
 }
 
-assemble{
-    println('writing properties file...')
+
+
+assemble.doFirst{
+    logger.lifecycle('writing properties file...')
     Properties properties = new Properties()
     File propertiesFile = new File("$projectDir/src/main/resources/DefaultSirius.properties")
     propertiesFile.withInputStream {
@@ -19,5 +21,104 @@ assemble{
     propertiesFile.withOutputStream{
         properties.store(it,"")
     }
-    println('done')
+}
+
+//apply plugin: 'application'
+//apply plugin: 'de.unijena.bioinf.launch4jj'
+
+mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
+project.ext.set("type", "console")
+
+/*################### Windows release Stuff ################### */
+launch4j {
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+
+    outfile = "${project.appName}.exe"
+    jar = "lib/${project.tasks.jar.archiveName}"
+}
+
+/*################### Linux release Stuff ################### */
+
+
+/*################### Build distributions ################### */
+distributions {
+    project.arch.split(',').each { ar ->
+        def n = "${project.linSuffix}${ar}"
+        create(n, {
+            baseName = "${project.appName}-$n-headless"
+            contents {
+                into('lib') {
+                    from("build/install/${project.name}/lib")
+                    from("${project.glpkPath}/l${ar}/")
+                }
+
+                into('bin') {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}") {
+                        exclude('sirius3-gui')
+                    }
+                }
+                into('doc') {
+                    from("${project.manualPath}/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+    }
+
+    //crete win32And64 zip tasks
+    project.arch.split(',').each { ar ->
+        def n = "${project.winSuffix}${ar}"
+        create(n, {
+
+            baseName = "${project.appName}-$n-headless"
+            contents {
+                into('lib') {
+                    from('build/launch4j/lib')
+                }
+                from { "${project.glpkPath}/w${ar}/" }
+                from("${project.distPath}") {
+                    exclude('sirius3-gui')
+                }
+                from('build/launch4j') {
+                    include("*-${ar}.exe")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+    }
+
+    linux32DistZip.dependsOn 'installDist'
+    linux32DistTar.dependsOn 'installDist'
+    installLinux32Dist.dependsOn 'installDist'
+
+    linux64DistZip.dependsOn 'installDist'
+    linux64DistTar.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
+
+    win32DistZip.dependsOn 'createExe'
+    win32DistTar.dependsOn 'createExe'
+    installWin32Dist.dependsOn 'createExe'
+
+    win64DistZip.dependsOn 'createExe'
+    win64DistTar.dependsOn 'createExe'
+    installWin64Dist.dependsOn 'createExe'
 }
