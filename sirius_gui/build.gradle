@@ -11,7 +11,8 @@ dependencies {
     compile internal(':sirius_frontend:sirius_cli',version)
 
 //internal
-    compile "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT"
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
     compile "de.unijena.bioinf:Myxo:0.2"
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
