@@ -24,6 +24,6 @@ import org.gnu.glpk.GLPK;
 public class glpk_test_main {
 
     public static void main(String[] args) {
-        GLPK.glp_version();
+        System.out.println(GLPK.glp_version());
     }
 }
