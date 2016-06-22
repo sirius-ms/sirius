@@ -19,11 +19,11 @@ apply plugin: 'de.unijena.bioinf.launch4jj'
 
 dependencies {
 //project
-    compile project(':chemistry_base')
-    compile project(':io')
-    compile project(':isotope_pattern:isotope_pattern_analysis')
-    compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile project(':sirius_frontend:sirius_cli')
+    compile internal(':chemistry_base',version)
+    compile internal(':io',version)
+    compile internal(':isotope_pattern:isotope_pattern_analysis',version)
+    compile internal(':fragmentation_tree:fragmentation_tree_construction',version)
+    compile internal(':sirius_frontend:sirius_cli',version)
 
 //internal
     compile "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT"
