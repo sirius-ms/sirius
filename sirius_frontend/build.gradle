@@ -1,0 +1,122 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+buildscript {
+    repositories {
+//        mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://bio.informatik.uni-jena.de/artifactory/repo" }
+    }
+    dependencies {
+        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.1'
+        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+    }
+
+}
+
+
+
+project.ext.set("linSuffix", "linux")
+project.ext.set("winSuffix", "win")
+project.ext.set("arch", "64,32")
+project.ext.set("appName", "sirius3")
+project.ext.set("manualPath", file('manual').absolutePath)
+project.ext.set("glpkPath", file('glpk').absolutePath)
+project.ext.set("distPath", file('dist').absolutePath)
+
+/*################### Building the Documentation ################### */
+task cleanDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'clean'])
+}
+
+task htmlDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'html'])
+}
+htmlDoku.mustRunAfter cleanDoku
+
+task mdDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'text'])
+}
+mdDoku.mustRunAfter cleanDoku
+
+
+task pdfDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'latexpdf'])
+}
+pdfDoku.mustRunAfter cleanDoku
+
+task buildDoku() {
+    group = 'documentation'
+}
+buildDoku.doLast {
+    def f = file("${project.manualPath}/source/index.rst").readLines()
+    File out = file("${project.manualPath}/build/singleText/sirius.md")
+    out.toPath().getParent().toFile().mkdirs();
+    out.createNewFile()
+
+    /*file("${project.manualPath}/build/text/index.txt").withInputStream() {
+        out << it
+    } //todo do we want the index file here?*/
+
+    f.each {
+        File ff = file("${project.manualPath}/build/text/${it.trim()}.txt")
+        if (ff.exists()) {
+            logger.lifecycle("Appending File: ${ff}")
+            ff.withInputStream() {
+                out << it
+            }
+        }
+    }
+    logger.lifecycle("copying SIRIUS.md to preject root")
+    Files.copy(out.toPath(), file('../../README.md').toPath(), StandardCopyOption.REPLACE_EXISTING)
+}
+buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
+clean.dependsOn cleanDoku
+
+subprojects {
+    apply plugin: 'application'
+    apply plugin: 'de.unijena.bioinf.launch4jj'
+
+    /*################### Windows release Stuff ################### */
+    launch4j {
+        icon = file('../dist/sirius.ico')
+        copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
+        companyName = "Friedrich-Schiller-University Jena"
+        version = project.version
+        textVersion = project.version
+        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+
+        initialHeapPercent = 50
+        maxHeapPercent = 80
+
+        dontWrapJar = true
+        jdkPreference = "preferJre"
+
+        classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
+
+    }
+
+    /*################### Linux release Stuff ################### */
+    mainClassName = mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
+    startScripts {
+        applicationName = "${project.appName}"
+        doLast {
+            unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+            unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""' + "${System.lineSeparator()}" + 'export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$APP_HOME/lib:$LD_LIBRARY_PATH')
+        }
+    }
+
+    /*################### Build distributions ################### */
+    task distribute { group = 'distribution' }
+    distribute.dependsOn buildDoku
+
+
+}
