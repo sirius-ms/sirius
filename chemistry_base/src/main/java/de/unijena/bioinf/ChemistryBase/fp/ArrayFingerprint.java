@@ -12,7 +12,10 @@ public class ArrayFingerprint extends Fingerprint {
 
     public ArrayFingerprint(FingerprintVersion fingerprintVersion, short[] indizes) {
         super(fingerprintVersion);
-        this.indizes = indizes;
+        this.indizes = indizes.clone();
+        if (indizes.length>0 && fingerprintVersion.size()>0 && indizes[indizes.length-1] >= fingerprintVersion.getAbsoluteIndexOf(fingerprintVersion.size()-1)) {
+            throw new IllegalArgumentException("Fingerprintversion is not compatible to fingerprint");
+        }
     }
 
     @Override
@@ -30,6 +33,7 @@ public class ArrayFingerprint extends Fingerprint {
     @Override
     public String toOneZeroString() {
         final char[] buffer = new char[fingerprintVersion.size()];
+        Arrays.fill(buffer, '0');
         for (short index : indizes) {
             buffer[fingerprintVersion.getRelativeIndexOf(index)] = '1';
         }
@@ -139,6 +143,18 @@ public class ArrayFingerprint extends Fingerprint {
         final double[] values = new double[fingerprintVersion.size()];
         for (int index : indizes) values[fingerprintVersion.getRelativeIndexOf(index)] = 1d;
         return new ProbabilityFingerprint(fingerprintVersion, values);
+    }
+
+    @Override
+    public String toCommaSeparatedString() {
+        if (indizes.length==0) return "";
+        final StringBuilder buffer = new StringBuilder(indizes.length*5);
+        buffer.append(String.valueOf(indizes[0]));
+        for (int k=1; k < indizes.length; ++k) {
+            buffer.append(',');
+            buffer.append(String.valueOf(indizes[k]));
+        }
+        return buffer.toString();
     }
 
     @Override
