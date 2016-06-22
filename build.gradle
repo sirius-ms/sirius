@@ -1,5 +1,5 @@
 //Global Properties
-ext{
+ext {
     //version for external libraries
     slf4j_version = '1.7.13'
     gson_version = '2.6.2'
@@ -17,6 +17,21 @@ ext{
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
+
+
+    //release branch auto detection
+    gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+    releaseBranch = 'release'
+
+    internal = { String modulePath, version ->
+        if (project.gitBranch.equals(project.releaseBranch)) {
+            println('release branch')
+            return "de.unijena.bioinf.ms:${modulePath.split(':').takeRight(1)[0]}:$version"
+        } else {
+            println('normal branch')
+            return project("$modulePath")
+        }
+    }
 }
 
 
@@ -58,6 +73,5 @@ allprojects {
         provided
         compileOnly.extendsFrom provided
     }
-
 
 }
