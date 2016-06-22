@@ -10,8 +10,8 @@ ext {
     jewelcli_version = '0.8.+'
 
     gurobi_version = '6.+'
-    gurobi_artifact = ''
 
+    fingeridVersion = "1.0.4-SNAPSHOT"
 
     graphUtils_version = '1.1'
 
@@ -21,14 +21,14 @@ ext {
 
     //release branch auto detection
     gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+    logger.lifecycle("Current Branch: $gitBranch")
+
     releaseBranch = 'release'
 
     internal = { String modulePath, version ->
         if (project.gitBranch.equals(project.releaseBranch)) {
-            println('release branch')
             return "de.unijena.bioinf.ms:${modulePath.split(':').takeRight(1)[0]}:$version"
         } else {
-            println('normal branch')
             return project("$modulePath")
         }
     }
