@@ -21,6 +21,18 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         return other.fingerprintVersion.compatible(fingerprintVersion);
     }
 
+    public String toCommaSeparatedString() {
+        final StringBuilder buffer = new StringBuilder();
+        final FPIter iter  = presentFingerprints();
+        if (!iter.hasNext()) return "";
+        buffer.append(iter.next().getIndex());
+        while (iter.hasNext()) {
+            buffer.append(',');
+            buffer.append(iter.next().getIndex());
+        }
+        return buffer.toString();
+    }
+
     public abstract String toTabSeparatedString();
 
     public abstract double[] toProbabilityArray();

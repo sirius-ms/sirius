@@ -20,7 +20,7 @@ public class SubstructureCountProperty extends SubstructureProperty {
 
     @Override
     public String toString() {
-        return getSmiles() + " >= " + minimalCount;
+        return getSmarts() + " >= " + minimalCount;
     }
 
     @Override
