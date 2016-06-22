@@ -1,5 +1,5 @@
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version:"$jewelcli_version"
 
-    compile project(':mass_decomposition:mass_decomposer')
+    compile internal(':mass_decomposition:mass_decomposer',version)
 }
