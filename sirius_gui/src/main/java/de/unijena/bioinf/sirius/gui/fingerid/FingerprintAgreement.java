@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +53,7 @@ public class FingerprintAgreement {
         return new Rectangle(x,y,w,h);
     }
 
-    public static FingerprintAgreement getAgreement(final double[] platts, boolean[] reference, double[] fscores, double threshold) {
+    public static FingerprintAgreement getAgreement(FingerprintVersion version, final double[] platts, boolean[] reference, double[] fscores, double threshold) {
         final ArrayList<Integer> list = new ArrayList<>();
         for (int k=0; k < reference.length; ++k) {
             if (reference[k] && platts[k] >= threshold) {
@@ -70,7 +72,7 @@ public class FingerprintAgreement {
         });
         int k=0;
         for (int i : list) {
-            indizes[k] = i;
+            indizes[k] = version.getAbsoluteIndexOf(i);
             weights[k] = (platts[i]-threshold)/(1d-threshold);
             weights2[k] = fscores[i];
             ++k;
@@ -78,7 +80,7 @@ public class FingerprintAgreement {
         return new FingerprintAgreement(indizes, weights, weights2);
     }
 
-    public static FingerprintAgreement getMissing(final double[] platts, boolean[] reference, double[] fscores, double threshold) {
+    public static FingerprintAgreement getMissing(FingerprintVersion version, final double[] platts, boolean[] reference, double[] fscores, double threshold) {
         final ArrayList<Integer> list = new ArrayList<>();
         for (int k=0; k < reference.length; ++k) {
             if (reference[k] && platts[k] <= threshold) {
@@ -97,7 +99,7 @@ public class FingerprintAgreement {
         });
         int k=0;
         for (int i : list) {
-            indizes[k] = i;
+            indizes[k] = version.getAbsoluteIndexOf(i);
             weights[k] = (threshold-platts[i])/threshold;
             weights2[k] = fscores[i];
             ++k;

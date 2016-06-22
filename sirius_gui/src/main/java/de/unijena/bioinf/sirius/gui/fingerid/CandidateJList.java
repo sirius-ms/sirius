@@ -231,8 +231,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
+        System.out.println("SELECT COMPOUND #" + index);
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
+        System.out.println("WITH NAME " + String.valueOf(candidate.compound.name));
+        System.out.println("AND INCHIKEY " + candidate.compound.inchi.key2D());
         highlightedCandidate = candidate.rank;
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
         final boolean in;
@@ -327,11 +330,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 }
             }
             if (fpindex>=0) {
-                final String sm = computation.relativeIndex2Smarts[fpindex];
-                if (sm==null || sm.isEmpty()) {
-                    final String sf = computation.relativeIndex2Comments[fpindex];
-                    return sf;
-                } else return sm;
+                return candidate.compound.fingerprint.getFingerprintVersion().getMolecularProperty(fpindex).getDescription();
             } else return null;
 
         }

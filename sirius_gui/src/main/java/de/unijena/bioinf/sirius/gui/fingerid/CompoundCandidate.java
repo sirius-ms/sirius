@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -65,49 +66,55 @@ public class CompoundCandidate {
     }
 
     public boolean hasFingerprintIndex(int index) {
-        return compound.fingerprint[index];
+        return compound.fingerprint.isSet(index);
     }
 
-    public boolean highlightFingerprint(CSIFingerIdComputation computation, int index) {
+    public boolean highlightFingerprint(CSIFingerIdComputation computation, int absoluteIndex) {
+        final FingerprintVersion version = compound.fingerprint.getFingerprintVersion();
         final IAtomContainer molecule = compound.getMolecule();
-        if (!hasFingerprintIndex(index)) {
+        if (!hasFingerprintIndex(absoluteIndex)) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
         }
+        final MolecularProperty property = version.getMolecularProperty(absoluteIndex);
+        if (property instanceof SubstructureProperty) {
+            final String smarts = ((SubstructureProperty)property).getSmarts();
+            final HashMap<IAtom, Integer> colorMap = new HashMap<>();
 
-        final HashMap<IAtom, Integer> colorMap = new HashMap<>();
-        if (computation.relativeIndex2Smarts[index]==null || computation.relativeIndex2Smarts[index].isEmpty() || computation.relativeIndex2Smarts[index].equals("?")) {
+            int minCount;
+            if (property instanceof SubstructureCountProperty) minCount = ((SubstructureCountProperty)property).getMinimalCount();
+            else minCount = 1;
+
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
-            return false;
-        }
-        FasterSmartsQueryTool tool = new FasterSmartsQueryTool(computation.relativeIndex2Smarts[index], DefaultChemObjectBuilder.getInstance());
-        try {
-            if (tool.matches(molecule)) {
-                final List<List<Integer>> mappings = tool.getUniqueMatchingAtoms();
-                int k=0;
-                for (List<Integer> mapping : mappings) {
-                    for (Integer i : mapping) {
-                        if (!colorMap.containsKey(molecule.getAtom(i)))
-                            colorMap.put(molecule.getAtom(i), Math.min(1,k));
+            System.err.println(smarts);
+            FasterSmartsQueryTool tool = new FasterSmartsQueryTool(smarts, DefaultChemObjectBuilder.getInstance());
+            try {
+                if (tool.matches(molecule)) {
+                    final List<List<Integer>> mappings = tool.getUniqueMatchingAtoms();
+                    for (List<Integer> mapping : mappings) {
+                        --minCount;
+                        for (Integer i : mapping) {
+                            if (!colorMap.containsKey(molecule.getAtom(i)))
+                                colorMap.put(molecule.getAtom(i), minCount>=0 ? 0 : 1);
 
+                        }
                     }
-                    ++k;
                 }
+            } catch (CDKException e) {
+                e.printStackTrace();
             }
-        } catch (CDKException e) {
-            e.printStackTrace();
-        }
-        molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);
-        return true;
+            molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);
+            return true;
+        } else return false;
     }
 
-    public FingerprintAgreement getAgreement(CSIFingerIdComputation computations, double[] prediction) {
-        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction, compound.fingerprint, computations.getFScores(), 1-THRESHOLD_FP);
+    public FingerprintAgreement getAgreement(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
+        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.getFScores(), 1-THRESHOLD_FP);
         return agreement;
     }
 
-    public FingerprintAgreement getMissings(CSIFingerIdComputation computations,  double[] prediction) {
-        if (missings==null) missings = FingerprintAgreement.getMissing(prediction, compound.fingerprint,computations.getFScores(),  THRESHOLD_FP);
+    public FingerprintAgreement getMissings(CSIFingerIdComputation computations,  ProbabilityFingerprint prediction) {
+        if (missings==null) missings = FingerprintAgreement.getMissing(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(),computations.getFScores(),  THRESHOLD_FP);
         return missings;
     }
 

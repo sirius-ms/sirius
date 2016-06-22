@@ -18,13 +18,15 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+
 public class FingerIdData {
 
-    protected double[] platts;
+    protected ProbabilityFingerprint platts;
     protected Compound[] compounds;
     protected double[] scores;
 
-    public FingerIdData(Compound[] compounds, double[] scores, double[] platts) {
+    public FingerIdData(Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
         this.compounds = compounds;
         this.scores = scores;
         this.platts = platts;

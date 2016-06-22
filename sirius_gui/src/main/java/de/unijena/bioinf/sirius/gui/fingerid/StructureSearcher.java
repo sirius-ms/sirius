@@ -66,7 +66,7 @@ public class StructureSearcher implements Runnable {
                 this.queue.clear();
                 queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize() + 10);
 
-                int i = activeCandidate, j = activeCandidate - 1, n = candidateList.getSize();
+                int i = activeCandidate-1, j = activeCandidate, n = candidateList.getSize();
                 while (j >= 0 && i < n) {
                     if (i < n) {
                         queue.add(candidateList.getElementAt(i++));

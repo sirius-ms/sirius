@@ -19,14 +19,16 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.babelms.utils.Base64;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import net.iharder.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -58,7 +60,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
 
-    protected final static boolean DEBUG = false;
+    protected final static boolean DEBUG = true;
 
     private final CloseableHttpClient client;
 
@@ -82,7 +84,7 @@ public class WebAPI implements Closeable {
 
     protected static URIBuilder getFingerIdURI(String path) {
         URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : "www.csi-fingerid.org");
-        if (DEBUG) b = b.setPort(8080).setPath("/csi_fingerid_frontend" + path);
+        if (DEBUG) b = b.setPort(8080).setPath("/frontend" + path);
         else b.setPath(path);
         return b;
     }
@@ -100,7 +102,7 @@ public class WebAPI implements Closeable {
                     while (buf.position() < buf.limit()) {
                         platts.add(buf.getDouble());
                     }
-                    job.prediction = platts.toArray();
+                    job.prediction = new ProbabilityFingerprint(job.version, platts.toArray());
                     return true;
                 } else {
                     job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
@@ -110,7 +112,7 @@ public class WebAPI implements Closeable {
         return false;
     }
 
-    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree) throws IOException, URISyntaxException {
+    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version) throws IOException, URISyntaxException {
         final HttpPost post = new HttpPost(getFingerIdURI("/webapi/predict.json").build());
         final String stringMs, jsonTree;
         {
@@ -124,7 +126,7 @@ public class WebAPI implements Closeable {
         {
             final FTJsonWriter writer = new FTJsonWriter();
             final StringWriter sw = new StringWriter();
-            writer.writeTree(new BufferedWriter(sw), ftree);
+            writer.writeTree(sw, ftree);
             jsonTree = sw.toString();
         }
 
@@ -143,7 +145,7 @@ public class WebAPI implements Closeable {
                     final JsonObject obj = json.readObject();
                     securityToken = obj.getString("securityToken");
                     jobId =obj.getInt("jobId");
-                    return new FingerIdJob(jobId, securityToken);
+                    return new FingerIdJob(jobId, securityToken, version);
                 }
             } else {
                 throw new RuntimeException(response.getStatusLine().getReasonPhrase());
@@ -151,11 +153,11 @@ public class WebAPI implements Closeable {
         }
     }
 
-    public Future<double[]> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree) {
-        return service.submit(new Callable<double[]>() {
+    public Future<ProbabilityFingerprint> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version) {
+        return service.submit(new Callable<ProbabilityFingerprint>() {
             @Override
-            public double[] call() throws Exception {
-                final FingerIdJob job = submitJob(experiment, tree);
+            public ProbabilityFingerprint call() throws Exception {
+                final FingerIdJob job = submitJob(experiment, tree, version);
                 // RECEIVE RESULTS
                 final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
                 for (int k=0; k < 60; ++k) {
@@ -179,7 +181,7 @@ public class WebAPI implements Closeable {
      * @return
      * @throws IOException
      */
-    public FingerprintStatistics getStatistics(TIntArrayList fingerprintIndizes, List<String> fingerprintSmarts, List<String> fingerprintComments) throws IOException {
+    public PredictionPerformance[] getStatistics(TIntArrayList fingerprintIndizes) throws IOException {
         fingerprintIndizes.clear();
         final HttpGet get;
         try {
@@ -189,30 +191,28 @@ public class WebAPI implements Closeable {
             throw new RuntimeException(e);
         }
         final TIntArrayList[] lists = new TIntArrayList[5];
-        for (int k=1; k < 5; ++k) lists[k] = new TIntArrayList();
-        lists[0] = fingerprintIndizes;
+        ArrayList<PredictionPerformance> performances = new ArrayList<>();
         try (CloseableHttpResponse response = client.execute(get)) {
             HttpEntity e = response.getEntity();
             final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
             String line; //br.readLine();
             while ((line=br.readLine())!=null) {
                 String[] tabs = line.split("\t");
-                System.out.println(tabs.length);
-                for (int k=0; k < 5; ++k) {
-                    lists[k].add(Integer.parseInt(tabs[k]));
-                }
-                fingerprintSmarts.add(tabs[5]);
-                if (tabs.length > 6) fingerprintComments.add(tabs[6].trim());
-                else fingerprintComments.add(null);
+                final int index = Integer.parseInt(tabs[0]);
+                PredictionPerformance p = new PredictionPerformance(
+                        Double.parseDouble(tabs[1]),
+                        Double.parseDouble(tabs[2]),
+                        Double.parseDouble(tabs[3]),
+                        Double.parseDouble(tabs[4])
+                );
+                performances.add(p);
+                fingerprintIndizes.add(index);
             }
         }
-        final FingerprintStatistics stats = new FingerprintStatistics(lists[1].toArray(), lists[2].toArray(), lists[3].toArray(), lists[4].toArray());
-        stats.setFThreshold(0.25);
-        stats.setMinimalNumberOfOccurences(10);
-        return stats;
+        return performances.toArray(new PredictionPerformance[performances.size()]);
     }
 
-    public List<Compound> getCompoundsFor(MolecularFormula formula, File output, int[] fingerprintIndizes, boolean bio) throws IOException {
+    public List<Compound> getCompoundsFor(MolecularFormula formula, File output, MaskedFingerprintVersion version, boolean bio) throws IOException {
         final HttpGet get;
         try {
             get = new HttpGet(getFingerIdURI("/webapi/compounds/" + (bio ? "bio/" : "not-bio/") + formula.toString() + ".json").build());
@@ -223,7 +223,7 @@ public class WebAPI implements Closeable {
         try (CloseableHttpResponse response = client.execute(get)) {
             try (MultiplexerFileAndIO io = new MultiplexerFileAndIO(response.getEntity().getContent(), new GZIPOutputStream(new FileOutputStream(output)))) {
                 try (final JsonParser parser = Json.createParser(io)) {
-                    return Compound.parseCompounds(fingerprintIndizes, compounds, parser);
+                    return Compound.parseCompounds(version, compounds, parser);
                 }
             }
         }

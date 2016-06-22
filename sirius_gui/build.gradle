@@ -9,20 +9,61 @@ buildscript {
     }
 }
 
+//Global Properties
+ext{
+    //version for external libraries
+    siriusVersion = "3.1.4-SNAPSHOT"
+    fingeridVersion = "1.0.4-SNAPSHOT"
+    slf4j_version = '1.7.13'
+    gson_version = '2.6.2'
+    json_version = '1.0'
+    json_impl_version = "1.0.4"
+    math3_version = '3.+'
+    glpk_version = '1.0.37'
+    jewelcli_version = '0.8.+'
+    gurobi_version = '6.0'
+
+
+    graphUtils_version = '1.1'
+}
+apply plugin: 'java'
+apply plugin: 'maven'
+
+version = "3.1.4-SNAPSHOT"
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "http://bio.informatik.uni-jena.de/artifactory/repo"
+        }
+        maven {
+            url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+        }
+        maven {
+            url "https://www.xypron.de/repository" //glpk repo
+            //only usede by fragmentation_tree_construction but has to be global
+        }
+    }
+
 // sourceCompatibility = 1.7
-// version = '3.1.3'
+// version = '3.1.4-SNAPSHOT'
 //project.version = '3.1.3' //todo should be the same as the line above
 
 dependencies {
 //project
-    compile project(':chemistry_base')
-    compile project(':io')
-    compile project(':isotope_pattern:isotope_pattern_analysis')
-    compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile project(':sirius_frontend:sirius_cli')
+    compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "io", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "isotope_pattern_analysis", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "fragmentation_tree_construction", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "sirius_cli", version: "$siriusVersion"
 
 //internal
-    compile "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT"
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
     compile "de.unijena.bioinf:Myxo:0.2"
 //external
     compile "net.sf.opencsv:opencsv:2.3"
@@ -39,6 +80,8 @@ dependencies {
     compile "org.openscience.cdk:cdk-sdg:1.5.10"
     compile "org.openscience.cdk:cdk-smarts:1.5.10"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
+
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
 }
 
 
@@ -51,8 +94,8 @@ launch4j {
     mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
     icon = file('src/main/resources/icons/sirius.ico')
     copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena. Kai Dührkop and Marvin Meusel"
-    version = "3.1.3"
-    textVersion = "3.1.3"
+    version = "3.1.4"
+    textVersion = "3.1.4"
     initialHeapSize = 256
     maxHeapSize = 1024
     maxHeapPercent = 60
