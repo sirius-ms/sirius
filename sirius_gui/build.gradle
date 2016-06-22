@@ -56,6 +56,80 @@ dependencies {
     provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
+
+
+/*################### Environment variables ################### */
+def linSuffix = 'linux'
+def winSuffix = 'win'
+
+mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+project.ext.set("arch", "64,32")
+project.ext.set("type", "gui,console")
+project.ext.set("appName", "sirius3")
+project.ext.set("manualPath", '../manual')
+project.ext.set("glpkPath", '../glpk')
+project.ext.set("distPath", '../dist')
+
+
+/*################### Building the Documentation ################### */
+task cleanDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'clean'])
+}
+
+task htmlDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'html'])
+}
+htmlDoku.mustRunAfter cleanDoku
+
+task mdDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'text'])
+}
+mdDoku.mustRunAfter cleanDoku
+
+
+task pdfDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['make', 'latexpdf'])
+}
+pdfDoku.mustRunAfter cleanDoku
+
+task buildDoku() {
+    group = 'documentation'
+}
+buildDoku.doLast {
+    def f = file("${project.manualPath}/source/index.rst").readLines()
+    File out = file("${project.manualPath}/build/singleText/sirius.md")
+    out.toPath().getParent().toFile().mkdirs();
+    out.createNewFile()
+
+    /*file("${project.manualPath}/build/text/index.txt").withInputStream() {
+        out << it
+    } //todo do we want the index file here?*/
+
+    f.each {
+        File ff = file("${project.manualPath}/build/text/${it.trim()}.txt")
+        if (ff.exists()) {
+            logger.lifecycle("Appending File: ${ff}")
+            ff.withInputStream() {
+                out << it
+            }
+        }
+    }
+    logger.lifecycle("copying SIRIUS.md to preject root")
+    Files.copy(out.toPath(),file('../../README.md').toPath(),StandardCopyOption.REPLACE_EXISTING)
+}
+buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
+clean.dependsOn cleanDoku
+
+
+/*################### Jar build Stuff ################### */
 shadowJar {
 
     configurations = [project.configurations.compile]
@@ -66,15 +140,8 @@ shadowJar {
 }
 
 
-def linSuffix = 'linux'
-def winSuffix = 'win'
 
-mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
-project.ext.set("arch", "64,32")
-project.ext.set("type", "gui,console")
-project.ext.set("appName", "sirius3")
-project.ext.set("os", linSuffix)
-
+/*################### Windows release Stuff ################### */
 launch4j {
     mainClassName = project.mainClassName
     mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
@@ -103,6 +170,10 @@ launch4j {
 
 createExe.dependsOn 'installDist'
 
+
+
+
+/*################### Linux release Stuff ################### */
 startScripts {
     applicationName = "${project.appName}"
 
@@ -113,9 +184,10 @@ startScripts {
 }
 
 
-//def fatJarFile = project.tasks.shadowJar.outputs.files.singleFile
 
-task distribute {}
+/*################### Build distributions ################### */
+task distribute {group = 'distribution'}
+distribute.dependsOn buildDoku
 
 distributions {
 
@@ -126,23 +198,23 @@ distributions {
             contents {
                 into('lib') {
                     from("build/install/${project.name}/lib")
-                    from("../glpk/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/")
                 }
 
                 into('bin') {
                     from("build/install/${project.name}/bin") {
                         exclude("*.bat")
                     }
-                    from('../dist')
+                    from("${project.distPath}")
                 }
                 into('doc') {
-                    from("../manual/build/latex") {
+                    from("${project.manualPath}/build/latex") {
                         include('SIRIUS.pdf')
                     }
-                    from("../manual/build/singleText")
+                    from("${project.manualPath}/build/singleText")
                 }
                 into('doc/html') {
-                    from("../manual/build/html")
+                    from("${project.manualPath}/build/html")
                 }
             }
         })
@@ -159,84 +231,27 @@ distributions {
                 into('lib') {
                     from('build/launch4j/lib')
                 }
-                from { "../glpk/w${ar}/" }
-                from('../dist') {
+                from { "${project.glpkPath}/w${ar}/" }
+                from("${project.distPath}") {
                     exclude('sirius3-gui')
                 }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from("../manual/build/latex") {
+                    from("${project.manualPath}/build/latex") {
                         include('SIRIUS.pdf')
                     }
-                    from("../manual/build/singleText")
+                    from("${project.manualPath}/build/singleText")
                 }
                 into('doc/html') {
-                    from("../manual/build/html")
+                    from("${project.manualPath}/build/html")
                 }
             }
         })
         distribute.dependsOn "${n}DistZip"
     }
 }
-
-
-task cleanDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file('../manual')
-    commandLine(['make', 'clean'])
-}
-
-task htmlDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file('../manual')
-    commandLine(['make', 'html'])
-}
-htmlDoku.mustRunAfter cleanDoku
-
-task mdDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file('../manual')
-    commandLine(['make', 'text'])
-}
-mdDoku.mustRunAfter cleanDoku
-
-
-task pdfDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file('../manual')
-    commandLine(['make', 'latexpdf'])
-}
-pdfDoku.mustRunAfter cleanDoku
-
-task buildDoku() {
-    group = 'documentation'
-}
-buildDoku.doLast {
-    def f = file('../manual/source/index.rst').readLines()
-    File out = file('../manual/build/singleText/sirius.md')
-    out.toPath().getParent().toFile().mkdirs();
-    out.createNewFile()
-
-    /*file("../manual/build/text/index.txt").withInputStream() {
-        out << it
-    } //todo do we want the index file here?*/
-
-    f.each {
-        File ff = file("../manual/build/text/${it.trim()}.txt")
-        if (ff.exists()) {
-            logger.lifecycle("Appending File: ${ff}")
-            ff.withInputStream() {
-                out << it
-            }
-        }
-    }
-    logger.lifecycle("copying SIRIUS.md to preject root")
-    Files.copy(out.toPath(),file('../../README.md').toPath(),StandardCopyOption.REPLACE_EXISTING)
-}
-buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
-jar.dependsOn buildDoku
 
 linux32DistZip.dependsOn 'installDist'
 linux32DistTar.dependsOn 'installDist'
