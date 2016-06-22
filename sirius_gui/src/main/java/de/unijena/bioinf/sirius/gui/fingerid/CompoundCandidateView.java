@@ -95,7 +95,11 @@ public class CompoundCandidateView extends JPanel {
                                     return "Timeout occured. The compute cluster is too busy to process your job. Please try again at later time.";
                                 }
                             } catch (IOException e1) {
+                                e1.printStackTrace();
                                 return e1.getMessage();
+                            } catch (RuntimeException e)  {
+                                e.printStackTrace();
+                                return e.getMessage();
                             }
                         }
 

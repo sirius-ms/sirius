@@ -22,7 +22,13 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TShortArrayList;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -48,7 +54,7 @@ public class Compound {
         PrototypeCompound.smiles = new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O");
         PrototypeCompound.name = "Glucose";
         PrototypeCompound.pubchemIds = new int[]{5793};
-        PrototypeCompound.fingerprint = new boolean[]{true};
+        PrototypeCompound.fingerprint = new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[0]);
         return PrototypeCompound;
     }
 
@@ -57,15 +63,26 @@ public class Compound {
     protected String name;
     protected IAtomContainer molecule;
 
-    protected boolean[] fingerprint;
+    protected Fingerprint fingerprint;
     protected Multimap<String, String> databases;
     protected int[] pubchemIds; // special case for the lots of pubchem ids a structure might have
+
+    protected Compound(FingerprintCandidate candidate) {
+        this.inchi = candidate.getInchi();
+        this.smiles = new Smiles(candidate.getSmiles());
+        this.name = candidate.getName();
+        this.fingerprint = candidate.getFingerprint();
+        final Set<String> names = DatasourceService2.getDataSourcesFromBitFlags(candidate.getBitset());
+        names.remove(DatasourceService2.Sources.PUBCHEM.name);
+        this.databases = ArrayListMultimap.create(names.size(), 1);
+        for (String aname : names) this.databases.put(aname,null);
+    }
 
     protected Compound() {
 
     }
 
-    protected static List<Compound> parseCompounds(int[] fingerprintIndizes, List<Compound> compounds, JsonParser parser) {
+    protected static List<Compound> parseCompounds(MaskedFingerprintVersion version, List<Compound> compounds, JsonParser parser) {
         if (parser.next()!= JsonParser.Event.START_OBJECT) throw new JsonException("Expect json object");
         if (!findTopLevelKey(parser, "compounds")) throw new JsonException("Do not find any compounds for given molecular formula");
         if (parser.next()!=JsonParser.Event.START_ARRAY) throw new JsonException("Expect array of compounds");
@@ -74,7 +91,7 @@ public class Compound {
             final JsonParser.Event event = parser.next();
             switch (event) {
                 case START_OBJECT:
-                    compounds.add(Compound.parseFromJSON(parser, fingerprintIndizes));
+                    compounds.add(Compound.parseFromJSON(parser, version));
                     break;
                 case END_ARRAY:
                     break outer;
@@ -102,7 +119,7 @@ public class Compound {
         }
     }
 
-    public static Compound parseFromJSON(JsonParser parser, int[] fingerprintIndizes) {
+    public static Compound parseFromJSON(JsonParser parser, MaskedFingerprintVersion version) {
         final Compound compound = new Compound();
         String inchi = null, inchikey = null;
         int flags=0;
@@ -121,7 +138,11 @@ public class Compound {
                         case "smiles":
                             compound.smiles = new Smiles(expectString(parser)); break;
                         case "fingerprint":
-                            compound.fingerprint = stringToBoolean(expectString(parser), fingerprintIndizes); break;
+                            expectArray(parser);
+                            final TShortArrayList values = new TShortArrayList(100);
+                            while (consumeShorts(parser, values)) {}
+                            compound.fingerprint = version.mask(values.toArray());
+                            break;
                         case "bitset":
                             flags = expectInt(parser); break;
                         case "links":
@@ -144,6 +165,18 @@ public class Compound {
                     return compound;
             }
         }
+    }
+
+    private static void expectArray(JsonParser parser) {
+        final JsonParser.Event event = parser.next();
+        if (event != JsonParser.Event.START_ARRAY) throw new JsonException("expected array value but '" + event.name() + "' is given." );
+    }
+    private static boolean consumeShorts(JsonParser parser, TShortArrayList values) {
+        final JsonParser.Event event = parser.next();
+        if (event == JsonParser.Event.END_ARRAY) return false;
+        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        values.add((short)parser.getInt());
+        return true;
     }
 
     private static int expectInt(JsonParser parser) {

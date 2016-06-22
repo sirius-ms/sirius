@@ -18,17 +18,16 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-
-import java.util.concurrent.Future;
 
 public class FingerIdTask {
 
     public final ExperimentContainer experiment;
     public final SiriusResultElement result;
 
-    public volatile double[] prediction;
+    public volatile ProbabilityFingerprint prediction;
 
     public FingerIdTask(ExperimentContainer experiment, SiriusResultElement result) {
         this.experiment = experiment;
