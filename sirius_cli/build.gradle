@@ -9,7 +9,7 @@ dependencies {
 
 
 
-assemble.doFirst{
+processResources.doFirst{
     logger.lifecycle('writing properties file...')
     Properties properties = new Properties()
     File propertiesFile = new File("$projectDir/src/main/resources/DefaultSirius.properties")
@@ -37,8 +37,6 @@ launch4j {
     outfile = "${project.appName}.exe"
     jar = "lib/${project.tasks.jar.archiveName}"
 }
-
-/*################### Linux release Stuff ################### */
 
 
 /*################### Build distributions ################### */
