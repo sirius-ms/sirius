@@ -1,18 +1,40 @@
 //Global Properties
-ext{
+ext {
     //version for external libraries
     slf4j_version = '1.7.13'
     gson_version = '2.6.2'
     json_version = '1.0'
     json_impl_version = "1.0.4"
     math3_version = '3.+'
-    glpk_version = '1.0.37'
+    glpk_version = '1.7.0'//'1.0.37'
     jewelcli_version = '0.8.+'
-    gurobi_version = '6.0'
+
+    gurobi_version = '6.+'
+    gurobi_artifact = ''
 
 
     graphUtils_version = '1.1'
+
+    //locations of runtime libraries
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
+
+
+    //release branch auto detection
+    gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+    releaseBranch = 'release'
+
+    internal = { String modulePath, version ->
+        if (project.gitBranch.equals(project.releaseBranch)) {
+            println('release branch')
+            return "de.unijena.bioinf.ms:${modulePath.split(':').takeRight(1)[0]}:$version"
+        } else {
+            println('normal branch')
+            return project("$modulePath")
+        }
+    }
 }
+
+
 
 
 allprojects {
@@ -36,7 +58,6 @@ allprojects {
         }
         maven {
             url "https://www.xypron.de/repository" //glpk repo
-            //only usede by fragmentation_tree_construction but has to be global
         }
     }
 
@@ -46,4 +67,11 @@ allprojects {
 
         testCompile group: 'junit', name: 'junit', version: '4.+'
     }
+
+    //to build shadowJar without provided libs
+    configurations {
+        provided
+        compileOnly.extendsFrom provided
+    }
+
 }

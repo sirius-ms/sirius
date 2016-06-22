@@ -7,5 +7,5 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
 
-    compile project(':chemistry_base')
+    compile internal(':chemistry_base',version)
 }

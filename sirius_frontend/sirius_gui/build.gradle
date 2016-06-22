@@ -1,71 +1,22 @@
-buildscript {
-    repositories {
-        maven {
-            url 'https://plugins.gradle.org/m2/'
-        }
-    }
-    dependencies {
-        classpath 'gradle.plugin.edu.sc.seis.gradle:launch4j:1.5.1'
-    }
-}
-
-//Global Properties
-ext{
-    //version for external libraries
-    siriusVersion = "3.1.4-SNAPSHOT"
-    fingeridVersion = "1.0.4-SNAPSHOT"
-    slf4j_version = '1.7.13'
-    gson_version = '2.6.2'
-    json_version = '1.0'
-    json_impl_version = "1.0.4"
-    math3_version = '3.+'
-    glpk_version = '1.0.37'
-    jewelcli_version = '0.8.+'
-    gurobi_version = '6.0'
-
-
-    graphUtils_version = '1.1'
-}
-apply plugin: 'java'
-apply plugin: 'maven'
-
-version = "3.1.4-SNAPSHOT"
-
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
-repositories {
-        mavenLocal()
-        mavenCentral()
-        maven {
-            url "http://bio.informatik.uni-jena.de/artifactory/repo"
-        }
-        maven {
-            url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
-        }
-        maven {
-            url "https://www.xypron.de/repository" //glpk repo
-            //only usede by fragmentation_tree_construction but has to be global
-        }
-    }
-
-// sourceCompatibility = 1.7
-// version = '3.1.4-SNAPSHOT'
-//project.version = '3.1.3' //todo should be the same as the line above
+//apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'de.unijena.bioinf.launch4jj'
 
 dependencies {
 //project
-    compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "io", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "isotope_pattern_analysis", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "fragmentation_tree_construction", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "sirius_cli", version: "$siriusVersion"
+    compile internal(':chemistry_base',version)
+    compile internal(':io',version)
+    compile internal(':isotope_pattern:isotope_pattern_analysis',version)
+    compile internal(':fragmentation_tree:fragmentation_tree_construction',version)
+    compile internal(':sirius_frontend:sirius_cli',version)
 
 //internal
-    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
-    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
+    compile "de.unijena.bioinf:fingerblast:1.0.2-SNAPSHOT"
     compile "de.unijena.bioinf:Myxo:0.2"
 //external
+    compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
+    compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
+
     compile "net.sf.opencsv:opencsv:2.3"
     compile "org.swinglabs.swingx:swingx-all:1.+"
     compile "org.openscience.cdk:cdk-silent:1.5.10"
@@ -81,44 +32,117 @@ dependencies {
     compile "org.openscience.cdk:cdk-smarts:1.5.10"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
 
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
+    provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
 
-apply plugin: 'application'
-apply plugin: 'edu.sc.seis.launch4j'
 
-mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
+/*################### Environment variables ################### */
+mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+project.ext.set("type", "gui,console")
 
-launch4j {
-    mainClassName = "de.unijena.bioinf.sirius.gui.mainframe.MainFrame"
-    icon = file('src/main/resources/icons/sirius.ico')
-    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena. Kai Dührkop and Marvin Meusel"
-    version = "3.1.4"
-    textVersion = "3.1.4"
-    initialHeapSize = 256
-    maxHeapSize = 1024
-    maxHeapPercent = 60
-    jreRuntimeBits = "64"
-}
 
-jar {
+/*################### Jar build Stuff ################### */
+shadowJar {
+
+    configurations = [project.configurations.compile]
+    classifier = 'fat'
     manifest {
-        attributes 'Implementation-Title': 'Gradle Quickstart',
-                'Implementation-Version': version
+        attributes 'Class-Path': "$runtimeClasspath"
     }
 }
 
 
+/*################### Windows release Stuff ################### */
+launch4j {
+    mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
 
-test {
-    systemProperties 'property': 'value'
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+
+    guiCLIArgument = '--gui'
+    outfile = "${project.appName}.exe"
+
+    jar = "lib/${project.tasks.jar.archiveName}"
 }
 
-uploadArchives {
-    repositories {
-        flatDir {
-            dirs 'repos'
-        }
+/*################### Build distributions ################### */
+distributions {
+    project.arch.split(',').each { ar ->
+        def n = "${project.linSuffix}${ar}"
+        create(n, {
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from("build/install/${project.name}/lib")
+                    from("${project.glpkPath}/l${ar}/")
+                }
+
+                into('bin') {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
     }
+
+    //crete win32And64 zip tasks
+    project.arch.split(',').each { ar ->
+        def n = "${project.winSuffix}${ar}"
+        create(n, {
+
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from('build/launch4j/lib')
+                }
+                from { "${project.glpkPath}/w${ar}/" }
+                from("${project.distPath}") {
+                    exclude('sirius3-gui')
+                }
+                from('build/launch4j') {
+                    include("*-${ar}.exe")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+    }
+
+    linux32DistZip.dependsOn 'installDist'
+    linux32DistTar.dependsOn 'installDist'
+    installLinux32Dist.dependsOn 'installDist'
+
+    linux64DistZip.dependsOn 'installDist'
+    linux64DistTar.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
+
+    win32DistZip.dependsOn 'createExe'
+    win32DistTar.dependsOn 'createExe'
+    installWin32Dist.dependsOn 'createExe'
+
+    win64DistZip.dependsOn 'createExe'
+    win64DistTar.dependsOn 'createExe'
+    installWin64Dist.dependsOn 'createExe'
 }
+
