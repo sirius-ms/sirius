@@ -1,21 +1,6 @@
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-
-buildscript {
-    repositories {
-//        mavenLocal()
-        maven {url "https://plugins.gradle.org/m2/"}
-        maven {url "http://bio.informatik.uni-jena.de/artifactory/repo"}
-    }
-    dependencies {
-        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.1'
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-    }
-
-}
-apply plugin: 'application'
+//apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'de.unijena.bioinf.launch4jj'
+//apply plugin: 'de.unijena.bioinf.launch4jj'
 
 dependencies {
 //project
@@ -53,74 +38,8 @@ dependencies {
 
 
 /*################### Environment variables ################### */
-def linSuffix = 'linux'
-def winSuffix = 'win'
-
 mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
-project.ext.set("arch", "64,32")
 project.ext.set("type", "gui,console")
-project.ext.set("appName", "sirius3")
-project.ext.set("manualPath", '../manual')
-project.ext.set("glpkPath", '../glpk')
-project.ext.set("distPath", '../dist')
-
-
-/*################### Building the Documentation ################### */
-task cleanDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}")
-    commandLine(['make', 'clean'])
-}
-
-task htmlDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}")
-    commandLine(['make', 'html'])
-}
-htmlDoku.mustRunAfter cleanDoku
-
-task mdDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}")
-    commandLine(['make', 'text'])
-}
-mdDoku.mustRunAfter cleanDoku
-
-
-task pdfDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}")
-    commandLine(['make', 'latexpdf'])
-}
-pdfDoku.mustRunAfter cleanDoku
-
-task buildDoku() {
-    group = 'documentation'
-}
-buildDoku.doLast {
-    def f = file("${project.manualPath}/source/index.rst").readLines()
-    File out = file("${project.manualPath}/build/singleText/sirius.md")
-    out.toPath().getParent().toFile().mkdirs();
-    out.createNewFile()
-
-    /*file("${project.manualPath}/build/text/index.txt").withInputStream() {
-        out << it
-    } //todo do we want the index file here?*/
-
-    f.each {
-        File ff = file("${project.manualPath}/build/text/${it.trim()}.txt")
-        if (ff.exists()) {
-            logger.lifecycle("Appending File: ${ff}")
-            ff.withInputStream() {
-                out << it
-            }
-        }
-    }
-    logger.lifecycle("copying SIRIUS.md to preject root")
-    Files.copy(out.toPath(),file('../../README.md').toPath(),StandardCopyOption.REPLACE_EXISTING)
-}
-buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
-clean.dependsOn cleanDoku
 
 
 /*################### Jar build Stuff ################### */
@@ -134,54 +53,23 @@ shadowJar {
 }
 
 
-
 /*################### Windows release Stuff ################### */
 launch4j {
-    mainClassName = project.mainClassName
     mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
 
-    icon = file('src/main/resources/icons/sirius.ico')
-    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
-    companyName = "Friedrich-Schiller-University Jena"
-    version = project.version
-    textVersion = project.version
-    supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
-
-    dontWrapJar = true
     headerType = "$project.type"
     jreRuntimeBits = "$project.arch"
 
-    initialHeapPercent = 50
-    maxHeapPercent = 80
-    jdkPreference = "preferJre"
-
     guiCLIArgument = '--gui'
-
     outfile = "${project.appName}.exe"
-    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
+
     jar = "lib/${project.tasks.jar.archiveName}"
 }
 
-/*################### Linux release Stuff ################### */
-startScripts {
-    applicationName = "${project.appName}"
-
-    doLast {
-        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
-        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""' + "${System.lineSeparator()}" + 'export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$APP_HOME/lib:$LD_LIBRARY_PATH')
-    }
-}
-
-
-
 /*################### Build distributions ################### */
-task distribute {group = 'distribution'}
-distribute.dependsOn buildDoku
-
 distributions {
-
     project.arch.split(',').each { ar ->
-        def n = "${linSuffix}${ar}"
+        def n = "${project.linSuffix}${ar}"
         create(n, {
             baseName = "${project.appName}-$n"
             contents {
@@ -212,7 +100,7 @@ distributions {
 
     //crete win32And64 zip tasks
     project.arch.split(',').each { ar ->
-        def n = "${winSuffix}${ar}"
+        def n = "${project.winSuffix}${ar}"
         create(n, {
 
             baseName = "${project.appName}-$n"
@@ -240,21 +128,21 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
     }
+
+    linux32DistZip.dependsOn 'installDist'
+    linux32DistTar.dependsOn 'installDist'
+    installLinux32Dist.dependsOn 'installDist'
+
+    linux64DistZip.dependsOn 'installDist'
+    linux64DistTar.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
+
+    win32DistZip.dependsOn 'createExe'
+    win32DistTar.dependsOn 'createExe'
+    installWin32Dist.dependsOn 'createExe'
+
+    win64DistZip.dependsOn 'createExe'
+    win64DistTar.dependsOn 'createExe'
+    installWin64Dist.dependsOn 'createExe'
 }
-
-linux32DistZip.dependsOn 'installDist'
-linux32DistTar.dependsOn 'installDist'
-installLinux32Dist.dependsOn 'installDist'
-
-linux64DistZip.dependsOn 'installDist'
-linux64DistTar.dependsOn 'installDist'
-installLinux64Dist.dependsOn 'installDist'
-
-win32DistZip.dependsOn 'createExe'
-win32DistTar.dependsOn 'createExe'
-installWin32Dist.dependsOn 'createExe'
-
-win64DistZip.dependsOn 'createExe'
-win64DistTar.dependsOn 'createExe'
-installWin64Dist.dependsOn 'createExe'
 
