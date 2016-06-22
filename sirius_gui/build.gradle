@@ -11,6 +11,7 @@ dependencies {
     compile internal(':sirius_frontend:sirius_cli',version)
 
 //internal
+    //todo fingerID dependencies into artifactory
     compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
     compile "de.unijena.bioinf:Myxo:0.2"

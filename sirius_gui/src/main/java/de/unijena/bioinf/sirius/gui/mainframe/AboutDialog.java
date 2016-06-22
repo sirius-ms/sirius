@@ -130,7 +130,7 @@ public class AboutDialog extends JDialog{
         bibtex.setAction(copyBibTexA);
         clipboard.setAction(copyPlainA);
     }
-
+    //todo we should load that from property file
     private static String FINGERID_CITATION = "Kai Dührkop, Huibin Shen, Marvin Meusel, Juho Rousu and Sebastian Böcker\nSearching molecular structure databases with tandem mass spectra using CSI:FingerID. \nProc Natl Acad Sci U S A, 112(41):12580-12585, 2015." +
             "Huibin Shen, Kai Dührkop, Sebastian Böcker and Juho Rousu\nMetabolite Identification through Multiple Kernel Learning on Fragmentation Trees.\nBioinformatics, 30(12):i157-i164, 2014. Proc. of Intelligent Systems for Molecular Biology (ISMB 2014)." +
             "Markus Heinonen, Huibin Shen, Nicola Zamboni and Juho Rousu\nMetabolite identification and molecular fingerprint prediction through machine learning\nBioinformatics (2012) 28 (18): 2333-2341.Proc. of European Conference on Computational Biology (ECCB 2012).";
