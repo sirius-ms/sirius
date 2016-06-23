@@ -36,13 +36,12 @@ task htmlDoku(type: Exec) {
 }
 htmlDoku.mustRunAfter cleanDoku
 
-task mdDoku(type: Exec) {
+task textDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}")
     commandLine(['make', 'text'])
 }
-mdDoku.mustRunAfter cleanDoku
-
+textDoku.mustRunAfter cleanDoku
 
 task pdfDoku(type: Exec) {
     group = 'documentation'
@@ -51,12 +50,19 @@ task pdfDoku(type: Exec) {
 }
 pdfDoku.mustRunAfter cleanDoku
 
-task buildDoku() {
+
+
+File out = file("${project.manualPath}/build/singleText/sirius.rst")
+File md = file("${project.manualPath}/build/singleText/sirius.md")
+
+task buildDoku(type: Exec) {
     group = 'documentation'
+    workingDir = file("${project.manualPath}")
+    commandLine(['pandoc','-f', 'rst', '-t', 'markdown', '-o', "${md}", "${out}"])
 }
-buildDoku.doLast {
+
+buildDoku.doFirst {
     def f = file("${project.manualPath}/source/index.rst").readLines()
-    File out = file("${project.manualPath}/build/singleText/sirius.md")
     out.toPath().getParent().toFile().mkdirs();
     out.createNewFile()
 
@@ -73,10 +79,14 @@ buildDoku.doLast {
             }
         }
     }
-    logger.lifecycle("copying SIRIUS.md to preject root")
-    Files.copy(out.toPath(), file('../../README.md').toPath(), StandardCopyOption.REPLACE_EXISTING)
+
 }
-buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
+buildDoku.doLast {
+    logger.lifecycle("copying ${md} to preject root")
+    Files.copy(md.toPath(), file('../README.md').toPath(), StandardCopyOption.REPLACE_EXISTING)
+}
+
+buildDoku.dependsOn cleanDoku, htmlDoku, textDoku, pdfDoku
 clean.dependsOn cleanDoku
 
 subprojects {
