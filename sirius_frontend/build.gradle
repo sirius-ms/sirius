@@ -14,8 +14,6 @@ buildscript {
 
 }
 
-
-
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("arch", "64,32")
@@ -81,6 +79,8 @@ buildDoku.doLast {
 buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
 clean.dependsOn cleanDoku
 
+apply plugin: 'application'
+apply plugin: 'de.unijena.bioinf.launch4jj'
 subprojects {
     apply plugin: 'application'
     apply plugin: 'de.unijena.bioinf.launch4jj'
