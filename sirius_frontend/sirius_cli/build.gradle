@@ -1,5 +1,5 @@
-apply plugin: "application"
-apply plugin: 'de.unijena.bioinf.launch4jj'
+//apply plugin: "application"
+//apply plugin: 'de.unijena.bioinf.launch4jj'
 
 mainClassName = "de.unijena.bioinf.sirius.cli.CLI"
 
