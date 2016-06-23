@@ -8,7 +8,7 @@ buildscript {
         maven { url "http://bio.informatik.uni-jena.de/artifactory/repo" }
     }
     dependencies {
-        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.1'
+        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
     }
 
