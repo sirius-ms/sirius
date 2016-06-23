@@ -1,4 +1,5 @@
 apply plugin: "application"
+apply plugin: 'de.unijena.bioinf.launch4jj'
 
 mainClassName = "de.unijena.bioinf.sirius.cli.CLI"
 
@@ -26,9 +27,6 @@ processResources.doFirst{
         properties.store(it,"")
     }
 }
-
-//apply plugin: 'application'
-//apply plugin: 'de.unijena.bioinf.launch4jj'
 
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
 project.ext.set("type", "console")
