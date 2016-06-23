@@ -79,8 +79,6 @@ buildDoku.doLast {
 buildDoku.dependsOn cleanDoku, htmlDoku, mdDoku, pdfDoku
 clean.dependsOn cleanDoku
 
-apply plugin: 'application'
-apply plugin: 'de.unijena.bioinf.launch4jj'
 subprojects {
     apply plugin: 'application'
     apply plugin: 'de.unijena.bioinf.launch4jj'

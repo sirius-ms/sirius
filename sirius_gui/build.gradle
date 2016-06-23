@@ -1,6 +1,6 @@
-apply plugin: 'application'
+//apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'de.unijena.bioinf.launch4jj'
+//apply plugin: 'de.unijena.bioinf.launch4jj'
 
 dependencies {
 //project
