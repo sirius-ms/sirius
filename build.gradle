@@ -110,7 +110,7 @@ allprojects {
     }
 
     artifactory {
-//        contextUrl = "${artifactory_contextUrl}"
+        contextUrl = 'http://localhost:8081/artifactory'
         publish {
             /*repository {
                 repoKey = 'libs-snapshot-local'
