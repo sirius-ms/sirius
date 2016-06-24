@@ -1,9 +1,13 @@
 buildscript {
     repositories {
         jcenter()
+        maven(){
+            url 'https://oss.jfrog.org/artifactory/oss-snapshot-local'
+        }
     }
+
     dependencies {
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.0"
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.x-SNAPSHOT"
     }
 }
 //Global Properties
@@ -97,40 +101,33 @@ allprojects {
     }
     javadocJar.dependsOn 'javadoc'*/
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-//                from components.java
-                artifact jar
-                artifact sourceJar
-//                artifact javadocJar
-                setArtifacts([jar, sourceJar/*, javadocJar*/])
-            }
-        }
-        /* repositories {
-             maven {
-                 url { "http://${repoHost}/libs-${project.version.endsWith('-SNAPSHOT') ? 'snapshot' : 'release' }-local" }
-             }
-         }*/
-    }
+
 
     artifactory {
-//        contextUrl = 'http://localhost:8081/artifactory'
+        contextUrl = 'http://hudson.bioinf.uni-jena.de:8080/artifactory'
         publish {
-            /*repository {
+            repository {
                 repoKey = 'libs-snapshot-local'
-//                username = "${artifactory_user}"
-//                password = "${artifactory_password}"
                 maven = true
 
-            }*/
+            }
             defaults {
                 publications('mavenJava')
             }
         }
     }
 
-//    publishAll.dependsOn artifactoryPublish
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact jar
+                artifact sourceJar
+//                artifact javadocJar
+                setArtifacts([jar, sourceJar/*, javadocJar*/])
+            }
+        }
+    }
 }
+
 artifactoryPublish.skip = true
-//artifactoryPublish.dependsOn jar
