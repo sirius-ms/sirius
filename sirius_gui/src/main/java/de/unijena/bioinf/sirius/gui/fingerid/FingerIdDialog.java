@@ -23,8 +23,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Vector;
 
 public class FingerIdDialog extends JDialog {
 
@@ -35,6 +33,7 @@ public class FingerIdDialog extends JDialog {
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
     protected String db;
+    protected JRadioButton pubchem, biodb;
 
     protected final static String BIO="bio database", ALL = "PubChem";
 
@@ -88,22 +87,19 @@ public class FingerIdDialog extends JDialog {
         final JPanel dbForm = new JPanel();
         dbForm.setLayout(new BoxLayout(dbForm, BoxLayout.Y_AXIS));
         final JPanel inner2 = new JPanel();
-        inner2.setLayout(new BoxLayout(inner2, BoxLayout.X_AXIS));
-        final JComboBox<String> database = new JComboBox<>(new Vector(Arrays.asList(BIO, ALL
-        )));
-        database.setPreferredSize(new Dimension(150, 26));
-        database.setSelectedIndex(0);
-        db = BIO;
-        database.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                db = (String)database.getSelectedItem();
-            }
-        });
-        inner2.add(database);
-        dbForm.add(inner2);
-        dbForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"search database"));
 
+        inner2.setLayout(new FlowLayout());
+        //dbForm.setAlignmentX(0);dbForm.setAlignmentY(0);
+        final ButtonGroup database = new ButtonGroup();
+        pubchem = new JRadioButton("PubChem", false);
+        biodb = new JRadioButton("bio databases", true);
+        database.add(pubchem);
+        database.add(biodb);
+
+        inner2.add(pubchem);
+        inner2.add(biodb);
+        dbForm.add(inner2);
+        dbForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"search in"));
         mainPanel.add(dirForm);
         mainPanel.add(dbForm);
 
@@ -116,7 +112,7 @@ public class FingerIdDialog extends JDialog {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     storage.setDirectory(new File(field.getText()));
-                    storage.setEnforceBio(db.equals(BIO));
+                    storage.setEnforceBio(biodb.isSelected());
                     storage.configured = true;
                     returnState = COMPUTE_ALL;
                     dispose();
@@ -131,7 +127,7 @@ public class FingerIdDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 storage.setDirectory(new File(field.getText()));
                 storage.configured = true;
-                storage.setEnforceBio(db.equals(BIO));
+                storage.setEnforceBio(biodb.isSelected());
                 returnState = APROVED;
                 dispose();
             }
@@ -145,8 +141,6 @@ public class FingerIdDialog extends JDialog {
         });
         southPanel.add(approve);
         southPanel.add(abort);
-
-        setPreferredSize(new Dimension(640, 480));
         pack();
         setVisible(true);
     }
