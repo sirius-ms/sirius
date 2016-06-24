@@ -107,4 +107,20 @@ allprojects {
          }*/
     }
 
+    artifactory {
+//        contextUrl = "${artifactory_contextUrl}"
+        publish {
+            /*repository {
+                repoKey = 'libs-snapshot-local'
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+                maven = true
+
+            }*/
+            defaults {
+                publications ('mavenJava')
+            }
+        }
+    }
+
 }
