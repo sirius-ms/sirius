@@ -53,6 +53,7 @@ ext {
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
+    apply plugin: 'maven'
 //    apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
@@ -117,7 +118,7 @@ allprojects {
         }
     }
 
-    task install {
+    task install (overwrite: true) {
         dependsOn publishToMavenLocal
     }
 }
