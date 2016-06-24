@@ -1,5 +1,10 @@
-plugins {
-    id "com.jfrog.artifactory" version "4.4.0"
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.0"
+    }
 }
 //Global Properties
 ext {
@@ -110,15 +115,15 @@ allprojects {
     }
 
     artifactory {
-        contextUrl = 'http://localhost:8081/artifactory'
+//        contextUrl = 'http://localhost:8081/artifactory'
         publish {
-            repository {
+            /*repository {
                 repoKey = 'libs-snapshot-local'
 //                username = "${artifactory_user}"
 //                password = "${artifactory_password}"
                 maven = true
 
-            }
+            }*/
             defaults {
                 publications('mavenJava')
             }
