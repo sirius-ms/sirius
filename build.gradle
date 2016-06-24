@@ -39,6 +39,7 @@ ext {
 
 allprojects {
     apply plugin: 'java'
+    apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -71,6 +72,36 @@ allprojects {
     configurations {
         provided
         compileOnly.extendsFrom provided
+    }
+
+    /*Define artifacts (for maven install --> is also used by artifactory)*/
+    task sourceJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    //todo Fix JavaDoc
+    /*task javadocJar (type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+    javadocJar.dependsOn 'javadoc'*/
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact jar
+                artifact sourceJar
+//                artifact javadocJar
+                setArtifacts([jar, sourceJar/*, javadocJar*/])
+            }
+        }
+        /* repositories {
+             maven {
+                 url { "http://${repoHost}/libs-${project.version.endsWith('-SNAPSHOT') ? 'snapshot' : 'release' }-local" }
+             }
+         }*/
     }
 
 }
