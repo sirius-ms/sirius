@@ -21,7 +21,6 @@ ext {
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
 
-
     //release branch auto detection
     gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
     logger.lifecycle("Current Branch: $gitBranch")
@@ -36,8 +35,6 @@ ext {
         }
     }
 }
-
-
 
 
 allprojects {
@@ -118,9 +115,9 @@ allprojects {
 
             }*/
             defaults {
-                publications ('mavenJava')
+                publications('mavenJava')
             }
         }
     }
-
 }
+artifactoryPublish.skip = true
