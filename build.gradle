@@ -118,10 +118,17 @@ allprojects {
         }
     }
 
-    task install (overwrite: true) {
-        dependsOn publishToMavenLocal
+    artifacts {
+        jar
+        sourceJar
     }
+
+    /*task install (overwrite: true) {
+        dependsOn publishToMavenLocal
+    }*/
 }
+
+//println(project.getTasksByName('install',true).each{it.getDescription()})
 
 /*artifactory {
     contextUrl = 'http://hudson.bioinf.uni-jena.de:8080/artifactory'
