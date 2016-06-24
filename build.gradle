@@ -14,7 +14,6 @@ buildscript {
 
 }
 
-artifactoryPublish.skip = true
 
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
@@ -127,5 +126,7 @@ subprojects {
     /*################### Build distributions ################### */
     task distribute { group = 'distribution' }
     distribute.dependsOn buildDoku
+
+
 
 }

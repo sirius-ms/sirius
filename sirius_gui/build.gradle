@@ -40,7 +40,6 @@ dependencies {
 }
 
 
-artifactoryPublish.skip = true
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
 project.ext.set("type", "gui,console")
@@ -158,7 +157,7 @@ distributions {
 
 task runGUI(type: Exec) {
     group = "application"
-    File command = file("build/install/sirius3-linux64/bin/sirius3")
+    File command = file("build/install/sirius3-linux64/bin/sirius3-gui")
+    commandLine([command.absolutePath/*, "--gui"*/])
     dependsOn installLinux64Dist
-    commandLine([command.absolutePath, "--gui"])
 }
