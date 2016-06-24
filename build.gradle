@@ -1,4 +1,4 @@
-buildscript {
+/*buildscript {
     repositories {
         jcenter()
         maven(){
@@ -9,7 +9,7 @@ buildscript {
     dependencies {
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.x-SNAPSHOT"
     }
-}
+}*/
 //Global Properties
 ext {
     //version for external libraries
@@ -53,7 +53,7 @@ ext {
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    apply plugin: "com.jfrog.artifactory"
+//    apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -103,19 +103,7 @@ allprojects {
 
 
 
-    artifactory {
-        contextUrl = 'http://hudson.bioinf.uni-jena.de:8080/artifactory'
-        publish {
-            repository {
-                repoKey = 'libs-snapshot-local'
-                maven = true
 
-            }
-            defaults {
-                publications('mavenJava')
-            }
-        }
-    }
 
     publishing {
         publications {
@@ -128,6 +116,24 @@ allprojects {
             }
         }
     }
+
+    task install {
+        dependsOn publishToMavenLocal
+    }
 }
 
-artifactoryPublish.skip = true
+/*artifactory {
+    contextUrl = 'http://hudson.bioinf.uni-jena.de:8080/artifactory'
+    publish {
+        repository {
+            repoKey = 'libs-snapshot-local'
+            maven = true
+
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+}
+
+artifactoryPublish.skip = true*/
