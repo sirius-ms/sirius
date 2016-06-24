@@ -98,6 +98,8 @@ distributions {
             }
         })
         distribute.dependsOn "${n}DistZip"
+        getTasksByName("${n}DistTar",false).each {it.setEnabled(false)}
+
     }
 
     //crete win32And64 zip tasks
@@ -129,7 +131,11 @@ distributions {
             }
         })
         distribute.dependsOn "${n}DistZip"
+        getTasksByName("${n}DistTar",false).each {it.setEnabled(false)}
     }
+
+    project.getTasksByName("distTar",false).each {it.setEnabled(false)}
+    project.getTasksByName("distZip",false).each {it.setEnabled(false)}
 
     linux32DistZip.dependsOn 'installDist'
     linux32DistTar.dependsOn 'installDist'

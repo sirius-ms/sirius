@@ -126,5 +126,4 @@ subprojects {
     task distribute { group = 'distribution' }
     distribute.dependsOn buildDoku
 
-
 }
