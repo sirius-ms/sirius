@@ -34,6 +34,7 @@ dependencies {
     compile "org.openscience.cdk:cdk-sdg:1.5.10"
     compile "org.openscience.cdk:cdk-smarts:1.5.10"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
 
     provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
@@ -155,3 +156,9 @@ distributions {
     installWin64Dist.dependsOn 'createExe'
 }
 
+task runGUI(type: Exec) {
+    group = "application"
+    File command = file("build/install/sirius3-linux64/bin/sirius3")
+    dependsOn installLinux64Dist
+    commandLine([command.absolutePath, "--gui"])
+}
