@@ -37,6 +37,10 @@ ext {
 }
 
 
+task publishAll(){
+
+}
+
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
@@ -119,5 +123,8 @@ allprojects {
             }
         }
     }
+
+    publishAll.dependsOn artifactoryPublish
 }
 artifactoryPublish.skip = true
+artifactoryPublish.dependsOn jar
