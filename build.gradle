@@ -37,13 +37,14 @@ ext {
 }
 
 
-task publishAll(){
+/*task publishAll(){
 
-}
+}*/
 
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
+    apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -94,7 +95,7 @@ allprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                from components.java
+//                from components.java
                 artifact jar
                 artifact sourceJar
 //                artifact javadocJar
@@ -124,7 +125,7 @@ allprojects {
         }
     }
 
-    publishAll.dependsOn artifactoryPublish
+//    publishAll.dependsOn artifactoryPublish
 }
 artifactoryPublish.skip = true
-artifactoryPublish.dependsOn jar
+//artifactoryPublish.dependsOn jar
