@@ -25,6 +25,7 @@ processResources.doFirst{
     }
 }
 
+
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
 project.ext.set("type", "console")
 
