@@ -1,7 +1,9 @@
-/*buildscript {
+import java.nio.file.Paths
+
+buildscript {
     repositories {
         jcenter()
-        maven(){
+        maven() {
             url 'https://oss.jfrog.org/artifactory/oss-snapshot-local'
         }
     }
@@ -9,7 +11,7 @@
     dependencies {
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.x-SNAPSHOT"
     }
-}*/
+}
 //Global Properties
 ext {
     //version for external libraries
@@ -45,16 +47,10 @@ ext {
     }
 }
 
-
-/*task publishAll(){
-
-}*/
-
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    apply plugin: 'maven'
-//    apply plugin: "com.jfrog.artifactory"
+    apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -66,7 +62,10 @@ allprojects {
         mavenLocal()
         mavenCentral()
         maven {
-            url "http://bio.informatik.uni-jena.de/artifactory/repo"
+            url "http://bio.informatik.uni-jena.de/artifactory/repo" //todo deprecated
+        }
+        maven {
+            url "http://bio.informatik.uni-jena.de/repository/repo"
         }
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
@@ -117,24 +116,26 @@ allprojects {
             }
         }
     }
-
-    artifacts {
-        jar
-        sourceJar
-    }
-
-    /*task install (overwrite: true) {
-        dependsOn publishToMavenLocal
-    }*/
 }
 
-//println(project.getTasksByName('install',true).each{it.getDescription()})
 
-/*artifactory {
-    contextUrl = 'http://hudson.bioinf.uni-jena.de:8080/artifactory'
+artifactory {
+    contextUrl = 'http://artifactory.bioinf.uni-jena.de:8081/artifactory'
     publish {
         repository {
-            repoKey = 'libs-snapshot-local'
+            if ("${version}".endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
+            Properties properties = new Properties()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            propertiesFile.withInputStream {
+                properties.load(it)
+            }
+
+
+            username = properties['username']
+            password = properties['password']
             maven = true
 
         }
@@ -144,4 +145,4 @@ allprojects {
     }
 }
 
-artifactoryPublish.skip = true*/
+artifactoryPublish.skip = true
