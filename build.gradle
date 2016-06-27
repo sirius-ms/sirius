@@ -5,7 +5,8 @@ buildscript {
     repositories {
 //        mavenLocal()
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "http://bio.informatik.uni-jena.de/artifactory/repo" }
+        maven { url "http://bio.informatik.uni-jena.de/artifactory/repo" }//todo depreciated
+        maven { url "http://bio.informatik.uni-jena.de/repository/repo" }
     }
     dependencies {
         classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
