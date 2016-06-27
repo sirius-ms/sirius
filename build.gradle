@@ -65,7 +65,7 @@ allprojects {
             url "http://bio.informatik.uni-jena.de/artifactory/repo" //todo deprecated
         }
         maven {
-            url "http://bio.informatik.uni-jena.de/repository/repo"
+            url "http://bio.informatik.uni-jena.de/repository/local"
         }
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
