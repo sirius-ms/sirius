@@ -61,9 +61,9 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {
+        /*maven {
             url "http://bio.informatik.uni-jena.de/artifactory/repo" //todo deprecated
-        }
+        }*/
         maven {
             url "http://bio.informatik.uni-jena.de/repository/local"
         }
