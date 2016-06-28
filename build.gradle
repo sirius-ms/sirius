@@ -120,7 +120,7 @@ allprojects {
 
 
 artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository'
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
     publish {
         repository {
             if ("${version}".endsWith('-SNAPSHOT'))
