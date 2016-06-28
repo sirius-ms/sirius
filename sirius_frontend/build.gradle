@@ -3,10 +3,8 @@ import java.nio.file.StandardCopyOption
 
 buildscript {
     repositories {
-//        mavenLocal()
         maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "http://bio.informatik.uni-jena.de/artifactory/repo" }//todo depreciated
-        maven { url "http://bio.informatik.uni-jena.de/repository/repo" }
+        maven { url "http://bio.informatik.uni-jena.de/repository/local" }
     }
     dependencies {
         classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
