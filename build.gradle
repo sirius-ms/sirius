@@ -65,7 +65,7 @@ allprojects {
             url "http://bio.informatik.uni-jena.de/artifactory/repo" //todo deprecated
         }*/
         maven {
-            url "http://bio.informatik.uni-jena.de/repository/local"
+            url "https://bio.informatik.uni-jena.de/repository/local"
         }
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
@@ -120,7 +120,7 @@ allprojects {
 
 
 artifactory {
-    contextUrl = 'http://artifactory.bioinf.uni-jena.de:8081/artifactory'
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository'
     publish {
         repository {
             if ("${version}".endsWith('-SNAPSHOT'))
