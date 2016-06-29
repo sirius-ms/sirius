@@ -19,8 +19,15 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.FormulaCandidate;
+import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -117,15 +124,18 @@ public class BackgroundComputation {
         private final int numberOfCandidates;
         private final String profile;
 
+        private final FormulaSource formulaSource;
+
         private volatile List<IdentificationResult> results;
         private volatile ComputingStatus state;
 
-        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates) {
+        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource) {
             this.profile = profile;
             this.exp = exp;
             this.constraints = constraints;
             this.ppm = ppm;
             this.numberOfCandidates = numberOfCandidates;
+            this.formulaSource = formulaSource;
 
             this.state = exp.getComputeState();
             this.results = exp.getRawResults();
@@ -171,6 +181,7 @@ public class BackgroundComputation {
 
         protected void compute(final Task container) {
             final Sirius sirius = siriusPerProfile.get(container.profile);
+            final FormulaSource formulaSource = container.formulaSource;
             sirius.setProgress(new Progress() {
                 @Override
                 public void init(double maxProgress) {
@@ -206,8 +217,29 @@ public class BackgroundComputation {
             sirius.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
 
             try {
-                final List<IdentificationResult> results = sirius.identify(SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp),
-                        container.numberOfCandidates, true, IsotopePatternHandling.score);
+                final List<IdentificationResult> results;
+                final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp);
+                if (formulaSource==FormulaSource.ALL_POSSIBLE) {
+                    results = sirius.identify(experiment,
+                            container.numberOfCandidates, true, IsotopePatternHandling.score);
+                } else {
+                    try (final RESTDatabase db = WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL)) {
+                        PrecursorIonType ionType = experiment.getPrecursorIonType();
+                        PrecursorIonType[] allowedIons;
+                        if (ionType.isIonizationUnknown()) {
+                            allowedIons = ionType.getCharge()>0 ? WebAPI.positiveIons : WebAPI.negativeIons;
+                        } else {
+                            allowedIons = new PrecursorIonType[]{ionType};
+                        }
+                        final HashSet<MolecularFormula> formulas = new HashSet<>();
+                        for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
+                            for (FormulaCandidate f : fc)
+                                formulas.add(f.getFormula());
+                        }
+                        results = sirius.identify(experiment,
+                                container.numberOfCandidates, true, IsotopePatternHandling.score, formulas);
+                    }
+                }
                 container.results = results;
                 if (results==null || results.size()==0) container.state = ComputingStatus.FAILED;
             } catch (Exception e) {

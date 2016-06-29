@@ -14,7 +14,7 @@ buildscript {
 
 }
 
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")

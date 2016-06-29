@@ -209,7 +209,6 @@ public class CSIFingerIdComputation {
             try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(mfile)))) {
                 compounds = new ArrayList<>();
                 Compound.parseCompounds(fingerprintVersion, compounds, parser);
-                System.out.println(compounds.size());
             }
         } else {
             if (webAPI==null) {
@@ -236,12 +235,26 @@ public class CSIFingerIdComputation {
         this.compounds = new HashMap<>();
     }
 
+    protected List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
+        final ArrayList<SiriusResultElement> elements = new ArrayList<>();
+        if (container==null || !container.isComputed() || container.getResults()==null) return elements;
+        final SiriusResultElement top = container.getResults().get(0);
+        elements.add(top);
+        final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.2);
+        for (int k=1; k < container.getResults().size(); ++k) {
+            SiriusResultElement e = container.getResults().get(k);
+            if (e.getScore() < threshold) break;
+            elements.add(e);
+        }
+        return elements;
+    }
+
     public void computeAll(Enumeration<ExperimentContainer> compounds) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         while (compounds.hasMoreElements()) {
             final ExperimentContainer c = compounds.nextElement();
-            if (c != null && c.isComputed() && c.getResults()!=null && c.getResults().size()>0) {
-                tasks.add(new FingerIdTask(c, c.getResults().get(0)));
+            for (SiriusResultElement e : getTopSiriusCandidates(c)) {
+                tasks.add(new FingerIdTask(c, e));
             }
         }
         computeAll(tasks);

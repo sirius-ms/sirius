@@ -40,7 +40,7 @@ dependencies {
 }
 
 
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
 project.ext.set("type", "gui,console")

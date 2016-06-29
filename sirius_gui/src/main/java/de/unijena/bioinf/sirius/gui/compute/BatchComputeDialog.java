@@ -53,7 +53,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private TreeSet<String> additionalElements;
 
     private Vector<String> ionizations, instruments;
-    private JComboBox<String> ionizationCB, instrumentCB;
+    private JComboBox<String> ionizationCB, instrumentCB,formulaCombobox;
     private JSpinner ppmSpinner;
     private SpinnerNumberModel snm;
 
@@ -171,6 +171,18 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         otherPanel.add(new JLabel("  fallback for unknown ionizations"));
         otherPanel.add(ionizationCB);
         stack.add(otherPanel);
+
+        //////////
+        {
+            JLabel label = new JLabel("Consider ");
+            final Vector<String> values = new Vector<>();
+            values.add("all possible molecular formulas");
+            values.add("PubChem formulas");
+            values.add("formulas from biological databases");
+            formulaCombobox = new JComboBox<>(values);
+            otherPanel.add(label);
+            otherPanel.add(formulaCombobox);
+        }
 
 
         mainPanel.add(stack);
@@ -299,6 +311,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }else{
             throw new RuntimeException("no valid instrument");
         }
+
+        FormulaSource formulaSource;
+        if (formulaCombobox.getSelectedIndex()==0) formulaSource = FormulaSource.ALL_POSSIBLE;
+        else if (formulaCombobox.getSelectedIndex()==1) formulaSource = FormulaSource.PUBCHEM;
+        else formulaSource = FormulaSource.BIODB;
+
         FormulaConstraints constraints;
         {
             HashSet<String> eles = new HashSet<>();
@@ -375,7 +393,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates);
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates,formulaSource);
                 tasks.add(task);
                 compoundList.add(ec);
             }

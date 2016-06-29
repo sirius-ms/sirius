@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
@@ -26,11 +27,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.RESTDatabase;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -60,7 +64,57 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
 
-    protected final static boolean DEBUG = true;
+    protected final static boolean DEBUG = false;
+
+
+    public static PrecursorIonType[] positiveIons = new PrecursorIonType[]{
+            PrecursorIonType.getPrecursorIonType("[M+H]+"),
+            PrecursorIonType.getPrecursorIonType("[M]+"),
+            PrecursorIonType.getPrecursorIonType("[M-H2O+H]+")
+    };
+    public static PrecursorIonType[] negativeIons = new PrecursorIonType[]{
+            PrecursorIonType.getPrecursorIonType("[M-H]-"),
+            PrecursorIonType.getPrecursorIonType("[M]-")
+    };
+
+
+    public static RESTDatabase getRESTDb(BioFilter bioFilter) {
+        return new RESTDatabase(null, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null);
+    }
+
+
+    public static final String VERSION = "3.1.4-alpha";
+    public static final String DATE = "2016-06-28";
+
+    public String needsUpdate() {
+        final HttpGet get;
+        try {
+            get = new HttpGet(getFingerIdURI("/webapi/version.json").build());
+            try (CloseableHttpResponse response = client.execute(get)) {
+                try (final JsonReader r  = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
+                    JsonObject o = r.readObject().getJsonObject("SIRIUS GUI");
+
+                    final String id = o.getString("version");
+                    final String date = o.getString("date");
+
+                    if (date.compareTo(DATE) > 0 && !id.equalsIgnoreCase(VERSION)) {
+
+                        return id;
+
+                    } else return null;
+
+
+                }
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     private final CloseableHttpClient client;
 
