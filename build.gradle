@@ -90,59 +90,71 @@ allprojects {
 
     /*Define artifacts (for maven install --> is also used by artifactory)*/
     task sourceJar(type: Jar) {
+        group = 'build'
         classifier = 'sources'
         from sourceSets.main.allSource
     }
 
-    //todo Fix JavaDoc
-    /*task javadocJar (type: Jar, dependsOn: javadoc) {
+    task javadocJar (type: Jar, dependsOn: javadoc) {
+        group = 'build'
         classifier = 'javadoc'
         from javadoc.destinationDir
     }
-    javadocJar.dependsOn 'javadoc'*/
-
-
-
-
 
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
-                artifact jar
-                artifact sourceJar
-//                artifact javadocJar
-                setArtifacts([jar, sourceJar/*, javadocJar*/])
+                setArtifacts([jar, sourceJar/*, javadocJar*/]) //todo Fix JavaDoc
+            }
+            mavenPomOnly(MavenPublication) {
+                from components.java
+                setArtifacts([])
             }
         }
     }
-}
 
+    artifactory {
+        contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+        publish {
+            repository {
+                if ("${version}".endsWith('-SNAPSHOT'))
+                    repoKey = 'libs-snapshot-local'
+                else
+                    repoKey = 'libs-release-local'
+                Properties properties = new Properties()
+                File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+                propertiesFile.withInputStream {
+                    properties.load(it)
+                }
 
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if ("${version}".endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-            Properties properties = new Properties()
-            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
-            propertiesFile.withInputStream {
-                properties.load(it)
+                username = properties['username']
+                password = properties['password']
             }
-
-
-            username = properties['username']
-            password = properties['password']
-            maven = true
-
-        }
-        defaults {
-            publications('mavenJava')
         }
     }
+    artifactoryPublish.dependsOn 'generatePomFileForMavenPomOnlyPublication'
+    artifactoryPublish.dependsOn 'generatePomFileForMavenJavaPublication'
+    artifactoryPublish.dependsOn 'jar'
+//    artifactoryPublish.dependsOn 'javadocJar'
+    artifactoryPublish.dependsOn 'sourceJar'
 }
 
-artifactoryPublish.skip = true
+
+/*publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            setArtifacts([])
+        }
+    }
+}*/
+
+
+
+
+
+
+
+
+
+

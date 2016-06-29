@@ -6,3 +6,6 @@ dependencies {
 
     compile internal(':chemistry_base',version)
 }
+artifactoryPublish {
+    publications('mavenJava')
+}

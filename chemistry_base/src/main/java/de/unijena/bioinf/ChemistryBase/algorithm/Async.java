@@ -9,7 +9,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /*
-    Simple producer/consumer szenario:
+    Simple producer/consumer scenario:
     - producer runs in a separate thread and inserts entries into the queue
     - as soon as the queue is full, the producer stops producing
         -> this allows some kind of memory control, e.g. a process is computing some intermediate values while another
