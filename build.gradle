@@ -89,9 +89,17 @@ buildDoku.doLast {
 buildDoku.dependsOn cleanDoku, htmlDoku, textDoku, pdfDoku
 clean.dependsOn cleanDoku
 
+artifactoryPublish {
+    publications('mavenPomOnly')
+}
+
 subprojects {
     apply plugin: 'application'
     apply plugin: 'de.unijena.bioinf.launch4jj'
+
+    artifactoryPublish {
+        publications('mavenJava')
+    }
 
     /*################### Windows release Stuff ################### */
     launch4j {
@@ -125,7 +133,4 @@ subprojects {
     /*################### Build distributions ################### */
     task distribute { group = 'distribution' }
     distribute.dependsOn buildDoku
-
-
-
 }
