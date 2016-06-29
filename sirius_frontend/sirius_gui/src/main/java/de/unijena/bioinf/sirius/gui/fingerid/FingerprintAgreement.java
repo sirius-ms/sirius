@@ -112,7 +112,6 @@ public class FingerprintAgreement {
         try {
             return indizes[row* numberOfCols + col];
         }catch (IndexOutOfBoundsException e) {
-            System.err.println("row=" + row + ", col=" + col + ", index=" + (row* numberOfCols +col) + ", number of cols=" + numberOfCols);
             return 0;
         }
     }

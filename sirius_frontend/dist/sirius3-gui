@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-APP_HOME="`pwd -P`"
-$APP_HOME/sirius3 --gui

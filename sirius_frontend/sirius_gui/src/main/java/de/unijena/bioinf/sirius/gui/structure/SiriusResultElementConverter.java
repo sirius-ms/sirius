@@ -60,6 +60,7 @@ public class SiriusResultElementConverter {
 	}
 
 	public static List<SiriusResultElement> convertResults(List<IdentificationResult> in){
+		if (in==null) return new ArrayList<>();
 		List<SiriusResultElement> outs = new ArrayList<>();
 		for(IdentificationResult res : in){
 			outs.add(convertResult(res));
