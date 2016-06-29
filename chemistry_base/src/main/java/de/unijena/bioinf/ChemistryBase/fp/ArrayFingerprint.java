@@ -13,8 +13,8 @@ public class ArrayFingerprint extends Fingerprint {
     public ArrayFingerprint(FingerprintVersion fingerprintVersion, short[] indizes) {
         super(fingerprintVersion);
         this.indizes = indizes.clone();
-        if (indizes.length>0 && fingerprintVersion.size()>0 && indizes[indizes.length-1] >= fingerprintVersion.getAbsoluteIndexOf(fingerprintVersion.size()-1)) {
-            throw new IllegalArgumentException("Fingerprintversion is not compatible to fingerprint");
+        if (indizes.length>0 && fingerprintVersion.size()>0 && indizes[indizes.length-1] > fingerprintVersion.getAbsoluteIndexOf(fingerprintVersion.size()-1)) {
+            throw new IllegalArgumentException("Fingerprintversion is not compatible to fingerprint: " + "version size: " + fingerprintVersion.size() +", last index is " + fingerprintVersion.getAbsoluteIndexOf(fingerprintVersion.size()-1) + ", and given fingerprint is: " + Arrays.toString(indizes));
         }
     }
 
