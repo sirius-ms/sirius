@@ -142,7 +142,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         final CompoundCandidate c = candidateList.getModel().getElementAt(selectedCompoundId);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (e.getSource() == CopyInchiKey) {
-            System.err.println("Copy inchi key: " + c.compound.inchi.key2D());
             clipboard.setContents(new StringSelection(c.compound.inchi.key2D()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.compound.inchi.in2D), null);
@@ -155,7 +154,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         } else if (e.getSource() == OpenInBrowser2) {
             if (c.compound.databases==null) return;
             for (Map.Entry<String,String> entry : c.compound.databases.entries()) {
-                System.out.println(entry.getKey());
                 final DatasourceService2.Sources s = DatasourceService2.getFromName(entry.getKey());
                 if (entry.getValue() == null || s==null || s.URI == null) continue;
                 try {
@@ -231,11 +229,8 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
-        System.out.println("SELECT COMPOUND #" + index);
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
-        System.out.println("WITH NAME " + String.valueOf(candidate.compound.name));
-        System.out.println("AND INCHIKEY " + candidate.compound.inchi.key2D());
         highlightedCandidate = candidate.rank;
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
         final boolean in;
@@ -254,7 +249,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final int row = ry/ CELL_SIZE;
             final int col = rx/ CELL_SIZE;
             highlightAgree = candidate.agreement.indexAt(row, col);
-            System.out.println(row + " / " + col + " => "+ highlightAgree);
             structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate);
         } else {
             final Rectangle box = candidate.missings.getBounds();
@@ -268,7 +262,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 final int row = ry/ CELL_SIZE;
                 final int col = rx/ CELL_SIZE;
                 highlightMissing = candidate.missings.indexAt(row, col);
-                System.out.println(row + " / " + col + " => "+ highlightMissing);
                 structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing,highlightedCandidate);
             } else {
                 if (highlightAgree>=0) {
@@ -337,7 +330,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     }
 
     private void popup(MouseEvent e, CompoundCandidate candidate) {
-        System.err.println("################  SHOW POPUP ############################");
         popupMenu.show(candidateList, e.getX(), e.getY());
     }
 

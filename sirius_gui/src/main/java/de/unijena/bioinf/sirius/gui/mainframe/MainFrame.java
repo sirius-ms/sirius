@@ -11,10 +11,7 @@ import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
-import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
-import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.*;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -295,7 +292,38 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		this.setSize(new Dimension(1368, 1024));
 
 		addKeyListener(this);
-		
+
+        final SwingWorker w = new SwingWorker<String, String>() {
+
+            @Override
+            protected String doInBackground() throws Exception {
+                final String result = new WebAPI().needsUpdate();
+                publish(result);
+                return result;
+            }
+
+            @Override
+            protected void process(List<String> chunks) {
+                super.process(chunks);
+                final String versionsNumber = chunks.get(0);
+                if (versionsNumber!=null) {
+                    new UpdateDialog(MainFrame.this, versionsNumber);
+                }
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+            }
+        };
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                w.execute();
+            }
+        });
+
+
 		this.setVisible(true);
 	}
 
@@ -715,11 +743,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                 }
             }
             if (withFingerid) {
+				final ArrayList<FingerIdData> datas = new ArrayList<>();
                 for (SiriusResultElement elem : container.getResults()) {
                     if (elem.getFingerIdData()==null) continue;
-                    final File resultFile = new File(selectedFile, name + "_" + elem.getMolecularFormula().toString() +".csv");
-                    new CSVExporter().exportToFile(resultFile, elem.getFingerIdData());
+					datas.add(elem.getFingerIdData());
                 }
+				final File resultFile = new File(selectedFile, name +".csv");
+				new CSVExporter().exportToFile(resultFile, datas);
             }
         }
     }

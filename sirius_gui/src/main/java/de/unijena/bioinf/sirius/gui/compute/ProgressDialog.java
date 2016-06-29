@@ -1,8 +1,13 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
@@ -12,6 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 public class ProgressDialog extends JDialog implements Progress, ActionListener{
@@ -83,14 +89,14 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
         this.exception = exception;
     }
 
-    public void start(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, FormulaConstraints constraints, int candidates){
+    public void start(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, FormulaConstraints constraints, int candidates, FormulaSource formulaSource){
 		sirius.setProgress(this);
 		this.setSize(new Dimension(700,210));
 		this.successful = false;
 		sb = new StringBuilder();
 		step = 0;
 		starttime = System.currentTimeMillis();
-		rt = new RunThread(sirius, ec, exp,candidates, constraints, this);
+		rt = new RunThread(sirius, ec, exp,candidates, constraints, this, formulaSource);
 		t = new Thread(rt);
 		t.start();
 		setLocationRelativeTo(getParent());
@@ -184,8 +190,9 @@ class RunThread implements Runnable{
 	private int candidates;
 	private FormulaConstraints constraints;
     private ExperimentContainer ec;
-	
-	RunThread(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, int candidates, FormulaConstraints constraints, ProgressDialog pd){
+	private FormulaSource formulaSource;
+
+	RunThread(Sirius sirius, ExperimentContainer ec, Ms2Experiment exp, int candidates, FormulaConstraints constraints, ProgressDialog pd, FormulaSource formulaSource){
 		this.sirius = sirius;
 		this.results = null;
 		this.exp = exp;
@@ -193,6 +200,7 @@ class RunThread implements Runnable{
 		this.candidates = candidates;
 		this.constraints = constraints;
         this.ec = ec;
+		this.formulaSource = formulaSource;
 	}
 
 	@Override
@@ -200,7 +208,24 @@ class RunThread implements Runnable{
 		boolean success;
 		try {
 			sirius.setFormulaConstraints(constraints);
-			results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
+			if (formulaSource!= FormulaSource.ALL_POSSIBLE){
+
+				PrecursorIonType ionType = exp.getPrecursorIonType();
+				PrecursorIonType[] allowedIons;
+				if (ionType.isIonizationUnknown()) {
+					allowedIons = ionType.getCharge()>0 ? WebAPI.positiveIons : WebAPI.negativeIons;
+				} else {
+					allowedIons = new PrecursorIonType[]{ionType};
+				}
+
+				final HashSet<MolecularFormula> whitelist = new HashSet<>();
+				for (List<FormulaCandidate> candidates : WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL).lookupMolecularFormulas(exp.getIonMass(), sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation(), allowedIons)) {
+                    for (FormulaCandidate f : candidates) whitelist.add(f.getFormula());
+                }
+                results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score, whitelist);
+			} else {
+                results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
+            }
 			success = (results!=null && results.size()>0);
 		} catch (final Exception e) {
 			success = false;

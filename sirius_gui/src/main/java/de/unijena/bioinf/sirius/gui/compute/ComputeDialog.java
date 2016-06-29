@@ -52,7 +52,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private Vector<Ionization> ionizations;
     private Vector<String> instruments;
 	private JComboBox<Ionization> ionizationCB;
-    private JComboBox<String> instrumentCB;
+    private JComboBox<String> instrumentCB,formulaCombobox;
 	private JSpinner ppmSpinner;
 	private SpinnerNumberModel snm;
 	
@@ -275,6 +275,19 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
 			}
 		});
+
+
+        //////////
+        {
+            JLabel label = new JLabel("Consider ");
+            final Vector<String> values = new Vector<>();
+            values.add("all possible molecular formulas");
+            values.add("PubChem formulas");
+            values.add("formulas from biological databases");
+            formulaCombobox = new JComboBox<>(values);
+            otherPanel.add(label);
+            otherPanel.add(formulaCombobox);
+        }
 		
 		
 		mainPanel.add(otherPanel);
@@ -508,7 +521,13 @@ public class ComputeDialog extends JDialog implements ActionListener{
             // cancel the corresponding task in background
             owner.getBackgroundComputation().cancel(ec);
 
-			progDiag.start(sirius, ec, exp, constraints, candidates);
+            FormulaSource formulaSource;
+            if (formulaCombobox.getSelectedIndex()==0) formulaSource = FormulaSource.ALL_POSSIBLE;
+            else if (formulaCombobox.getSelectedIndex()==1) formulaSource = FormulaSource.PUBCHEM;
+            else formulaSource = FormulaSource.BIODB;
+
+
+            progDiag.start(sirius, ec, exp, constraints, candidates, formulaSource);
 			if(progDiag.isSucessful()){
 //	            	System.err.println("progDiag erfolgreich");
 				this.success = true;

@@ -19,7 +19,10 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,13 +30,16 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class CSVExporter {
 
     public void exportToFile(File file, FingerIdData data) throws IOException {
+        try (final BufferedWriter bw = Files.newBufferedWriter(file.toPath(), Charset.defaultCharset())) {
+            export(bw, data);
+        }
+    }
+    public void exportToFile(File file, List<FingerIdData> data) throws IOException {
         try (final BufferedWriter bw = Files.newBufferedWriter(file.toPath(), Charset.defaultCharset())) {
             export(bw, data);
         }
@@ -49,6 +55,46 @@ public class CSVExporter {
             writer.write(c.inchi.key2D());
             writer.write('\t');
             writer.write(c.inchi.in2D);
+            writer.write('\t');
+            writer.write(String.valueOf(rank));
+            writer.write('\t');
+            writer.write(String.valueOf(score));
+            writer.write('\t');
+            writer.write(escape(c.name));
+            writer.write('\t');
+            writer.write(c.smiles.smiles);
+            writer.write('\t');
+            list(writer, c.pubchemIds);
+            writer.write('\t');
+            links(writer, c);
+            writer.write('\n');
+        }
+    }
+
+    public void export(Writer writer, List<FingerIdData> data) throws IOException {
+        writer.write("inchikey2D\tinchi\tformula\trank\tscore\tname\tsmiles\tpubchemids\tlinks\n");
+        final List<Scored<Compound>> candidates = new ArrayList<>();
+        for (FingerIdData d : data) {
+            if (d==null) continue;
+            for (int k=0; k < d.scores.length; ++k) {
+                final Compound c = d.compounds[k];
+                final Scored<Compound> sc = new Scored<>(c, d.scores[k]);
+                candidates.add(sc);
+            }
+        }
+
+        Collections.sort(candidates, Scored.<Compound>desc());;
+
+        if (data==null) return;
+        for (int i=0; i < candidates.size(); ++i) {
+            final Compound c = candidates.get(i).getCandidate();
+            final double score = candidates.get(i).getScore();
+            final int rank = i+1;
+            writer.write(c.inchi.key2D());
+            writer.write('\t');
+            writer.write(c.inchi.in2D);
+            writer.write('\t');
+            writer.write(c.inchi.extractFormula().toString());
             writer.write('\t');
             writer.write(String.valueOf(rank));
             writer.write('\t');
@@ -90,22 +136,37 @@ public class CSVExporter {
         }
         Map.Entry<String, Collection<String>> x = iter.next();
         w.write(x.getKey());
-        w.write(":(");
-        w.write(escape(Joiner.on(' ').join(x.getValue())));
-        w.write(")");
-
+        Collection<String> col = withoutNulls(x.getValue());
+        if (col.size()>0) {
+            w.write(":(");
+            w.write(escape(Joiner.on(' ').join(col)));
+            w.write(")");
+        }
         while (iter.hasNext()) {
             w.write(';');
             x = iter.next();
-            w.write(":(");
-            w.write(escape(Joiner.on(' ').join(x.getValue())));
-            w.write(")");
+            w.write(x.getKey());
+            col = withoutNulls(x.getValue());
+            if (col.size()>0) {
+                w.write(":(");
+                w.write(escape(Joiner.on(' ').join(col)));
+                w.write(")");
+            }
         }
     }
 
     private String escape(String name) {
         if (name==null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
+    }
+
+    private Collection<String> withoutNulls(Collection<String> in) {
+        return Collections2.filter(in, new Predicate<String>() {
+            @Override
+            public boolean apply(String input) {
+                return input != null;
+            }
+        });
     }
 
 }
