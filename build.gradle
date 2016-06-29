@@ -17,7 +17,7 @@ ext {
     glpk_version = '1.7.0'//'1.0.37'
     jewelcli_version = '0.8.+'
 
-    gurobi_version = '6.+'
+    gurobi_version = '6.5.1'
 
     fingeridVersion = "1.0.4-SNAPSHOT"
 
@@ -49,7 +49,7 @@ ext {
 allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    apply plugin: "com.jfrog.artifactory"
+    //apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -100,7 +100,7 @@ allprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-//                from components.java
+                from components.java
                 artifact jar
                 artifact sourceJar
 //                artifact javadocJar
@@ -113,24 +113,24 @@ allprojects {
              }
          }*/
     }
-
-    artifactory {
-//        contextUrl = 'http://localhost:8081/artifactory'
-        publish {
-            /*repository {
-                repoKey = 'libs-snapshot-local'
-//                username = "${artifactory_user}"
-//                password = "${artifactory_password}"
-                maven = true
-
-            }*/
-            defaults {
-                publications('mavenJava')
-            }
-        }
-    }
+//
+//    artifactory {
+////        contextUrl = 'http://localhost:8081/artifactory'
+//        publish {
+//            /*repository {
+//                repoKey = 'libs-snapshot-local'
+////                username = "${artifactory_user}"
+////                password = "${artifactory_password}"
+//                maven = true
+//
+//            }*/
+//            defaults {
+//                publications('mavenJava')
+//            }
+//        }
+//    }
 
 //    publishAll.dependsOn artifactoryPublish
 }
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 //artifactoryPublish.dependsOn jar
