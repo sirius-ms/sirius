@@ -24,7 +24,6 @@ processResources.doFirst{
         properties.store(it,"")
     }
 }
-//artifactoryPublish.skip = true
 
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
 project.ext.set("type", "console")

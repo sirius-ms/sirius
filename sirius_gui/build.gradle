@@ -5,11 +5,11 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 dependencies {
 //project
-    compile internal(':chemistry_base',version)
-    compile internal(':io',version)
-    compile internal(':isotope_pattern:isotope_pattern_analysis',version)
-    compile internal(':fragmentation_tree:fragmentation_tree_construction',version)
-    compile internal(':sirius_frontend:sirius_cli',version)
+    compile internal(':chemistry_base', version)
+    compile internal(':io', version)
+    compile internal(':isotope_pattern:isotope_pattern_analysis', version)
+    compile internal(':fragmentation_tree:fragmentation_tree_construction', version)
+    compile internal(':sirius_frontend:sirius_cli', version)
 
 //internal
     //todo fingerID dependencies into artifactory
@@ -39,12 +39,10 @@ dependencies {
     provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
-
 //artifactoryPublish.skip = true
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
 project.ext.set("type", "gui,console")
-
 
 /*################### Jar build Stuff ################### */
 shadowJar {
@@ -55,7 +53,6 @@ shadowJar {
         attributes 'Class-Path': "$runtimeClasspath"
     }
 }
-
 
 /*################### Windows release Stuff ################### */
 launch4j {
@@ -100,7 +97,7 @@ distributions {
             }
         })
         distribute.dependsOn "${n}DistZip"
-        getTasksByName("${n}DistTar",false).each {it.setEnabled(false)}
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 
     }
 
@@ -133,11 +130,11 @@ distributions {
             }
         })
         distribute.dependsOn "${n}DistZip"
-        getTasksByName("${n}DistTar",false).each {it.setEnabled(false)}
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
-    project.getTasksByName("distTar",false).each {it.setEnabled(false)}
-    project.getTasksByName("distZip",false).each {it.setEnabled(false)}
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
 
     linux32DistZip.dependsOn 'installDist'
     linux32DistTar.dependsOn 'installDist'
@@ -158,8 +155,7 @@ distributions {
 
 task runGUI(type: Exec) {
     group = "application"
-    File command = file("build/install/sirius3-linux64/bin/sirius3-gui")
-    commandLine([command.absolutePath/*, "--gui"*/])
+    File command = file("build/install/sirius3-linux64/bin/sirius3")
     dependsOn installLinux64Dist
     commandLine([command.absolutePath, "--gui"])
 }
