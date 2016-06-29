@@ -1,16 +1,6 @@
 import java.nio.file.Paths
-
-buildscript {
-    repositories {
-        jcenter()
-        maven() {
-            url 'https://oss.jfrog.org/artifactory/oss-snapshot-local'
-        }
-    }
-
-    dependencies {
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.x-SNAPSHOT"
-    }
+plugins {
+    id "com.jfrog.artifactory" version "4.3.0"
 }
 //Global Properties
 ext {
@@ -48,6 +38,7 @@ ext {
 }
 
 allprojects {
+
     apply plugin: 'java'
     apply plugin: 'maven-publish'
     apply plugin: "com.jfrog.artifactory"
@@ -139,15 +130,6 @@ allprojects {
 //    artifactoryPublish.dependsOn 'javadocJar'
     artifactoryPublish.dependsOn 'sourceJar'
 }
-
-
-/*publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            setArtifacts([])
-        }
-    }
-}*/
 
 
 
