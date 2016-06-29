@@ -1,10 +1,7 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.4.0"
-    }
+import java.nio.file.Paths
+
+plugins {
+    id "com.jfrog.artifactory" version "4.3.0"
 }
 //Global Properties
 ext {
@@ -41,15 +38,11 @@ ext {
     }
 }
 
-
-/*task publishAll(){
-
-}*/
-
 allprojects {
+
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    //apply plugin: "com.jfrog.artifactory"
+    apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -58,10 +51,13 @@ allprojects {
     group = 'de.unijena.bioinf.ms'
 
     repositories {
-        mavenLocal()
+//        mavenLocal()
         mavenCentral()
+        /*maven {
+            url "http://bio.informatik.uni-jena.de/artifactory/repo" //todo deprecated
+        }*/
         maven {
-            url "http://bio.informatik.uni-jena.de/artifactory/repo"
+            url "https://bio.informatik.uni-jena.de/repository/local"
         }
         maven {
             url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
@@ -86,51 +82,55 @@ allprojects {
 
     /*Define artifacts (for maven install --> is also used by artifactory)*/
     task sourceJar(type: Jar) {
+        group = 'build'
         classifier = 'sources'
         from sourceSets.main.allSource
     }
 
-    //todo Fix JavaDoc
-    /*task javadocJar (type: Jar, dependsOn: javadoc) {
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        group = 'build'
         classifier = 'javadoc'
         from javadoc.destinationDir
     }
-    javadocJar.dependsOn 'javadoc'*/
 
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
-                artifact jar
-                artifact sourceJar
-//                artifact javadocJar
-                setArtifacts([jar, sourceJar/*, javadocJar*/])
+                if (version.toString().endsWith('-SNAPSHOT'))
+                    setArtifacts([jar, sourceJar])
+                else
+                    setArtifacts([jar, sourceJar/*, javadocJar*/]) //todo Fix JavaDoc
+            }
+            mavenPomOnly(MavenPublication) {
+                from components.java
+                setArtifacts([])
             }
         }
-        /* repositories {
-             maven {
-                 url { "http://${repoHost}/libs-${project.version.endsWith('-SNAPSHOT') ? 'snapshot' : 'release' }-local" }
-             }
-         }*/
     }
-//
-//    artifactory {
-////        contextUrl = 'http://localhost:8081/artifactory'
-//        publish {
-//            /*repository {
-//                repoKey = 'libs-snapshot-local'
-////                username = "${artifactory_user}"
-////                password = "${artifactory_password}"
-//                maven = true
-//
-//            }*/
-//            defaults {
-//                publications('mavenJava')
-//            }
-//        }
-//    }
 
-//    publishAll.dependsOn artifactoryPublish
+    artifactory {
+        contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+        publish {
+            repository {
+                if (version.toString().endsWith('-SNAPSHOT'))
+                    repoKey = 'libs-snapshot-local'
+                else
+                    repoKey = 'libs-release-local'
+                Properties properties = new Properties()
+                File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+                propertiesFile.withInputStream {
+                    properties.load(it)
+                }
+
+                username = properties['username']
+                password = properties['password']
+            }
+        }
+    }
+    artifactoryPublish.dependsOn 'generatePomFileForMavenPomOnlyPublication'
+    artifactoryPublish.dependsOn 'generatePomFileForMavenJavaPublication'
+    artifactoryPublish.dependsOn 'jar'
+//    artifactoryPublish.dependsOn 'javadocJar'
+    artifactoryPublish.dependsOn 'sourceJar'
 }
-//artifactoryPublish.skip = true
-//artifactoryPublish.dependsOn jar
