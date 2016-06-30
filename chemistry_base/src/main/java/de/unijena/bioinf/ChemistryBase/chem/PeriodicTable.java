@@ -30,10 +30,10 @@ import java.util.regex.Pattern;
  * Give access to all chemical elements and ions. This class should be seen as singleton, although it's
  * possible to create multiple PeriodicTables
  * All this information are parsed from a json file in the ChemistryBase library.
- * <p/>
+ * <p>
  * The PeriodicTable is not thread-safe, because in practice there should be only read-accesses. For write access,
  * you have to do the synchronisation yourself.
- * <p/>
+ * <p>
  * <pre>
  * PeriodicTable.getInstance().getByName("C").getMass();
  * PeriodicTable.getInstance().parse("C6H12O6", myAtomVisitor)
@@ -731,7 +731,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     /**
      * search for an ion with the given name. Usually, the names are in the format '[M'[+-]X']'[+-] where
      * X is a molecular formula, for example [M+H2O]+.
-     * <p/>
+     * <p>
      * [M+H]+
      */
     public PrecursorIonType ionByName(String name) {

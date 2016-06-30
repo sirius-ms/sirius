@@ -25,7 +25,7 @@ import java.util.*;
  * Decomposes a given mass over an alphabet, returning all decompositions which mass equals the given mass
  * considering a given deviation.
  *
- * @see @see <a href="http://bio.informatik.uni-jena.de/bib2html/downloads/2005/BoeckerLiptak_MoneyChangingProblem_COCOON_2005.pdf">The Money Changing Problem revisited by Sebastian Böcker and Zsuzsanna Lipták</a>
+ * @see <a href="http://bio.informatik.uni-jena.de/bib2html/downloads/2005/BoeckerLiptak_MoneyChangingProblem_COCOON_2005.pdf">The Money Changing Problem revisited by Sebastian Böcker and Zsuzsanna Lipták</a>
  * @param <T> type of the alphabet's characters
  */
 public class MassDecomposer<T> {

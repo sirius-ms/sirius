@@ -32,7 +32,7 @@ import java.util.List;
  * - there is a maximum number of different elements
  * - negative amounts for elements are not allowed
  * - getting molecule mass or the amount of elements is slower than for MolecularFormula
- * <p/>
+ * <p>
  * Comparing two PackedFormula is slightly faster than comparing
  * molecular formulas. So use PackedFormula if you have a huge set
  * of formulas you only want to compare

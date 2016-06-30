@@ -36,7 +36,7 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
  * Molecules with higher rdbe are "rare/strange" and are penalized using a Pareto Distribution. The parameter
  * xmin=0.75 is the 95% quantile of the rdbe/sqrt(mass) values in kegg. The parameter k=9 is chosen by an educated
  * guess. While it fits the rdbe/sqrt(mass) distribution in kegg very well, it is not optimized using e.g. least-square.
- * <p/>
+ * <p>
  * The main idea behind this scorer is to filter out molecular formulas that do not exist due to their strange elemental
  * composition. For example: C54H18OP2 which has so much carbon that it have to consists of many rings and double bonds.
  * It is not the idea of this scorer to score the frequency of a formula in a database. Therefore, the RDBENormalScorer

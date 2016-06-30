@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.MassDecomposer;
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+
 import java.util.Arrays;
 import java.util.Map;
 
@@ -34,7 +36,7 @@ import java.util.Map;
  *
  * More general, you can define the minimal weight per free valence , called Q. Now for each character x with
  * valence 1, its maximal abundance in a fully connected graph is M+Q / (m(x) + Q/2)
- * with Q = min_{c_i in Alphabet with valence(c_i) > 1} {m(c_i) / (valence(c_i)/2 - 1)}
+ * with Q = min_{c_i in Alphabet with valence(c_i) {@literal >} 1} {m(c_i) / (valence(c_i)/2 - 1)}
  *        = minimal number of free edges which can be inserted into the graph after inserting a mass Q
  */
 public class ValenceBoundary<T> {
@@ -81,7 +83,7 @@ public class ValenceBoundary<T> {
     }
 
     /**
-     * Can be used as parameter in {@link MassDecomposer#decompose(double, java.util.Map)}
+     * Can be used as parameter in {@link de.unijena.bioinf.MassDecomposer.MassDecomposer#decompose(double, Deviation, Map)}
      * @param mass mass of decomposition
      * @return a map which maps the valence-1 characters of the alphabet to their maximal abundance
      */

@@ -21,7 +21,7 @@ import java.util.*;
  * - the Reduction controller was coded to ease readability of the performed reduction methods and to make it easier
  *   for new reductions to be implemented
  * - use 'cmd getall' to see the full list of implemented commands
- * - use 'cmd <cmd>' or 'help <cmd>' to see the description of the command 'cmd'
+ * - use 'cmd "cmd"' or 'help "cmd"' to see the description of the command 'cmd'
  *
  * CLASS: ACOMMANDABLE
  * - the class "ACommandable" is used like an interface, but it will automatically allow measuring times for each
@@ -1068,16 +1068,16 @@ public class TReductionController implements GraphReduction {
 		}
 	}
 
-	/**
-	 * NOT BUG-FREE
-	 *
+	/*
+	  NOT BUG-FREE
+
 	protected class CmdReduceDominatingPath extends ACommandable {
 
 		protected CmdReduceDominatingPath() {
 			super(true);
 		}
 
-		@Override
+		Override
 		protected int executeMethod( String[] arg, int Ci ) {
 
 			System.out.println( " ~~~ CMD: reduce-dompath " );
@@ -1085,7 +1085,7 @@ public class TReductionController implements GraphReduction {
 			return Ci;
 		}
 
-		@Override
+		Override
 		protected String description() {
 
 			return " ~ --reduce-dompath \n" +

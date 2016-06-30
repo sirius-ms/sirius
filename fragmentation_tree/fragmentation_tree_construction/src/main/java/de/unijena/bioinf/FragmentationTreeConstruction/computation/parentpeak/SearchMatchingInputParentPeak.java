@@ -37,7 +37,7 @@ import java.util.List;
  * highest intensity.
  * Example: For input mass 128.2 the detector search for peaks in massrange [128.15, 128.25]
  * - if there is no such peak, a synthetic parent peak is created
- * <p/>
+ * <p>
  * TODO: This detector assumes that the ionization of the parent peak has charge (+-)1!
  * For other ionization types the detector have to be rewritten!
  */

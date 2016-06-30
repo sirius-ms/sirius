@@ -39,10 +39,10 @@ public final class ChemicalCompoundScorer {
      * 1. Hetero-to-Carbon ratio: Heteroatoms are all atoms which are not carbon, hydrogen or oxygen(!)
      * 2. Some compounds have an oxygen+hetero backbone. For this compound, the SpecialMoleculeScorer is used:
      * It scores the Oxygen-to-hetero ratio as well as the RDBE value
-     * <p/>
+     * <p>
      * From both scorings the maximum is used
-     * Parameters: All distributions are Uniform+Pareto-Distributions. For all x0<x<xmin the probability is uniform and
-     * maximal. For all x>xmin the probability decreases according to a pareto distribution by parameter k
+     * Parameters: All distributions are Uniform+Pareto-Distributions. For all x0{@literal <}x{@literal <}xmin the probability is uniform and
+     * maximal. For all x{@literal >}xmin the probability decreases according to a pareto distribution by parameter k
      * Hetero-to-carbon: x0=0, xmin=1, k=3
      * Oxygen-to-hetero: x0=0, xmin=0.75, k=5
      * RDBE: x0=0, xmin=2, k=2
