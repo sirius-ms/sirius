@@ -26,12 +26,12 @@ import java.util.*;
 /**
  * A chemical alphabet is a subset of the Periodic Table
  * - The PeriodicTable contains information about (probably) all possible characters in
- * the given alphabet (usually: metabolites -> atoms, peptides -> amino acids)
+ * the given alphabet (usually: metabolites {@literal ->} atoms, peptides {@literal ->} amino acids)
  * - The TableSelection is for internal use: It improves performance and memory efficient by bundling elements which
  * often occur together. It has no meaning for the application and should not be used by the user.
  * - in contrast, the chemical alphabet says which elements from the periodic table should be considered in an specific
  * application. Obviously, the chemical alphabet and table selection may be identical sometimes, but this is no requirement
- * <p/>
+ * <p>
  * The chemical alphabet is implemented such that is works together well with the MassDecomposer. This means, that
  * elements are internally always ordered by mass. But there are other
  * use-cases for this class. In general: Whenever you want the user to submit a subset of the periodic table, use this class.

@@ -30,7 +30,7 @@ import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
  * as normal distribution. While there are fewer molecules with low h2c values in databases, this says nothing about
  * the reasonability of the formula (obviously, formulas consisting only of carbon and hydrogen are possible!).
  * Therefore, a pareto distribution might be a better decision for application: We score all molecules with
- * h2c < 1 by an uniform distribution with maximal score. Molecules with h2c worse than 1 are than scored by a
+ * h2c {@literal <} 1 by an uniform distribution with maximal score. Molecules with h2c worse than 1 are than scored by a
  * pareto distribution which penalize them but "allows" outliers.
  *
  * Remarkt that there are special compounds with very high h2c. This happens when a compound consist of a oxygen+(P,S,?)

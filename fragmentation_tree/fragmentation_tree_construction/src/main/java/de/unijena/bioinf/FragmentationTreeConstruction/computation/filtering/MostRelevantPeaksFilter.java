@@ -33,9 +33,9 @@ public class MostRelevantPeaksFilter implements PostProcessor {
     /**
      * only consider peaks with decompositions
      * most relevant peaks are ...
-     * "the 2x<limit> most intense peaks\n" +
-     * "the <limit> best peaks with mass*log(relIntensity)\n" +
-     * "the <limit> best peaks with mass*log(relIntensity) int he upper mass range\n" +
+     * "the 2x{@literal <}limit{@literal >} most intense peaks\n" +
+     * "the {@literal <}limit{@literal >} best peaks with mass*log(relIntensity)\n" +
+     * "the {@literal <}limit{@literal >} best peaks with mass*log(relIntensity) int he upper mass range\n" +
      *
      * @param limit
      */
