@@ -104,7 +104,7 @@ public class Sirius {
      * constraints consist of a set of allowed elements together with upperbounds for this elements
      * You can set constraints as String with a format like "CHNOP[7]" where each bracket contains the upperbound
      * for the preceeding element. Elements without upperbound are unbounded.
-     * <p/>
+     * <p>
      * The elemens CHNOPS will always be contained in the element set. However, you can change their upperbound which
      * is unbounded by default.
      *
@@ -117,7 +117,7 @@ public class Sirius {
     /**
      * set new constraints for the molecular formulas that should be considered by Sirius
      * constraints consist of a set of allowed elements together with upperbounds for this elements
-     * <p/>
+     * <p>
      * The elemens CHNOPS will always be contained in the element set. However, you can change their upperbound which
      * is unbounded by default.
      *
@@ -135,12 +135,12 @@ public class Sirius {
     /**
      * parses a file and return an iterator over all MS/MS experiments contained in this file
      * An experiment consists of all MS and MS/MS spectra belonging to one feature (=compound).
-     * <p/>
+     * <p>
      * Supported file formats are .ms and .mgf
-     * <p/>
+     * <p>
      * The returned iterator supports the close method to close the input stream. The stream is closed automatically,
      * after the last element is iterated. However, it is recommendet to use the following syntax (since java 7):
-     * <p/>
+     * <p>
      * <pre>
      * {@code
      * try ( CloseableIterator<Ms2Experiment> iter = sirius.parse(myfile) ) {
@@ -148,7 +148,7 @@ public class Sirius {
      *      Ms2Experiment experiment = iter.next();
      *      // ...
      *   }
-     * }
+     * }}
      * </pre>
      *
      * @param file
@@ -864,7 +864,7 @@ public class Sirius {
 
     /**
      * Lookup the ionization name and returns the corresponding ionization object or null if no ionization with this name is registered. The name of an ionization has the syntax [M+ADDUCT]CHARGE, for example [M+H]+ or [M-H]-.
-     * <p/>
+     * <p>
      * Deprecated: Ionization is now for the ion-mode (protonation or deprotonation, number of charges, ...). Use
      * getPrecursorIonType to get a PrecursorIonType object that contains adducts and in-source fragmentation as well as
      * the ion mode of the precursor ion
