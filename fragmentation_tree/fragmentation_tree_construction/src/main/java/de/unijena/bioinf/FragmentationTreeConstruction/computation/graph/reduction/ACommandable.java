@@ -15,8 +15,8 @@ import java.util.LinkedList;
  * Interface holding some method declarations
  *
  * USAGE OF IMPLEMENTING COMMANDS IN THIS COMMAND-PARSER
- * ~ executeMethod MUST return Ci + relative, relative >= 0
- * ~ Ci shall be increase equally by the amount of arguments a command used => increase relative by every argument used
+ * ~ executeMethod MUST return Ci + relative, relative {@literal >=} 0
+ * ~ Ci shall be increase equally by the amount of arguments a command used {@literal =>} increase relative by every argument used
  * ~ check, if the argument list 'arg' is large enough to contain arguments, if you need them
  * ~ description is the method that is called whenever 'help' is used or you feel like telling the user how to use the command
  */
@@ -125,7 +125,7 @@ public abstract class ACommandable {
 	/**
 	 * that is the actual execution that will be changed in sub-classes
 	 * @param arg: argument list; provided by command parser ( by default )
-	 * @param Ci: command index, 0 <= Ci < arg.length; provided by command parser ( by default )
+	 * @param Ci: command index, 0 {@literal <=} Ci {@literal <} arg.length; provided by command parser ( by default )
 	 * @return: return Ci, if no additional command is used; else, increase Ci for every argument you take from 'arg'
 	 *          and return the result
 	 */

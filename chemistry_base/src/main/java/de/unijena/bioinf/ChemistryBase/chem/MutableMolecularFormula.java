@@ -23,10 +23,10 @@ import java.util.BitSet;
 /**
  * A mutable molecular formula which enables the programmer to change the amount of the elements
  * as well as to add new elements into the formula.
- * <p/>
+ * <p>
  * A mutable formula is created by calling the constructor with another (usually immutable) molecular
  * formula.
- * <p/>
+ * <p>
  * {{@code
  * MutableMolecularFormula m = new MutableMolecularFormula(MolecularFormula.parse("CH4"));
  * m.setByName("C", 2); // => C2H4
@@ -55,8 +55,8 @@ public class MutableMolecularFormula extends MolecularFormula {
     /**
      * Changes the amount of the element given as index. The index have to be valid, which means,
      * there have to be a mapping in the table selection from the index to an element. To add
-     * an element which is not contained in the selection, use #{@link this.set(Element, int)} or
-     * #{@link this.setByName(String, int)}
+     * an element which is not contained in the selection, use {@link de.unijena.bioinf.ChemistryBase.chem.MutableMolecularFormula#set(Element, int)} or
+     * {@link de.unijena.bioinf.ChemistryBase.chem.MutableMolecularFormula#setByName(String, int)}
      */
     public void setAt(int index, int amount) {
         if (amount < Short.MIN_VALUE || amount > Short.MAX_VALUE)

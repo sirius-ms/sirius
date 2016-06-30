@@ -31,8 +31,8 @@ public class PartialParetoDistribution implements DensityFunction {
     private final double a, b, k, norm, opt, kdivbnorm;
 
     /**
-     * @param a minimal allowed value. P(x < a) = 0
-     * @param b interval [a,b) is optimal, For all x with a < x < b, density(x) is maximal
+     * @param a minimal allowed value. P(x {@literal <} a) = 0
+     * @param b interval [a,b) is optimal, For all x with a {@literal <} x {@literal <} b, density(x) is maximal
      * @param k shape parameter of underlying pareto distribution
      */
     public PartialParetoDistribution(@Parameter("a") double a, @Parameter("b") double b, @Parameter("k") double k) {

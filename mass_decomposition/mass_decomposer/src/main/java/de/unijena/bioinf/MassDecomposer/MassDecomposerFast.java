@@ -26,7 +26,7 @@ import java.util.*;
  * considering a given deviation.
  * In contrast to {@link MassDecomposer} MassDecomposerFast calculates the decompositions with the help of an ERT containing deviation information, not requiring to iterate over all different integer mass values.
  *
- * @see @see <a href="http://bio.informatik.uni-jena.de/bib2html/downloads/2005/BoeckerLiptak_MoneyChangingProblem_COCOON_2005.pdf">The Money Changing Problem revisited by Sebastian Böcker and Zsuzsanna Lipták</a>
+ * @see <a href="http://bio.informatik.uni-jena.de/bib2html/downloads/2005/BoeckerLiptak_MoneyChangingProblem_COCOON_2005.pdf">The Money Changing Problem revisited by Sebastian Böcker and Zsuzsanna Lipták</a>
  * @param <T> type of the alphabet's characters
  */
 public class MassDecomposerFast<T> extends MassDecomposer<T>{
@@ -152,7 +152,7 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
 
     /**
      * decomposes an interval of masses with mass as UPPER mass and all other masses below within deviation
-     * Example: mass = 18, deviation 3 -> decompose 18,17,16,15
+     * Example: mass = 18, deviation 3 {@literal ->} decompose 18,17,16,15
      * @param mass
      * @param deviation
      * @param bounds

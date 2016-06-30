@@ -60,7 +60,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
 
 
     /*
-    This is a list of fragments which are relative common (count >= 5), which have a bad chemical prior (hetero-to-carbon > 0.6),
+    This is a list of fragments which are relative common (count >= 5), which have a bad chemical prior (hetero-to-carbon{@literal >}0.6),
     and which are contained in the KEGG database
      */
     private static final Object[] COMPENSATE_STRANGE_CHEMICAL_PRIOR = new Object[]{
