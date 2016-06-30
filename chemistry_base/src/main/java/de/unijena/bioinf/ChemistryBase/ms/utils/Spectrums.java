@@ -559,7 +559,7 @@ public class Spectrums {
      * otherwise, (-(insertion point) - 1). The insertion point is defined as the point at which the
      * key would be inserted into the array: the index of the first element in the range greater
      * than the key, or toIndex if all elements in the range are less than the specified key.
-     * Note that this guarantees that the return value will be >= 0 if and only if the key is found.
+     * Note that this guarantees that the return value will be {@literal >=} 0 if and only if the key is found.
      */
     public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz, Deviation d) {
         int pos = binarySearch(spectrum, mz);

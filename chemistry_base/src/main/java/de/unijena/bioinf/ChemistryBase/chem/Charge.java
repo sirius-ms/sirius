@@ -34,7 +34,7 @@ public class Charge extends Ionization {
 	}
 
     /**
-     * [M + H+] ~= [M + H] - [H - H+] => "Ion mass" = -charge * (H-H+) = difference between molecule+H and molecule+ion
+     * [M + H+] ~= [M + H] - [H - H+] {@literal =>} "Ion mass" = -charge * (H-H+) = difference between molecule+H and molecule+ion
      *
      * @return
      */

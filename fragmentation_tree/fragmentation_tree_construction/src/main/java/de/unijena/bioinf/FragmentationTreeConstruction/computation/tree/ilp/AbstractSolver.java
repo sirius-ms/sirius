@@ -256,7 +256,7 @@ abstract public class AbstractSolver {
     /**
      * - relaxed version: for each vertex, there are only one or more outgoing edges,
      *   if there is at least one incomming edge
-     *   -> the sum of all incomming edges - sum of outgoing edges >= 0
+     *   {@literal ->} the sum of all incomming edges - sum of outgoing edges {@literal >=} 0
      * - applying 'ColorConstraint' will tighten this condition to:
      *      for each vertex, there can only be one incommning edge at most and only if one incomming edge is present,
      *      one single outgoing edge can be present.
