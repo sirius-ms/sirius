@@ -26,7 +26,7 @@ import java.util.Map;
 public interface Alphabet<T> {
 
     /**
-     * @return size of the alphabet. Indizes of characters are 0..<size
+     * @return size of the alphabet. Indizes of characters are 0..{@literal <} size
      */
     public int size();
 

@@ -23,7 +23,7 @@ import java.util.*;
  * A (hierarchical structured) data document is an abstraction over YAML/JSON/XML/sonstewas.
  *
  * It consists of document entries (of type General) which are either numeric values, booleans, strings, lists or
- * dictionaries (a string->general map). The lists and dictionaries contain again document entries, therefore a
+ * dictionaries (a string{@literal ->}general map). The lists and dictionaries contain again document entries, therefore a
  * document is a tree which inner vertices are lists or dictionaries and which leafs are java primitive types or strings.
  */
 public abstract class DataDocument<General, Dictionary, List> {

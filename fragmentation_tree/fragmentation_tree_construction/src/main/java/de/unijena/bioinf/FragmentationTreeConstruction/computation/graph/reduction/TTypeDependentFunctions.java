@@ -114,7 +114,7 @@ public class TTypeDependentFunctions<T> {
 	/**
 	 * - this function imitates the 'unique' iterator function of relative++
 	 * - basically, it deletes any element except the first of any particular group of equal elements
-	 * - e.g. al = { 1,2,2,2,3,2,2,1 } => {1,2,3,2,1,?,?,?,?}
+	 * - e.g. al = { 1,2,2,2,3,2,2,1 } {@literal =>} {1,2,3,2,1,?,?,?,?}
 	 * @param al : arraylist that is being changed
 	 * @param first : first index that is being accessed
 	 * @param last : last index that is being affected; even so, it can be different in the return value

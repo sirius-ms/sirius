@@ -50,7 +50,7 @@ public abstract class IsotopePatternGenerator {
     /**
      * maximal number of peaks which should be generated. This is also the maximal mass of peaks that should be generated
      * (so maximalNumberOfPeaks=10 means that all peaks with 10 Da above the nominal mass should be generated).
-     * <p/>
+     * <p>
      * This parameter has high impact on the performance, so it is recommended to set it on some reasonable small value
      * (e.g. 5 or 10).
      */

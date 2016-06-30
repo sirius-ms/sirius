@@ -41,9 +41,9 @@ import java.util.List;
  * - GLPK uses a value array of type 'SWIGTYPE_p_double'
  * - GLPKConstants.IV: Integer Variable, x € Z
  * - GLPKConstants.CV: Continuous Variable, x € R
- * - GLPKConstants.DB: Double bound, lb < x < ub
- * - GLPKConstants.LO: Only Lower Bound, lb < x < infinity
- * - GLPKConstraints.FX: fixed variables 1 <= x <= 1
+ * - GLPKConstants.DB: Double bound, lb {@literal <} x {@literal <} ub
+ * - GLPKConstants.LO: Only Lower Bound, lb {@literal <} x {@literal <} infinity
+ * - GLPKConstraints.FX: fixed variables 1 {@literal <}= x {@literal <}= 1
  * TODO: timelimit?
  * TODO: global lower bound?
  * Created by xentrics on 04.03.15.

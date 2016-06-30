@@ -43,7 +43,7 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * This class provides a easy to use wrapper around SMARTS matching functionality. <p/> User code that wants to do
+ * This class provides a easy to use wrapper around SMARTS matching functionality. <p> User code that wants to do
  * SMARTS matching should use this rather than using SMARTSParser (and UniversalIsomorphismTester) directly. Example
  * usage would be
  * <p>
@@ -66,7 +66,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Currently the CDK supports the following SMARTS symbols, that are not described in the Daylight specification.
  * However they are supported by other packages and are noted as such.
  * <p>
- * <table border=1 cellpadding=3> <thead> <tr> <th>Symbol</th><th>Meaning</th><th>Default</th><th>Notes</th> </tr>
+ * <table border=1 cellpadding=3 summary=""> <thead> <tr> <th>Symbol</th><th>Meaning</th><th>Default</th><th>Notes</th> </tr>
  * </thead> <tbody> <tr> <td>Gx</td><td>Periodic group number</td><td>None</td><td>x must be specified and must be a
  * number between 1 and 18. This symbol is supported by the MOE SMARTS implementation</td> <tr> <td>#X</td><td>Any
  * non-carbon heavy element</td><td>None</td><td>This symbol is supported by the MOE SMARTS implementation</td> </tr>
@@ -76,7 +76,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>
  * <h3>Notes</h3> <ul> <li>As <a href="http://sourceforge.net/mailarchive/message.php?msg_name=4964F605.1070502%40emolecules.com">described</a>
  * by Craig James the <code>h&lt;n&gt;</code> SMARTS pattern should not be used. It was included in the Daylight spec
- * for backwards compatibility. To match hydrogens, use the <code>H&lt;n&gt;</cod> pattern.</li> <li>The wild card
+ * for backwards compatibility. To match hydrogens, use the <code>H&lt;n&gt;</code> pattern.</li> <li>The wild card
  * pattern (<code>*</code>) will not match hydrogens (explicit or implicit) unless an isotope is specified. In other
  * words, <code>*</code> gives two hits against <code>C[2H]</code> but 1 hit against <code>C[H]</code>. This also means
  * that it gives no hits against <code>[H][H]</code>. This is contrary to what is shown by Daylights <a
@@ -92,13 +92,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * detection may not work correctly in such polycyclic systems</li> </ul>
  *
  * @author Rajarshi Guha
- * @cdk.created 2007-04-08
- * @cdk.module smarts
- * @cdk.githash
- * @cdk.keyword SMARTS
- * @cdk.keyword substructure search
- * @cdk.bug 1760973
- * @cdk.bug 1761027
+ * cdk.created 2007-04-08
+ * cdk.module smarts
+ * cdk.githash
+ * cdk.keyword SMARTS
+ * cdk.keyword substructure search
+ * cdk.bug 1760973
+ * cdk.bug 1761027
  */
 @TestClass("org.openscience.cdk.smiles.smarts.SMARTSQueryToolTest")
 public class FasterSmartsQueryTool {
@@ -262,10 +262,10 @@ public class FasterSmartsQueryTool {
      * sqt.setAromaticity(new Aromaticity(ElectronDonation.cdk(),
      *                                    Cycles.cdkAromaticSet));
      * for (IAtomContainer molecule : molecules) {
-     * <p>
+     *
      *     // CDK Aromatic model needs atom types
      *     AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
-     * <p>
+     *
      *     sqt.matches(molecule);
      * }
      * </pre></blockquote>
@@ -302,7 +302,7 @@ public class FasterSmartsQueryTool {
     }
 
     /**
-     * Perform a SMARTS match and check whether the query is present in the target molecule. <p/> This function simply
+     * Perform a SMARTS match and check whether the query is present in the target molecule. <p> This function simply
      * checks whether the query pattern matches the specified molecule. However the function will also, internally, save
      * the mapping of query atoms to the target molecule
      * <p>
@@ -345,7 +345,7 @@ public class FasterSmartsQueryTool {
         return !mappings.isEmpty();
     }
     /**
-     * Returns the number of times the pattern was found in the target molecule. <p/> This function should be called
+     * Returns the number of times the pattern was found in the target molecule. <p> This function should be called
      * after {@link #matches(IAtomContainer)}. If not, the results may be undefined.
      *
      * @return The number of times the pattern was found in the target molecule
@@ -356,7 +356,7 @@ public class FasterSmartsQueryTool {
     }
 
     /**
-     * Get the atoms in the target molecule that match the query pattern. <p/> Since there may be multiple matches, the
+     * Get the atoms in the target molecule that match the query pattern. <p> Since there may be multiple matches, the
      * return value is a List of List objects. Each List object contains the indices of the atoms in the target
      * molecule, that match the query pattern
      *
@@ -371,7 +371,7 @@ public class FasterSmartsQueryTool {
     }
 
     /**
-     * Get the atoms in the target molecule that match the query pattern. <p/> Since there may be multiple matches, the
+     * Get the atoms in the target molecule that match the query pattern. <p> Since there may be multiple matches, the
      * return value is a List of List objects. Each List object contains the unique set of indices of the atoms in the
      * target molecule, that match the query pattern
      *
@@ -391,7 +391,7 @@ public class FasterSmartsQueryTool {
     }
 
     /**
-     * Prepare the target molecule for analysis. <p/> We perform ring perception and aromaticity detection and set up
+     * Prepare the target molecule for analysis. <p> We perform ring perception and aromaticity detection and set up
      * the appropriate properties. Right now, this function is called each time we need to do a query and this is
      * inefficient.
      *

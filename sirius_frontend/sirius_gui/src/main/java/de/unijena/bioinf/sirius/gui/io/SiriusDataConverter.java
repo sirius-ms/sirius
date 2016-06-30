@@ -38,9 +38,6 @@ import java.util.List;
 
 /**
  * Convert Sirius Data structures to Myxobase data structures
- *
- * @Marvin: Please do not write your own parsers! It is really confusing if for some data types the sirius commandline
- *          tool behaves differently than the sirius gui.
  */
 public class SiriusDataConverter {
 

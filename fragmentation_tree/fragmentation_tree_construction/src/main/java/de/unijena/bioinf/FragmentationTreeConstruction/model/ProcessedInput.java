@@ -55,7 +55,7 @@ import java.util.List;
  *    processedInput.getAnnotation(AExt.class).getX()
  *
  *    For performance reasons you have to use a special PeakAnnotation class to access peak annotations.
- *    PeakAnnotation<BExt> ext = processedInput.addPeakAnnotation(BExt.class);
+ *    PeakAnnotation{@literal <}BExt{@literal >} ext = processedInput.addPeakAnnotation(BExt.class);
  *    ext.get(somePeak).getX();
  *
  *  Important notes:

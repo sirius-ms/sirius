@@ -34,9 +34,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 1. fragment appears at lower collision energies than parent -> alpha (10%) probability
+ * 1. fragment appears at lower collision energies than parent {@literal ->} alpha (10%) probability
  * 2. fragment appears at higher collision energies than parent
- *      - for three collision energies c1 < c2 < c3 where the parent appears lastly at c1 and the fragment
+ *      - for three collision energies c1 {@literal <} c2 {@literal <} c3 where the parent appears lastly at c1 and the fragment
  *        appears firstly at c3, alpha (10%) probability
  *      - if fragment appears direct after parent, give beta (80%)probability
  * otherwise 100% probability

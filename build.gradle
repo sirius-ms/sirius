@@ -88,7 +88,7 @@ allprojects {
     }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
-        group = 'build'
+        group = 'documentation'
         classifier = 'javadoc'
         from javadoc.destinationDir
     }
@@ -100,7 +100,7 @@ allprojects {
                 if (version.toString().endsWith('-SNAPSHOT'))
                     setArtifacts([jar, sourceJar])
                 else
-                    setArtifacts([jar, sourceJar/*, javadocJar*/]) //todo Fix JavaDoc
+                    setArtifacts([jar, sourceJar, javadocJar])
             }
             mavenPomOnly(MavenPublication) {
                 from components.java
