@@ -71,7 +71,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     }
 
     /**
-     * maps all vertices from graph1 to graph2. Returns a map (fragment a -> fragment b) where a is a fragment of
+     * maps all vertices from graph1 to graph2. Returns a map (fragment a {@literal ->} fragment b) where a is a fragment of
      * graph1 and b is a corresponding fragment from graph 2. Two fragments belong to each other if they have the same
      * molecular formula.
      */

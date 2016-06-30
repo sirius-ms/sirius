@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * Basic class for molecular formulas. All algorithm should use this abstract class instead of
  * it's concrete implementations.
- * <p/>
+ * <p>
  * A molecular formula describes a sum formula, which is a multiset or compomere containing
  * elements and their amount.
  */
@@ -214,13 +214,13 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     /**
      * the doubled ring-double-bond-equation is the maximal number of
      * not-satisfied valences in the molecular graph.
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * For example: In C2H6 each C atom has 4 valences, each H atom has 1 valence. We do not know
      * the molecular structure, but we know that the sum of all valences is 14, while each but one
      * atom consumes at least two valences (for a bond to another atom) such that the graph is fully connected. Therefore
      * the number of not satisfied valence-pairs is 14-(7*2) = 0.
-     * <p/>
+     * <p>
      * If the number is odd, then the molecule is charged because there is one free electron. If the number
      * is negative, then there are free atoms which cannot be connected to the graph. Usually, we forbid
      * such molecules in our application.
@@ -348,7 +348,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     /**
      * a formula is subtractable from another formula, if for each element in the
      * periodic table the amount of atoms of this element is greater or equal to the other formula.
-     * for all elements ei is (this(ei) - other(ei)) >= 0
+     * for all elements ei is (this(ei) - other(ei)) {@literal >=} 0
      */
     public boolean isSubtractable(MolecularFormula other) {
         final short[] amounts = buffer();
@@ -610,7 +610,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * their amount. The first element is C, the second is H, all further elements are sorted alphabetically.
      * For single-amount elements the number is skipped. For zero-amount elements both number and element
      * symbol is skipped. Example: CH4, H2, NOH, Fe
-     * <p/>
+     * <p>
      * TODO: Handle special cases of negative amounts!
      */
     public String formatByHill() {
