@@ -15,7 +15,7 @@ dependencies {
     //todo fingerID dependencies into artifactory
     compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
-    compile "de.unijena.bioinf:Myxo:0.2"
+    compile "de.unijena.bioinf.ms:Myxo:0.2.1"
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
     compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
