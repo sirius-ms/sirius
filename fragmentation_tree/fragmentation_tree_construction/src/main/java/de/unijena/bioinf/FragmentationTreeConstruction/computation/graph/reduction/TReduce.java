@@ -68,8 +68,8 @@ public class TReduce {
      * - is called when --checkPreconds is enabled
      * - this method will terminate this program when the is at least 1 edge, that doesn't confirm the following
      * conditions, even though renumbering has been applied on the graph:
-     * (i) e = edge ( u, v ) => u.ArrayIndex < v.ArrayIndex
-     * (ii) u < v => u.color <= v.color
+     * (i) e = edge ( u, v ) {@literal =>} u.ArrayIndex {@literal <} v.ArrayIndex
+     * (ii) u {@literal <} v {@literal =>} u.color {@literal <=} v.color
      *
      * @param errMsg : massage, that will be printed if above conditions are not fulfilled
      *               TODO: check for correctness, but probably working, rewritten

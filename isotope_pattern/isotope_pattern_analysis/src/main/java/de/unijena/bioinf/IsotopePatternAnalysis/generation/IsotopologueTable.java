@@ -59,7 +59,7 @@ class IsotopologueTable implements Isotopologues {
 
     /*
     1  wenn k = 0 dann rückgabe 1
-2  wenn 2k > n
+2  wenn 2k{@literal >}n
 3      dann führe aus ergebnis \leftarrow binomialkoeffizient(n, n-k)
 4  sonst führe aus ergebnis \leftarrow n-k+1
 5          von i \leftarrow 2 bis k
