@@ -9,23 +9,29 @@ public final class PredictionPerformance {
 
     public final static class Modify {
 
-        private Modify(double tp, double fp, double tn, double fn, double pseudoCount) {
+        private Modify(double tp, double fp, double tn, double fn, double pseudoCount, boolean relabeling) {
             this.tp = tp;
             this.fp = fp;
             this.tn = tn;
             this.fn = fn;
             this.pseudoCount = pseudoCount;
+            this.relabeling = relabeling;
+        }
+
+        private Modify(double tp, double fp, double tn, double fn, double pseudoCount) {
+            this(tp, fp, tn, fn, pseudoCount, true);
         }
 
         private Modify(double tp, double fp, double tn, double fn) {
-            this(tp,fp,tn,fn,0);
+            this(tp,fp,tn,fn,0,true);
         }
 
         private double tp,fp,tn,fn;
         private double pseudoCount;
+        private boolean relabeling;
 
         public PredictionPerformance done() {
-            return new PredictionPerformance(tp,fp,tn,fn);
+            return new PredictionPerformance(tp,fp,tn,fn,pseudoCount,relabeling);
         }
 
         public PredictionPerformance done(PredictionPerformance performance) {
@@ -69,6 +75,14 @@ public final class PredictionPerformance {
             return this;
         }
 
+        public boolean isRelabeling() {
+            return relabeling;
+        }
+
+        public void setRelabeling(boolean relabeling) {
+            this.relabeling = relabeling;
+        }
+
         public double getTp() {
             return tp;
         }
@@ -109,16 +123,26 @@ public final class PredictionPerformance {
     private double tp, fp, tn, fn;
     private double pseudoCount;
     private double f, precision, recall, accuracy, specitivity;
+    private final boolean allowRelabeling;
 
     @Override
     public String toString() {
         return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.2f\tprecision=%.2f\trecall=%.2f\taccuracy=%.2f", tp,fp,tn,fn,f,precision,recall,accuracy);
     }
 
+    /**
+     * If true (default mode), PredictionPerformance will always use the smaller class. If false, PredictionPerformance
+     * will use the POSITIVE class.
+     */
+    public PredictionPerformance withRelabelingAllowed(boolean value) {
+        return new PredictionPerformance(tp, fp, tn, fn, pseudoCount, value);
+    }
+
     public Modify modify() {
         return new Modify(tp,fp,tn,fn);
     }
 
+    @Deprecated
     public void set(double tp, double fp, double tn, double fn) {
         this.tp = tp;
         this.fp = fp;
@@ -128,7 +152,7 @@ public final class PredictionPerformance {
     }
 
     public PredictionPerformance withPseudoCount(double pseudoCount) {
-        return new PredictionPerformance(tp,fp,tn,fn, pseudoCount);
+        return new PredictionPerformance(tp,fp,tn,fn, pseudoCount, allowRelabeling);
     }
 
     public void set(PredictionPerformance other) {
@@ -167,7 +191,7 @@ public final class PredictionPerformance {
     }
 
     public PredictionPerformance() {
-
+        this(0,0,0,0,0,true);
     }
 
     public PredictionPerformance(PredictionPerformance perf) {
@@ -176,19 +200,25 @@ public final class PredictionPerformance {
         this.tn=perf.getTn();
         this.fn=perf.getFn();
         this.pseudoCount = perf.pseudoCount;
+        this.allowRelabeling = perf.allowRelabeling;
         calc();
     }
 
     public PredictionPerformance(double tp, double fp, double tn, double fn) {
-        this(tp, fp, tn, fn, 0d);
+        this(tp, fp, tn, fn, 0d, true);
     }
 
     public PredictionPerformance(double tp, double fp, double tn, double fn, double pseudoCount) {
+        this(tp, fp, tn, fn, pseudoCount, true);
+    }
+
+    public PredictionPerformance(double tp, double fp, double tn, double fn, double pseudoCount, boolean allowRelabeling) {
         this.tp = tp;
         this.fp = fp;
         this.tn = tn;
         this.fn = fn;
         this.pseudoCount = pseudoCount;
+        this.allowRelabeling = allowRelabeling;
         calc();
     }
 
@@ -268,7 +298,7 @@ public final class PredictionPerformance {
         final double positive = tp+fn;
         final double negative = tn+fp;
         final double TP, FP, TN, FN;
-        if (positive > negative) {
+        if (allowRelabeling && positive > negative) {
             TP = tn+pseudoCount; FP = fn+pseudoCount; TN = tp+pseudoCount; FN = fp+pseudoCount;
         } else {
             TP=tp+pseudoCount; FP=fp+pseudoCount; TN=tn+pseudoCount; FN=fn+pseudoCount;
