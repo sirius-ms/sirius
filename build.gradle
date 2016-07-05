@@ -58,7 +58,7 @@ File md = file("${project.manualPath}/build/singleText/sirius.md")
 task buildDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}")
-    commandLine(['pandoc','-f', 'rst', '-t', 'markdown', '-o', "${md}", "${out}"])
+    commandLine(['pandoc', '-f', 'rst', '-t', 'markdown', '-o', "${md}", "${out}"])
 }
 
 buildDoku.doFirst {
@@ -89,17 +89,10 @@ buildDoku.doLast {
 buildDoku.dependsOn cleanDoku, htmlDoku, textDoku, pdfDoku
 clean.dependsOn cleanDoku
 
-artifactoryPublish {
-    publications('mavenPomOnly')
-}
 
 subprojects {
     apply plugin: 'application'
     apply plugin: 'de.unijena.bioinf.launch4jj'
-
-    artifactoryPublish {
-        publications('mavenJava')
-    }
 
     /*################### Windows release Stuff ################### */
     launch4j {

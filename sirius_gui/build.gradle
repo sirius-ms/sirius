@@ -5,11 +5,11 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 dependencies {
 //project
-    compile internal(':chemistry_base', version)
-    compile internal(':io', version)
-    compile internal(':isotope_pattern:isotope_pattern_analysis', version)
-    compile internal(':fragmentation_tree:fragmentation_tree_construction', version)
-    compile internal(':sirius_frontend:sirius_cli', version)
+    compile project(':chemistry_base')
+    compile project(':io')
+    compile project(':isotope_pattern:isotope_pattern_analysis')
+    compile project(':fragmentation_tree:fragmentation_tree_construction')
+    compile project(':sirius_frontend:sirius_cli')
 
 //internal
     //todo fingerID dependencies into artifactory
@@ -39,7 +39,6 @@ dependencies {
     provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
-//artifactoryPublish.skip = true
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
 project.ext.set("type", "gui,console")
@@ -157,5 +156,5 @@ task runGUI(type: Exec) {
     group = "application"
     File command = file("build/install/sirius3-linux64/bin/sirius3")
     dependsOn installLinux64Dist
-    commandLine([command.absolutePath, "--gui"])
+    commandLine([command.absolutePath])
 }
