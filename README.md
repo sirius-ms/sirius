@@ -37,7 +37,7 @@ identify the molecular formula of the ion and the fragment peaks and use
 this information as input for other tools like FingerID or MAGMa to
 identify the 2D structure of the measured compound. For this purpose you
 can also use the SIRIUS library directly, instead of the command line
-interface. See *SIRIUS Java Library*.
+interface. See SIRIUS Java Library.
 
 Since Sirius 3.1 our software ships with an **user interface**. The user
 interface, however, have to be downloaded separately. If you want to use
