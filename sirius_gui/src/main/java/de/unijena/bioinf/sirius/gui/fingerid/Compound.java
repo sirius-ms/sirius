@@ -54,7 +54,9 @@ public class Compound {
         PrototypeCompound.smiles = new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O");
         PrototypeCompound.name = "Glucose";
         PrototypeCompound.pubchemIds = new int[]{5793};
-        PrototypeCompound.fingerprint = new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[0]);
+        PrototypeCompound.fingerprint = new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[]{
+            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,34,35,38,80,120
+        });
         return PrototypeCompound;
     }
 
