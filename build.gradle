@@ -19,10 +19,11 @@ project.ext.set("winSuffix", "win")
 project.ext.set("arch", "64,32")
 project.ext.set("appName", "sirius3")
 project.ext.set("manualPath", file('manual').absolutePath)
-project.ext.set("glpkPath", file('glpk').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
 /*################### Building the Documentation ################### */
+
+
 task cleanDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}")

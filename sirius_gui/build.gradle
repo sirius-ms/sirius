@@ -96,6 +96,7 @@ distributions {
             }
         })
         distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 
     }
@@ -129,6 +130,7 @@ distributions {
             }
         })
         distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
