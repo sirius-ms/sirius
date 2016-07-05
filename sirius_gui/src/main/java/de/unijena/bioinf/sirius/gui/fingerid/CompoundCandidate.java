@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundCandidate {
 
-    private final static double THRESHOLD_FP = 1d/3d;
+    private final static double THRESHOLD_FP = 0.4;
 
     protected Compound compound;
     protected double score;
@@ -109,12 +109,12 @@ public class CompoundCandidate {
     }
 
     public FingerprintAgreement getAgreement(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
-        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.getFScores(), 1-THRESHOLD_FP);
+        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.performances, 1-THRESHOLD_FP, 0.25);
         return agreement;
     }
 
     public FingerprintAgreement getMissings(CSIFingerIdComputation computations,  ProbabilityFingerprint prediction) {
-        if (missings==null) missings = FingerprintAgreement.getMissing(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(),computations.getFScores(),  THRESHOLD_FP);
+        if (missings==null) missings = FingerprintAgreement.getMissing(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(),computations.performances,  THRESHOLD_FP);
         return missings;
     }
 
