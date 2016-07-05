@@ -1,8 +1,8 @@
 dependencies {
 //project
-    compile internal(':chemistry_base',version)
-    compile internal(':isotope_pattern:isotope_pattern_analysis',version)
-    compile internal(':mass_decomposition:mass_decomposer',version)
+    compile project(':chemistry_base')
+    compile project(':isotope_pattern:isotope_pattern_analysis')
+    compile project(':mass_decomposition:mass_decomposer')
 //internal
     compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version:'1.0'
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
@@ -13,6 +13,6 @@ dependencies {
 
     provided group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
 //test
-    testCompile internal(':io',version)
+    testCompile project(':io')
 }
 

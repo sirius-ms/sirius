@@ -1,6 +1,6 @@
 dependencies() {
-    compile internal(':chemistry_base',version)
-    compile internal(':mass_decomposition:mass_decomposer',version)
+    compile project(':chemistry_base')
+    compile project(':mass_decomposition:mass_decomposer')
 
     compile "org.apache.commons:commons-math3:$math3_version"
 }

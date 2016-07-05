@@ -3,10 +3,10 @@ mainClassName = "de.unijena.bioinf.sirius.cli.CLI"
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
 
-    compile internal(':chemistry_base',version)
-    compile internal(':io',version)
-    compile internal(':isotope_pattern:isotope_pattern_analysis',version)
-    compile internal(':fragmentation_tree:fragmentation_tree_construction',version)
+    compile project(':chemistry_base')
+    compile project(':io')
+    compile project(':isotope_pattern:isotope_pattern_analysis')
+    compile project(':fragmentation_tree:fragmentation_tree_construction')
 }
 
 

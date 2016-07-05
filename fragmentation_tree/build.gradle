@@ -1,8 +1,0 @@
-artifactoryPublish {
-    publications('mavenPomOnly')
-}
-subprojects{
-    artifactoryPublish {
-        publications('mavenJava')
-    }
-}

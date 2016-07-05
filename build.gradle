@@ -3,6 +3,7 @@ import java.nio.file.Paths
 plugins {
     id "com.jfrog.artifactory" version "4.3.0"
 }
+
 //Global Properties
 ext {
     //version for external libraries
@@ -29,23 +30,27 @@ ext {
 
     releaseBranch = 'release'
 
-    internal = { String modulePath, version ->
+    /*internal = { String modulePath, version ->
         if (project.gitBranch.equals(project.releaseBranch)) {
             return "de.unijena.bioinf.ms:${modulePath.split(':').takeRight(1)[0]}:$version"
         } else {
             return project("$modulePath")
         }
-    }
+    }*/
 }
 
-allprojects {
 
+
+
+
+allprojects {
+    apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-    apply plugin: "com.jfrog.artifactory"
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
+
 
     version = '3.1.4-SNAPSHOT'
     group = 'de.unijena.bioinf.ms'
@@ -65,6 +70,12 @@ allprojects {
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
+
+        //to build shadowJar without provided libs
+        configurations {
+            provided
+            compileOnly.extendsFrom provided
+        }
     }
 
     dependencies {
@@ -74,13 +85,6 @@ allprojects {
         testCompile group: 'junit', name: 'junit', version: '4.+'
     }
 
-    //to build shadowJar without provided libs
-    configurations {
-        provided
-        compileOnly.extendsFrom provided
-    }
-
-    /*Define artifacts (for maven install --> is also used by artifactory)*/
     task sourceJar(type: Jar) {
         group = 'build'
         classifier = 'sources'
@@ -93,44 +97,71 @@ allprojects {
         from javadoc.destinationDir
     }
 
+
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                from components.java
+                from project.components.java
+                //adding submodules to pom
+                pom.withXml {
+                    if (!project.subprojects.isEmpty()) {
+                        def modlules = asNode().appendNode('modules','')
+                        project.subprojects.each {
+                            new Node(modlules,'module',it.name)
+                        }
+                    }
+                }
+                setArtifacts([])
+            }
+        }
+    }
+}
+
+def javaProjects() {
+    subprojects.findAll { new File(it.projectDir, 'src').directory }
+}
+
+configure(javaProjects()) {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+//                from project.components.java
                 if (version.toString().endsWith('-SNAPSHOT'))
                     setArtifacts([jar, sourceJar])
                 else
                     setArtifacts([jar, sourceJar, javadocJar])
             }
-            mavenPomOnly(MavenPublication) {
-                from components.java
-                setArtifacts([])
-            }
         }
     }
-
-    artifactory {
-        contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-        publish {
-            repository {
-                if (version.toString().endsWith('-SNAPSHOT'))
-                    repoKey = 'libs-snapshot-local'
-                else
-                    repoKey = 'libs-release-local'
-                Properties properties = new Properties()
-                File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
-                propertiesFile.withInputStream {
-                    properties.load(it)
-                }
-
-                username = properties['username']
-                password = properties['password']
-            }
-        }
-    }
-    artifactoryPublish.dependsOn 'generatePomFileForMavenPomOnlyPublication'
-    artifactoryPublish.dependsOn 'generatePomFileForMavenJavaPublication'
-    artifactoryPublish.dependsOn 'jar'
-//    artifactoryPublish.dependsOn 'javadocJar'
-    artifactoryPublish.dependsOn 'sourceJar'
 }
+
+/*subprojects{
+    //    Define artifacts (for maven install --> is also used by artifactory)
+
+}*/
+
+
+//artifactoryPublish.skip = true
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
+            Properties properties = new Properties()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            propertiesFile.withInputStream {
+                properties.load(it)
+            }
+
+            username = properties['username']
+            password = properties['password']
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+}
+

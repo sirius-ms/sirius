@@ -5,6 +5,6 @@ mainClassName = "de.unijena.bioinf.IsotopePatternAnalysis.isogencli.Main"
 
 dependencies() {
     compile "com.lexicalscope.jewelcli:jewelcli:$jewelcli_version"
-    compile internal(":io",version)
-    compile internal(":isotope_pattern:isotope_pattern_analysis",version)
+    compile project(":io")
+    compile project(":isotope_pattern:isotope_pattern_analysis")
 }

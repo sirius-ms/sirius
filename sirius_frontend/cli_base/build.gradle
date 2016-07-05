@@ -1,8 +1,8 @@
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version:"$jewelcli_version"
 
-    compile internal(':chemistry_base',version)
-    compile internal(':io',version)
+    compile project(':chemistry_base')
+    compile project(':io')
 
 }
 
