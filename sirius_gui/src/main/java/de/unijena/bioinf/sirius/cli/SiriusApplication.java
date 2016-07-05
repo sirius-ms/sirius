@@ -13,7 +13,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 public class SiriusApplication {
 
     public static void main(String[] args) {
-        /*
         final CLI<SiriusGUIOptions> cli = new CLI<>();
         cli.parseArgs(args, SiriusGUIOptions.class);
         if (cli.options.isGUI()) {
@@ -23,7 +22,6 @@ public class SiriusApplication {
             cli.validate();
             cli.compute();
         }
-        */
-        new MainFrame();
+//        new MainFrame();
     }
 }
