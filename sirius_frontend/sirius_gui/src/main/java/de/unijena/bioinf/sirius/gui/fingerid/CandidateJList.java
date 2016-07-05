@@ -51,6 +51,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.text.AttributedCharacterIterator;
 import java.util.*;
 
 public class CandidateJList extends JPanel implements MouseListener, ActionListener {
@@ -65,7 +66,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected Font nameFont, propertyFont, rankFont;
+    protected Font nameFont, propertyFont, rankFont, scoreSuperscriptFont;
     protected Frame owner;
 
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
@@ -82,6 +83,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             nameFont = tempFont.deriveFont(13f);
             propertyFont = tempFont.deriveFont(16f);
             rankFont = tempFont.deriveFont(32f);
+            final HashMap<AttributedCharacterIterator.Attribute, Object> attrs=new HashMap<>();
+            attrs.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
+            attrs.put(TextAttribute.SIZE, 15f);
+            scoreSuperscriptFont = nameFont.deriveFont(attrs);
         } catch (FontFormatException | IOException e) {
             nameFont = propertyFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
@@ -109,6 +114,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         candidateList = new InnerList(new ListModel());
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer());
+        candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(new CompoundCandidate(Compound.getPrototypeCompound(), 0d, 1, 0));
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
@@ -249,7 +255,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final int row = ry/ CELL_SIZE;
             final int col = rx/ CELL_SIZE;
             highlightAgree = candidate.agreement.indexAt(row, col);
-            structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate);
+            structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate-1);
         } else {
             final Rectangle box = candidate.missings.getBounds();
             final int absX = box.x+relativeRect.x;
@@ -262,15 +268,15 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 final int row = ry/ CELL_SIZE;
                 final int col = rx/ CELL_SIZE;
                 highlightMissing = candidate.missings.indexAt(row, col);
-                structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing,highlightedCandidate);
+                structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing,highlightedCandidate-1);
             } else {
                 if (highlightAgree>=0) {
                     highlightAgree=-1;
-                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate);
+                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate-1);
                 }
                 if (highlightMissing>=0) {
                     highlightMissing=-1;
-                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing, highlightedCandidate);
+                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing, highlightedCandidate-1);
                 }
             }
         }
@@ -499,27 +505,65 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
                 synchronized (molecule.compound) {
                     renderer.paint(molecule.compound.getMolecule(), new AWTDrawVisitor(gg),
-                            new Rectangle2D.Double(7, 14, 360, 200), true);
+                            new Rectangle2D.Double(7, 14, 360, 185), true);
                 }
                 if (molecule.compound.name!=null) {
                     gg.setFont(nameFont);
                     gg.drawString(molecule.compound.name, 3, 16);
                 }
                 gg.setFont(rankFont);
-                gg.drawString(String.valueOf(molecule.rank), 3, 100);
+                final String rankString = String.valueOf(molecule.rank);
+                final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
+                {
+                    final int x = 3;
+                    final int y = getHeight()-(int)(bound.getHeight());
+                    final int h = (int)(y + bound.getHeight());
+                    gg.drawString(rankString, x,h-2);
+                }
+                gg.setFont(nameFont);
+                final String scoreText1 = "score: e", scoreText2 = String.format(Locale.US, "%d", (long)Math.round(molecule.score));
+                double w = gg.getFontMetrics(nameFont).getStringBounds(scoreText1, gg).getWidth(),
+                        w2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getWidth();
+                /*{
+                    Color from = new Color(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue(),0);
+                    Color to = new Color(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue(),255);
+
+                    int xx = (int)(getWidth()-(w + w2)), yy = (int)(getHeight()-30);
+                    int mid = xx + (getWidth()-xx)/2;
+                    GradientPaint paint = new GradientPaint(mid, yy, from,
+                            mid, yy+15, to, false);
+                    Paint oldPaint = gg.getPaint();
+                    gg.setPaint(paint);
+                    gg.fillRect(xx, yy, getWidth()-xx, getHeight()-yy);
+                    gg.setPaint(oldPaint);
+                }*/
+                gg.drawString(scoreText1, (int)(getWidth() - (w + w2 + 4)), getHeight()-4);
+                gg.setFont(scoreSuperscriptFont);
+                gg.drawString(scoreText2, (int)(getWidth() - (w2 + 4)), getHeight()-4);
             }
         }
     }
 
     public class FingerprintView extends JPanel {
 
-        FingerprintAgreement agreement;
+        private FingerprintAgreement agreement;
         Color color;
 
-        public FingerprintView(Color color) {
+        public FingerprintView(int height, Color color) {
             this.color = color;
             setOpaque(false);
-            setPreferredSize(new Dimension(Integer.MAX_VALUE, 80));
+            setPreferredSize(new Dimension(Integer.MAX_VALUE, height));
+        }
+
+        public void setAgreement(FingerprintAgreement agreement) {
+            this.agreement = agreement;
+            final int numberOfCols = Math.min(agreement.indizes.length, (getWidth()-2)/ CELL_SIZE);
+            final int numberOfRows = numberOfCols==0 ? 1 : ((agreement.indizes.length+numberOfCols-1)/numberOfCols);
+            agreement.setNumberOfCols(numberOfCols);
+            final int W = numberOfCols* CELL_SIZE;
+            final int H = numberOfRows* CELL_SIZE;
+            //setPreferredSize(new Dimension(Integer.MAX_VALUE, H + 8));
+            //revalidate();
         }
 
         @Override
@@ -574,6 +618,8 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
+    private static final int DB_LABEL_PADDING = 4;
+
     public class DatabasePanel extends JPanel {
         private CompoundCandidate candidate;
         private Font ownFont;
@@ -582,7 +628,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.LEFT));
             setBorder(new EmptyBorder(5,2,2,2));
-            ownFont = getFont().deriveFont(Font.BOLD, 14);
+            ownFont = getFont().deriveFont(Font.BOLD, 12);
         }
 
         public void setCompound(CompoundCandidate candidate) {
@@ -594,7 +640,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             for (String name : dbNames) {
                 final TextLayout tlayout = new TextLayout(name, ownFont, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
-                add(new DatabaseLabel(name, (int)r.getWidth() +24, (int)r.getHeight() + 24, bgColor, ownFont));
+                add(new DatabaseLabel(name, (int)r.getWidth() + 2*DB_LABEL_PADDING + 6, (int)r.getHeight() + 2*DB_LABEL_PADDING + 6, bgColor, ownFont));
             }
         }
 /*
@@ -642,8 +688,8 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final FontMetrics m = getFontMetrics(getFont());
             final int tw = m.stringWidth(name);
             final int th = m.getHeight();
-            final int w = tw + 16;
-            final int h = th + 12;
+            final int w = tw + DB_LABEL_PADDING;
+            final int h = th + DB_LABEL_PADDING;
             g.setColor(color);
             g.fillRoundRect(2,2,w,h,4,4);
             g.setColor(Color.BLACK);
@@ -671,30 +717,35 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             agpanel.setBorder(new EmptyBorder(5,0,0,2));
             viopanel = new JPanel();
             viopanel.setOpaque(false);
-            viopanel.setBorder(new EmptyBorder(2,0,0,5));
+            viopanel.setBorder(new EmptyBorder(5,0,0,2));
             viopanel.setLayout(new BoxLayout(viopanel, BoxLayout.Y_AXIS));
             agreements = new JLabel("True Positive Predictions:", SwingConstants.LEFT);
             Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
             map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
             map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-            violations = new JLabel("False Positive Predictions:", SwingConstants.LEFT);
-            agreements.setFont(agreements.getFont().deriveFont(map));
-            violations.setFont(violations.getFont().deriveFont(map));
+            violations = new JLabel("False Negative Predictions:", SwingConstants.LEFT);
+            agreements.setFont(nameFont.deriveFont(map));
+            violations.setFont(nameFont.deriveFont(map));
             add(inchi);
-            ag = new FingerprintView(Color.GREEN);
-            vio = new FingerprintView(Color.RED);
+            ag = new FingerprintView(70, Color.GREEN);
+            vio = new FingerprintView(50, Color.RED);
             agpanel.add(agreements);
             agpanel.add(ag);
             viopanel.add(violations);
             viopanel.add(vio);
             add(agpanel);
             add(viopanel);
+            Box db = Box.createVerticalBox();
+            db.setOpaque(false);
+            db.setAlignmentX(Component.LEFT_ALIGNMENT);
             final JLabel dbl = new JLabel("Databases");
-            dbl.setFont(agreements.getFont().deriveFont(map));
+            dbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+            dbl.setFont(nameFont.deriveFont(map));
+            db.add(dbl);
             databasePanel = new DatabasePanel();
-            add(dbl);
-            add(databasePanel);
-
+            databasePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            db.add(databasePanel);
+            add(db);
             setVisible(true);
         }
 
@@ -706,10 +757,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 ag.agreement = null;
                 vio.agreement = null;
             } else {
-                ag.agreement = value.getAgreement(computation, data.platts);
-                vio.agreement = value.getMissings(computation, data.platts);
+                ag.setAgreement(value.getAgreement(computation, data.platts));
+                vio.setAgreement(value.getMissings(computation, data.platts));
             }
-
         }
     }
 

@@ -87,7 +87,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 
 		SiriusResultElement sre = null;
 		resultsJList.removeListSelectionListener(this);
-		if(this.ec!=null&&!this.ec.getResults().isEmpty()){
+		if(this.ec!=null&&ec.getResults()!=null&&!this.ec.getResults().isEmpty()){
 			this.listModel.setData(ec.getResults());
 			if(this.listModel.getSize()>0){
 				this.resultsJList.setSelectedIndex(0);
