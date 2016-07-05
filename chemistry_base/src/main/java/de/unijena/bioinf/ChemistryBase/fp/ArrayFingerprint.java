@@ -288,7 +288,7 @@ public class ArrayFingerprint extends Fingerprint {
 
         @Override
         public boolean hasNext() {
-            return relative < fingerprintVersion.size();
+            return relative+1 < fingerprintVersion.size();
         }
 
         public String toString() {return isSet() ? "1" : "0";}
