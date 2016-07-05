@@ -152,9 +152,7 @@ distributions {
     installWin64Dist.dependsOn 'createExe'
 }
 
-task runGUI(type: Exec) {
-    group = "application"
-    File command = file("build/install/sirius3-linux64/bin/sirius3-gui")
-    dependsOn installLinux64Dist
+task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/sirius3-gui').toFile()
     commandLine([command.absolutePath])
 }

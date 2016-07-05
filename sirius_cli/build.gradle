@@ -131,4 +131,10 @@ distributions {
     win64DistZip.dependsOn 'createExe'
     win64DistTar.dependsOn 'createExe'
     installWin64Dist.dependsOn 'createExe'
+
+
+    task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+        File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/sirius3').toFile()
+        commandLine([command.absolutePath])
+    }
 }
