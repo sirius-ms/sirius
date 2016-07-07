@@ -22,6 +22,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -90,8 +92,23 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
     }
 
     @Override
+    public double getDoubleFromList(JsonArray jsonElements, int index) {
+        return jsonElements.get(index).getAsDouble();
+    }
+
+    @Override
+    public double getDoubleFromDictionary(JsonObject dict, String key) {
+        return dict.get(key).getAsDouble();
+    }
+
+    @Override
     public boolean isInteger(JsonElement document) {
-        return isNumber(document) && document.getAsBigDecimal().scale() == 0;
+        if (!document.isJsonPrimitive()) return false;
+        final BigDecimal dec = ((JsonPrimitive)document).getAsBigDecimal();
+        if (dec.scale() > 0) return false;
+        final BigInteger i = dec.toBigInteger();
+        if (i.bitLength() <= 31) return true;
+        else return false;
     }
 
     @Override
