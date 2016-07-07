@@ -53,6 +53,7 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.text.AttributedCharacterIterator;
 import java.util.*;
+import java.util.List;
 
 public class CandidateJList extends JPanel implements MouseListener, ActionListener {
 
@@ -72,7 +73,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
     protected JPopupMenu popupMenu;
 
-    protected int highlightMissing=-1, highlightAgree=-1, highlightedCandidate=-1;
+    protected int highlightMissing = -1, highlightAgree = -1, highlightedCandidate = -1;
     protected int selectedCompoundId;
 
     protected void initFonts() {
@@ -83,7 +84,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             nameFont = tempFont.deriveFont(13f);
             propertyFont = tempFont.deriveFont(16f);
             rankFont = tempFont.deriveFont(32f);
-            final HashMap<AttributedCharacterIterator.Attribute, Object> attrs=new HashMap<>();
+            final HashMap<AttributedCharacterIterator.Attribute, Object> attrs = new HashMap<>();
             attrs.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
             attrs.put(TextAttribute.SIZE, 15f);
             scoreSuperscriptFont = nameFont.deriveFont(attrs);
@@ -99,7 +100,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         initFonts();
         setLayout(new BorderLayout());
         this.data = data;
-        JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+        JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         add(northPanel, BorderLayout.NORTH);
 
         final JButton exportToCSV = new JButton("export list", new ImageIcon(CandidateJList.class.getResource("/icons/document-export.png")));
@@ -120,7 +121,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         add(scrollPane, BorderLayout.CENTER);
 
         candidateList.addMouseListener(this);
-        this.structureSearcher = new StructureSearcher(computation, data==null ? 0 : data.compounds.length);
+        this.structureSearcher = new StructureSearcher(computation, data == null ? 0 : data.compounds.length);
         this.structureSearcherThread = new Thread(structureSearcher);
         structureSearcherThread.start();
         this.structureSearcher.reloadList((ListModel) candidateList.getModel());
@@ -158,10 +159,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 e1.printStackTrace();
             }
         } else if (e.getSource() == OpenInBrowser2) {
-            if (c.compound.databases==null) return;
-            for (Map.Entry<String,String> entry : c.compound.databases.entries()) {
+            if (c.compound.databases == null) return;
+            for (Map.Entry<String, String> entry : c.compound.databases.entries()) {
                 final DatasourceService2.Sources s = DatasourceService2.getFromName(entry.getKey());
-                if (entry.getValue() == null || s==null || s.URI == null) continue;
+                if (entry.getValue() == null || s == null || s.URI == null) continue;
                 try {
                     if (s.URI.contains("%s")) {
                         Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), "UTF-8"))));
@@ -183,33 +184,33 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         FileFilter csvFileFilter = new SupportedExportCSVFormatsFilter();
         jfc.addChoosableFileFilter(csvFileFilter);
         File selectedFile = null;
-        while(selectedFile==null){
+        while (selectedFile == null) {
             int returnval = jfc.showSaveDialog(this);
-            if(returnval == JFileChooser.APPROVE_OPTION){
+            if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 
                 config.setDefaultCompoundsExportPath(selFile.getParentFile());
 
                 String name = selFile.getName();
-                if(selFile.exists()){
+                if (selFile.exists()) {
                     FilePresentDialog fpd = new FilePresentDialog(owner, selFile.getName());
                     ReturnValue rv = fpd.getReturnValue();
-                    if(rv==ReturnValue.Success){
+                    if (rv == ReturnValue.Success) {
                         selectedFile = selFile;
                     }
-                }else{
+                } else {
                     selectedFile = selFile;
                 }
-            }else{
+            } else {
                 break;
             }
         }
 
-        if(selectedFile!=null){
+        if (selectedFile != null) {
 
-            try{
+            try {
                 new CSVExporter().exportToFile(selectedFile, data);
-            }catch(Exception e2){
+            } catch (Exception e2) {
                 ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
                 e2.printStackTrace();
             }
@@ -222,16 +223,16 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     public void refresh(FingerIdData data) {
         this.data = data;
-        ((ListModel)candidateList.getModel()).change();
+        ((ListModel) candidateList.getModel()).change();
         this.structureSearcher.reloadList((ListModel) candidateList.getModel());
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
         if (e.isPopupTrigger()) return;
-        highlightedCandidate=-1;
-        highlightAgree=-1;
-        highlightMissing=-1;
+        highlightedCandidate = -1;
+        highlightAgree = -1;
+        highlightMissing = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
@@ -243,42 +244,68 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         int rx, ry;
         {
             final Rectangle box = candidate.agreement.getBounds();
-            final int absX = box.x+relativeRect.x;
-            final int absY = box.y+relativeRect.y;
-            final int absX2 = box.width+absX;
-            final int absY2 = box.height+absY;
-            in=point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
-            rx = point.x-absX;
-            ry = point.y-absY;
+            final int absX = box.x + relativeRect.x;
+            final int absY = box.y + relativeRect.y;
+            final int absX2 = box.width + absX;
+            final int absY2 = box.height + absY;
+            in = point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
+            rx = point.x - absX;
+            ry = point.y - absY;
         }
         if (in) {
-            final int row = ry/ CELL_SIZE;
-            final int col = rx/ CELL_SIZE;
+            final int row = ry / CELL_SIZE;
+            final int col = rx / CELL_SIZE;
             highlightAgree = candidate.agreement.indexAt(row, col);
-            structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate-1);
+            structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate - 1);
         } else {
             final Rectangle box = candidate.missings.getBounds();
-            final int absX = box.x+relativeRect.x;
-            final int absY = box.y+relativeRect.y;
-            final int absX2 = box.width+absX;
-            final int absY2 = box.height+absY;
+            final int absX = box.x + relativeRect.x;
+            final int absY = box.y + relativeRect.y;
+            final int absX2 = box.width + absX;
+            final int absY2 = box.height + absY;
             if (point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2) {
-                rx = point.x-absX;
-                ry = point.y-absY;
-                final int row = ry/ CELL_SIZE;
-                final int col = rx/ CELL_SIZE;
+                rx = point.x - absX;
+                ry = point.y - absY;
+                final int row = ry / CELL_SIZE;
+                final int col = rx / CELL_SIZE;
                 highlightMissing = candidate.missings.indexAt(row, col);
-                structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing,highlightedCandidate-1);
+                structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate - 1);
             } else {
-                if (highlightAgree>=0) {
-                    highlightAgree=-1;
-                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightAgree,highlightedCandidate-1);
+                if (highlightAgree >= 0) {
+                    highlightAgree = -1;
+                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate - 1);
                 }
-                if (highlightMissing>=0) {
-                    highlightMissing=-1;
-                    structureSearcher.reloadList((ListModel)candidateList.getModel(), highlightMissing, highlightedCandidate-1);
+                if (highlightMissing >= 0) {
+                    highlightMissing = -1;
+                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate - 1);
+                }
+
+                double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
+                for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel l : candidate.labels) {
+                    if (l.rect.contains(rpx, rpy)) {
+                        clickOnDBLabel(l);
+                        break;
+                    }
+                }
+
+            }
+        }
+    }
+
+    private void clickOnDBLabel(de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label) {
+        final DatasourceService2.Sources s = DatasourceService2.getFromName(label.name);
+        if (label.values == null || label.values.length==0 || s == null || s.URI == null) return;
+        try {
+            for (String id : label.values) {
+                if (id==null) continue;
+                if (s.URI.contains("%s")) {
+                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, "UTF-8"))));
+                } else {
+                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(id))));
                 }
             }
+        } catch (IOException | URISyntaxException e1) {
+            e1.printStackTrace();
         }
     }
 
@@ -301,34 +328,34 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             int rx, ry;
             {
                 final Rectangle box = candidate.agreement.getBounds();
-                final int absX = box.x+relativeRect.x;
-                final int absY = box.y+relativeRect.y;
-                final int absX2 = box.width+absX;
-                final int absY2 = box.height+absY;
-                in=point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
-                rx = point.x-absX;
-                ry = point.y-absY;
+                final int absX = box.x + relativeRect.x;
+                final int absY = box.y + relativeRect.y;
+                final int absX2 = box.width + absX;
+                final int absY2 = box.height + absY;
+                in = point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
+                rx = point.x - absX;
+                ry = point.y - absY;
             }
             int fpindex = -1;
             if (in) {
-                final int row = ry/ CELL_SIZE;
-                final int col = rx/ CELL_SIZE;
+                final int row = ry / CELL_SIZE;
+                final int col = rx / CELL_SIZE;
                 fpindex = candidate.agreement.indexAt(row, col);
             } else {
                 final Rectangle box = candidate.missings.getBounds();
-                final int absX = box.x+relativeRect.x;
-                final int absY = box.y+relativeRect.y;
-                final int absX2 = box.width+absX;
-                final int absY2 = box.height+absY;
+                final int absX = box.x + relativeRect.x;
+                final int absY = box.y + relativeRect.y;
+                final int absX2 = box.width + absX;
+                final int absY2 = box.height + absY;
                 if (point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2) {
-                    rx = point.x-absX;
-                    ry = point.y-absY;
-                    final int row = ry/ CELL_SIZE;
-                    final int col = rx/ CELL_SIZE;
+                    rx = point.x - absX;
+                    ry = point.y - absY;
+                    final int row = ry / CELL_SIZE;
+                    final int col = rx / CELL_SIZE;
                     fpindex = candidate.missings.indexAt(row, col);
                 }
             }
-            if (fpindex>=0) {
+            if (fpindex >= 0) {
                 return candidate.compound.fingerprint.getFingerprintVersion().getMolecularProperty(fpindex).getDescription();
             } else return null;
 
@@ -341,32 +368,32 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     @Override
     public void mousePressed(MouseEvent e) {
-        highlightedCandidate=-1;
-        highlightAgree=-1;
-        highlightMissing=-1;
+        highlightedCandidate = -1;
+        highlightAgree = -1;
+        highlightMissing = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.rank;
-        if(e.isPopupTrigger()){
+        if (e.isPopupTrigger()) {
             popup(e, candidate);
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        highlightedCandidate=-1;
-        highlightAgree=-1;
-        highlightMissing=-1;
+        highlightedCandidate = -1;
+        highlightAgree = -1;
+        highlightMissing = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.rank;
-        if(e.isPopupTrigger()){
+        if (e.isPopupTrigger()) {
             popup(e, candidate);
         }
     }
@@ -383,6 +410,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     public class ListModel extends AbstractListModel<CompoundCandidate> {
         ArrayList<CompoundCandidate> candidates;
+
         public ListModel() {
             this.candidates = new ArrayList<>();
             change();
@@ -406,10 +434,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
 
         public void change() {
-            if (data!=null) {
+            if (data != null) {
                 candidates.clear();
-                for (int i=0; i < data.compounds.length; ++i) {
-                    candidates.add(new CompoundCandidate(data.compounds[i],data.scores[i], i+1, i));
+                for (int i = 0; i < data.compounds.length; ++i) {
+                    candidates.add(new CompoundCandidate(data.compounds[i], data.scores[i], i + 1, i));
                 }
             } else candidates = new ArrayList<>();
             refreshList();
@@ -433,7 +461,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             image = new CompoundImage();
             descriptionPanel = new DescriptionPanel();
             even = Color.WHITE;
-            odd = new Color(213,227,238);
+            odd = new Color(213, 227, 238);
             add(image, BorderLayout.WEST);
             add(descriptionPanel, BorderLayout.CENTER);
         }
@@ -441,7 +469,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         @Override
         public Component getListCellRendererComponent(JList<? extends CompoundCandidate> list, CompoundCandidate value, int index, boolean isSelected, boolean cellHasFocus) {
             image.molecule = value;
-            image.backgroundColor = (index%2==0 ? even : odd);
+            image.backgroundColor = (index % 2 == 0 ? even : odd);
             setOpaque(true);
             setBackground(image.backgroundColor);
             descriptionPanel.setCompound(value);
@@ -493,8 +521,8 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         @Override
         public void paint(Graphics g) {
             super.paint(g);
-            if (molecule.compound.molecule!=null) {
-                final Graphics2D gg = (Graphics2D)g;
+            if (molecule.compound.molecule != null) {
+                final Graphics2D gg = (Graphics2D) g;
                 StructureDiagramGenerator sdg = new StructureDiagramGenerator();
                 sdg.setMolecule(molecule.compound.getMolecule(), false);
                 try {
@@ -507,7 +535,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                     renderer.paint(molecule.compound.getMolecule(), new AWTDrawVisitor(gg),
                             new Rectangle2D.Double(7, 14, 360, 185), true);
                 }
-                if (molecule.compound.name!=null) {
+                if (molecule.compound.name != null) {
                     gg.setFont(nameFont);
                     gg.drawString(molecule.compound.name, 3, 16);
                 }
@@ -516,12 +544,12 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
                 {
                     final int x = 3;
-                    final int y = getHeight()-(int)(bound.getHeight());
-                    final int h = (int)(y + bound.getHeight());
-                    gg.drawString(rankString, x,h-2);
+                    final int y = getHeight() - (int) (bound.getHeight());
+                    final int h = (int) (y + bound.getHeight());
+                    gg.drawString(rankString, x, h - 2);
                 }
                 gg.setFont(nameFont);
-                final String scoreText1 = "score: e", scoreText2 = String.format(Locale.US, "%d", (long)Math.round(molecule.score));
+                final String scoreText1 = "score: e", scoreText2 = String.format(Locale.US, "%d", (long) Math.round(molecule.score));
                 double w = gg.getFontMetrics(nameFont).getStringBounds(scoreText1, gg).getWidth(),
                         w2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getWidth();
                 /*{
@@ -537,9 +565,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                     gg.fillRect(xx, yy, getWidth()-xx, getHeight()-yy);
                     gg.setPaint(oldPaint);
                 }*/
-                gg.drawString(scoreText1, (int)(getWidth() - (w + w2 + 4)), getHeight()-4);
+                gg.drawString(scoreText1, (int) (getWidth() - (w + w2 + 4)), getHeight() - 4);
                 gg.setFont(scoreSuperscriptFont);
-                gg.drawString(scoreText2, (int)(getWidth() - (w2 + 4)), getHeight()-4);
+                gg.drawString(scoreText2, (int) (getWidth() - (w2 + 4)), getHeight() - 4);
             }
         }
     }
@@ -557,11 +585,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
         public void setAgreement(FingerprintAgreement agreement) {
             this.agreement = agreement;
-            final int numberOfCols = Math.min(agreement.indizes.length, (getWidth()-2)/ CELL_SIZE);
-            final int numberOfRows = numberOfCols==0 ? 1 : ((agreement.indizes.length+numberOfCols-1)/numberOfCols);
+            final int numberOfCols = Math.min(agreement.indizes.length, (getWidth() - 2) / CELL_SIZE);
+            final int numberOfRows = numberOfCols == 0 ? 1 : ((agreement.indizes.length + numberOfCols - 1) / numberOfCols);
             agreement.setNumberOfCols(numberOfCols);
-            final int W = numberOfCols* CELL_SIZE;
-            final int H = numberOfRows* CELL_SIZE;
+            final int W = numberOfCols * CELL_SIZE;
+            final int H = numberOfRows * CELL_SIZE;
             //setPreferredSize(new Dimension(Integer.MAX_VALUE, H + 8));
             //revalidate();
         }
@@ -569,13 +597,13 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         @Override
         public void paint(Graphics graphics) {
             super.paint(graphics);
-            if (agreement==null || agreement.indizes.length==0) return;
-            final Graphics2D g = (Graphics2D)graphics;
-            final int numberOfCols = Math.min(agreement.indizes.length, (getWidth()-2)/ CELL_SIZE);
-            final int numberOfRows = ((agreement.indizes.length+numberOfCols-1)/numberOfCols);
+            if (agreement == null || agreement.indizes.length == 0) return;
+            final Graphics2D g = (Graphics2D) graphics;
+            final int numberOfCols = Math.min(agreement.indizes.length, (getWidth() - 2) / CELL_SIZE);
+            final int numberOfRows = ((agreement.indizes.length + numberOfCols - 1) / numberOfCols);
             agreement.setNumberOfCols(numberOfCols);
-            final int W = numberOfCols* CELL_SIZE;
-            final int H = numberOfRows* CELL_SIZE;
+            final int W = numberOfCols * CELL_SIZE;
+            final int H = numberOfRows * CELL_SIZE;
             final int sizeOfLastRow = agreement.indizes.length % numberOfCols;
             /*
             g.setColor(Color.BLACK);
@@ -591,28 +619,27 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
             // highlight current INDEX
 
-            final int useable_cell_size = CELL_SIZE-1;
-            for (int i=0; i < agreement.indizes.length; ++i) {
-                final float weight = (float)agreement.weights[i];
-                final int row = i/numberOfCols;
-                final int col = i%numberOfCols;
+            final int useable_cell_size = CELL_SIZE - 1;
+            for (int i = 0; i < agreement.indizes.length; ++i) {
+                final float weight = (float) agreement.weights[i];
+                final int row = i / numberOfCols;
+                final int col = i % numberOfCols;
 
                 final double weight2 = Math.max(0.25, agreement.weights2[i]);
-                final int reduction = (int)Math.round((useable_cell_size-(((useable_cell_size-MIN_CELL_SIZE)/0.75)*weight2))/2d) + 2;
+                final int reduction = (int) Math.round((useable_cell_size - (((useable_cell_size - MIN_CELL_SIZE) / 0.75) * weight2)) / 2d) + 2;
                 final int b;
-                if (agreement.indizes[i]==highlightAgree || agreement.indizes[i]==highlightMissing) {
+                if (agreement.indizes[i] == highlightAgree || agreement.indizes[i] == highlightMissing) {
                     g.setColor(Color.BLUE);
-                    b=2;
+                    b = 2;
                 } else {
-                    b=1;
+                    b = 1;
                     g.setColor(Color.BLACK);
                 }
-                g.fillRect((CELL_SIZE *col)+reduction-b, (CELL_SIZE *row)+reduction-b, (CELL_SIZE-reduction-reduction)+b+b, (CELL_SIZE-reduction-reduction)+b+b);
+                g.fillRect((CELL_SIZE * col) + reduction - b, (CELL_SIZE * row) + reduction - b, (CELL_SIZE - reduction - reduction) + b + b, (CELL_SIZE - reduction - reduction) + b + b);
 
-                g.setColor(Color.getHSBColor(components[0], components[1],weight));
-                g.fillRect(reduction + CELL_SIZE * col, reduction + CELL_SIZE * row, CELL_SIZE -reduction - reduction, CELL_SIZE - reduction - reduction );
+                g.setColor(Color.getHSBColor(components[0], components[1], weight));
+                g.fillRect(reduction + CELL_SIZE * col, reduction + CELL_SIZE * row, CELL_SIZE - reduction - reduction, CELL_SIZE - reduction - reduction);
             }
-
 
 
         }
@@ -623,24 +650,32 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     public class DatabasePanel extends JPanel {
         private CompoundCandidate candidate;
         private Font ownFont;
-        private Color bgColor= new Color(155,166,219);
+        private Color bgColor = new Color(155, 166, 219);
+
         public DatabasePanel() {
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.LEFT));
-            setBorder(new EmptyBorder(5,2,2,2));
+            setBorder(new EmptyBorder(5, 2, 2, 2));
             ownFont = getFont().deriveFont(Font.BOLD, 12);
         }
 
         public void setCompound(CompoundCandidate candidate) {
             removeAll();
-            if (candidate==null || candidate.compound==null || candidate.compound.databases==null) return;
+            if (candidate == null || candidate.compound == null || candidate.compound.databases == null) return;
             final ArrayList<String> dbNames = new ArrayList<>(candidate.compound.databases.keySet());
             Collections.sort(dbNames);
             final FontMetrics m = getFontMetrics(ownFont);
-            for (String name : dbNames) {
-                final TextLayout tlayout = new TextLayout(name, ownFont, new FontRenderContext(null, false, false));
+            List<de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel> labels = new ArrayList<>();
+
+            final Rectangle2D boundary = getBounds();
+
+            for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label : candidate.labels) {
+                final TextLayout tlayout = new TextLayout(label.name, ownFont, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
-                add(new DatabaseLabel(name, (int)r.getWidth() + 2*DB_LABEL_PADDING + 6, (int)r.getHeight() + 2*DB_LABEL_PADDING + 6, bgColor, ownFont));
+                final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
+                final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
+                add(new DatabaseLabel(label, X, Y, bgColor, ownFont));
+
             }
         }
 /*
@@ -673,29 +708,40 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     private static class DatabaseLabel extends JPanel {
         private String name;
         private Color color;
-        public DatabaseLabel(String name, int width, int height, Color color, Font font) {
-            this.name = name;
+        private de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label;
+
+        public DatabaseLabel(de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label, int width, int height, Color color, Font font) {
+            this.name = label.name;
             this.color = color;
             setFont(font);
-            setOpaque(false);
+            setOpaque(true);
             setPreferredSize(new Dimension(width, height));
+            this.label = label;
         }
 
         @Override
         public void paint(Graphics graphics) {
             super.paint(graphics);
-            final Graphics2D g = (Graphics2D)graphics;
+            final Graphics2D g = (Graphics2D) graphics;
             final FontMetrics m = getFontMetrics(getFont());
             final int tw = m.stringWidth(name);
             final int th = m.getHeight();
             final int w = tw + DB_LABEL_PADDING;
             final int h = th + DB_LABEL_PADDING;
+            Rectangle ggp = getParent().getParent().getParent().getBounds();
+            Rectangle gp = getParent().getParent().getBounds();
+            Rectangle p = getParent().getBounds();
+            Rectangle s = getBounds();
+            final int rx = (int)(s.getX() + p.getX()+gp.getX()+ggp.getX());
+            final int ry = (int)(s.getY() + p.getY()+gp.getY()+ggp.getY());
+
+            label.rect.setBounds(rx,ry,w,h);
             g.setColor(color);
-            g.fillRoundRect(2,2,w,h,4,4);
+            g.fillRoundRect(2, 2, w, h, 4, 4);
             g.setColor(Color.BLACK);
-            g.drawRoundRect(2,2,w,h,4,4);
+            g.drawRoundRect(2, 2, w, h, 4, 4);
             g.setColor(Color.WHITE);
-            g.drawString(name, 2 + (w-tw)/2, h - (h-th)/2);
+            g.drawString(name, 2 + (w - tw) / 2, h - (h - th) / 2);
         }
     }
 
@@ -709,15 +755,15 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         public DescriptionPanel() {
             setOpaque(false);
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            setBorder(new EmptyBorder(5,2,2,2));
-            inchi = new JLabel("",SwingConstants.LEFT);
+            setBorder(new EmptyBorder(5, 2, 2, 2));
+            inchi = new JLabel("", SwingConstants.LEFT);
             agpanel = new JPanel();
             agpanel.setOpaque(false);
             agpanel.setLayout(new BoxLayout(agpanel, BoxLayout.Y_AXIS));
-            agpanel.setBorder(new EmptyBorder(5,0,0,2));
+            agpanel.setBorder(new EmptyBorder(5, 0, 0, 2));
             viopanel = new JPanel();
             viopanel.setOpaque(false);
-            viopanel.setBorder(new EmptyBorder(5,0,0,2));
+            viopanel.setBorder(new EmptyBorder(5, 0, 0, 2));
             viopanel.setLayout(new BoxLayout(viopanel, BoxLayout.Y_AXIS));
             agreements = new JLabel("True Positive Predictions:", SwingConstants.LEFT);
             Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
@@ -753,7 +799,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             setFont(propertyFont);
             inchi.setText(value.compound.inchi.in2D);
             databasePanel.setCompound(value);
-            if (data==null) {
+            if (data == null) {
                 ag.agreement = null;
                 vio.agreement = null;
             } else {

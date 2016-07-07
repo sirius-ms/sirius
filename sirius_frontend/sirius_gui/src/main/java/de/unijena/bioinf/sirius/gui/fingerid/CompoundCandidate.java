@@ -26,8 +26,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.generators.HighlightGenerator;
 
-import java.util.Collections;
-import java.util.HashMap;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -40,6 +40,7 @@ public class CompoundCandidate {
     protected int rank,index;
 
     protected FingerprintAgreement agreement, missings;
+    protected DatabaseLabel[] labels;
     protected int highlightedIndex=-1;
     protected boolean atomCoordinatesAreComputed=false;
     protected ReentrantLock compoundLock = new ReentrantLock();
@@ -49,6 +50,16 @@ public class CompoundCandidate {
         this.score = score;
         this.rank = rank;
         this.index = index;
+        if (compound==null || compound.databases==null) {
+            this.labels = new DatabaseLabel[0];
+        } else {
+            List<DatabaseLabel> labels = new ArrayList<>();
+            for (String key : compound.databases.keySet()) {
+                final Collection<String> values = compound.databases.get(key);
+                labels.add(new DatabaseLabel(key, values.toArray(new String[values.size()]), new Rectangle(0,0,0,0)));
+            }
+            this.labels = labels.toArray(new DatabaseLabel[labels.size()]);
+        }
     }
 
     public boolean computeAtomCoordinates() {
