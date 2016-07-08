@@ -29,6 +29,10 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         }
     }
 
+    public int[] allowedIndizes() {
+        return allowedIndizes.clone();
+    }
+
     public ArrayFingerprint mask(short[] values) {
         return mask(new ArrayFingerprint(innerVersion, values));
     }
