@@ -37,7 +37,6 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
         CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
 
         double[] haveProperty = new double[topHit.getFingerprint().getFingerprintVersion().size()];
-        //todo numerically unstable?!
         for (int i = 1; i < numOfCandidates; i++) {
             boolean[] fp  = rankedCandidates[i].getFingerprint().toBooleanArray();
             for (int j = 0; j < fp.length; j++) {
@@ -53,8 +52,6 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
         int diffMolPropCounter = 0;
         boolean[] fp = topHit.getFingerprint().toBooleanArray();
         for (int i = 0; i < fp.length; i++) {
-            //ToDo just use molecular properties used for scoring?!?!?
-//            if (statistics.isBiased(i)) continue;
             if (fp[i]){
                 if ((1-haveProperty[i])>=alpha) diffMolPropCounter++;
             } else {

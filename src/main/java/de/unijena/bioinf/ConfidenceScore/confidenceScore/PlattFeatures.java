@@ -25,12 +25,7 @@ public class PlattFeatures implements FeatureCreator {
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        //ToDo no unbiased positions anymore?
-//        TIntArrayList unbiased = new TIntArrayList();
-//        for (int i = 0; i < statistics.length; i++) {
-//            if (statistics[i].getSmallerClassSize()>25) unbiased.add(i);
-//        }
-//        this.unbiasedPositions = unbiased.toArray();
+
     }
 
 
@@ -38,12 +33,6 @@ public class PlattFeatures implements FeatureCreator {
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         final double[] scores = new double[featureSize];
         final double[] platt = query.getFingerprint().toProbabilityArray();
-//        final double[] unbiasedFP = new double[unbiasedPositions.length];
-//        for (int i = 0; i < unbiasedPositions.length; i++) {
-//            final int pos = unbiasedPositions[i];
-//            unbiasedFP[i] = platt[pos];
-//        }
-//        Arrays.sort(unbiasedFP);
         Arrays.sort(platt);
 
         for (int i = 0; i < quantiles.length; i++) {
@@ -84,7 +73,6 @@ public class PlattFeatures implements FeatureCreator {
         }
 
         for (int i = 0; i < quantilesAbs.length; i++) {
-            final double quantile = quantilesAbs[i];
             names[quantiles.length+i] = "quantileAbs"+quantilesAbs[i];
         }
 

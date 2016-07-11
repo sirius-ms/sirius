@@ -20,6 +20,9 @@ abstract public class Scaler implements Parameterized{
 
     public abstract double[] scale(double[] matrix);
 
+    /**
+     * scale to mean 0 and standard deviation 1.
+     */
     public static class StandardScaler extends Scaler {
         private double[] mean;
         private double[] sd;

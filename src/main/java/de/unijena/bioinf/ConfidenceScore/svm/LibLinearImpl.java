@@ -17,8 +17,11 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
 
     @Override
     public LibLinearImpl.svm_nodeImpl createSVM_Node(int index, double value) {
-        return new LibLinearImpl.svm_nodeImpl(index, value);
+        if (Double.isNaN(value)){
+            throw new IllegalArgumentException("value for node cannot be NaN");
         }
+        return new LibLinearImpl.svm_nodeImpl(index, value);
+    }
 
     @Override
     public LibLinearImpl.svm_problemImpl createSVM_Problem() {
@@ -49,7 +52,7 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
             for (int j = 0; j < feature.length; j++) {
                 Feature f = feature[j];
                 if (f.getIndex()<=index){
-                    System.out.println("Damn");
+                    throw new RuntimeException("index of feature node too small");
                 }
                 index = f.getIndex();
             }

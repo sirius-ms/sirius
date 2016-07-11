@@ -28,6 +28,8 @@ import java.util.concurrent.*;
 
 /**
  * Created by Marcus Ludwig on 27.06.16.
+ *
+ * Train and predict confidence scores for CSI-FingerId structure identifications.
  */
 public class ConfidenceScorePrediction {
 
@@ -39,10 +41,10 @@ public class ConfidenceScorePrediction {
     private final QueryPredictor queryPredictor;
     private final MaskedFingerprintVersion maskedFingerprintVersion;
 
+    private final ExecutorService chemDBThread;
+
 
     public static void main(String... args) throws IOException, DatabaseException, InterruptedException {
-        System.out.println(Arrays.toString(args));
-
         if (!((args.length==4 || args.length==5) && args[0].equals("train")) && !(args.length==5 && args[0].equals("predict"))){
             System.out.println("commands: 'train' or 'predict'\n" +
                     "train <predictedFPFile> <fingerid.data> <confidenceScoreModelOutputPath> [<maskFile>]\n" +
@@ -78,7 +80,7 @@ public class ConfidenceScorePrediction {
 
             List<? extends CompoundWithAbstractFP<ProbabilityFingerprint>> queries = readQueries(predictedFPFile, maskedFingerprintVersion, mask);
 
-            QueryPredictor queryPredictor = train((List<CompoundWithAbstractFP<ProbabilityFingerprint>>)queries, statistics, maskedFingerprintVersion, true, db);
+            QueryPredictor queryPredictor = train((List<CompoundWithAbstractFP<ProbabilityFingerprint>>)queries, statistics, maskedFingerprintVersion, db);
             queryPredictor.writeToFile(outputFile);
         } else {
             //predict
@@ -95,29 +97,22 @@ public class ConfidenceScorePrediction {
             ConfidenceScorePrediction confidenceScorePrediction = new ConfidenceScorePrediction(queryPredictor);
             List<CompoundWithId> queries = readQueries(predictedFPFile, maskedFingerprintVersion, null);
 
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
             for (CompoundWithId query : queries) {
-                MolecularFormula mf = query.getInchi().extractFormula();
-                CompoundWithAbstractFP<Fingerprint>[] candidates = searchByFingerBlast(db, confidenceScorePrediction.maskedFingerprintVersion, mf, executorService).toArray(new CompoundWithAbstractFP[0]);
-
-                if (!queryPredictor.isApplicable(query, candidates)) continue;
-
                 double confidenceScore = 0;
                 try {
-                    confidenceScore = confidenceScorePrediction.computeConfidenceScore(query, candidates, true);
+                    confidenceScore = confidenceScorePrediction.computeConfidenceScore(query, db);
                 } catch (PredictionException e) {
                     System.err.println("no applicable predictor for query "+query.id);
                     continue;
                 }
                 writer.write(query.id+"\t"+confidenceScore+"\n");
             }
-            executorService.shutdown();
             writer.close();
         }
 
     }
 
-    private static List<CompoundWithId> readQueries(Path predictedFPFile, MaskedFingerprintVersion fingerprintVersion, Mask crossvalMask) throws IOException {
+    protected static List<CompoundWithId> readQueries(Path predictedFPFile, MaskedFingerprintVersion fingerprintVersion, Mask crossvalMask) throws IOException {
         BufferedReader reader = Files.newBufferedReader(predictedFPFile, Charset.defaultCharset());
 
         String[] header = reader.readLine().split("\\s");
@@ -179,21 +174,35 @@ public class ConfidenceScorePrediction {
     }
 
 
-
+    /**
+     *
+     * @param confidenceModel Path to the confidence score model file
+     * @throws IOException
+     */
     public ConfidenceScorePrediction(Path confidenceModel) throws IOException {
         this(QueryPredictor.loadFromFile(confidenceModel));
     }
 
+    /**
+     *
+     * @param queryPredictor the learned confidence score predictor
+     */
     public ConfidenceScorePrediction(QueryPredictor queryPredictor) {
         this(queryPredictor, fingerprintVersionFromIndices(queryPredictor.absFPIndices));
     }
 
 
+    /**
+     *
+     * @param queryPredictor the learned confidence score predictor
+     * @param maskedFingerprintVersion the {@link MaskedFingerprintVersion} used for your data
+     */
     public ConfidenceScorePrediction(QueryPredictor queryPredictor, MaskedFingerprintVersion maskedFingerprintVersion) {
         this.queryPredictor = queryPredictor;
         this.maskedFingerprintVersion = maskedFingerprintVersion;
         statistics = queryPredictor.getStatistics();
         csiFingerIdScoring = new CSIFingerIdScoring(statistics);
+        chemDBThread = Executors.newSingleThreadExecutor();
     }
 
     private static MaskedFingerprintVersion fingerprintVersionFromIndices(int[] absFPIndices){
@@ -208,14 +217,34 @@ public class ConfidenceScorePrediction {
     //-----------------------------------------------------------------------
     //----------------------------------------------------------------------
 
-    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException {
+    /**
+     * train a confidence score model
+     * @param queries a list of {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the correct structure inchi and the predicted fingerprint
+     * @param statistics the {@link PredictionPerformance}s of the different molecular properties (fingerprint positions)
+     * @param maskedFingerprintVersion the {@link MaskedFingerprintVersion} of the predicted fingerprints
+     * @param db {@link ChemicalDatabase} to search in for candidate structure
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) throws IOException, InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        QueryPredictor queryPredictor =  train(queries, statistics, maskedFingerprintVersion, useLinearSVM, db, executorService);
+        QueryPredictor queryPredictor =  train(queries, statistics, maskedFingerprintVersion, db, executorService);
         executorService.shutdown();
         return queryPredictor;
     }
 
-    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, boolean useLinearSVM, ChemicalDatabase db, ExecutorService executorService) throws IOException, InterruptedException {
+    /**
+     * train a confidence score model
+     * @param queries a list of {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the correct structure inchi and the predicted fingerprint
+     * @param statistics the {@link PredictionPerformance}s of the different molecular properties (fingerprint positions)
+     * @param maskedFingerprintVersion the {@link MaskedFingerprintVersion} of the predicted fingerprints
+     * @param db {@link ChemicalDatabase} to search for candidate structure in
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db, ExecutorService executorService) throws IOException, InterruptedException {
         System.out.println("compute hitlist");
 
         List<CompoundWithAbstractFP<ProbabilityFingerprint>[]> candidatesList = new ArrayList<>();
@@ -227,8 +256,7 @@ public class ConfidenceScorePrediction {
 
         System.out.println("train");
 
-
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(true);
         trainConfidenceScore.train(executorService, queries.toArray(new CompoundWithAbstractFP[0]), candidatesList.toArray(new CompoundWithAbstractFP[0][]), statistics);
 
         QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
@@ -250,9 +278,9 @@ public class ConfidenceScorePrediction {
     //----------------------------------------------------------------------
 
     /**
-     * fingerprint CANDIDATES must be SORTED by score or can be rescored using CSIFingerIdScoring
-     * @param query
-     * @param candidates
+     * fingerprint CANDIDATES must be SORTED by score or can be rescored (and sorted) using CSIFingerIdScoring
+     * @param query {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the estimated structure inchi and the predicted fingerprint
+     * @param candidates candidate structures with inchi and fingerprint
      * @param rescore if true, score and sort candidates by CSIFingerIdScoring
      * @return
      */
@@ -264,6 +292,23 @@ public class ConfidenceScorePrediction {
         } else {
             platt = queryPredictor.score(query, candidates);
         }
+        return platt;
+    }
+
+    /**
+     *
+     * @param query {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the estimated structure inchi and the predicted fingerprint
+     * @param db {@link ChemicalDatabase} to search candidates structures in
+     * @return
+     * @throws PredictionException
+     */
+    public double computeConfidenceScore(CompoundWithAbstractFP<ProbabilityFingerprint> query, ChemicalDatabase db) throws PredictionException {
+        MolecularFormula mf = query.getInchi().extractFormula();
+        CompoundWithAbstractFP<Fingerprint>[] candidates = searchByFingerBlast(db, this.maskedFingerprintVersion, mf, chemDBThread).toArray(new CompoundWithAbstractFP[0]);
+
+        ScoredCandidate[] scoredCandidates = getScoredHitlist(query, candidates);
+        double platt = queryPredictor.score(query, scoredCandidates);
+
         return platt;
     }
 
@@ -283,7 +328,7 @@ public class ConfidenceScorePrediction {
 
 
 
-    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula, ExecutorService backgroundThread) {
+    protected static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula, ExecutorService backgroundThread) {
         final ConcurrentLinkedQueue<FingerprintCandidate> candidates = new ConcurrentLinkedQueue<>();
         final Future future = backgroundThread.submit(new Runnable() {
             @Override

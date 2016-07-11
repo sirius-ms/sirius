@@ -48,7 +48,6 @@ public class EvalConfidenceScore {
     private ChemicalDatabase db;
 
     public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException {
-//        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, absFPIndices, db);
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -65,8 +64,6 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//        ExecutorService executorService = Executors.newFixedThreadPool(1);
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.DefaultMultipleSVMs(useLinearSVM);
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 
         trainConfidenceScore.train(executorService, queriesX.toArray(new CompoundWithAbstractFP[0]), candidatesX.toArray(new CompoundWithAbstractFP[0][]), statistics);
@@ -114,7 +111,6 @@ public class EvalConfidenceScore {
     }
 
     public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException {
-//        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, queryPredictor.getStatistics(), queryPredictor.getAbsFPIndices(), db);
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, queryPredictor.getStatistics(), maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -134,13 +130,12 @@ public class EvalConfidenceScore {
             } catch (PredictionException e) {
                 continue;
             }
-//            boolean predicted = queryPredictor.predict(instance.query, instance.candidates.toArray(new Candidate[0]));
 
             assert platt>=0;
             assert platt<=1;
             platts.add(platt);
             corrects.add((byte)(isCorrect ? 1 : 0));
-            ids.add(instance.query.getInchi().in3D); //todo what as id!?!/
+            ids.add(instance.query.getInchi().in3D);
         }
 
         boolean[] correctsBool = new boolean[corrects.size()];
@@ -186,7 +181,6 @@ public class EvalConfidenceScore {
 
 
         //shuffle
-        //todo for positive and negative instances
         System.out.println(instances.get(0).query.getInchi().in3D);
         Collections.shuffle(instances);
         System.out.println(instances.get(0).query.getInchi().in3D);
@@ -196,7 +190,6 @@ public class EvalConfidenceScore {
         for (Instance instance : instances) {
             if (instance.candidates.size()==0) continue;
             if (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)){
-                //todo test still working!?!?!! with inchi equals
                 posInstances.add(instance);
             } else {
                 negInstances.add(instance);
@@ -221,12 +214,9 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//        ExecutorService executorService = Executors.newFixedThreadPool(1);
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.DefaultMultipleSVMs(useLinearSVM);
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM);
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
-//        ...//todo test csiFingerID score separation
 
         TDoubleArrayList platts = new TDoubleArrayList();
         TByteArrayList corrects = new TByteArrayList();
@@ -288,15 +278,12 @@ public class EvalConfidenceScore {
 
                 idSet.add(instance.query.getInchi());
                 boolean isCorrect = (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)); //todo inchi equals !?!
-//                boolean isCorrect = (instance.candidates.get(0).inchi.equals(instance.query.inchi));
                 double platt = 0;
                 try {
                     platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
                 } catch (PredictionException e) {
                     continue;
                 }
-//                double platt = queryPredictor.score(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
-//            boolean predicted = queryPredictor.predict(instance.query, instance.candidates.toArray(new Candidate[0]));
 
                 assert platt>=0;
                 assert platt<=1;
@@ -380,7 +367,7 @@ public class EvalConfidenceScore {
         while (queryIterator.hasNext()) {
             CompoundWithAbstractFP<ProbabilityFingerprint> query = queryIterator.next();
             List<ScoredCandidate> scoredCandidates = scoredCandListIterator.next();
-//            Collections.sort(scoredCandidates, new ScoredCandidate.MaxBestComparator()); //// TODo already done?
+//            Collections.sort(scoredCandidates, new ScoredCandidate.MaxBestComparator()); // already done
             final Instance instance = new Instance(query, scoredCandidates);
             instances.add(instance);
 
