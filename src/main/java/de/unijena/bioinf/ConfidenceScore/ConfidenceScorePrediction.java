@@ -41,8 +41,6 @@ public class ConfidenceScorePrediction {
     private final QueryPredictor queryPredictor;
     private final MaskedFingerprintVersion maskedFingerprintVersion;
 
-    private final ExecutorService chemDBThread;
-
 
     public static void main(String... args) throws IOException, DatabaseException, InterruptedException {
         if (!((args.length==4 || args.length==5) && args[0].equals("train")) && !(args.length==5 && args[0].equals("predict"))){
@@ -202,7 +200,6 @@ public class ConfidenceScorePrediction {
         this.maskedFingerprintVersion = maskedFingerprintVersion;
         statistics = queryPredictor.getStatistics();
         csiFingerIdScoring = new CSIFingerIdScoring(statistics);
-        chemDBThread = Executors.newSingleThreadExecutor();
     }
 
     private static MaskedFingerprintVersion fingerprintVersionFromIndices(int[] absFPIndices){
@@ -227,7 +224,7 @@ public class ConfidenceScorePrediction {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) throws IOException, InterruptedException {
+    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         QueryPredictor queryPredictor =  train(queries, statistics, maskedFingerprintVersion, db, executorService);
         executorService.shutdown();
@@ -244,13 +241,13 @@ public class ConfidenceScorePrediction {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db, ExecutorService executorService) throws IOException, InterruptedException {
+    public static QueryPredictor train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db, ExecutorService executorService) throws IOException, InterruptedException, DatabaseException {
         System.out.println("compute hitlist");
 
         List<CompoundWithAbstractFP<ProbabilityFingerprint>[]> candidatesList = new ArrayList<>();
         for (CompoundWithAbstractFP<ProbabilityFingerprint> query : queries) {
             MolecularFormula mf = query.getInchi().extractFormula();
-            CompoundWithAbstractFP<ProbabilityFingerprint>[] candidates = searchByFingerBlast(db, maskedFingerprintVersion, mf, executorService).toArray(new CompoundWithAbstractFP[0]);
+            CompoundWithAbstractFP<ProbabilityFingerprint>[] candidates = searchByFingerBlast(db, maskedFingerprintVersion, mf).toArray(new CompoundWithAbstractFP[0]);
             candidatesList.add(candidates);
         }
 
@@ -302,9 +299,9 @@ public class ConfidenceScorePrediction {
      * @return
      * @throws PredictionException
      */
-    public double computeConfidenceScore(CompoundWithAbstractFP<ProbabilityFingerprint> query, ChemicalDatabase db) throws PredictionException {
+    public double computeConfidenceScore(CompoundWithAbstractFP<ProbabilityFingerprint> query, ChemicalDatabase db) throws PredictionException, DatabaseException {
         MolecularFormula mf = query.getInchi().extractFormula();
-        CompoundWithAbstractFP<Fingerprint>[] candidates = searchByFingerBlast(db, this.maskedFingerprintVersion, mf, chemDBThread).toArray(new CompoundWithAbstractFP[0]);
+        CompoundWithAbstractFP<Fingerprint>[] candidates = searchByFingerBlast(db, this.maskedFingerprintVersion, mf).toArray(new CompoundWithAbstractFP[0]);
 
         ScoredCandidate[] scoredCandidates = getScoredHitlist(query, candidates);
         double platt = queryPredictor.estimateProbability(query, scoredCandidates);
@@ -327,27 +324,12 @@ public class ConfidenceScorePrediction {
     }
 
 
-
-    protected static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula, ExecutorService backgroundThread) {
+    protected static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula) throws DatabaseException {
         final ConcurrentLinkedQueue<FingerprintCandidate> candidates = new ConcurrentLinkedQueue<>();
-        final Future future = backgroundThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
-                } catch (DatabaseException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
 
         List<CompoundWithAbstractFP<Fingerprint>> candidateList = new ArrayList<>();
         FingerprintCandidate c;
-        try {
-            future.get(); // wait now until all candidates are loaded
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
 
         while ((c=candidates.poll())!=null) {
             CompoundWithAbstractFP<Fingerprint> candidate = new CompoundWithAbstractFP<>(c.getInchi(), maskedFingerprintVersion.mask(c.getFingerprint()));
@@ -355,7 +337,6 @@ public class ConfidenceScorePrediction {
         }
         return candidateList;
     }
-
 
 
     private static class CompoundWithId extends CompoundWithAbstractFP<ProbabilityFingerprint>{

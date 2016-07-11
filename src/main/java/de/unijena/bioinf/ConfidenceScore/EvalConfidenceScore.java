@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ConfidenceScore;
 
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -9,22 +8,18 @@ import de.unijena.bioinf.ConfidenceScore.confidenceScore.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.DatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import gnu.trove.list.array.TByteArrayList;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.procedure.TIntIntProcedure;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -47,7 +42,7 @@ public class EvalConfidenceScore {
     private MaskedFingerprintVersion maskedFingerprintVersion;
     private ChemicalDatabase db;
 
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException {
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -96,7 +91,7 @@ public class EvalConfidenceScore {
      * @param db
      * @throws IOException
      */
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
         QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
         MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault()).disableAll();
         for (int i : queryPredictor.getAbsFPIndices()) {
@@ -105,12 +100,12 @@ public class EvalConfidenceScore {
         predict(queries, builder.toMask(), queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
         QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
         predict(queries, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, queryPredictor.getStatistics(), maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -154,7 +149,7 @@ public class EvalConfidenceScore {
         writer.close();
     }
 
-    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException {
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
         final int FOLD = 10;
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
@@ -342,7 +337,7 @@ public class EvalConfidenceScore {
         this.db = db;
     }
 
-    public List<Instance> computeHitList() throws IOException {
+    public List<Instance> computeHitList() throws IOException, DatabaseException {
         List<Instance> instances = new ArrayList<>();
         List<String> queriesPerFormulaList = new ArrayList<>(queriesPerFormula.keySet());
 
@@ -377,26 +372,12 @@ public class EvalConfidenceScore {
     }
 
 
-    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula, ExecutorService backgroundThread) {
+    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula, ExecutorService backgroundThread) throws DatabaseException {
         final ConcurrentLinkedQueue<FingerprintCandidate> candidates = new ConcurrentLinkedQueue<>();
-        final Future future = backgroundThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
-                } catch (DatabaseException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
 
         List<CompoundWithAbstractFP<Fingerprint>> candidateList = new ArrayList<>();
         FingerprintCandidate c;
-        try {
-            future.get(); // wait now until all candidates are loaded
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
 
         while ((c=candidates.poll())!=null) {
             CompoundWithAbstractFP<Fingerprint> candidate = new CompoundWithAbstractFP<>(c.getInchi(), maskedFingerprintVersion.mask(c.getFingerprint()));
