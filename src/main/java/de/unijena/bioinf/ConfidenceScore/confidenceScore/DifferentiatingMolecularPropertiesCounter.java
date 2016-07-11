@@ -1,7 +1,11 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.*;
 
 import java.util.Arrays;
@@ -10,7 +14,6 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 29.04.16.
  */
 public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator {
-    private FingerprintStatistics statistics;
     private double alpha;
     private int numOfWorseCandidates;
 
@@ -25,18 +28,18 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
+    public void prepare(PredictionPerformance[] statistics) {
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         int numOfCandidates = (this.numOfWorseCandidates<0 ? rankedCandidates.length : this.numOfWorseCandidates+1);
-        Candidate topHit = rankedCandidates[0];
-        double[] haveProperty = new double[topHit.fingerprint.length];
+        CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
+
+        double[] haveProperty = new double[topHit.getFingerprint().getFingerprintVersion().size()];
         //todo numerically unstable?!
         for (int i = 1; i < numOfCandidates; i++) {
-            boolean[] fp  = rankedCandidates[i].fingerprint;
+            boolean[] fp  = rankedCandidates[i].getFingerprint().toBooleanArray();
             for (int j = 0; j < fp.length; j++) {
                 if (fp[j]) ++haveProperty[j];
             }
@@ -48,10 +51,10 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
         }
 
         int diffMolPropCounter = 0;
-        boolean[] fp = topHit.fingerprint;
+        boolean[] fp = topHit.getFingerprint().toBooleanArray();
         for (int i = 0; i < fp.length; i++) {
             //ToDo just use molecular properties used for scoring?!?!?
-            if (statistics.isBiased(i)) continue;
+//            if (statistics.isBiased(i)) continue;
             if (fp[i]){
                 if ((1-haveProperty[i])>=alpha) diffMolPropCounter++;
             } else {
@@ -69,7 +72,7 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>1;
     }
 

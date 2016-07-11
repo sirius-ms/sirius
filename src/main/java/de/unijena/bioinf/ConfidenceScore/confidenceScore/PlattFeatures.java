@@ -1,11 +1,11 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.fingerid.Candidate;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
-import de.unijena.bioinf.fingerid.Query;
-import gnu.trove.list.array.TIntArrayList;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 import java.util.Arrays;
 
@@ -17,51 +17,51 @@ public class PlattFeatures implements FeatureCreator {
     private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
     private int featureSize;
 
-    private FingerprintStatistics statistics;
-    private int[] unbiasedPositions;
+//    private int[] unbiasedPositions;
 
     public PlattFeatures() {
         this.featureSize = quantiles.length+quantilesAbs.length+1;
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
-        TIntArrayList unbiased = new TIntArrayList();
-        for (int i = 0; i < statistics.numberOfFingerprints; i++) {
-            if (!statistics.isBiased(i)) unbiased.add(i);
-        }
-        this.unbiasedPositions = unbiased.toArray();
+    public void prepare(PredictionPerformance[] statistics) {
+        //ToDo no unbiased positions anymore?
+//        TIntArrayList unbiased = new TIntArrayList();
+//        for (int i = 0; i < statistics.length; i++) {
+//            if (statistics[i].getSmallerClassSize()>25) unbiased.add(i);
+//        }
+//        this.unbiasedPositions = unbiased.toArray();
     }
 
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         final double[] scores = new double[featureSize];
-        final double[] unbiasedFP = new double[unbiasedPositions.length];
-        final double[] platt = query.getPlattScores();
-        for (int i = 0; i < unbiasedPositions.length; i++) {
-            final int pos = unbiasedPositions[i];
-            unbiasedFP[i] = platt[pos];
-        }
-        Arrays.sort(unbiasedFP);
+        final double[] platt = query.getFingerprint().toProbabilityArray();
+//        final double[] unbiasedFP = new double[unbiasedPositions.length];
+//        for (int i = 0; i < unbiasedPositions.length; i++) {
+//            final int pos = unbiasedPositions[i];
+//            unbiasedFP[i] = platt[pos];
+//        }
+//        Arrays.sort(unbiasedFP);
+        Arrays.sort(platt);
 
         for (int i = 0; i < quantiles.length; i++) {
             final double quantile = quantiles[i];
-            scores[i] = quantile(unbiasedFP, quantile);
+            scores[i] = quantile(platt, quantile);
         }
 
         //deviation from 0.5
-        for (int i = 0; i < unbiasedFP.length; i++) unbiasedFP[i] = Math.abs(unbiasedFP[i]-0.5);
-        Arrays.sort(unbiasedFP);
+        for (int i = 0; i < platt.length; i++) platt[i] = Math.abs(platt[i]-0.5);
+        Arrays.sort(platt);
 
         for (int i = 0; i < quantilesAbs.length; i++) {
             final double quantile = quantilesAbs[i];
-            scores[quantiles.length+i] = quantile(unbiasedFP, quantile);
+            scores[quantiles.length+i] = quantile(platt, quantile);
         }
 
         //deviation from middle as platt scores where transformed
-        scores[scores.length-1] = getStdDev(unbiasedFP);
+        scores[scores.length-1] = getStdDev(platt);
 
         return scores;
     }
@@ -72,7 +72,7 @@ public class PlattFeatures implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return true;
     }
 

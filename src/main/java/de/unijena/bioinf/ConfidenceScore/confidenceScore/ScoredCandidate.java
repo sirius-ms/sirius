@@ -1,24 +1,26 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
-import de.unijena.bioinf.fingerid.Candidate;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+
 
 import java.util.Comparator;
 
 /**
  * Created by Marcus Ludwig on 09.03.16.
  */
-public class ScoredCandidate extends Candidate {
+public class ScoredCandidate extends CompoundWithAbstractFP<Fingerprint> {
     public final double score;
-    public final double[] additionalScores;
 
-    public ScoredCandidate(String inchi, boolean[] fingerprint, double scoreToSort, double... additionalScores) {
-        super(inchi, fingerprint);
-        this.score = scoreToSort;
-        this.additionalScores = additionalScores;
+    public ScoredCandidate(InChI inChI, Fingerprint fingerprint, double score) {
+        super(inChI, fingerprint);
+        this.score = score;
     }
 
-    public ScoredCandidate(Candidate candidate, double score, double... additionalScores) {
-        this(candidate.inchi, candidate.fingerprint, score, additionalScores);
+    public ScoredCandidate(CompoundWithAbstractFP<Fingerprint> candidate, double score) {
+        super(candidate.getInchi(), candidate.getFingerprint());
+        this.score = score;
     }
 
     public static final class MinBestComparator implements Comparator<ScoredCandidate> {

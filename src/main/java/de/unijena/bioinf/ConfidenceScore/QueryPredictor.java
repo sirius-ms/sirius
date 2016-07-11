@@ -1,17 +1,20 @@
 package de.unijena.bioinf.ConfidenceScore;
 
+import com.google.gson.JsonObject;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.FeatureCreator;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
-import de.unijena.bioinf.fingerid.Candidate;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
-import de.unijena.bioinf.fingerid.Query;
-import org.json.JSONObject;
+
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,7 +29,7 @@ public class QueryPredictor implements Parameterized{
     private Scaler[] scalers;
     private LinearPredictor[] predictors;
     private int[] priorities;
-    private FingerprintStatistics statistics;
+    private PredictionPerformance[] statistics;
     protected int[] absFPIndices;
 
     QueryPredictor(){
@@ -41,7 +44,7 @@ public class QueryPredictor implements Parameterized{
      * @param priorities huge priorities are chosen first
      * @param statistics
      */
-    public QueryPredictor(FeatureCreator[] featureCreators, Scaler[] scalers, LinearPredictor[] predictors, int[] priorities, FingerprintStatistics statistics) {
+    public QueryPredictor(FeatureCreator[] featureCreators, Scaler[] scalers, LinearPredictor[] predictors, int[] priorities, PredictionPerformance[] statistics) {
         this.featureCreators = featureCreators;
         this.scalers = scalers;
         this.predictors = predictors;
@@ -50,7 +53,7 @@ public class QueryPredictor implements Parameterized{
     }
 
 
-    private int findCompatibleFeatureCreator(Query query, Candidate[] rankedCandidates){
+    private int findCompatibleFeatureCreator(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates){
         int bestCompatiblePos = -1;
         int bestCompatiblePriority = -1;
         for (int i = 0; i < featureCreators.length; i++) {
@@ -65,24 +68,24 @@ public class QueryPredictor implements Parameterized{
         return bestCompatiblePos;
     }
 
-    public boolean isApplicable(Query query, Candidate[] rankedCandidates){
+    public boolean isApplicable(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates){
         return findCompatibleFeatureCreator(query, rankedCandidates)>0;
     }
 
-    private double[] computeScaledFeatures(Query query, Candidate[] rankedCandidates, int predictorNumber){
-        if (predictorNumber<0) throw new IllegalArgumentException("cannot compute features for this input");
+    private double[] computeScaledFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, int predictorNumber) throws PredictionException {
+        if (predictorNumber<0) throw new PredictionException("no compatible predictor for this input");
         final double[] features = featureCreators[predictorNumber].computeFeatures(query, rankedCandidates);
         final double[] scaled = scalers[predictorNumber].scale(features);
         return scaled;
     }
 
-    public boolean predict(Query query, Candidate[] rankedCandidates) {
+    public boolean predict(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) throws PredictionException {
         final int i = findCompatibleFeatureCreator(query, rankedCandidates);
         final double[] scaled = computeScaledFeatures(query, rankedCandidates, i);
         return predictors[i].predict(scaled);
     }
 
-    public double score(Query query, Candidate[] rankedCandidates) {
+    public double score(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) throws PredictionException {
         final int i = findCompatibleFeatureCreator(query, rankedCandidates);
         final double[] scaled = computeScaledFeatures(query, rankedCandidates, i);
         return predictors[i].score(scaled);
@@ -94,14 +97,14 @@ public class QueryPredictor implements Parameterized{
      * @param rankedCandidates the candidates for the query ranked by their score
      * @return
      */
-    public double estimateProbability(Query query, Candidate[] rankedCandidates) {
+    public double estimateProbability(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) throws PredictionException {
         final int i = findCompatibleFeatureCreator(query, rankedCandidates);
         final double[] scaled = computeScaledFeatures(query, rankedCandidates, i);
         return predictors[i].estimateProbability(scaled);
     }
 
 
-    public FingerprintStatistics getStatistics() {
+    public PredictionPerformance[] getStatistics() {
         return statistics;
     }
 
@@ -124,30 +127,30 @@ public class QueryPredictor implements Parameterized{
 
         L list = document.getListFromDictionary(dictionary, "tp");
         size = document.sizeOfList(list);
-        int[] tp = new int[size];
-        for (int i = 0; i < size; i++) tp[i] = (int)document.getIntFromList(list, i);
+        double[] tp = new double[size];
+        for (int i = 0; i < size; i++) tp[i] = document.getDoubleFromList(list, i);
         list = document.getListFromDictionary(dictionary, "fp");
         size = document.sizeOfList(list);
-        int[] fp = new int[size];
-        for (int i = 0; i < size; i++) fp[i] = (int)document.getIntFromList(list, i);
+        double[] fp = new double[size];
+        for (int i = 0; i < size; i++) fp[i] = document.getDoubleFromList(list, i);
         list = document.getListFromDictionary(dictionary, "tn");
         size = document.sizeOfList(list);
-        int[] tn = new int[size];
-        for (int i = 0; i < size; i++) tn[i] = (int)document.getIntFromList(list, i);
+        double[] tn = new double[size];
+        for (int i = 0; i < size; i++) tn[i] = document.getDoubleFromList(list, i);
         list = document.getListFromDictionary(dictionary, "fn");
         size = document.sizeOfList(list);
-        int[] fn = new int[size];
-        for (int i = 0; i < size; i++) fn[i] = (int)document.getIntFromList(list, i);
-        double minF = (int)document.getDoubleFromDictionary(dictionary, "minF");
-        int minPresent = (int)document.getIntFromDictionary(dictionary, "minPresent");
+        double[] fn = new double[size];
+        for (int i = 0; i < size; i++) fn[i] = document.getDoubleFromList(list, i);
+//        double minF = (int)document.getDoubleFromDictionary(dictionary, "minF");
+//        int minPresent = (int)document.getIntFromDictionary(dictionary, "minPresent");
         list = document.getListFromDictionary(dictionary, "absFPIndices");
         size = document.sizeOfList(list);
         absFPIndices = new int[size];
         for (int i = 0; i < size; i++) absFPIndices[i] = (int)document.getIntFromList(list, i);
 
-        this.statistics = new FingerprintStatistics(tp, fp, tn, fn);
-        this.statistics.setFThreshold(minF);
-        this.statistics.setMinimalNumberOfOccurences(minPresent);
+        this.statistics = new PredictionPerformance[size];
+        for (int i = 0; i < size; i++) this.statistics[i] = new PredictionPerformance(tp[i], fp[i], tn[i], fn[i]);
+
 
         this.featureCreators = featureCreatorList.toArray(new FeatureCreator[0]);
         this.scalers = scalerList.toArray(new Scaler[0]);
@@ -183,20 +186,33 @@ public class QueryPredictor implements Parameterized{
         for (int p : priorities) document.addToList(list, p);
         document.addListToDictionary(dictionary, "priorities", list);
 
+        double[] tp = new double[statistics.length];
+        double[] fp = new double[statistics.length];
+        double[] tn = new double[statistics.length];
+        double[] fn = new double[statistics.length];
+
+        for (int i = 0; i < statistics.length; i++) {
+            PredictionPerformance predictionPerformance = statistics[i];
+            tp[i] = predictionPerformance.getTp();
+            fp[i] = predictionPerformance.getFp();
+            tn[i] = predictionPerformance.getTn();
+            fn[i] = predictionPerformance.getFn();
+        }
+
         list = document.newList();
-        for (int p : statistics.tp) document.addToList(list, p);
+        for (double p : tp) document.addToList(list, p);
         document.addListToDictionary(dictionary, "tp", list);
         list = document.newList();
-        for (int p : statistics.fp) document.addToList(list, p);
+        for (double p : fp) document.addToList(list, p);
         document.addListToDictionary(dictionary, "fp", list);
         list = document.newList();
-        for (int p : statistics.tn) document.addToList(list, p);
+        for (double p : tn) document.addToList(list, p);
         document.addListToDictionary(dictionary, "tn", list);
         list = document.newList();
-        for (int p : statistics.fn) document.addToList(list, p);
+        for (double p : fn) document.addToList(list, p);
         document.addListToDictionary(dictionary, "fn", list);
-        document.addToDictionary(dictionary, "minF", statistics.getFThreshold());
-        document.addToDictionary(dictionary, "minPresent", statistics.getMinimalNumberOfOccurences());
+//        document.addToDictionary(dictionary, "minF", statistics.getFThreshold());
+//        document.addToDictionary(dictionary, "minPresent", statistics.getMinimalNumberOfOccurences());
         list = document.newList();
         for (int i : absFPIndices) document.addToList(list, i);
         document.addListToDictionary(dictionary, "absFPIndices", list);
@@ -204,9 +220,9 @@ public class QueryPredictor implements Parameterized{
 
 
     public void writeToFile(Path path) throws IOException {
-        BufferedWriter writer = Files.newBufferedWriter(path);
+        BufferedWriter writer = Files.newBufferedWriter(path, Charset.defaultCharset());
         final JSONDocumentType json = new JSONDocumentType();
-        final JSONObject obj = json.newDictionary();
+        final JsonObject obj = json.newDictionary();
         writeToProfile(json, obj);
         try {
             JSONDocumentType.writeJson(json, obj, writer);
@@ -224,7 +240,7 @@ public class QueryPredictor implements Parameterized{
     }
 
     public static QueryPredictor loadFromFile(Path path) throws IOException {
-        final JSONObject json = JSONDocumentType.getJSON("queryPredictor", path.toAbsolutePath().toString());
+        final JsonObject json = JSONDocumentType.getJSON("queryPredictor", path.toAbsolutePath().toString());
         final JSONDocumentType document = new JSONDocumentType();
         return loadFromProfile(document, json);
 

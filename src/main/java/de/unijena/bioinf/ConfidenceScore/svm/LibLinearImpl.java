@@ -55,7 +55,6 @@ public class LibLinearImpl implements SVMInterface<LibLinearImpl.svm_nodeImpl, L
             }
         }
 
-
         Model liblinear_model = Linear.train(problem.svm_problem, libLinear_parameter);
 
         LibLinearImpl.svm_model model  = new LibLinearImpl.svm_model(liblinear_model);

@@ -1,8 +1,14 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 
 import java.util.Arrays;
 
@@ -10,29 +16,25 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 29.04.16.
  */
 public class MedianMeanScoresFeature implements FeatureCreator {
-    private final ScoringMethod scoringMethod;
     private final String name;
-    private Scorer scorer;
-    private FingerprintStatistics statistics;
+    private FingerblastScoring scorer;
 
     public MedianMeanScoresFeature(){
         //todo do for all scorings?
-        scoringMethod = new MarvinsScoring();
-        name = scoringMethod.getClass().getSimpleName();
+        name = "CSIFingerIdScoring";
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
-        scorer = scoringMethod.getScorer(statistics);
+    public void prepare(PredictionPerformance[] statistics) {
+        scorer = new CSIFingerIdScoring(statistics);
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-        scorer.preprocessQuery(query, statistics);
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorer.prepare(query.getFingerprint());
         double[] scores = new double[rankedCandidates.length];
         for (int i = 0; i < rankedCandidates.length; i++) {
-            scores[i] = scorer.score(query, rankedCandidates[i], statistics);
+            scores[i] = scorer.score(query.getFingerprint(), rankedCandidates[i].getFingerprint());
         };
         return new double[]{mean(scores), median(scores)};
     }
@@ -57,7 +59,7 @@ public class MedianMeanScoresFeature implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
     }
 

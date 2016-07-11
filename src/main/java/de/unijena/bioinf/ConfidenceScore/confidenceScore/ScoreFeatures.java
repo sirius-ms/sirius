@@ -1,57 +1,54 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
+import de.unijena.bioinf.fingerid.blast.ProbabilityEstimateScoring;
+import de.unijena.bioinf.fingerid.blast.SimpleMaximumLikelihoodScoring;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
 public class ScoreFeatures implements FeatureCreator {
-    private final ScoringMethod[] scoringMethods;
     private final String[] names;
-    private final Scorer[] scorers;
-    private FingerprintStatistics statistics;
+    private final FingerblastScoring[] scorers;
 
     public ScoreFeatures(){
-        scoringMethods = new ScoringMethod[3];
-        scoringMethods[0] = new MarvinsScoring();
-        scoringMethods[1] = new MaximumLikelihoodScoring();
-        scoringMethods[2] = new ProbabilityEstimateScoring();
-        names = new String[scoringMethods.length];
-        for (int i = 0; i < scoringMethods.length; i++) {
-            names[i] = scoringMethods[i].getClass().getSimpleName();
-        }
-
-        scorers = new Scorer[scoringMethods.length];
+        names = new String[]{"CSIFingerIdScoring", "SimpleMaximumLikelihoodScoring", "ProbabilityEstimateScoring"};
+        scorers = new FingerblastScoring[3];
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
-        for (int i = 0; i < scoringMethods.length; i++) {
-            scorers[i] = scoringMethods[i].getScorer(statistics);
-        }
+    public void prepare(PredictionPerformance[] statistics) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        scorers[2] = new ProbabilityEstimateScoring(statistics);
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-        final Candidate topHit = rankedCandidates[0];
-        final double[] scores = new double[scoringMethods.length];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
+        final double[] scores = new double[scorers.length];
         for (int i = 0; i < scorers.length; i++) {
-            scorers[i].preprocessQuery(query, statistics);
-            scores[i] = scorers[i].score(query, topHit, statistics);
+            scorers[i].prepare(query.getFingerprint());
+            scores[i] = scorers[i].score(query.getFingerprint(), topHit.getFingerprint());
         }
         return scores;
     }
 
     @Override
     public int getFeatureSize() {
-        return scoringMethods.length;
+        return scorers.length;
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
     }
 

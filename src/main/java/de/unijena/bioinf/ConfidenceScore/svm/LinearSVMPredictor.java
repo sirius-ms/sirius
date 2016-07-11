@@ -3,7 +3,6 @@ package de.unijena.bioinf.ConfidenceScore.svm;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ConfidenceScore.LinearPredictor;
-import org.json.JSONException;
 
 import java.io.*;
 

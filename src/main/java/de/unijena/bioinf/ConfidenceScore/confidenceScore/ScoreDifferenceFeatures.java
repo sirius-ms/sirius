@@ -3,16 +3,23 @@ package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
+import de.unijena.bioinf.fingerid.blast.ProbabilityEstimateScoring;
+import de.unijena.bioinf.fingerid.blast.SimpleMaximumLikelihoodScoring;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
 public class ScoreDifferenceFeatures implements FeatureCreator {
-    private final ScoringMethod[] scoringMethods;
-    private final Scorer[] scorers;
-    private FingerprintStatistics statistics;
+    private final String[] names;
+    private final FingerblastScoring[] scorers;
     private int[] positions;
     private int max;
 
@@ -25,11 +32,8 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
      * @param positions the positions
      */
     public ScoreDifferenceFeatures(int... positions){
-        scoringMethods = new ScoringMethod[3];
-        scoringMethods[0] = new MarvinsScoring();
-        scoringMethods[1] = new MaximumLikelihoodScoring();
-        scoringMethods[2] = new ProbabilityEstimateScoring();
-        scorers = new Scorer[scoringMethods.length];
+        names = new String[]{"CSIFingerIdScoring", "SimpleMaximumLikelihoodScoring", "ProbabilityEstimateScoring"};
+        scorers = new FingerblastScoring[3];
 
         this.positions = positions;
         int max = Integer.MIN_VALUE;
@@ -38,23 +42,22 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
-        for (int i = 0; i < scoringMethods.length; i++) {
-            scorers[i] = scoringMethods[i].getScorer(statistics);
-        }
+    public void prepare(PredictionPerformance[] statistics) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        scorers[2] = new ProbabilityEstimateScoring(statistics);
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-        double[] scores = new double[scoringMethods.length * positions.length];
-        final Candidate topHit = rankedCandidates[0];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        double[] scores = new double[scorers.length * positions.length];
+        final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
         int pos = 0;
         for (int i = 0; i < scorers.length; i++) {
-            scorers[i].preprocessQuery(query, statistics);
-            final double topScore = scorers[i].score(query, topHit, statistics);
+            scorers[i].prepare(query.getFingerprint());
+            final double topScore = scorers[i].score(query.getFingerprint(), topHit.getFingerprint());
             for (int j = 0; j < positions.length; j++) {
-                scores[pos++] = topScore - scorers[i].score(query, rankedCandidates[positions[j]], statistics);
+                scores[pos++] = topScore - scorers[i].score(query.getFingerprint(), rankedCandidates[positions[j]].getFingerprint());
             }
         }
         assert pos == scores.length;
@@ -63,11 +66,11 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return scoringMethods.length*positions.length;
+        return scorers.length*positions.length;
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return (rankedCandidates.length>max);
     }
 
@@ -75,8 +78,8 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         int pos = 0;
-        for (int i = 0; i < scoringMethods.length; i++) {
-            String scoringMethod = scoringMethods[i].getClass().getSimpleName();
+        for (int i = 0; i < scorers.length; i++) {
+            String scoringMethod = scorers[i].getClass().getSimpleName();
             for (int j = 0; j < positions.length; j++) {
                 int position = positions[j];
                 names[pos++] = scoringMethod+"DiffTo"+position;

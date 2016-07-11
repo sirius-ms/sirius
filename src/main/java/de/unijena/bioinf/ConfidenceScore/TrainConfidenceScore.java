@@ -1,16 +1,18 @@
 package de.unijena.bioinf.ConfidenceScore;
 
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.*;
 import de.unijena.bioinf.ConfidenceScore.svm.LibLinearImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LibSVMImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LinearSVMPredictor;
 import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
-import de.unijena.bioinf.fingerid.Candidate;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
-import de.unijena.bioinf.fingerid.Query;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
@@ -26,7 +28,7 @@ public class TrainConfidenceScore {
     private LinearSVMPredictor[] predictors;
     private int[] priority;
     private final SVMInterface svmInterface;
-    private FingerprintStatistics statistics;
+    private PredictionPerformance[] statistics;
 
     public TrainConfidenceScore(boolean useLinearSVM){
         if (useLinearSVM) svmInterface = new LibLinearImpl();
@@ -39,7 +41,7 @@ public class TrainConfidenceScore {
      * @param queries
      * @param rankedCandidates sorted best to worst!
      */
-    public void train(ExecutorService executorService, Query[] queries, Candidate[][] rankedCandidates, FingerprintStatistics statistics) throws InterruptedException {
+    public void train(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates, PredictionPerformance[] statistics) throws InterruptedException {
         if (queries.length!=rankedCandidates.length){
             throw new IllegalArgumentException("query and candidates sizes differ");
         }
@@ -56,18 +58,20 @@ public class TrainConfidenceScore {
 
     }
 
-    private void trainOnePredictor(ExecutorService executorService, Query[] queries, Candidate[][] rankedCandidates , FeatureCreator featureCreator, int step) throws InterruptedException {
+    private void trainOnePredictor(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates , FeatureCreator featureCreator, int step) throws InterruptedException {
         List<double[]> featureList = new ArrayList();
         TIntArrayList usedInstances = new TIntArrayList();
         for (int i = 0; i < queries.length; i++) {
-            Query query = queries[i];
-            Candidate[] candidates = rankedCandidates[i];
+            CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
+            CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
             if (featureCreator.isCompatible(query, candidates)){
                 usedInstances.add(i);
                 double[] features = featureCreator.computeFeatures(query, candidates);
-                for (double feature : features){
+                for (int j = 0; j < features.length; j++) {
+                    double feature = features[j];
                     if (Double.isNaN(feature)){
-                        System.out.println("damn");
+                        String name = featureCreator.getFeatureNames()[j];
+                        throw new IllegalArgumentException("NaN created by feature "+name);
                     }
                 }
                 featureList.add(features);
@@ -77,13 +81,24 @@ public class TrainConfidenceScore {
         double[][] featureMatrix = featureList.toArray(new double[0][]);
 
         Scaler scaler = new Scaler.StandardScaler(featureMatrix);
+        double[] sds = ((Scaler.StandardScaler) scaler).getSD();
+        for (int i = 0; i < sds.length; i++) {
+            double sd = sds[i];
+            if (sd==0){
+                String name = featureCreator.getFeatureNames()[i];
+                System.out.println("Zero standard deviation for feature "+name);
+            }
+
+        }
 //        Scaler scaler = new Scaler.NoScaler(featureMatrix);
 
         double[][] scaledMatrix = scaler.scale(featureMatrix);
         for (double[] doubles : scaledMatrix) {
-            for (double aDouble : doubles) {
+            for (int j = 0; j < doubles.length; j++) {
+                double aDouble = doubles[j];
                 if (Double.isNaN(aDouble)){
-                    System.out.println("damn");
+                    String name = featureCreator.getFeatureNames()[j];
+                    throw new IllegalArgumentException("NaN after scaling for feature "+name);
                 }
             }
         }
@@ -93,8 +108,8 @@ public class TrainConfidenceScore {
         for (int i = 0; i < scaledMatrix.length; i++) {
             double[] features = scaledMatrix[i];
             int pos = usedInstances.get(i);
-            Query query = queries[pos];
-            Candidate[] candidates = rankedCandidates[pos];
+            CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[pos];
+            CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[pos];
             compounds.add(createCompound(query, candidates, features));
         }
 
@@ -129,17 +144,17 @@ public class TrainConfidenceScore {
         return predictors;
     }
 
-    private TrainLinearSVM.Compound createCompound(Query query, Candidate[] rankedCandidates, double[] features){
+    private TrainLinearSVM.Compound createCompound(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, double[] features){
         byte classification;
-        String queryInchi2D = inchi2d(query.inchi);
-        String candidateInchi2D = inchi2d(rankedCandidates[0].inchi);
+        String queryInchi2D = query.getInchi().in2D;
+        String candidateInchi2D = rankedCandidates[0].getInchi().in2D;
         if (queryInchi2D.equals(candidateInchi2D)) classification = 1;
         else classification = -1;
         TrainLinearSVM.Compound compound = new TrainLinearSVM.Compound(queryInchi2D, classification, features);
         return compound;
     }
 
-    private void prepare(FingerprintStatistics statistics){
+    private void prepare(PredictionPerformance[] statistics){
         for (FeatureCreator featureCreator : featureCreators) {
             featureCreator.prepare(statistics);
         }
@@ -435,13 +450,4 @@ public class TrainConfidenceScore {
         this.priority = priority;
     }
 
-    private static Pattern inchi2dPattern = Pattern.compile("/[btmrsfi]");
-    private static String inchi2d(String inchi) {
-        final Matcher m = inchi2dPattern.matcher(inchi);
-        if (m.find()) {
-            return inchi.substring(0, m.start());
-        } else {
-            return inchi;
-        }
-    }
 }

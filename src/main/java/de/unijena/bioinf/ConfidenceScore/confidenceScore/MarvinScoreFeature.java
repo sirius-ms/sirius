@@ -1,35 +1,37 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 
 /**
  * Created by Marcus Ludwig on 21.04.16.
  */
 public class MarvinScoreFeature implements FeatureCreator {
-    private final ScoringMethod scoringMethod;
     private final String name;
-    private Scorer scorer;
-    private FingerprintStatistics statistics;
+    private FingerblastScoring scorer;
 
     public MarvinScoreFeature(){
-        scoringMethod = new MarvinsScoring();
-        name = scoringMethod.getClass().getSimpleName();
+        name = "CSIFingerIdScoring";
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
-        scorer = scoringMethod.getScorer(statistics);
+    public void prepare(PredictionPerformance[] statistics) {
+        scorer = new CSIFingerIdScoring(statistics);
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-        final Candidate topHit = rankedCandidates[0];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
         final double[] scores = new double[1];
-        scorer.preprocessQuery(query, statistics);
-        scores[0] = scorer.score(query, topHit, statistics);
+        scorer.prepare(query.getFingerprint());
+        scores[0] = scorer.score(query.getFingerprint(), topHit.getFingerprint());
         return scores;
     }
 
@@ -39,7 +41,7 @@ public class MarvinScoreFeature implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
     }
 

@@ -178,7 +178,6 @@ public class TrainLinearSVM  implements Closeable {
     }
 
     private void pickupTrainAndEvalStructureDependent(List<Compound> compounds, List<Compound>[] trains, List<Compound>[] eval, boolean removeIdentifierDuplicates) {
-        //ToDo....
         for (int k=0; k < FOLDS; ++k) {
             trains[k] = new ArrayList<>();
             eval[k] = new ArrayList<>();
@@ -217,16 +216,11 @@ public class TrainLinearSVM  implements Closeable {
             split[i] = new ArrayList<>();
         }
 
-//        int shufflePos = 0;
-//        for (Compound compound : sortedCompounds) {
-//            final int randBucket = foldSizes[shufflePos];
-//            final String identifier = compound.identifier;
-//            while ((shufflePos<length) && (identifier.equals()))
-//        }
 
         int shufflePos = 0;
         int[] unbalancedSize = new int[FOLDS];
-        Iterator<Compound> iterator = compounds.iterator();
+//        Iterator<Compound> iterator = compounds.iterator();
+        Iterator<Compound> iterator = sortedCompounds.iterator();
         Compound next = iterator.next();
         while (next != null) {
             Compound compound = next;
@@ -234,6 +228,7 @@ public class TrainLinearSVM  implements Closeable {
             while (unbalancedSize[randBucket]>0) {
                 unbalancedSize[randBucket]--;
                 shufflePos++;
+                if (shufflePos>=randomOrder.length) break;
                 randBucket = randomOrder[shufflePos];
             }
             shufflePos++;
@@ -246,10 +241,8 @@ public class TrainLinearSVM  implements Closeable {
                     split[randBucket].add(next);
 
                 }
-//                shufflePos++;
             }
 
-//            if (shufflePos>=length) break;
         }
 
         for (int i = 0; i < split.length; i++) {
@@ -570,15 +563,15 @@ public class TrainLinearSVM  implements Closeable {
 
 
     private void createSVM_nodes(Iterable<Compound> compounds){
-        int index = 0;
         for (Compound compound : compounds) {
             final double[] fingerprint = compound.features;
             List<SVMInterface.svm_node> nodes = new ArrayList<>();
 
             for (int i = 0; i < fingerprint.length; i++) {
                 final double value = fingerprint[i];
-                if (value == 0 ) continue;
-                final SVMInterface.svm_node node = svmInterface.createSVM_Node(i+1, compound.features[i]);
+//                if (value == 0 ) continue;
+//                final SVMInterface.svm_node node = svmInterface.createSVM_Node(i+1, compound.features[i]);
+                final SVMInterface.svm_node node = svmInterface.createSVM_Node(i+1, value);
                 nodes.add(node);
             }
             compound.nodes = nodes;

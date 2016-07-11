@@ -1,15 +1,12 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.fingerid.Candidate;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
-import de.unijena.bioinf.fingerid.Query;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 /**
  * Created by Marcus Ludwig on 29.04.16.
@@ -17,13 +14,13 @@ import de.unijena.bioinf.fingerid.Query;
 public class MolecularFormulaFeature implements FeatureCreator {
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
+    public void prepare(PredictionPerformance[] statistics) {
 
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-        MolecularFormula formula = MolecularFormula.parse(query.getFormula());
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        MolecularFormula formula = query.getInchi().extractFormula();
         PeriodicTable periodicTable = formula.getTableSelection().getPeriodicTable();
         Element sulphor = periodicTable.getByName("S");
         Element phosphorus = periodicTable.getByName("P");
@@ -50,13 +47,13 @@ public class MolecularFormulaFeature implements FeatureCreator {
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return true;
     }
 
     @Override
     public String[] getFeatureNames() {
-        return new String[]{"c", "h", "n", "o", "p", "s", "rest", "halogens"};
+        return new String[]{"mf_c", "mf_h", "mf_n", "mf_o", "mf_p", "mf_s", "mf_rest", "mf_halogens"};
     }
 
     @Override

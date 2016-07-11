@@ -1,8 +1,16 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
+import de.unijena.bioinf.fingerid.blast.ProbabilityEstimateScoring;
+import de.unijena.bioinf.fingerid.blast.SimpleMaximumLikelihoodScoring;
 
 import java.util.Arrays;
 
@@ -10,43 +18,31 @@ import java.util.Arrays;
  * Created by Marcus Ludwig on 30.04.16.
  */
 public class NormalizedToMedianScores implements FeatureCreator {
-    private final ScoringMethod[] scoringMethods;
     private final String[] names;
-    private final Scorer[] scorers;
-    private FingerprintStatistics statistics;
+    private final FingerblastScoring[] scorers;
 
     public NormalizedToMedianScores(){
-        scoringMethods = new ScoringMethod[3];
-        scoringMethods[0] = new MarvinsScoring();
-        scoringMethods[1] = new MaximumLikelihoodScoring();
-        scoringMethods[2] = new ProbabilityEstimateScoring();
-        names = new String[scoringMethods.length];
-        for (int i = 0; i < scoringMethods.length; i++) {
-            names[i] = scoringMethods[i].getClass().getSimpleName();
-        }
-
-        scorers = new Scorer[scoringMethods.length];
+        names = new String[]{"CSIFingerIdScoring", "SimpleMaximumLikelihoodScoring", "ProbabilityEstimateScoring"};
+        scorers = new FingerblastScoring[3];
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
-        this.statistics = statistics;
-        for (int i = 0; i < scoringMethods.length; i++) {
-            scorers[i] = scoringMethods[i].getScorer(statistics);
-        }
+    public void prepare(PredictionPerformance[] statistics) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        scorers[2] = new ProbabilityEstimateScoring(statistics);
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-//        final Candidate topHit = rankedCandidates[0];
-        final double[] scores = new double[scoringMethods.length];
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        final double[] scores = new double[scorers.length];
         for (int i = 0; i < scorers.length; i++) {
-            Scorer scorer = scorers[i];
-            scorer.preprocessQuery(query, statistics);
+            FingerblastScoring scorer = scorers[i];
+            scorer.prepare(query.getFingerprint());
 
             double[] allScores = new double[rankedCandidates.length];
             for (int j = 0; j < rankedCandidates.length; j++) {
-                allScores[j] = scorer.score(query, rankedCandidates[j], statistics);
+                allScores[j] = scorer.score(query.getFingerprint(), rankedCandidates[j].getFingerprint());
             }
             double median = median(allScores);
             scores[i] = allScores[0]-median;
@@ -72,11 +68,11 @@ public class NormalizedToMedianScores implements FeatureCreator {
 
     @Override
     public int getFeatureSize() {
-        return scoringMethods.length;
+        return scorers.length;
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
     }
 

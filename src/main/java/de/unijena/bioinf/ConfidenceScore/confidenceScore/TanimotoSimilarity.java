@@ -1,16 +1,18 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.fingerid.Candidate;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
-import de.unijena.bioinf.fingerid.Query;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+
 
 /**
  * Created by Marcus Ludwig on 30.04.16.
  */
 public class TanimotoSimilarity implements FeatureCreator{
-    private FingerprintStatistics statistics;
+    private PredictionPerformance[] statistics;
     private int[] positions;
     private int max;
 
@@ -23,44 +25,21 @@ public class TanimotoSimilarity implements FeatureCreator{
     }
 
     @Override
-    public void prepare(FingerprintStatistics statistics) {
+    public void prepare(PredictionPerformance[] statistics) {
         this.statistics = statistics;
     }
 
     @Override
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates) {
-        boolean[] topHitFp = rankedCandidates[0].fingerprint;
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        Fingerprint topHitFp = rankedCandidates[0].getFingerprint();
         double[] scores = new double[positions.length];
         for (int i = 0; i < positions.length; i++) {
             int position = positions[i];
-            scores[i] = tanimoto(topHitFp, rankedCandidates[position].fingerprint);
+            scores[i] = topHitFp.tanimoto(rankedCandidates[position].getFingerprint());
         }
         return scores;
     }
 
-    private double tanimoto(boolean[] fp1, boolean[] fp2){
-        int samePos = 0;
-//        int sameNeg = 0;
-        int diff = 0;
-        for (int i = 0; i < fp1.length; i++) {
-            if (statistics.isBiased(i)) continue;
-            //todo just mol probs used for scoring?
-            if (fp1[i]){
-                if (fp2[i]){
-                    samePos++;
-                } else {
-                    diff++;
-                }
-            } else {
-                if (fp2[i]){
-                    diff++;
-                } else {
-//                    sameNeg++;
-                }
-            }
-        }
-        return 1.0*samePos/(samePos+diff);
-    }
 
     @Override
     public int getFeatureSize() {
@@ -68,7 +47,7 @@ public class TanimotoSimilarity implements FeatureCreator{
     }
 
     @Override
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates) {
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return (rankedCandidates.length>max);
     }
 

@@ -1,16 +1,17 @@
 package de.unijena.bioinf.ConfidenceScore.confidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.fingerid.Candidate;
-import de.unijena.bioinf.fingerid.FingerprintStatistics;
-import de.unijena.bioinf.fingerid.Query;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
 public interface FeatureCreator extends Parameterized {
 
-    public void prepare(FingerprintStatistics statistics);
+    public void prepare(PredictionPerformance[] statistics);
 
     /**
      *
@@ -18,11 +19,11 @@ public interface FeatureCreator extends Parameterized {
      * @param rankedCandidates sorted best to worst hit!
      * @return
      */
-    public double[] computeFeatures(Query query, Candidate[] rankedCandidates);
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
 
     public int getFeatureSize();
 
-    public boolean isCompatible(Query query, Candidate[] rankedCandidates);
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
 
     public String[] getFeatureNames();
 }

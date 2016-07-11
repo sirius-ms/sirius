@@ -71,10 +71,18 @@ abstract public class Scaler implements Parameterized{
         public double[] scale(double[] matrix) {
             final double[] newDoubles = new double[matrix.length];
             for (int j = 0; j < matrix.length; j++) {
-                newDoubles[j] = (matrix[j]-mean[j]) / sd[j];
+                if (sd[j]==0){
+                    newDoubles[j] = (matrix[j]-mean[j]);
+                } else {
+                    newDoubles[j] = (matrix[j]-mean[j]) / sd[j];
+                }
+
             }
             return newDoubles;
         }
+
+        public double[] getSD(){return sd.clone();};
+        public double[] getMean(){return mean.clone();};
 
         @Override
         public String toString() {
