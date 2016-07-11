@@ -3,6 +3,7 @@ dependencies {
 	//project
     compile project(':fingerid')
     compile project(':fingerblast')
+    compile project(':fingerprinter')
     compile project(':chemical_db')
 
 	//internal
