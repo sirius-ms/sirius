@@ -288,9 +288,9 @@ public class ConfidenceScorePrediction {
         final double platt;
         if (rescore){
             ScoredCandidate[] scoredCandidates = getScoredHitlist(query, candidates);
-            platt = queryPredictor.score(query, scoredCandidates);
+            platt = queryPredictor.estimateProbability(query, scoredCandidates);
         } else {
-            platt = queryPredictor.score(query, candidates);
+            platt = queryPredictor.estimateProbability(query, candidates);
         }
         return platt;
     }
@@ -307,7 +307,7 @@ public class ConfidenceScorePrediction {
         CompoundWithAbstractFP<Fingerprint>[] candidates = searchByFingerBlast(db, this.maskedFingerprintVersion, mf, chemDBThread).toArray(new CompoundWithAbstractFP[0]);
 
         ScoredCandidate[] scoredCandidates = getScoredHitlist(query, candidates);
-        double platt = queryPredictor.score(query, scoredCandidates);
+        double platt = queryPredictor.estimateProbability(query, scoredCandidates);
 
         return platt;
     }
