@@ -111,7 +111,7 @@ public class CSVExporter {
         }
     }
 
-    private void list(Writer writer, int[] pubchemIds) throws IOException {
+    public static void list(Writer writer, int[] pubchemIds) throws IOException {
         if (pubchemIds==null || pubchemIds.length==0) {
             writer.write("\"\"");
         } else {
@@ -123,12 +123,14 @@ public class CSVExporter {
         }
     }
 
-    private void links(Writer w, Compound c) throws IOException {
+    public static void links(Writer w, Compound c) throws IOException {
         if (c.databases==null) {
             w.write("\"\"");
             return;
-        }
-        final Multimap<String, String> databases = c.databases;
+        } else links(w, c.databases);
+    }
+
+    public static void links(Writer w, Multimap<String,String> databases) throws IOException {
         final Iterator<Map.Entry<String, Collection<String>>> iter = databases.asMap().entrySet().iterator();
         if (!iter.hasNext()) {
             w.write("\"\"");
@@ -155,12 +157,12 @@ public class CSVExporter {
         }
     }
 
-    private String escape(String name) {
+    private static String escape(String name) {
         if (name==null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
     }
 
-    private Collection<String> withoutNulls(Collection<String> in) {
+    private static Collection<String> withoutNulls(Collection<String> in) {
         return Collections2.filter(in, new Predicate<String>() {
             @Override
             public boolean apply(String input) {

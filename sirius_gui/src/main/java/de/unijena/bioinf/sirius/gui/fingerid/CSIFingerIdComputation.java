@@ -238,12 +238,12 @@ public class CSIFingerIdComputation {
         this.compounds = new HashMap<>();
     }
 
-    protected List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
+    protected static List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
         final ArrayList<SiriusResultElement> elements = new ArrayList<>();
         if (container==null || !container.isComputed() || container.getResults()==null) return elements;
         final SiriusResultElement top = container.getResults().get(0);
         elements.add(top);
-        final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.2);
+        final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.25);
         for (int k=1; k < container.getResults().size(); ++k) {
             SiriusResultElement e = container.getResults().get(k);
             if (e.getScore() < threshold) break;
