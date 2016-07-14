@@ -13,8 +13,8 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 public class SiriusApplication {
 
     public static void main(String[] args) {
-        final CLI<SiriusGUIOptions> cli = new CLI<>();
-        cli.parseArgs(args, SiriusGUIOptions.class);
+        final FingeridApplication cli = new FingeridApplication();
+        cli.parseArgs(args, FingerIdOptions.class);
         if (cli.options.isGUI()) {
             new MainFrame();
         } else {

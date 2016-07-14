@@ -94,14 +94,14 @@ public class CLI<Options extends SiriusOptions> {
                 final List<IdentificationResult> results;
 
                 final List<String> whitelist = options.getFormula();
-                final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
-                if (whitelist==null && (options.getNumberOfCandidates()==null) && i.experiment.getMolecularFormula()!=null) {
-                    whiteset.add(i.experiment.getMolecularFormula());
-                } else if (whitelist!=null) for (String s :whitelist) whiteset.add(MolecularFormula.parse(s));
-                if (whiteset.isEmpty() && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
+                if ((whiteset==null) && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                     results = sirius.identifyPrecursorAndIonization(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
+                    doIdentify = true;
+                } else if (whiteset!=null && whiteset.isEmpty()) {
+                    results = new ArrayList<>();
                     doIdentify=true;
-                } else if (whiteset.size()!=1) {
+                } else if (whiteset==null || whiteset.size()!=1) {
                     results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
                     doIdentify=true;
                 } else {
@@ -129,6 +129,7 @@ public class CLI<Options extends SiriusOptions> {
                 } else {
                     outputSingle(i, results.get(0), whiteset.iterator().next());
                 }
+                handleResults(i, results);
                 if (siriusResultWriter!=null) {
                     siriusResultWriter.add(i.experiment, results);
                 }
@@ -137,6 +138,18 @@ public class CLI<Options extends SiriusOptions> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    protected void handleResults(Instance i, List<IdentificationResult> results) {
+
+    }
+
+    protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
+        final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
+        if (whitelist==null && (options.getNumberOfCandidates()==null) && i.experiment.getMolecularFormula()!=null) {
+            whiteset.add(i.experiment.getMolecularFormula());
+        } else if (whitelist!=null) for (String s :whitelist) whiteset.add(MolecularFormula.parse(s));
+        return whiteset.isEmpty() ? null : whiteset;
     }
 
     private boolean isUsingSiriusFormat() {
@@ -221,7 +234,19 @@ public class CLI<Options extends SiriusOptions> {
         }
     }
 
-    private File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
+    protected File getTargetName(File target, Instance i, String format) {
+        if (!target.isDirectory()) {
+            final String name = target.getName();
+            final int j = name.lastIndexOf('.');
+            if (j>=0) return new File(target.getParentFile(), name.substring(0, j) + "." + format);
+            else return new File(target.getParentFile(), name + "." + format);
+        } else {
+            final String inputName = i.fileNameWithoutExtension();
+            return new File(target, inputName + "." + format);
+        }
+    }
+
+    protected File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
         if (!target.isDirectory()) {
             final String name = target.getName();
             final int j = name.lastIndexOf('.');
@@ -569,7 +594,7 @@ public class CLI<Options extends SiriusOptions> {
         return cf;
     }
 
-    private static String fileNameWithoutExtension(File file) {
+    protected static String fileNameWithoutExtension(File file) {
         final String name = file.getName();
         final int i = name.lastIndexOf('.');
         if (i>=0) return name.substring(0, i);
