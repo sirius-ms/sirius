@@ -11,9 +11,9 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.FeatureCreator;
 import de.unijena.bioinf.babelms.json.JSONDocumentType;
 
-
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -243,7 +243,12 @@ public class QueryPredictor implements Parameterized{
         final JsonObject json = JSONDocumentType.getJSON("queryPredictor", path.toAbsolutePath().toString());
         final JSONDocumentType document = new JSONDocumentType();
         return loadFromProfile(document, json);
+    }
 
+    public static QueryPredictor loadFromStream(Reader reader) throws IOException {
+        final JsonObject json = JSONDocumentType.read(reader);
+        final JSONDocumentType document = new JSONDocumentType();
+        return loadFromProfile(document, json);
     }
 
     public static  <G, D, L> QueryPredictor loadFromProfile(DataDocument<G, D, L> document, G value){

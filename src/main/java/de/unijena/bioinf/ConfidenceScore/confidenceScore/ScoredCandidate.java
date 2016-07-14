@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 
-
 import java.util.Comparator;
 
 /**
