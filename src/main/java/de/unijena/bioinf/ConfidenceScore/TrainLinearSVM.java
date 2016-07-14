@@ -102,7 +102,6 @@ public class TrainLinearSVM  implements Closeable {
         final List<Compound>[] train = new List[FOLDS];
         final List<Compound>[] eval = new List[FOLDS];
 
-//        pickupTrainAndEval(compounds, train, eval);
         pickupTrainAndEvalStructureDependent(compounds, train, eval, false);
 
         final SVMInterface.svm_problem[]  problems = new SVMInterface.svm_problem[FOLDS];
@@ -113,16 +112,10 @@ public class TrainLinearSVM  implements Closeable {
 
         for (int i = 0; i < FOLDS; i++) {
             if (DEBUG) System.out.println("Fold "+(i+1)+" of "+FOLDS);
-            final List<Compound> currentTrain = train[i];
             final List<Compound> currentEval = eval[i];
 
-//            final SVMInterface.svm_problem problem = defineProblem(currentTrain);
             final SVMInterface.svm_problem problem = problems[i];
-//            final double[] weight = computeUnbalancedWeight(currentTrain);
 
-
-//            for (int e = 0; e < C_EXP_Range.length; e++) {
-//                double c = Math.exp(C_EXP_Range[e]);
             for (int e = C_EXP_Range[0]; e <= C_EXP_Range[1]; e++) {
                 double c = Math.pow(2, e);
                 if (DEBUG) System.out.println("c: "+c);
@@ -132,7 +125,6 @@ public class TrainLinearSVM  implements Closeable {
                 parameter.weight_label = WEIGHT_LABEL;
 
 //                learnModel. Future..
-
                 fmodels.add(executorService.submit(new Callable<Model>() {
                     @Override
                     public Model call() throws Exception {
@@ -166,7 +158,6 @@ public class TrainLinearSVM  implements Closeable {
         //ToDo at the moment unnecessary additional computations
         double[] probAB = trainProABForPlatt(bestModel.c, problems, eval);
 
-//        return new LinearPredictor(bestModel, svm_model);
         return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
     }
 

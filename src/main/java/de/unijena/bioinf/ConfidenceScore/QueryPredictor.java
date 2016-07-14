@@ -141,8 +141,6 @@ public class QueryPredictor implements Parameterized{
         size = document.sizeOfList(list);
         double[] fn = new double[size];
         for (int i = 0; i < size; i++) fn[i] = document.getDoubleFromList(list, i);
-//        double minF = (int)document.getDoubleFromDictionary(dictionary, "minF");
-//        int minPresent = (int)document.getIntFromDictionary(dictionary, "minPresent");
         list = document.getListFromDictionary(dictionary, "absFPIndices");
         size = document.sizeOfList(list);
         absFPIndices = new int[size];
@@ -211,8 +209,6 @@ public class QueryPredictor implements Parameterized{
         list = document.newList();
         for (double p : fn) document.addToList(list, p);
         document.addListToDictionary(dictionary, "fn", list);
-//        document.addToDictionary(dictionary, "minF", statistics.getFThreshold());
-//        document.addToDictionary(dictionary, "minPresent", statistics.getMinimalNumberOfOccurences());
         list = document.newList();
         for (int i : absFPIndices) document.addToList(list, i);
         document.addListToDictionary(dictionary, "absFPIndices", list);

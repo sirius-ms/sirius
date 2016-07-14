@@ -21,7 +21,7 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
     @Override
     public LibSVMImpl.svm_nodeImpl createSVM_Node(int index, double value) {
         if (Double.isNaN(value)){
-            System.out.println("damn");
+            throw new IllegalArgumentException("value for node cannot be NaN");
         }
         return new LibSVMImpl.svm_nodeImpl(index, value);
     }
