@@ -92,10 +92,8 @@ public class StructureSearcher implements Runnable {
                 if (c.compound == null) continue;
                 c.compoundLock.lock();
                 try {
-                    System.out.println("Run " + c.rank);
                     if (c.compound.molecule == null) c.parseAndPrepare();
                     if (highlight >= 0) c.highlightFingerprint(computation, highlight);
-                    System.out.println("Done " + c.rank);
                 } finally {
                     c.compoundLock.unlock();
                 }

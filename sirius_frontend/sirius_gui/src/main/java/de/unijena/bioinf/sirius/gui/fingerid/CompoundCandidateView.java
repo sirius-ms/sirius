@@ -75,7 +75,7 @@ public class CompoundCandidateView extends JPanel {
 
     public class ComputeElement extends JPanel {
         public ComputeElement() {
-            searchCSIButton = new JButton("Search online search with CSI:FingerId");
+            searchCSIButton = new JButton("Search online with CSI:FingerId");
             add(searchCSIButton);
             searchCSIButton.setEnabled((resultElement!=null));
             searchCSIButton.addActionListener(new ActionListener() {

@@ -41,9 +41,13 @@ public class FTJsonWriter {
 
     private DescriptorRegistry registry = DescriptorRegistry.getInstance();
 
-    public void writeTree(Writer writer, FTree tree) throws IOException {
+    public String treeToJsonString(FTree tree) {
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        writer.write(gson.toJson(tree2json(tree)));
+        return gson.toJson(tree2json(tree));
+    }
+
+    public void writeTree(Writer writer, FTree tree) throws IOException {
+        writer.write(treeToJsonString(tree));
     }
 
     public void writeTreeToFile(File f, FTree tree) throws IOException {

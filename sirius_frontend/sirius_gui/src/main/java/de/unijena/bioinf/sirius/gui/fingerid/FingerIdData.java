@@ -25,11 +25,22 @@ public class FingerIdData {
     protected ProbabilityFingerprint platts;
     protected Compound[] compounds;
     protected double[] scores;
+    protected double confidence;
+    public double topScore;
 
     public FingerIdData(Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
         this.compounds = compounds;
         this.scores = scores;
         this.platts = platts;
+        this.topScore = scores.length == 0 ? Double.NEGATIVE_INFINITY : scores[0];
+        this.confidence = Double.NaN;
     }
 
+    public double getConfidence() {
+        return confidence;
+    }
+
+    public void setConfidence(double confidence) {
+        this.confidence = confidence;
+    }
 }
