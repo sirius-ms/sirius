@@ -277,6 +277,7 @@ public class EvalConfidenceScore {
                 try {
                     platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
                 } catch (PredictionException e) {
+                    System.err.println(e.getMessage());
                     continue;
                 }
 
