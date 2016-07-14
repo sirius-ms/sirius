@@ -44,7 +44,6 @@ public class FTJsonReader implements Parser<FTree> {
         return parse(reader, null);
     }
 
-    @Override
     public FTree parse(BufferedReader reader, URL source) throws IOException {
         final StringBuilder buffer = new StringBuilder(1024);
         String line = null;
@@ -52,13 +51,14 @@ public class FTJsonReader implements Parser<FTree> {
             buffer.append(line).append('\n');
         }
         if (buffer.length() == 0) return null;
+        return treeFromJsonString(buffer.toString(), source);
+    }
 
+    public FTree treeFromJsonString(String jsonString, URL source) {
         final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         final JSONDocumentType JSONdoc = new JSONDocumentType();
-
-
         final JsonParser r = new JsonParser();
-        final JsonObject json = r.parse(buffer.toString()).getAsJsonObject();
+        final JsonObject json = r.parse(jsonString).getAsJsonObject();
         final FTree tree = new FTree(MolecularFormula.parse(json.get("molecularFormula").getAsString()));
         final JsonArray fragments = json.getAsJsonArray("fragments");
         final HashMap<MolecularFormula, JsonObject> fragmentMap = new HashMap<>(fragments.size());

@@ -104,6 +104,8 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
     @Override
     public boolean isInteger(JsonElement document) {
         if (!document.isJsonPrimitive()) return false;
+        final JsonPrimitive primitive = (JsonPrimitive)document;
+        if (!primitive.isNumber()) return false;
         final BigDecimal dec = ((JsonPrimitive)document).getAsBigDecimal();
         if (dec.scale() > 0) return false;
         final BigInteger i = dec.toBigInteger();
