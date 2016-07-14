@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius.cli;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -10,25 +9,17 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.DynamicBaselineFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.IsotopePeakWithKnownParentFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.NoiseThresholdFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.PeakScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.PeakAnnotation;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
 
@@ -63,7 +54,7 @@ public class Test {
                 };
                 s.getMs2Analyzer().getFragmentPeakScorers().add(noIsotopePenalizer);
 
-                s.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(20, 0.002));
+                s.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(10, 0.002));
                 exp = new MsExperimentParser().getParser(f).parseFromFile(f).get(0);
                 MutableMs2Experiment mexp = new MissingValueValidator().validate(exp, new Warning.Noop(),true);
                 System.out.println(f.getName());

@@ -104,18 +104,22 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 
 	}
 
+	public void select(SiriusResultElement sre) {
+        if(sre==null){
+            tvp.showTree(null);
+            svp.changeSiriusResultElement(null);
+            ccv.changeData(ec, sre);
+        }else{
+            tvp.showTree(sre);
+            svp.changeSiriusResultElement(sre);
+            ccv.changeData(ec, sre);
+        }
+	}
+
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		SiriusResultElement sre = this.resultsJList.getSelectedValue();
-		if(sre==null){
-			tvp.showTree(null);
-			svp.changeSiriusResultElement(null);
-            ccv.changeData(ec, sre);
-		}else{
-			tvp.showTree(sre);
-			svp.changeSiriusResultElement(sre);
-            ccv.changeData(ec, sre);
-		}
+		select(sre);
 	}
 
 }

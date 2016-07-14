@@ -32,7 +32,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 	public CompoundCellRenderer(){
 		this.setPreferredSize(new Dimension(200,86));
 		initColorsAndFonts();
-		this.numberFormat = new DecimalFormat("#0.0");
+		this.numberFormat = new DecimalFormat("#0.00");
 //		this.disamb = new FormulaDisassambler();
 //		this.ppmFormat = new DecimalFormat("#0.00");
 //		this.massFormat = new DecimalFormat("#0.00");

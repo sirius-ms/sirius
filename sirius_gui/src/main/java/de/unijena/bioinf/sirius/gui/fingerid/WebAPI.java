@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
@@ -53,6 +54,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -286,6 +288,28 @@ public class WebAPI implements Closeable {
     @Override
     public void close() throws IOException {
         client.close();
+    }
+
+    public QueryPredictor getConfidenceScore() {
+        final HttpGet get;
+        try {
+            get = new HttpGet(getFingerIdURI("/webapi/confidence.json").build());
+            try (CloseableHttpResponse response = client.execute(get)) {
+                final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
+                final QueryPredictor qp = QueryPredictor.loadFromStream(br);
+                br.close();
+                return qp;
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+                return null;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     private static class MultiplexerFileAndIO extends InputStream implements Closeable {

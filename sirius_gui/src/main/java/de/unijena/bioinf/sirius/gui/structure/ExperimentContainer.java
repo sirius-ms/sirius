@@ -22,6 +22,8 @@ public class ExperimentContainer {
 	
 	private volatile List<SiriusResultElement> results;
 	private volatile List<IdentificationResult> originalResults;
+	private volatile SiriusResultElement bestHit;
+
 
 	public ExperimentContainer() {
 		ms1Spectra = new ArrayList<CompactSpectrum>();
@@ -35,6 +37,14 @@ public class ExperimentContainer {
 		results = Collections.emptyList();
 		originalResults = Collections.emptyList();
 		this.computeState = ComputingStatus.UNCOMPUTED;
+	}
+
+	public SiriusResultElement getBestHit() {
+		return bestHit;
+	}
+
+	public void setBestHit(SiriusResultElement bestHit) {
+		this.bestHit = bestHit;
 	}
 
 	public String getName() {
