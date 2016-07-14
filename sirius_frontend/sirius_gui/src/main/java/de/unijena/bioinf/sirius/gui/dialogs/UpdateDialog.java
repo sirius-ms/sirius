@@ -38,7 +38,7 @@ public class UpdateDialog extends JDialog implements ActionListener{
         if (e.getSource()==ignore) {
         } else if (e.getSource()==download) {
             try {
-                Desktop.getDesktop().browse(new URI("https://bio.informatik.uni-jena.de/software/sirius/"));
+                Desktop.getDesktop().browse(new URI(WebAPI.SIRIUS_DOWNLOAD));
             } catch (IOException e1) {
                 e1.printStackTrace();
             } catch (URISyntaxException e1) {
