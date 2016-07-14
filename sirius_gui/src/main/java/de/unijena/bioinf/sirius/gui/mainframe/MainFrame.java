@@ -68,7 +68,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private boolean removeWithoutWarning = false;
 
     private DropTarget dropTarget;
-	
+	private ConfidenceList confidenceList;
 	private JPopupMenu expPopMenu;
 	private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI, cancelMI;
 	private JLabel aboutL;
@@ -95,6 +95,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             @Override
             public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
                 refreshCompound(container);
+                confidenceList.refreshList();
             }
         });
 
@@ -131,9 +132,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		resultsPanelCL.show(resultsPanel, RESULTS_CARD);
 		mainPanel.add(showResultsPanel,BorderLayout.CENTER);
 		
-		JPanel compoundPanel = new JPanel(new BorderLayout());
-		compoundPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiments"));
-		
+		//JPanel compoundPanel = new JPanel(new BorderLayout());
+		//compoundPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiments"));
+
+
+		final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+
 		compoundModel = new CompoundModel();
 		compoundList = new JList<>(compoundModel);
 		compoundList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -142,7 +146,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		compoundList.setMinimumSize(new Dimension(200,0));
 		compoundList.addMouseListener(this);
 //		compoundList.setPreferredSize(new Dimension(200,0));
-		
+
+
+		JScrollPane paneConfidence = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        confidenceList = new ConfidenceList(this);
+		paneConfidence.setViewportView(confidenceList);
+
 		JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		pane.setViewportView(compoundList);
 		
@@ -153,10 +162,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		
 //		System.err.println(pane.getVerticalScrollBar().getPreferredSize().getWidth());
 //		pane.setPreferredSize(new Dimension(221,0));
+
+		tabbedPane.addTab("Experiments", pane);
+		tabbedPane.addTab("Identifications", paneConfidence);
+
+
+		//compoundPanel.add(pane,BorderLayout.WEST);
 		
-		compoundPanel.add(pane,BorderLayout.WEST);
-		
-		mainPanel.add(compoundPanel,BorderLayout.WEST);
+		mainPanel.add(tabbedPane,BorderLayout.WEST);
 
 //		JPanel controlPanel = new JPanel(new WrapLayout(FlowLayout.LEFT,3,0));
 		JPanel leftControlPanel = new JPanel(new WrapLayout(FlowLayout.LEFT,3,0));
@@ -420,11 +433,16 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		return compoundModel.elements();
 	}
 
+	public CompoundModel getCompoundModel() {
+		return compoundModel;
+	}
+
 	public void refreshCompound(ExperimentContainer c) {
 		compoundModel.refresh(c);
 		refreshResultListFor(c);
         refreshComputationMenuItem();
         refreshExportMenuButton();
+
 	}
 
 	private void refreshResultListFor(ExperimentContainer c) {
@@ -910,6 +928,17 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			}
 		}
 	}
+
+    public void selectExperimentContainer(ExperimentContainer container) {
+        this.showResultsPanel.changeData(container);
+        compoundList.setSelectedIndex(compoundModel.indexOf(container));
+        resultsPanelCL.show(resultsPanel,RESULTS_CARD);
+    }
+
+    public void selectExperimentContainer(ExperimentContainer container, SiriusResultElement element) {
+        selectExperimentContainer(container);
+        showResultsPanel.select(element);
+    }
 	
 	public void computationStarted(){
 		this.computeAllActive = true;

@@ -19,12 +19,12 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ConfidenceScore.PredictionException;
+import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.DatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -70,6 +70,8 @@ public class CSIFingerIdComputation {
     protected boolean configured = false;
     protected File directory;
     protected Callback callback;
+
+    protected QueryPredictor confidenceScorePredictor;
 
     protected boolean enforceBio;
 
@@ -119,6 +121,7 @@ public class CSIFingerIdComputation {
     private void loadStatistics(WebAPI webAPI) throws IOException {
         final TIntArrayList list = new TIntArrayList(4096);
         this.performances = webAPI.getStatistics(list);
+        this.confidenceScorePredictor = webAPI.getConfidenceScore();
 
         final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
         v.disableAll();
@@ -354,6 +357,58 @@ public class CSIFingerIdComputation {
         }
     }
 
+    protected void refreshConfidence(ExperimentContainer exp) {
+        if (exp.getResults()==null || exp.getResults().isEmpty()) return;
+        SiriusResultElement best = null;
+        for (SiriusResultElement elem : exp.getResults()) {
+            if (elem!= null && elem.getFingerIdData()!=null) {
+                if (best==null) best = elem;
+                else if (elem.getFingerIdData().scores.length>0 && elem.getFingerIdData().topScore > best.getFingerIdData().topScore) {
+                    best = elem;
+                }
+            }
+        }
+
+        if (best!=null) {
+            if (Double.isNaN(best.getFingerIdData().confidence)) recomputeConfidence(best);
+        }
+        exp.setBestHit(best);
+    }
+
+    private void recomputeConfidence(SiriusResultElement best) {
+        try {
+            globalLock.lock();
+            if (performances==null) {
+                final WebAPI webAPI = new WebAPI();
+                loadStatistics(webAPI);
+                webAPI.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        } finally {
+            globalLock.unlock();
+        }
+
+        if (confidenceScorePredictor!=null) {
+            final FingerIdData data = best.getFingerIdData();
+            CompoundWithAbstractFP<ProbabilityFingerprint> query = data.compounds[0].asQuery(data.platts);
+            CompoundWithAbstractFP<Fingerprint>[] candidates = new CompoundWithAbstractFP[data.compounds.length];
+            for (int k=0; k < candidates.length; ++k) {
+                candidates[k] = data.compounds[k].asCandidate();
+            }
+            try {
+                System.out.print("Compute confidence for " + best.getMolecularFormula());
+                data.confidence = confidenceScorePredictor.estimateProbability(query, candidates);
+                System.out.println(": " + data.confidence);
+            } catch (PredictionException e) {
+                data.confidence = Double.NaN;
+                e.printStackTrace();
+            }
+        }
+
+    }
+
     protected class BackgroundThreadFormulas implements Runnable {
 
         protected volatile boolean shutdown;
@@ -519,6 +574,7 @@ public class CSIFingerIdComputation {
                 final SiriusResultElement resultElement = container.result;
                 resultElement.setFingerIdData(data);
                 resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
+                refreshConfidence(experiment);
                 callback.computationFinished(experiment, resultElement);
 
             }

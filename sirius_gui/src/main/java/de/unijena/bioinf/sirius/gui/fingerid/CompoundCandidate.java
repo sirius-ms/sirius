@@ -97,7 +97,6 @@ public class CompoundCandidate {
             else minCount = 1;
 
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
-            System.err.println(smarts);
             FasterSmartsQueryTool tool = new FasterSmartsQueryTool(smarts, DefaultChemObjectBuilder.getInstance());
             try {
                 if (tool.matches(molecule)) {

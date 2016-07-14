@@ -20,12 +20,10 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
@@ -83,6 +81,16 @@ public class Compound {
     protected Compound() {
 
     }
+
+    public CompoundWithAbstractFP<ProbabilityFingerprint> asQuery(ProbabilityFingerprint probFp) {
+        return new CompoundWithAbstractFP<ProbabilityFingerprint>(inchi, probFp);
+    }
+
+    public CompoundWithAbstractFP<Fingerprint> asCandidate() {
+        return new CompoundWithAbstractFP<Fingerprint>(inchi, this.fingerprint);
+    }
+
+
 
     protected static List<Compound> parseCompounds(MaskedFingerprintVersion version, List<Compound> compounds, JsonParser parser) {
         if (parser.next()!= JsonParser.Event.START_OBJECT) throw new JsonException("Expect json object");

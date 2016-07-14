@@ -110,7 +110,20 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 doExport();
             }
         });
+
         northPanel.add(exportToCSV);
+
+        final JButton filter = new JButton("filter list",  new ImageIcon(CandidateJList.class.getResource("/icons/filter_32.png")));
+        filter.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //new FilterDialog(CandidateJList.this.owner).setVisible(true);
+            }
+        });
+        filter.setEnabled(false);
+
+        northPanel.add(filter);
+
 
         candidateList = new InnerList(new ListModel());
         ToolTipManager.sharedInstance().registerComponent(candidateList);
@@ -714,7 +727,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             this.name = label.name;
             this.color = color;
             setFont(font);
-            setOpaque(true);
+            setOpaque(false);
             setPreferredSize(new Dimension(width, height));
             this.label = label;
         }
