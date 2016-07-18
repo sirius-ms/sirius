@@ -4,7 +4,8 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ConfidenceScore.confidenceScore.*;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ConfidenceScore.confidenceScore.ScoredCandidate;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.DatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -149,6 +150,164 @@ public class EvalConfidenceScore {
         writer.close();
     }
 
+    //    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+//        final int FOLD = 10;
+//        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
+//
+//        System.out.println("compute hitlist");
+//
+//        List<Instance> instances = evalConfidenceScore.computeHitList();
+//
+//        if (DEBUG){
+//            System.out.println("candiates per query");
+//            TIntIntHashMap map = new TIntIntHashMap();
+//            for (Instance instance : instances) {
+//                int count = instance.candidates.size();
+//                map.adjustOrPutValue(count, 1,1);
+//            }
+//            map.forEachEntry(new TIntIntProcedure() {
+//                @Override
+//                public boolean execute(int a, int b) {
+//                    System.out.println(a+": "+b);
+//                    return true;
+//                }
+//            });
+//        }
+//
+//
+//
+//        //shuffle
+//        Collections.shuffle(instances);
+//
+//        List<Instance> posInstances = new ArrayList<>();
+//        List<Instance> negInstances = new ArrayList<>();
+//        for (Instance instance : instances) {
+//            if (instance.candidates.size()==0) continue;
+//            if (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)){
+//                posInstances.add(instance);
+//            } else {
+//                negInstances.add(instance);
+//            }
+//        }
+//
+//        System.out.println("pos: "+posInstances.size()+" neg: "+negInstances.size());
+//
+//        List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries_Pos = new ArrayList<>();
+//        List<CompoundWithAbstractFP<Fingerprint>[]> candidates_Pos = new ArrayList<>();
+//        for (Instance instance : posInstances) {
+//            queries_Pos.add(instance.query);
+//            candidates_Pos.add(instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//        }
+//        List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries_Neg = new ArrayList<>();
+//        List<CompoundWithAbstractFP<Fingerprint>[]> candidates_Neg = new ArrayList<>();
+//        for (Instance instance : negInstances) {
+//            queries_Neg.add(instance.query);
+//            candidates_Neg.add(instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//        }
+//
+//        System.out.println("train");
+//
+//        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+////        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM);
+////        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+//
+//        TDoubleArrayList platts = new TDoubleArrayList();
+//        TByteArrayList corrects = new TByteArrayList();
+//        List<String> ids = new ArrayList<>();
+//
+//        final int sizePos = candidates_Pos.size();
+//        final int sizeNeg = candidates_Neg.size();
+//
+//
+//        HashSet<InChI> idSet = new HashSet<>();
+//
+//        int end_Pos = 0;
+//        int end_Neg = 0;
+//        for (int i = 0; i < FOLD; i++) {
+//            int start_Pos = end_Pos;
+//            int start_Neg = end_Neg;
+//            end_Pos = (int)Math.ceil(1.0*(i+1)*sizePos/FOLD);
+//            end_Neg = (int)Math.ceil(1.0*(i+1)*sizeNeg/FOLD);
+//
+//            List<CompoundWithAbstractFP<Fingerprint>[]> trainCand = new ArrayList<>(candidates_Pos.subList(0, start_Pos));
+//            trainCand.addAll(candidates_Pos.subList(end_Pos,sizePos));
+//            trainCand.addAll(candidates_Neg.subList(0, start_Neg));
+//            trainCand.addAll(candidates_Neg.subList(end_Neg,sizeNeg));
+//
+//
+//            System.out.println(start_Pos+" "+end_Pos+" | "+start_Neg+" "+end_Neg);
+//
+//            List<CompoundWithAbstractFP<ProbabilityFingerprint>> trainQueries = new ArrayList<>(queries_Pos.subList(0, start_Pos));
+//            trainQueries.addAll(queries_Pos.subList(end_Pos,sizePos));
+//            trainQueries.addAll(queries_Neg.subList(0, start_Neg));
+//            trainQueries.addAll(queries_Neg.subList(end_Neg,sizeNeg));
+//
+//
+//            List<Instance> testInstances = new ArrayList<>(posInstances.subList(start_Pos, end_Pos));
+//            testInstances.addAll(negInstances.subList(start_Neg, end_Neg));
+//
+//            System.out.println("train: "+trainQueries.size()+" "+trainCand.size());
+//            System.out.println("test: "+testInstances.size());
+//
+//            //train
+//            trainConfidenceScore.train(executorService, trainQueries.toArray(new CompoundWithAbstractFP[0]), trainCand.toArray(new CompoundWithAbstractFP[0][]), statistics);
+//
+//            QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
+//            queryPredictor.absFPIndices = getAbsIndices(maskedFingerprintVersion);
+//
+//
+//            //test
+//
+//
+//            System.out.println("predict");
+//            for (Instance instance : testInstances) {
+//                if (instance.candidates.size()==0) continue;
+//
+//                if (DEBUG){
+//                    if (idSet.contains(instance.query.getInchi())){
+//                        System.out.println("Already tested query");
+//                    }
+//                }
+//
+//                idSet.add(instance.query.getInchi());
+//                boolean isCorrect = (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)); //todo inchi equals !?!
+//                double platt = 0;
+//                try {
+//                    platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//                } catch (PredictionException e) {
+//                    System.err.println(e.getMessage());
+//                    continue;
+//                }
+//
+//                assert platt>=0;
+//                assert platt<=1;
+//                platts.add(platt);
+//                corrects.add((byte)(isCorrect ? 1 : 0));
+//                ids.add(instance.query.getInchi().in3D);
+//            }
+//
+//        }
+//
+//        //write output
+//        boolean[] correctsBool = new boolean[corrects.size()];
+//        for (int i = 0; i < correctsBool.length; i++) correctsBool[i] = (corrects.get(i)>0);
+//
+//        Stats stats = new Stats(platts.toArray(), correctsBool);
+//        BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
+//        writer.write("#AUC"+SEP+stats.getAUC()+"\n");
+//        writer.write("inchi"+SEP+"platt"+SEP+"isCorrect"+"\n");
+//        for (int i = 0; i < correctsBool.length; i++) {
+//            String id = ids.get(i);
+//            byte b = corrects.get(i);
+//            double platt = platts.get(i);
+//            writer.write(id+SEP+platt+SEP+b+"\n");
+//        }
+//        writer.close();
+//
+//        executorService.shutdown();
+//    }
+
     public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
         final int FOLD = 10;
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
@@ -173,37 +332,45 @@ public class EvalConfidenceScore {
             });
         }
 
-
-
-        //shuffle
-        System.out.println(instances.get(0).query.getInchi().in3D);
-        Collections.shuffle(instances);
-        System.out.println(instances.get(0).query.getInchi().in3D);
-
-        List<Instance> posInstances = new ArrayList<>();
-        List<Instance> negInstances = new ArrayList<>();
+        List<Instance> instances_pos = new ArrayList<>();
+        List<Instance> instances_neg = new ArrayList<>();
         for (Instance instance : instances) {
-            if (instance.candidates.size()==0) continue;
-            if (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)){
-                posInstances.add(instance);
-            } else {
-                negInstances.add(instance);
+            if (instance.candidates.get(0).getInchi().in2D.equals(instance.query.getInchi().in2D))
+                instances_pos.add(instance);
+            else
+                instances_neg.add(instance);
+        }
+
+        List<Instance>[] instanceFolds_pos = new ArrayList[FOLD];
+        List<Instance>[] instanceFolds_neg = new ArrayList[FOLD];
+
+        pickupTrainAndEvalStructureDependent(instances, instanceFolds_pos, false, FOLD);
+        pickupTrainAndEvalStructureDependent(instances, instanceFolds_neg, false, FOLD);
+
+        List<CompoundWithAbstractFP<ProbabilityFingerprint>>[] queryFolds_pos = new ArrayList[FOLD];
+        List<CompoundWithAbstractFP<Fingerprint>[]>[] candidateFolds_pos = new ArrayList[FOLD];
+
+        List<CompoundWithAbstractFP<ProbabilityFingerprint>>[] queryFolds_neg = new ArrayList[FOLD];
+        List<CompoundWithAbstractFP<Fingerprint>[]>[] candidateFolds_neg = new ArrayList[FOLD];
+
+        for (int i = 0; i < instanceFolds_pos.length; i++) {
+            List<Instance> instanceFold = instanceFolds_pos[i];
+            queryFolds_pos[i] = new ArrayList<>();
+            candidateFolds_pos[i] = new ArrayList<>();
+            for (Instance instance : instanceFold) {
+                queryFolds_pos[i].add(instance.query);
+                candidateFolds_pos[i].add(instance.candidates.toArray(new ScoredCandidate[0]));
             }
         }
 
-        System.out.println("pos: "+posInstances.size()+" neg: "+negInstances.size());
-
-        List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries_Pos = new ArrayList<>();
-        List<CompoundWithAbstractFP<Fingerprint>[]> candidates_Pos = new ArrayList<>();
-        for (Instance instance : posInstances) {
-            queries_Pos.add(instance.query);
-            candidates_Pos.add(instance.candidates.toArray(new CompoundWithAbstractFP[0]));
-        }
-        List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries_Neg = new ArrayList<>();
-        List<CompoundWithAbstractFP<Fingerprint>[]> candidates_Neg = new ArrayList<>();
-        for (Instance instance : negInstances) {
-            queries_Neg.add(instance.query);
-            candidates_Neg.add(instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+        for (int i = 0; i < instanceFolds_pos.length; i++) {
+            List<Instance> instanceFold = instanceFolds_pos[i];
+            queryFolds_pos[i] = new ArrayList<>();
+            candidateFolds_pos[i] = new ArrayList<>();
+            for (Instance instance : instanceFold) {
+                queryFolds_pos[i].add(instance.query);
+                candidateFolds_pos[i].add(instance.candidates.toArray(new ScoredCandidate[0]));
+            }
         }
 
         System.out.println("train");
@@ -217,36 +384,23 @@ public class EvalConfidenceScore {
         TByteArrayList corrects = new TByteArrayList();
         List<String> ids = new ArrayList<>();
 
-        final int sizePos = candidates_Pos.size();
-        final int sizeNeg = candidates_Neg.size();
-
-
         HashSet<InChI> idSet = new HashSet<>();
 
-        int end_Pos = 0;
-        int end_Neg = 0;
         for (int i = 0; i < FOLD; i++) {
-            int start_Pos = end_Pos;
-            int start_Neg = end_Neg;
-            end_Pos = (int)Math.ceil(1.0*(i+1)*sizePos/FOLD);
-            end_Neg = (int)Math.ceil(1.0*(i+1)*sizeNeg/FOLD);
+            List<CompoundWithAbstractFP<Fingerprint>[]> trainCand = new ArrayList<>();
+            for (int j = 0; j < FOLD; j++) {
+                if (j!=i) trainCand.addAll(candidateFolds[j]);
 
-            List<CompoundWithAbstractFP<Fingerprint>[]> trainCand = new ArrayList<>(candidates_Pos.subList(0, start_Pos));
-            trainCand.addAll(candidates_Pos.subList(end_Pos,sizePos));
-            trainCand.addAll(candidates_Neg.subList(0, start_Neg));
-            trainCand.addAll(candidates_Neg.subList(end_Neg,sizeNeg));
+            }
 
+            List<CompoundWithAbstractFP<ProbabilityFingerprint>> trainQueries = new ArrayList<>();
+            for (int j = 0; j < FOLD; j++) {
+                if (j!=i) trainQueries.addAll(queryFolds[j]);
 
-            System.out.println(start_Pos+" "+end_Pos+" | "+start_Neg+" "+end_Neg);
-
-            List<CompoundWithAbstractFP<ProbabilityFingerprint>> trainQueries = new ArrayList<>(queries_Pos.subList(0, start_Pos));
-            trainQueries.addAll(queries_Pos.subList(end_Pos,sizePos));
-            trainQueries.addAll(queries_Neg.subList(0, start_Neg));
-            trainQueries.addAll(queries_Neg.subList(end_Neg,sizeNeg));
+            }
 
 
-            List<Instance> testInstances = new ArrayList<>(posInstances.subList(start_Pos, end_Pos));
-            testInstances.addAll(negInstances.subList(start_Neg, end_Neg));
+            List<Instance> testInstances = new ArrayList<>(instanceFolds[i]);
 
             System.out.println("train: "+trainQueries.size()+" "+trainCand.size());
             System.out.println("test: "+testInstances.size());
@@ -272,7 +426,7 @@ public class EvalConfidenceScore {
                 }
 
                 idSet.add(instance.query.getInchi());
-                boolean isCorrect = (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)); //todo inchi equals !?!
+                boolean isCorrect = (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D));
                 double platt = 0;
                 try {
                     platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
@@ -289,6 +443,231 @@ public class EvalConfidenceScore {
             }
 
         }
+
+
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+
+
+
+//        List<Instance>[] instanceFolds = new ArrayList[FOLD];
+//
+//        pickupTrainAndEvalStructureDependent(instances, instanceFolds, false, FOLD);
+//
+//        List<CompoundWithAbstractFP<ProbabilityFingerprint>>[] queryFolds = new ArrayList[FOLD];
+//        List<CompoundWithAbstractFP<Fingerprint>[]>[] candidateFolds = new ArrayList[FOLD];
+//
+//        for (int i = 0; i < instanceFolds.length; i++) {
+//            List<Instance> instanceFold = instanceFolds[i];
+//            queryFolds[i] = new ArrayList<>();
+//            candidateFolds[i] = new ArrayList<>();
+//            for (Instance instance : instanceFold) {
+//                queryFolds[i].add(instance.query);
+//                candidateFolds[i].add(instance.candidates.toArray(new ScoredCandidate[0]));
+//            }
+//        }
+//
+//        System.out.println("train");
+//
+//        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+////        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM);
+////        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+//
+//        TDoubleArrayList platts = new TDoubleArrayList();
+//        TByteArrayList corrects = new TByteArrayList();
+//        List<String> ids = new ArrayList<>();
+//
+//        HashSet<InChI> idSet = new HashSet<>();
+//
+//        for (int i = 0; i < FOLD; i++) {
+//            List<CompoundWithAbstractFP<Fingerprint>[]> trainCand = new ArrayList<>();
+//            for (int j = 0; j < FOLD; j++) {
+//                if (j!=i) trainCand.addAll(candidateFolds[j]);
+//
+//            }
+//
+//            List<CompoundWithAbstractFP<ProbabilityFingerprint>> trainQueries = new ArrayList<>();
+//            for (int j = 0; j < FOLD; j++) {
+//                if (j!=i) trainQueries.addAll(queryFolds[j]);
+//
+//            }
+//
+//
+//            List<Instance> testInstances = new ArrayList<>(instanceFolds[i]);
+//
+//            System.out.println("train: "+trainQueries.size()+" "+trainCand.size());
+//            System.out.println("test: "+testInstances.size());
+//
+//            //train
+//            trainConfidenceScore.train(executorService, trainQueries.toArray(new CompoundWithAbstractFP[0]), trainCand.toArray(new CompoundWithAbstractFP[0][]), statistics);
+//
+//            QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
+//            queryPredictor.absFPIndices = getAbsIndices(maskedFingerprintVersion);
+//
+//
+//            //test
+//
+//
+//            System.out.println("predict");
+//            for (Instance instance : testInstances) {
+//                if (instance.candidates.size()==0) continue;
+//
+//                if (DEBUG){
+//                    if (idSet.contains(instance.query.getInchi())){
+//                        System.out.println("Already tested query");
+//                    }
+//                }
+//
+//                idSet.add(instance.query.getInchi());
+//                boolean isCorrect = (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D));
+//                double platt = 0;
+//                try {
+//                    platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//                } catch (PredictionException e) {
+//                    System.err.println(e.getMessage());
+//                    continue;
+//                }
+//
+//                assert platt>=0;
+//                assert platt<=1;
+//                platts.add(platt);
+//                corrects.add((byte)(isCorrect ? 1 : 0));
+//                ids.add(instance.query.getInchi().in3D);
+//            }
+//
+//        }
+//
+//
+
+
+
+
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+//
+
+
+
+
+        //shuffle
+//        Collections.shuffle(instances);
+//
+//        List<Instance> posInstances = new ArrayList<>();
+//        List<Instance> negInstances = new ArrayList<>();
+//        for (Instance instance : instances) {
+//            if (instance.candidates.size()==0) continue;
+//            if (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)){
+//                posInstances.add(instance);
+//            } else {
+//                negInstances.add(instance);
+//            }
+//        }
+//
+//        System.out.println("pos: "+posInstances.size()+" neg: "+negInstances.size());
+//
+//        List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries_Pos = new ArrayList<>();
+//        List<CompoundWithAbstractFP<Fingerprint>[]> candidates_Pos = new ArrayList<>();
+//        for (Instance instance : posInstances) {
+//            queries_Pos.add(instance.query);
+//            candidates_Pos.add(instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//        }
+//        List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries_Neg = new ArrayList<>();
+//        List<CompoundWithAbstractFP<Fingerprint>[]> candidates_Neg = new ArrayList<>();
+//        for (Instance instance : negInstances) {
+//            queries_Neg.add(instance.query);
+//            candidates_Neg.add(instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//        }
+
+//        System.out.println("train");
+//
+//        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+////        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM);
+////        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+//
+//        TDoubleArrayList platts = new TDoubleArrayList();
+//        TByteArrayList corrects = new TByteArrayList();
+//        List<String> ids = new ArrayList<>();
+//
+//        final int sizePos = candidates_Pos.size();
+//        final int sizeNeg = candidates_Neg.size();
+//
+//
+//        HashSet<InChI> idSet = new HashSet<>();
+//
+//        int end_Pos = 0;
+//        int end_Neg = 0;
+//        for (int i = 0; i < FOLD; i++) {
+//            int start_Pos = end_Pos;
+//            int start_Neg = end_Neg;
+//            end_Pos = (int)Math.ceil(1.0*(i+1)*sizePos/FOLD);
+//            end_Neg = (int)Math.ceil(1.0*(i+1)*sizeNeg/FOLD);
+//
+//            List<CompoundWithAbstractFP<Fingerprint>[]> trainCand = new ArrayList<>(candidates_Pos.subList(0, start_Pos));
+//            trainCand.addAll(candidates_Pos.subList(end_Pos,sizePos));
+//            trainCand.addAll(candidates_Neg.subList(0, start_Neg));
+//            trainCand.addAll(candidates_Neg.subList(end_Neg,sizeNeg));
+//
+//
+//            System.out.println(start_Pos+" "+end_Pos+" | "+start_Neg+" "+end_Neg);
+//
+//            List<CompoundWithAbstractFP<ProbabilityFingerprint>> trainQueries = new ArrayList<>(queries_Pos.subList(0, start_Pos));
+//            trainQueries.addAll(queries_Pos.subList(end_Pos,sizePos));
+//            trainQueries.addAll(queries_Neg.subList(0, start_Neg));
+//            trainQueries.addAll(queries_Neg.subList(end_Neg,sizeNeg));
+//
+//
+//            List<Instance> testInstances = new ArrayList<>(posInstances.subList(start_Pos, end_Pos));
+//            testInstances.addAll(negInstances.subList(start_Neg, end_Neg));
+//
+//            System.out.println("train: "+trainQueries.size()+" "+trainCand.size());
+//            System.out.println("test: "+testInstances.size());
+//
+//            //train
+//            trainConfidenceScore.train(executorService, trainQueries.toArray(new CompoundWithAbstractFP[0]), trainCand.toArray(new CompoundWithAbstractFP[0][]), statistics);
+//
+//            QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
+//            queryPredictor.absFPIndices = getAbsIndices(maskedFingerprintVersion);
+//
+//
+//            //test
+//
+//
+//            System.out.println("predict");
+//            for (Instance instance : testInstances) {
+//                if (instance.candidates.size()==0) continue;
+//
+//                if (DEBUG){
+//                    if (idSet.contains(instance.query.getInchi())){
+//                        System.out.println("Already tested query");
+//                    }
+//                }
+//
+//                idSet.add(instance.query.getInchi());
+//                boolean isCorrect = (instance.query.getInchi().in2D.equals(instance.candidates.get(0).getInchi().in2D)); //todo inchi equals !?!
+//                double platt = 0;
+//                try {
+//                    platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
+//                } catch (PredictionException e) {
+//                    System.err.println(e.getMessage());
+//                    continue;
+//                }
+//
+//                assert platt>=0;
+//                assert platt<=1;
+//                platts.add(platt);
+//                corrects.add((byte)(isCorrect ? 1 : 0));
+//                ids.add(instance.query.getInchi().in3D);
+//            }
+//
+//        }
 
         //write output
         boolean[] correctsBool = new boolean[corrects.size()];
@@ -307,6 +686,85 @@ public class EvalConfidenceScore {
         writer.close();
 
         executorService.shutdown();
+    }
+
+
+
+//    private static void pickupTrainAndEvalStructureDependent(List<Instance> compounds, List<Instance>[] trains, List<Instance>[] eval, boolean removeIdentifierDuplicates, int FOLDS) {
+private static void pickupTrainAndEvalStructureDependent(List<Instance> compounds, List<Instance>[] trains, boolean removeIdentifierDuplicates, int FOLDS) {
+        for (int k=0; k < FOLDS; ++k) {
+            trains[k] = new ArrayList<>();
+        }
+
+        final int[] foldSizes = new int[FOLDS];
+        final int length = compounds.size();
+        final int factor = length/FOLDS;
+        final int mod = length % FOLDS;
+
+        for (int i = 0; i < foldSizes.length; i++) {
+            foldSizes[i] = factor;
+            if (i<mod) ++foldSizes[i];
+        }
+
+        int[] randomOrder = new int[length];
+        int pos = 0;
+        for (int i = 0; i < foldSizes.length; i++) {
+            int foldSize = foldSizes[i];
+            for (int j = 0; j < foldSize; j++) {
+                randomOrder[pos++] = i;
+            }
+        }
+        Statistics.shuffle(randomOrder);
+
+        final List<Instance> sortedCompounds = new ArrayList<>(compounds);
+        Collections.sort(sortedCompounds, new Comparator<Instance>() {
+            @Override
+            public int compare(Instance o1, Instance o2) {
+                return o1.query.getInchi().in2D.compareTo(o2.query.getInchi().in2D);
+            }
+        });
+
+        List<Instance>[] split = new ArrayList[FOLDS];
+        for (int i = 0; i < split.length; i++) {
+            split[i] = new ArrayList<>();
+        }
+
+
+        int shufflePos = 0;
+        int[] unbalancedSize = new int[FOLDS];
+//        Iterator<Compound> iterator = compounds.iterator();
+        Iterator<Instance> iterator = sortedCompounds.iterator();
+        Instance next = iterator.next();
+        while (next != null) {
+            Instance compound = next;
+            int randBucket = randomOrder[shufflePos];
+            while (unbalancedSize[randBucket]>0) {
+                unbalancedSize[randBucket]--;
+                shufflePos++;
+                if (shufflePos>=randomOrder.length) break;
+                randBucket = randomOrder[shufflePos];
+            }
+            shufflePos++;
+            final String identifier = compound.query.getInchi().in2D;
+            split[randBucket].add(compound);
+            if (!iterator.hasNext()) break;
+            while ((iterator.hasNext()) && (next = iterator.next()).query.getInchi().in2D.equals(identifier)){
+                if (!removeIdentifierDuplicates){
+                    unbalancedSize[randBucket]++;
+                    split[randBucket].add(next);
+
+                }
+            }
+
+        }
+
+        for (int i = 0; i < split.length; i++) {
+            List<Instance> compoundList = split[i];
+            for (int j = 0; j < split.length; j++) {
+                if (i!=j) trains[j].addAll(compoundList);
+            }
+        }
+
     }
 
 

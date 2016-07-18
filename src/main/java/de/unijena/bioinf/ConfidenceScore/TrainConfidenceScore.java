@@ -12,11 +12,8 @@ import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by Marcus Ludwig on 08.03.16.

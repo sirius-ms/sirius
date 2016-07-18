@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ProbabilityEstimateScoring;
@@ -17,11 +16,11 @@ import java.util.Arrays;
 /**
  * Created by Marcus Ludwig on 30.04.16.
  */
-public class NormalizedToMedianScores implements FeatureCreator {
+public class DiffToMedianMeanScores implements FeatureCreator {
     private final String[] names;
     private final FingerblastScoring[] scorers;
 
-    public NormalizedToMedianScores(){
+    public DiffToMedianMeanScores(){
         names = new String[]{"CSIFingerIdScoring", "SimpleMaximumLikelihoodScoring", "ProbabilityEstimateScoring"};
         scorers = new FingerblastScoring[3];
     }

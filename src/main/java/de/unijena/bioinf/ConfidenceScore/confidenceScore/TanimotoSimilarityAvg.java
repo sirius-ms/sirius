@@ -1,0 +1,81 @@
+package de.unijena.bioinf.ConfidenceScore.confidenceScore;
+
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+
+import java.util.Collections;
+
+
+/**
+ * Created by Marcus Ludwig on 30.04.16.
+ */
+public class TanimotoSimilarityAvg implements FeatureCreator{
+    private PredictionPerformance[] statistics;
+    private int[] positions;
+    private int max;
+
+    //todo use also diff between similarities !?
+    public TanimotoSimilarityAvg(int... positions){
+        this.positions = positions;
+        int max = Integer.MIN_VALUE;
+        for (int i = 0; i < positions.length; i++) max = Math.max(max, positions[i]);
+        this.max = max;
+    }
+
+    @Override
+    public void prepare(PredictionPerformance[] statistics) {
+        this.statistics = statistics;
+    }
+
+    @Override
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        Fingerprint topHitFp = rankedCandidates[0].getFingerprint();
+        double sum = 0;
+        for (int i = 0; i < positions.length; i++) {
+            int position = positions[i];
+            sum += topHitFp.tanimoto(rankedCandidates[position].getFingerprint());
+        }
+
+        return new double[]{sum/positions.length};
+    }
+
+
+    @Override
+    public int getFeatureSize() {
+        return 1;
+    }
+
+    @Override
+    public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        return (rankedCandidates.length>max);
+    }
+
+    @Override
+    public String[] getFeatureNames() {
+        return new String[]{"TanimotoDiffToAvg"};
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper parameterHelper, DataDocument<G, D, L> document, D dictionary) {
+        L positionsList = document.getListFromDictionary(dictionary, "positions");
+        int size = document.sizeOfList(positionsList);
+        int[] positions = new int[size];
+        for (int i = 0; i < size; i++) positions[i] = (int)document.getIntFromList(positionsList, i);
+
+        this.positions = positions;
+        int max = Integer.MIN_VALUE;
+        for (int i = 0; i < positions.length; i++) max = Math.max(max, positions[i]);
+        this.max = max;
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper parameterHelper, DataDocument<G, D, L> document, D dictionary) {
+        L list = document.newList();
+        for (int position : positions) document.addToList(list, position);
+        document.addListToDictionary(dictionary, "positions", list);
+    }
+}

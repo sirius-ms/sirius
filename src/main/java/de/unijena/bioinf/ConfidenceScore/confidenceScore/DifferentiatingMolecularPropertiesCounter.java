@@ -6,9 +6,6 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.*;
-
-import java.util.Arrays;
 
 /**
  * Created by Marcus Ludwig on 29.04.16.
