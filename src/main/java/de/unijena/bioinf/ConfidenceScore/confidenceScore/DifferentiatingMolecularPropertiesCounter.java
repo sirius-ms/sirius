@@ -35,6 +35,12 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
 
         double[] haveProperty = new double[topHit.getFingerprint().getFingerprintVersion().size()];
         for (int i = 1; i < numOfCandidates; i++) {
+            if (i==rankedCandidates.length){
+                System.out.println("DEBUG");
+                System.out.println(rankedCandidates.length);
+                System.out.println(numOfCandidates);
+                System.out.println(this.numOfWorseCandidates);
+            }
             boolean[] fp  = rankedCandidates[i].getFingerprint().toBooleanArray();
             for (int j = 0; j < fp.length; j++) {
                 if (fp[j]) ++haveProperty[j];
@@ -67,7 +73,7 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
 
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        return rankedCandidates.length>1;
+        return (this.numOfWorseCandidates<0 ? rankedCandidates.length>1 : rankedCandidates.length>numOfWorseCandidates);
     }
 
     @Override

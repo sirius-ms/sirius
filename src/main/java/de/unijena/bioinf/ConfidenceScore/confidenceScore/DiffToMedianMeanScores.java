@@ -21,7 +21,8 @@ public class DiffToMedianMeanScores implements FeatureCreator {
     private final FingerblastScoring[] scorers;
 
     public DiffToMedianMeanScores(){
-        names = new String[]{"CSIFingerIdScoring", "SimpleMaximumLikelihoodScoring", "ProbabilityEstimateScoring"};
+        names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
+                                "CSIFingerIdScoringAvg", "SimpleMaximumLikelihoodScoringAvg", "ProbabilityEstimateScoringAvg"};
         scorers = new FingerblastScoring[3];
     }
 
@@ -34,7 +35,7 @@ public class DiffToMedianMeanScores implements FeatureCreator {
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        final double[] scores = new double[scorers.length];
+        final double[] scores = new double[scorers.length*2];
         for (int i = 0; i < scorers.length; i++) {
             FingerblastScoring scorer = scorers[i];
             scorer.prepare(query.getFingerprint());
@@ -44,7 +45,13 @@ public class DiffToMedianMeanScores implements FeatureCreator {
                 allScores[j] = scorer.score(query.getFingerprint(), rankedCandidates[j].getFingerprint());
             }
             double median = median(allScores);
+            double mean = mean(allScores);
             scores[i] = allScores[0]-median;
+            scores[i+scorers.length] = allScores[0]-mean;
+            //todo test
+            if (Double.isNaN(scores[i]) || Double.isNaN(scores[i+ scorers.length])){
+                throw new IllegalArgumentException("NaN");
+            }
         }
         return scores;
     }
@@ -56,18 +63,16 @@ public class DiffToMedianMeanScores implements FeatureCreator {
         return sum/numbers.length;
     }
 
-    /*
-    sorts array!!!
-     */
     public double median(double[] numbers){
-        Arrays.sort(numbers);
-        return numbers[numbers.length/2]; //todo ceil, floor?!?
+        double[] numbers2 = numbers.clone();
+        Arrays.sort(numbers2);
+        return numbers2[numbers2.length/2]; //todo ceil, floor?!?
     }
 
 
     @Override
     public int getFeatureSize() {
-        return scorers.length;
+        return scorers.length*2;
     }
 
     @Override
