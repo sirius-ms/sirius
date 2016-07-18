@@ -32,7 +32,7 @@ public class EvalConfidenceScore {
     final int MAX_CANDIDATES = -1; //all candidates
 
     private static final String SEP = "\t";
-    final static boolean DEBUG = true;
+    final static boolean DEBUG = false;
 
     private final PredictionPerformance[] statistics;
     protected final HashMap<String, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> queriesPerFormula;
@@ -202,9 +202,9 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM); //changed
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
+//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
 
         TDoubleArrayList platts = new TDoubleArrayList();
@@ -213,7 +213,6 @@ public class EvalConfidenceScore {
 
         HashSet<InChI> idSet = new HashSet<>();
 
-        //todo debug
         TIntIntHashMap map = new TIntIntHashMap();
 
         for (int i = 0; i < FOLD; i++) {
