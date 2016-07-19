@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -26,6 +27,7 @@ public class FingerIdTask {
 
     public final ExperimentContainer experiment;
     public final SiriusResultElement result;
+    public JobLog.Job job;
 
     public volatile ProbabilityFingerprint prediction;
 

@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
@@ -52,6 +53,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.text.AttributedCharacterIterator;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 
@@ -75,6 +77,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     protected int highlightMissing = -1, highlightAgree = -1, highlightedCandidate = -1;
     protected int selectedCompoundId;
+    protected HashSet<String> logPCalculated = new HashSet<>();
+
+    protected FilterPanel filterPanel;
+
+    protected LogPSlider logPSlider;
 
     protected void initFonts() {
         try {
@@ -100,8 +107,22 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         initFonts();
         setLayout(new BorderLayout());
         this.data = data;
+
+        JPanel northPanels = new JPanel(new BorderLayout());
+        add(northPanels, BorderLayout.NORTH);
+
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        add(northPanel, BorderLayout.NORTH);
+
+        northPanels.add(northPanel, BorderLayout.NORTH);
+        filterPanel = new FilterPanel();
+        filterPanel.toggle();
+        filterPanel.whenFilterChanges(new Runnable() {
+            @Override
+            public void run() {
+                updateFilter();
+            }
+        });
+        northPanels.add(filterPanel, BorderLayout.SOUTH);
 
         final JButton exportToCSV = new JButton("export list", new ImageIcon(CandidateJList.class.getResource("/icons/document-export.png")));
         exportToCSV.addActionListener(new ActionListener() {
@@ -113,16 +134,36 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
         northPanel.add(exportToCSV);
 
-        final JButton filter = new JButton("filter list",  new ImageIcon(CandidateJList.class.getResource("/icons/filter_32.png")));
+        final ImageIcon downIcon = new ImageIcon(CandidateJList.class.getResource("/icons/filter_down.png"));
+        final ImageIcon upIcon = new ImageIcon(CandidateJList.class.getResource("/icons/filter_up.png"));
+        final JButton filter = new JButton("filter list",  downIcon);
         filter.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //new FilterDialog(CandidateJList.this.owner).setVisible(true);
+                if (filterPanel.toggle()) {
+                    filter.setIcon(upIcon);
+                } else {
+                    filter.setIcon(downIcon);
+                }
             }
         });
-        filter.setEnabled(false);
 
         northPanel.add(filter);
+
+        logPSlider = new LogPSlider();
+        northPanel.add(new JLabel("XLogP filter: "));
+        northPanel.add(logPSlider);
+        logPSlider.setCallback(new Runnable() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateFilter();
+                    }
+                });
+            }
+        });
 
 
         candidateList = new InnerList(new ListModel());
@@ -154,7 +195,14 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         popupMenu.add(OpenInBrowser1);
         popupMenu.add(OpenInBrowser2);
         setVisible(true);
+
     }
+
+    public void updateFilter() {
+        final ListModel model = (ListModel)candidateList.getModel();
+        model.change();
+    }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -236,8 +284,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     public void refresh(FingerIdData data) {
         this.data = data;
+        this.filterPanel.setActiveExperiment(data);
         ((ListModel) candidateList.getModel()).change();
         this.structureSearcher.reloadList((ListModel) candidateList.getModel());
+        this.logPSlider.refresh(data);
     }
 
     @Override
@@ -251,7 +301,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         selectedCompoundId = index;
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.rank;
+        highlightedCandidate = candidate.index;
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
         final boolean in;
         int rx, ry;
@@ -269,7 +319,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final int row = ry / CELL_SIZE;
             final int col = rx / CELL_SIZE;
             highlightAgree = candidate.agreement.indexAt(row, col);
-            structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate - 1);
+            structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
         } else {
             final Rectangle box = candidate.missings.getBounds();
             final int absX = box.x + relativeRect.x;
@@ -282,15 +332,15 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 final int row = ry / CELL_SIZE;
                 final int col = rx / CELL_SIZE;
                 highlightMissing = candidate.missings.indexAt(row, col);
-                structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate - 1);
+                structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate);
             } else {
                 if (highlightAgree >= 0) {
                     highlightAgree = -1;
-                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate - 1);
+                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
                 }
                 if (highlightMissing >= 0) {
                     highlightMissing = -1;
-                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate - 1);
+                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate);
                 }
 
                 double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
@@ -449,8 +499,18 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         public void change() {
             if (data != null) {
                 candidates.clear();
+                int toFlag = 0;
+                final double minValue = data.minLogPFilter, maxValue = data.maxLogPFilter;
+                if (data.dbSelection.contains(DatasourceService.Sources.PUBCHEM)) toFlag = -1;
+                else for (DatasourceService.Sources s : data.dbSelection) toFlag |= s.flag;
+                System.out.println(toFlag);
                 for (int i = 0; i < data.compounds.length; ++i) {
-                    candidates.add(new CompoundCandidate(data.compounds[i], data.scores[i], i + 1, i));
+                    if (toFlag<0 || (toFlag & data.compounds[i].bitset)!=0) {
+                        double logp=data.compounds[i].xlogP;
+                        if (!Double.isNaN(logp) && logp >= minValue && logp <= maxValue) {
+                            candidates.add(new CompoundCandidate(data.compounds[i], data.scores[i], i + 1, i));
+                        }
+                    }
                 }
             } else candidates = new ArrayList<>();
             refreshList();
@@ -758,9 +818,42 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
+    public class XLogPLabel extends JPanel {
+
+        private double logP;
+        private final DecimalFormat format = new DecimalFormat("#0.000");
+        private Font font;
+
+        public XLogPLabel() {
+            this.logP = Double.NaN;
+            setPreferredSize(new Dimension(128, 20));
+            Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
+            map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+            map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
+            font = nameFont.deriveFont(map);
+        }
+
+        @Override
+        public void paint(Graphics g) {
+            ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            if (Double.isNaN(logP)) return;
+            g.setFont(font);
+            int widthB = g.getFontMetrics().stringWidth("XLogP: ");
+            g.drawString("XLogP:", 0, 14);
+            g.setFont(nameFont);
+            g.drawString(format.format(logP), widthB, 14);
+        }
+
+        public void setLogP(double logP) {
+            this.logP = logP;
+            repaint();
+        }
+    }
+
     public class DescriptionPanel extends JPanel {
 
         protected JLabel inchi, agreements, violations;
+        protected XLogPLabel xlogP;
         protected FingerprintView ag, vio;
         protected JPanel agpanel, viopanel;
         protected DatabasePanel databasePanel;
@@ -769,7 +862,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             setOpaque(false);
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setBorder(new EmptyBorder(5, 2, 2, 2));
+            final JPanel namePanel = new JPanel(new BorderLayout());
             inchi = new JLabel("", SwingConstants.LEFT);
+            inchi.setFont(nameFont);
             agpanel = new JPanel();
             agpanel.setOpaque(false);
             agpanel.setLayout(new BoxLayout(agpanel, BoxLayout.Y_AXIS));
@@ -785,7 +880,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             violations = new JLabel("False Negative Predictions:", SwingConstants.LEFT);
             agreements.setFont(nameFont.deriveFont(map));
             violations.setFont(nameFont.deriveFont(map));
-            add(inchi);
+            xlogP = new XLogPLabel();
+            namePanel.setOpaque(false);
+            namePanel.add(inchi, BorderLayout.WEST);
+            namePanel.add(xlogP, BorderLayout.EAST);
+            add(namePanel);
             ag = new FingerprintView(70, Color.GREEN);
             vio = new FingerprintView(50, Color.RED);
             agpanel.add(agreements);
@@ -810,8 +909,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
         public void setCompound(CompoundCandidate value) {
             setFont(propertyFont);
-            inchi.setText(value.compound.inchi.in2D);
+            inchi.setText(value.compound.inchi.key2D());
             databasePanel.setCompound(value);
+            xlogP.setLogP(value.compound.xlogP);
             if (data == null) {
                 ag.agreement = null;
                 vio.agreement = null;

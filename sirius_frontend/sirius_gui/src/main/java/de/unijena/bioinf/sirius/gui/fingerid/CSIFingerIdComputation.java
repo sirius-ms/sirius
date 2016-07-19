@@ -31,6 +31,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
+import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -80,6 +81,7 @@ public class CSIFingerIdComputation {
     protected final BackgroundThreadFormulas formulaWorker;
     protected final BackgroundThreadJobs jobWorker;
 
+
     protected final ReentrantLock globalLock;
     protected final Condition globalCondition;
 
@@ -108,6 +110,7 @@ public class CSIFingerIdComputation {
         this.jobWorker = new BackgroundThreadJobs();
         this.jobThread = new Thread(jobWorker);
         jobThread.start();
+
     }
 
     public MaskedFingerprintVersion getFingerprintVersion() {
@@ -226,6 +229,7 @@ public class CSIFingerIdComputation {
             this.compounds.put(c.inchi.key2D(), c);
         }
         compoundsPerFormula.put(formula, compounds);
+        for (Compound c : compounds) c.calculateXlogP();
         return compounds;
     }
 
@@ -392,15 +396,14 @@ public class CSIFingerIdComputation {
 
         if (confidenceScorePredictor!=null) {
             final FingerIdData data = best.getFingerIdData();
+            if (data.compounds.length==0) return;
             CompoundWithAbstractFP<ProbabilityFingerprint> query = data.compounds[0].asQuery(data.platts);
             CompoundWithAbstractFP<Fingerprint>[] candidates = new CompoundWithAbstractFP[data.compounds.length];
             for (int k=0; k < candidates.length; ++k) {
                 candidates[k] = data.compounds[k].asCandidate();
             }
             try {
-                System.out.print("Compute confidence for " + best.getMolecularFormula());
                 data.confidence = confidenceScorePredictor.estimateProbability(query, candidates);
-                System.out.println(": " + data.confidence);
             } catch (PredictionException e) {
                 data.confidence = Double.NaN;
                 e.printStackTrace();
@@ -445,12 +448,15 @@ public class CSIFingerIdComputation {
                     }
                 } else {
                     // download molecular formulas
+                    final MolecularFormula formula = container.result.getMolecularFormula();
+                    final JobLog.Job job = JobLog.getInstance().submit(container.experiment.getGUIName(), "Download " + formula.toString());
                     try {
-                        final MolecularFormula formula = container.result.getMolecularFormula();
                         loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula());
                         synchronized (blastWorker) {blastWorker.notifyAll();}
+
+                        job.done();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        job.error(e.getMessage(), e);
                     }
                 }
             }
@@ -485,13 +491,16 @@ public class CSIFingerIdComputation {
                     final FingerIdTask container = jobQueue.poll();
                     if (container!=null) {
                         nothingToDo=false;
+                        container.job = JobLog.getInstance().submit(container.experiment.getGUIName(), "Predict fingerprint");
                         try {
                             final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getRawTree(), fingerprintVersion);
                             jobs.put(container, job);
                         } catch (IOException e) {
                             jobQueue.add(container);
+                            container.job.error(e.getMessage(), e);
                         } catch (URISyntaxException e) {
                             e.printStackTrace();
+                            container.job.error(e.getMessage(), e);
                         }
                     }
                     try {
@@ -509,11 +518,13 @@ public class CSIFingerIdComputation {
                             entry.getKey().prediction = entry.getValue().prediction;
                             iter.remove();
                             blastQueue.add(entry.getKey());
+                            entry.getKey().job.done();
                             synchronized (blastWorker) {
                                 blastWorker.notifyAll();
                             }
                         } else if (entry.getValue().state=="CRASHED"){
                             iter.remove();
+                            entry.getKey().job.error("Error on server side", null);
                         }
                     } catch (URISyntaxException e) {
                         iter.remove();
@@ -565,17 +576,20 @@ public class CSIFingerIdComputation {
                         }
                         continue;
                     }
+                    // blast this compound
+                    container.job = JobLog.getInstance().submit(container.experiment.getGUIName(), "Search in structure database");
+                    final FingerIdData data = blast(container.result, container.prediction);
+                    final ExperimentContainer experiment = container.experiment;
+                    final SiriusResultElement resultElement = container.result;
+                    resultElement.setFingerIdData(data);
+                    resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
+                    refreshConfidence(experiment);
+                    callback.computationFinished(experiment, resultElement);
+                    container.job.done();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                // blast this compound
-                final FingerIdData data = blast(container.result, container.prediction);
-                final ExperimentContainer experiment = container.experiment;
-                final SiriusResultElement resultElement = container.result;
-                resultElement.setFingerIdData(data);
-                resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
-                refreshConfidence(experiment);
-                callback.computationFinished(experiment, resultElement);
+
 
             }
         }
