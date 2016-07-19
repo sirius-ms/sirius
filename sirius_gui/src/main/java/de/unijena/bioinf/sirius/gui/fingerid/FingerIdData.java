@@ -19,6 +19,9 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.chemdb.DatasourceService;
+
+import java.util.EnumSet;
 
 public class FingerIdData {
 
@@ -27,6 +30,8 @@ public class FingerIdData {
     protected double[] scores;
     protected double confidence;
     public double topScore;
+    protected double minLogPFilter=Double.NEGATIVE_INFINITY, maxLogPFilter=Double.POSITIVE_INFINITY;
+    public EnumSet<DatasourceService.Sources> dbSelection;
 
     public FingerIdData(Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
         this.compounds = compounds;
@@ -34,6 +39,7 @@ public class FingerIdData {
         this.platts = platts;
         this.topScore = scores.length == 0 ? Double.NEGATIVE_INFINITY : scores[0];
         this.confidence = Double.NaN;
+        this.dbSelection = EnumSet.of(DatasourceService.Sources.PUBCHEM);
     }
 
     public double getConfidence() {

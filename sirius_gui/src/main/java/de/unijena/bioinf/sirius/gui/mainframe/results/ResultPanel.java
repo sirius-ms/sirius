@@ -81,7 +81,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 
 		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"results"));
 	}
-	
+
 	public void changeData(ExperimentContainer ec){
 		this.ec = ec;
 

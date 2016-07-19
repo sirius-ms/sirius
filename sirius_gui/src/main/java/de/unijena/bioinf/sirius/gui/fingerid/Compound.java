@@ -30,9 +30,12 @@ import gnu.trove.list.array.TShortArrayList;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
+import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
@@ -62,6 +65,8 @@ public class Compound {
     protected Smiles smiles;
     protected String name;
     protected IAtomContainer molecule;
+    protected double xlogP = Double.NaN;
+    protected int bitset;
 
     protected Fingerprint fingerprint;
     protected Multimap<String, String> databases;
@@ -71,11 +76,16 @@ public class Compound {
         this.inchi = candidate.getInchi();
         this.smiles = new Smiles(candidate.getSmiles());
         this.name = candidate.getName();
+        this.bitset = candidate.getBitset();
         this.fingerprint = candidate.getFingerprint();
         final Set<String> names = DatasourceService2.getDataSourcesFromBitFlags(candidate.getBitset());
         names.remove(DatasourceService2.Sources.PUBCHEM.name);
         this.databases = ArrayListMultimap.create(names.size(), 1);
         for (String aname : names) this.databases.put(aname,null);
+    }
+
+    public int getBitset() {
+        return bitset;
     }
 
     protected Compound() {
@@ -161,6 +171,7 @@ public class Compound {
                 case END_OBJECT:
                     compound.inchi = new InChI(inchikey, inchi);
                     // add databases without links
+                    compound.bitset = flags;
                     final Set<String> names = DatasourceService2.getDataSourcesFromBitFlags(flags);
                     names.remove(DatasourceService2.Sources.PUBCHEM.name);
                     if (compound.databases!=null) {
@@ -249,9 +260,24 @@ public class Compound {
                 // try to parse smiles instead
                 return parseMoleculeFromSmiles();
             }
+            // calculate xlogP
         } catch (CDKException e) {
             e.printStackTrace();
             return parseMoleculeFromSmiles();
+        }
+    }
+
+    public void calculateXlogP() {
+        try {
+            XLogPDescriptor logPDescriptor = new XLogPDescriptor();
+            logPDescriptor.setParameters(new Object[]{true,true});
+            this.xlogP = ((DoubleResult)logPDescriptor.calculate(getMolecule()).getValue()).doubleValue();
+            if (inchi==null) {
+                final InChIGenerator gen = InChIGeneratorFactory.getInstance().getInChIGenerator(getMolecule());
+                this.inchi = new InChI(gen.getInchiKey(), gen.getInchi());
+            }
+        } catch (CDKException e) {
+            e.printStackTrace();
         }
     }
 
