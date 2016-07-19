@@ -32,7 +32,7 @@ public class EvalConfidenceScore {
     final int MAX_CANDIDATES = -1; //all candidates
 
     private static final String SEP = "\t";
-    final static boolean DEBUG = false;
+    final static boolean DEBUG = true;
 
     private final PredictionPerformance[] statistics;
     protected final HashMap<String, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> queriesPerFormula;

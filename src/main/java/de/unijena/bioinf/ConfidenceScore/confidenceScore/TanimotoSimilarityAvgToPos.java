@@ -13,14 +13,14 @@ import java.util.Arrays;
 /**
  * Created by Marcus Ludwig on 30.04.16.
  */
-public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
+public class TanimotoSimilarityAvgToPos implements FeatureCreator{
     private PredictionPerformance[] statistics;
-    private int[] percent;
+    private int[] positions;
 
     //todo use also diff between similarities !?
-    public TanimotoSimilarityAvgToPerc(int... percent){
-        this.percent = percent;
-        Arrays.sort(this.percent);
+    public TanimotoSimilarityAvgToPos(int... followingPositions){
+        this.positions = followingPositions;
+        Arrays.sort(this.positions);
     }
 
     @Override
@@ -33,11 +33,11 @@ public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
         Fingerprint topHitFp = rankedCandidates[0].getFingerprint();
         double sum = 0;
         int pPos = 0;
-        double[] sim = new double[percent.length];
+        double[] sim = new double[positions.length];
         for (int i = 1; i < rankedCandidates.length; i++) {
             CompoundWithAbstractFP<Fingerprint> rankedCandidate = rankedCandidates[i];
             sum += topHitFp.tanimoto(rankedCandidate.getFingerprint());
-            while (pPos<percent.length && (percent[pPos]/100.0)<=(1.0*i/rankedCandidates.length)) {
+            while (pPos<positions.length && positions[pPos]<=i) {
                 sim[pPos] = sum/i;
                 pPos++;
             }
@@ -48,7 +48,7 @@ public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
 
     @Override
     public int getFeatureSize() {
-        return percent.length;
+        return positions.length;
     }
 
     @Override
@@ -59,27 +59,27 @@ public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
     @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
-        for (int j = 0; j < percent.length; j++) {
-            int perc = percent[j];
-            names[j] = "TanimotoSimilarityAvgToPerc"+perc;
+        for (int j = 0; j < positions.length; j++) {
+            int p = positions[j];
+            names[j] = "TanimotoSimilarityAvgToPos"+p;
         }
         return names;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper parameterHelper, DataDocument<G, D, L> document, D dictionary) {
-        L percentList = document.getListFromDictionary(dictionary, "percent");
+        L percentList = document.getListFromDictionary(dictionary, "positions");
         int size = document.sizeOfList(percentList);
         int[] perc = new int[size];
         for (int i = 0; i < size; i++) perc[i] = (int)document.getIntFromList(percentList, i);
 
-        this.percent = perc;
+        this.positions = perc;
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper parameterHelper, DataDocument<G, D, L> document, D dictionary) {
         L list = document.newList();
-        for (int position : percent) document.addToList(list, position);
-        document.addListToDictionary(dictionary, "percent", list);
+        for (int position : positions) document.addToList(list, position);
+        document.addListToDictionary(dictionary, "positions", list);
     }
 }

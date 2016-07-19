@@ -12,8 +12,13 @@ import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Created by Marcus Ludwig on 08.03.16.
@@ -26,6 +31,8 @@ public class TrainConfidenceScore {
     private int[] priority;
     private final SVMInterface svmInterface;
     private PredictionPerformance[] statistics;
+
+    private final boolean DEBUG = true;
 
     public TrainConfidenceScore(boolean useLinearSVM){
         if (useLinearSVM) svmInterface = new LibLinearImpl();
@@ -55,26 +62,87 @@ public class TrainConfidenceScore {
 
     }
 
-    private void trainOnePredictor(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates , FeatureCreator featureCreator, int step) throws InterruptedException {
+    private class FeatureWithIdx {
+        private final int idx;
+        private final double[] features;
+        private FeatureWithIdx(int idx, double[] features){
+            this.idx = idx;
+            this.features = features;
+        }
+    }
+
+    private void trainOnePredictor(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates , final FeatureCreator featureCreator, int step) throws InterruptedException {
         List<double[]> featureList = new ArrayList();
         TIntArrayList usedInstances = new TIntArrayList();
+
+        List<Future<FeatureWithIdx>> futures = new ArrayList<>();
         for (int i = 0; i < queries.length; i++) {
-            CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
-            CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
+            final int idx = i;
+            final CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
+            final CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
             if (featureCreator.isCompatible(query, candidates)){
                 usedInstances.add(i);
-                double[] features = featureCreator.computeFeatures(query, candidates);
-                for (int j = 0; j < features.length; j++) {
-                    double feature = features[j];
-                    if (Double.isNaN(feature)){
-                        String name = featureCreator.getFeatureNames()[j];
-                        throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
+                futures.add(executorService.submit(new Callable<FeatureWithIdx>() {
+                    @Override
+                    public FeatureWithIdx call() throws Exception {
+                        double[] features = featureCreator.computeFeatures(query, candidates);
+                        for (int j = 0; j < features.length; j++) {
+                            double feature = features[j];
+                            if (Double.isNaN(feature)){
+                                String name = featureCreator.getFeatureNames()[j];
+                                throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
+                            }
+                        }
+                        return new FeatureWithIdx(idx, features);
                     }
-                }
-                featureList.add(features);
+                }));
+
             }
 
         }
+
+        List<FeatureWithIdx> results = new ArrayList<>();
+        for (Future<FeatureWithIdx> future : futures) {
+            try {
+                results.add(future.get());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+        Collections.sort(results, new Comparator<FeatureWithIdx>() {
+            @Override
+            public int compare(FeatureWithIdx o1, FeatureWithIdx o2) {
+                return Integer.compare(o1.idx, o2.idx);
+            }
+        });
+
+        for (FeatureWithIdx result : results) {
+            featureList.add(result.features);
+        }
+
+
+        if (DEBUG){
+            System.out.println("computed features");
+        }
+
+//        for (int i = 0; i < queries.length; i++) {
+//            CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
+//            CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
+//            if (featureCreator.isCompatible(query, candidates)){
+//                usedInstances.add(i);
+//                double[] features = featureCreator.computeFeatures(query, candidates);
+//                for (int j = 0; j < features.length; j++) {
+//                    double feature = features[j];
+//                    if (Double.isNaN(feature)){
+//                        String name = featureCreator.getFeatureNames()[j];
+//                        throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
+//                    }
+//                }
+//                featureList.add(features);
+//            }
+//        }
+
         double[][] featureMatrix = featureList.toArray(new double[0][]);
 
         Scaler scaler = new Scaler.StandardScaler(featureMatrix);
@@ -117,6 +185,10 @@ public class TrainConfidenceScore {
         LinearSVMPredictor predictor = trainLinearSVM.trainWithCrossvalidation();
 
 //        LinearSVMPredictor predictor = new LinearSVMPredictor(new double[]{1}, 0);
+
+        if (DEBUG){
+            System.out.println("trained predictor");
+        }
 
         this.predictors[step] = predictor;
         this.scalers[step] = scaler;
@@ -529,7 +601,7 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarity(1,4,9),
                             new TanimotoSimilarityAvg(1,2,3,4),
                             new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
-                            new TanimotoSimilarityAvgToPerc(10,20,50),
+//                            new TanimotoSimilarityAvgToFixedLength(4,9),
                             new NormalizedToMedianMeanScores(1,4,9),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 9),
@@ -538,6 +610,30 @@ public class TrainConfidenceScore {
                     });
                     break;
                 case 20:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter()),
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,4,9),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new MedianMeanScoresFeature(),
+                            new DiffToMedianMeanScores(),
+                            new TanimotoSimilarity(1,4),
+//                            new TanimotoSimilarityAvg(1,2,3,4),
+//                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
+                            new TanimotoSimilarityAvgToPos(4,9,19),
+                            new NormalizedToMedianMeanScores(1,4,9),
+                            new DifferentiatingMolecularPropertiesCounter(0.8, size-1),
+                            new DifferentiatingMolecularPropertiesCounter(0.9, size-1),
+                            new DifferentiatingMolecularPropertiesCounter(0.8, 4),
+                            new DifferentiatingMolecularPropertiesCounter(0.8, 9),
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 4),
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 9)
+                    });
+                    break;
                 case 50:
                     featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
                             new NumOfCandidatesCounter(),
@@ -551,9 +647,9 @@ public class TrainConfidenceScore {
                             new MedianMeanScoresFeature(),
                             new DiffToMedianMeanScores(),
                             new TanimotoSimilarity(1,4),
-                            new TanimotoSimilarityAvg(1,2,3,4),
-                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
-                            new TanimotoSimilarityAvgToPerc(10,20,50),
+//                            new TanimotoSimilarityAvg(1,2,3,4),
+//                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
+                            new TanimotoSimilarityAvgToPos(4,9,19,49),
                             new NormalizedToMedianMeanScores(1,4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.9, size-1),
