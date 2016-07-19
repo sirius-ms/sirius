@@ -3,10 +3,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
-import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
-import de.unijena.bioinf.sirius.gui.compute.CompoundModel;
-import de.unijena.bioinf.sirius.gui.compute.ComputeDialog;
+import de.unijena.bioinf.sirius.gui.compute.*;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
@@ -43,13 +40,13 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener, KeyListener{
+public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener, KeyListener, JobLog.JobListener{
 
     private Logger logger = LoggerFactory.getLogger(MainFrame.class);
 
     private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID;
+	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID, jobs;
 
 	protected CSIFingerIdComputation csiFingerId;
 	
@@ -62,6 +59,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private static final String DUMMY_CARD = "dummy";
 	private static final String RESULTS_CARD = "results";
 	private ConfigStorage config;
+    private JobDialog jobDialog;
+    private ImageIcon jobRunning, jobNotRunning;
 
 	private BackgroundComputation backgroundComputation;
 
@@ -92,12 +91,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}
 
         csiFingerId = new CSIFingerIdComputation(new CSIFingerIdComputation.Callback() {
-            @Override
-            public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
-                refreshCompound(container);
-                confidenceList.refreshList();
-            }
-        });
+			@Override
+			public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
+				refreshCompound(container);
+				confidenceList.refreshList();
+			}
+		});
 
 
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -242,6 +241,24 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         tempP.add(configFingerID);
         leftControlPanel.add(tempP);
+		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
+		//tempP.setBorder(BorderFactory.createEtchedBorder());
+        this.jobRunning = new ImageIcon(MainFrame.class.getResource("/icons/ajax-loader.gif"));
+        this.jobNotRunning = new ImageIcon(MainFrame.class.getResource("/icons/ajax-stop.png"));
+		jobs = new JButton("Jobs", jobNotRunning);
+
+
+        jobDialog = new JobDialog(this);
+        jobs.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                jobDialog.showDialog();
+            }
+        });
+
+		tempP.add(jobs);
+        JobLog.getInstance().addListener(this);
+		leftControlPanel.add(tempP);
 
 //        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 //        tempP.setBorder(BorderFactory.createEtchedBorder());
@@ -1140,6 +1157,28 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 
     public void fingerIdComputationComplete() {
+
+    }
+
+    @Override
+    public void jobIsSubmitted(JobLog.Job job) {
+
+    }
+
+    @Override
+    public void jobIsDone(final JobLog.Job job) {
+        SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				if (JobLog.getInstance().hasActiveJobs()) {
+					jobs.setIcon(jobRunning);
+				} else jobs.setIcon(jobNotRunning);
+			}
+		});
+    }
+
+    @Override
+    public void jobIsFailed(JobLog.Job job) {
 
     }
 }

@@ -61,6 +61,7 @@ public class BackgroundComputation {
             final Task t = iter.next();
             if (t.exp==container) {
                 iter.remove();
+                t.job.error("Canceled", null);
                 break;
             }
         }
@@ -76,6 +77,7 @@ public class BackgroundComputation {
             canceled.add(t.exp);
             iter.remove();
             t.exp.setComputeState(ComputingStatus.UNCOMPUTED);
+            t.job.error("Canceled", null);
         }
         if (currentComputation!=null) cancel(currentComputation);
         return canceled;
@@ -123,6 +125,7 @@ public class BackgroundComputation {
         private final double ppm;
         private final int numberOfCandidates;
         private final String profile;
+        private final JobLog.Job job;
 
         private final FormulaSource formulaSource;
 
@@ -139,6 +142,7 @@ public class BackgroundComputation {
 
             this.state = exp.getComputeState();
             this.results = exp.getRawResults();
+            this.job = JobLog.getInstance().submit(exp.getGUIName(), "compute trees");
         }
     }
 
@@ -154,6 +158,7 @@ public class BackgroundComputation {
                     c.exp.setComputeState(c.state);
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
+                    c.job.run();
                 }
                 owner.refreshCompound(c.exp);
             }
@@ -169,10 +174,12 @@ public class BackgroundComputation {
             while (!queue.isEmpty()) {
                 final Task task = queue.poll();
                 task.state = ComputingStatus.COMPUTING;
+                task.job.run();
                 publish(task);
                 compute(task);
                 if (task.state == ComputingStatus.COMPUTING) {
                     task.state = ComputingStatus.COMPUTED;
+                    task.job.done();
                 }
                 publish(task);
             }
@@ -197,6 +204,7 @@ public class BackgroundComputation {
                         if (canceled==container.exp) {
                             feedback.cancelComputation();
                             container.state = ComputingStatus.UNCOMPUTED;
+                            container.job.error("canceled",null);
                         }
                         iter.remove();
                     }
@@ -245,6 +253,7 @@ public class BackgroundComputation {
             } catch (Exception e) {
                 e.printStackTrace();
                 container.state = ComputingStatus.FAILED;
+                container.job.error(e.getMessage(), e);
                 container.results=new ArrayList<>();
             }
         }
