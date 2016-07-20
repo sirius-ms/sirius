@@ -312,27 +312,49 @@ public class TrainLinearSVM  implements Closeable {
         return new double[]{data.size()/(2*weight[0]), data.size()/(2*weight[1])};
     }
 
-    private double[] trainProABForPlatt(double c, SVMInterface.svm_problem[] problems, List<Compound>[] evals){
+    private double[] trainProABForPlatt(double c, final SVMInterface.svm_problem[] problems, List<Compound>[] evals) throws InterruptedException {
         final SVMInterface.svm_parameter parameter = defaultParameters();
         parameter.C = c;
         parameter.weight = WEIGHT;
         parameter.weight_label = WEIGHT_LABEL;
 
+        List<Future<SVMInterface.svm_model>> fmodels = new ArrayList<>();
+
         TDoubleArrayList scores = new TDoubleArrayList();
         TDoubleArrayList labels = new TDoubleArrayList();
         for (int fold=0; fold < problems.length; ++fold) {
-            final SVMInterface.svm_model model = svmInterface.svm_train(problems[fold], parameter);
-            for (Compound compound : evals[fold]) {
-                final double score = svmInterface.svm_predict(model, compound.nodes);
-                scores.add(score);
-                labels.add(compound.classification);
-            }
+            final int current = fold;
+            fmodels.add(executorService.submit(new Callable<SVMInterface.svm_model>() {
+                @Override
+                public SVMInterface.svm_model call() throws Exception {
+                    final SVMInterface.svm_model model = svmInterface.svm_train(problems[current], parameter);
+                    return model;
+                }
+            }));
         }
+
+        final ArrayList<SVMInterface.svm_model> models = new ArrayList<>();
+        for (int fold = 0; fold < fmodels.size(); fold++) {
+            Future<SVMInterface.svm_model> fm  = fmodels.get(fold);
+            try {
+                final SVMInterface.svm_model model = fm.get();
+                for (Compound compound : evals[fold]) {
+                    final double score = svmInterface.svm_predict(model, compound.nodes);
+                    scores.add(score);
+                    labels.add(compound.classification);
+                }
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
 
         double[] probAB = new double[2];
         sigmoid_train(scores.size(), scores.toArray(), labels.toArray(), probAB);
         return probAB;
     }
+
 
     private SVMInterface.svm_model train(double c, List<Compound> train){
         final SVMInterface.svm_problem problem = defineProblem(train);

@@ -16,6 +16,17 @@ public class NewBioChemicalDatabase extends ChemicalDatabase {
         super(host, username, password);
     }
 
+    @Override
+    public NewBioChemicalDatabase clone() throws CloneNotSupportedException {
+        try {
+            NewBioChemicalDatabase db =  new NewBioChemicalDatabase(super.getHost(), super.getUsername(), super.getPassword());
+            db.setBioFilter(this.getBioFilter());
+            return db;
+        } catch (DatabaseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     @Override
     protected PreparedStatement sqlLookupStructureBio(MolecularFormula f) throws SQLException {

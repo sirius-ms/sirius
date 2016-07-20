@@ -202,9 +202,9 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM); //changed
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
 
         TDoubleArrayList platts = new TDoubleArrayList();
@@ -420,42 +420,113 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
         this.db = db;
     }
 
+    /**
+     * parrallel !!!
+     * @return
+     * @throws IOException
+     * @throws DatabaseException
+     */
     public List<Instance> computeHitList() throws IOException, DatabaseException {
         List<Instance> instances = new ArrayList<>();
         List<String> queriesPerFormulaList = new ArrayList<>(queriesPerFormula.keySet());
 
-        final List<CompoundWithAbstractFP<ProbabilityFingerprint>> allQueries = new LinkedList<>();
-        final List<List<ScoredCandidate>> allScoredCandidates = new LinkedList<>();
-        for (String name : queriesPerFormulaList) {
-            if (name == null) continue;
-            final List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries = queriesPerFormula.get(name);
 
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            List<CompoundWithAbstractFP<Fingerprint>> iter = searchByFingerBlast(db, maskedFingerprintVersion, queries.get(0).getInchi().extractFormula(), executorService);
-            executorService.shutdown();
-
-            List<List<ScoredCandidate>> hits = getTopHits(queries, iter, MAX_CANDIDATES);
-            allScoredCandidates.addAll(hits);
-            allQueries.addAll(queries);
-        }
-
-        Iterator<CompoundWithAbstractFP<ProbabilityFingerprint>> queryIterator = allQueries.iterator();
-        Iterator<List<ScoredCandidate>> scoredCandListIterator = allScoredCandidates.listIterator();
-
-        while (queryIterator.hasNext()) {
-            CompoundWithAbstractFP<ProbabilityFingerprint> query = queryIterator.next();
-            List<ScoredCandidate> scoredCandidates = scoredCandListIterator.next();
-//            Collections.sort(scoredCandidates, new ScoredCandidate.MaxBestComparator()); // already done
-            final Instance instance = new Instance(query, scoredCandidates);
-            instances.add(instance);
+        final int NUM_OF_THREADS = Runtime.getRuntime().availableProcessors();
+        ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
+        List<ChemicalDatabase> databases = new ArrayList<>();
+        for (int i = 0; i < NUM_OF_THREADS; i++) {
+            try {
+                databases.add(db.clone());
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+            }
 
         }
 
-        return instances;
+        if (databases.size()==0){
+            System.err.println("cloning DBs didn't work");
+            databases.add(db);
+        }
+
+        List<Future<List<Instance>>> futures = new ArrayList<>();
+        final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>(queriesPerFormulaList);
+        for (final ChemicalDatabase database : databases) {
+            futures.add(executorService.submit(new Callable<List<Instance>>() {
+                @Override
+                public List<Instance> call() throws Exception {
+                    List<Instance> instanceList = new ArrayList<Instance>();
+                    String name;
+                    while (!queue.isEmpty()){
+                        name = queue.poll();
+                        if (name == null) continue;
+                        final List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries = queriesPerFormula.get(name);
+
+                        List<CompoundWithAbstractFP<Fingerprint>> iter = searchByFingerBlast(database, maskedFingerprintVersion, queries.get(0).getInchi().extractFormula());
+
+                        List<List<ScoredCandidate>> hits = getTopHits(queries, iter, MAX_CANDIDATES);
+
+                        Iterator<CompoundWithAbstractFP<ProbabilityFingerprint>> queryIterator = queries.iterator();
+                        Iterator<List<ScoredCandidate>> scoredCandListIterator = hits.listIterator();
+
+                        while (queryIterator.hasNext()) {
+                            CompoundWithAbstractFP<ProbabilityFingerprint> query = queryIterator.next();
+                            List<ScoredCandidate> scoredCandidates = scoredCandListIterator.next();
+                            final Instance instance = new Instance(query, scoredCandidates);
+                            instanceList.add(instance);
+                        }
+                    }
+                    return instanceList;
+                }
+            }));
+        }
+
+        List<Instance> results = new ArrayList<>();
+        for (Future<List<Instance>> future : futures) {
+            try {
+                results.addAll(future.get());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+        executorService.shutdown();
+
+        return results;
+
+//        final List<CompoundWithAbstractFP<ProbabilityFingerprint>> allQueries = new LinkedList<>();
+//        final List<List<ScoredCandidate>> allScoredCandidates = new LinkedList<>();
+//        for (String name : queriesPerFormulaList) {
+//            if (name == null) continue;
+//            final List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries = queriesPerFormula.get(name);
+//
+//            List<CompoundWithAbstractFP<Fingerprint>> iter = searchByFingerBlast(db, maskedFingerprintVersion, queries.get(0).getInchi().extractFormula());
+//
+//
+//            List<List<ScoredCandidate>> hits = getTopHits(queries, iter, MAX_CANDIDATES);
+//            allScoredCandidates.addAll(hits);
+//            allQueries.addAll(queries);
+//        }
+//
+//        Iterator<CompoundWithAbstractFP<ProbabilityFingerprint>> queryIterator = allQueries.iterator();
+//        Iterator<List<ScoredCandidate>> scoredCandListIterator = allScoredCandidates.listIterator();
+//
+//        while (queryIterator.hasNext()) {
+//            CompoundWithAbstractFP<ProbabilityFingerprint> query = queryIterator.next();
+//            List<ScoredCandidate> scoredCandidates = scoredCandListIterator.next();
+////            Collections.sort(scoredCandidates, new ScoredCandidate.MaxBestComparator()); // already done
+//            final Instance instance = new Instance(query, scoredCandidates);
+//            instances.add(instance);
+//
+//        }
+//
+//        return instances;
     }
 
 
-    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula, ExecutorService backgroundThread) throws DatabaseException {
+    private static List<CompoundWithAbstractFP<Fingerprint>> searchByFingerBlast(final ChemicalDatabase db, MaskedFingerprintVersion maskedFingerprintVersion, final MolecularFormula formula) throws DatabaseException {
         final ConcurrentLinkedQueue<FingerprintCandidate> candidates = new ConcurrentLinkedQueue<>();
         db.lookupStructuresAndFingerprintsByFormula(formula, candidates);
 
