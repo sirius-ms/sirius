@@ -10,6 +10,7 @@ import java.sql.SQLException;
  */
 public class NewBioChemicalDatabase extends ChemicalDatabase {
     public NewBioChemicalDatabase() throws DatabaseException {
+        super();
     }
 
     public NewBioChemicalDatabase(String host, String username, String password) throws DatabaseException {

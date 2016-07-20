@@ -152,7 +152,8 @@ public class EvalConfidenceScore {
 
 
     public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-        final int FOLD = 10;
+//        final int FOLD = 10;
+        final int FOLD = 5; //changed!!!
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -446,6 +447,8 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
         if (databases.size()==0){
             System.err.println("cloning DBs didn't work");
             databases.add(db);
+        } else {
+            System.out.println(databases.size()+" chemicalDBs");
         }
 
         List<Future<List<Instance>>> futures = new ArrayList<>();
