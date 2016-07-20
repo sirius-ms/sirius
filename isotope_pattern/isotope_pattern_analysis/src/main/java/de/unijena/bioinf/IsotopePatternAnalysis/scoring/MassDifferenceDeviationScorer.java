@@ -24,17 +24,23 @@ import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.LinearIntensityDependency;
 import org.apache.commons.math3.special.Erf;
 
+/**
+ * scores the m/z of the first peak and the m/z difference between either all other peaks and the first peak.
+ * Peaks with relative intensity below 10% are scored with doubled standard deviation
+ *
+ *
+ */
 public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
 
     private final static double root2 = Math.sqrt(2d);
-    private IntensityDependency dependency;
+    protected IntensityDependency dependency;
 
     public MassDifferenceDeviationScorer() {
-        this(1.5d);
+        this(2d);
     }
 
     public MassDifferenceDeviationScorer(double lowestIntensityAccuracy) {
-        this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
+        this(new LinearIntensityDependency(0.1d, 1d, lowestIntensityAccuracy));
     }
 
     public MassDifferenceDeviationScorer(IntensityDependency dependency) {
@@ -42,19 +48,18 @@ public class MassDifferenceDeviationScorer implements IsotopePatternScorer {
     }
 
     @Override
-    public double score(Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scores, Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
         final double mz0 = measured.getMzAt(0);
         final double thMz0 = theoretical.getMzAt(0);
         double score = 0d;
-        for (int i=0; i < measured.size(); ++i) {
-            final double mz = measured.getMzAt(i) - (i==0 ? 0 : measured.getMzAt(i-1));
-            final double thMz = theoretical.getMzAt(i) - (i==0 ? 0 : theoretical.getMzAt(i-1));
+        for (int i=1; i < measured.size(); ++i) {
+            final double mz = measured.getMzAt(i) - mz0;
+            final double thMz = theoretical.getMzAt(i) - thMz0;
             final double intensity = measured.getIntensityAt(i);
-            // TODO: thMz hier richtig?
             final double sd = profile.getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * dependency.getValueAt(intensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
+            scores[i] += score;
         }
-        return score;
     }
 
     @Override

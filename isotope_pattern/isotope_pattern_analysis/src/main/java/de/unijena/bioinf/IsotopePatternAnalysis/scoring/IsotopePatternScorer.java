@@ -30,7 +30,7 @@ public interface IsotopePatternScorer extends Parameterized{
      * @param usedNormalization normalization mode which was applied to the spectra, or null, if both spectra is not normalized
      * @return
      */
-    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile);
+    public void score(double[] scoreUptoKPeaks, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile);
 	
 	
 }

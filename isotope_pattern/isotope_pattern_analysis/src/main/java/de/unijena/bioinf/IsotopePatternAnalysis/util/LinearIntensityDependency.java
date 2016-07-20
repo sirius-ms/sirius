@@ -22,14 +22,22 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 public class LinearIntensityDependency implements IntensityDependency {
 
-    private double zeroIntensity, fullIntensity;
+    private double zeroIntensity, fullIntensity, maxValue;
 
     public LinearIntensityDependency(){
         this.zeroIntensity = 1;
         this.fullIntensity = 1;
+        this.maxValue = 1;
     }
 
     public LinearIntensityDependency(double fullIntensity, double zeroIntensity) {
+        this.maxValue = 1d;
+        this.zeroIntensity = zeroIntensity;
+        this.fullIntensity = fullIntensity;
+    }
+
+    public LinearIntensityDependency(double maxValue, double fullIntensity, double zeroIntensity) {
+        this.maxValue = maxValue;
         this.zeroIntensity = zeroIntensity;
         this.fullIntensity = fullIntensity;
     }
@@ -54,7 +62,8 @@ public class LinearIntensityDependency implements IntensityDependency {
 
     @Override
     public double getValueAt(double intensity) {
-        return fullIntensity*(intensity) + zeroIntensity*(1-intensity);
+        if (intensity >= maxValue) return fullIntensity;
+        return fullIntensity*(intensity) + zeroIntensity*(maxValue-intensity);
     }
 
     @Override
