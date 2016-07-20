@@ -20,66 +20,53 @@ package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.IntensityDependency;
 import de.unijena.bioinf.IsotopePatternAnalysis.util.LinearIntensityDependency;
 import org.apache.commons.math3.special.Erf;
 
+/**
+ * scores the m/z of the first peak and the m/z difference between either all other peaks and the first peak.
+ * Peaks with relative intensity below 10% are scored with doubled standard deviation
+ *
+ *
+ */
 public class MassDeviationScorer implements IsotopePatternScorer {
 
     private final static double root2 = Math.sqrt(2d);
-
-    private IntensityDependency intensityDependency;
+    protected IntensityDependency dependency;
 
     public MassDeviationScorer() {
-        this(1.5d);
+        this(2d);
     }
 
     public MassDeviationScorer(double lowestIntensityAccuracy) {
-        this(new LinearIntensityDependency(1d, lowestIntensityAccuracy));
+        this(new LinearIntensityDependency(0.1d, 1d, lowestIntensityAccuracy));
     }
 
-    public MassDeviationScorer(IntensityDependency intensityDependency) {
-        this.intensityDependency  = intensityDependency;
+    public MassDeviationScorer(IntensityDependency dependency) {
+        this.dependency = dependency;
     }
 
     @Override
-    public double score(Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
-        if (measured.size() > theoretical.size())
-            throw new IllegalArgumentException("Theoretical spectrum is smaller than measured spectrum");
-        // remove peaks from theoretical pattern until the length of both spectra is equal
-        final MutableSpectrum<Peak> theoreticalSpectrum = new SimpleMutableSpectrum(theoretical);
-        if (measured.size()==0)
-            throw new IllegalArgumentException("Cannot score empty spectrum");
-        while (measured.size() < theoreticalSpectrum.size()) {
-            theoreticalSpectrum.removePeakAt(theoreticalSpectrum.size()-1);
-        }
-        // re-normalize
-        Spectrums.normalize(theoreticalSpectrum, norm);
-        final double mz0 = measured.getMzAt(0);
-        final double thMz0 = theoreticalSpectrum.getMzAt(0);
-        final double int0 = measured.getIntensityAt(0);
-        double score = Math.log(Erf.erfc(Math.abs(thMz0 - mz0)/
-                (root2*(profile.getStandardMs1MassDeviation().absoluteFor(mz0) *  intensityDependency.getValueAt(int0)))));
-        for (int i=1; i < measured.size(); ++i) {
-            final double mz = measured.getMzAt(i) - mz0;
-            final double thMz = theoreticalSpectrum.getMzAt(i) - thMz0;
-            final double thIntensity = measured.getIntensityAt(i);
-            // TODO: thMz hier richtig?
-            final double sd = profile.getStandardMassDifferenceDeviation().absoluteFor(measured.getMzAt(i)) * intensityDependency.getValueAt(thIntensity);
+    public void score(double[] scores, Spectrum<Peak> measured, Spectrum<Peak> theoretical, Normalization norm, Ms2Experiment experiment, MeasurementProfile profile) {
+        double score = 0d;
+        for (int i=0; i < measured.size(); ++i) {
+            final double mz = measured.getMzAt(i);
+            final double thMz = theoretical.getMzAt(i);
+            final double intensity = measured.getIntensityAt(i);
+            final double sd = profile.getStandardMs1MassDeviation().absoluteFor(mz) * dependency.getValueAt(intensity);
             score += Math.log(Erf.erfc(Math.abs(thMz - mz)/(root2*sd)));
+            scores[i] += score;
         }
-        return score;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        this.intensityDependency = (IntensityDependency)helper.unwrap(document, document.getFromDictionary(dictionary, "intensityDependency"));
+        this.dependency = (IntensityDependency)helper.unwrap(document, document.getFromDictionary(dictionary, "intensityDependency"));
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "intensityDependency", helper.wrap(document, intensityDependency));
+        document.addToDictionary(dictionary, "intensityDependency", helper.wrap(document,dependency));
     }
 }

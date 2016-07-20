@@ -3,6 +3,22 @@
     "$name": "IsotopePatternAnalysis",
     "patternScorers": [
       {
+        "$name": "scoring.MassDifferenceDeviationScorer",
+        "intensityDependency": {
+          "$name": "util.PiecewiseLinearFunctionIntensityDependency",
+          "values": [
+            1,
+            2,
+            3
+          ],
+          "bags": [
+            0.2,
+            0.1,
+            0.01
+          ]
+        }
+      },
+      {
         "$name": "scoring.MassDeviationScorer",
         "intensityDependency": {
           "$name": "util.PiecewiseLinearFunctionIntensityDependency",
@@ -19,30 +35,14 @@
         }
       },
       {
-        "$name": "scoring.LogNormDistributedIntensityScorer",
-        "intensityDependency": {
-          "$name": "util.PiecewiseLinearFunctionIntensityDependency",
-          "values": [
-            0.7,
-            0.6,
-            0.8,
-            0.5
-          ],
-          "bags": [
-            1,
-            0.3,
-            0.15,
-            0.03
-          ]
-        }
+        "$name": "scoring.NormalDistributedIntensityScorer",
+        "absolute_error": 0.02,
+        "relative_error": 0.1
       },
       {
         "$name": "scoring.MissingPeakScorer",
-        "lambda": 500
-      },
-      {
-        "$name": "scoring.ScorePerPeak",
-        "scorePerPeak": 5
+        "lambda": 50,
+        "threshold": 0.05
       }
     ],
     "isotopes": {
@@ -653,9 +653,9 @@
   "profile": {
     "allowedMassDeviation": "5.0 ppm (0.001 m/z)",
     "intensityDeviation": 0.06,
-    "standardMs2MassDeviation": "2.0 ppm (3.4E-4 m/z)",
+    "standardMs2MassDeviation": "5.0 ppm (5E-4 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
-    "standardMs1MassDeviation": "2.0 ppm (7.0E-4 m/z)",
+    "standardMs1MassDeviation": "5.0 ppm (5E-4 m/z)",
     "medianNoiseIntensity": 0.015,
     "formulaConstraints": {
       "$name": "ChemistryBase.chem.FormulaConstraints",
@@ -668,6 +668,6 @@
         }
       ]
     },
-    "standardMassDifferenceDeviation": "1.5 ppm (3.0E-4 m/z)"
+    "standardMassDifferenceDeviation": "2 ppm (3.0E-4 m/z)"
   }
 }

@@ -261,6 +261,16 @@ public class Spectrums {
         return new SimpleSpectrum(mzsL.toArray(), intensitiesL.toArray());
     }
 
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum subspectrum(S spectrum, int from, int length) {
+        final double[] mz = new double[Math.min(length, spectrum.size()-from)];
+        final double[] intensities = new double[mz.length];
+        for (int k=from, i=0, n = Math.min(from+length, spectrum.size()); k < n; ++k) {
+            mz[i] = spectrum.getMzAt(k);
+            intensities[i++] = spectrum.getIntensityAt(k);
+        }
+        return new SimpleSpectrum(mz, intensities);
+    }
+
     public static <P extends Peak, S extends Spectrum<P>> List<P> extractPeakList(S spectrum) {
         final int n = spectrum.size();
         final ArrayList<P> peaks = new ArrayList<P>(n);

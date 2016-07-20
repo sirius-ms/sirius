@@ -21,6 +21,7 @@ package de.unijena.bioinf.IsotopePatternAnalysis.scoring;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 /**
  * Models isotope intensity deviations as normal distributions of absolute and relative errors
@@ -44,10 +45,14 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
     }
 
     @Override
-    public double score(Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+    public void score(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
+        if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {
+            measuredSpectrum = Spectrums.getNormalizedSpectrum(measuredSpectrum, Normalization.Max(1));
+            theoreticalSpectrum = Spectrums.getNormalizedSpectrum(theoreticalSpectrum, Normalization.Max(1));
+        }
         double score = 0d;
-        for (int i = 0; i < theoreticalSpectrum.size(); ++i) {
-            final double measuredIntensity = measuredSpectrum.size() > i ? measuredSpectrum.getIntensityAt(i) : 0d;
+        for (int i = 1; i < Math.min(measuredSpectrum.size(), theoreticalSpectrum.size()); ++i) {
+            final double measuredIntensity = measuredSpectrum.getIntensityAt(i);
             final double theoreticalIntensity = theoreticalSpectrum.getIntensityAt(i);
             final double delta = measuredIntensity - theoreticalIntensity;
             final double deltaZero = (sigmaR * sigmaR * delta * theoreticalIntensity) / (sigmaA * sigmaA +
@@ -58,8 +63,8 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             final double probEpsilon = (1 / (SQRT2PI * sigmaA)) * (Math.pow(Math.E, (epsilon * epsilon / (-2 * sigmaA * sigmaA))));
             final double probability = probDelta * probEpsilon;
             score += Math.log(probability);
+            scores[i] += score;
         }
-        return score/5d;
     }
 
     @Override
