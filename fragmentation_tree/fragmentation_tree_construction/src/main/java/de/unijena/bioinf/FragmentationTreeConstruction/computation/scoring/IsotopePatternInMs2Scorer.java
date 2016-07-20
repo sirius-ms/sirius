@@ -2,17 +2,20 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.IsotopicMarker;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Ms2IsotopePatternMatch;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.IsotopicMarker;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
-import de.unijena.bioinf.IsotopePatternAnalysis.extraction.ExtractAll;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FragmentIsotopeGenerator;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -20,7 +23,6 @@ import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.math3.special.Erf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -210,30 +212,8 @@ public class IsotopePatternInMs2Scorer {
         SimpleSpectrum ms1Pattern;// find MS1 spectrum
         if (USE_FRAGMENT_ISOGEN && input.getExperimentInformation().getMergedMs1Spectrum()!=null) {
             // search for isotope pattern in MS1
-            final List<IsotopePattern> isoPatterns = new ExtractAll().extractPattern(input.getMeasurementProfile(), input.getExperimentInformation().getMergedMs1Spectrum(), input.getExperimentInformation().getIonMass(), false);
-            double maxScore = Double.NEGATIVE_INFINITY;
-            SimpleSpectrum bestPattern = null;
-            for (IsotopePattern pat : isoPatterns) {
-                final SimpleSpectrum spec = normalizeByFirstPeak(pat.getPattern());
-                // TODO: implicitely assume that graph has only one ion formula
-                final SimpleSpectrum sim = normalizeByFirstPeak(generator.simulatePattern(graph.getRoot().getChildren(0).getFormula(), ion));
-
-                final double[] isoScores = new double[spec.size()];
-                double sc = scorePatternPeakByPeak(sim, spec, isoScores, 1, 0.05);
-                final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
-                for (int k=0; k < isoScores.length; ++k) {
-                    buf.addPeak(spec.getPeakAt(k));
-                    if (isoScores[k] > maxScore) {
-                        maxScore = isoScores[k];
-                        bestPattern = new SimpleSpectrum(buf);
-                    }
-                }
-            }
-            if (bestPattern!=null && bestPattern.size()>1) {
-                ms1Pattern=bestPattern;
-            } else {
-                ms1Pattern=null;
-            }
+            final List<IsotopePattern> patterns = new IsotopePatternAnalysis().deisotope(input.getExperimentInformation(), input.getMeasurementProfile());
+            return patterns.get(0).getPattern();
 
         } else {
             ms1Pattern=null;

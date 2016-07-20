@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -466,19 +465,13 @@ public class CLI<Options extends SiriusOptions> {
                 }
                 if (prec == 0) {
                     if (exp.getMs1Spectra().size()>0) {
-                        final List<IsotopePattern> patterns = sirius.getMs1Analyzer().deisotope(exp);
-                        if (patterns.size()>0) {
-                            double pmz2 = patterns.get(0).getMonoisotopicMass();
-                            for (IsotopePattern pat : patterns) {
-                                if (Math.abs(pmz2-pat.getMonoisotopicMass()) > 1e-3) {
-                                    throw new IllegalArgumentException("SIRIUS cannot infer the parentmass of the measured compound from MS1 spectrum. Please provide it via the -z option.");
-                                }
-                            }
-                            prec = pmz2;
-                        } else throw new IllegalArgumentException("SIRIUS expects the parentmass of the measured compound as parameter. Please provide it via the -z option.");
-                    }
-                }
-                expPrecursor=prec;
+                        final SimpleSpectrum patterns = sirius.getMs1Analyzer().extractPattern(exp, exp.getMergedMs1Spectrum().getMzAt(0));
+                        if (patterns.size() < exp.getMergedMs1Spectrum().size()) {
+                            throw new IllegalArgumentException("SIRIUS cannot infer the parentmass of the measured compound from MS1 spectrum. Please provide it via the -z option.");
+                        }
+                        expPrecursor = patterns.getMzAt(0);
+                    } else throw new IllegalArgumentException("SIRIUS expects the parentmass of the measured compound as parameter. Please provide it via the -z option.");
+                } else expPrecursor = prec;
             }
 
 

@@ -22,7 +22,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.IsotopePatternAnalysis.extraction.ExtractAll;
 import org.junit.Test;
 
 import java.util.ArrayList;

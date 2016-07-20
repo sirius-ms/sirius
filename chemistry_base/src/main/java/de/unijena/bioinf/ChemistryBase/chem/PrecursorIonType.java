@@ -119,11 +119,13 @@ public class PrecursorIonType {
         return ionization.getCharge();
     }
 
+    //////// ????????????????
     public MolecularFormula neutralMoleculeToMeasuredNeutralMolecule(MolecularFormula neutral) {
         return neutral.subtract(inSourceFragmentation).add(adduct);
     }
 
     public MolecularFormula measuredNeutralMoleculeToNeutralMolecule(MolecularFormula measured) {
+        if (inSourceFragmentation==null) return measured;
         return measured.add(inSourceFragmentation).subtract(adduct);
     }
 

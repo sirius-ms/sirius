@@ -767,7 +767,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } catch (Throwable e) {
             // try GLPK tree builder
             try {
-                final
                 TreeBuilder solver =((Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver")).newInstance();
                 solver.getDescription();
                 return solver;

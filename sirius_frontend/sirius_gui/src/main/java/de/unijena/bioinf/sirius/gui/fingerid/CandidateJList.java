@@ -151,6 +151,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         northPanel.add(filter);
 
         logPSlider = new LogPSlider();
+        northPanel.add(Box.createHorizontalGlue());
         northPanel.add(new JLabel("XLogP filter: "));
         northPanel.add(logPSlider);
         logPSlider.setCallback(new Runnable() {
