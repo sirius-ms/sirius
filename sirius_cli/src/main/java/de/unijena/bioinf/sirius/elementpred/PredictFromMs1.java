@@ -24,20 +24,17 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
-import de.unijena.bioinf.IsotopePatternAnalysis.extraction.PatternExtractor;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import gnu.trove.map.hash.TObjectIntHashMap;
-
-import java.util.List;
 
 /**
  * Vote for Br and Cl from the isotope pattern
  */
 public class PredictFromMs1 implements Judge {
 
-    private final PatternExtractor extractor;
+    private final IsotopePatternAnalysis extractor;
 
-    public PredictFromMs1(PatternExtractor extractor) {
+    public PredictFromMs1(IsotopePatternAnalysis extractor) {
         this.extractor = extractor;
     }
 
@@ -48,41 +45,37 @@ public class PredictFromMs1 implements Judge {
         boolean evidenceForClBr = false;
         if (experiment.getMs1Spectra().size() > 0) {
             for (Spectrum<Peak> spec : experiment.getMs1Spectra()) {
-                final List<IsotopePattern> extracted = extractor.extractPattern(profile, spec, experiment.getIonMass(), false);
-                for (IsotopePattern pattern : extracted) {
-                    final SimpleSpectrum ms1spec = pattern.getPattern();
-                    final double mono = pattern.getMonoisotopicMass();
-                    final int plus1 = (int)Math.round(mono+1);
-                    final int plus2 = (int)Math.round(mono+2);
-                    // find +1 peak
-                    double int1 = 0, int2 = 0;
-                    for (int k=0; k < ms1spec.size(); ++k) {
-                        if (Math.round(ms1spec.getMzAt(k)) == plus1) {
-                            int1 = Math.max(int1, ms1spec.getIntensityAt(k));
-                        } else if (Math.round(ms1spec.getMzAt(k))==plus2) {
-                            int2 = Math.max(int2, ms1spec.getIntensityAt(k));
-                        }
+                final SimpleSpectrum ms1spec = extractor.extractPattern(spec, profile, experiment.getIonMass());
+                final double mono = ms1spec.getMzAt(0);
+                final int plus1 = (int)Math.round(mono+1);
+                final int plus2 = (int)Math.round(mono+2);
+                // find +1 peak
+                double int1 = 0, int2 = 0;
+                for (int k=0; k < ms1spec.size(); ++k) {
+                    if (Math.round(ms1spec.getMzAt(k)) == plus1) {
+                        int1 = Math.max(int1, ms1spec.getIntensityAt(k));
+                    } else if (Math.round(ms1spec.getMzAt(k))==plus2) {
+                        int2 = Math.max(int2, ms1spec.getIntensityAt(k));
                     }
-                    if (int1==0 && int2 == 0) continue;
-                    if (int1 > 0 && int2 == 0) {
-                        if (!evidenceForClBr) {
-                            votes.adjustOrPutValue(Cl, -10, -10);
-                            votes.adjustOrPutValue(Br, -10, -10);
-                        }
-                    } else if (int2 > int1) {
-                        evidenceForClBr = true;
-                        if ((int2 / int1) <= 3 ) {
-                            votes.adjustOrPutValue(Cl, 10, 10);
-                            votes.adjustOrPutValue(Br, 3, 3);
-                        } else if ((int2 / int1) > 3) {
-                            votes.adjustOrPutValue(Cl, 5, 5);
-                            votes.adjustOrPutValue(Br, 6, 6);
-                        }
-                    } else if (!evidenceForClBr) {
+                }
+                if (int1==0 && int2 == 0) continue;
+                if (int1 > 0 && int2 == 0) {
+                    if (!evidenceForClBr) {
                         votes.adjustOrPutValue(Cl, -10, -10);
                         votes.adjustOrPutValue(Br, -10, -10);
                     }
-
+                } else if (int2 > int1) {
+                    evidenceForClBr = true;
+                    if ((int2 / int1) <= 3 ) {
+                        votes.adjustOrPutValue(Cl, 10, 10);
+                        votes.adjustOrPutValue(Br, 3, 3);
+                    } else if ((int2 / int1) > 3) {
+                        votes.adjustOrPutValue(Cl, 5, 5);
+                        votes.adjustOrPutValue(Br, 6, 6);
+                    }
+                } else if (!evidenceForClBr) {
+                    votes.adjustOrPutValue(Cl, -10, -10);
+                    votes.adjustOrPutValue(Br, -10, -10);
                 }
 
             }

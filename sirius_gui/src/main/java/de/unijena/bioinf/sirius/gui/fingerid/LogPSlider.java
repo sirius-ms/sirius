@@ -57,8 +57,6 @@ public class LogPSlider extends JPanel {
                 if (data!=null) {
                     data.minLogPFilter = getMinSelected();
                     data.maxLogPFilter = getMaxSelected();
-                    if (data.compounds.length>0)
-                        System.out.println("SET " + data.compounds[0].inchi.key2D() +  " TO " + data.minLogPFilter + " / " + data.maxLogPFilter);
                 }
                 callback.run();
             }
