@@ -24,4 +24,12 @@ public enum IsotopePatternHandling {
 
     omit, filter, score;
 
+    public boolean isFiltering() {
+        return this==filter || this == score;
+    }
+
+    public boolean isScoring() {
+        return this == score;
+    }
+
 }

@@ -39,7 +39,7 @@ public class ElementPrediction {
     private Judge[] judges;
 
     public ElementPrediction(IsotopePatternAnalysis isoAnalyzer) {
-        this.judges = new Judge[]{new PredictFromMs1(isoAnalyzer.getPatternExtractor()), new PredictFromMs2()};
+        this.judges = new Judge[]{new PredictFromMs1(isoAnalyzer), new PredictFromMs2()};
     }
 
     public FormulaConstraints extendConstraints(FormulaConstraints input, Ms2Experiment experiment, MeasurementProfile profile) {
