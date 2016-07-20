@@ -22,17 +22,21 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
     private int[] positions;
 
     public NormalizedToMedianMeanScores(int... positions){
-        names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
-                                "CSIFingerIdScoringAvg", "SimpleMaximumLikelihoodScoringAvg", "ProbabilityEstimateScoringAvg"};
-        scorers = new FingerblastScoring[3];
+//        names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
+//                                "CSIFingerIdScoringAvg", "SimpleMaximumLikelihoodScoringAvg", "ProbabilityEstimateScoringAvg"};
+//        scorers = new FingerblastScoring[3];
+        //changed
+        names = new String[]{"CSIFingerIdScoringMedian", "CSIFingerIdScoringAvg"};
+        scorers = new FingerblastScoring[1];
+
         this.positions = positions;
     }
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
         scorers[0] = new CSIFingerIdScoring(statistics);
-        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
-        scorers[2] = new ProbabilityEstimateScoring(statistics);
+//        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+//        scorers[2] = new ProbabilityEstimateScoring(statistics);
     }
 
     @Override
@@ -71,9 +75,9 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
                     if (Math.abs(score-median)<1e-12)
                         scores[scoresPos++] = 1;
                     else{
-                        throw new IllegalArgumentException("Unexpected median scores");
-//                        scores[scoresPos++] = (score-median)/(Math.signum(allScores[0]-allScores[allScores.length-1])*0.001);
-//                        System.err.println("Unexpected median scores");
+//                        throw new IllegalArgumentException("Unexpected median scores");
+                        scores[scoresPos++] = (score-median)/(Math.signum(allScores[0]-allScores[allScores.length-1])*0.001);
+                        System.err.println("Unexpected median scores");
                     }
                 } else {
                     scores[scoresPos++] = (score-median)/diffToMedian;
@@ -129,13 +133,13 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
                 int position = positions[j];
                 double score = allScores[position];
                 if (diffToMean==0){
-                    if (!(Math.abs(score-mean)<1e-12)){
+                    if (!(Math.abs(score-mean)<1e-13)){
                         return false;
                     }
                 }
 
                 if (diffToMedian==0){
-                    if (!(Math.abs(score-median)<1e-12)) {
+                    if (!(Math.abs(score-median)<1e-13)) {
                       return false;
                     }
                 }

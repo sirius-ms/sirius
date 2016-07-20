@@ -650,7 +650,7 @@ public class TrainConfidenceScore {
 //                            new TanimotoSimilarityAvg(1,2,3,4),
 //                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
                             new TanimotoSimilarityAvgToPos(4,9,19,49),
-                            new NormalizedToMedianMeanScores(1,4),
+                            new NormalizedToMedianMeanScores(1,4,9),
                             new DifferentiatingMolecularPropertiesCounter(0.8, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.9, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
