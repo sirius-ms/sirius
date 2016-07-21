@@ -45,7 +45,7 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
 
     public <T extends AbstractFingerprint> T mask(T fingerprint) {
         if (!innerVersion.compatible(fingerprint.getFingerprintVersion()))
-            throw new RuntimeException("Fingerprint is not compatible to mask.");
+            throw new RuntimeException("Fingerprint is not compatible to mask. Given fingerprint is version " + fingerprint.getFingerprintVersion().toString() + ", mask is version " + innerVersion.toString());
         if (fingerprint instanceof ProbabilityFingerprint) {
             final double[] ys =((ProbabilityFingerprint) fingerprint).fingerprint;
             final double[] xs = new double[allowedIndizes.length];
@@ -115,6 +115,11 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     @Override
     public MolecularProperty getMolecularProperty(int absoluteIndex) {
         return innerVersion.getMolecularProperty(absoluteIndex);
+    }
+
+    @Override
+    public String toString() {
+        return "Masked fingerprint version: " + allowedIndizes.length + " bits in use. Derived from " + innerVersion.toString();
     }
 
     @Override

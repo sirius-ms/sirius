@@ -28,12 +28,14 @@ public class FingerIdTask {
     public final ExperimentContainer experiment;
     public final SiriusResultElement result;
     public JobLog.Job job;
+    public boolean bio;
 
     public volatile ProbabilityFingerprint prediction;
 
-    public FingerIdTask(ExperimentContainer experiment, SiriusResultElement result) {
+    public FingerIdTask(boolean bio, ExperimentContainer experiment, SiriusResultElement result) {
         this.experiment = experiment;
         this.result = result;
+        this.bio = bio;
     }
 
     @Override

@@ -463,7 +463,7 @@ public class Sirius {
         int maxNumberOfFormulas = 0;
         pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput(), pinput.getMeasurementProfile());
 
-        if (deisotope.isFiltering()) {
+        if (candidates.size() > 0 && deisotope.isFiltering()) {
             maxNumberOfFormulas = isoFormulas.size();
         } else {
             maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
