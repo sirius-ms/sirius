@@ -37,6 +37,11 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     }
 
     @Override
+    public String toString() {
+        return "Cdk fingerprint version: " + properties.length + " bits in use.";
+    }
+
+    @Override
     public MolecularProperty getMolecularProperty(int index) {
         return properties[index];
     }

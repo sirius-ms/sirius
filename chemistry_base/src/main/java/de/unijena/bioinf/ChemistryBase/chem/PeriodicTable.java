@@ -279,7 +279,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         //knownIonTypes.put("[M+?]-", UNKNOWN_NEGATIVE_IONTYPE);
     }
 
+    protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\d+M([+-]|\\])");
+
     private PrecursorIonType parseIonType(String name) {
+        if (MULTIMERE_PATTERN.matcher(name).find()) throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
         // tokenize String
         final ArrayList<String> tokens = new ArrayList<String>();
         final Matcher m = IONTYPE_PATTERN.matcher(name);
