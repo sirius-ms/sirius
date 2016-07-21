@@ -21,7 +21,7 @@ ext {
 
     gurobi_version = '6.5.1'
 
-    fingeridVersion = "1.0.4-SNAPSHOT"
+    fingeridVersion = "1.0.5"
 
     graphUtils_version = '1.1'
 
@@ -44,7 +44,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = '3.1.4-SNAPSHOT'
+    version = '3.2'
     group = 'de.unijena.bioinf.ms'
 
     repositories {
