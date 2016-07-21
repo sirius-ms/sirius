@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -367,6 +368,7 @@ public class Sirius {
             } finally {
                 exp.setPrecursorIonType(before);
             }
+            Collections.sort(patterns, Collections.<IsotopePattern>reverseOrder());
             filterCandidateList(patterns, isoScores, deisotope);
         }
         return isoScores;
@@ -585,7 +587,6 @@ public class Sirius {
         final List<IsotopePattern> candidates = lookAtMs1(validatedInput, deisotope != IsotopePatternHandling.omit);
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
-        filterCandidateList(candidates, isoFormulas, deisotope);
         final double optIsoScore = filterCandidateList(candidates, isoFormulas, deisotope);
 
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());

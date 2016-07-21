@@ -41,15 +41,24 @@ public class CompoundCandidateView extends JPanel {
 
     protected CardLayout layout;
     private MainFrame frame;
+    protected Runnable enableCsiFingerId;
 
     public CompoundCandidateView(MainFrame owner) {
         this.frame = owner;
         this.storage = owner.getCsiFingerId();
+        this.enableCsiFingerId = new Runnable() {
+            @Override
+            public void run() {
+                searchCSIButton.setEnabled(storage.enabled);
+            }
+        };
+        storage.getEnabledListeners().add(enableCsiFingerId);
         refresh();
     }
 
     public void dispose() {
         list.dispose();
+        storage.getEnabledListeners().remove(enableCsiFingerId);
     }
 
     public void refresh() {
@@ -70,14 +79,14 @@ public class CompoundCandidateView extends JPanel {
         if (resultElement==null) layout.show(this, "empty");
         else if (resultElement.getFingerIdData()==null) layout.show(this, "computeButton");
         else layout.show(this, "list");
-        searchCSIButton.setEnabled((resultElement!=null));
+        searchCSIButton.setEnabled((resultElement!=null && storage.enabled));
     }
 
     public class ComputeElement extends JPanel {
         public ComputeElement() {
             searchCSIButton = new JButton("Search online with CSI:FingerId");
             add(searchCSIButton);
-            searchCSIButton.setEnabled((resultElement!=null));
+            searchCSIButton.setEnabled((resultElement!=null && storage.enabled));
             searchCSIButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {

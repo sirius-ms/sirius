@@ -114,7 +114,6 @@ public class LogPSlider extends JPanel {
             rangeSlider.setUpperValue(pmax);
             rangeSlider.setLowerValue(pmin);
         }
-        System.out.println(pmin  + "/ " +pmax);
         left.setText(format.format(getMinSelected()));
         right.setText(format.format(getMaxSelected()));
         } finally {

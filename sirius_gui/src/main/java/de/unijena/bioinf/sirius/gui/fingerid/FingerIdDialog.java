@@ -91,8 +91,8 @@ public class FingerIdDialog extends JDialog {
         inner2.setLayout(new FlowLayout());
         //dbForm.setAlignmentX(0);dbForm.setAlignmentY(0);
         final ButtonGroup database = new ButtonGroup();
-        pubchem = new JRadioButton("PubChem", false);
-        biodb = new JRadioButton("bio databases", true);
+        pubchem = new JRadioButton("PubChem", !storage.isEnforceBio());
+        biodb = new JRadioButton("bio databases", storage.isEnforceBio());
         database.add(pubchem);
         database.add(biodb);
 

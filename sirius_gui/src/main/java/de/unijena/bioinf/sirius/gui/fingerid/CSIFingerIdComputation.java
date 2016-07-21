@@ -40,10 +40,13 @@ import gnu.trove.list.array.TIntArrayList;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -57,6 +60,16 @@ import java.util.zip.GZIPInputStream;
  */
 public class CSIFingerIdComputation {
 
+    private VersionsInfo versionNumber;
+
+    public void setVersionNumber(VersionsInfo versionNumber) {
+        this.versionNumber = versionNumber;
+    }
+
+    public VersionsInfo getVersionNumber() {
+        return versionNumber;
+    }
+
     public interface Callback {
         public void computationFinished(ExperimentContainer container, SiriusResultElement element);
     }
@@ -66,15 +79,17 @@ public class CSIFingerIdComputation {
     protected PredictionPerformance[] performances;
     protected MaskedFingerprintVersion fingerprintVersion;
     protected HashMap<String, Compound> compounds;
-    protected ConcurrentHashMap<MolecularFormula, List<Compound>> compoundsPerFormula;
+    protected HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
     protected RESTDatabase restDatabase;
     protected boolean configured = false;
-    protected File directory;
+    private File directory;
     protected Callback callback;
+    protected boolean enabled;
+    protected List<Runnable> enabledListeners=new ArrayList<>();
 
-    protected QueryPredictor confidenceScorePredictor;
+    protected QueryPredictor pubchemConfidenceScorePredictor, bioConfidenceScorePredictor;
 
-    protected boolean enforceBio;
+    protected boolean enforceBio, checkedCache;
 
     protected final Thread blastThread, formulaThread, jobThread;
     protected final BackgroundThreadBlast blastWorker;
@@ -92,7 +107,8 @@ public class CSIFingerIdComputation {
         globalLock = new ReentrantLock();
         globalCondition = globalLock.newCondition();
         this.compounds = new HashMap<>(32768);
-        this.compoundsPerFormula = new ConcurrentHashMap<>(128);
+        this.compoundsPerFormulaBio = new HashMap<>(128);
+        this.compoundsPerFormulaNonBio = new HashMap<>(128);
         this.restDatabase = WebAPI.DEBUG ? new RESTDatabase(directory, BioFilter.ALL, "http://localhost:8080/frontend") :  new RESTDatabase(directory, BioFilter.ALL);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
@@ -102,6 +118,7 @@ public class CSIFingerIdComputation {
         this.blastWorker = new BackgroundThreadBlast();
         this.blastThread = new Thread(blastWorker);
         blastThread.start();
+        this.enforceBio = true;
 
         this.formulaWorker = new BackgroundThreadFormulas();
         this.formulaThread = new Thread(formulaWorker);
@@ -111,6 +128,19 @@ public class CSIFingerIdComputation {
         this.jobThread = new Thread(jobWorker);
         jobThread.start();
 
+    }
+
+    public List<Runnable> getEnabledListeners() {
+        return enabledListeners;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        for (Runnable r : enabledListeners) r.run();
     }
 
     public MaskedFingerprintVersion getFingerprintVersion() {
@@ -124,7 +154,8 @@ public class CSIFingerIdComputation {
     private void loadStatistics(WebAPI webAPI) throws IOException {
         final TIntArrayList list = new TIntArrayList(4096);
         this.performances = webAPI.getStatistics(list);
-        this.confidenceScorePredictor = webAPI.getConfidenceScore();
+        this.pubchemConfidenceScorePredictor = webAPI.getConfidenceScore(false);
+        this.bioConfidenceScorePredictor = webAPI.getConfidenceScore(true);
 
         final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
         v.disableAll();
@@ -194,10 +225,10 @@ public class CSIFingerIdComputation {
     }
 
     private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula) throws IOException {
-        if (compoundsPerFormula.containsKey(formula)) return compoundsPerFormula.get(formula);
         final List<Compound> compounds;
         try {
             globalLock.lock();
+            destroyCacheIfNecessary();
             compounds = loadCompoundsForGivenMolecularFormula(webAPI, formula, true);
             if (!enforceBio) compounds.addAll(loadCompoundsForGivenMolecularFormula(webAPI, formula, false));
         } finally {
@@ -206,7 +237,47 @@ public class CSIFingerIdComputation {
         return compounds;
     }
 
+    private boolean cacheHasToBeDestroyed() {
+        checkedCache = true;
+        final File f = new File(directory, "version");
+        if (f.exists()) {
+            try {
+                final List<String> content = Files.readAllLines(f.toPath(), Charset.forName("UTF-8"));
+                if (content.size()>0 && !versionNumber.databaseOutdated(content.get(0)) ) return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
+    }
+
+    private void destroyCacheIfNecessary() {
+        if (checkedCache || !cacheHasToBeDestroyed()) return;
+
+        try {
+            final File bio = new File(directory, "bio");
+            final File nonBio = new File(directory, "not-bio");
+            for (File f : bio.listFiles()) {
+                Files.deleteIfExists(f.toPath());
+            }
+            for (File f : nonBio.listFiles()) {
+                Files.deleteIfExists(f.toPath());
+            }
+            for (File f : directory.listFiles()) {
+                Files.deleteIfExists(f.toPath());
+            }
+            try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), Charset.forName("UTF-8"))) {
+                bw.write(versionNumber.databaseDate);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            // might happen, especially under Windows. But I don't wanna make a proper error dialogue for that
+        }
+    }
+
     private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio) throws IOException {
+        if (!bio && compoundsPerFormulaNonBio.containsKey(formula)) return compoundsPerFormulaNonBio.get(formula);
+        if (bio && compoundsPerFormulaBio.containsKey(formula)) return compoundsPerFormulaBio.get(formula);
         final File dir = new File(directory, bio ? "bio" : "not-bio");
         if (!dir.exists()) dir.mkdirs();
         final File mfile = new File(dir, formula.toString() + ".json.gz");
@@ -226,32 +297,30 @@ public class CSIFingerIdComputation {
             }
         }
         for (Compound c : compounds) {
+            c.calculateXlogP();
             this.compounds.put(c.inchi.key2D(), c);
         }
-        compoundsPerFormula.put(formula, compounds);
-        for (Compound c : compounds) c.calculateXlogP();
         return compounds;
-    }
-
-    public Compound getCompound(String inchiKey2D) {
-        return compounds.get(inchiKey2D); // TODO: probably we have to implement a cache here
     }
 
     public void setDirectory(File directory) {
         this.directory = directory;
         this.compounds = new HashMap<>();
+        checkedCache = false;
     }
 
     protected static List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
         final ArrayList<SiriusResultElement> elements = new ArrayList<>();
         if (container==null || !container.isComputed() || container.getResults()==null) return elements;
         final SiriusResultElement top = container.getResults().get(0);
-        elements.add(top);
+        if (top.getRawTree().numberOfEdges()>0)
+            elements.add(top);
         final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.25);
         for (int k=1; k < container.getResults().size(); ++k) {
             SiriusResultElement e = container.getResults().get(k);
             if (e.getScore() < threshold) break;
-            elements.add(e);
+            if (e.getRawTree().numberOfEdges()>0)
+                elements.add(e);
         }
         return elements;
     }
@@ -331,12 +400,7 @@ public class CSIFingerIdComputation {
             if (job == null) {
                 job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getRawTree(), this.fingerprintVersion);
             }
-            final List<Compound> compounds;
-
-            if (compoundsPerFormula.containsKey(resultElement.getMolecularFormula()))
-                compounds = compoundsPerFormula.get(resultElement.getMolecularFormula());
-            else
-                compounds = loadCompoundsForGivenMolecularFormula(null, resultElement.getMolecularFormula());
+            final List<Compound> compounds = loadCompoundsForGivenMolecularFormula(webAPI, resultElement.getMolecularFormula());
 
             ProbabilityFingerprint platts=null;
             for (int k=0; k < 60; ++k) {
@@ -394,16 +458,27 @@ public class CSIFingerIdComputation {
             globalLock.unlock();
         }
 
-        if (confidenceScorePredictor!=null) {
+        if (bioConfidenceScorePredictor!=null) {
             final FingerIdData data = best.getFingerIdData();
             if (data.compounds.length==0) return;
+
+            // bio or pubchem?
+            boolean bio = true;
+            for (Compound c : data.compounds) {
+                if (c.bitset>0) {
+                    bio = false;
+                    break;
+                }
+            }
+            final QueryPredictor queryPredictor = bio ? bioConfidenceScorePredictor : pubchemConfidenceScorePredictor;
+
             CompoundWithAbstractFP<ProbabilityFingerprint> query = data.compounds[0].asQuery(data.platts);
             CompoundWithAbstractFP<Fingerprint>[] candidates = new CompoundWithAbstractFP[data.compounds.length];
             for (int k=0; k < candidates.length; ++k) {
                 candidates[k] = data.compounds[k].asCandidate();
             }
             try {
-                data.confidence = confidenceScorePredictor.estimateProbability(query, candidates);
+                data.confidence = queryPredictor.estimateProbability(query, candidates);
             } catch (PredictionException e) {
                 data.confidence = Double.NaN;
                 e.printStackTrace();
@@ -449,7 +524,7 @@ public class CSIFingerIdComputation {
                 } else {
                     // download molecular formulas
                     final MolecularFormula formula = container.result.getMolecularFormula();
-                    final JobLog.Job job = JobLog.getInstance().submit(container.experiment.getGUIName(), "Download " + formula.toString());
+                    final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
                     try {
                         loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula());
                         synchronized (blastWorker) {blastWorker.notifyAll();}
@@ -491,7 +566,7 @@ public class CSIFingerIdComputation {
                     final FingerIdTask container = jobQueue.poll();
                     if (container!=null) {
                         nothingToDo=false;
-                        container.job = JobLog.getInstance().submit(container.experiment.getGUIName(), "Predict fingerprint");
+                        container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Predict fingerprint");
                         try {
                             final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getRawTree(), fingerprintVersion);
                             jobs.put(container, job);
@@ -566,18 +641,29 @@ public class CSIFingerIdComputation {
                     if (container==null) {
                         synchronized (this) {this.wait();}
                         continue;
-                    } else if (!compoundsPerFormula.containsKey(container.result.getMolecularFormula())) {
-                        final boolean queueIsEmpty = blastQueue.isEmpty();
-                        blastQueue.add(container);
-                        if (queueIsEmpty) {
-                            synchronized (this) {
-                                this.wait();
+                    } else {
+                        boolean canRun=true;
+                        if (!enforceBio) {
+                            synchronized (compoundsPerFormulaNonBio) {
+                                if (compoundsPerFormulaNonBio.containsKey(container.result.getMolecularFormula())) canRun = false;
                             }
                         }
-                        continue;
+                        synchronized (compoundsPerFormulaBio) {
+                            if (compoundsPerFormulaBio.containsKey(container.result.getMolecularFormula())) canRun = false;
+                        }
+                        if (!canRun) {
+                            final boolean queueIsEmpty = blastQueue.isEmpty();
+                            blastQueue.add(container);
+                            if (queueIsEmpty) {
+                                synchronized (this) {
+                                    this.wait();
+                                }
+                            }
+                            continue;
+                        }
                     }
                     // blast this compound
-                    container.job = JobLog.getInstance().submit(container.experiment.getGUIName(), "Search in structure database");
+                    container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Search in structure database");
                     final FingerIdData data = blast(container.result, container.prediction);
                     final ExperimentContainer experiment = container.experiment;
                     final SiriusResultElement resultElement = container.result;

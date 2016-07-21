@@ -29,8 +29,8 @@ public class DatasourceService2 {
     public enum Sources {
 
         PUBCHEM("PubChem", 0,   "SELECT compound_id FROM ref.pubchem WHERE inchi_key_1 = ?", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
-        MESH("MeSH", 4,         "SELECT name FROM ref.mesh WHERE inchi_key_1 = ?", "http://www.ncbi.nlm.nih.gov/mesh/?term=%s"),
-        HMDB("HMDB", 8,         "SELECT hmdb_id FROM ref.hmdb WHERE inchi_key_1 = ?", "http://www.hmdb.ca/metabolites/HMDB%05d"),
+        MESH("MeSH", 4,         "SELECT name FROM ref.mesh WHERE inchi_key_1 = ?", "http://www.ncbi.nlm.nih.gov/mesh/%s"),
+        HMDB("HMDB", 8,         "SELECT hmdb_id FROM ref.hmdb WHERE inchi_key_1 = ?", "http://www.hmdb.ca/metabolites/%s"),
         KNAPSACK("KNApSAcK",16, "SELECT knapsack_id FROM ref.knapsack WHERE inchi_key_1 = ?", "http://kanaya.naist.jp/knapsack_jsp/information.jsp?sname=C_ID&word=%s"),
         CHEBI("CHEBI",32,       "SELECT chebi_id FROM ref.chebi WHERE inchi_key_1 = ?", "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s"),
         PUBMED("PubMed", 64,    null,null),
@@ -38,10 +38,11 @@ public class DatasourceService2 {
         KEGG("KEGG", 256,       "SELECT kegg_id FROM ref.kegg WHERE inchi_key_1 = ?", "http://www.kegg.jp/dbget-bin/www_bget?cpd:%s"),
         HSDB("HSDB", 512,       "SELECT cas FROM ref.hsdb WHERE inchi_key_1 = ?", null),
         MACONDA("Maconda", 1024,"SELECT maconda_id FROM ref.maconda WHERE inchi_key_1 = ?", "http://www.maconda.bham.ac.uk/contaminant.php?id="),
-        METACYC("Metacyc", 2048,"SELECT metacyc_id FROM ref.metacyc WHERE inchi_key_1 = ?", "http://metacyc.org/META/new-image?object=%s"),
+        METACYC("Biocyc", 2048,"SELECT metacyc_id FROM ref.metacyc WHERE inchi_key_1 = ?", "http://metacyc.org/META/new-image?object=%s"),
         GNPS("GNPS", 4096,      "SELECT id FROM ref.gnps WHERE inchi_key_1 = ?", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
         ZINCBIO("ZINC bio", 8192,"SELECT zinc_id FROM ref.zincbio WHERE inchi_key_1 = ?", "http://zinc.docking.org/substance/%s"),
-        TRAIN("training set", 16384, null,null);
+        TRAIN("training set", 16384, null,null),
+        UNDP("Natural Products", 32768, "SELECT undp_id FROM ref.undp WHERE inchi_key_1 = ?", null);
 
         public final int flag; public final String name; public final String sqlQuery;
         public final String URI;
