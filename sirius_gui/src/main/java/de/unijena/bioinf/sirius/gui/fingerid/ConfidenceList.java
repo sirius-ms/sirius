@@ -63,7 +63,6 @@ public class ConfidenceList extends JPanel implements ListSelectionListener {
                     return Double.compare(o2.getBestHit().getFingerIdData().confidence, o1.getBestHit().getFingerIdData().confidence);
                 }
             });
-            System.out.println("Inner List has now " + innerList.size() + " elements!");
             fireContentsChanged(this, 0, innerList.size());
         }
 

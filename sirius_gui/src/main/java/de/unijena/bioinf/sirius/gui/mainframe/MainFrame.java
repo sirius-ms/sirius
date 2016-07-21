@@ -92,9 +92,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         csiFingerId = new CSIFingerIdComputation(new CSIFingerIdComputation.Callback() {
 			@Override
-			public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
-				refreshCompound(container);
-				confidenceList.refreshList();
+			public void computationFinished(final ExperimentContainer container, final SiriusResultElement element) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						refreshCompound(container);
+						confidenceList.refreshList();
+					}
+				});
 			}
 		});
 
@@ -150,6 +155,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		JScrollPane paneConfidence = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         confidenceList = new ConfidenceList(this);
 		paneConfidence.setViewportView(confidenceList);
+
+        csiFingerId.setConfidenceCallback(new CSIFingerIdComputation.Callback() {
+            @Override
+            public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
+                refreshCompound(container);
+            }
+        });
 
 		JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		pane.setViewportView(compoundList);
@@ -469,11 +481,16 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		return compoundModel;
 	}
 
-	public void refreshCompound(ExperimentContainer c) {
-		compoundModel.refresh(c);
-		refreshResultListFor(c);
-        refreshComputationMenuItem();
-        refreshExportMenuButton();
+	public void refreshCompound(final ExperimentContainer c) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                compoundModel.refresh(c);
+                refreshResultListFor(c);
+                refreshComputationMenuItem();
+                refreshExportMenuButton();
+            }
+        });
 
 	}
 
@@ -488,20 +505,35 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         while (ecs.hasMoreElements()) {
             final ExperimentContainer e = ecs.nextElement();
             if (e.getComputeState()== ComputingStatus.COMPUTED) {
-                exportResultsB.setEnabled(true);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        exportResultsB.setEnabled(true);
+                    }
+                });
                 return;
             }
         }
-        exportResultsB.setEnabled(false);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                exportResultsB.setEnabled(false);
+            }
+        });
     }
 
     private void refreshComputationMenuItem() {
         final ExperimentContainer ec = this.compoundList.getSelectedValue();
-        if (ec != null && (ec.isComputing() || ec.isQueued()) ) {
-            cancelMI.setEnabled(true);
-        } else {
-            cancelMI.setEnabled(false);
-        }
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (ec != null && (ec.isComputing() || ec.isQueued()) ) {
+                    cancelMI.setEnabled(true);
+                } else {
+                    cancelMI.setEnabled(false);
+                }
+            }
+        });
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -827,18 +859,23 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	}
 
 	private void deleteCurrentCompound() {
-		int index = this.compoundList.getSelectedIndex();
-		if (index < 0) return;
-		ExperimentContainer cont = this.compoundModel.get(index);
-        backgroundComputation.cancel(cont);
-		if (cont.getResults()!=null && cont.getResults().size()>0 && !config.isCloseNeverAskAgain()) {
-			CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(this, "When removing this experiment you will loose the computed identification results for \""  +cont.getGUIName()+"\"?", config);
-			CloseDialogReturnValue val = diag.getReturnValue();
-			if (val==CloseDialogReturnValue.abort) return;
-		}
-		this.compoundModel.remove(index);
-		//this.compoundList.setSelectedIndex(-1);
-		this.names.remove(cont.getGUIName());
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                int index = compoundList.getSelectedIndex();
+                if (index < 0) return;
+                ExperimentContainer cont = compoundModel.get(index);
+                backgroundComputation.cancel(cont);
+                if (cont.getResults()!=null && cont.getResults().size()>0 && !config.isCloseNeverAskAgain()) {
+                    CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MainFrame.this, "When removing this experiment you will loose the computed identification results for \""  +cont.getGUIName()+"\"?", config);
+                    CloseDialogReturnValue val = diag.getReturnValue();
+                    if (val==CloseDialogReturnValue.abort) return;
+                }
+                compoundModel.remove(index);
+                //this.compoundList.setSelectedIndex(-1);
+                names.remove(cont.getGUIName());
+            }
+        });
 	}
 
 	public void importOneExperimentPerFile(List<File> msFiles, List<File> mgfFiles){
@@ -900,26 +937,31 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	
 	
 	
-	public void importCompound(ExperimentContainer ec){
-		while(true){
-			if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
-				if(this.names.contains(ec.getGUIName())){
-					ec.setSuffix(ec.getSuffix()+1);
-				}else{
-					this.names.add(ec.getGUIName());
-					break;
-				}
-			}else{
-				ec.setName("Unknown");
-				ec.setSuffix(1);
-			}
-		}
-		this.compoundModel.addElement(ec);
-		this.compoundList.setSelectedValue(ec, true);
-		if (ec.getResults().size()>0) ec.setComputeState(ComputingStatus.COMPUTED);
-        if (ec.getComputeState()==ComputingStatus.COMPUTED) {
-            this.exportResultsB.setEnabled(true);
-        }
+	public void importCompound(final ExperimentContainer ec){
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    if(ec.getGUIName()!=null&&!ec.getGUIName().isEmpty()){
+                        if(names.contains(ec.getGUIName())){
+                            ec.setSuffix(ec.getSuffix()+1);
+                        }else{
+                            names.add(ec.getGUIName());
+                            break;
+                        }
+                    }else{
+                        ec.setName("Unknown");
+                        ec.setSuffix(1);
+                    }
+                }
+                compoundModel.addElement(ec);
+                compoundList.setSelectedValue(ec, true);
+                if (ec.getResults().size()>0) ec.setComputeState(ComputingStatus.COMPUTED);
+                if (ec.getComputeState()==ComputingStatus.COMPUTED) {
+                    exportResultsB.setEnabled(true);
+                }
+            }
+        });
 	}
 
 	public void clearWorkspace() {
@@ -970,7 +1012,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void selectExperimentContainer(ExperimentContainer container, SiriusResultElement element) {
         selectExperimentContainer(container);
-        showResultsPanel.select(element);
+        showResultsPanel.select(element, true);
     }
 	
 	public void computationStarted(){
@@ -1182,6 +1224,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     @Override
+    public void jobIsRunning(JobLog.Job job) {
+
+    }
+
+    @Override
     public void jobIsDone(final JobLog.Job job) {
         SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -1197,6 +1244,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     public void jobIsFailed(JobLog.Job job) {
 
     }
+
+	@Override
+	public void jobDescriptionChanged(JobLog.Job job) {
+
+	}
 }
 
 class SiriusSaveFileFilter extends FileFilter{

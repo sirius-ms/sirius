@@ -20,6 +20,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.DatasourceService;
+import org.apache.commons.math3.analysis.function.Cbrt;
 
 import java.util.EnumSet;
 
@@ -30,10 +31,12 @@ public class FingerIdData {
     protected double[] scores;
     protected double confidence;
     public double topScore;
+    public boolean bio;
     protected double minLogPFilter=Double.NEGATIVE_INFINITY, maxLogPFilter=Double.POSITIVE_INFINITY;
     public EnumSet<DatasourceService.Sources> dbSelection;
 
-    public FingerIdData(Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
+    public FingerIdData(boolean bio, Compound[]compounds, double[] scores, ProbabilityFingerprint platts) {
+        this.bio = bio;
         this.compounds = compounds;
         this.scores = scores;
         this.platts = platts;
