@@ -82,7 +82,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"results"));
 	}
 
-	public void changeData(ExperimentContainer ec){
+	public void changeData(final ExperimentContainer ec){
 		this.ec = ec;
 
 		SiriusResultElement sre = null;
@@ -97,14 +97,21 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 			this.listModel.setData(new ArrayList<SiriusResultElement>());
 		}
 		resultsJList.addListSelectionListener(this);
-		svp.changeExperiment(this.ec,sre);
-		if(sre==null) tvp.showTree(null);
-		else tvp.showTree(sre);
+		final SiriusResultElement element = sre;
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				svp.changeExperiment(ec,element);
+				if(element==null) tvp.showTree(null);
+				else tvp.showTree(element);
+			}
+		});
         ccv.changeData(ec, sre);
 
 	}
 
-	public void select(SiriusResultElement sre) {
+	public void select(SiriusResultElement sre, boolean fireEvent) {
+        if (fireEvent) resultsJList.setSelectedValue(sre, true);
         if(sre==null){
             tvp.showTree(null);
             svp.changeSiriusResultElement(null);
@@ -119,7 +126,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		SiriusResultElement sre = this.resultsJList.getSelectedValue();
-		select(sre);
+		select(sre, false);
 	}
 
 }

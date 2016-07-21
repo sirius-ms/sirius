@@ -73,20 +73,35 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
     }
 
     @Override
-    public void jobIsSubmitted(JobLog.Job job) {
+    public void jobIsSubmitted(final JobLog.Job job) {
         r.add(0, job);
     }
 
     @Override
-    public void jobIsDone(JobLog.Job job) {
+    public void jobIsRunning(JobLog.Job job) {
+        int i = r.indexOf(job);
+        if (i>=0) r.setElementAt(job, i);
+    }
+
+    @Override
+    public void jobIsDone(final JobLog.Job job) {
         r.removeElement(job);
         t.add(0,job);
     }
 
     @Override
-    public void jobIsFailed(JobLog.Job job) {
+    public void jobIsFailed(final JobLog.Job job) {
         r.removeElement(job);
         t.add(0, job);
+    }
+
+    @Override
+    public void jobDescriptionChanged(final JobLog.Job job) {
+        if (job.isError() || job.isDone()) {
+            t.setElementAt(job, t.indexOf(job));
+        } else {
+            r.setElementAt(job, r.indexOf(job));
+        }
     }
 
     protected static class JobCell extends JPanel implements ListCellRenderer<JobLog.Job> {

@@ -178,7 +178,7 @@ public class IdentificationCellRenderer extends JPanel implements ListCellRender
 
         String nameOrInchi = c.name;
         if (c.name==null || c.name.isEmpty()) nameOrInchi = c.smiles.smiles;
-
+        if (nameOrInchi==null) nameOrInchi = "";
         if (nameOrInchi.length() > 13) {
             nameOrInchi = nameOrInchi.substring(0, 10) + "...";
         }

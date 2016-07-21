@@ -1,11 +1,10 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import javax.swing.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JobLog {
 
@@ -23,8 +22,10 @@ public class JobLog {
 
     public interface JobListener {
         public void jobIsSubmitted(Job job);
+        public void jobIsRunning(Job job);
         public void jobIsDone(Job job);
         public void jobIsFailed(Job job);
+        public void jobDescriptionChanged(Job job);
     }
 
     public interface Job {
@@ -33,6 +34,7 @@ public class JobLog {
         public void done();
         public void error(String msg, Throwable exc);
 
+        public void changeDescription(String newDescription);
         public boolean isError();
         public boolean isDone();
         public boolean isRunning();
@@ -40,13 +42,16 @@ public class JobLog {
         public void run();
     }
 
-    protected List<Job> runningJobs, doneJobs;
+    protected final List<Job> runningJobs, doneJobs;
     protected List<JobListener> listeners;
+    protected volatile boolean needsUpdate;
+    protected final HashSet<Job> updatedJobs;
 
     public JobLog() {
         this.runningJobs = new ArrayList<>();
         this.doneJobs = new ArrayList<>();
         this.listeners = new ArrayList<>();
+        this.updatedJobs = new HashSet<>();
     }
 
     public Job submitRunning(String guiName, String s) {
@@ -57,9 +62,50 @@ public class JobLog {
 
     public Job submit(String name, String description) {
         final Job j = new JobImpl(name, description);
-        this.runningJobs.add(j);
-        for (JobListener jj : listeners) jj.jobIsSubmitted(j);
+        synchronized (runningJobs) {
+            this.runningJobs.add(j);
+        }
+        jobUpdate(j);
         return j;
+    }
+
+    private void jobUpdate(Job j) {
+        needsUpdate = true;
+        synchronized (updatedJobs) {
+            updatedJobs.add(j);
+        }
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (needsUpdate) {
+                    needsUpdate=false;
+
+                    final Job[] copy;
+                    synchronized (updatedJobs) {
+                        copy = updatedJobs.toArray(new Job[updatedJobs.size()]);
+                        updatedJobs.clear();
+                    }
+                    synchronized (runningJobs) {
+                        final Iterator<Job> runIter = runningJobs.iterator();
+                        while (runIter.hasNext()) {
+                            final JobImpl j = (JobImpl)runIter.next();
+                            if (j.state >= 2) {
+                                doneJobs.add(j);
+                                runIter.remove();
+                            }
+                        }
+                    }
+                    for (Job j : copy) {
+                        switch (((JobImpl)j).state) {
+                            case 0: for (JobListener l : listeners) l.jobIsSubmitted(j); break;
+                            case 1: for (JobListener l : listeners) l.jobIsRunning(j); break;
+                            case 2: for (JobListener l : listeners) l.jobIsFailed(j); break;
+                            case 3: for (JobListener l : listeners) l.jobIsDone(j); break;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public void addListener(JobListener listener) {
@@ -74,6 +120,8 @@ public class JobLog {
     protected class JobImpl implements Job {
 
         protected String name, description, text;
+        protected Throwable exception;
+        protected String exceptionMessage;
         protected Date timestamp;
         protected int state;
 
@@ -103,7 +151,7 @@ public class JobLog {
         public void done() {
             if (state > 1) throw new IllegalStateException();
             this.state = 3;
-            jobIsDone(this);
+            jobUpdate(this);
         }
 
         @Override
@@ -111,7 +159,15 @@ public class JobLog {
             if (state > 1) throw new IllegalStateException();
             text = name + ": " + msg;
             this.state = 2;
-            jobIsFailed(this, msg, exc);
+            this.exception = exc;
+            this.exceptionMessage = msg;
+            jobUpdate(this);
+        }
+
+        @Override
+        public void changeDescription(String newDescription) {
+            this.description = newDescription;
+            jobUpdate(this);
         }
 
         @Override
@@ -133,19 +189,8 @@ public class JobLog {
         public void run() {
             if (state > 1) throw new IllegalStateException();
             this.state = 1;
+            jobUpdate(this);
         }
-    }
-
-    protected void jobIsDone(Job job) {
-        runningJobs.remove(job);
-        doneJobs.add(job);
-        for (JobListener j : listeners) j.jobIsDone(job);
-    }
-
-    protected void jobIsFailed(Job job, String message, Throwable exc) {
-        runningJobs.remove(job);
-        doneJobs.add(job);
-        for (JobListener j : listeners) j.jobIsFailed(job);
     }
 
 }

@@ -16,7 +16,7 @@ public class SiriusResultElement {
 	private double score;
 	private MolecularFormula mf;
 
-	protected FingerIdData fingerIdData;
+	protected volatile FingerIdData fingerIdData;
 	public volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
 	public SiriusResultElement() {
