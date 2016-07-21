@@ -37,4 +37,9 @@ public class IsotopePattern extends Scored<MolecularFormula> {
     public double getMonoisotopicMass() {
         return pattern.getMzAt(0);
     }
+
+    @Override
+    public String toString() {
+        return getCandidate().toString() + "(" + getScore() + ") <- " + getPattern().toString();
+    }
 }

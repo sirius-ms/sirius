@@ -18,6 +18,7 @@ import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
 import de.unijena.bioinf.sirius.gui.fingerid.DatasourceService2;
+import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -269,17 +270,18 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private void initFingerBlast() {
         progress.info("Initialize CSI:FingerId...");
         webAPI = new WebAPI();
-        final String needsUpdate = webAPI.needsUpdate();
-        if (needsUpdate!=null) {
-            progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + needsUpdate + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
+        final VersionsInfo needsUpdate = webAPI.needsUpdate();
+        if (needsUpdate!=null && needsUpdate.outdated()) {
+            progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + needsUpdate.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
             System.exit(1);
         }
         final TIntArrayList indizes = new TIntArrayList();
         try {
+            final BioFilter bioFilter = getBioFilter();
             final PredictionPerformance[] performances = webAPI.getStatistics(indizes);
-            this.fingerblast = new Fingerblast(new RESTDatabase(getBioFilter()));
+            this.fingerblast = new Fingerblast(new RESTDatabase(bioFilter));
             this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
-            this.confidence = webAPI.getConfidenceScore();
+            this.confidence = webAPI.getConfidenceScore(bioFilter!=BioFilter.ALL);
             MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
             b.disableAll();
             for (int index : indizes.toArray()) {

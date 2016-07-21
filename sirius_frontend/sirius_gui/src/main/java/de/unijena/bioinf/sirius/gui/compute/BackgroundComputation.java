@@ -139,7 +139,6 @@ public class BackgroundComputation {
             this.ppm = ppm;
             this.numberOfCandidates = numberOfCandidates;
             this.formulaSource = formulaSource;
-
             this.state = exp.getComputeState();
             this.results = exp.getRawResults();
             this.job = JobLog.getInstance().submit(exp.getGUIName(), "compute trees");

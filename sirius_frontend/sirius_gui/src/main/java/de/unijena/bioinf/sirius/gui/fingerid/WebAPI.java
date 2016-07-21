@@ -86,25 +86,24 @@ public class WebAPI implements Closeable {
     }
 
 
-    public static final String VERSION = "3.1.4-alpha";
-    public static final String DATE = "2016-06-28";
+    public static final String VERSION = "3.2";
+    public static final String DATE = "2016-07-20";
 
-    public String needsUpdate() {
+    public VersionsInfo needsUpdate() {
         final HttpGet get;
         try {
             get = new HttpGet(getFingerIdURI("/webapi/version.json").build());
             try (CloseableHttpResponse response = client.execute(get)) {
                 try (final JsonReader r  = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
-                    JsonObject o = r.readObject().getJsonObject("SIRIUS GUI");
 
-                    final String id = o.getString("version");
-                    final String date = o.getString("date");
+                    JsonObject o = r.readObject();
+                    JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
-                    if (date.compareTo(DATE) > 0 && !id.equalsIgnoreCase(VERSION)) {
+                    final String id = gui.getString("version");
+                    final String date = gui.getString("date");
 
-                        return id;
-
-                    } else return null;
+                    String database = o.getJsonObject("database").getString("version");
+                    return new VersionsInfo(id, date, database);
 
 
                 }
@@ -291,10 +290,10 @@ public class WebAPI implements Closeable {
         client.close();
     }
 
-    public QueryPredictor getConfidenceScore() {
+    public QueryPredictor getConfidenceScore(boolean bio) {
         final HttpGet get;
         try {
-            get = new HttpGet(getFingerIdURI("/webapi/confidence.json").build());
+            get = new HttpGet(getFingerIdURI("/webapi/confidence.json").setParameter("bio", String.valueOf(bio)).build());
             try (CloseableHttpResponse response = client.execute(get)) {
                 final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
                 final QueryPredictor qp = QueryPredictor.loadFromStream(br);

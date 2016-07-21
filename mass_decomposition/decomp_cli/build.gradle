@@ -1,3 +1,9 @@
+
+apply plugin: "application"
+
+mainClassName = "de.unijena.bioinf.MassDecomposer.cli.Main"
+
+
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version:"$jewelcli_version"
 
