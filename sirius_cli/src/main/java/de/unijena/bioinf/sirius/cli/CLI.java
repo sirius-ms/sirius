@@ -124,9 +124,9 @@ public class CLI<Options extends SiriusOptions> {
                     for (IdentificationResult result : results) {
                         printf("%" + n + "d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree()) * 100);
                     }
-                    output(i, results);
+                    if (siriusResultWriter==null) output(i, results);
                 } else {
-                    outputSingle(i, results.get(0), whiteset.iterator().next());
+                    if (siriusResultWriter==null) outputSingle(i, results.get(0), whiteset.iterator().next());
                 }
                 handleResults(i, results);
                 if (siriusResultWriter!=null) {

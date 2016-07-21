@@ -49,6 +49,12 @@ public class JobLog {
         this.listeners = new ArrayList<>();
     }
 
+    public Job submitRunning(String guiName, String s) {
+        Job j = submit(guiName, s);
+        j.run();
+        return j;
+    }
+
     public Job submit(String name, String description) {
         final Job j = new JobImpl(name, description);
         this.runningJobs.add(j);

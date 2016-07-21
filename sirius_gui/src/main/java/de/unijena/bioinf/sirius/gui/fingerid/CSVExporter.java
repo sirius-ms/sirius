@@ -46,7 +46,7 @@ public class CSVExporter {
     }
 
     public void export(Writer writer, FingerIdData data) throws IOException {
-        writer.write("inchikey2D\tinchi\trank\tscore\tname\tsmiles\tpubchemids\tlinks\n");
+        writer.write("inchikey2D\tinchi\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         if (data==null) return;
         for (int i=0; i < data.compounds.length; ++i) {
             final Compound c = data.compounds[i];
@@ -64,6 +64,9 @@ public class CSVExporter {
             writer.write('\t');
             writer.write(c.smiles.smiles);
             writer.write('\t');
+            if (Double.isNaN(c.xlogP)) writer.write("\"\"");
+            else writer.write(String.valueOf(c.xlogP));
+            writer.write('\t');
             list(writer, c.pubchemIds);
             writer.write('\t');
             links(writer, c);
@@ -72,7 +75,7 @@ public class CSVExporter {
     }
 
     public void export(Writer writer, List<FingerIdData> data) throws IOException {
-        writer.write("inchikey2D\tinchi\tformula\trank\tscore\tname\tsmiles\tpubchemids\tlinks\n");
+        writer.write("inchikey2D\tinchi\tformula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         final List<Scored<Compound>> candidates = new ArrayList<>();
         for (FingerIdData d : data) {
             if (d==null) continue;
@@ -103,6 +106,9 @@ public class CSVExporter {
             writer.write(escape(c.name));
             writer.write('\t');
             writer.write(c.smiles.smiles);
+            writer.write('\t');
+            if (Double.isNaN(c.xlogP)) writer.write("\"\"");
+            else writer.write(String.valueOf(c.xlogP));
             writer.write('\t');
             list(writer, c.pubchemIds);
             writer.write('\t');

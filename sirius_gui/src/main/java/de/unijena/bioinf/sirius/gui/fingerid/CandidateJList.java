@@ -250,6 +250,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             int returnval = jfc.showSaveDialog(this);
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
+                if (!selFile.getName().endsWith(".csv")) selFile = new File(selectedFile.getAbsolutePath() + ".csv");
 
                 config.setDefaultCompoundsExportPath(selFile.getParentFile());
 
@@ -896,14 +897,18 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             add(viopanel);
             Box db = Box.createVerticalBox();
             db.setOpaque(false);
-            db.setAlignmentX(Component.LEFT_ALIGNMENT);
+            final Box b1 = Box.createHorizontalBox();
             final JLabel dbl = new JLabel("Databases");
-            dbl.setAlignmentX(Component.LEFT_ALIGNMENT);
             dbl.setFont(nameFont.deriveFont(map));
-            db.add(dbl);
+            b1.add(Box.createHorizontalStrut(18));
+            b1.add(dbl);
+            b1.add(Box.createHorizontalGlue());
+            db.add(b1);
+
+            final Box b2 = Box.createHorizontalBox();
             databasePanel = new DatabasePanel();
-            databasePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            db.add(databasePanel);
+            b2.add(databasePanel);
+            db.add(b2);
             add(db);
             setVisible(true);
         }

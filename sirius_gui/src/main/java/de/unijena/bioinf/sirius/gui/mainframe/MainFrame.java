@@ -238,6 +238,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         configFingerID = new JButton("CSI:FingerId",new ImageIcon(MainFrame.class.getResource("/icons/fingerprint.png")));
         configFingerID.addActionListener(this);
+        configFingerID.setEnabled(false);
 
         tempP.add(configFingerID);
         leftControlPanel.add(tempP);
@@ -323,21 +324,35 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 		addKeyListener(this);
 
-        final SwingWorker w = new SwingWorker<String, String>() {
+        final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
 
             @Override
-            protected String doInBackground() throws Exception {
-                final String result = new WebAPI().needsUpdate();
-                publish(result);
-                return result;
+            protected VersionsInfo doInBackground() throws Exception {
+                try {
+                    final VersionsInfo result = new WebAPI().needsUpdate();
+                    publish(result);
+                    return result;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    final VersionsInfo resultAlternative = new VersionsInfo("unknown","unknown","unknown");
+                    publish(resultAlternative);
+                    return resultAlternative;
+                }
             }
 
             @Override
-            protected void process(List<String> chunks) {
+            protected void process(List<VersionsInfo> chunks) {
                 super.process(chunks);
-                final String versionsNumber = chunks.get(0);
+                final VersionsInfo versionsNumber = chunks.get(0);
+                System.out.println(String.valueOf(versionsNumber));
                 if (versionsNumber!=null) {
-                    new UpdateDialog(MainFrame.this, versionsNumber);
+                    csiFingerId.setVersionNumber(versionsNumber);
+                    if (versionsNumber.outdated()) {
+                        new UpdateDialog(MainFrame.this, versionsNumber.siriusGuiVersion);
+                    } else {
+                        configFingerID.setEnabled(true);
+                        csiFingerId.setEnabled(true);
+                    }
                 }
             }
 
@@ -901,6 +916,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}
 		this.compoundModel.addElement(ec);
 		this.compoundList.setSelectedValue(ec, true);
+		if (ec.getResults().size()>0) ec.setComputeState(ComputingStatus.COMPUTED);
         if (ec.getComputeState()==ComputingStatus.COMPUTED) {
             this.exportResultsB.setEnabled(true);
         }

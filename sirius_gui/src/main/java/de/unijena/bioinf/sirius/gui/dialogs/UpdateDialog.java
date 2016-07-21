@@ -17,7 +17,7 @@ public class UpdateDialog extends JDialog implements ActionListener{
     public UpdateDialog(Frame owner, String version) {
         super(owner, "Update for SIRIUS is available", ModalityType.APPLICATION_MODAL);
         setLayout(new BorderLayout());
-        final JLabel label = new JLabel("<html>There is a new version of SIRIUS available.<br> Update to SIRIUS " + version + " to receive the newest upgrades.<br> Your current version is " + WebAPI.VERSION + "</html>");
+        final JLabel label = new JLabel("<html>There is a new version of SIRIUS available.<br> Update to <b>SIRIUS " + version + "</b> to receive the newest upgrades.<br> Your current version is " + WebAPI.VERSION + "<br>To avoid compatibility issues with the CSI:FingerId webservice,<br> the CSI:FingerId search is disabled in this outdated version of SIRIUS.</html>");
         label.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
         add(label, BorderLayout.CENTER);
         final JPanel subpanel = new JPanel(new FlowLayout());
