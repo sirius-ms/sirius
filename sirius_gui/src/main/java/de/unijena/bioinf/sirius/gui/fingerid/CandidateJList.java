@@ -250,11 +250,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             int returnval = jfc.showSaveDialog(this);
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
-                if (!selFile.getName().endsWith(".csv")) selFile = new File(selectedFile.getAbsolutePath() + ".csv");
 
                 config.setDefaultCompoundsExportPath(selFile.getParentFile());
 
-                String name = selFile.getName();
                 if (selFile.exists()) {
                     FilePresentDialog fpd = new FilePresentDialog(owner, selFile.getName());
                     ReturnValue rv = fpd.getReturnValue();
@@ -263,6 +261,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                     }
                 } else {
                     selectedFile = selFile;
+                    if (!selectedFile.getName().endsWith(".csv")) selectedFile = new File(selectedFile.getAbsolutePath()+".csv");
                 }
             } else {
                 break;
@@ -803,12 +802,13 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final int th = m.getHeight();
             final int w = tw + DB_LABEL_PADDING;
             final int h = th + DB_LABEL_PADDING;
+            Rectangle gggp = getParent().getParent().getParent().getParent().getBounds();
             Rectangle ggp = getParent().getParent().getParent().getBounds();
             Rectangle gp = getParent().getParent().getBounds();
             Rectangle p = getParent().getBounds();
             Rectangle s = getBounds();
-            final int rx = (int)(s.getX() + p.getX()+gp.getX()+ggp.getX());
-            final int ry = (int)(s.getY() + p.getY()+gp.getY()+ggp.getY());
+            final int rx = (int)(s.getX() + p.getX()+gp.getX()+ggp.getX()+gggp.getX());
+            final int ry = (int)(s.getY() + p.getY()+gp.getY()+ggp.getY()+gggp.getY());
 
             label.rect.setBounds(rx,ry,w,h);
             g.setColor(color);
