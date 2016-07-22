@@ -1,0 +1,21 @@
+this module lets you predict confidence scores for structure assignments of csi:fingerid
+
+##### Train the classifier #####
+ExecutorService executorService = Executors.newFixedThreadPool(1);
+- create object of class TrainConfidenceScore, e.g.
+    TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.DefaultMultipleSVMs(useLinearSVM);
+
+- train
+    trainConfidenceScore.train(ExecutorService executorService, Query[] queries, Candidate[][] rankedCandidates, FingerprintStatistics statistics);
+
+- get predictor and save it
+    QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
+    queryPredictor.writeToFile(outputFile);
+
+
+##### Prediction phase #####
+- load predictor
+    QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
+
+- estimate
+    double platt = queryPredictor.estimateProbability(Query query, Candidate[] rankedCandidates);
