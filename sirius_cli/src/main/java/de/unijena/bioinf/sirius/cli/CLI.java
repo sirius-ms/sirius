@@ -78,6 +78,8 @@ public class CLI<Options extends SiriusOptions> {
                     } else {
                         output = new File(".",new File(".").getAbsoluteFile().getName() + ".sirius");
                     }
+                } else if (output.isDirectory()) {
+                    output = new File(output, "results.sirius");
                 }
                 final FileOutputStream fout = new FileOutputStream(output);
                 siriusResultWriter = new SiriusResultWriter(fout);

@@ -216,8 +216,8 @@ public class WebAPI implements Closeable {
                 final FingerIdJob job = submitJob(experiment, tree, version);
                 // RECEIVE RESULTS
                 final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
-                for (int k=0; k < 60; ++k) {
-                    Thread.sleep(3000);
+                for (int k=0; k < 600; ++k) {
+                    Thread.sleep(3000 + 30*k);
                     if (updateJobStatus(job)) {
                         return job.prediction;
                     } else if (job.state=="CRASHED") {

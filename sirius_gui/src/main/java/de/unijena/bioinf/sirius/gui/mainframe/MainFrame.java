@@ -1220,17 +1220,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     @Override
     public void jobIsSubmitted(JobLog.Job job) {
-
-    }
-
-    @Override
-    public void jobIsRunning(JobLog.Job job) {
-
-    }
-
-    @Override
-    public void jobIsDone(final JobLog.Job job) {
-        SwingUtilities.invokeLater(new Runnable() {
+		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				if (JobLog.getInstance().hasActiveJobs()) {
@@ -1241,8 +1231,18 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     @Override
-    public void jobIsFailed(JobLog.Job job) {
+    public void jobIsRunning(JobLog.Job job) {
+		jobIsSubmitted(job);
+    }
 
+    @Override
+    public void jobIsDone(final JobLog.Job job) {
+		jobIsSubmitted(job);
+    }
+
+    @Override
+    public void jobIsFailed(JobLog.Job job) {
+		jobIsSubmitted(job);
     }
 
 	@Override

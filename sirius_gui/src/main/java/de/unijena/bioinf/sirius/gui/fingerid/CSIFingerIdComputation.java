@@ -78,8 +78,8 @@ public class CSIFingerIdComputation {
     protected double[] fscores;
     protected PredictionPerformance[] performances;
     protected MaskedFingerprintVersion fingerprintVersion;
-    protected HashMap<String, Compound> compounds;
-    protected HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
+    protected final HashMap<String, Compound> compounds;
+    protected final HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
     protected RESTDatabase restDatabase;
     protected boolean configured = false;
     private File directory;
@@ -104,12 +104,12 @@ public class CSIFingerIdComputation {
     private final ConcurrentLinkedQueue<FingerIdTask> formulaQueue, jobQueue, blastQueue;
 
     public CSIFingerIdComputation(Callback callback) {
-        setDirectory(getDefaultDirectory());
         globalLock = new ReentrantLock();
         globalCondition = globalLock.newCondition();
         this.compounds = new HashMap<>(32768);
         this.compoundsPerFormulaBio = new HashMap<>(128);
         this.compoundsPerFormulaNonBio = new HashMap<>(128);
+        setDirectory(getDefaultDirectory());
         this.restDatabase = WebAPI.DEBUG ? new RESTDatabase(directory, BioFilter.ALL, "http://localhost:8080/frontend") :  new RESTDatabase(directory, BioFilter.ALL);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
@@ -200,10 +200,17 @@ public class CSIFingerIdComputation {
             final double[] scores = new double[candidates.size()];
             final Compound[] comps = new Compound[candidates.size()];
             int k=0;
+            final HashMap<String, Compound> compounds;
+            synchronized(this.compounds) {
+                compounds = this.compounds;
+            }
             for (Scored<FingerprintCandidate> candidate : candidates) {
                 scores[k] = candidate.getScore();
-                comps[k] = this.compounds.get(candidate.getCandidate().getInchiKey2D());
-                if (comps[k]==null) comps[k] = new Compound(candidate.getCandidate());
+                comps[k] = compounds.get(candidate.getCandidate().getInchiKey2D());
+                if (comps[k]==null) {
+                    System.err.println("DO NOT FOUND " + candidate.getCandidate().getInchi().key2D());
+                    comps[k] = new Compound(candidate.getCandidate());
+                }
                 ++k;
             }
             return new FingerIdData(bio, comps, scores, plattScores);
@@ -286,6 +293,9 @@ public class CSIFingerIdComputation {
             try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), Charset.forName("UTF-8"))) {
                 bw.write(versionNumber.databaseDate);
             }
+            compounds.clear();
+            compoundsPerFormulaBio.clear();
+            compoundsPerFormulaNonBio.clear();
         } catch (IOException e) {
             e.printStackTrace();
             // might happen, especially under Windows. But I don't wanna make a proper error dialogue for that
@@ -293,8 +303,16 @@ public class CSIFingerIdComputation {
     }
 
     private List<Compound> internalLoadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio) throws IOException {
-        if (!bio && compoundsPerFormulaNonBio.containsKey(formula)) return compoundsPerFormulaNonBio.get(formula);
-        if (bio && compoundsPerFormulaBio.containsKey(formula)) return compoundsPerFormulaBio.get(formula);
+
+        if (bio) {
+            synchronized (compoundsPerFormulaBio) {
+                if (compoundsPerFormulaBio.containsKey(formula)) return compoundsPerFormulaBio.get(formula);
+            }
+        } else {
+            synchronized (compoundsPerFormulaNonBio) {
+                if (compoundsPerFormulaNonBio.containsKey(formula)) return compoundsPerFormulaNonBio.get(formula);
+            }
+        }
         final File dir = new File(directory, bio ? "bio" : "not-bio");
         if (!dir.exists()) dir.mkdirs();
         final File mfile = new File(dir, formula.toString() + ".json.gz");
@@ -315,16 +333,33 @@ public class CSIFingerIdComputation {
         }
         for (Compound c : compounds) {
             c.calculateXlogP();
-            this.compounds.put(c.inchi.key2D(), c);
+            synchronized (this.compounds) {
+                this.compounds.put(c.inchi.key2D(), c);
+            }
         }
-        if (bio) compoundsPerFormulaBio.put(formula, compounds);
-        else compoundsPerFormulaNonBio.put(formula, compounds);
+        if (bio) {
+            synchronized (compoundsPerFormulaBio) {
+                compoundsPerFormulaBio.put(formula, compounds);
+            }
+        } else {
+            synchronized (compoundsPerFormulaNonBio) {
+                compoundsPerFormulaNonBio.put(formula, compounds);
+            }
+        }
         return compounds;
     }
 
     public void setDirectory(File directory) {
         this.directory = directory;
-        this.compounds = new HashMap<>();
+        synchronized (this.compounds){
+            this.compounds.clear();
+        }
+        synchronized (this.compoundsPerFormulaNonBio) {
+            this.compoundsPerFormulaNonBio.clear();
+        }
+        synchronized (this.compoundsPerFormulaBio) {
+            this.compoundsPerFormulaBio.clear();
+        }
         checkedCache = false;
     }
 
@@ -452,6 +487,9 @@ public class CSIFingerIdComputation {
             }
             final FingerIdData data = blast(resultElement, platts, isEnforceBio());
             resultElement.setFingerIdData(data); // todo: etwas kritisch... dürfte aber keine Probleme geben... oder?
+            refreshConfidence(container);
+            callback.computationFinished(container, resultElement);
+            confidenceCallback.computationFinished(container, resultElement);
             return true;
         } catch (URISyntaxException e) {
             throw new IOException(e);
@@ -742,11 +780,15 @@ public class CSIFingerIdComputation {
         @Override
         public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
             if (!bio) {
-                for (Compound c : compoundsPerFormulaNonBio.get(molecularFormula))
+                for (Compound c : compoundsPerFormulaNonBio.get(molecularFormula)) {
+                    if (compounds.get(c.inchi.key2D())==null) System.err.println("WTF? " + c.inchi.key2D());
                     fingerprintCandidates.add(new FingerprintCandidate(c.inchi, c.fingerprint));
+                }
             }
-            for (Compound c : compoundsPerFormulaBio.get(molecularFormula))
+            for (Compound c : compoundsPerFormulaBio.get(molecularFormula)) {
+                if (compounds.get(c.inchi.key2D())==null) System.err.println("WTF??? " + c.inchi.key2D());
                 fingerprintCandidates.add(new FingerprintCandidate(c.inchi, c.fingerprint));
+            }
 
 
             return fingerprintCandidates;
