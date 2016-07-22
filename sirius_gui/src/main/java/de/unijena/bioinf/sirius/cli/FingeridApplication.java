@@ -102,10 +102,11 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         try {
         // search CSI:FingerId identifications
         if (options.isFingerid()) {
-            progress.info("Search with CSI:FingerId");
             // first filter result list by top scoring formulas
             final ArrayList<IdentificationResult> filteredResults = new ArrayList<>();
             final IdentificationResult top = results.get(0);
+            if (top==null || top.getTree()==null) return;
+            progress.info("Search with CSI:FingerId");
             filteredResults.add(top);
             final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.25);
             for (int k=1; k < results.size(); ++k) {
