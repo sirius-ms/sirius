@@ -277,18 +277,27 @@ public class CSIFingerIdComputation {
 
     private void destroyCacheIfNecessary() {
         if (checkedCache || !cacheHasToBeDestroyed()) return;
-
         try {
             final File bio = new File(directory, "bio");
             final File nonBio = new File(directory, "not-bio");
-            for (File f : bio.listFiles()) {
-                Files.deleteIfExists(f.toPath());
+            if (bio.exists()) {
+                for (File f : bio.listFiles()) {
+                    Files.deleteIfExists(f.toPath());
+                }
             }
-            for (File f : nonBio.listFiles()) {
-                Files.deleteIfExists(f.toPath());
+            if (nonBio.exists()) {
+                for (File f : nonBio.listFiles()) {
+                    Files.deleteIfExists(f.toPath());
+                }
             }
-            for (File f : directory.listFiles()) {
-                Files.deleteIfExists(f.toPath());
+            if (directory.exists()) {
+                for (File f : directory.listFiles()) {
+                    Files.deleteIfExists(f.toPath());
+                }
+            } else {
+                directory.mkdirs();
+                bio.mkdirs();
+                nonBio.mkdirs();
             }
             try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), Charset.forName("UTF-8"))) {
                 bw.write(versionNumber.databaseDate);
