@@ -382,6 +382,101 @@ public class TrainConfidenceScore {
     }
 
 
+
+    public static TrainConfidenceScore AdvancedMultipleSVMs50(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int[] sizes = new int[]{1,2,3,4,5,10,20,50};
+        FeatureCreator[] featureCreators = new FeatureCreator[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+            int size = sizes[i];
+            final FeatureCreator featureCreator;
+            switch (size){
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 3:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 4:
+                case 5:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i-1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i-1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 10:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,4,9),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 20:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,4,9,19),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9,19)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 50:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,4,9,19,49),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9,19,49)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    throw new RuntimeException("unexpected size");
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[sizes.length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+
+
     public static TrainConfidenceScore MedianMultipleSVMs(boolean useLinearSVM){
         TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
 
