@@ -582,7 +582,7 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarity(1,size-1),
                             new TanimotoSimilarityAvg(positions),
                             new TanimotoSimilarityAvgToPerc(10,20,50),
-                            new NormalizedToMedianMeanScores(1,size-1),
+//                            new NormalizedToMedianMeanScores(1,size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.8, -1)
                     });
                     break;
@@ -602,7 +602,7 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarityAvg(1,2,3,4),
                             new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
 //                            new TanimotoSimilarityAvgToFixedLength(4,9),
-                            new NormalizedToMedianMeanScores(1,4,9),
+//                            new NormalizedToMedianMeanScores(1,4,9), //changed stranged
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 9),
                             new DifferentiatingMolecularPropertiesCounter(0.9, 4),
@@ -625,7 +625,7 @@ public class TrainConfidenceScore {
 //                            new TanimotoSimilarityAvg(1,2,3,4),
 //                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
                             new TanimotoSimilarityAvgToPos(4,9,19),
-                            new NormalizedToMedianMeanScores(1,4,9),
+//                            new NormalizedToMedianMeanScores(1,4,9), //changed stranged
                             new DifferentiatingMolecularPropertiesCounter(0.8, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.9, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
@@ -650,7 +650,7 @@ public class TrainConfidenceScore {
 //                            new TanimotoSimilarityAvg(1,2,3,4),
 //                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
                             new TanimotoSimilarityAvgToPos(4,9,19,49),
-                            new NormalizedToMedianMeanScores(1,4,9),
+//                            new NormalizedToMedianMeanScores(1,4,9), //changed stranged
                             new DifferentiatingMolecularPropertiesCounter(0.8, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.9, size-1),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),

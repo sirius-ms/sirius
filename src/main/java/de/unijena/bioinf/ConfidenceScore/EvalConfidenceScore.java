@@ -44,6 +44,11 @@ public class EvalConfidenceScore {
     private ChemicalDatabase db;
 
     public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        train(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -60,7 +65,6 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 
         trainConfidenceScore.train(executorService, queriesX.toArray(new CompoundWithAbstractFP[0]), candidatesX.toArray(new CompoundWithAbstractFP[0][]), statistics);
 
@@ -150,10 +154,14 @@ public class EvalConfidenceScore {
         writer.close();
     }
 
-
     public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-//        final int FOLD = 10;
-        final int FOLD = 5; //changed!!!
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        crossvalidation(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+        final int FOLD = 10;
+//        final int FOLD = 5; //changed!!!
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -205,7 +213,7 @@ public class EvalConfidenceScore {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM); //changed
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
+//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
 //        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
 
         TDoubleArrayList platts = new TDoubleArrayList();
@@ -499,33 +507,6 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
 
         return results;
 
-//        final List<CompoundWithAbstractFP<ProbabilityFingerprint>> allQueries = new LinkedList<>();
-//        final List<List<ScoredCandidate>> allScoredCandidates = new LinkedList<>();
-//        for (String name : queriesPerFormulaList) {
-//            if (name == null) continue;
-//            final List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries = queriesPerFormula.get(name);
-//
-//            List<CompoundWithAbstractFP<Fingerprint>> iter = searchByFingerBlast(db, maskedFingerprintVersion, queries.get(0).getInchi().extractFormula());
-//
-//
-//            List<List<ScoredCandidate>> hits = getTopHits(queries, iter, MAX_CANDIDATES);
-//            allScoredCandidates.addAll(hits);
-//            allQueries.addAll(queries);
-//        }
-//
-//        Iterator<CompoundWithAbstractFP<ProbabilityFingerprint>> queryIterator = allQueries.iterator();
-//        Iterator<List<ScoredCandidate>> scoredCandListIterator = allScoredCandidates.listIterator();
-//
-//        while (queryIterator.hasNext()) {
-//            CompoundWithAbstractFP<ProbabilityFingerprint> query = queryIterator.next();
-//            List<ScoredCandidate> scoredCandidates = scoredCandListIterator.next();
-////            Collections.sort(scoredCandidates, new ScoredCandidate.MaxBestComparator()); // already done
-//            final Instance instance = new Instance(query, scoredCandidates);
-//            instances.add(instance);
-//
-//        }
-//
-//        return instances;
     }
 
 
