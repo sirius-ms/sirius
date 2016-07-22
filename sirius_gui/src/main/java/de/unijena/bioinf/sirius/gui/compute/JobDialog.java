@@ -47,7 +47,7 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         @Override
         public String getToolTipText(MouseEvent event) {
             final int i = locationToIndex(event.getPoint());
-            if (i < getModel().getSize()) {
+            if (i >= 0 && i < getModel().getSize()) {
                 final JobLog.Job job = getModel().getElementAt(i);
                 if (job != null) {
                     return job.name() + ": " + job.description();
