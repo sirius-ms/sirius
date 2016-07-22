@@ -44,6 +44,11 @@ public class EvalConfidenceScore {
     private ChemicalDatabase db;
 
     public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        train(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -60,7 +65,6 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
 
         trainConfidenceScore.train(executorService, queriesX.toArray(new CompoundWithAbstractFP[0]), candidatesX.toArray(new CompoundWithAbstractFP[0][]), statistics);
 
@@ -152,6 +156,11 @@ public class EvalConfidenceScore {
 
 
     public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        crossvalidation(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         final int FOLD = 10;
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
@@ -202,10 +211,6 @@ public class EvalConfidenceScore {
         System.out.println("train");
 
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.All(useLinearSVM); //changed
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AllLong(useLinearSVM); //changed
-//        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
 
         TDoubleArrayList platts = new TDoubleArrayList();
         TByteArrayList corrects = new TByteArrayList();
