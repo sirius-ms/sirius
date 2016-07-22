@@ -165,7 +165,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 String name = topCandidate.getName();
                 if (name==null || name.isEmpty()) name = topCandidate.getSmiles();
                 if (name==null || name.isEmpty()) name = "";
-                progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, topCandidate.getInchi().in2D, confidenceScore));
+                progress.info(String.format(Locale.US, "Top compound is %s (%s) with confidence %.2f\n", name, topCandidate.getInchi().in2D, confidenceScore));
                 try {
 
                     final String line = String.format(Locale.US, "%s\t%s\t%s\t%s\t%s\t%f\t%f\n", i.fileNameWithoutExtension(),topCandidate.getInchi().in2D,topCandidate.getInchi().key2D(),escape(topCandidate.getName()),topCandidate.getSmiles(),confidenceList.get(0).getScore(),confidenceScore);

@@ -62,7 +62,7 @@ public class CSVExporter {
             writer.write('\t');
             writer.write(escape(c.name));
             writer.write('\t');
-            writer.write(c.smiles.smiles);
+            writer.write(c.smiles!=null ? escape(c.smiles.smiles) : escape(""));
             writer.write('\t');
             if (Double.isNaN(c.xlogP)) writer.write("\"\"");
             else writer.write(String.valueOf(c.xlogP));
@@ -105,7 +105,7 @@ public class CSVExporter {
             writer.write('\t');
             writer.write(escape(c.name));
             writer.write('\t');
-            writer.write(c.smiles.smiles);
+            writer.write(c.smiles!=null ? escape(c.smiles.smiles) : escape(null));
             writer.write('\t');
             if (Double.isNaN(c.xlogP)) writer.write("\"\"");
             else writer.write(String.valueOf(c.xlogP));
