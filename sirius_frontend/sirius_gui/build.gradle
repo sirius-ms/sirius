@@ -38,7 +38,7 @@ dependencies {
     compile "org.apache.httpcomponents:httpclient:4.5.1"
     compile group: "net.iharder", name: "base64", version: "2.3.8"
 
-    provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
+//    provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
 /*################### Environment variables ################### */
@@ -46,8 +46,13 @@ mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
 project.ext.set("type", "gui,console")
 
 /*################### Jar build Stuff ################### */
-shadowJar {
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
 
+shadowJar {
     configurations = [project.configurations.compile]
     classifier = 'fat'
     manifest {
@@ -57,8 +62,8 @@ shadowJar {
 
 /*################### Windows release Stuff ################### */
 launch4j {
-    mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
-
+//    mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
+    mainClassName = project.mainClassName
     headerType = "$project.type"
     jreRuntimeBits = "$project.arch"
 
@@ -76,8 +81,11 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from("build/install/${project.name}/lib")
+                    from("build/install/${project.name}/lib"){
+                        exclude("$gurobiExclude")
+                    }
                     from("${project.glpkPath}/l${ar}/")
+                    exclude('*.zip')
                 }
 
                 into('bin') {
@@ -111,7 +119,10 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from('build/launch4j/lib')
+                    from('build/launch4j/lib'){
+                        exclude("$gurobiExclude")
+                    }
+                    exclude('*.zip')
                 }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.distPath}") {

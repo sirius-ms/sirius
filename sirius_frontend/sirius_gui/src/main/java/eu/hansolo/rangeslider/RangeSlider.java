@@ -5,7 +5,7 @@ import java.awt.*;
 
 
 /**
- * @author Gerrit Grunwald <han.solo at muenster.de>
+ * @author Gerrit Grunwald
  *
  *     http://harmoniccode.blogspot.de/2011/11/friday-fun-component-xiv.html
  *

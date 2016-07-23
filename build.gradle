@@ -27,6 +27,7 @@ ext {
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
+    gurobiExclude = "gurobi-*-${gurobi_version}.jar"
 
     //release branch auto detection
     gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
@@ -63,11 +64,11 @@ allprojects {
             url "https://www.xypron.de/repository" //glpk repo
         }
 
-        //to build shadowJar without provided libs
+        /*//to build shadowJar without provided libs
         configurations {
             provided
             compileOnly.extendsFrom provided
-        }
+        }*/
     }
 
     dependencies {
