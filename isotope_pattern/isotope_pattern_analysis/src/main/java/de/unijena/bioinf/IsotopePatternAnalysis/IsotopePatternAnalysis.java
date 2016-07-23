@@ -244,7 +244,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             final Iterable<Ionization> ionModes = PeriodicTable.getInstance().getKnownIonModes(charge);
             for (Ionization ion : ionModes) {
                 final List<MolecularFormula> formulas = decomposer.getDecomposer(profile.getFormulaConstraints().getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(pattern.getMzAt(0)), profile.getAllowedMassDeviation(), profile.getFormulaConstraints());
-                ionFormulas.addAll(scoreFormulas(pattern, formulas, experiment, profile));
+                ionFormulas.addAll(scoreFormulas(pattern, formulas, experiment, profile, PrecursorIonType.getPrecursorIonType(ion)));
             }
             Collections.sort(ionFormulas, Scored.<MolecularFormula>desc());
             return ionFormulas;
@@ -257,6 +257,10 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public List<IsotopePattern> scoreFormulas(SimpleSpectrum extractedSpectrum, List<MolecularFormula> formulas, Ms2Experiment experiment, MeasurementProfile profile) {
+        return scoreFormulas(extractedSpectrum, formulas, experiment, profile, experiment.getPrecursorIonType());
+    }
+
+    public List<IsotopePattern> scoreFormulas(SimpleSpectrum extractedSpectrum, List<MolecularFormula> formulas, Ms2Experiment experiment, MeasurementProfile profile, PrecursorIonType ion) {
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(extractedSpectrum);
         normalize(spec, Normalization.Sum(1d));
         if (intensityOffset != 0d) {
@@ -284,9 +288,9 @@ public class IsotopePatternAnalysis implements Parameterized {
         final double[] scoreBuffer = new double[allPatternVariants.length];
         for (MolecularFormula f : formulas) {
             Arrays.fill(scoreBuffer, 0d);
-            f = experiment.getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(f);
+            f = ion.neutralMoleculeToMeasuredNeutralMolecule(f);
             Spectrum<Peak> measuredOne = measuredSpectrum;
-            Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, experiment.getPrecursorIonType().getIonization());
+            Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, ion.getIonization());
             if (theoreticalSpectrum.size() > 10)
                 theoreticalSpectrum = Spectrums.getNormalizedSpectrum(Spectrums.subspectrum(theoreticalSpectrum, 0, 10), Normalization.Max(1d));
             if (measuredSpectrum.size() > theoreticalSpectrum.size())
