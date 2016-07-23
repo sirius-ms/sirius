@@ -227,8 +227,13 @@ public class BackgroundComputation {
                 final List<IdentificationResult> results;
                 final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp);
                 if (formulaSource==FormulaSource.ALL_POSSIBLE) {
-                    results = sirius.identify(experiment,
-                            container.numberOfCandidates, true, IsotopePatternHandling.score);
+                    if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+                        results = sirius.identifyPrecursorAndIonization(experiment,
+                                container.numberOfCandidates, true, IsotopePatternHandling.score);
+                    } else {
+                        results = sirius.identify(experiment,
+                                container.numberOfCandidates, true, IsotopePatternHandling.score);
+                    }
                 } else {
                     try (final RESTDatabase db = WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL)) {
                         PrecursorIonType ionType = experiment.getPrecursorIonType();
