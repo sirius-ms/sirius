@@ -504,7 +504,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 final double minValue = data.minLogPFilter, maxValue = data.maxLogPFilter;
                 if (data.dbSelection.contains(DatasourceService.Sources.PUBCHEM)) toFlag = -1;
                 else for (DatasourceService.Sources s : data.dbSelection) toFlag |= s.flag;
-                System.out.println(toFlag);
                 for (int i = 0; i < data.compounds.length; ++i) {
                     if (toFlag<0 || (toFlag & data.compounds[i].bitset)!=0) {
                         double logp=data.compounds[i].xlogP;

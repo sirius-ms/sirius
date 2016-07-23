@@ -462,7 +462,6 @@ public class Sirius {
         filterCandidateList(candidates, isoFormulas, deisotope);
         int maxNumberOfFormulas = 0;
         pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput(), pinput.getMeasurementProfile());
-
         if (candidates.size() > 0 && deisotope.isFiltering()) {
             maxNumberOfFormulas = isoFormulas.size();
         } else {
@@ -471,7 +470,6 @@ public class Sirius {
 
         final int outputSize = Math.min(maxNumberOfFormulas, numberOfCandidates);
         final int computeNTrees = Math.max(5, outputSize);
-
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer != null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;
@@ -558,7 +556,6 @@ public class Sirius {
 
             Collections.sort(computedTrees, Collections.reverseOrder(TREE_SCORE_COMPARATOR));
 
-
             final ArrayList<IdentificationResult> list = new ArrayList<IdentificationResult>(outputSize);
             for (int k = 0; k < Math.min(outputSize, computedTrees.size()); ++k) {
                 final FTree tree = computedTrees.get(k);
@@ -588,7 +585,9 @@ public class Sirius {
         int maxNumberOfFormulas = 0;
         final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
         final double optIsoScore = filterCandidateList(candidates, isoFormulas, deisotope);
-
+        if (isoFormulas.size()>0 && deisotope.isFiltering()) {
+            return identify(uexperiment, numberOfCandidates, recalibrating, deisotope, isoFormulas.keySet());
+        }
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer != null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;

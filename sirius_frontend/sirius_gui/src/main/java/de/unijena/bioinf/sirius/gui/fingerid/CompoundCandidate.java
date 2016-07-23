@@ -131,7 +131,6 @@ public class CompoundCandidate {
 
     public void parseAndPrepare() {
         try {
-            System.out.println("parse and prepare " + compound.inchi.in2D);
             // we do not want to search anything in the compound but just "enforce initialization" of the molecule
             final FasterSmartsQueryTool tool = new FasterSmartsQueryTool("Br", DefaultChemObjectBuilder.getInstance());
             tool.matches(compound.getMolecule());

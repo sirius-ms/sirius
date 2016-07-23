@@ -356,7 +356,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             protected void process(List<VersionsInfo> chunks) {
                 super.process(chunks);
                 final VersionsInfo versionsNumber = chunks.get(0);
-                System.out.println(String.valueOf(versionsNumber));
                 if (versionsNumber!=null) {
                     csiFingerId.setVersionNumber(versionsNumber);
                     if (versionsNumber.outdated()) {
@@ -556,7 +555,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}else if(e.getSource()==computeB || e.getSource()==computeMI) {
 			computeCurrentCompound();
 		} else if (e.getSource() == computeAllB) {
-			System.out.println(computeAllActive);
 			if(computeAllActive){
 				cancelComputation();
 			}else{
