@@ -1,5 +1,3 @@
-mainClassName = "de.unijena.bioinf.sirius.cli.CLI"
-
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
 
@@ -10,7 +8,7 @@ dependencies {
 
 
 // DEBUG
-    compile group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
+//    compile group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
 
 }
 
@@ -33,8 +31,15 @@ processResources.doFirst{
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
 project.ext.set("type", "console")
 
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
 /*################### Windows release Stuff ################### */
 launch4j {
+    mainClassName = project.mainClassName
     headerType = "$project.type"
     jreRuntimeBits = "$project.arch"
 
@@ -51,7 +56,9 @@ distributions {
             baseName = "${project.appName}-$n-headless"
             contents {
                 into('lib') {
-                    from("build/install/${project.name}/lib")
+                    from("build/install/${project.name}/lib"){
+                        exclude("$gurobiExclude")
+                    }
                     from("${project.glpkPath}/l${ar}/")
                 }
 
@@ -91,7 +98,9 @@ distributions {
             baseName = "${project.appName}-$n-headless"
             contents {
                 into('lib') {
-                    from('build/launch4j/lib')
+                    from('build/launch4j/lib'){
+                        exclude("$gurobiExclude")
+                    }
                 }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.distPath}") {

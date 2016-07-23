@@ -115,7 +115,6 @@ subprojects {
     }
 
     /*################### Linux release Stuff ################### */
-    mainClassName = mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
     startScripts {
         applicationName = "${project.appName}"
         doLast {

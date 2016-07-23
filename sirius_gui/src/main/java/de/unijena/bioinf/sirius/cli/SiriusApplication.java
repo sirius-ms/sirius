@@ -22,6 +22,5 @@ public class SiriusApplication {
             cli.validate();
             cli.compute();
         }
-//        new MainFrame();
     }
 }
