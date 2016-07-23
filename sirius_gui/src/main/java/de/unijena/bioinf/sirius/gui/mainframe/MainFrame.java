@@ -434,9 +434,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		return backgroundComputation;
 	}
 
-	public static void main(String[] args){
+	/*public static void main(String[] args){
 		new MainFrame();
-	}
+	}*/
 
 	public void windowOpened(WindowEvent e) {
 		// TODO Auto-generated method stub
