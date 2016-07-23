@@ -191,8 +191,6 @@ public class CSIFingerIdComputation {
 
     private FingerIdData blast(SiriusResultElement elem, ProbabilityFingerprint plattScores, boolean bio) {
         final MolecularFormula formula = elem.getMolecularFormula();
-        System.out.println(formula + " bio downloaded? " + compoundsPerFormulaBio.containsKey(formula));
-        System.out.println(formula + " non-bio downloaded? " + compoundsPerFormulaNonBio.containsKey(formula));
         final Fingerblast blaster = new Fingerblast(new InMemoryCacheDatabase(bio));
         blaster.setScoring(new CSIFingerIdScoring(performances));
         try {
@@ -208,7 +206,6 @@ public class CSIFingerIdComputation {
                 scores[k] = candidate.getScore();
                 comps[k] = compounds.get(candidate.getCandidate().getInchiKey2D());
                 if (comps[k]==null) {
-                    System.err.println("DO NOT FOUND " + candidate.getCandidate().getInchi().key2D());
                     comps[k] = new Compound(candidate.getCandidate());
                 }
                 ++k;
@@ -790,12 +787,10 @@ public class CSIFingerIdComputation {
         public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
             if (!bio) {
                 for (Compound c : compoundsPerFormulaNonBio.get(molecularFormula)) {
-                    if (compounds.get(c.inchi.key2D())==null) System.err.println("WTF? " + c.inchi.key2D());
                     fingerprintCandidates.add(new FingerprintCandidate(c.inchi, c.fingerprint));
                 }
             }
             for (Compound c : compoundsPerFormulaBio.get(molecularFormula)) {
-                if (compounds.get(c.inchi.key2D())==null) System.err.println("WTF??? " + c.inchi.key2D());
                 fingerprintCandidates.add(new FingerprintCandidate(c.inchi, c.fingerprint));
             }
 

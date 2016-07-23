@@ -223,6 +223,8 @@ class RunThread implements Runnable{
                     for (FormulaCandidate f : candidates) whitelist.add(f.getFormula());
                 }
                 results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score, whitelist);
+			} else if (exp.getPrecursorIonType().isIonizationUnknown()) {
+				results = sirius.identifyPrecursorAndIonization(exp, candidates, true, IsotopePatternHandling.score);
 			} else {
                 results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
             }

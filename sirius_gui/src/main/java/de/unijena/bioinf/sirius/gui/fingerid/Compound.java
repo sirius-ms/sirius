@@ -289,21 +289,10 @@ public class Compound {
         }
     }
     public static boolean[] stringToBoolean(String fingerprint, int[] fingerprintIndizes) {
-        try {
-        if (fingerprint.length() < 3000)  {
-            System.err.println("TOO SHORT FINGERPRINT:");
-            System.err.println(fingerprint);
-        }
         final boolean[] values = new boolean[fingerprintIndizes.length];
         for (int k=0; k < fingerprintIndizes.length; ++k)
             if (fingerprint.charAt(fingerprintIndizes[k])=='1')
                 values[k] = true;
         return values;
-    }catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(fingerprint);
-            System.exit(1);
-            return null;
-        }
     }
 }
