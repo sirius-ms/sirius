@@ -211,6 +211,14 @@ SIRIUS recognizes the following options:
 
   If this option is set, SIRIUS will not recalibrate the spectrum during the analysis.
 
+.. option:: --fingerid
+
+  If this option is set, SIRIUS will search for molecular structure using CSI:FingerId after determining the molecular formula
+
+.. option:: --database, -d
+
+  If this option is set, SIRIUS will only consider molecular formulas from the given database. Either ``PubChem`` or ``bio`` can be chosen, as well as other concrete databases like ``hmdb``, ``kegg``, ``knapsack```or ``biocyc``. When used with the option --fingerid, the chosen database will also be used to search for candidate structures.
+
 .. option:: -h, --help
 
   display help
@@ -254,6 +262,17 @@ This creates a file Bicuculline.dot.pdf (:ref:`Fig.1 <treeimg>`). Remark that SI
 .. figure:: images/tree.pdf
 
   The output of the dot program to visualize the computed fragmentation tree
+
+
+********************************
+Identifying Molecular Structures
+********************************
+
+With SIRIUS 3.2 you can also search for molecular structures with CSI:FingerId. Just add the option **--fingerid** to trigger a CSI:FingerId search after fragmentation tree computation. With **--database** can now also specify the database SIRIUS should search in. Available are *pubchem* and *bio*. However, you can also specify certain databases like *kegg* and *hmdb*, although it is recommended to filter the list afterwards.
+
+SIRIUS will generate csv files for each input spectrum containing a ordered candidate list of structures with the CSI:FingerId score. Furthermore, another result csv file is generated only the top candidates from all input spectra ordered by their confidence.  
+
+  sirius -c 10 --database=pubchem --fingerid demo-data/ms/Bicuculline.ms
 
 ********************************
 Demo Data

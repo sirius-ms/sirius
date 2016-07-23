@@ -5,29 +5,21 @@ Installation
 User Interface
 ---------
 
-The SiriusGUI.exe should hopefully work out of the box. Just run the SiriusGUI.exe on Windows or Sirius.sh on Linux.
+SIRIUS should hopefully work out of the box. You just have to install a java runtime environment (version >= 7). If you have a 64 bit operating system you also have to install a 64 bit java runtime! 
 
 Windows
 ---------
 
-The sirius.exe as well as SiriusGUI.exe should hopefully work out of the box. To execute SIRIUS from every location you have to add the location of the sirius.exe to your PATH environment variable. This is not necessary for the user interface SiriusGUI.exe.
+The sirius3-console.exe as well as Sirius3-gui.exe should hopefully work out of the box. To execute the SIRIUS commandline tool from every location you have to add the location of the sirius.exe to your PATH environment variable.
 
 Linux and MacOSX
 -------------------
 
+With SIRIUS 3.2 we deliver all necessary third-party dependencies with SIRIUS.
+
 To execute SIRIUS from every location you have to add the location of the sirius executable to your PATH variable. Open the file ``~/.bashrc`` in an editor and add the following line (replacing the placeholder path)::
 
   export PATH=$PATH:/path/to/sirius
-
-SIRIUS need an ilp solver to analyze MS/MS data. You can install the free available GLPK solver, e.g. for Ubuntu::
-
-  sudo apt-get install libglpk libglpk-java
-
-Alternatively, SIRIUS ships with the necessary binaries. You might have to add the location of sirius to your LD_LIBRARY_PATH variable (in linux) or to your DYLIB_LIBRARY_PATH variable (MacOsx). For example:
-
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/sirius
-
-However, it might be that libglpk needs further dependencies, so installing GLPK via package manager is recommended.
 
 Gurobi
 -------
