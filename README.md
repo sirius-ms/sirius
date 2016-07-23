@@ -37,7 +37,7 @@ identify the molecular formula of the ion and the fragment peaks and use
 this information as input for other tools like FingerID or MAGMa to
 identify the 2D structure of the measured compound. For this purpose you
 can also use the SIRIUS library directly, instead of the command line
-interface. See *SIRIUS Java Library*.
+interface. See SIRIUS Java Library.
 
 Since Sirius 3.1 our software ships with an **user interface**. The user
 interface, however, have to be downloaded separately. If you want to use
@@ -106,19 +106,23 @@ Installation
 User Interface
 --------------
 
-The SiriusGUI.exe should hopefully work out of the box. Just run the
-SiriusGUI.exe on Windows or Sirius.sh on Linux.
+SIRIUS should hopefully work out of the box. You just have to install a
+java runtime environment (version &gt;= 7). If you have a 64 bit
+operating system you also have to install a 64 bit java runtime!
 
 Windows
 -------
 
-The sirius.exe as well as SiriusGUI.exe should hopefully work out of the
-box. To execute SIRIUS from every location you have to add the location
-of the sirius.exe to your PATH environment variable. This is not
-necessary for the user interface SiriusGUI.exe.
+The sirius3-console.exe as well as Sirius3-gui.exe should hopefully work
+out of the box. To execute the SIRIUS commandline tool from every
+location you have to add the location of the sirius.exe to your PATH
+environment variable.
 
 Linux and MacOSX
 ----------------
+
+With SIRIUS 3.2 we deliver all necessary third-party dependencies with
+SIRIUS.
 
 To execute SIRIUS from every location you have to add the location of
 the sirius executable to your PATH variable. Open the file "\~/.bashrc"
@@ -126,20 +130,6 @@ in an editor and add the following line (replacing the placeholder
 path):
 
 > export PATH=\$PATH:/path/to/sirius
-
-SIRIUS need an ilp solver to analyze MS/MS data. You can install the
-free available GLPK solver, e.g. for Ubuntu:
-
-> sudo apt-get install libglpk libglpk-java
-
-Alternatively, SIRIUS ships with the necessary binaries. You might have
-to add the location of sirius to your LD\_LIBRARY\_PATH variable (in
-linux) or to your DYLIB\_LIBRARY\_PATH variable (MacOsx). For example:
-
-> export LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/path/to/sirius
-
-However, it might be that libglpk needs further dependencies, so
-installing GLPK via package manager is recommended.
 
 Gurobi
 ------
@@ -224,8 +214,8 @@ application window. This is usually the easiest way to import data into
 Sirius. Supported file formats for Drag and Drop are *.csv*, *.ms*,
 *.sirius* and *.mgf*.
 
-Computation
------------
+Identifying Molecular Formulas with SIRIUS
+------------------------------------------
 
 As for importing data Sirius offers two computation modes: **Single
 Computation** and **Batch Computation**. The Single Computation allows
@@ -272,8 +262,57 @@ either below the chosen ppm or smaller than frac{100 cdot
 ppm\_{max}}{10\^6}
 
 Finally, you can select the number of molecular formula candidates that
-should be given in the output. But Sirius will search through the space
-of all possible molecular formulas, anyways.
+should be given in the output as well as where they come from.
+
+If you select **All possible molecular formulas** then SIRIUS will
+enumerate over all molecular formulas that match the ion mass, filtering
+out only molecular formulas with negative ring double bond equivalent.
+If you choose **PubChem formulas** then SIRIUS will select all molecular
+formulas from PubChem. When choosing **formulas from biological
+databases** SIRIUS will select formulas that are contained in any
+database of either biological compounds or compounds that could be
+expected in biological experiments (e.g. KEGG, Biocyc, HMDB but also
+MaConDa).
+
+Please consider the following:
+
+:   -   we never search in any of these databases but instead in our own
+        in-house database. Although we regularly update our database it
+        might happen that some new compound in e.g. CHEBI is not already
+        contained in our own copy of CHEBI.
+    -   when choosing a database SIRIUS will ignore your element
+        restrictions and instead allow all elements. However, if you
+        provide MS1 spectra SIRIUS can usually determine the elemental
+        composition from them anyways.
+    -   while we recommend searching in PubChem and filtering the
+        results afterwards, searching in bio databases significantly
+        speeds up the computation, as SIRIUS has to consider much less
+        molecular formulas and have to download much smaller candidate
+        structure lists.
+
+Identifying Molecular Structure with CSI:FingerId
+-------------------------------------------------
+
+After computing the fragmentation trees you can search these in a
+structure database. Again we provide a **single mode** and a **batch
+mode**. The single mode is available by clicking on the molecular
+formula of interest, then switching to the **CSI:FingerId** tab and
+pressing on the **Search online with CSI:FingerId** button. The batch
+mode can be triggered by pressing on the **CSI:FingerId** in the
+toolbar.
+
+> \[image\]
+
+When starting the CSI:FingerId search you are again asked to choose
+between PubChem or biological databases. This is mainly a performance
+issue because you can filter your result lists afterwards by any
+database you want to. Our biological database is several magnitudes
+smaller than PubChem and downloading and searching structure lists from
+biological databases is significantly faster. However, when searching in
+biological databases you might never see if there are structures with
+possibly much better score from PubChem. Therefore, we recommend to
+search in PubChem and filter the result list if you expect the result to
+be contained in biological databases.
 
 Visualization of the Results
 ----------------------------
@@ -307,6 +346,69 @@ In the spectrum view all peaks that are annotated by the Fragmentation
 Tree are colored in blue. Peaks that are annotated as noise are colored
 black. Hovering with the mouse over a peak shows its annotation.
 
+### CSI:FingerId View
+
+> \[image\]
+
+This tab shows you the candidate structures for the selected molecular
+formula ordered by the CSI:FingerId search score. If you want to filter
+the candidate list by a certain database (e.g. only compounds from KEGG
+and Biocyc) you can press the filter button. A menu will open displaying
+all available databases. Only candidates will be displayed that are
+enabled in this filter menu. Note that PubChem is enabled by default
+and, therefore, always the complete list is shown. If you want to see
+only compounds from KEGG and Biocyc you have to disable PubChem and
+enable KEGG and Biocyc.
+
+Another way of filtering is the XLogP slider. If you have information
+about retention times and expected logP values of your measured compound
+you can use this slider to filter the candidate list by certain XLogP
+values. The slider allows you to define min and max values. XLogP is
+calculated using the CDK development kit \[1\].
+
+The green and red squares are some visualization of the CSI:FingerId
+predictions and scoring. All green squares represent molecular
+structures that are found in the candidate structure and are predicted
+by CSI:FingerId to be present in the measured compound. As lighter the
+square as more likely is the predicted probability for the presence of
+this substructure. As larger the square as more reliable is the
+predictor. The red squares, however, represent structures that are
+predicted to be absent but are, nevertheless, found in the candidate
+structure. Again, as lighter the square as higher the predicted
+probability that this structure should be absent. Therefore, a lot of
+large light green squares and as few as possible large light red squares
+are a good indication for a correct prediction.
+
+When hovering with the mouse over these squares the corresponding
+description of the molecular structure (usually a SMART expression) is
+displayed. When clicking on one of these squares, the corresponding
+atoms in the molecule that belong to this substructure are highlighted.
+If the substructure matches several times in the molecule, it is once
+highlighted in dark blue while all other matches are highlighted in a
+translucent blue.
+
+Even if the correct structure is not found by CSI:FingerId -especially
+if the correct structure is not contained in any database -you can get
+information about the structure by looking at the predicted structures:
+When clicking on the large light green squares you see which molecular
+substructures are expected in the measured compound.
+
+You can open a context menu by right click on the compound. It offers
+you to open the compound in PubChem or copy the InChI or InChI key in
+your clipboard.
+
+If the compound is contained in any biological database, a blue label
+with the name of this database is displayed below the compound. You can
+click on most of these labels to open the database entry in your browser
+window.
+
+You can export a single candidate list by clicking on the **export
+list** button.
+
+*\[1\] The Chemistry Development Kit (CDK): An Open-Source Java Library
+for Chemo- and Bioinformatics. Steinbeck et al, J. Chem. Inf. Comput.
+Sci., 2003*
+
 Workspace
 ---------
 
@@ -324,22 +426,41 @@ The Sirius Commandline Tool is able to output *.sirius* files by using
 the option **-O sirius**. You can import these files with the Sirius
 User Interface to get a visualization of the results.
 
+Currently, CSI:FingerId predictions are not stored in the *.sirius*
+file. This will hopefully change in future releases.
+
 ### Export Results
 
 Next to the *.sirius* format you can also export your results as a
 simple **csv** file by clicking on the **Export Results** button. Such a
-*csv* file can then be imported into *Excel*, *Matlab* or *R*. The csv
-file contains the following fields: \* name of the experiment
+*csv* file can then be imported into *Excel*, *Matlab* or *R*.
 
-> -   parent mass
-> -   ionization
-> -   for each molecular formula candidate there are two columns: one
->     with the molecular formula and one with the corresponding score
+The csv file contains the following fields:
+
+:   -   name of the experiment
+    -   parent mass
+    -   ionization
+    -   for each molecular formula candidate there are two columns: one
+        with the molecular formula and one with the corresponding score
 
 If the number of molecular formula candidates differ between
 experiments, the number of fields per row might differ, too. However,
 most software programs do not have a problem with such *malformed* csv
 files.
+
+### Confidence View
+
+When identifying large amounts of spectra with CSI:FingerId you will,
+unfortunately, get a lot of wrong predictions among the correct ones.
+With SIRIUS 3.2 we offer a confidence score that reflects the likelihood
+that some identification is correct. You can list all identifications by
+opening the **identification** tab.
+
+> \[image\]
+
+This list contains the top hits in all structure candidate lists ordered
+by their confidence. Entries at the top are more likely to be correct
+while entries at the bottom are more likely to be wrong.
 
 Example Workflow
 ----------------
@@ -696,6 +817,19 @@ SIRIUS recognizes the following options:
 > If this option is set, SIRIUS will not recalibrate the spectrum during
 > the analysis.
 
+--fingerid
+
+> If this option is set, SIRIUS will search for molecular structure
+> using CSI:FingerId after determining the molecular formula
+
+--database, -d
+
+> If this option is set, SIRIUS will only consider molecular formulas
+> from the given database. Either "PubChem" or "bio" can be chosen, as
+> well as other concrete databases like "hmdb", "kegg",
+> "knapsack`` `or ``biocyc". When used with the option --fingerid, the
+> chosen database will also be used to search for candidate structures.
+
 -h, --help
 
 > display help
@@ -748,6 +882,23 @@ as only one tree is computed).
 >
 > \[image\]The output of the dot program to visualize the computed
 > fragmentation tree
+
+##### Identifying Molecular Structures
+
+With SIRIUS 3.2 you can also search for molecular structures with
+CSI:FingerId. Just add the option **--fingerid** to trigger a
+CSI:FingerId search after fragmentation tree computation. With
+**--database** can now also specify the database SIRIUS should search
+in. Available are *pubchem* and *bio*. However, you can also specify
+certain databases like *kegg* and *hmdb*, although it is recommended to
+filter the list afterwards.
+
+SIRIUS will generate csv files for each input spectrum containing a
+ordered candidate list of structures with the CSI:FingerId score.
+Furthermore, another result csv file is generated only the top
+candidates from all input spectra ordered by their confidence.
+
+> sirius -c 10 --database=pubchem --fingerid demo-data/ms/Bicuculline.ms
 
 ##### Demo Data
 
