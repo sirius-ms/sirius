@@ -912,6 +912,7 @@ public class Sirius {
     public Ms2Experiment getMs2Experiment(double parentMass, PrecursorIonType ion, Spectrum<Peak> ms1, Spectrum... ms2) {
         final MutableMs2Experiment mexp = new MutableMs2Experiment();
         mexp.setPrecursorIonType(ion);
+        mexp.setIonMass(parentMass);
         for (Spectrum<Peak> spec : ms2) {
             mexp.getMs2Spectra().add(new MutableMs2Spectrum(spec, mexp.getIonMass(), CollisionEnergy.none(), 2));
         }
