@@ -46,6 +46,7 @@ public class PredictFromMs1 implements Judge {
         if (experiment.getMs1Spectra().size() > 0) {
             for (Spectrum<Peak> spec : experiment.getMs1Spectra()) {
                 final SimpleSpectrum ms1spec = extractor.extractPattern(spec, profile, experiment.getIonMass());
+                if (ms1spec==null) continue;
                 final double mono = ms1spec.getMzAt(0);
                 final int plus1 = (int)Math.round(mono+1);
                 final int plus2 = (int)Math.round(mono+2);
