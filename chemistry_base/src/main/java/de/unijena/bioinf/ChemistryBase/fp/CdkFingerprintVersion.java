@@ -18,8 +18,9 @@ import java.util.regex.Pattern;
  */
 public class CdkFingerprintVersion extends FingerprintVersion {
 
-    private int fastCompareFlag;
+    private final int fastCompareFlag;
     private final MolecularProperty[] properties;
+    private final USED_FINGERPRINTS[] usedFingerprints;
 
     public static CdkFingerprintVersion getDefault() {
         return DEFAULT_INSTANCE;
@@ -27,12 +28,14 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
-        this.fastCompareFlag = 0;
+        int fastCompareFlag = 0;
         Arrays.sort(fingerprints);
         for (USED_FINGERPRINTS uf : fingerprints) {
             properties.addAll(Arrays.asList(getDefaultPropertiesFor(uf)));
-            this.fastCompareFlag |= (1<<uf.defaultPosition);
+            fastCompareFlag |= (1<<uf.defaultPosition);
         }
+        this.fastCompareFlag = fastCompareFlag;
+        this.usedFingerprints = fingerprints;
         this.properties = properties.toArray(new MolecularProperty[properties.size()]);
     }
 
@@ -68,7 +71,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH};
 
     public static enum USED_FINGERPRINTS {
-        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860);
+        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), SPHERICAL(5, 261);
 
         public final int defaultPosition, length;
 
@@ -78,7 +81,13 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
     }
 
-    private USED_FINGERPRINTS[] usedFingerprints;
+    public int numberOfFingerprintTypesInUse() {
+        return usedFingerprints.length;
+    }
+
+    public USED_FINGERPRINTS getFingerprintTypeAt(int index) {
+        return usedFingerprints[index];
+    }
 
     private static Pattern COUNT_PATTERN = Pattern.compile(" at least (\\d+) times");
     private static Pattern ELEMENT_PATTERN = Pattern.compile(" >= (\\d+) ([A-Z][a-z]?)");
@@ -88,7 +97,14 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private static final MolecularProperty[][] DEFAULT_PROPERTIES = new MolecularProperty[DEFAULT_SETUP.length][];
 
     public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
-        return DEFAULT_PROPERTIES[uf.defaultPosition];
+        switch (uf) {
+            case SPHERICAL:
+                final MolecularProperty[] placeHolders = new MolecularProperty[uf.length];
+                Arrays.fill(placeHolders, new SpecialMolecularProperty("spherical fingerprint"));
+                return placeHolders;
+            default:
+                return DEFAULT_PROPERTIES[uf.defaultPosition];
+        }
     }
 
     static {
