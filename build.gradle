@@ -128,14 +128,16 @@ configure(javaProjects()) {
     }
 }
 
-task downloadGLPK (type: Copy){
+task downloadGLPK(type: Copy) {
     def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
     java.nio.file.Path dir = project.glpkPath.toPath().getParent()
+
     copy {
-        if (Files.notExists(dir))
-            Files.createDirectories(dir)
+        println(dir.toString())
+        dir.resolve('glpk').toFile().deleteDir()
+        Files.createDirectories(dir)
 
         def glpkZipFile = Paths.get('glpk.zip');
         def file = dir.resolve(glpkZipFile).newOutputStream()
