@@ -40,6 +40,7 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         libsSvm_parameter.cache_size = parameter.cache_size;
 //        libsSvm_parameter.coef0 = parameter.coef0;
 //        libsSvm_parameter.degree = parameter.degree;
+        libsSvm_parameter.degree = 2;
         libsSvm_parameter.eps = parameter.eps;
 //        libsSvm_parameter.gamma = parameter.gamma;
         libsSvm_parameter.kernel_type = parameter.kernel_type;
