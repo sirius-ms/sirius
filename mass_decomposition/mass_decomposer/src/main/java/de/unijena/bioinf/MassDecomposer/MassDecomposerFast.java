@@ -135,6 +135,7 @@ public class MassDecomposerFast<T> extends MassDecomposer<T>{
         //new decomposition with the whole integer interval at once
         if (interval.getMax()<interval.getMin()) rawDecompositions = new ArrayList<int[]>();
         else rawDecompositions = integerDecompose(interval.getMax(), toInt(interval.getMax() - interval.getMin()), boundsarray);
+        System.err.println(rawDecompositions.size());
         for (int i=0; i < rawDecompositions.size(); ++i) {
             final int[] decomp = rawDecompositions.get(i);
             if (!minAllZero) {

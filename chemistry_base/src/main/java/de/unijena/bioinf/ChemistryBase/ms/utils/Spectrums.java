@@ -19,14 +19,12 @@ package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class Spectrums {
 
@@ -76,6 +74,16 @@ public class Spectrums {
     }
 
     public static <P extends Peak, S extends Spectrum<P>>
+    SimpleSpectrum neutralMassSpectrum(final S spectrum, final PrecursorIonType ionization) {
+        return map(spectrum, new Transformation<P, Peak>() {
+            @Override
+            public Peak transform(P input) {
+                return new Peak(ionization.precursorMassToNeutralMass(input.getMass()), input.getIntensity());
+            }
+        });
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum mergeSpectra(@SuppressWarnings("unchecked") final S... spectra) {
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
         for (S s : spectra) {
@@ -84,6 +92,93 @@ public class Spectrums {
             }
         }
         return new SimpleSpectrum(ms);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>>
+    SimpleSpectrum mergeSpectra(@SuppressWarnings("unchecked") final List<S> spectra) {
+        final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
+        for (S s : spectra) {
+            for (Peak p : s) {
+                ms.addPeak(p); // TODO: improve performance by concatenating arrays
+            }
+        }
+        return new SimpleSpectrum(ms);
+    }
+
+    /**
+     * Merges the given mass spectra such that all the resulting spectra contains all
+     * peaks from all mass spectra but all peaks within the given mass window are merged
+     * into one peak
+     * @param massWindow determines the mass window in which peaks should be merged
+     * @param sumIntenstities if true, the intensity is the sum of merged peak intensities. Otherwise, it is the maximum of peak intensities.
+     * @param mergeMasses if true, the mass is the weighted averaged mass over merged peaks. Otherwise it is the mass of the most intensive peak.
+     * @param spectra the list of spectra to merge
+     * @param <P> class of the input peak
+     * @param <S> class of the input spectrum
+     * @return
+     */
+    public static <P extends Peak, S extends Spectrum<P>>
+    SimpleSpectrum mergeSpectra(Deviation massWindow, boolean sumIntenstities, boolean mergeMasses, @SuppressWarnings("unchecked") final S... spectra) {
+        final SimpleSpectrum merged = mergeSpectra(spectra);
+        return performPeakMerging(merged, massWindow, sumIntenstities, mergeMasses);
+    }
+
+    private static <P extends Peak, S extends Spectrum<P>>
+    SimpleSpectrum performPeakMerging(SimpleSpectrum merged, Deviation massWindow, boolean sumIntenstities, boolean mergeMasses) {
+        final Spectrum<Peak> intensityOrdered = getIntensityOrderedSpectrum(merged);
+        final BitSet alreadyMerged = new BitSet(merged.size());
+        final SimpleMutableSpectrum mergedSpectrum = new SimpleMutableSpectrum();
+        for (int k=0; k < intensityOrdered.size(); ++k) {
+            final double mz = intensityOrdered.getMzAt(k);
+            final int index = binarySearch(merged, mz);
+            assert intensityOrdered.getIntensityAt(k)==merged.getIntensityAt(index);
+
+            if (alreadyMerged.get(index)) continue;
+            // merge all surrounding peaks
+            final double dev = massWindow.absoluteFor(mz);
+            final double min=mz-dev, max=mz+dev;
+            int a=index,b=index+1;
+            while (a >= 0 && merged.getMzAt(a) >= min) --a;
+            ++a;
+            while (b < merged.size() && merged.getMzAt(b) <= max) ++b;
+
+            double mzSum=0d,intensitySum=0d;
+            for (int j=a; j < b; ++j) {
+                if (!alreadyMerged.get(j)) {
+                    alreadyMerged.set(j);
+                    mzSum += merged.getMzAt(j)*merged.getIntensityAt(j);
+                    intensitySum += merged.getIntensityAt(j);
+                }
+            }
+            final double intensity, mergedMz;
+            if (sumIntenstities) {
+                intensity = intensitySum;
+            } else intensity = intensityOrdered.getIntensityAt(k);
+            if (mergeMasses) {
+                mergedMz = mzSum / intensitySum;
+            } else mergedMz = mz;
+
+            mergedSpectrum.addPeak(mergedMz, intensity);
+        }
+        return new SimpleSpectrum(mergedSpectrum);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>>
+    SimpleSpectrum mergeSpectra(Deviation massWindow, boolean sumIntenstities, boolean mergeMasses, final List<S> spectra) {
+        final SimpleSpectrum merged = mergeSpectra(spectra);
+        return performPeakMerging(merged, massWindow, sumIntenstities, mergeMasses);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>>
+    Spectrum<P> getIntensityOrderedSpectrum(S spectrum) {
+        final PeaklistSpectrum<P> wrapper = new PeaklistSpectrum<>(spectrum);
+        Collections.sort(wrapper.peaks, new Comparator<P>() {
+            @Override
+            public int compare(P o1, P o2) {
+                return Double.compare(o2.getIntensity(), o1.getIntensity());
+            }
+        });
+        return wrapper;
     }
 
     public static <P extends Peak, S extends MutableSpectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
