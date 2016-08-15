@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
@@ -37,22 +38,32 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BackgroundComputation {
 
 
     private final MainFrame owner;
     private final ConcurrentLinkedQueue<Task> queue;
-    private volatile Worker worker;
-    protected final HashMap<String, Sirius> siriusPerProfile;
+    private final Worker[] workers;
+    private final int nworkers;
     private final ConcurrentLinkedQueue<ExperimentContainer> cancel;
-    private ExperimentContainer currentComputation;
 
     public BackgroundComputation(MainFrame owner) {
         this.owner = owner;
         this.queue = new ConcurrentLinkedQueue<>();
-        this.siriusPerProfile = new HashMap<>();
         this.cancel = new ConcurrentLinkedQueue<>();
+        int nw;
+        try {
+        if (new Sirius().getMs2Analyzer().getTreeBuilder().getDescription().equalsIgnoreCase("Gurobi")) {
+            nw = Math.max(1, Runtime.getRuntime().availableProcessors()/2);
+        } else {
+            nw = 1;
+        }} catch (Throwable t) {
+            nw = 1;
+        }
+        this.nworkers = nw;
+        this.workers = new Worker[nw];
     }
 
     public void cancel(ExperimentContainer container) {
@@ -79,12 +90,19 @@ public class BackgroundComputation {
             t.exp.setComputeState(ComputingStatus.UNCOMPUTED);
             t.job.error("Canceled", null);
         }
-        if (currentComputation!=null) cancel(currentComputation);
+        synchronized (this) {
+            for (Worker w : workers) {
+                if (w != null && !w.isDone()) {
+                    final ExperimentContainer currentComputation = w.currentComputation;
+                    if (currentComputation!=null)
+                        cancel(currentComputation);
+                }
+            }
+        }
         return canceled;
     }
 
     public void add(Task containers) {
-        checkProfile(containers);
         this.queue.add(containers);
         containers.exp.setComputeState(ComputingStatus.QUEUED);
         wakeup();
@@ -92,28 +110,19 @@ public class BackgroundComputation {
 
     public void addAll(Collection<Task> containers) {
         for (Task t : containers) {
-            checkProfile(t);
             t.exp.setComputeState(ComputingStatus.QUEUED);
         }
         this.queue.addAll(containers);
         wakeup();
     }
 
-    private void checkProfile(Task t) {
-        if (siriusPerProfile.containsKey(t.profile)) return;
-        else try {
-            siriusPerProfile.put(t.profile, new Sirius(t.profile));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private void wakeup() {
-        if (worker == null || worker.isDone()) {
-            synchronized(this) {
+        synchronized(this) {
+            for (int w=0; w < workers.length; ++w) {
+                final Worker worker = workers[w];
                 if (worker == null || worker.isDone()) {
-                    worker = new Worker();
-                    worker.execute();
+                    workers[w] = new Worker();
+                    workers[w].execute();
                 }
             }
         }
@@ -147,6 +156,9 @@ public class BackgroundComputation {
 
     private class Worker extends SwingWorker<List<ExperimentContainer>, Task> {
 
+        protected final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
+        protected volatile ExperimentContainer currentComputation;
+
         @Override
         protected void process(List<Task> chunks) {
             super.process(chunks);
@@ -160,6 +172,15 @@ public class BackgroundComputation {
                     c.job.run();
                 }
                 owner.refreshCompound(c.exp);
+            }
+        }
+
+        private void checkProfile(Task t) {
+            if (siriusPerProfile.containsKey(t.profile)) return;
+            else try {
+                siriusPerProfile.put(t.profile, new Sirius(t.profile));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
 
@@ -186,6 +207,7 @@ public class BackgroundComputation {
         }
 
         protected void compute(final Task container) {
+            checkProfile(container);
             final Sirius sirius = siriusPerProfile.get(container.profile);
             final FormulaSource formulaSource = container.formulaSource;
             sirius.setProgress(new Progress() {
