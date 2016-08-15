@@ -30,7 +30,11 @@ import java.util.List;
  */
 public class PeaklistSpectrum<P extends Peak> implements Spectrum<P> {
 
-    private final List<P> peaks;
+    protected final List<P> peaks;
+
+    public PeaklistSpectrum(Spectrum<P> spec) {
+        this(Spectrums.extractPeakList(spec));
+    }
 
     public PeaklistSpectrum(List<P> peaks) {
         this.peaks = peaks;

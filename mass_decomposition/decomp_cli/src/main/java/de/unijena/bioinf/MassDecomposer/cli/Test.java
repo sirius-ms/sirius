@@ -17,24 +17,16 @@ public class Test {
 
     public static void main(String[] args) {
         final PeriodicTable P = PeriodicTable.getInstance();
-        String allowedElements = "CHNOPSF";
+        String allowedElements = "CHNOPS";
         int allowedPPM = 0;
-        double allowedMz = 0.005;
-        FormulaConstraints constraints = new FormulaConstraints(allowedElements);
-        constraints.setUpperbound(P.getByName("C"), 100);
-        constraints.setUpperbound(P.getByName("H"), 100);
-        constraints.setUpperbound(P.getByName("N"), 50);
-        constraints.setUpperbound(P.getByName("F"), 50);
-        constraints.setUpperbound(P.getByName("O"), 50);
-        constraints.setUpperbound(P.getByName("P"), 10);
-        constraints.setUpperbound(P.getByName("S"), 10);
+        double allowedMz = 0.003;
 
-
+        final FormulaConstraints constraints = new FormulaConstraints("CHNOPS");
         MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer(constraints.getChemicalAlphabet());
 
 // you might want to remove RDBE >=0 condition which is enabled by default
         constraints.getFilters().clear(); // remove RDBE>=0
-        for (double mass : new double[]{2*1154.739624}) {
+        for (double mass : new double[]{10000d}) {
             final long time = System.currentTimeMillis();
             List<MolecularFormula> formulas = decomposer.decomposeToFormulas(mass, new Deviation(allowedPPM, allowedMz), constraints);
             final long time2 = System.currentTimeMillis();
