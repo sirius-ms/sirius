@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class PatternExtractionTest {
 
-    @Test
+   /* @Test
     public void testPatternExtraction() {
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -120,5 +120,5 @@ public class PatternExtractionTest {
         }
         return c;
     }
-
+*/
 }
