@@ -21,20 +21,23 @@ buildscript {
 //Global Properties
 ext {
     //version for external libraries
-
-    json_version = '1.0'
-    json_impl_version = "1.0.4"
+    json_version = '1.0' //todo move to gson
+    json_impl_version = "1.0.4" //todo move to gson
 
     glpk_lib_version = '4.60'
 
-    jewelcli_version = '0.8.+'
-    gurobi_version = '6.5.1'
     siriusVersion = '3.2.1-SNAPSHOT'
     fingeridVersion = "1.0.6-SNAPSHOT"
 
+    jewelcli_version = '0.8.+'
+
+
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
-    gurobiExclude = "gurobi-*-${gurobi_version}.jar"
+    gurobiExclude = "gurobi-*.jar"
+
+
+
 }
 
 allprojects {
@@ -94,9 +97,6 @@ task downloadGLPK(type: Copy) {
 }
 
 /*################### DISTRIBUTION STUFF ################### */
-
-
-
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
