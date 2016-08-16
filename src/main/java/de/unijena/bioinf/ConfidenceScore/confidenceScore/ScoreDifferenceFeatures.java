@@ -19,6 +19,7 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
     private final FingerblastScoring[] scorers;
     private int[] positions;
     private int max;
+    private PredictionPerformance[] statistics;
 
     public ScoreDifferenceFeatures(){
         this(new int[]{});
@@ -40,13 +41,15 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        scorers[0] = new CSIFingerIdScoring(statistics);
-        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
-        scorers[2] = new ProbabilityEstimateScoring(statistics);
+        this.statistics = statistics;
     }
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        scorers[2] = new ProbabilityEstimateScoring(statistics);
+
         double[] scores = new double[scorers.length * positions.length];
         final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
         int pos = 0;

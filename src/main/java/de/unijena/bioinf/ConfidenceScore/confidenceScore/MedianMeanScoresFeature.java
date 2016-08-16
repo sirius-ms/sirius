@@ -17,6 +17,7 @@ import java.util.Arrays;
 public class MedianMeanScoresFeature implements FeatureCreator {
     private final String name;
     private FingerblastScoring scorer;
+    private PredictionPerformance[] statistics;
 
     public MedianMeanScoresFeature(){
         //todo do for all scorings?
@@ -25,11 +26,13 @@ public class MedianMeanScoresFeature implements FeatureCreator {
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        scorer = new CSIFingerIdScoring(statistics);
+        this.statistics = statistics;
     }
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorer = new CSIFingerIdScoring(statistics);
+
         scorer.prepare(query.getFingerprint());
         double[] scores = new double[rankedCandidates.length];
         for (int i = 0; i < rankedCandidates.length; i++) {

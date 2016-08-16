@@ -43,7 +43,9 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         libsSvm_parameter.degree = 2;
         libsSvm_parameter.eps = parameter.eps;
 //        libsSvm_parameter.gamma = parameter.gamma;
-        libsSvm_parameter.kernel_type = parameter.kernel_type;
+//        libsSvm_parameter.kernel_type = parameter.kernel_type;
+        libsSvm_parameter.kernel_type = svm_parameter.RBF;
+        System.out.println("RBF");
         libsSvm_parameter.nr_weight = parameter.nr_weight;
 //        libsSvm_parameter.nu = parameter.nu;
         libsSvm_parameter.p = parameter.p;

@@ -366,7 +366,7 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
 
         int shufflePos = 0;
         int[] unbalancedSize = new int[FOLDS];
-//        Iterator<Compound> iterator = compounds.iterator();
+//        Iterator<Instance> iterator = compounds.iterator();
         Iterator<Instance> iterator = sortedCompounds.iterator();
         Instance next = iterator.next();
         while (next != null) {

@@ -59,8 +59,8 @@ public interface SVMInterface<node extends SVMInterface.svm_node, problem extend
 //        public static final int EPSILON_SVR = 3;
 //        public static final int NU_SVR = 4;
         public static final int LINEAR = 0;
-//        public static final int POLY = 1;
-//        public static final int RBF = 2;
+        public static final int POLY = 1;
+        public static final int RBF = 2;
 //        public static final int SIGMOID = 3;
 //        public static final int PRECOMPUTED = 4;
         public final int svm_type = C_SVC;

@@ -15,10 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * Created by Marcus Ludwig on 08.03.16.
@@ -75,6 +72,8 @@ public class TrainConfidenceScore {
         List<double[]> featureList = new ArrayList();
         TIntArrayList usedInstances = new TIntArrayList();
 
+        ExecutorService executorService2 = Executors.newSingleThreadExecutor();
+
         List<Future<FeatureWithIdx>> futures = new ArrayList<>();
         for (int i = 0; i < queries.length; i++) {
             final int idx = i;
@@ -82,7 +81,7 @@ public class TrainConfidenceScore {
             final CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
             if (featureCreator.isCompatible(query, candidates)){
                 usedInstances.add(i);
-                futures.add(executorService.submit(new Callable<FeatureWithIdx>() {
+                futures.add(executorService2.submit(new Callable<FeatureWithIdx>() {
                     @Override
                     public FeatureWithIdx call() throws Exception {
                         double[] features = featureCreator.computeFeatures(query, candidates);
@@ -121,6 +120,10 @@ public class TrainConfidenceScore {
             featureList.add(result.features);
         }
 
+
+
+//        //changed
+        executorService2.shutdown();
 
         if (DEBUG){
             System.out.println("computed features");
