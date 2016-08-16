@@ -1,0 +1,208 @@
+//apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'de.unijena.bioinf.launch4jj'
+
+
+dependencies {
+//project
+//    compile project(':chemistry_base')
+//    compile project(':io')
+//    compile project(':isotope_pattern:isotope_pattern_analysis')
+//    compile project(':fragmentation_tree:fragmentation_tree_construction')
+    compile project(':sirius_frontend:sirius_cli')
+
+//internal
+    //todo fingerID dependencies into artifactory
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
+    compile "de.unijena.bioinf.ms:Myxo:0.2.1"
+//external
+    compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
+    compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
+
+    compile "net.sf.opencsv:opencsv:2.3"
+    compile "org.swinglabs.swingx:swingx-all:1.+"
+    compile "org.openscience.cdk:cdk-silent:1.5.10"
+    compile "org.openscience.cdk:cdk-render:1.5.10"
+    compile "org.openscience.cdk:cdk-renderextra:1.5.10"
+    compile "org.openscience.cdk:cdk-renderawt:1.5.10"
+    compile "org.openscience.cdk:cdk-data:1.5.10"
+    compile "org.openscience.cdk:cdk-core:1.5.10"
+    compile "org.openscience.cdk:cdk-interfaces:1.5.10"
+    compile "org.openscience.cdk:cdk-inchi:1.5.10"
+    compile "org.openscience.cdk:cdk-smiles:1.5.10"
+    compile "org.openscience.cdk:cdk-sdg:1.5.10"
+    compile "org.openscience.cdk:cdk-smarts:1.5.10"
+    compile "org.apache.httpcomponents:httpclient:4.5.1"
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+//    provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
+}
+
+/*################### Environment variables ################### */
+mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+project.ext.set("type", "gui,console")
+
+/*################### Jar build Stuff ################### */
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    classifier = 'fat'
+    manifest {
+        attributes 'Class-Path': "$runtimeClasspath"
+    }
+}
+
+/*################### Windows release Stuff ################### */
+launch4j {
+//    mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
+    mainClassName = project.mainClassName
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+
+    guiCLIArgument = '--gui'
+    outfile = "${project.appName}.exe"
+
+    jar = "lib/${project.tasks.jar.archiveName}"
+}
+
+/*################### Build distributions ################### */
+distributions {
+    project.arch.split(',').each { ar ->
+        def n = "${project.linSuffix}${ar}"
+        create(n, {
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from("build/install/${project.name}/lib"){
+                        exclude("$gurobiExclude")
+                    }
+                    from("${project.glpkPath}/l${ar}/")
+                    exclude('*.zip')
+                }
+
+                into('bin') {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+    }
+
+    //crete win32And64 zip tasks
+    project.arch.split(',').each { ar ->
+        def n = "${project.winSuffix}${ar}"
+        create(n, {
+
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from('build/launch4j/lib'){
+                        exclude("$gurobiExclude")
+                    }
+                    exclude('*.zip')
+                }
+                from { "${project.glpkPath}/w${ar}/" }
+                from("${project.distPath}") {
+                    exclude('sirius3-gui')
+                }
+                from('build/launch4j') {
+                    include("*-${ar}.exe")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build/latex") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+    }
+
+    //create osx zip
+    def n = "${project.macSuffix}64"
+    create(n, {
+        baseName = "${project.appName}-$n"
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib"){
+                    exclude("$gurobiExclude")
+                }
+                from("${project.glpkPath}/osx/")
+                exclude('*.zip')
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+                from("${project.distPath}")
+            }
+            into('doc') {
+                from("${project.manualPath}/build/latex") {
+                    include('SIRIUS.pdf')
+                }
+                from("${project.manualPath}/build/singleText")
+            }
+            into('doc/html') {
+                from("${project.manualPath}/build/html")
+            }
+        }
+    })
+    distribute.dependsOn "${n}DistZip"
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+
+
+
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
+
+    linux32DistZip.dependsOn 'installDist'
+    linux32DistTar.dependsOn 'installDist'
+    installLinux32Dist.dependsOn 'installDist'
+
+    linux64DistZip.dependsOn 'installDist'
+    linux64DistTar.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
+
+    win32DistZip.dependsOn 'createExe'
+    win32DistTar.dependsOn 'createExe'
+    installWin32Dist.dependsOn 'createExe'
+
+    win64DistZip.dependsOn 'createExe'
+    win64DistTar.dependsOn 'createExe'
+    installWin64Dist.dependsOn 'createExe'
+}
+
+task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/sirius3-gui').toFile()
+    commandLine([command.absolutePath])
+}
