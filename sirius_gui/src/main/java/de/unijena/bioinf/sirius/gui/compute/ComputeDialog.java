@@ -463,7 +463,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				// try go get exception object
 				try {
 
-					System.loadLibrary("glpk_4_55_java");
+					System.loadLibrary("glpk_4_60_java");
 				} catch (Throwable t) {
 					new StacktraceDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ", t);
 					return;
