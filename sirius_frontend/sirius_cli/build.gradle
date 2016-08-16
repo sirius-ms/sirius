@@ -1,15 +1,11 @@
 dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
 
-    compile project(':chemistry_base')
-    compile project(':io')
-    compile project(':isotope_pattern:isotope_pattern_analysis')
-    compile project(':fragmentation_tree:fragmentation_tree_construction')
-
-
-// DEBUG
-//    compile group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
-
+//    compile project(':chemistry_base')
+//    compile project(':io')
+//    compile project(':isotope_pattern:isotope_pattern_analysis')
+//    compile project(':fragmentation_tree:fragmentation_tree_construction')
+    compile project(':sirius_api')
 }
 
 
