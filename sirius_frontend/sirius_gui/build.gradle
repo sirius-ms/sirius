@@ -1,15 +1,6 @@
-//apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
-//apply plugin: 'de.unijena.bioinf.launch4jj'
-
-
 dependencies {
 //project
-//    compile project(':chemistry_base')
-//    compile project(':io')
-//    compile project(':isotope_pattern:isotope_pattern_analysis')
-//    compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile project(':sirius_frontend:sirius_cli')
+    compile project(':sirius_cli')
 
 //internal
     //todo fingerID dependencies into artifactory
@@ -37,8 +28,6 @@ dependencies {
     compile "org.openscience.cdk:cdk-smarts:1.5.10"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
     compile group: "net.iharder", name: "base64", version: "2.3.8"
-
-//    provided group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
 }
 
 /*################### Environment variables ################### */
@@ -52,17 +41,8 @@ jar {
     }
 }
 
-shadowJar {
-    configurations = [project.configurations.compile]
-    classifier = 'fat'
-    manifest {
-        attributes 'Class-Path': "$runtimeClasspath"
-    }
-}
-
 /*################### Windows release Stuff ################### */
 launch4j {
-//    mainClassNameGUI = 'de.unijena.bioinf.sirius.gui.mainframe.MainFrame'
     mainClassName = project.mainClassName
     headerType = "$project.type"
     jreRuntimeBits = "$project.arch"
