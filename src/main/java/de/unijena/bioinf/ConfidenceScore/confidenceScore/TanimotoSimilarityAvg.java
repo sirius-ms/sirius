@@ -18,6 +18,11 @@ public class TanimotoSimilarityAvg implements FeatureCreator{
     private int[] positions;
     private int max;
 
+    public TanimotoSimilarityAvg(){
+        this.positions = new int[]{};
+        this.max = Integer.MIN_VALUE;
+    }
+
     //todo use also diff between similarities !?
     public TanimotoSimilarityAvg(int... positions){
         this.positions = positions;

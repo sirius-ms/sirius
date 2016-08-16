@@ -17,6 +17,10 @@ public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
     private PredictionPerformance[] statistics;
     private int[] percent;
 
+    public TanimotoSimilarityAvgToPerc(){
+        this.percent = new int[]{};
+    }
+
     //todo use also diff between similarities !?
     public TanimotoSimilarityAvgToPerc(int... percent){
         this.percent = percent;

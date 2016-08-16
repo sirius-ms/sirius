@@ -17,7 +17,10 @@ public class TanimotoSimilarityAvgToPos implements FeatureCreator{
     private PredictionPerformance[] statistics;
     private int[] positions;
 
-    //todo use also diff between similarities !?
+    public TanimotoSimilarityAvgToPos(){
+        this.positions = new int[0];
+    }
+
     public TanimotoSimilarityAvgToPos(int... followingPositions){
         this.positions = followingPositions;
         Arrays.sort(this.positions);

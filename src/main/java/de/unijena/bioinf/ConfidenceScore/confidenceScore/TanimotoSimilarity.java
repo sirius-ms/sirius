@@ -16,6 +16,11 @@ public class TanimotoSimilarity implements FeatureCreator{
     private int[] positions;
     private int max;
 
+    public TanimotoSimilarity(){
+        this.positions = new int[]{};
+        this.max = Integer.MIN_VALUE;
+    }
+
     //todo use also diff between similarities !?
     public TanimotoSimilarity(int... positions){
         this.positions = positions;

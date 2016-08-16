@@ -617,6 +617,111 @@ public class TrainConfidenceScore {
     }
 
 
+
+    public static TrainConfidenceScore All10(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int[] sizes = new int[]{1,2,3,4,5,10};
+        FeatureCreator[] featureCreators = new FeatureCreator[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+            int size = sizes[i];
+            final FeatureCreator featureCreator;
+            switch (size){
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter()),
+                            new ScoreFeatures(),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter()),
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new TanimotoSimilarity(1)
+                    });
+                    break;
+                case 3:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter()),
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new TanimotoSimilarity(1,2)
+                    });
+                    break;
+                case 4:
+                case 5:
+                    int[] positions = new int[size-1];
+                    for (int j = 0; j < size-1; j++) positions[j] = j+1;
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter()),
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,size-1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,size-1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new MedianMeanScoresFeature(),
+                            new DiffToMedianMeanScores(),
+                            new TanimotoSimilarity(1,size-1),
+                            new TanimotoSimilarityAvg(positions),
+                            new TanimotoSimilarityAvgToPerc(10,20,50),
+//                            new NormalizedToMedianMeanScores(1,size-1),
+                            new DifferentiatingMolecularPropertiesCounter(0.8, -1)
+                    });
+                    break;
+                case 10:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter()),
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,4,9),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new MedianMeanScoresFeature(),
+                            new DiffToMedianMeanScores(),
+                            new TanimotoSimilarity(1,4,9),
+                            new TanimotoSimilarityAvg(1,2,3,4),
+                            new TanimotoSimilarityAvg(1,2,3,4,5,6,7,8,9),
+//                            new TanimotoSimilarityAvgToFixedLength(4,9),
+//                            new NormalizedToMedianMeanScores(1,4,9), //changed stranged
+                            new DifferentiatingMolecularPropertiesCounter(0.8, 4),
+                            new DifferentiatingMolecularPropertiesCounter(0.8, 9),
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 4),
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 9)
+                    });
+                    break;
+                default:
+                    throw new RuntimeException("unexpected size");
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[sizes.length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
     public static TrainConfidenceScore AllLong(boolean useLinearSVM){
         TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
 
