@@ -22,6 +22,13 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
     private int[] positions;
     private PredictionPerformance[] statistics;
 
+    public NormalizedToMedianMeanScores(){
+        names = new String[]{"CSIFingerIdScoringMedian", "CSIFingerIdScoringAvg"};
+        scorers = new FingerblastScoring[1];
+
+        this.positions = new int[0];
+    }
+
     public NormalizedToMedianMeanScores(int... positions){
 //        names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
 //                                "CSIFingerIdScoringAvg", "SimpleMaximumLikelihoodScoringAvg", "ProbabilityEstimateScoringAvg"};

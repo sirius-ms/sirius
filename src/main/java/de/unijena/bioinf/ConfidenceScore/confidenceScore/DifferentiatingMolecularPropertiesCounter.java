@@ -14,6 +14,12 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
     private double alpha;
     private int numOfWorseCandidates;
 
+
+    public DifferentiatingMolecularPropertiesCounter(){
+        this.alpha = -1;
+        this.numOfWorseCandidates = -1;
+    }
+
     /**
      *
      * @param alpha 0-1: Proportion of candidates which have to differ in this mol prob from the top hit to count
