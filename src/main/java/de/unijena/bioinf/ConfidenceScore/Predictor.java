@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 /**
  * Created by Marcus Ludwig on 11.03.16.
  */
-public interface LinearPredictor extends Parameterized{
+public interface Predictor extends Parameterized{
 
     public boolean predict(double[] features);
 

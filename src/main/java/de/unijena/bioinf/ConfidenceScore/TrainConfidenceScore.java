@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Marcus Ludwig on 08.03.16.
@@ -24,7 +26,7 @@ public class TrainConfidenceScore {
 
     private FeatureCreator[] featureCreators;
     private Scaler scalers[];
-    private LinearSVMPredictor[] predictors;
+    private Predictor[] predictors;
     private int[] priority;
     private final SVMInterface svmInterface;
     private PredictionPerformance[] statistics;
@@ -36,6 +38,9 @@ public class TrainConfidenceScore {
         else svmInterface = new LibSVMImpl();
     }
 
+
+
+
     /**
      * rankedCandidates[i] are the candidates corresponding to query "queries[i]". the candidates for each query must be sorted by score, best to worst !
      * @param executorService
@@ -43,6 +48,11 @@ public class TrainConfidenceScore {
      * @param rankedCandidates sorted best to worst!
      */
     public void train(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates, PredictionPerformance[] statistics) throws InterruptedException {
+        train(executorService, queries, rankedCandidates, statistics, true);
+    }
+
+
+    public void train(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates, PredictionPerformance[] statistics, boolean doCrossval) throws InterruptedException {
         if (queries.length!=rankedCandidates.length){
             throw new IllegalArgumentException("query and candidates sizes differ");
         }
@@ -50,11 +60,11 @@ public class TrainConfidenceScore {
 
         this.statistics = statistics;
         this.scalers = new Scaler[featureCreators.length];
-        this.predictors = new LinearSVMPredictor[featureCreators.length];
+        this.predictors = new Predictor[featureCreators.length];
 
         for (int i = 0; i < featureCreators.length; i++) {
             FeatureCreator featureCreator = featureCreators[i];
-            trainOnePredictor(executorService, queries, rankedCandidates, featureCreator, i);
+            trainOnePredictor(executorService, queries, rankedCandidates, featureCreator, i, doCrossval);
         }
 
     }
@@ -69,6 +79,10 @@ public class TrainConfidenceScore {
     }
 
     private void trainOnePredictor(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates , final FeatureCreator featureCreator, int step) throws InterruptedException {
+        trainOnePredictor(executorService, queries, rankedCandidates , featureCreator, step, true);
+    }
+
+    private void trainOnePredictor(ExecutorService executorService, CompoundWithAbstractFP<ProbabilityFingerprint>[] queries, CompoundWithAbstractFP<Fingerprint>[][] rankedCandidates , final FeatureCreator featureCreator, int step, boolean doCrossval) throws InterruptedException {
         List<double[]> featureList = new ArrayList();
         TIntArrayList usedInstances = new TIntArrayList();
 
@@ -148,6 +162,7 @@ public class TrainConfidenceScore {
 
         double[][] featureMatrix = featureList.toArray(new double[0][]);
 
+        //        Scaler scaler = new Scaler.NoScaler(featureMatrix);
         Scaler scaler = new Scaler.StandardScaler(featureMatrix);
         double[] sds = ((Scaler.StandardScaler) scaler).getSD();
         for (int i = 0; i < sds.length; i++) {
@@ -158,7 +173,6 @@ public class TrainConfidenceScore {
             }
 
         }
-//        Scaler scaler = new Scaler.NoScaler(featureMatrix);
 
         double[][] scaledMatrix = scaler.scale(featureMatrix);
         for (double[] doubles : scaledMatrix) {
@@ -185,9 +199,18 @@ public class TrainConfidenceScore {
 //        TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface);
         TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5});
 
-        LinearSVMPredictor predictor = trainLinearSVM.trainWithCrossvalidation();
+        Predictor predictor;
+        if (doCrossval){
+            predictor = trainLinearSVM.trainWithCrossvalidation();
+        } else {
+            if (DEBUG){
+                System.out.println("anti-crossvalidation");
+            }
+            predictor = trainLinearSVM.trainAntiCrossvalidation();
+        }
 
-//        LinearSVMPredictor predictor = new LinearSVMPredictor(new double[]{1}, 0);
+
+//        Predictor predictor = new LinearSVMPredictor(new double[]{1}, 0);
 
         if (DEBUG){
             System.out.println("trained predictor");
@@ -212,17 +235,17 @@ public class TrainConfidenceScore {
         return scalers;
     }
 
-    public LinearSVMPredictor[] getLinearPredictor() {
+    public Predictor[] getLinearPredictor() {
         return predictors;
     }
 
     private TrainLinearSVM.Compound createCompound(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, double[] features){
         byte classification;
-        String queryInchi2D = query.getInchi().in2D;
-        String candidateInchi2D = rankedCandidates[0].getInchi().in2D;
-        if (queryInchi2D.equals(candidateInchi2D)) classification = 1;
+        String queryInchiKey2D = query.getInchi().key2D();
+        String candidateInchiKey2D = rankedCandidates[0].getInchi().key2D();
+        if (queryInchiKey2D.equals(candidateInchiKey2D)) classification = 1;
         else classification = -1;
-        TrainLinearSVM.Compound compound = new TrainLinearSVM.Compound(queryInchi2D, classification, features);
+        TrainLinearSVM.Compound compound = new TrainLinearSVM.Compound(queryInchiKey2D, classification, features);
         return compound;
     }
 
@@ -600,7 +623,7 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarity(positions),
                             new TanimotoSimilarityAvg(positions),
                             new TanimotoSimilarityAvgToPerc(10,20,50),
-                            new NormalizedToMedianMeanScores(1,i),
+//                            new NormalizedToMedianMeanScores(1,i),
                             new DifferentiatingMolecularPropertiesCounter(0.8, -1)
                     });
                     break;

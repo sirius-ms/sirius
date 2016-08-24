@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ConfidenceScore.svm;
 
 
+import de.unijena.bioinf.ConfidenceScore.Predictor;
+
 import java.util.List;
 
 /**
@@ -17,7 +19,7 @@ public interface SVMInterface<node extends SVMInterface.svm_node, problem extend
 
     public double svm_predict(SVMInterface.svm_model<M> model, List<node> nodes);
 //
-    public LinearSVMPredictor getPredictor(SVMInterface.svm_model<M> model, double probA, double probB);
+    public Predictor getPredictor(SVMInterface.svm_model<M> model, double probA, double probB);
 
 
     public abstract class svm_node{
@@ -65,8 +67,8 @@ public interface SVMInterface<node extends SVMInterface.svm_node, problem extend
 //        public static final int PRECOMPUTED = 4;
         public final int svm_type = C_SVC;
         public final int kernel_type = LINEAR;
-//        public int degree;
-//        public double gamma;
+        public int degree;
+        public double gamma;
 //        public double coef0;
         public double cache_size;
         public double eps;

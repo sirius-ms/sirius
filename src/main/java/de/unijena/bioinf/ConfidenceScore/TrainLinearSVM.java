@@ -96,7 +96,7 @@ public class TrainLinearSVM  implements Closeable {
     }
 
 
-    public LinearSVMPredictor trainWithCrossvalidation() throws InterruptedException {
+    public Predictor trainWithCrossvalidation() throws InterruptedException {
         final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
 
         final List<Compound>[] train = new List[FOLDS];
@@ -133,6 +133,143 @@ public class TrainLinearSVM  implements Closeable {
                         return model;
                     }
                 }));
+            }
+
+        }
+
+
+        final ArrayList<Model> models = new ArrayList<>();
+        for (Future<Model> fm : fmodels) {
+            try {
+                models.add(fm.get());
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        final List<Model> mergedModels = mergeModels(models);
+        final Model bestModel = Collections.max(mergedModels);
+
+        if (DEBUG) System.out.println("best model c "+bestModel.c);
+
+        //train on complete dataset;
+        final SVMInterface.svm_model svm_model = train(bestModel.c, compounds);
+
+        //ToDo at the moment unnecessary additional computations
+        double[] probAB = trainProABForPlatt(bestModel.c, problems, eval);
+
+        return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
+    }
+
+    public Predictor trainAntiCrossvalidation() throws InterruptedException {
+        final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
+
+        final List<Compound>[] train = new List[FOLDS];
+        final List<Compound>[] eval = new List[FOLDS];
+
+        final SVMInterface.svm_problem  problem = defineProblem(compounds);
+
+        final List<Compound> currentEval = compounds;
+
+        for (int e = C_EXP_Range[0]; e <= C_EXP_Range[1]; e++) {
+            double c = Math.pow(2, e);
+            if (DEBUG) System.out.println("c: "+c);
+            final SVMInterface.svm_parameter parameter = defaultParameters();
+            parameter.C = c;
+            parameter.weight = WEIGHT;
+            parameter.weight_label = WEIGHT_LABEL;
+
+//                learnModel. Future..
+            fmodels.add(executorService.submit(new Callable<Model>() {
+                @Override
+                public Model call() throws Exception {
+                    final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
+                    final Model model = new Model(performance, parameter.C, featureSize);
+                    return model;
+                }
+            }));
+        }
+
+
+
+
+        final ArrayList<Model> models = new ArrayList<>();
+        for (Future<Model> fm : fmodels) {
+            try {
+                models.add(fm.get());
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        final Model bestModel = Collections.max(models);
+
+        if (DEBUG) System.out.println("best model c "+bestModel.c);
+
+        //train on complete dataset;
+        final SVMInterface.svm_model svm_model = train(bestModel.c, compounds);
+
+        //ToDo at the moment unnecessary additional computations
+        double[] probAB = trainProABForPlatt(bestModel.c, new SVMInterface.svm_problem[]{problem}, new List[]{compounds});
+
+        return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
+    }
+
+    public Predictor trainWithCrossvalidationOptimizeGammaAndDegree(double lowest_gamma, double highest_gamma, int lowest_degree, int highest_degree) throws InterruptedException {
+        final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
+
+        final List<Compound>[] train = new List[FOLDS];
+        final List<Compound>[] eval = new List[FOLDS];
+
+        pickupTrainAndEvalStructureDependent(compounds, train, eval, false);
+
+        final SVMInterface.svm_problem[]  problems = new SVMInterface.svm_problem[FOLDS];
+        for (int i = 0; i < train.length; i++) {
+            problems[i] = defineProblem(train[i]);
+        }
+
+
+
+        for (int i = 0; i < FOLDS; i++) {
+            if (DEBUG) System.out.println("Fold "+(i+1)+" of "+FOLDS);
+            final List<Compound> currentEval = eval[i];
+
+            final SVMInterface.svm_problem problem = problems[i];
+
+
+            for (int e = C_EXP_Range[0]; e <= C_EXP_Range[1]; e++) {
+                double c = Math.pow(2, e);
+                if (DEBUG) System.out.println("c: "+c);
+
+                double gamma = lowest_gamma;
+                while (gamma<=highest_gamma){
+                    int degree = lowest_degree;
+                    while (degree<=highest_degree){
+
+                        final SVMInterface.svm_parameter parameter = defaultParameters();
+                        parameter.C = c;
+                        parameter.weight = WEIGHT;
+                        parameter.weight_label = WEIGHT_LABEL;
+                        parameter.degree = degree;
+                        parameter.gamma = gamma;
+
+                        // learnModel. Future..
+                        fmodels.add(executorService.submit(new Callable<Model>() {
+                            @Override
+                            public Model call() throws Exception {
+                                final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
+                                final Model model = new Model(performance, parameter.C, featureSize);
+                                return model;
+                            }
+                        }));
+
+
+                        degree *=2;
+                    }
+
+                    gamma *=2;
+                }
+
             }
 
         }
@@ -389,7 +526,7 @@ public class TrainLinearSVM  implements Closeable {
         }
 
 
-        LinearSVMPredictor linearSVMPredictor = svmInterface.getPredictor(model, Double.NaN, Double.NaN);
+        Predictor predictor = svmInterface.getPredictor(model, Double.NaN, Double.NaN);
         int tp2 = 0, fp2 = 0, tn2 = 0, fn2 = 0;
         for (int i = 0; i < nodes.size(); i++) {
             List<SVMInterface.svm_node> currentNodes = nodes.get(i);
@@ -404,7 +541,7 @@ public class TrainLinearSVM  implements Closeable {
             }
 
             boolean isCorrect = compound.classification>0;
-            boolean predicted = linearSVMPredictor.predict(features);
+            boolean predicted = predictor.predict(features);
             if (predicted){
                 if (isCorrect) tp2++;
                 else fp2++;

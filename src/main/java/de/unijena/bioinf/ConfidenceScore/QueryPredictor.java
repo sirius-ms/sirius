@@ -27,7 +27,7 @@ import java.util.List;
 public class QueryPredictor implements Parameterized{
     private FeatureCreator[] featureCreators;
     private Scaler[] scalers;
-    private LinearPredictor[] predictors;
+    private Predictor[] predictors;
     private int[] priorities;
     private PredictionPerformance[] statistics;
     protected int[] absFPIndices;
@@ -44,7 +44,7 @@ public class QueryPredictor implements Parameterized{
      * @param priorities huge priorities are chosen first
      * @param statistics
      */
-    public QueryPredictor(FeatureCreator[] featureCreators, Scaler[] scalers, LinearPredictor[] predictors, int[] priorities, PredictionPerformance[] statistics) {
+    public QueryPredictor(FeatureCreator[] featureCreators, Scaler[] scalers, Predictor[] predictors, int[] priorities, PredictionPerformance[] statistics) {
         this.featureCreators = featureCreators;
         this.scalers = scalers;
         this.predictors = predictors;
@@ -152,7 +152,7 @@ public class QueryPredictor implements Parameterized{
 
         this.featureCreators = featureCreatorList.toArray(new FeatureCreator[0]);
         this.scalers = scalerList.toArray(new Scaler[0]);
-        this.predictors = linearPredictorList.toArray(new LinearPredictor[0]);
+        this.predictors = linearPredictorList.toArray(new Predictor[0]);
         this.priorities = priorities;
 
         for (FeatureCreator featureCreator : featureCreators)
@@ -178,7 +178,7 @@ public class QueryPredictor implements Parameterized{
         for (Scaler scaler : scalers) document.addToList(list, helper.wrap(document, scaler));
         document.addListToDictionary(dictionary, "scalers", list);
         list = document.newList();
-        for (LinearPredictor linearPredictor : predictors) document.addToList(list, helper.wrap(document, linearPredictor));
+        for (Predictor predictor : predictors) document.addToList(list, helper.wrap(document, predictor));
         document.addListToDictionary(dictionary, "predictors", list);
         list = document.newList();
         for (int p : priorities) document.addToList(list, p);

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ConfidenceScore.svm;
 
+import de.unijena.bioinf.ConfidenceScore.Predictor;
 import libsvm.*;
 
 import java.util.List;
@@ -82,17 +83,24 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
     }
 
     @Override
-    public LinearSVMPredictor getPredictor(SVMInterface.svm_model<libsvm.svm_model> model, double probA, double probB) {
-        double[][] d = convertDualToPrimal(model);
-        double[] w = d[0];
-        double b = d[1][0];
+    public Predictor getPredictor(SVMInterface.svm_model<libsvm.svm_model> model, double probA, double probB) {
+        if (model.getModel().param.kernel_type==svm_parameter.LINEAR){
+            double[][] d = convertDualToPrimal(model);
+            double[] w = d[0];
+            double b = d[1][0];
 
 
-        if (model.getModel().probA!=null){
-            return new LinearSVMPredictor(w, b, model.getModel().probA[0], model.getModel().probB[0]);
+            if (model.getModel().probA!=null){
+                return new LinearSVMPredictor(w, b, model.getModel().probA[0], model.getModel().probB[0]);
+            } else {
+                return new LinearSVMPredictor(w, b, probA, probB);
+            }
         } else {
-            return new LinearSVMPredictor(w, b, probA, probB);
+            return new KernelSVMPredictor(model.getModel());
+
         }
+
+
 
     }
 
