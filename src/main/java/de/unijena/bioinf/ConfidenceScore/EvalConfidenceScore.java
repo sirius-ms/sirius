@@ -44,7 +44,7 @@ public class EvalConfidenceScore {
     private ChemicalDatabase db;
 
     public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
         train(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
@@ -110,7 +110,23 @@ public class EvalConfidenceScore {
         predict(queries, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+        predict(queries, null, maskedFingerprintVersion, queryPredictor, outputFile, db);
+    }
+
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+        QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
+        predict(predictedQueries, correctQueries, maskedFingerprintVersion, queryPredictor, outputFile, db);
+    }
+
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+        if (correctQueries==null) correctQueries = predictedQueries;
+        if (predictedQueries.size()!=correctQueries.size()) throw new RuntimeException("predictedQueries and correctQueries size differ");
+        Map<CompoundWithAbstractFP, CompoundWithAbstractFP> predictedToCorrect = new HashMap<>();
+        for (int i = 0; i < predictedQueries.size(); i++) {
+             predictedToCorrect.put(predictedQueries.get(i), correctQueries.get(i));
+        }
+
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(predictedQueries, queryPredictor.getStatistics(), maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -124,7 +140,7 @@ public class EvalConfidenceScore {
         for (Instance instance : instances) {
             if (instance.candidates.size()==0) continue;
 //            boolean isCorrect = (inchi2d(instance.candidates.get(0).getInchi().in2D).equals(inchi2d(instance.query.getInchi().in2D)));
-            double isCorrect = precentageCorrect(instance.candidates, instance.query);
+            double isCorrect = precentageCorrect(instance.candidates, predictedToCorrect.get(instance.query));
             double platt = 0;
             try {
                 platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new ScoredCandidate[0]));
@@ -155,13 +171,11 @@ public class EvalConfidenceScore {
 
 
     public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
         overfit(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
     public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
-        final int FOLD = 10;
-//        final int FOLD = 5; //changed!!!
         EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
@@ -191,21 +205,11 @@ public class EvalConfidenceScore {
         }
         instances = instances2;
 
-        List<Instance>[] instanceFolds = new ArrayList[FOLD];
-
-        pickupTrainAndEvalStructureDependent(instances, instanceFolds, false, FOLD);
-
-        List<CompoundWithAbstractFP<ProbabilityFingerprint>>[] queryFolds = new ArrayList[FOLD];
-        List<CompoundWithAbstractFP<Fingerprint>[]>[] candidateFolds = new ArrayList[FOLD];
-
-        for (int i = 0; i < instanceFolds.length; i++) {
-            List<Instance> instanceFold = instanceFolds[i];
-            queryFolds[i] = new ArrayList<>();
-            candidateFolds[i] = new ArrayList<>();
-            for (Instance instance : instanceFold) {
-                queryFolds[i].add(instance.query);
-                candidateFolds[i].add(instance.candidates.toArray(new ScoredCandidate[0]));
-            }
+        List<CompoundWithAbstractFP<Fingerprint>[]> usedCandidates = new ArrayList<>();
+        List<CompoundWithAbstractFP<ProbabilityFingerprint>> usedQueries = new ArrayList<>();
+        for (Instance instance : instances) {
+            usedCandidates.add(instance.candidates.toArray(new ScoredCandidate[0]));
+            usedQueries.add(instance.query);
         }
 
         System.out.println("train");
@@ -217,83 +221,54 @@ public class EvalConfidenceScore {
         TDoubleArrayList corrects = new TDoubleArrayList();
         List<String> ids = new ArrayList<>();
 
-        HashSet<InChI> idSet = new HashSet<>();
-
         TIntIntHashMap map = new TIntIntHashMap();
 
-        for (int i = 0; i < FOLD; i++) {
-            List<CompoundWithAbstractFP<Fingerprint>[]> trainCand = new ArrayList<>();
-            List<Instance> trainInstances = new ArrayList<>();
-            for (int j = 0; j < FOLD; j++) {
-                if (j!=i){
-                    trainCand.addAll(candidateFolds[j]);
-                    trainInstances.addAll(instanceFolds[j]);
-                }
 
-            }
+        System.out.println("train: "+usedQueries.size()+" "+usedCandidates.size());
+        System.out.println("test: "+instances.size());
 
-            List<CompoundWithAbstractFP<ProbabilityFingerprint>> trainQueries = new ArrayList<>();
-            for (int j = 0; j < FOLD; j++) {
-                if (j!=i) trainQueries.addAll(queryFolds[j]);
+        //train
+        trainConfidenceScore.train(executorService, usedQueries.toArray(new CompoundWithAbstractFP[0]), usedCandidates.toArray(new CompoundWithAbstractFP[0][]), statistics);
 
-            }
+        QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
+        queryPredictor.absFPIndices = getAbsIndices(maskedFingerprintVersion);
 
 
-            List<Instance> testInstances = new ArrayList<>(instanceFolds[i]);
-
-            System.out.println("train: "+trainQueries.size()+" "+trainCand.size());
-            System.out.println("test: "+testInstances.size());
-
-            //train
-            trainConfidenceScore.train(executorService, trainQueries.toArray(new CompoundWithAbstractFP[0]), trainCand.toArray(new CompoundWithAbstractFP[0][]), statistics);
-
-            QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
-            queryPredictor.absFPIndices = getAbsIndices(maskedFingerprintVersion);
+        //test
 
 
-            //test
-
-            HashSet<InChI> idSet2 = new HashSet<>();
-
-            System.out.println("predict");
-            for (Instance instance : trainInstances) {
-                if (instance.candidates.size()==0) continue;
-
-                if (DEBUG){
-                    if (idSet.contains(instance.query.getInchi())){
-                        System.out.println("Already tested query");
-                    }
-                }
+        System.out.println("predict");
+        for (Instance instance : instances) {
+            if (instance.candidates.size()==0) continue;
 
 
-                idSet2.add(instance.query.getInchi());
+
+
 //                boolean isCorrect = (inchi2d(instance.query.getInchi().in2D).equals(inchi2d(instance.candidates.get(0).getInchi().in2D)));
-                double isCorrect = precentageCorrect(instance.candidates, instance.query);
-                double platt = 0;
-                try {
+            double isCorrect = precentageCorrect(instance.candidates, instance.query);
+            double platt = 0;
+            try {
                     platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0]));
-//                    platt = queryPredictor.score(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0])); //changed
-                } catch (PredictionException e) {
-                    System.err.println(e.getMessage());
-                    continue;
-                }
-
-
-                if (DEBUG){
-                    if ((isCorrect>=0.5)!=(platt>=0.5)){
-                        map.adjustOrPutValue(instance.candidates.size(), 1,1);
-                    }
-                }
-
-                assert platt>=0;
-                assert platt<=1;
-                platts.add(platt);
-                corrects.add(isCorrect);
-                ids.add(instance.query.getInchi().in3D);
+//                platt = queryPredictor.score(instance.query, instance.candidates.toArray(new CompoundWithAbstractFP[0])); //changed
+            } catch (PredictionException e) {
+                System.err.println(e.getMessage());
+                continue;
             }
 
-            idSet = idSet2;
+
+            if (DEBUG){
+                if ((isCorrect>=0.5)!=(platt>=0.5)){
+                    map.adjustOrPutValue(instance.candidates.size(), 1,1);
+                }
+            }
+
+            assert platt>=0;
+            assert platt<=1;
+            platts.add(platt);
+            corrects.add(isCorrect);
         }
+
+
 
 
         if (DEBUG){
@@ -324,7 +299,7 @@ public class EvalConfidenceScore {
     }
 
     public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.AdvancedMultipleSVMs(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
         crossvalidation(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
