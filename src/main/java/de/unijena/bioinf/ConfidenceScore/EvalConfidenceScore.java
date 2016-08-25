@@ -228,7 +228,7 @@ public class EvalConfidenceScore {
         System.out.println("test: "+instances.size());
 
         //train
-        trainConfidenceScore.train(executorService, usedQueries.toArray(new CompoundWithAbstractFP[0]), usedCandidates.toArray(new CompoundWithAbstractFP[0][]), statistics);
+        trainConfidenceScore.train(executorService, usedQueries.toArray(new CompoundWithAbstractFP[0]), usedCandidates.toArray(new CompoundWithAbstractFP[0][]), statistics, false);
 
         QueryPredictor queryPredictor = trainConfidenceScore.getPredictors();
         queryPredictor.absFPIndices = getAbsIndices(maskedFingerprintVersion);
@@ -266,6 +266,7 @@ public class EvalConfidenceScore {
             assert platt<=1;
             platts.add(platt);
             corrects.add(isCorrect);
+            ids.add(instance.query.getInchi().in3D);
         }
 
 

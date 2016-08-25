@@ -164,9 +164,6 @@ public class TrainLinearSVM  implements Closeable {
     public Predictor trainAntiCrossvalidation() throws InterruptedException {
         final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
 
-        final List<Compound>[] train = new List[FOLDS];
-        final List<Compound>[] eval = new List[FOLDS];
-
         final SVMInterface.svm_problem  problem = defineProblem(compounds);
 
         final List<Compound> currentEval = compounds;
