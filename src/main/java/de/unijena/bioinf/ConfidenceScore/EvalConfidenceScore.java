@@ -705,7 +705,7 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
         int correct = 0;
         for (ScoredCandidate candidate : candidates) {
             double score = candidate.score;
-            if (Math.abs(bestScore-score)>1e-16){
+            if (Math.abs(bestScore-score)>1e-15){
                 break;
             }
 //            if (struct.equals(inchi2d(candidate.getInchi().in2D))){

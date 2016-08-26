@@ -197,16 +197,30 @@ public class TrainConfidenceScore {
 
 
 //        TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface);
-        TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5});
+
 
         Predictor predictor;
         if (doCrossval){
-            predictor = trainLinearSVM.trainWithCrossvalidation();
+            if (svmInterface instanceof LibSVMImpl){
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-7,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(1.0/64, 64, 1, 1);
+            } else {
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+                predictor = trainLinearSVM.trainWithCrossvalidation();
+            }
+
         } else {
             if (DEBUG){
                 System.out.println("anti-crossvalidation");
             }
-            predictor = trainLinearSVM.trainAntiCrossvalidation();
+            if (svmInterface instanceof LibSVMImpl){
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-7,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainAntiCrossvalidation(1.0/64, 64, 1, 1);
+            } else {
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+                predictor = trainLinearSVM.trainAntiCrossvalidation();
+            }
+
         }
 
 
@@ -407,6 +421,73 @@ public class TrainConfidenceScore {
         return trainConfidenceScore;
     }
 
+
+    public static TrainConfidenceScore AdvancedMultipleSVMsLog(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new LogarithmScorer(new MolecularFormulaFeature())
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new LogarithmScorer(new MolecularFormulaFeature())
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new LogarithmScorer(new MolecularFormulaFeature())
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new LogarithmScorer(new MolecularFormulaFeature())
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
 
 
     public static TrainConfidenceScore AdvancedMultipleSVMs50(boolean useLinearSVM){

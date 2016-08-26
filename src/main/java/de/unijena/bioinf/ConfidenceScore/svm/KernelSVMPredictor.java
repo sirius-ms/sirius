@@ -17,6 +17,7 @@ public class KernelSVMPredictor implements Predictor {
 
     public KernelSVMPredictor(svm_model model){
         this.model = model;
+        System.out.println("probability model "+svm.svm_check_probability_model(model));
     }
 
 
@@ -36,6 +37,9 @@ public class KernelSVMPredictor implements Predictor {
         double[] probabilities = new double[2];
         svm.svm_predict_probability(model, toNodes(features), probabilities);
         return probabilities[0]; //tdodo return which!?!?!?!
+//        double[] score = new double[1];
+//        svm.svm_predict_values(model, toNodes(features), score);
+//        return score[0];
     }
 
     private svm_node[] toNodes(double[] features){
