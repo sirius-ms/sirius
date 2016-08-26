@@ -631,20 +631,11 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
         ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
         List<ChemicalDatabase> databases = new ArrayList<>();
         for (int i = 0; i < NUM_OF_THREADS; i++) {
-            try {
-                databases.add(db.clone());
-            } catch (CloneNotSupportedException e) {
-                e.printStackTrace();
-            }
-
+            databases.add(db.clone());
         }
 
-        if (databases.size()==0){
-            System.err.println("cloning DBs didn't work");
-            databases.add(db);
-        } else {
-            System.out.println(databases.size()+" chemicalDBs");
-        }
+        System.out.println(databases.size()+" chemicalDBs");
+
 
         List<Future<List<Instance>>> futures = new ArrayList<>();
         final ConcurrentLinkedQueue<MolecularFormula> queue = new ConcurrentLinkedQueue<>(queriesPerFormulaList);

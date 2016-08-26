@@ -21,7 +21,7 @@ public class NewBioChemicalDatabase extends ChemicalDatabase {
         super(db);
     }
     @Override
-    public NewBioChemicalDatabase clone() throws CloneNotSupportedException {
+    public NewBioChemicalDatabase clone() {
         try {
             NewBioChemicalDatabase db =  new NewBioChemicalDatabase(this);
             db.setBioFilter(this.getBioFilter());
