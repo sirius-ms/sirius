@@ -11,7 +11,6 @@ import de.unijena.bioinf.chemdb.DatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import gnu.trove.list.array.TByteArrayList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.procedure.TIntIntProcedure;
@@ -35,7 +34,7 @@ public class EvalConfidenceScore {
     final static boolean DEBUG = true;
 
     private final PredictionPerformance[] statistics;
-    protected final HashMap<String, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> queriesPerFormula;
+    protected final HashMap<MolecularFormula, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> queriesPerFormula;
     final CSIFingerIdScoring marvinsScoring;
 
     private static final Comparator<ScoredCandidate> SCORED_CANDIDATE_COMPARATOR = new ScoredCandidate.MaxBestComparator();
@@ -43,13 +42,30 @@ public class EvalConfidenceScore {
     private MaskedFingerprintVersion maskedFingerprintVersion;
     private ChemicalDatabase db;
 
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
-        train(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+        train(correctQueries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
-    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
-        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, List<MolecularFormula> predictedMFs, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+        train(correctQueries, predictedMFs, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+        train(correctQueries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+    public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, List<MolecularFormula> predictedMFs, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+        if (predictedMFs==null){
+            predictedMFs = new ArrayList<>();
+            for (CompoundWithAbstractFP<ProbabilityFingerprint> correctQuery : correctQueries) {
+                predictedMFs.add(correctQuery.getInchi().extractFormula());
+            }
+        }
+        if (predictedMFs.size()!=correctQueries.size()) throw new RuntimeException("predictedMFs and correctQueries size differ");
+
+        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(correctQueries, predictedMFs, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
 
@@ -114,20 +130,25 @@ public class EvalConfidenceScore {
         predict(queries, null, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, List<MolecularFormula> predictedMFs, MaskedFingerprintVersion maskedFingerprintVersion, Path modelFile, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
         QueryPredictor queryPredictor = QueryPredictor.loadFromFile(modelFile);
-        predict(predictedQueries, correctQueries, maskedFingerprintVersion, queryPredictor, outputFile, db);
+        predict(correctQueries, predictedMFs, maskedFingerprintVersion, queryPredictor, outputFile, db);
     }
 
-    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
-        if (correctQueries==null) correctQueries = predictedQueries;
-        if (predictedQueries.size()!=correctQueries.size()) throw new RuntimeException("predictedQueries and correctQueries size differ");
-        Map<CompoundWithAbstractFP, CompoundWithAbstractFP> predictedToCorrect = new HashMap<>();
-        for (int i = 0; i < predictedQueries.size(); i++) {
-             predictedToCorrect.put(predictedQueries.get(i), correctQueries.get(i));
+    public static void predict(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, List<MolecularFormula> predictedMFs, MaskedFingerprintVersion maskedFingerprintVersion, QueryPredictor queryPredictor, Path outputFile, ChemicalDatabase db) throws IOException, DatabaseException {
+        if (predictedMFs==null){
+            predictedMFs = new ArrayList<>();
+            for (CompoundWithAbstractFP<ProbabilityFingerprint> correctQuery : correctQueries) {
+                predictedMFs.add(correctQuery.getInchi().extractFormula());
+            }
         }
+        if (predictedMFs.size()!=correctQueries.size()) throw new RuntimeException("predictedMFs and correctQueries size differ");
+//        Map<MolecularFormula, CompoundWithAbstractFP> predictedToCorrect = new HashMap<>();
+//        for (int i = 0; i < predictedMFs.size(); i++) {
+//             predictedToCorrect.put(predictedMFs.get(i), correctQueries.get(i));
+//        }
 
-        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(predictedQueries, queryPredictor.getStatistics(), maskedFingerprintVersion, db);
+        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(correctQueries, predictedMFs, queryPredictor.getStatistics(), maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
         List<Instance> instances = evalConfidenceScore.computeHitList();
@@ -140,7 +161,7 @@ public class EvalConfidenceScore {
         for (Instance instance : instances) {
             if (instance.candidates.size()==0) continue;
 //            boolean isCorrect = (inchi2d(instance.candidates.get(0).getInchi().in2D).equals(inchi2d(instance.query.getInchi().in2D)));
-            double isCorrect = precentageCorrect(instance.candidates, predictedToCorrect.get(instance.query));
+            double isCorrect = precentageCorrect(instance.candidates, instance.query);
             double platt = 0;
             try {
                 platt = queryPredictor.estimateProbability(instance.query, instance.candidates.toArray(new ScoredCandidate[0]));
@@ -176,7 +197,11 @@ public class EvalConfidenceScore {
     }
 
     public static void overfit(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
-        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
+        List<MolecularFormula> molecularFormulas = new ArrayList<>();
+        for (CompoundWithAbstractFP<ProbabilityFingerprint> query : queries) {
+            molecularFormulas.add(query.getInchi().extractFormula());
+        }
+        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, molecularFormulas, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
 
@@ -299,15 +324,32 @@ public class EvalConfidenceScore {
         executorService.shutdown();
     }
 
+
     public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
         TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
-        crossvalidation(queries, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+        crossvalidation(queries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, List<MolecularFormula> predictedMFs, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+        crossvalidation(queries, predictedMFs, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
 
-    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
+        crossvalidation(correctQueries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
+    }
+
+    public static void crossvalidation(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, List<MolecularFormula> predictedMFs, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, ChemicalDatabase db, TrainConfidenceScore trainConfidenceScore) throws IOException, InterruptedException, DatabaseException {
         final int FOLD = 10;
-        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(queries, statistics, maskedFingerprintVersion, db);
+        if (predictedMFs==null){
+            predictedMFs = new ArrayList<>();
+            for (CompoundWithAbstractFP<ProbabilityFingerprint> correctQuery : correctQueries) {
+                predictedMFs.add(correctQuery.getInchi().extractFormula());
+            }
+        }
+        if (predictedMFs.size()!=correctQueries.size()) throw new RuntimeException("predictedMFs and correctQueries size differ");
+
+        EvalConfidenceScore evalConfidenceScore = new EvalConfidenceScore(correctQueries, predictedMFs, statistics, maskedFingerprintVersion, db);
 
         System.out.println("compute hitlist");
 
@@ -556,14 +598,16 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
 
 
 
-    public EvalConfidenceScore(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) {
+    public EvalConfidenceScore(List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries, List<MolecularFormula> predictedMFs,  PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, ChemicalDatabase db) {
+        if (predictedMFs.size()!=queries.size()) throw new RuntimeException("predictedMFs and queries size differ");
         marvinsScoring = new CSIFingerIdScoring(statistics);
         this.statistics = statistics;
         this.maskedFingerprintVersion = maskedFingerprintVersion;
 
-        final HashMap<String, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> map = new HashMap<>();
+        final HashMap<MolecularFormula, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> map = new HashMap<>();
+        Iterator<MolecularFormula> mfIterator = predictedMFs.iterator();
         for (CompoundWithAbstractFP<ProbabilityFingerprint> c : queries) {
-            final String formula = c.getInchi().extractFormula().formatByHill();
+            final MolecularFormula formula = mfIterator.next();
             if (!map.containsKey(formula)) map.put(formula, new ArrayList<CompoundWithAbstractFP<ProbabilityFingerprint>>());
             map.get(formula).add(c);
         }
@@ -580,7 +624,7 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
      */
     public List<Instance> computeHitList() throws IOException, DatabaseException {
         List<Instance> instances = new ArrayList<>();
-        List<String> queriesPerFormulaList = new ArrayList<>(queriesPerFormula.keySet());
+        List<MolecularFormula> queriesPerFormulaList = new ArrayList<>(queriesPerFormula.keySet());
 
 
         final int NUM_OF_THREADS = Runtime.getRuntime().availableProcessors();
@@ -603,19 +647,19 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
         }
 
         List<Future<List<Instance>>> futures = new ArrayList<>();
-        final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>(queriesPerFormulaList);
+        final ConcurrentLinkedQueue<MolecularFormula> queue = new ConcurrentLinkedQueue<>(queriesPerFormulaList);
         for (final ChemicalDatabase database : databases) {
             futures.add(executorService.submit(new Callable<List<Instance>>() {
                 @Override
                 public List<Instance> call() throws Exception {
                     List<Instance> instanceList = new ArrayList<Instance>();
-                    String name;
+                    MolecularFormula formula;
                     while (!queue.isEmpty()){
-                        name = queue.poll();
-                        if (name == null) continue;
-                        final List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries = queriesPerFormula.get(name);
+                        formula = queue.poll();
+                        if (formula == null) continue;
+                        final List<CompoundWithAbstractFP<ProbabilityFingerprint>> queries = queriesPerFormula.get(formula);
 
-                        List<CompoundWithAbstractFP<Fingerprint>> iter = searchByFingerBlast(database, maskedFingerprintVersion, queries.get(0).getInchi().extractFormula());
+                        List<CompoundWithAbstractFP<Fingerprint>> iter = searchByFingerBlast(database, maskedFingerprintVersion, formula);
 
                         List<List<ScoredCandidate>> hits = getTopHits(queries, iter, MAX_CANDIDATES);
 
