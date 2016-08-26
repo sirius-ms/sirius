@@ -17,10 +17,13 @@ public class NewBioChemicalDatabase extends ChemicalDatabase {
         super(host, username, password);
     }
 
+    public NewBioChemicalDatabase(ChemicalDatabase db) throws DatabaseException {
+        super(db);
+    }
     @Override
     public NewBioChemicalDatabase clone() throws CloneNotSupportedException {
         try {
-            NewBioChemicalDatabase db =  new NewBioChemicalDatabase(super.getHost(), super.getUsername(), super.getPassword());
+            NewBioChemicalDatabase db =  new NewBioChemicalDatabase(this);
             db.setBioFilter(this.getBioFilter());
             return db;
         } catch (DatabaseException e) {
