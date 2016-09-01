@@ -1,4 +1,3 @@
-import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
@@ -10,30 +9,12 @@ ext {
     //version for external libraries
     slf4j_version = '1.7.13'
     gson_version = '2.6.2'
-    json_version = '1.0'
-    json_impl_version = "1.0.4"
     math3_version = '3.+'
-    glpk_version = '1.7.0'//'1.0.37'
-    glpk_lib_version = '4.60'
-
-
-    jewelcli_version = '0.8.+'
-
+    glpk_version = '1.7.0'
     gurobi_version = '6.5.1'
-
-    fingeridVersion = "1.0.6-SNAPSHOT"
-
     graphUtils_version = '1.1'
 
-    //locations of runtime libraries
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
-    gurobiExclude = "gurobi-*-${gurobi_version}.jar"
-
-    //release branch auto detection
-    gitBranch = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
-    logger.lifecycle("Current Branch: $gitBranch")
-
-    releaseBranch = 'release'
+    jewelcli_version = '0.8.+' //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
 }
 
 allprojects {
@@ -51,9 +32,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        /*maven {
-            url "http://bio.informatik.uni-jena.de/artifactory/repo" //todo deprecated
-        }*/
         maven {
             url "https://bio.informatik.uni-jena.de/repository/local"
         }
@@ -63,12 +41,6 @@ allprojects {
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
-
-        /*//to build shadowJar without provided libs
-        configurations {
-            provided
-            compileOnly.extendsFrom provided
-        }*/
     }
 
     dependencies {
@@ -125,25 +97,6 @@ configure(javaProjects()) {
                     setArtifacts([jar, sourceJar, javadocJar])
             }
         }
-    }
-}
-
-task downloadGLPK (type: Copy){
-    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
-    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
-
-    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
-    copy {
-        if (Files.notExists(dir))
-            Files.createDirectories(dir)
-
-        def glpkZipFile = Paths.get('glpk.zip');
-        def file = dir.resolve(glpkZipFile).newOutputStream()
-        file << glpkURL.openStream()
-        file.close()
-
-        from zipTree(dir.resolve(glpkZipFile).toFile())
-        into dir.toFile()
     }
 }
 
