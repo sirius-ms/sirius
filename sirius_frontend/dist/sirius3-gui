@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-SCRIPT=$(readlink -f $0)
-APP_HOME=$(dirname $SCRIPT)
-$APP_HOME/sirius3 --gui
