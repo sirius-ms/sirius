@@ -24,6 +24,8 @@ dependencies {
     compile "org.openscience.cdk:cdk-interfaces:1.5.10"
     compile "org.openscience.cdk:cdk-inchi:1.5.10"
     compile "org.openscience.cdk:cdk-smiles:1.5.10"
+    compile "org.openscience.cdk:cdk-io:1.5.10"
+    compile "org.openscience.cdk:cdk-ioformats:1.5.10"
     compile "org.openscience.cdk:cdk-sdg:1.5.10"
     compile "org.openscience.cdk:cdk-smarts:1.5.10"
     compile "org.apache.httpcomponents:httpclient:4.5.1"

@@ -66,7 +66,7 @@ public class CompoundCandidateView extends JPanel {
         setLayout(layout);
         add(new JPanel(), "empty");
         add(new ComputeElement(), "computeButton");
-        list = new CandidateJList(frame, storage, frame.getConfig(), resultElement==null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement==null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
         changeData(null,null);
@@ -75,11 +75,23 @@ public class CompoundCandidateView extends JPanel {
     public void changeData(ExperimentContainer container, SiriusResultElement element) {
         this.experimentContainer = container;
         this.resultElement = element;
-        list.refresh(resultElement==null ? null : resultElement.getFingerIdData());
+        list.refresh(container, resultElement==null ? null : resultElement.getFingerIdData());
         if (resultElement==null) layout.show(this, "empty");
         else if (resultElement.getFingerIdData()==null) layout.show(this, "computeButton");
         else layout.show(this, "list");
-        searchCSIButton.setEnabled((resultElement!=null && storage.enabled));
+
+        if (resultElement==null || !storage.enabled) {
+            searchCSIButton.setEnabled(false);
+            searchCSIButton.setToolTipText("");
+        } else {
+            if (resultElement.getCharge() > 0) {
+                searchCSIButton.setEnabled(true);
+                searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
+            } else {
+                searchCSIButton.setEnabled(false);
+                searchCSIButton.setToolTipText("With this version, negative ion mode is not supported for CSI:FingerId");
+            }
+        }
     }
 
     public class ComputeElement extends JPanel {

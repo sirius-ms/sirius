@@ -275,37 +275,41 @@ public class CSIFingerIdComputation {
     private void destroyCacheIfNecessary() {
         if (checkedCache || !cacheHasToBeDestroyed()) return;
         try {
-            final File bio = new File(directory, "bio");
-            final File nonBio = new File(directory, "not-bio");
-            if (bio.exists()) {
-                for (File f : bio.listFiles()) {
-                    Files.deleteIfExists(f.toPath());
-                }
-            }
-            if (nonBio.exists()) {
-                for (File f : nonBio.listFiles()) {
-                    Files.deleteIfExists(f.toPath());
-                }
-            }
-            if (directory.exists()) {
-                for (File f : directory.listFiles()) {
-                    Files.deleteIfExists(f.toPath());
-                }
-            } else {
-                directory.mkdirs();
-                bio.mkdirs();
-                nonBio.mkdirs();
-            }
-            try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), Charset.forName("UTF-8"))) {
-                bw.write(versionNumber.databaseDate);
-            }
-            compounds.clear();
-            compoundsPerFormulaBio.clear();
-            compoundsPerFormulaNonBio.clear();
+            destroyCache();
         } catch (IOException e) {
             e.printStackTrace();
             // might happen, especially under Windows. But I don't wanna make a proper error dialogue for that
         }
+    }
+
+    public void destroyCache() throws IOException {
+        final File bio = new File(directory, "bio");
+        final File nonBio = new File(directory, "not-bio");
+        if (bio.exists()) {
+            for (File f : bio.listFiles()) {
+                Files.deleteIfExists(f.toPath());
+            }
+        }
+        if (nonBio.exists()) {
+            for (File f : nonBio.listFiles()) {
+                Files.deleteIfExists(f.toPath());
+            }
+        }
+        if (directory.exists()) {
+            for (File f : directory.listFiles()) {
+                Files.deleteIfExists(f.toPath());
+            }
+        } else {
+            directory.mkdirs();
+            bio.mkdirs();
+            nonBio.mkdirs();
+        }
+        try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), Charset.forName("UTF-8"))) {
+            bw.write(versionNumber.databaseDate);
+        }
+        compounds.clear();
+        compoundsPerFormulaBio.clear();
+        compoundsPerFormulaNonBio.clear();
     }
 
     private List<Compound> internalLoadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio) throws IOException {
@@ -391,7 +395,9 @@ public class CSIFingerIdComputation {
         while (compounds.hasMoreElements()) {
             final ExperimentContainer c = compounds.nextElement();
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-                tasks.add(new FingerIdTask(isEnforceBio(), c, e));
+                if (e.getCharge()>0) {
+                    tasks.add(new FingerIdTask(isEnforceBio(), c, e));
+                }
             }
         }
         computeAll(tasks);

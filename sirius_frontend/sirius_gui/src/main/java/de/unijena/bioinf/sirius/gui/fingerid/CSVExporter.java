@@ -46,7 +46,7 @@ public class CSVExporter {
     }
 
     public void export(Writer writer, FingerIdData data) throws IOException {
-        writer.write("inchikey2D\tinchi\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
+        writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         if (data==null) return;
         for (int i=0; i < data.compounds.length; ++i) {
             final Compound c = data.compounds[i];
@@ -55,6 +55,8 @@ public class CSVExporter {
             writer.write(c.inchi.key2D());
             writer.write('\t');
             writer.write(c.inchi.in2D);
+            writer.write('\t');
+            writer.write(c.inchi.extractFormula().toString());
             writer.write('\t');
             writer.write(String.valueOf(rank));
             writer.write('\t');
@@ -75,7 +77,7 @@ public class CSVExporter {
     }
 
     public void export(Writer writer, List<FingerIdData> data) throws IOException {
-        writer.write("inchikey2D\tinchi\tformula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
+        writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         final List<Scored<Compound>> candidates = new ArrayList<>();
         for (FingerIdData d : data) {
             if (d==null) continue;

@@ -20,10 +20,13 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
@@ -39,10 +42,14 @@ import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import javax.json.Json;
 import javax.json.JsonException;
+import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class Compound {
 
@@ -98,6 +105,24 @@ public class Compound {
 
     public CompoundWithAbstractFP<Fingerprint> asCandidate() {
         return new CompoundWithAbstractFP<Fingerprint>(inchi, this.fingerprint);
+    }
+
+    public FingerprintCandidate asFingerprintCandidate() {
+        final FingerprintCandidate fc = new FingerprintCandidate(inchi, fingerprint);
+        fc.setBitset(bitset);
+        final ArrayList<DBLink> links = new ArrayList<>();
+        if (pubchemIds!=null)
+            for (int i : pubchemIds)
+                links.add(new DBLink(DatasourceService.Sources.PUBCHEM.name(), String.valueOf(i)));
+        if (databases!=null) {
+            for (Map.Entry<String,String> entry : databases.entries()) {
+                links.add(new DBLink(entry.getKey(), entry.getValue()));
+            }
+        }
+        fc.setLinks(links.toArray(new DBLink[links.size()]));
+        if (name != null) fc.setName(name);
+        if (smiles != null) fc.setSmiles(smiles.smiles);
+        return fc;
     }
 
 
@@ -161,7 +186,7 @@ public class Compound {
                             expectArray(parser);
                             final TShortArrayList values = new TShortArrayList(100);
                             while (consumeShorts(parser, values)) {}
-                            compound.fingerprint = version.mask(values.toArray());
+                            compound.fingerprint = version==null ? new ArrayFingerprint(CdkFingerprintVersion.getDefault(), values.toArray()) : version.mask(values.toArray());
                             break;
                         case "bitset":
                             flags = expectInt(parser); break;
@@ -294,5 +319,28 @@ public class Compound {
             if (fingerprint.charAt(fingerprintIndizes[k])=='1')
                 values[k] = true;
         return values;
+    }
+
+    public static void merge(List<FingerprintCandidate> candidates, File file) throws IOException {
+        final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
+        for (FingerprintCandidate fc : candidates) compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
+        if (file.exists()) {
+            final List<Compound> compounds = new ArrayList<>();
+            try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(file)))) {
+                parseCompounds(null, compounds, parser);
+            }
+            for (Compound c : compounds) {
+                compoundPerInchiKey.put(c.inchi.key2D(), c.asFingerprintCandidate());
+            }
+        }
+        try (final JsonGenerator writer = Json.createGenerator(new GZIPOutputStream(new FileOutputStream(file)))) {
+            writer.writeStartObject();
+            writer.writeStartArray("compounds");
+            for (FingerprintCandidate fc : compoundPerInchiKey.values()) {
+                fc.writeToJSON(writer, true);
+            }
+            writer.writeEnd();
+            writer.writeEnd();
+        }
     }
 }

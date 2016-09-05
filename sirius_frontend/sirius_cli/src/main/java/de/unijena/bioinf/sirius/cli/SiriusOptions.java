@@ -30,7 +30,7 @@ public interface SiriusOptions {
     @Option
     public boolean isVersion();
 
-    @Option(shortName = "s", longName = "isotope", defaultValue = "score", description = "how to handle isotope pattern data. Use 'score' to use them for ranking or 'filter' if you just want to remove candidates with bad isotope pattern. Use 'omit' to ignore isotope pattern.")
+    @Option(shortName = "s", longName = "isotope", defaultValue = "both", description = "how to handle isotope pattern data. Use 'score' to use them for ranking or 'filter' if you just want to remove candidates with bad isotope pattern. With 'both' you can use isotopes for filtering and scoring (default). Use 'omit' to ignore isotope pattern.")
     public IsotopePatternHandling getIsotopes();
 
     @Option(shortName = "c", longName = "candidates", description = "number of candidates in the output", defaultToNull = true)

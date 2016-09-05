@@ -156,7 +156,7 @@ public class JobLog {
 
         @Override
         public void error(String msg, Throwable exc) {
-            exc.printStackTrace();
+            if (exc!=null) exc.printStackTrace();
             if (state > 1) throw new IllegalStateException();
             text = name + ": " + msg;
             this.state = 2;

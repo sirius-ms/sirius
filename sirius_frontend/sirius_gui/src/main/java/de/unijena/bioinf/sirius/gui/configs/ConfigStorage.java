@@ -8,6 +8,9 @@ public class ConfigStorage {
 	
 	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath, csvExportPath, defaultCompoundsExportPath;
 	private FileFormat treeFileFormat;
+
+	protected File databaseDirectory;
+
 	private boolean closeNeverAskAgain;
 
 	private boolean enforceBio;
@@ -23,6 +26,25 @@ public class ConfigStorage {
 		closeNeverAskAgain = false;
 		enforceBio = true;
 	}
+
+    public File getCustomDatabaseDirectory() {
+        return new File(getDatabaseDirectory(), "custom");
+    }
+
+    public File getDatabaseDirectory() {
+        if (databaseDirectory==null) databaseDirectory = getDefaultDatabaseDirectory();
+        return databaseDirectory;
+    }
+
+    public File getDefaultDatabaseDirectory() {
+        final String val = System.getenv("CSI_FINGERID_STORAGE");
+        if (val!=null) return new File(val);
+        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
+    }
+
+    public void setDatabaseDirectory(File databaseDirectory) {
+        this.databaseDirectory = databaseDirectory;
+    }
 
     public File getCsvExportPath() {
         return csvExportPath;

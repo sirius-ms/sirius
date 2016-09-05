@@ -20,9 +20,11 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -68,6 +70,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected JList<CompoundCandidate> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
+    protected ExperimentContainer correspondingExperimentContainer;
 
     protected Font nameFont, propertyFont, rankFont, scoreSuperscriptFont;
     protected Frame owner;
@@ -80,6 +83,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected HashSet<String> logPCalculated = new HashSet<>();
 
     protected FilterPanel filterPanel;
+    protected double topScore;
 
     protected LogPSlider logPSlider;
 
@@ -100,8 +104,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
-    public CandidateJList(Frame owner, CSIFingerIdComputation computation, ConfigStorage config, FingerIdData data) {
+    public CandidateJList(Frame owner, CSIFingerIdComputation computation, ConfigStorage config, ExperimentContainer correspondingExperimentContainer, FingerIdData data) {
         this.computation = computation;
+        this.correspondingExperimentContainer = correspondingExperimentContainer;
+        updateTopScore();
         this.config = config;
         this.owner = owner;
         initFonts();
@@ -199,6 +205,14 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     }
 
+    private void updateTopScore() {
+        if (correspondingExperimentContainer==null || correspondingExperimentContainer.getBestHit()==null || correspondingExperimentContainer.getBestHit().getFingerIdData()==null) {
+            topScore = 0d;
+        } else {
+            topScore = correspondingExperimentContainer.getBestHit().getFingerIdData().topScore;
+        }
+    }
+
     public void updateFilter() {
         final ListModel model = (ListModel)candidateList.getModel();
         model.change();
@@ -283,8 +297,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         structureSearcher.stop();
     }
 
-    public void refresh(FingerIdData data) {
+    public void refresh(ExperimentContainer ec, FingerIdData data) {
         this.data = data;
+        this.correspondingExperimentContainer = ec;
+        updateTopScore();
         this.filterPanel.setActiveExperiment(data);
         ((ListModel) candidateList.getModel()).change();
         this.structureSearcher.reloadList((ListModel) candidateList.getModel());
@@ -542,7 +558,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         @Override
         public Component getListCellRendererComponent(JList<? extends CompoundCandidate> list, CompoundCandidate value, int index, boolean isSelected, boolean cellHasFocus) {
             image.molecule = value;
-            image.backgroundColor = (index % 2 == 0 ? even : odd);
+            if (value != null && value.score >= topScore) {
+                image.backgroundColor = Style.LIGHT_GREEN;
+            } else {
+                image.backgroundColor = (index % 2 == 0 ? even : odd);
+            }
             setOpaque(true);
             setBackground(image.backgroundColor);
             descriptionPanel.setCompound(value);

@@ -25,11 +25,11 @@ public class SupportedExportCSVFormatsFilter extends FileFilter{
     @Override
     public boolean accept(File f) {
         if(f.isDirectory()) return true;
-        return f.getName().toLowerCase().endsWith(".csv");
+        return f.getName().toLowerCase().endsWith(".csv") || f.getName().toLowerCase().endsWith(".tsv");
     }
 
     @Override
     public String getDescription() {
-        return ".csv";
+        return ".csv, .tsv";
     }
 }

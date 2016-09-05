@@ -5,7 +5,9 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.compute.*;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
+import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.fingerid.*;
@@ -46,7 +48,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID, jobs;
+	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID, jobs, db;
 
 	protected CSIFingerIdComputation csiFingerId;
 	
@@ -61,6 +63,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private ConfigStorage config;
     private JobDialog jobDialog;
     private ImageIcon jobRunning, jobNotRunning;
+    private DatabaseDialog dbDialog;
 
 	private BackgroundComputation backgroundComputation;
 
@@ -201,12 +204,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		editB.addActionListener(this);
 		editB.setEnabled(false);
         //editB.setToolTipText("Edit an experiment");
-		tempP.add(editB);
+		//tempP.add(editB);
 		closeB = new JButton("Close",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
 		closeB.addActionListener(this);
 		closeB.setEnabled(false);
         //closeB.setToolTipText("Remove an experiment together with its results from the workspace");
-		tempP.add(closeB);
+		//tempP.add(closeB);
 		leftControlPanel.add(tempP);
 		
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
@@ -253,6 +256,15 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         configFingerID.setEnabled(false);
 
         tempP.add(configFingerID);
+
+		/*
+		db = new JButton("Database", new ImageIcon(MainFrame.class.getResource("/icons/db.png")));
+        tempP.add(db);
+        db.addActionListener(this);
+		*/
+
+
+
         leftControlPanel.add(tempP);
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		//tempP.setBorder(BorderFactory.createEtchedBorder());
@@ -685,7 +697,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			
 			//zu unfangreich, extra Methode
 			
-		}
+		} else if (e.getSource()==db) {
+            if (dbDialog==null) dbDialog = new DatabaseDialog(this, config);
+            dbDialog.setVisible(true);
+        }
 		
 		
 		
@@ -1067,6 +1082,15 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		
 	}
 
+	public void drop(DropTargetDropEvent dtde) {
+		final List<File> newFiles = DragAndDrop.getFileListFromDrop(dtde);
+
+		if(newFiles.size()>0){
+			importDragAndDropFiles(Arrays.asList(resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
+		}
+	}
+
+	/*
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
 		dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
@@ -1097,6 +1121,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			importDragAndDropFiles(Arrays.asList(resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
 		}
 	}
+	*/
 	
 	private void importDragAndDropFiles(List<File> rawFiles){
 		

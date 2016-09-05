@@ -1,6 +1,8 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
+import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
@@ -18,6 +20,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 	private Color activatedForeground, deactivatedForeground, disableBackground;
 	
 	private SiriusResultElement sre;
+    protected ExperimentContainer ec;
 	
 //	private FormulaDisassambler disamb;
 	
@@ -73,11 +76,19 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 //		list.setPreferredSize(new Dimension(list.getModel().getSize()*200,45));
 		this.sre = value;
 		if(isSelected){
-			this.backColor = this.selectedBackground;
+			if (isTopHit(value)) {
+			    this.backColor = Style.SELECTED_GREEN;
+            } else {
+                this.backColor = this.selectedBackground;
+            }
 			this.foreColor = this.selectedForeground;
 		}else{
-			if(index%2==0) this.backColor = this.evenBackground;
-			else this.backColor = this.unevenBackground;
+            if (isTopHit(value)) {
+                this.backColor = Style.LIGHT_GREEN;
+            } else {
+                if(index%2==0) this.backColor = this.evenBackground;
+                else this.backColor = this.unevenBackground;
+            }
 			this.foreColor = this.activatedForeground;
 //			if(value.formulaUsed()) this.foreColor = this.activatedForeground;
 //			else this.foreColor = this.foreColor = this.deactivatedForeground;
@@ -85,10 +96,14 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 		
 		return this;
 	}
-	
-	
-	
-	@Override
+
+    private boolean isTopHit(SiriusResultElement value) {
+        if (ec==null) return false;
+        return (ec.getBestHit()==value);
+    }
+
+
+    @Override
 	public void paint(Graphics g){
 		
 		Graphics2D g2 = (Graphics2D) g; 

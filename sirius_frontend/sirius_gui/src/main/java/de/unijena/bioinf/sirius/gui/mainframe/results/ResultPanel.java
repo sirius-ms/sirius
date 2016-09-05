@@ -21,6 +21,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	private TreeVisualizationPanel tvp;
 	private SpectraVisualizationPanel svp;
 	private CompoundCandidateView ccv;
+	private ResultTreeListTextCellRenderer cellRenderer;
 	
 	private ExperimentContainer ec;
 	
@@ -52,7 +53,8 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 //			listRenderer = new ResultTreeListThumbnailCellRenderers(new ArrayList<SiriusResultElement>());
 //		}
 //		resultsJList.setCellRenderer(listRenderer);
-		resultsJList.setCellRenderer(new ResultTreeListTextCellRenderer());
+        cellRenderer = new ResultTreeListTextCellRenderer();
+		resultsJList.setCellRenderer(cellRenderer);
 		resultsJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		resultsJList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		resultsJList.setVisibleRowCount(1);
@@ -84,7 +86,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 
 	public void changeData(final ExperimentContainer ec){
 		this.ec = ec;
-
+        cellRenderer.ec = ec;
 		SiriusResultElement sre = null;
 		resultsJList.removeListSelectionListener(this);
 		if(this.ec!=null&&ec.getResults()!=null&&!this.ec.getResults().isEmpty()){

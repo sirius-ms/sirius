@@ -98,7 +98,8 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     protected void handleResults(Instance i, List<IdentificationResult> results) {
         super.handleResults(i, results);
         if (results.isEmpty()) return;
-        executorService = Executors.newFixedThreadPool(2);
+        // this service is just use to submit several fingerprint jobs at the same time
+        executorService = Executors.newFixedThreadPool(16);
         try {
         // search CSI:FingerId identifications
         if (options.isFingerid()) {
@@ -166,7 +167,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 String name = topCandidate.getName();
                 if (name==null || name.isEmpty()) name = topCandidate.getSmiles();
                 if (name==null || name.isEmpty()) name = "";
-                progress.info(String.format(Locale.US, "Top compound is %s (%s) with confidence %.2f\n", name, topCandidate.getInchi().in2D, confidenceScore));
+                progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, topCandidate.getInchi().in2D, confidenceScore));
                 try {
 
                     final String line = String.format(Locale.US, "%s\t%s\t%s\t%s\t%s\t%f\t%f\n", i.fileNameWithoutExtension(),topCandidate.getInchi().in2D,topCandidate.getInchi().key2D(),escape(topCandidate.getName()),topCandidate.getSmiles(),confidenceList.get(0).getScore(),confidenceScore);
@@ -253,7 +254,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     private BioFilter getBioFilter() {
         final BioFilter bioFilter;
-        if (options.getDatabase().equalsIgnoreCase("pubchem")) {
+        if (options.getDatabase().equalsIgnoreCase("pubchem") || options.getDatabase().equalsIgnoreCase("all")) {
             bioFilter = BioFilter.ALL;
         } else bioFilter = BioFilter.ONLY_BIO;
         return bioFilter;
@@ -324,7 +325,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 for (List<FormulaCandidate> fc : candidates)  {
                     for (FormulaCandidate f : fc) {
                         final int bitset = f.getBitset();
-                       // if (flag == 0 || (bitset & flag) != 0) TODO: NOT SUPPORTED YET
+                        if (flag == 0 || (bitset & flag) != 0)
                             allowedSet.add(f.getFormula());
                     }
                 }
