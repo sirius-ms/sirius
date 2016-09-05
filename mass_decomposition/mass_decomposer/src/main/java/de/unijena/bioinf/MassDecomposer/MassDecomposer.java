@@ -492,7 +492,12 @@ public class MassDecomposer<T> {
     }
 
     protected void divideByGCD() {
-        if (weights.size() > 0) {
+        if (weights.size() == 1){
+            final Weight<T> weight = weights.get(0);
+            final long d = weight.getIntegerMass();
+            precision *= d;
+            weight.setIntegerMass(1);
+        } else if (weights.size() > 0) {
             long d = gcd(weights.get(0).getIntegerMass(), weights.get(1).getIntegerMass());
             for (int i=2; i < weights.size(); ++i) {
                 d = gcd(d, weights.get(i).getIntegerMass());
