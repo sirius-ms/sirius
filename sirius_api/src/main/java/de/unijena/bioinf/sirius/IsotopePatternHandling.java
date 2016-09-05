@@ -17,19 +17,16 @@
  */
 package de.unijena.bioinf.sirius;
 
-/**
- * Created by kaidu on 05.05.15.
- */
 public enum IsotopePatternHandling {
 
-    omit, filter, score;
+    omit, filter, score, both;
 
     public boolean isFiltering() {
-        return this==filter || this == score;
+        return this==filter || this == both;
     }
 
     public boolean isScoring() {
-        return this == score;
+        return this == score || this == both;
     }
 
 }

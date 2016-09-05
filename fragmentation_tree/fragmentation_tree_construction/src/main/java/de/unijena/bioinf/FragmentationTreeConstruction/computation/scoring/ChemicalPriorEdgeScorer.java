@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.ChemicalCompoundScorer;
+import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -52,9 +53,17 @@ public class ChemicalPriorEdgeScorer implements LossScorer {
     }
 
     public double score(MolecularFormula parentFormula, MolecularFormula childFormula) {
-        if (childFormula.getMass() < 100d) return 0d;
-        final double child = Math.max(Math.log(0.0001), prior.score(childFormula));
-        final double parent = Math.max(Math.log(0.0001), prior.score(parentFormula));
+        if (childFormula.getMass() < minimalMass) return 0d;
+        double child,parent;
+        if (prior instanceof SupportVectorMolecularFormulaScorer) {
+            // legacy
+            child = Math.min(1, prior.score(childFormula));
+            parent = Math.min(1, prior.score(parentFormula));
+            return Math.min(0,child-parent) - normalization;
+        } else {
+            child = Math.max(Math.log(0.0001), prior.score(childFormula));
+            parent = Math.max(Math.log(0.0001), prior.score(parentFormula));
+        }
         return Math.min(0, child - parent) - normalization;
     }
 

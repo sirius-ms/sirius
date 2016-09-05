@@ -132,17 +132,17 @@
         }
       }
     },
-    "cutoff": 0.05,
+    "cutoff": 0.01,
     "patternExtractor": {
       "$name": "extraction.ExtractAll"
     },
-    "intensityOffset": 0
+    "intensityOffset": 0.01
   },
   "FragmentationPatternAnalysis": {
     "rootScorers": [
       {
         "$name": "MassDeviationVertexScorer",
-        "standardDeviation": "2.0 ppm (2.0E-4 m/z)",
+        "standardDeviation": "5.0 ppm (5.0E-4 m/z)",
         "useOriginalMz": true
       },
       {
@@ -158,42 +158,10 @@
       },
       {
         "$name": "ChemicalPriorScorer",
-        "normalization": 0.8223655391091401,
+        "normalization": 0,
         "minimalMass": 100,
         "prior": {
-          "heteroAtom2CarbonScorer": {
-            "$name": "ImprovedHetero2CarbonScorer",
-            "distribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.4,
-              "a": 0,
-              "k": 3.14534
-            }
-          },
-          "$name": "ChemicalCompoundScorer$DefaultScorer",
-          "specialMoleculeScorer": {
-            "oxygenToHeteroDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.75,
-              "a": 0,
-              "k": 5
-            },
-            "rdbeDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 2,
-              "a": 0,
-              "k": 2
-            },
-            "$name": "SpecialMoleculeScorer"
-          },
-          "rdbeScorer": {
-            "$name": "RDBEMassScorer",
-            "distribution": {
-              "$name": "NormalDistribution",
-              "mean": 0.1481998,
-              "variance": 0.07341486
-            }
-          }
+          "$name": "SupportVectorMolecularFormulaScorer"
         }
       }
     ],
@@ -201,9 +169,9 @@
       "$name": "HypothesenDrivenRecalibration",
       "method": {
         "$name": "MedianSlope",
-        "minNumberOfPeaks": 6,
-        "maxDeviation": "5.0 ppm (0.0005 m/z)",
-        "epsilon": "1.0 ppm (5.0E-4 m/z)",
+        "minNumberOfPeaks": 8,
+        "maxDeviation": "10.0 ppm (0.001 m/z)",
+        "epsilon": "2.0 ppm (5.0E-4 m/z)",
         "forceParentPeakIn": false,
         "threshold": 0.01
       },
@@ -211,7 +179,7 @@
     },
     "$name": "FragmentationPatternAnalysis",
     "preProcessing": [
-{
+      {
         "$name": "NormalizeToSumPreprocessor",
         "onlyForRelativeIntensities": true
       },
@@ -227,8 +195,7 @@
     },
     "fragmentScorers": [
       {
-        "$name": "MassDeviationVertexScorer",
-        "useOriginalMz": true
+        "$name": "MassDeviationVertexScorer"
       },
       {
         "$name": "PhosphorScorer"
@@ -236,7 +203,7 @@
       {
         "$name": "StrangeElementSmallFragmentScorer",
         "score": 0.5,
-        "maximalMass": 125
+        "maximalMass": 75
       },
       {
         "$name": "CommonFragmentsScore",
@@ -322,12 +289,12 @@
     "peakScorers": [
       {
         "$name": "TreeSizeScorer",
-        "score": 0.5
+        "score": -0.5
       },
       {
         "$name": "FragmentSizeScorer",
-        "maxScore": 3,
-        "maxSize": 300
+        "maxScore": 2,
+        "maxSize": 200
       },
       {
         "$name": "PeakIsNoiseScorer",
@@ -493,48 +460,8 @@
         ]
       },
       {
-        "$name": "ChemicalPriorEdgeScorer",
-        "normalization": -0.04412622063311402,
-        "minimalMass": 100,
-        "prior": {
-          "heteroAtom2CarbonScorer": {
-            "$name": "ImprovedHetero2CarbonScorer",
-            "distribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.4,
-              "a": 0,
-              "k": 3.14534
-            }
-          },
-          "$name": "ChemicalCompoundScorer$DefaultScorer",
-          "specialMoleculeScorer": {
-            "oxygenToHeteroDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 0.75,
-              "a": 0,
-              "k": 5
-            },
-            "rdbeDistribution": {
-              "$name": "PartialParetoDistribution",
-              "b": 2,
-              "a": 0,
-              "k": 2
-            },
-            "$name": "SpecialMoleculeScorer"
-          },
-          "rdbeScorer": {
-            "$name": "RDBEMassScorer",
-            "distribution": {
-              "$name": "NormalDistribution",
-              "mean": 0.1481998,
-              "variance": 0.07341486
-            }
-          }
-        }
-      },
-      {
         "$name": "CommonLossEdgeScorer",
-        "normalization": 2.738930846569549,
+        "normalization": 2.694804625936435,
         "recombinator": {
           "$name": "CommonLossEdgeScorer$MinimalScoreRecombinator",
           "lossSize": {
@@ -656,7 +583,7 @@
     "standardMs2MassDeviation": "5.0 ppm (5E-4 m/z)",
     "$name": "ChemistryBase.ms.MutableMeasurementProfile",
     "standardMs1MassDeviation": "5.0 ppm (5E-4 m/z)",
-    "medianNoiseIntensity": 0.015,
+    "medianNoiseIntensity": 0.01,
     "formulaConstraints": {
       "$name": "ChemistryBase.chem.FormulaConstraints",
       "upperbounds": {},

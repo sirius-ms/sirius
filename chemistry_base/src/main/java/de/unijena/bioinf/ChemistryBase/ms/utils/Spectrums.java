@@ -163,6 +163,89 @@ public class Spectrums {
         return new SimpleSpectrum(mergedSpectrum);
     }
 
+    public static <P extends Peak, S extends Spectrum<P>> int getFirstPeakGreaterOrEqualThan(S spec, double mass) {
+        if (spec instanceof OrderedSpectrum) {
+            final int k = binarySearch(spec, mass);
+            if (k < 0) {
+                return -(k+1);
+            } else {
+                return k;
+            }
+        } else {
+            double smallestDist = Double.MAX_VALUE;
+            int bestIndex = spec.size();
+            for (int k=0; k < spec.size(); ++k) {
+                double dist = spec.getMzAt(k)-mass;
+                if (dist >= 0 && dist < smallestDist) {
+                    smallestDist = dist;
+                    bestIndex = k;
+                }
+            }
+            return bestIndex;
+        }
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
+    double cosineProduct(S left, S2 right, Deviation deviation) {
+        return dotProductPeaks(left, right, deviation) / Math.sqrt(dotProductPeaks(left,left,deviation)*dotProductPeaks(right,right,deviation));
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
+    double cosineProductWithLosses(S left, S2 right, Deviation deviation, double precursor) {
+        return (cosineProduct(left,right,deviation) + cosineProduct(getInversedSpectrum(left, precursor), getInversedSpectrum(right, precursor), deviation))/2d;
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum getInversedSpectrum(S spec, double precursor) {
+        if (spec instanceof OrderedSpectrum) {
+            final SimpleMutableSpectrum mut = new SimpleMutableSpectrum(spec.size());
+            int index = getFirstPeakGreaterOrEqualThan(spec, precursor) - 1;
+            if (index < 0) {
+                return new SimpleSpectrum(mut);
+            }
+            for (int k = index; k >= 0; --k) mut.addPeak(precursor - spec.getMzAt(k), spec.getIntensityAt(k));
+            return new SimpleSpectrum(getAlreadyOrderedSpectrum(mut));
+        } else {
+            final SimpleMutableSpectrum mut = new SimpleMutableSpectrum(spec.size());
+            for (int k=0; k < spec.size(); ++k) {
+                final double loss = precursor-spec.getMzAt(k);
+                if (loss > 0) mut.addPeak(loss, spec.getIntensityAt(k));
+            }
+            return new SimpleSpectrum(mut);
+        }
+    }
+
+    private static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
+    double dotProductPeaks(S left, S2 right, Deviation deviation) {
+        int i=0, j=0;
+        final int nl=left.size(), nr=right.size();
+        double score=0d;
+        while (i < nl && j < nr) {
+            final double difference = left.getMzAt(i)- right.getMzAt(j);
+            final double allowedDifference = deviation.absoluteFor(Math.min(left.getMzAt(i), right.getMzAt(j)));
+            if (Math.abs(difference) <= allowedDifference) {
+                score += left.getIntensityAt(i)*right.getIntensityAt(j);
+                for (int k=i+1; k < nl; ++k) {
+                    final double difference2 = left.getMzAt(k)- right.getMzAt(j);
+                    if (Math.abs(difference2) <= allowedDifference) {
+                        score += left.getIntensityAt(k)*right.getIntensityAt(j);
+                    } else break;
+                }
+                for (int l=j+1; l < nr; ++l) {
+                    final double difference2 = left.getMzAt(i)- right.getMzAt(l);
+                    if (Math.abs(difference2) <= allowedDifference) {
+                        score += left.getIntensityAt(i)*right.getIntensityAt(l);
+                    } else break;
+                }
+                ++i; ++j;
+            } else if (difference > 0) {
+                ++j;
+            } else {
+                ++i;
+            }
+        }
+        return score;
+    }
+
     public static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum mergeSpectra(Deviation massWindow, boolean sumIntenstities, boolean mergeMasses, final List<S> spectra) {
         final SimpleSpectrum merged = mergeSpectra(spectra);
@@ -886,5 +969,42 @@ public class Spectrums {
         return store;
     }
 
+    private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum, Spectrum<T> {
+
+        private final Spectrum<T> delegate;
+
+        public AlreadyOrderedSpectrum(Spectrum<T> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public double getMzAt(int index) {
+            return delegate.getMzAt(index);
+        }
+
+        @Override
+        public double getIntensityAt(int index) {
+            return delegate.getIntensityAt(index);
+        }
+
+        @Override
+        public T getPeakAt(int index) {
+            return delegate.getPeakAt(index);
+        }
+
+        @Override
+        public int size() {
+            return delegate.size();
+        }
+
+        @Override
+        public Iterator<T> iterator() {
+            return delegate.iterator();
+        }
+    }
+
+    private static <T extends Peak, S extends Spectrum<T>> AlreadyOrderedSpectrum<T> getAlreadyOrderedSpectrum(S spec) {
+        return new AlreadyOrderedSpectrum<>(spec);
+    }
 
 }
