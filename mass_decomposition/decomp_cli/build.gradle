@@ -1,7 +1,7 @@
 
 apply plugin: "application"
 
-mainClassName = "de.unijena.bioinf.MassDecomposer.cli.Main"
+mainClassName = "de.unijena.bioinf.MassDecomposer.Main"
 
 
 dependencies {

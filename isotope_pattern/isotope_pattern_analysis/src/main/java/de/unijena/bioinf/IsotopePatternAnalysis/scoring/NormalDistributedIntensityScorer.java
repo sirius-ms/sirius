@@ -44,6 +44,22 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
         this.sigmaR = 0.1;
     }
 
+    public double getSigmaA() {
+        return sigmaA;
+    }
+
+    public void setSigmaA(double sigmaA) {
+        this.sigmaA = sigmaA;
+    }
+
+    public double getSigmaR() {
+        return sigmaR;
+    }
+
+    public void setSigmaR(double sigmaR) {
+        this.sigmaR = sigmaR;
+    }
+
     @Override
     public void score(double[] scores, Spectrum<Peak> measuredSpectrum, Spectrum<Peak> theoreticalSpectrum, Normalization usedNormalization, Ms2Experiment experiment, MeasurementProfile profile) {
         if (usedNormalization.getBase() != 1 || usedNormalization.getMode() != NormalizationMode.MAX) {

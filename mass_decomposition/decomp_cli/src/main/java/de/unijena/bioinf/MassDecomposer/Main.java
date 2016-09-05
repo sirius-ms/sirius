@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.MassDecomposer.cli;
+package de.unijena.bioinf.MassDecomposer;
 
 import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.Cli;
@@ -23,11 +23,7 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.MassDecomposer.ChemicalValidator;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.MassDecomposer.DecompositionValidator;
-import de.unijena.bioinf.MassDecomposer.Interval;
-import de.unijena.bioinf.MassDecomposer.ValenceValidator;
 
 import java.io.PrintStream;
 import java.text.DecimalFormat;
@@ -190,10 +186,11 @@ public class Main {
         }
         */
 
-        final List<int[]> compomers = decomposer.decompose(mass, dev, boundary, validator);
+        final List<int[]> compomers = decomposer.decompose(mass, dev, boundary);
         final List<MolecularFormula> formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
-            formulas.add(alphabet.decompositionToFormula(c));
+            if (validator.validate(c, decomposer.orderedCharacterIds, decomposer.getAlphabet()))
+                formulas.add(alphabet.decompositionToFormula(c));
         }
         Collections.sort(formulas, new Comparator<MolecularFormula>() {
             @Override

@@ -26,6 +26,7 @@ public class LogNormalDistribution extends RealDistribution {
 
     public static final double SQRT2PI = sqrt(2 * PI);
     private final double mean, var, sd;
+    private final double shift;
 
     public static LogNormalDistribution withMeanAndSd(double mean, double sd) {
         return new LogNormalDistribution(mean, sd*sd);
@@ -35,7 +36,16 @@ public class LogNormalDistribution extends RealDistribution {
         this.mean = mean;
         this.var = var;
         this.sd = sqrt(var);
+        this.shift = 0d;
     }
+    public LogNormalDistribution(double mean, double var, double shift) {
+        this.mean = mean;
+        this.var = var;
+        this.sd = sqrt(var);
+        this.shift = shift;
+    }
+
+
 
     @Override
     public String toString() {
@@ -56,11 +66,13 @@ public class LogNormalDistribution extends RealDistribution {
 
     @Override
     public double getDensity(double x) {
-        return 1/(SQRT2PI *sd*x) * exp(-pow(log(x)-mean, 2)/(2*var));
+        x += shift;
+        return (1/(SQRT2PI *sd*x) * exp(-pow(log(x)-mean, 2)/(2*var)));
     }
 
     @Override
     public double getCumulativeProbability(double x) {
+        x += shift;
         return MathUtils.cdf(log(x), mean, var);
     }
 
