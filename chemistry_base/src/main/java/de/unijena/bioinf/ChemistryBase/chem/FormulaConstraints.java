@@ -284,6 +284,8 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     }
 
     public boolean isViolated(MolecularFormula formula) {
+        for (FormulaFilter f : filters)
+            if (!f.isValid(formula)) return true;
         final boolean[] violation = new boolean[]{false};
         formula.visit(new FormulaVisitor<Object>() {
             @Override
@@ -304,10 +306,10 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         return true;
     }
 
-    public boolean isSatiesfied(MolecularFormula formula) {
+    public boolean isSatisfied(MolecularFormula formula) {
         return !isViolated(formula);
     }
-    public boolean isSatiesfied(ChemicalAlphabet formula) {
+    public boolean isSatisfied(ChemicalAlphabet formula) {
         return !isViolated(formula);
     }
 

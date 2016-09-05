@@ -102,7 +102,7 @@ public class ArrayFingerprint extends Fingerprint {
             }
         }
 
-        // |A n B| = (|A| + |B|) - |A u B|
+        // |A n B| = (|A| + |B|) - 2|A u B|
         final int union = as.length + bs.length - intersection;
         // number of (1,1) pairs: intersection
         // number of {-1,1} pairs: union  - intersection

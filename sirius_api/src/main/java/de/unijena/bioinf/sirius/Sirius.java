@@ -87,6 +87,7 @@ public class Sirius {
     public Sirius(String profileName) throws IOException {
         profile = new Profile(profileName);
         loadMeasurementProfile();
+        this.progress = new Progress.Quiet();
     }
 
     public Sirius() {
@@ -208,7 +209,7 @@ public class Sirius {
      * @return a list of identified molecular formulas together with their tree
      */
     public List<IdentificationResult> identify(Ms2Experiment uexperiment) {
-        return identify(uexperiment, 5, true, IsotopePatternHandling.score, Collections.<MolecularFormula>emptySet());
+        return identify(uexperiment, 5, true, IsotopePatternHandling.both, Collections.<MolecularFormula>emptySet());
     }
 
     /**
@@ -251,7 +252,7 @@ public class Sirius {
         // first MS
         final HashMap<MolecularFormula, Double> isoScores = handleIsoAnalysisWithWhitelist(deisotope, exp, subsets);
         // then MS/MS
-        final TreeSet<FTree> treeSet = new TreeSet<FTree>(TREE_SCORE_COMPARATOR);
+        final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         final double originalTreeSize = (treeSizeScorer != null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;
@@ -279,9 +280,8 @@ public class Sirius {
                     while (iter.hasNext()) {
                         final FTree tree = iter.next();
                         if (tree != null) {
-                            if (deisotope == IsotopePatternHandling.score) addIsoScore(isoScores, tree);
+                            if (deisotope.isScoring()) addIsoScore(isoScores, tree);
                             treeSet.add(tree);
-                            if (treeSet.size() > numberOfCandidates) treeSet.pollFirst();
                         }
                         if (iter.lastGraph() != null) {
                             progress.update(++counter, whiteList.size(), iter.lastGraph().getRoot().getChildren(0).getFormula().toString() + " " + wl.ionization.toString(), feedback);
@@ -289,7 +289,7 @@ public class Sirius {
                         if (feedback.getFlag() == FeedbackFlag.Flag.CANCEL) {
                             return null;
                         } else if (feedback.getFlag() == FeedbackFlag.Flag.STOP) {
-                            computedTrees.addAll(new ArrayList<FTree>(treeSet));
+                            computedTrees.addAll(treeSet.getTrees());
                             break outerLoop;
                         }
                     }
@@ -297,7 +297,7 @@ public class Sirius {
                 progress.finished();
                 boolean satisfied = treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE;
                 if (!satisfied) {
-                    final Iterator<FTree> treeIterator = treeSet.descendingIterator();
+                    final Iterator<FTree> treeIterator = treeSet.iterator();
                     for (int k = 0; k < MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY; ++k) {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
@@ -310,7 +310,7 @@ public class Sirius {
                     }
                 }
                 if (satisfied) {
-                    computedTrees.addAll(treeSet.descendingSet());
+                    computedTrees.addAll(treeSet.getTrees());
                     break;
                 } else {
                     progress.info("Not enough peaks were explained. Repeat computation with less restricted constraints.");
@@ -328,7 +328,7 @@ public class Sirius {
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
-                    if (deisotope == IsotopePatternHandling.score) addIsoScore(isoScores, recalibratedTree);
+                    if (deisotope.isScoring()) addIsoScore(isoScores, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
                     if (feedback.getFlag() == FeedbackFlag.Flag.CANCEL) return null;
@@ -488,24 +488,23 @@ public class Sirius {
                 }
                 trees = trees.computeMaximal(computeNTrees).withoutRecalibration();
 
-                final TreeSet<FTree> treeSet = new TreeSet<FTree>(TREE_SCORE_COMPARATOR);
+                final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
 
                 final TreeIterator iter = trees.iterator(true);
                 progress.init(maxNumberOfFormulas);
                 int counter = 0;
                 while (iter.hasNext()) {
                     final FTree tree = iter.next();
-                    if (deisotope == IsotopePatternHandling.score) addIsoScore(isoFormulas, tree);
+                    if (deisotope.isScoring()) addIsoScore(isoFormulas, tree);
 
                     if (tree != null) {
                         treeSet.add(tree);
-                        if (treeSet.size() > numberOfCandidates) treeSet.pollFirst();
                     }
                     if (iter.lastGraph() != null)
                         progress.update(++counter, maxNumberOfFormulas, iter.lastGraph().getRoot().getChildren(0).getFormula().toString(), feedback);
                     if (feedback.getFlag() == FeedbackFlag.Flag.CANCEL) return null;
                     if (feedback.getFlag() == FeedbackFlag.Flag.STOP) {
-                        computedTrees.addAll(treeSet);
+                        computedTrees.addAll(treeSet.getTrees());
                         break outerLoop;
                     }
                 }
@@ -514,7 +513,7 @@ public class Sirius {
                 // check if at least one of the best N trees satisfies the tree-rejection-condition
                 boolean satisfied = treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE;
                 if (!satisfied) {
-                    final Iterator<FTree> treeIterator = treeSet.descendingIterator();
+                    final Iterator<FTree> treeIterator = treeSet.iterator();
                     for (int k = 0; k < computeNTrees; ++k) {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
@@ -527,13 +526,14 @@ public class Sirius {
                     }
                 }
                 if (satisfied) {
-                    computedTrees.addAll(treeSet.descendingSet());
+                    computedTrees.addAll(treeSet.getTrees());
                     break;
                 } else {
                     progress.info("Not enough peaks were explained. Repeat computation with less restricted constraints.");
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
                     computedTrees.clear();
+                    treeSet.clear();
                     // TODO!!!! find a smarter way to do this -_-
                     pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput(), pinput.getMeasurementProfile());
                 }
@@ -545,7 +545,7 @@ public class Sirius {
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
-                    if (deisotope == IsotopePatternHandling.score) addIsoScore(isoFormulas, recalibratedTree);
+                    if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
                     if (feedback.getFlag() == FeedbackFlag.Flag.CANCEL) return null;
@@ -601,7 +601,7 @@ public class Sirius {
             possibleIonModes.add(ionMode);
         }
 
-        final TreeSet<FTree> treeSet = new TreeSet<FTree>(TREE_SCORE_COMPARATOR);
+        final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
         final FeedbackFlag feedback = new FeedbackFlag();
 
         try {
@@ -632,13 +632,12 @@ public class Sirius {
 
                         if (tree != null) {
                             treeSet.add(tree);
-                            if (treeSet.size() > numberOfCandidates) treeSet.pollFirst();
                         }
                         if (iter.lastGraph() != null)
                             progress.update(++counter, maxNumberOfFormulas, iter.lastGraph().getRoot().getChildren(0).getFormula().toString() + " " + ionType.toString(), feedback);
                         if (feedback.getFlag() == FeedbackFlag.Flag.CANCEL) return null;
                         else if (feedback.getFlag() == FeedbackFlag.Flag.STOP) {
-                            computedTrees.addAll(treeSet);
+                            computedTrees.addAll(treeSet.getTrees());
                             break outerLoop;
                         }
                     }
@@ -649,7 +648,7 @@ public class Sirius {
                 // check if at least one of the best N trees satisfies the tree-rejection-condition
                 boolean satisfied = treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE;
                 if (!satisfied) {
-                    final Iterator<FTree> treeIterator = treeSet.descendingIterator();
+                    final Iterator<FTree> treeIterator = treeSet.iterator();
                     for (int k = 0; k < numberOfCandidates; ++k) {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
@@ -662,7 +661,7 @@ public class Sirius {
                     }
                 }
                 if (satisfied) {
-                    computedTrees.addAll(treeSet.descendingSet());
+                    computedTrees.addAll(treeSet.getTrees());
                     break;
                 } else {
                     progress.info("Not enough peaks were explained. Repeat computation with less restricted constraints.");
@@ -679,7 +678,7 @@ public class Sirius {
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
-                    if (deisotope == IsotopePatternHandling.score) addIsoScore(isoFormulas, recalibratedTree);
+                    if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
                     if (feedback.getFlag() == FeedbackFlag.Flag.STOP) break;
@@ -1001,7 +1000,9 @@ public class Sirius {
      * @return score of the best isotope candidate
      */
     private double filterCandidateList(List<IsotopePattern> candidates, HashMap<MolecularFormula, Double> formulas, IsotopePatternHandling handling) {
-        if (handling==IsotopePatternHandling.omit) return candidates.get(0).getScore();
+        if (handling==IsotopePatternHandling.omit) {
+            return 0d;
+        }
         if (candidates.size() == 0) return 0d;
         if (!handling.isFiltering()) {
             for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), p.getScore());
@@ -1014,7 +1015,7 @@ public class Sirius {
         for (; n < candidates.size(); ++n) {
             final double score = candidates.get(n).getScore();
             final double prev = candidates.get(n - 1).getScore();
-            if (score <= 0 || score / optscore < 0.666 || score / prev < 0.5) break;
+            if (((optscore-score) > 5) && (score <= 0 || score / optscore < 0.5 || score / prev < 0.5)) break;
         }
         for (int i = 0; i < n; ++i) formulas.put(candidates.get(i).getCandidate(), candidates.get(i).getScore());
         return optscore;

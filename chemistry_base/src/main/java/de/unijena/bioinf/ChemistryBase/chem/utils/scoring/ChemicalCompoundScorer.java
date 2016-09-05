@@ -33,6 +33,11 @@ public final class ChemicalCompoundScorer {
     private ChemicalCompoundScorer() {
     }
 
+
+    public MolecularFormulaScorer getTrainedSupportVectorDecisionFunction() {
+        return new SupportVectorMolecularFormulaScorer();
+    }
+
     /**
      * creates a scorer for molecular formulas of the compound. This scorer should not be used
      * for fragments! Currently, the following scorings are used:
@@ -96,6 +101,7 @@ public final class ChemicalCompoundScorer {
         public SpecialMoleculeScorer getOxygenBackboneScorer() {
             return oxygenBackboneScorer;
         }
+
         public void setOxygenBackboneScorer(SpecialMoleculeScorer oxygenBackboneScorer) {
             this.oxygenBackboneScorer = oxygenBackboneScorer;
         }
@@ -113,11 +119,11 @@ public final class ChemicalCompoundScorer {
         public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
             if (document.hasKeyInDictionary(dictionary, "standardScorer")) {
                 // LEGACY PATH
-                heteroAtom2CarbonScorer = (ImprovedHetero2CarbonScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "heteroAtom2CarbonScorer"));
+                heteroAtom2CarbonScorer = (ImprovedHetero2CarbonScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "heteroAtom2CarbonScorer"));
                 disableRDBEScorer();
             } else {
-                heteroAtom2CarbonScorer = (ImprovedHetero2CarbonScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "heteroAtom2CarbonScorer"));
-                rdbeScorer = (RDBEMassScorer)helper.unwrap(document, document.getFromDictionary(dictionary, "rdbeScorer"));
+                heteroAtom2CarbonScorer = (ImprovedHetero2CarbonScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "heteroAtom2CarbonScorer"));
+                rdbeScorer = (RDBEMassScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "rdbeScorer"));
             }
             oxygenBackboneScorer = (SpecialMoleculeScorer) helper.unwrap(document, document.getFromDictionary(dictionary, "specialMoleculeScorer"));
         }

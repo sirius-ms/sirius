@@ -1,4 +1,4 @@
-package de.unijena.bioinf.MassDecomposer.cli;
+package de.unijena.bioinf.MassDecomposer;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;

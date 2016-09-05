@@ -20,15 +20,17 @@ package de.unijena.bioinf.MassDecomposer.Chemistry;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaFilterList;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.MassDecomposer.DecompIterator;
 import de.unijena.bioinf.MassDecomposer.Interval;
-import de.unijena.bioinf.MassDecomposer.MassDecomposerFast;
+import de.unijena.bioinf.MassDecomposer.RangeMassDecomposer;
 import de.unijena.bioinf.MassDecomposer.ValencyAlphabet;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
+public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
 
     protected final ChemicalAlphabet alphabet;
 
@@ -39,6 +41,50 @@ public class MassToFormulaDecomposer extends MassDecomposerFast<Element> {
     public MassToFormulaDecomposer(ChemicalAlphabet alphabet) {
         super(new ChemicalAlphabetWrapper(alphabet));
         this.alphabet = alphabet;
+    }
+
+    public Iterator<MolecularFormula> formulaIterator(double mass, Deviation deviation, final FormulaConstraints constraints) {
+        if (!constraints.getChemicalAlphabet().equals(alphabet)) throw new IllegalArgumentException("Incompatible alphabet");
+        final Map<Element, Interval> boundaries = alphabet.toMap();
+        final int[] upperbounds = constraints.getUpperbounds();
+        for (int i=0; i < alphabet.size(); ++i) {
+            boundaries.put(alphabet.get(i), new Interval(0, upperbounds[i]));
+        }
+        final DecompIterator<Element> decompIterator = decomposeIterator(mass, deviation, boundaries);
+        return new Iterator<MolecularFormula>() {
+
+            MolecularFormula current = fetchNextFormula();
+
+            @Override
+            public boolean hasNext() {
+                return current!=null;
+            }
+
+            @Override
+            public MolecularFormula next() {
+                final MolecularFormula now = current;
+                current = fetchNextFormula();
+                return now;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+            private MolecularFormula fetchNextFormula() {
+                outerLoop:
+                while (decompIterator.next()) {
+                    final MolecularFormula formula = alphabet.decompositionToFormula(decompIterator.getCurrentCompomere());
+                    for (FormulaFilter g : constraints.getFilters()) {
+                        if (!g.isValid(formula))
+                            continue outerLoop;
+                    }
+                    return formula;
+                }
+                return null;
+            }
+        };
     }
 
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {
