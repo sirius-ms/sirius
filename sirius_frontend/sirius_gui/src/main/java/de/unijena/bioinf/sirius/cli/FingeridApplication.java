@@ -5,6 +5,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
@@ -16,11 +17,14 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.gui.db.CompoundImportedListener;
+import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
 import de.unijena.bioinf.sirius.gui.fingerid.DatasourceService2;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import gnu.trove.list.array.TIntArrayList;
+import org.openscience.cdk.exception.CDKException;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -47,6 +51,10 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     @Override
     public void compute() {
+        if (options.isGeneratingCompoundDatabase()!=null) {
+            generateCustomDatabase();
+            return;
+        }
         if (options.isFingerid()) {
             initFingerBlast();
             File out;
@@ -91,6 +99,27 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void generateCustomDatabase() {
+        final CustomDatabase db = new CustomDatabase(options.getDatabase(), new File(RESTDatabase.defaultCacheDir(), "custom/" + new File(options.getDatabase()).getName()));
+        final List<File> files = new ArrayList<>();
+        for (String name : options.getInput()) {
+            final File file = new File(name);
+            if (file.exists()) files.add(file);
+        }
+        try {
+            db.buildDatabase(files, new CompoundImportedListener() {
+                @Override
+                public void compoundImported(InChI inchi) {
+                    System.out.println("import\t" + inchi.key2D() + "\t" + inchi.in2D);
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CDKException e) {
+            e.printStackTrace();
         }
     }
 

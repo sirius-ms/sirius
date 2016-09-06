@@ -33,6 +33,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.smiles.smarts.parser.SMARTSParser;
 
 import javax.json.*;
+import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 import java.io.*;
 import java.nio.charset.Charset;
@@ -40,6 +41,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class CustomDatabase {
 
@@ -51,6 +53,25 @@ public class CustomDatabase {
     public CustomDatabase(String name, File path) {
         this.name = name;
         this.path = path;
+    }
+
+    public void buildDatabase(List<File> files, CompoundImportedListener listener) throws IOException, CDKException {
+        final Importer importer = getImporter();
+        importer.init();
+        for (File f : files) {
+            final List<IAtomContainer> molecules = importer.importFrom(f);
+            for (IAtomContainer mol : molecules) {
+                listener.compoundImported(importer.importCompound(mol, mol.getID()));
+            }
+            if (molecules.size()>1000) {
+                importer.flushBuffer();
+            }
+        }
+        importer.flushBuffer();
+    }
+
+    public void inheritMetadata(File otherDb) throws IOException {
+        getImporter().inheritMetadata(otherDb);
     }
 
     public boolean isDeriveFromPubchem() {
@@ -227,6 +248,51 @@ public class CustomDatabase {
                     return importCompound(molecule, null);
                 } catch (CDKException e) {
                     throw new IOException(e);
+                }
+            }
+        }
+
+        protected void inheritMetadata(File otherDb) throws IOException {
+            for (File formulaFile : currentPath.listFiles()) {
+                if (formulaFile.getName().endsWith(".json.gz")) {
+
+                    final File otherFormulaFile = new File(otherDb, formulaFile.getName());
+                    if (!otherFormulaFile.exists()) continue;
+
+                    final HashMap<String, Compound> compoundPerInchiKey = new HashMap<>();
+                    final List<Compound> compounds = new ArrayList<>();
+                    try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(formulaFile)))) {
+                        Compound.parseCompounds(null, compounds, parser);
+                    }
+                    for (Compound c : compounds) {
+                        compoundPerInchiKey.put(c.getInchi().key2D(), c);
+                    }
+
+                    compounds.clear();
+                    try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(otherFormulaFile)))) {
+                        Compound.parseCompounds(null, compounds, parser);
+                    }
+                    boolean dirty=false;
+                    for (Compound meta : compounds) {
+                        final Compound c = compoundPerInchiKey.get(meta.getInchi().key2D());
+                        if (c!=null) {
+                            c.mergeMetaData(meta);
+                            dirty=true;
+                        }
+                    }
+
+                    if (!dirty) continue;
+                    try (final JsonGenerator writer = Json.createGenerator(new GZIPOutputStream(new FileOutputStream(formulaFile)))) {
+                        writer.writeStartObject();
+                        writer.writeStartArray("compounds");
+                        for (Compound fc : compoundPerInchiKey.values()) {
+                            fc.asFingerprintCandidate().writeToJSON(writer, true);
+                        }
+                        writer.writeEnd();
+                        writer.writeEnd();
+                    }
+
+
                 }
             }
         }

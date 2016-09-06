@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -127,7 +129,7 @@ public class Compound {
 
 
 
-    protected static List<Compound> parseCompounds(MaskedFingerprintVersion version, List<Compound> compounds, JsonParser parser) {
+    public static List<Compound> parseCompounds(MaskedFingerprintVersion version, List<Compound> compounds, JsonParser parser) {
         if (parser.next()!= JsonParser.Event.START_OBJECT) throw new JsonException("Expect json object");
         if (!findTopLevelKey(parser, "compounds")) throw new JsonException("Do not find any compounds for given molecular formula");
         if (parser.next()!=JsonParser.Event.START_ARRAY) throw new JsonException("Expect array of compounds");
@@ -341,6 +343,46 @@ public class Compound {
             }
             writer.writeEnd();
             writer.writeEnd();
+        }
+    }
+
+    public InChI getInchi() {
+        return inchi;
+    }
+
+    public Smiles getSmiles() {
+        return smiles;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getXlogP() {
+        return xlogP;
+    }
+
+    public Fingerprint getFingerprint() {
+        return fingerprint;
+    }
+
+    public void mergeMetaData(Compound meta) {
+        if (name==null) name = meta.name;
+        if (smiles==null) smiles = meta.smiles;
+        if (inchi==null) inchi = meta.inchi;
+        if (pubchemIds==null) pubchemIds = meta.pubchemIds;
+        else if (meta.pubchemIds!=null) {
+            final TIntHashSet ids = new TIntHashSet(pubchemIds);
+            ids.addAll(meta.pubchemIds);
+            pubchemIds = ids.toArray();
+            Arrays.sort(pubchemIds);
+        }
+        bitset = bitset|meta.bitset;
+        if (databases==null) databases=ArrayListMultimap.create(meta.databases);
+        else {
+            databases = HashMultimap.create(databases);
+            databases.putAll(meta.databases);
+            databases = ArrayListMultimap.create(databases);
         }
     }
 }
