@@ -215,7 +215,13 @@ public class TrainLinearSVM  implements Closeable {
 
         final Model bestModel = Collections.max(models);
 
-        if (DEBUG) System.out.println("best model c "+bestModel.parameter.C);
+        if (DEBUG){
+            double tp = bestModel.performance.getTp();
+            double tn = bestModel.performance.getTn();
+            double fp = bestModel.performance.getFp();
+            double fn = bestModel.performance.getFn();
+            System.out.println("best model c "+bestModel.parameter.C+" with tp:"+tp+" tn:"+tn+" fp:"+fp+" fn:"+fn);
+        }
 
         //train on complete dataset;
         final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);
@@ -274,9 +280,18 @@ public class TrainLinearSVM  implements Closeable {
 
         final Model bestModel = Collections.max(models);
 
-        if (DEBUG) System.out.println("best model c "+bestModel.parameter.C);
-        if (DEBUG) System.out.println("best model gamma "+bestModel.parameter.gamma);
-        if (DEBUG) System.out.println("best model degree "+bestModel.parameter.degree);
+        if (DEBUG){
+            System.out.println("best model c "+bestModel.parameter.C);
+            System.out.println("best model gamma "+bestModel.parameter.gamma);
+            System.out.println("best model degree "+bestModel.parameter.degree);
+
+            double tp = bestModel.performance.getTp();
+            double tn = bestModel.performance.getTn();
+            double fp = bestModel.performance.getFp();
+            double fn = bestModel.performance.getFn();
+            System.out.println("performance tp:"+tp+" tn:"+tn+" fp:"+fp+" fn:"+fn);
+        }
+
 
         //train on complete dataset;
         final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);

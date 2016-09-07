@@ -287,8 +287,8 @@ public class TrainConfidenceScore {
         Predictor predictor;
         if (doCrossval){
             if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,10}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{4,5,6,7,8,9,10,11,12}, new int[]{1});
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{1,2,4,6,8,10,12}, new int[]{1});
             } else {
                 TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
 //                predictor = trainLinearSVM.trainWithCrossvalidation(); //changed
@@ -301,8 +301,8 @@ public class TrainConfidenceScore {
                 System.out.println("anti-crossvalidation");
             }
             if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,10}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{4,5,6,7,8,9,10,11,12}, new int[]{1});
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{1,2,4,6,8,10,12}, new int[]{1});
             } else {
                 TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
                 predictor = trainLinearSVM.trainAntiCrossvalidation();
