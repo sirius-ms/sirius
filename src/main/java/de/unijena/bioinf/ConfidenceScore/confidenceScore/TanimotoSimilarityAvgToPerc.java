@@ -61,6 +61,11 @@ public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 2;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         for (int j = 0; j < percent.length; j++) {

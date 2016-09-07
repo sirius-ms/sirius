@@ -83,6 +83,11 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return Math.max(this.numOfWorseCandidates+1, 1);
+    }
+
+    @Override
     public String[] getFeatureNames() {
         return new String[]{"diffMolProps_vs_"+numOfWorseCandidates};
     }

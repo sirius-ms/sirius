@@ -64,6 +64,13 @@ public class LogarithmScorer implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        int max = -1;
+        for (FeatureCreator featureCreator : featureCreators) max = Math.max(max, featureCreator.getRequiredCandidateSize());
+        return max;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         int pos = 0;

@@ -25,5 +25,7 @@ public interface FeatureCreator extends Parameterized {
 
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates);
 
+    public int getRequiredCandidateSize();
+
     public String[] getFeatureNames();
 }

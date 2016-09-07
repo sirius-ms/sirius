@@ -165,6 +165,11 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         String[] allNames = new String[names.length*positions.length];
         int pos = 0;

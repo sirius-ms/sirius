@@ -57,6 +57,11 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         return names;
     }

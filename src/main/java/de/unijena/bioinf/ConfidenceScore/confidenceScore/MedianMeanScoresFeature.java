@@ -66,6 +66,11 @@ public class MedianMeanScoresFeature implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         return new String[]{"mean_"+name, "median_"+name};
     }

@@ -57,6 +57,11 @@ public class TanimotoSimilarity implements FeatureCreator{
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return max+1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         for (int j = 0; j < positions.length; j++) {

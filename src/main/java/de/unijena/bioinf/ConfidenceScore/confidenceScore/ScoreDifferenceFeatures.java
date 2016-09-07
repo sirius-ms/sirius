@@ -75,6 +75,11 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return max+1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         int pos = 0;

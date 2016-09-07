@@ -58,6 +58,18 @@ public class TrainLinearSVM  implements Closeable {
             this.classification = classification;
             this.features = features;
         }
+
+        public String getIdentifier() {
+            return identifier;
+        }
+
+        public byte getClassification() {
+            return classification;
+        }
+
+        public double[] getFeatures() {
+            return features.clone();
+        }
     }
 
 
@@ -213,7 +225,7 @@ public class TrainLinearSVM  implements Closeable {
         return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
     }
 
-    public Predictor trainAntiCrossvalidation(double lowest_gamma, double highest_gamma, int lowest_degree, int highest_degree) throws InterruptedException {
+    public Predictor trainAntiCrossvalidation(double[] gammas, int[] degrees) throws InterruptedException {
         final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
 
         final SVMInterface.svm_problem  problem = defineProblem(compounds);
@@ -224,10 +236,10 @@ public class TrainLinearSVM  implements Closeable {
             double c = Math.pow(2, e);
             if (DEBUG) System.out.println("c: "+c);
 
-            double gamma = lowest_gamma;
-            while (gamma<=highest_gamma){
-                int degree = lowest_degree;
-                while (degree<=highest_degree){
+            for (int i = 0; i < gammas.length; i++) {
+                final double gamma = gammas[i];
+                for (int j = 0; j < degrees.length; j++) {
+                    final int degree = degrees[j];
                     System.out.println("d "+degree+" | g "+gamma);
                     final SVMInterface.svm_parameter parameter = defaultParameters();
                     parameter.C = c;
@@ -245,15 +257,9 @@ public class TrainLinearSVM  implements Closeable {
                             return model;
                         }
                     }));
-
-
-                    degree += 1;
                 }
-
-                gamma *=2;
             }
         }
-
 
 
 
@@ -280,7 +286,7 @@ public class TrainLinearSVM  implements Closeable {
         return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
     }
 
-    public Predictor trainWithCrossvalidationOptimizeGammaAndDegree(double lowest_gamma, double highest_gamma, int lowest_degree, int highest_degree) throws InterruptedException {
+    public Predictor trainWithCrossvalidationOptimizeGammaAndDegree(double[] gammas, int[] degrees) throws InterruptedException {
         final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
 
         final List<Compound>[] train = new List[FOLDS];
@@ -294,7 +300,6 @@ public class TrainLinearSVM  implements Closeable {
         }
 
 
-
         for (int i = 0; i < FOLDS; i++) {
             if (DEBUG) System.out.println("Fold "+(i+1)+" of "+FOLDS);
             final List<Compound> currentEval = eval[i];
@@ -306,10 +311,10 @@ public class TrainLinearSVM  implements Closeable {
                 double c = Math.pow(2, e);
                 if (DEBUG) System.out.println("c: "+c);
 
-                double gamma = lowest_gamma;
-                while (gamma<=highest_gamma){
-                    int degree = lowest_degree;
-                    while (degree<=highest_degree){
+                for (int j = 0; j < gammas.length; j++) {
+                    double gamma = gammas[j];
+                    for (int k = 0; k < degrees.length; k++) {
+                        int degree = degrees[k];
                         System.out.println("d "+degree+" | g "+gamma);
                         final SVMInterface.svm_parameter parameter = defaultParameters();
                         parameter.C = c;
@@ -327,14 +332,8 @@ public class TrainLinearSVM  implements Closeable {
                                 return model;
                             }
                         }));
-
-
-                        degree +=1;
                     }
-
-                    gamma *=2;
                 }
-
             }
 
         }

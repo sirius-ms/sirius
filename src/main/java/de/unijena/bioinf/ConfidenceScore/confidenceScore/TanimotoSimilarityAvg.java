@@ -60,6 +60,11 @@ public class TanimotoSimilarityAvg implements FeatureCreator{
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return max+1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         return new String[]{"TanimotoDiffToAvg"};
     }

@@ -36,6 +36,11 @@ public class MassFeature implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 0;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         return new String[]{"mass"};
     }

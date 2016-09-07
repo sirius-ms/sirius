@@ -32,6 +32,7 @@ public class EvalConfidenceScore {
 
     private static final String SEP = "\t";
     final static boolean DEBUG = true;
+    final static int NUM_OF_THREADS = Runtime.getRuntime().availableProcessors();
 
     private final PredictionPerformance[] statistics;
     protected final HashMap<MolecularFormula, List<CompoundWithAbstractFP<ProbabilityFingerprint>>> queriesPerFormula;
@@ -80,7 +81,7 @@ public class EvalConfidenceScore {
 
         System.out.println("train");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
 
         trainConfidenceScore.train(executorService, queriesX.toArray(new CompoundWithAbstractFP[0]), candidatesX.toArray(new CompoundWithAbstractFP[0][]), statistics);
 
@@ -215,7 +216,7 @@ public class EvalConfidenceScore {
 
         System.out.println("train");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
 
 
         TDoubleArrayList platts = new TDoubleArrayList();
@@ -321,7 +322,7 @@ public class EvalConfidenceScore {
 
         System.out.println("train");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
 
 
         TDoubleArrayList platts = new TDoubleArrayList();
@@ -524,8 +525,6 @@ private static void pickupTrainAndEvalStructureDependent(List<Instance> compound
     public List<Instance> computeHitList() throws IOException, DatabaseException {
         List<MolecularFormula> queriesPerFormulaList = new ArrayList<>(queriesPerFormula.keySet());
 
-
-        final int NUM_OF_THREADS = Runtime.getRuntime().availableProcessors();
         ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_THREADS);
         List<ChemicalDatabase> databases = new ArrayList<>();
         for (int i = 0; i < NUM_OF_THREADS; i++) {

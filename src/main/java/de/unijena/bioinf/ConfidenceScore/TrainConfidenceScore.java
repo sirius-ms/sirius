@@ -4,17 +4,22 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.*;
 import de.unijena.bioinf.ConfidenceScore.svm.LibLinearImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LibSVMImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LinearSVMPredictor;
 import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
+import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,6 +37,8 @@ public class TrainConfidenceScore {
     private PredictionPerformance[] statistics;
 
     private final boolean DEBUG = true;
+    private final boolean DEBUG_OUT = false;
+
 
     public TrainConfidenceScore(boolean useLinearSVM){
         if (useLinearSVM) svmInterface = new LibLinearImpl();
@@ -88,13 +95,66 @@ public class TrainConfidenceScore {
 
         ExecutorService executorService2 = Executors.newSingleThreadExecutor();
 
+//        Path out = Paths.get("./scores_"+step);
+//        try {
+//            BufferedWriter w = new BufferedWriter(new FileWriter(out.toFile()));
+
+
+        System.out.println("with cutting");
+        Random r = new Random();
+        int positiveInstances=0, negativeInstances = 0;
+        int maxCandidateNumber = featureCreator.getRequiredCandidateSize();
         List<Future<FeatureWithIdx>> futures = new ArrayList<>();
         for (int i = 0; i < queries.length; i++) {
             final int idx = i;
             final CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
-            final CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
-            if (featureCreator.isCompatible(query, candidates)){
+
+//            {
+//                for (int j = 0; j < rankedCandidates[i].length; j++){
+//                    double score = ((ScoredCandidate)rankedCandidates[i][j]).score;
+//                    if (j==rankedCandidates[i].length-1) w.write(score+"\n");
+//                    else w.write(score+"\t");
+//                }
+//            }
+            if (featureCreator.isCompatible(query, rankedCandidates[i])){
+//                final CompoundWithAbstractFP<Fingerprint>[] candidates = reduceCandidates(rankedCandidates[i], query, maxCandidateNumber, true, false); //changed!!!
+
+                final CompoundWithAbstractFP<Fingerprint>[] candidates;
+                if (step==4){
+                    candidates = rankedCandidates[i];
+                } else {
+                    if (rankedCandidates[i].length<=maxCandidateNumber) //just enough candidates to use classifier
+                        candidates = rankedCandidates[i];
+                    else { //decide whether instance shall be positive or negative, can just become positive if there is a high chance that this can be drawn randomly
+                        final int candNum = rankedCandidates[i].length;
+                        final int pos = findCorrectIndex(rankedCandidates[i], query);
+                        boolean containsCorrectInFront = pos>=0 && probNoOfAChoosen(pos, candNum-pos, maxCandidateNumber)>0.01; //correct contained an their is a change > 10% that no better candidate is drawn
+                        boolean nextPositive = containsCorrectInFront&&r.nextDouble()>(1d*positiveInstances/(positiveInstances+negativeInstances));
+                        CompoundWithAbstractFP<Fingerprint>[] candidates2;
+                        do {
+                            candidates2 = reduceCandidates(rankedCandidates[i], query, maxCandidateNumber, nextPositive, false); //changed!!!
+//                            System.out.println("next "+nextPositive+" "+(candidates2[0].getInchi().key2D().equals(query.getInchi().key2D())));
+                        } while ((candidates2[0].getInchi().key2D().equals(query.getInchi().key2D()))!=nextPositive);
+//                        System.out.println("yeah");
+                        candidates = candidates2;
+                    }
+
+                }
+
+                if (query.getInchi().key2D().equals(candidates[0].getInchi().key2D())) positiveInstances++;
+                else negativeInstances++;
+
                 usedInstances.add(i);
+                ////////////////////////////////
+//                if (DEBUG){
+//                    int size = candidates.length;
+//                    double[] scores = new double[size];
+//                    for (int j = 0; j < candidates.length; j++)
+//                        scores[j] = ((ScoredCandidate)candidates[j]).score;
+//                    System.out.println("candidates: "+size+" | "+Arrays.toString(scores));
+//                }
+
+                //////////////////////////////
                 futures.add(executorService2.submit(new Callable<FeatureWithIdx>() {
                     @Override
                     public FeatureWithIdx call() throws Exception {
@@ -113,6 +173,63 @@ public class TrainConfidenceScore {
             }
 
         }
+        System.out.println("positiveInstances: "+positiveInstances+" | negativeInstances: "+negativeInstances);
+
+
+//        ////////////////////////////////////////////////////////////////////////////////////////////
+//        int additionalPos = 0, additionalNeg = 0;
+//        if (step!=4){
+//            for (int i = 0; i < queries.length; i++) {
+//                final int idx = i;
+//                final CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
+//                if (featureCreator.isCompatible(query, rankedCandidates[i])){
+//                    final int pos = findCorrectIndex(rankedCandidates[i], query);
+//
+////                    if (Math.random()>0.5) continue;
+//
+//                    if (pos==0){
+////                        if (additionalPos>=1000) continue;
+//                        additionalPos++;
+//                    } else {
+////                        if (additionalNeg>=1000) continue;
+//                        additionalNeg++;
+//                    }
+//
+//                    final CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
+//
+//
+//                    if (query.getInchi().key2D().equals(candidates[0].getInchi().key2D())) positiveInstances++;
+//                    else negativeInstances++;
+//
+//                    usedInstances.add(i);
+//
+//
+//                    futures.add(executorService2.submit(new Callable<FeatureWithIdx>() {
+//                        @Override
+//                        public FeatureWithIdx call() throws Exception {
+//                            double[] features = featureCreator.computeFeatures(query, candidates);
+//                            for (int j = 0; j < features.length; j++) {
+//                                double feature = features[j];
+//                                if (Double.isNaN(feature)){
+//                                    String name = featureCreator.getFeatureNames()[j];
+//                                    throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
+//                                }
+//                            }
+//                            return new FeatureWithIdx(idx, features);
+//                        }
+//                    }));
+//
+//                }
+//
+//            }
+//        }
+//
+//        System.out.println("positiveInstances: "+positiveInstances+" | negativeInstances: "+negativeInstances);
+//
+//
+//
+//        /////////////////////////////////////////////////////////////////////////////////////
+//        //////////////////////////////////////////////////////
 
         List<FeatureWithIdx> results = new ArrayList<>();
         for (Future<FeatureWithIdx> future : futures) {
@@ -134,7 +251,11 @@ public class TrainConfidenceScore {
             featureList.add(result.features);
         }
 
-
+//            w.close();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
 //        //changed
         executorService2.shutdown();
@@ -196,16 +317,38 @@ public class TrainConfidenceScore {
         }
 
 
-//        TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface);
 
+        if (DEBUG_OUT){
+            Path outpath = Paths.get("./featureMatrix_"+step);
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(outpath.toFile()));
+                for (TrainLinearSVM.Compound compound : compounds) {
+                    double[] features = compound.getFeatures();
+                    for (int i = 0; i < features.length; i++) {
+                        final double feature = features[i];
+                        if (i==features.length-1) writer.write(feature+"\n");
+                        else writer.write(feature+"\t");
+                    }
+                }
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+//        TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface);
 
         Predictor predictor;
         if (doCrossval){
             if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-7,5}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(1.0/64, 64, 1, 1);
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,10}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{4,5,6,7,8,9,10,11,12}, new int[]{1});
             } else {
                 TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+//                predictor = trainLinearSVM.trainWithCrossvalidation(); //changed
+                System.out.println("crossvalidation.");
                 predictor = trainLinearSVM.trainWithCrossvalidation();
             }
 
@@ -214,8 +357,8 @@ public class TrainConfidenceScore {
                 System.out.println("anti-crossvalidation");
             }
             if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-7,5}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainAntiCrossvalidation(1.0/64, 64, 1, 1);
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,10}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{4,5,6,7,8,9,10,11,12}, new int[]{1});
             } else {
                 TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
                 predictor = trainLinearSVM.trainAntiCrossvalidation();
@@ -261,6 +404,66 @@ public class TrainConfidenceScore {
         else classification = -1;
         TrainLinearSVM.Compound compound = new TrainLinearSVM.Compound(queryInchiKey2D, classification, features);
         return compound;
+    }
+
+    private CompoundWithAbstractFP<Fingerprint>[] reduceCandidates(CompoundWithAbstractFP<Fingerprint>[] candidates, CompoundWithAbstractFP query, int size, boolean keepCorrect, boolean removeCorrect){
+        CompoundWithAbstractFP<Fingerprint>[] newList = new CompoundWithAbstractFP[size];
+        final Random r = new Random();
+        TIntList indizes = new TIntArrayList();
+        if (keepCorrect || removeCorrect){
+            int idx = findCorrectIndex(candidates, query);
+            for (int i = 0; i < candidates.length; i++){
+                if (i!=idx)indizes.add(i);
+            }
+            shuffle(indizes, r);
+            if (idx<0 || removeCorrect)
+                indizes = indizes.subList(0, size);
+            else {
+                indizes = indizes.subList(0, size-1);
+                indizes.add(idx);
+            }
+
+
+        } else {
+            for (int i = 0; i < candidates.length; i++) indizes.add(i);
+            shuffle(indizes, r);
+            indizes = indizes.subList(0, size);
+        }
+
+        indizes.sort();
+//        System.out.println(Arrays.toString(indizes.toArray()));
+        for (int i = 0; i < newList.length; i++) {
+            newList[i] = candidates[indizes.get(i)];
+        }
+        return newList;
+    }
+
+    private void shuffle(TIntList indizes, Random r){
+        final int size = indizes.size();
+        int tmp;
+        for (int i = 0; i < size; i++) {
+            int p = r.nextInt(size);
+            tmp = indizes.replace(i, indizes.get(p));
+            indizes.set(p,tmp);
+        }
+    }
+
+    private double probNoOfAChoosen(int aCount, int bCount, int drawings){
+        if (bCount<drawings) return 0d;
+        int sum = aCount+bCount;
+        double p = 1d;
+        for (int i = 0; i < drawings; i++) {
+            p *= ((double)bCount--)/(sum--);
+        }
+        return p;
+    }
+
+
+    private int findCorrectIndex(CompoundWithAbstractFP<Fingerprint>[] candidates, CompoundWithAbstractFP query){
+        for (int i = 0; i < candidates.length; i++) {
+            if (candidates[i].getInchi().key2D().equals(query.getInchi().key2D())) return i;
+        }
+        return -1;
     }
 
     private void prepare(PredictionPerformance[] statistics){
@@ -409,6 +612,78 @@ public class TrainConfidenceScore {
                             new MolecularFormulaFeature()
                     });
                     break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+    public static TrainConfidenceScore AdvancedMultipleSVMs2(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 3:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 4:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature(),
+                            new NumOfCandidatesCounter(),
+                            new LogarithmScorer(new NumOfCandidatesCounter())
+                    });
+                    break;
+                default:
+                    return null;
             }
             featureCreators[i] = featureCreator;
 
