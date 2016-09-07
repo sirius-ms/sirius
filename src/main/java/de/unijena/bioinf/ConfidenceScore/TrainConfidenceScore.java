@@ -175,62 +175,6 @@ public class TrainConfidenceScore {
         }
         System.out.println("positiveInstances: "+positiveInstances+" | negativeInstances: "+negativeInstances);
 
-
-//        ////////////////////////////////////////////////////////////////////////////////////////////
-//        int additionalPos = 0, additionalNeg = 0;
-//        if (step!=4){
-//            for (int i = 0; i < queries.length; i++) {
-//                final int idx = i;
-//                final CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
-//                if (featureCreator.isCompatible(query, rankedCandidates[i])){
-//                    final int pos = findCorrectIndex(rankedCandidates[i], query);
-//
-////                    if (Math.random()>0.5) continue;
-//
-//                    if (pos==0){
-////                        if (additionalPos>=1000) continue;
-//                        additionalPos++;
-//                    } else {
-////                        if (additionalNeg>=1000) continue;
-//                        additionalNeg++;
-//                    }
-//
-//                    final CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
-//
-//
-//                    if (query.getInchi().key2D().equals(candidates[0].getInchi().key2D())) positiveInstances++;
-//                    else negativeInstances++;
-//
-//                    usedInstances.add(i);
-//
-//
-//                    futures.add(executorService2.submit(new Callable<FeatureWithIdx>() {
-//                        @Override
-//                        public FeatureWithIdx call() throws Exception {
-//                            double[] features = featureCreator.computeFeatures(query, candidates);
-//                            for (int j = 0; j < features.length; j++) {
-//                                double feature = features[j];
-//                                if (Double.isNaN(feature)){
-//                                    String name = featureCreator.getFeatureNames()[j];
-//                                    throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
-//                                }
-//                            }
-//                            return new FeatureWithIdx(idx, features);
-//                        }
-//                    }));
-//
-//                }
-//
-//            }
-//        }
-//
-//        System.out.println("positiveInstances: "+positiveInstances+" | negativeInstances: "+negativeInstances);
-//
-//
-//
-//        /////////////////////////////////////////////////////////////////////////////////////
-//        //////////////////////////////////////////////////////
-
         List<FeatureWithIdx> results = new ArrayList<>();
         for (Future<FeatureWithIdx> future : futures) {
             try {
