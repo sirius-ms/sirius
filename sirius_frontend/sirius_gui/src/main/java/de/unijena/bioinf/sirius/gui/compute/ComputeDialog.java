@@ -42,7 +42,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private Vector<CompactPeak> masses;
 	private MyListCellRenderer renderer;
 	
-	private JCheckBox bromine, borone, selenium, chlorine, iodine, fluorine;
+	private JCheckBox bromine, boron, selenium, chlorine, iodine, fluorine;
 	private JTextField elementTF;
 	private JButton elementButton, elementAutoDetect;
 	private MainFrame owner;
@@ -187,7 +187,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		mainPanel.add(elementPanel);
 		
 		bromine = new JCheckBox("bromine");
-		borone = new JCheckBox("borone");
+		boron = new JCheckBox("boron");
 		selenium = new JCheckBox("selenium");
 		chlorine = new JCheckBox("chlorine");
 		iodine = new JCheckBox("iodine");
@@ -195,7 +195,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		JPanel elements = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		elements.add(bromine);
-		elements.add(borone);
+		elements.add(boron);
 		elements.add(chlorine);
 		elements.add(fluorine);
 		elements.add(iodine);
@@ -369,7 +369,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 //			System.out.println("dim: "+dim.getWidth()+" "+dim.getHeight());
 		}else if(e.getSource()==this.elementButton){
 			HashSet<String> eles = new HashSet<>();
-			if(borone.isSelected()) eles.add("B");
+			if(boron.isSelected()) eles.add("B");
 			if(bromine.isSelected()) eles.add("Br");
 			if(chlorine.isSelected()) eles.add("Cl");
 			if(fluorine.isSelected()) eles.add("F");
@@ -380,10 +380,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			if(diag.successful()){
 				additionalElements = new TreeSet<>(diag.getSelectedElements());
 				if(additionalElements.contains("B")){
-					borone.setSelected(true);
+					boron.setSelected(true);
 					additionalElements.remove("B");
 				}else{
-					borone.setSelected(false);
+					boron.setSelected(false);
 				}
 				if(additionalElements.contains("Br")){
 					bromine.setSelected(true);
@@ -499,7 +499,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			FormulaConstraints constraints;
 			{
 				HashSet<String> eles = new HashSet<>();
-				if(borone.isSelected()) eles.add("B");
+				if(boron.isSelected()) eles.add("B");
 				if(bromine.isSelected()) eles.add("Br");
 				if(chlorine.isSelected()) eles.add("Cl");
 				if(fluorine.isSelected()) eles.add("F");
