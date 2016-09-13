@@ -120,7 +120,7 @@ public class TrainConfidenceScore {
 //                final CompoundWithAbstractFP<Fingerprint>[] candidates = reduceCandidates(rankedCandidates[i], query, maxCandidateNumber, true, false); //changed!!!
 
                 final CompoundWithAbstractFP<Fingerprint>[] candidates;
-                if (step==4){
+                if (step==predictors.length-1){
                     candidates = rankedCandidates[i];
                 } else {
                     if (rankedCandidates[i].length<=maxCandidateNumber) //just enough candidates to use classifier
@@ -229,6 +229,7 @@ public class TrainConfidenceScore {
 
         //        Scaler scaler = new Scaler.NoScaler(featureMatrix);
         Scaler scaler = new Scaler.StandardScaler(featureMatrix);
+//        Scaler scaler = new Scaler.MinMaxScaler(featureMatrix);
         double[] sds = ((Scaler.StandardScaler) scaler).getSD();
         for (int i = 0; i < sds.length; i++) {
             double sd = sds[i];
@@ -287,8 +288,8 @@ public class TrainConfidenceScore {
         Predictor predictor;
         if (doCrossval){
             if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,5}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{1,2,4,6,8,10,12}, new int[]{1});
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{1d/64, 1d/32, 1d/16, 1d/8, 1d/4, 1d/2, 1, 2, 4, 6, 8, 16}, new int[]{1});
             } else {
                 TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
 //                predictor = trainLinearSVM.trainWithCrossvalidation(); //changed
@@ -301,8 +302,8 @@ public class TrainConfidenceScore {
                 System.out.println("anti-crossvalidation");
             }
             if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{1,5}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{1,2,4,6,8,10,12}, new int[]{1});
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{1d/64, 1d/32, 1d/16, 1d/8, 1d/4, 1d/2, 1, 2, 4, 6, 8, 16}, new int[]{1});
             } else {
                 TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
                 predictor = trainLinearSVM.trainAntiCrossvalidation();
@@ -568,6 +569,166 @@ public class TrainConfidenceScore {
         return trainConfidenceScore;
     }
 
+    public static TrainConfidenceScore NoLogScores(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+    public static TrainConfidenceScore NoLog(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+    public static TrainConfidenceScore PlattLogs(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new PlattFeatures(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new PlattFeatures(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new PlattFeatures(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new PlattFeatures(),
+                            new LogarithmScorer(new PlattFeatures()),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
     public static TrainConfidenceScore AdvancedMultipleSVMs2(boolean useLinearSVM){
         TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
 
@@ -801,7 +962,77 @@ public class TrainConfidenceScore {
         return trainConfidenceScore;
     }
 
+    public static TrainConfidenceScore AdvancedMultipleSVMs10(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
 
+        int[] sizes = new int[]{1,2,3,4,5,10};
+        FeatureCreator[] featureCreators = new FeatureCreator[sizes.length];
+        for (int i = 0; i < sizes.length; i++) {
+            int size = sizes[i];
+            final FeatureCreator featureCreator;
+            switch (size){
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 3:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 4:
+                case 5:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i-1),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i-1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 10:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,4,9),
+                            new LogarithmScorer(new ScoreFeatures()),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    throw new RuntimeException("unexpected size");
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[sizes.length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
 
     public static TrainConfidenceScore MedianMultipleSVMs(boolean useLinearSVM){
         TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);

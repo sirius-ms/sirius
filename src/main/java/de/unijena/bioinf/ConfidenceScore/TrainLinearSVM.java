@@ -366,9 +366,17 @@ public class TrainLinearSVM  implements Closeable {
         final List<Model> mergedModels = mergeModelsAll(models);
         final Model bestModel = Collections.max(mergedModels);
 
-        if (DEBUG) System.out.println("best model c "+bestModel.parameter.C);
-        if (DEBUG) System.out.println("best model gamma "+bestModel.parameter.gamma);
-        if (DEBUG) System.out.println("best model degree "+bestModel.parameter.degree);
+        if (DEBUG){
+            System.out.println("best model c "+bestModel.parameter.C);
+            System.out.println("best model gamma "+bestModel.parameter.gamma);
+            System.out.println("best model degree "+bestModel.parameter.degree);
+
+            double tp = bestModel.performance.getTp();
+            double tn = bestModel.performance.getTn();
+            double fp = bestModel.performance.getFp();
+            double fn = bestModel.performance.getFn();
+            System.out.println("performance tp:"+tp+" tn:"+tn+" fp:"+fp+" fn:"+fn);
+        }
 
         //train on complete dataset;
         final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);
@@ -632,6 +640,7 @@ public class TrainLinearSVM  implements Closeable {
             List<SVMInterface.svm_node> currentNodes = nodes.get(i);
             Compound compound = compounds.get(i);
 
+            if (currentNodes.size()!=featureSize) throw new RuntimeException("nodes and feature size differ");
 
             double[] features = new double[featureSize];
             for (int j = 0; j < currentNodes.size(); j++) {
@@ -655,6 +664,10 @@ public class TrainLinearSVM  implements Closeable {
         assert fp==fp2;
         assert tn==tn2;
         assert fn==fn2;
+
+        if (DEBUG){
+            System.out.println("assert train: "+tp+" "+tp2+" "+tn+" "+tn2+" "+fp+" "+fp2+" "+fn+" "+fn2);
+        }
     }
 
     private Model trainAndEvaluateCrossFolds(SVMInterface.svm_problem[] problems, SVMInterface.svm_parameter param, List<Compound>[] evals) {

@@ -75,6 +75,15 @@ public class QueryPredictor implements Parameterized{
     private double[] computeScaledFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, int predictorNumber) throws PredictionException {
         if (predictorNumber<0) throw new PredictionException("no compatible predictor for this input");
         final double[] features = featureCreators[predictorNumber].computeFeatures(query, rankedCandidates);
+        final int[] divergingFeatures = scalers[predictorNumber].divergingFeatures(features);
+        if (divergingFeatures.length>0){
+            System.err.print("instance "+query.getInchi().in3D+" has features differing largely from the expected range: ");
+            String[] names = featureCreators[predictorNumber].getFeatureNames();
+            for (int i = 0; i < divergingFeatures.length; i++) {
+                System.err.print(names[divergingFeatures[i]]+", ");
+
+            }
+        }
         final double[] scaled = scalers[predictorNumber].scale(features);
         return scaled;
     }
