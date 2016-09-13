@@ -24,7 +24,7 @@ public class KernelSVMPredictor implements Predictor {
 
     @Override
     public boolean predict(double[] features) {
-        return svm.svm_predict(model, toNodes(features))>=0;
+        return svm.svm_predict(model, toNodes(features))>0;
     }
 
     @Override
@@ -36,10 +36,7 @@ public class KernelSVMPredictor implements Predictor {
     public double estimateProbability(double[] features) {
         double[] probabilities = new double[2];
         svm.svm_predict_probability(model, toNodes(features), probabilities);
-        return probabilities[0]; //tdodo return which!?!?!?!
-//        double[] score = new double[1];
-//        svm.svm_predict_values(model, toNodes(features), score);
-//        return score[0];
+        return probabilities[0];
     }
 
     private svm_node[] toNodes(double[] features){
@@ -50,7 +47,7 @@ public class KernelSVMPredictor implements Predictor {
                 throw new IllegalArgumentException("value for node cannot be NaN");
             }
             svm_node svm_node = new libsvm.svm_node();
-            svm_node.index = i;
+            svm_node.index = i+1;
             svm_node.value = value;
             nodes[i] = svm_node;
         }
