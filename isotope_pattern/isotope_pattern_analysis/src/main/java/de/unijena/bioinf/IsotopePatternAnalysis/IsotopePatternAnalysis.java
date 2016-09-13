@@ -291,6 +291,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             f = ion.neutralMoleculeToMeasuredNeutralMolecule(f);
             Spectrum<Peak> measuredOne = measuredSpectrum;
             Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, ion.getIonization());
+            if (theoreticalSpectrum.size()==0) continue;
             if (theoreticalSpectrum.size() > 10)
                 theoreticalSpectrum = Spectrums.getNormalizedSpectrum(Spectrums.subspectrum(theoreticalSpectrum, 0, 10), Normalization.Max(1d));
             if (measuredSpectrum.size() > theoreticalSpectrum.size())
