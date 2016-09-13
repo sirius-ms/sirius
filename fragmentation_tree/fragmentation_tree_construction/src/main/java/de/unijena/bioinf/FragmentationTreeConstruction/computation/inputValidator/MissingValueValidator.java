@@ -47,10 +47,13 @@ public class MissingValueValidator implements InputValidator {
     public MutableMs2Experiment validate(Ms2Experiment originalInput, Warning warn, boolean repair) throws InvalidException {
         final MutableMs2Experiment input = new MutableMs2Experiment(originalInput);
         checkInchi(warn, repair, input);
-        if (input.getMs2Spectra() == null || input.getMs2Spectra().isEmpty())
-            throw new InvalidException("Miss MS2 spectra");
-        if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<SimpleSpectrum>());
+        if (input.getMs2Spectra() == null)
+            throw new InvalidException("Missing MS2 spectra");
         removeEmptySpectra(warn, input);
+        if (input.getMs2Spectra().isEmpty())
+            throw new InvalidException("Missing MS2 spectra");
+        if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<SimpleSpectrum>());
+
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
