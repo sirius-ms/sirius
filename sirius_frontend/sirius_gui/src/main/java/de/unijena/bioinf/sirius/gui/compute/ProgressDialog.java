@@ -206,6 +206,7 @@ class RunThread implements Runnable{
 	@Override
 	public void run() {
 		boolean success;
+		boolean hasMS2 = exp.getMs2Spectra().size()!=0;
 		try {
 			sirius.setFormulaConstraints(constraints);
 			if (formulaSource!= FormulaSource.ALL_POSSIBLE){
@@ -222,11 +223,11 @@ class RunThread implements Runnable{
 				for (List<FormulaCandidate> candidates : WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL).lookupMolecularFormulas(exp.getIonMass(), sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation(), allowedIons)) {
                     for (FormulaCandidate f : candidates) whitelist.add(f.getFormula());
                 }
-                results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score, whitelist);
+                results = hasMS2 ? sirius.identify(exp, candidates, true, IsotopePatternHandling.score, whitelist) : sirius.identifyByIsotopePattern(exp, candidates, whitelist);
 			} else if (exp.getPrecursorIonType().isIonizationUnknown()) {
-				results = sirius.identifyPrecursorAndIonization(exp, candidates, true, IsotopePatternHandling.score);
+				results = hasMS2 ? sirius.identifyPrecursorAndIonization(exp, candidates, true, IsotopePatternHandling.score) : sirius.identifyByIsotopePattern(exp, candidates);
 			} else {
-                results = sirius.identify(exp, candidates, true, IsotopePatternHandling.score);
+                results = hasMS2 ? sirius.identify(exp, candidates, true, IsotopePatternHandling.score) : sirius.identifyByIsotopePattern(exp, candidates);
             }
 			success = (results!=null && results.size()>0);
 		} catch (final Exception e) {
