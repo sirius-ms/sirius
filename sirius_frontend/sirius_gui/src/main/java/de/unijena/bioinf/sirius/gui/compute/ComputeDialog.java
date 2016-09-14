@@ -294,6 +294,15 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		this.add(southPanel,BorderLayout.SOUTH);
+
+		if (ec.getMs2Spectra().size()==0){
+			JLabel label = new JLabel("No MS2 data provided. Identify by isotope pattern.");
+			Font font = label.getFont();
+			Font boldFont = new Font(font.getFontName(), Font.BOLD, font.getSize());
+			label.setFont(boldFont);
+			southPanel.add(label, BorderLayout.CENTER);
+		}
+
 		compute = new JButton("Compute");
 		compute.addActionListener(this);
 		abort = new JButton("Abort");

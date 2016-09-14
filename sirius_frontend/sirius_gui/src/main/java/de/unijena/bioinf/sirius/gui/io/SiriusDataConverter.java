@@ -41,6 +41,11 @@ import java.util.List;
  */
 public class SiriusDataConverter {
 
+    /**
+     * add missing data (if possible) to display it properly in gui .
+     * @param input
+     * @return
+     */
     public static Ms2Experiment validateInput(Ms2Experiment input) {
         final MissingValueValidator validator = new MissingValueValidator();
         try {
