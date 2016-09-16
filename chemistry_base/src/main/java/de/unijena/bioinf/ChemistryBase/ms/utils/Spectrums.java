@@ -191,8 +191,8 @@ public class Spectrums {
     }
 
     public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
-    double cosineProductWithLosses(S left, S2 right, Deviation deviation, double precursor) {
-        return (cosineProduct(left,right,deviation) + cosineProduct(getInversedSpectrum(left, precursor), getInversedSpectrum(right, precursor), deviation))/2d;
+    double cosineProductWithLosses(S left, S2 right, Deviation deviation, double precursorLeft, double precursorRight) {
+        return (cosineProduct(left,right,deviation) + cosineProduct(getInversedSpectrum(left, precursorLeft), getInversedSpectrum(right, precursorRight), deviation))/2d;
     }
 
     public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum getInversedSpectrum(S spec, double precursor) {

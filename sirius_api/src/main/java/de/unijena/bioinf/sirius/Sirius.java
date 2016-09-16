@@ -19,6 +19,7 @@ package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -1004,12 +1005,22 @@ public class Sirius {
             return 0d;
         }
         if (candidates.size() == 0) return 0d;
+        {
+            double opt=Double.NEGATIVE_INFINITY;
+            final SupportVectorMolecularFormulaScorer formulaScorer = new SupportVectorMolecularFormulaScorer();
+            for (IsotopePattern p : candidates) {
+                opt = Math.max(opt, p.getScore() + formulaScorer.score(p.getCandidate()));
+            }
+            if (opt < 0) {
+                for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), 0d);
+                return  candidates.get(0).getScore();
+            }
+        }
+        final double optscore = candidates.get(0).getScore();
         if (!handling.isFiltering()) {
             for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), p.getScore());
             return  candidates.get(0).getScore();
         }
-        final double optscore = candidates.get(0).getScore();
-        if (optscore <= 0) return 0d;
         formulas.put(candidates.get(0).getCandidate(), optscore);
         int n = 1;
         for (; n < candidates.size(); ++n) {

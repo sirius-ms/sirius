@@ -367,6 +367,34 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return true;
     }
 
+    /**
+     * checks if the molecular formula consists of the given subset and an arbitrary number
+     * of additional carbon and/or hydrogen atoms
+     */
+    public boolean isCarbonHydrogenPlusSubset(MolecularFormula other) {
+        final short[] amounts = buffer();
+        final short[] amounts2 = other.buffer();
+        final TableSelection sel = getTableSelection();
+        final TableSelection sel2 = other.getTableSelection();
+        final int carbon = sel2.carbonIndex();
+        final int hydrogen = sel2.hydrogenIndex();
+        int atoms=0;
+        for (short val : amounts) atoms += val;
+        atoms -= numberOfCarbons();
+        atoms -= numberOfHydrogens();
+        for (int i = 0; i < amounts2.length; ++i) {
+            if (amounts2[i] > 0) {
+                final Element elem = sel2.get(i);
+                final int index = sel.getIndexIfExist(elem);
+                if (index < 0 || amounts.length <= index || amounts[index] < amounts2[i]) return false;
+                else if (i != carbon && i != hydrogen) {
+                    atoms -= amounts2[i];
+                }
+            }
+        }
+        return atoms == 0;
+    }
+
     private boolean isSubtractableInc(MolecularFormula other) {
         final short[] amounts = buffer();
         final short[] amounts2 = other.buffer();
@@ -733,6 +761,19 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] copy = buffer().clone();
         final int hi = sel.hydrogenIndex();
         if (hi < copy.length) copy[sel.hydrogenIndex()] = 0;
+        return new ImmutableMolecularFormula(sel,copy);
+    }
+
+    /**
+     * @return a copy of this molecular formula with the given elements set to zero
+     */
+    public MolecularFormula without(Element... elems) {
+        final TableSelection sel = getTableSelection();
+        final short[] copy = buffer().clone();
+        for (Element e : elems) {
+            final int j = sel.getIndexIfExist(e);
+            if (j >= 0 && j < copy.length) copy[j] = 0;
+        }
         return new ImmutableMolecularFormula(sel,copy);
     }
 
