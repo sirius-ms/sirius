@@ -104,7 +104,13 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 exp.setMoleculeNeutralMass(ionization.precursorMassToNeutralMass(exp.getIonMass()));
             exp.setMolecularFormula(formula);
             exp.setName(compoundName);
-            exp.setPrecursorIonType(ionization);
+            if (ionization==null) {
+                if (charge!=0) {
+                    exp.setPrecursorIonType(PrecursorIonType.unknown(charge));
+                }
+            } else  {
+                exp.setPrecursorIonType(ionization);
+            }
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
             exp.setSource(source);

@@ -96,6 +96,7 @@ public class BooleanFingerprint extends Fingerprint {
 
     @Override
     public FPIter2 foreachUnion(AbstractFingerprint fp) {
+        enforceCompatibility(fp);
         if (fp instanceof BooleanFingerprint) return new PairwiseUnionIterator(this, (BooleanFingerprint) fp, -1, -1);
         else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
         // We cannot express this in javas type system -_- In theory somebody could just implement a pairwise iterator
@@ -104,6 +105,7 @@ public class BooleanFingerprint extends Fingerprint {
 
     @Override
     public FPIter2 foreachIntersection(AbstractFingerprint fp) {
+        enforceCompatibility(fp);
         if (fp instanceof BooleanFingerprint) return new PairwiseIntersectionIterator(this, (BooleanFingerprint) fp, -1, -1);
         else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
         // We cannot express this in javas type system -_- In theory somebody could just implement a pairwise iterator
@@ -112,6 +114,7 @@ public class BooleanFingerprint extends Fingerprint {
 
     @Override
     public FPIter2 foreachPair(AbstractFingerprint fp) {
+        enforceCompatibility(fp);
         if (fp instanceof BooleanFingerprint) return new PairwiseIterator(this, (BooleanFingerprint) fp, -1, -1);
         else if (fp instanceof ProbabilityFingerprint) return new ProbabilityFingerprint.PairwiseBooleanProb(this, (ProbabilityFingerprint)fp, -1);
         else return super.foreachPair(fp);
