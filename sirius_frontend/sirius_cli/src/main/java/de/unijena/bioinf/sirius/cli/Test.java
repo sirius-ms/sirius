@@ -32,7 +32,7 @@ public class Test {
             final PiecewiseLinearFunctionIntensityDependency dep = new PiecewiseLinearFunctionIntensityDependency(new double[]{0.2, 0.1, 0.01}, new double[]{1, 2, 3});
             final MassDifferenceDeviationScorer diff = new MassDifferenceDeviationScorer(dep);
             final MassDeviationScorer dev = new MassDeviationScorer(dep);
-            final NormalDistributedIntensityScorer intens = new NormalDistributedIntensityScorer(0.1, 0.02);
+            final NormalDistributedIntensityScorer intens = new NormalDistributedIntensityScorer(0.1, 0.01);
             final MissingPeakScorer missing = new MissingPeakScorer();
 
             s.getMs1Analyzer().getIsotopePatternScorers().clear();
