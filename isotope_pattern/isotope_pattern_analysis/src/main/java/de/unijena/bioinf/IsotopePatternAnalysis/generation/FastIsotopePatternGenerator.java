@@ -115,12 +115,9 @@ public class FastIsotopePatternGenerator extends IsotopePatternGenerator {
             candidateDistribution = fold(candidateDistribution, list, maxNumberOfPeaks);
         }
         final SimpleMutableSpectrum finalSpectrum = new SimpleMutableSpectrum(candidateDistribution);
-        for (int k = finalSpectrum.size() - 1; k >= 1; --k) {
-            if (finalSpectrum.getIntensityAt(k) < minimalIntensity) {
+        for (int k = finalSpectrum.size() - 1; k >= 0; --k) {
+            if (finalSpectrum.getIntensityAt(k) < minimalIntensity)
                 finalSpectrum.removePeakAt(k);
-            } else {
-                break;
-            }
         }
         return finalSpectrum;
     }
