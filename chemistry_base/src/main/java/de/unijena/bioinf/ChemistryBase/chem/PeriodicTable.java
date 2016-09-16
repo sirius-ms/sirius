@@ -250,7 +250,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         };
         final String[] adductsNegative = new String[]{
                 "[M-H]-", "[M]-", "[M-2H]-", "[M+K-2H]-",
-                "[M-OH]-", "[M+Cl]-", "[M-H+OH]-", "[M+HCOO-]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
+                "[M-OH]-", "[M+Cl]-", "[M-H+OH]-", "[M-H+H2CO2]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
         };
         final HashMap<String, PrecursorIonType> positiveIonTypes = new HashMap<String, PrecursorIonType>();
         for (String pos : adductsPositive) {
@@ -274,6 +274,12 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         knownIonTypes.put("M-H", hminus);
         knownIonTypes.put("M-H-", hminus);
         knownIonTypes.put("[M-H]", hminus);
+
+        final PrecursorIonType fa = knownIonTypes.get("[M-H+H2CO2]-");
+        knownIonTypes.put("[M+FA]-", fa);
+        knownIonTypes.put("[M+HCOO-]-", fa);
+        knownIonTypes.put("[M+HCOO]-", fa);
+        knownIonTypes.put("[M+HCO2H]-", fa);
 
         //knownIonTypes.put("[M+?]+", UNKNOWN_POSITIVE_IONTYPE);
         //knownIonTypes.put("[M+?]-", UNKNOWN_NEGATIVE_IONTYPE);

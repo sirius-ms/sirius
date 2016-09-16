@@ -16,6 +16,12 @@ public abstract class Fingerprint extends AbstractFingerprint {
     public abstract boolean[] toBooleanArray();
     public abstract short[] toIndizesArray();
 
+    protected final void enforceCompatibility(AbstractFingerprint other) {
+        if (!isCompatible(other)) {
+            throw new IllegalArgumentException("fingerprint versions differ: " + fingerprintVersion.toString() + " vs. " + other.fingerprintVersion.toString());
+        }
+    }
+
     public static ArrayFingerprint fromOneZeroString(FingerprintVersion version, String fp) {
         if (fp.length() != version.size()) throw new RuntimeException("Fingerprint version does not match given string: " + version.size() + " bits vs. " + fp.length());
         TShortArrayList indizes = new TShortArrayList(400);
@@ -34,6 +40,7 @@ public abstract class Fingerprint extends AbstractFingerprint {
      * Computes the dot product of two fingerprints represented as -1|1 vector
      */
     public double plusMinusdotProduct(Fingerprint other) {
+        enforceCompatibility(other);
         final int length = fingerprintVersion.size();
         short union=0, intersection=0;
         for (FPIter2 pairwise : foreachPair(other)) {
@@ -55,6 +62,7 @@ public abstract class Fingerprint extends AbstractFingerprint {
      * Computes the dot product of two fingerprints represented as 0|1 vector
      */
     public double dotProduct(Fingerprint other) {
+        enforceCompatibility(other);
         long union=0;
         short left=0, right=0;
         for (FPIter2 pairwise : foreachPair(other)) {
@@ -68,6 +76,7 @@ public abstract class Fingerprint extends AbstractFingerprint {
     }
 
     public double tanimoto(Fingerprint other) {
+        enforceCompatibility(other);
         short union=0, intersection=0;
         for (FPIter2 pairwise : foreachPair(other)) {
             final boolean a = pairwise.isLeftSet();

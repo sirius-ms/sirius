@@ -79,7 +79,7 @@ class FormulaFeatureVector {
                 f.numberOf(I)/(f.numberOfCarbons()+0.8f),
                 f.numberOf(F)/(f.numberOfCarbons()+0.8f),
                 f.numberOfNitrogens()/(f.numberOfOxygens()+0.8f),
-                f.numberOfNitrogens()/(f.numberOfCarbons()+f.numberOfOxygens()+0.8f)
+                f.numberOfNitrogens()/(f.numberOfCarbons()+f.numberOfOxygens()+0.8f),
         };
     }
 

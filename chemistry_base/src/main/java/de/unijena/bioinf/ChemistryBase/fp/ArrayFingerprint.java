@@ -67,6 +67,7 @@ public class ArrayFingerprint extends Fingerprint {
     }
 
     public double dotProduct(ArrayFingerprint other) {
+        enforceCompatibility(other);
         final short[] as = indizes, bs=other.indizes;
         int a=0, b=0, union=0;
         while(a < as.length && b < bs.length) {
@@ -88,6 +89,7 @@ public class ArrayFingerprint extends Fingerprint {
     }
 
     public double plusMinusdotProduct(ArrayFingerprint other) {
+        enforceCompatibility(other);
         final int length = fingerprintVersion.size();
         final short[] as = indizes, bs=other.indizes;
         int a=0, b=0, intersection=0;
@@ -113,6 +115,7 @@ public class ArrayFingerprint extends Fingerprint {
     }
 
     public double tanimoto(ArrayFingerprint other) {
+        enforceCompatibility(other);
         final short[] as = indizes, bs=other.indizes;
         int a=0, b=0, intersection=0;
         while(a < as.length && b < bs.length) {
@@ -191,6 +194,7 @@ public class ArrayFingerprint extends Fingerprint {
 
     @Override
     public FPIter2 foreachUnion(AbstractFingerprint fp) {
+        enforceCompatibility(fp);
         if (fp instanceof  ArrayFingerprint)
             return new PairwiseUnionIterator(this, (ArrayFingerprint)fp, -1,0,0);
         else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
@@ -200,6 +204,7 @@ public class ArrayFingerprint extends Fingerprint {
 
     @Override
     public FPIter2 foreachIntersection(AbstractFingerprint fp) {
+        enforceCompatibility(fp);
         if (fp instanceof  ArrayFingerprint)
             return new PairwiseIntersectionIterator(this, (ArrayFingerprint)fp, -1,0,0);
         else throw new IllegalArgumentException("Pairwise iterators are only supported for same type fingerprints;");
@@ -209,6 +214,7 @@ public class ArrayFingerprint extends Fingerprint {
 
     @Override
     public FPIter2 foreachPair(AbstractFingerprint fp) {
+        enforceCompatibility(fp);
         if (fp instanceof  ArrayFingerprint)
             return new PairwiseIterator(this, (ArrayFingerprint)fp, -1,0,0);
         else return super.foreachPair(fp);

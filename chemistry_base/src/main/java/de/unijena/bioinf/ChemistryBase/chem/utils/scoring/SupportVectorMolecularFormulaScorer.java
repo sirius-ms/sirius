@@ -29,8 +29,8 @@ public class SupportVectorMolecularFormulaScorer implements MolecularFormulaScor
     }
 
     public static double getLogScore(MolecularFormula f) {
-        if (inWhiteset(f)) return 4;
-        else return 4*Math.max(-3,Math.min(1, getDecisionValue(f)));
+        if (inWhiteset(f)) return 0d;
+        else return 5*Math.max(-3,Math.min(0, getDecisionValue(f)));
     }
 
     private final static HashSet<MolecularFormula> WHITESET = new HashSet<>();
