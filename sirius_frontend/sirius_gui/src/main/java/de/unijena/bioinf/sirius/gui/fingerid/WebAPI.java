@@ -34,16 +34,23 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
 
 import javax.json.Json;
@@ -120,8 +127,31 @@ public class WebAPI implements Closeable {
 
     private final CloseableHttpClient client;
 
-    public WebAPI() {
+    /*public WebAPI() {
+        proxy = null;
         client = HttpClients.createDefault();
+
+    }*/
+
+    public WebAPI() {
+        HttpClientBuilder clientBuilder = HttpClients.custom();
+        BasicCredentialsProvider clientCredentials = new BasicCredentialsProvider();
+        clientBuilder.setDefaultCredentialsProvider(clientCredentials);
+
+        if (Boolean.getBoolean(System.getProperty("de.unijena.bioinf.sirius.proxy"))) {
+            HttpHost proxy = new HttpHost(
+                    System.getProperty("de.unijena.bioinf.sirius.proxy.hostname"),
+                    Integer.getInteger(System.getProperty("de.unijena.bioinf.sirius.proxy.port")),
+                    System.getProperty("de.unijena.bioinf.sirius.proxy.scheme"));
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+            clientBuilder.setRoutePlanner(routePlanner);
+
+            if (Boolean.getBoolean(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
+                clientCredentials.setCredentials(new AuthScope(proxy),new UsernamePasswordCredentials(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"),System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw")));
+            }
+        }
+            client = clientBuilder.build();
+
     }
 
     public static void SHUT_UP_STUPID_LOGGING() {

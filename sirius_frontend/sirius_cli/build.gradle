@@ -1,4 +1,5 @@
 dependencies {
+    compile project(':sirius_core')
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
 }
