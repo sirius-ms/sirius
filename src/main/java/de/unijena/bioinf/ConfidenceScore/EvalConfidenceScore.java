@@ -31,7 +31,7 @@ public class EvalConfidenceScore {
     final int MAX_CANDIDATES = -1; //all candidates
 
     private static final String SEP = "\t";
-    final static boolean DEBUG = true;
+    final static boolean DEBUG = false;
     final static int NUM_OF_THREADS = Runtime.getRuntime().availableProcessors();
 
     private final PredictionPerformance[] statistics;

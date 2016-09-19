@@ -36,7 +36,7 @@ public class TrainConfidenceScore {
     private final SVMInterface svmInterface;
     private PredictionPerformance[] statistics;
 
-    private final boolean DEBUG = true;
+    private final boolean DEBUG = false;
     private final boolean DEBUG_OUT = false;
 
 
@@ -95,12 +95,6 @@ public class TrainConfidenceScore {
 
         ExecutorService executorService2 = Executors.newSingleThreadExecutor();
 
-//        Path out = Paths.get("./scores_"+step);
-//        try {
-//            BufferedWriter w = new BufferedWriter(new FileWriter(out.toFile()));
-
-
-        System.out.println("with cutting");
         Random r = new Random();
         int positiveInstances=0, negativeInstances = 0;
         int maxCandidateNumber = featureCreator.getRequiredCandidateSize();
@@ -133,9 +127,7 @@ public class TrainConfidenceScore {
                         CompoundWithAbstractFP<Fingerprint>[] candidates2;
                         do {
                             candidates2 = reduceCandidates(rankedCandidates[i], query, maxCandidateNumber, nextPositive, false); //changed!!!
-//                            System.out.println("next "+nextPositive+" "+(candidates2[0].getInchi().key2D().equals(query.getInchi().key2D())));
                         } while ((candidates2[0].getInchi().key2D().equals(query.getInchi().key2D()))!=nextPositive);
-//                        System.out.println("yeah");
                         candidates = candidates2;
                     }
 
@@ -145,16 +137,6 @@ public class TrainConfidenceScore {
                 else negativeInstances++;
 
                 usedInstances.add(i);
-                ////////////////////////////////
-//                if (DEBUG){
-//                    int size = candidates.length;
-//                    double[] scores = new double[size];
-//                    for (int j = 0; j < candidates.length; j++)
-//                        scores[j] = ((ScoredCandidate)candidates[j]).score;
-//                    System.out.println("candidates: "+size+" | "+Arrays.toString(scores));
-//                }
-
-                //////////////////////////////
                 futures.add(executorService2.submit(new Callable<FeatureWithIdx>() {
                     @Override
                     public FeatureWithIdx call() throws Exception {
@@ -195,35 +177,8 @@ public class TrainConfidenceScore {
             featureList.add(result.features);
         }
 
-//            w.close();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-//        //changed
         executorService2.shutdown();
 
-        if (DEBUG){
-            System.out.println("computed features");
-        }
-
-//        for (int i = 0; i < queries.length; i++) {
-//            CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
-//            CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
-//            if (featureCreator.isCompatible(query, candidates)){
-//                usedInstances.add(i);
-//                double[] features = featureCreator.computeFeatures(query, candidates);
-//                for (int j = 0; j < features.length; j++) {
-//                    double feature = features[j];
-//                    if (Double.isNaN(feature)){
-//                        String name = featureCreator.getFeatureNames()[j];
-//                        throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
-//                    }
-//                }
-//                featureList.add(features);
-//            }
-//        }
 
         double[][] featureMatrix = featureList.toArray(new double[0][]);
 
@@ -287,28 +242,12 @@ public class TrainConfidenceScore {
 
         Predictor predictor;
         if (doCrossval){
-            if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{1d/64, 1d/32, 1d/16, 1d/8, 1d/4, 1d/2, 1, 2, 4, 6, 8, 16}, new int[]{1});
-            } else {
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
-//                predictor = trainLinearSVM.trainWithCrossvalidation(); //changed
-                System.out.println("crossvalidation.");
-                predictor = trainLinearSVM.trainWithCrossvalidation();
-            }
+            TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+            predictor = trainLinearSVM.trainWithCrossvalidation();
 
         } else {
-            if (DEBUG){
-                System.out.println("anti-crossvalidation");
-            }
-            if (svmInterface instanceof LibSVMImpl){
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.RBF);
-                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{1d/64, 1d/32, 1d/16, 1d/8, 1d/4, 1d/2, 1, 2, 4, 6, 8, 16}, new int[]{1});
-            } else {
-                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
-                predictor = trainLinearSVM.trainAntiCrossvalidation();
-            }
-
+            TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+            predictor = trainLinearSVM.trainAntiCrossvalidation();
         }
 
 

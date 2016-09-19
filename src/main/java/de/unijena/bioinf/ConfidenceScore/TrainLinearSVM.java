@@ -17,7 +17,7 @@ import java.util.concurrent.*;
  */
 public class TrainLinearSVM  implements Closeable {
     private SVMInterface svmInterface;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     @Override
     public void close() throws IOException {
