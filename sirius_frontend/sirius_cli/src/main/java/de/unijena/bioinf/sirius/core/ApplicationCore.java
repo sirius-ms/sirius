@@ -1,29 +1,62 @@
-package de.unijena.bioinf.ms.sirius;
+package de.unijena.bioinf.sirius.core;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius
  * 19.09.16.
  */
 
+import de.unijena.bioinf.sirius.Sirius;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusCore {
+public class ApplicationCore {
 
-    private static final Properties USER_PROPERTIES = new Properties();
+    private static final Properties USER_PROPERTIES;
+
     public final static Path WORKSPACE;
+
+    public final static String VERSION_STRING;
+    public final static String CITATION;
+    public final static String CITATION_BIBTEX;
+
 
     //creating
     static {
-        final Path DEFAULT_WORKSPACE = Paths.get(System.getProperty("user.home")).resolve(".sirius");
+        //intit build properties
+        final Properties BUILD_PROPERTIES = new Properties();
+        try (InputStream input = ApplicationCore.class.getResourceAsStream("/siriusBuild.properties")) {
+            // load a properties file
+            BUILD_PROPERTIES.load(input);
+            System.getProperties().putAll(BUILD_PROPERTIES);
+        } catch (IOException | NullPointerException e ) {
+            e.printStackTrace();
+        }
+
+        String prop = System.getProperty("de.unijena.bioinf.sirius.version");
+        VERSION_STRING = prop != null ? "Sirius "+ prop:"Sirius";
+
+        prop = System.getProperty("de.unijena.bioinf.sirius.cite");
+        CITATION = prop != null ? prop:"";
+        prop = System.getProperty("de.unijena.bioinf.sirius.cite-bib");
+        CITATION_BIBTEX = prop != null ? prop:"";
+
+
+        //init application properties
+        String s = System.getProperty("user.home");
+        System.out.println(s);
+
+        final Path DEFAULT_WORKSPACE = Paths.get(s).resolve(".sirius");
         final Map<String, String> env = System.getenv();
         String ws =  env.get("SIRIUS_WORKSPACE");
 
@@ -60,15 +93,15 @@ public class SiriusCore {
 
         final Path USER_PROPERTIES_FILE = WORKSPACE.resolve("sirius.properties");
         if (Files.notExists(USER_PROPERTIES_FILE)) {
-            try {
-                final Path DEFAULT_PROPERTIES_FILE = Paths.get(SiriusCore.class.getClassLoader().getResource("sirius.properties").getFile());
-                Files.copy(DEFAULT_PROPERTIES_FILE, USER_PROPERTIES_FILE);
+            try(InputStream defaultPropertiesStream = ApplicationCore.class.getResourceAsStream("/sirius.properties")) {
+                Files.copy(defaultPropertiesStream, USER_PROPERTIES_FILE);
             } catch (IOException e) {
                 System.err.println("Could NOT create Properties file");//todo use logging (error)
                 e.printStackTrace();
             }//todo Close application?
         }
 
+        USER_PROPERTIES = new Properties();
         try {
             USER_PROPERTIES.load(Files.newInputStream(USER_PROPERTIES_FILE));
         } catch (IOException e) {
@@ -77,10 +110,8 @@ public class SiriusCore {
         }
 
         USER_PROPERTIES.setProperty("de.unijena.bioinf.sirius.workspace",WORKSPACE.toAbsolutePath().toString());
-        System.setProperties(USER_PROPERTIES);
+        System.getProperties().putAll(USER_PROPERTIES);
     }
-
-
 
     public static void addDefaultPropteries(File properties) throws IOException {
         addDefaultPropteries(properties.toPath());
@@ -93,13 +124,13 @@ public class SiriusCore {
     }
 
     public static void addDefaultPropteries(Properties properties) {
-        System.setProperties(properties);
-        System.setProperties(USER_PROPERTIES);
+        System.getProperties().putAll(properties);
+        System.getProperties().putAll(USER_PROPERTIES);
     }
 
     public static void addDefaultProptery(String propertyName, String propertyValue) {
         System.setProperty(propertyName,propertyValue);
-        System.setProperties(USER_PROPERTIES);
+        System.getProperties().putAll(USER_PROPERTIES);
     }
 
 

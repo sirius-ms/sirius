@@ -31,7 +31,7 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.ms.sirius.SiriusCore;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -224,7 +224,7 @@ public class CSIFingerIdComputation {
 
     public File getDefaultDirectory() {
         final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        if (val!=null && !val.isEmpty()) return SiriusCore.WORKSPACE.resolve(val).toFile();;
+        if (val!=null && !val.isEmpty()) return ApplicationCore.WORKSPACE.resolve(val).toFile();;
         return new File(System.getProperty("user.home"), "csi_fingerid_cache");// todo remove fallback
     }
 

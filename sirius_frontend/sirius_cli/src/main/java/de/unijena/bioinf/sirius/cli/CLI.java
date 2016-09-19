@@ -38,6 +38,7 @@ import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusResultWriter;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.File;
@@ -187,7 +188,7 @@ public class CLI<Options extends SiriusOptions> {
 
     protected void cite() {
         System.out.println("Please cite the following paper when using our method:");
-        System.out.println(Sirius.CITATION);
+        System.out.println(ApplicationCore.CITATION);
     }
 
     protected void outputSingle(Instance instance, IdentificationResult result, MolecularFormula formula) throws IOException {
@@ -277,7 +278,7 @@ public class CLI<Options extends SiriusOptions> {
 
     public void parseArgs(String[] args, Class<Options> optionsClass ) {
         if (args.length==0) {
-            System.out.println(Sirius.VERSION_STRING);
+            System.out.println(ApplicationCore.VERSION_STRING);
             System.out.println(CliFactory.createCli(optionsClass).getHelpMessage());
             System.exit(0);
         }
@@ -294,7 +295,7 @@ public class CLI<Options extends SiriusOptions> {
             System.exit(0);
         }
         if (options.isVersion()) {
-            System.out.println(Sirius.VERSION_STRING);
+            System.out.println(ApplicationCore.VERSION_STRING);
             cite();
             System.exit(0);
         }
