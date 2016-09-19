@@ -93,7 +93,7 @@ abstract public class Scaler implements Parameterized{
             TIntArrayList idx = new TIntArrayList();
             for (int i = 0; i < matrix.length; i++) {
                 if (sd[i]==0) continue;
-                if (Math.abs((matrix[i]-mean[i])/sd[i])>4) idx.add(i);
+                if (Math.abs((matrix[i]-mean[i])/sd[i])>5) idx.add(i);
             }
             return idx.toArray();
         }
