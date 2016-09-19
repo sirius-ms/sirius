@@ -414,7 +414,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         int j = 0;
         for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size() - 1)) {
             peak.setIndex(j++);
-            decompositionList.set(peak, DecompositionList.fromFormulas(decomposer.decomposeToFormulas(peak.getUnmodifiedMass(), fragmentDeviation, constraints)));
+            final double mass = peak.getUnmodifiedMass();
+            if (mass > 0) {
+                decompositionList.set(peak, DecompositionList.fromFormulas(decomposer.decomposeToFormulas(mass, fragmentDeviation, constraints)));
+            } else decompositionList.set(peak, new DecompositionList(new ArrayList<Scored<MolecularFormula>>(0)));
         }
         parentPeak.setIndex(processedPeaks.size() - 1);
         assert parentPeak == processedPeaks.get(processedPeaks.size() - 1);

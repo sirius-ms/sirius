@@ -42,6 +42,38 @@ public class PrecursorIonType {
         this.name = formatToString();
     }
 
+    public String substituteName(MolecularFormula neutralFormula) {
+        if (isIonizationUnknown()) {
+            return neutralFormula + " " + (getCharge()>0 ? "+" : "-") + getCharge();
+        }
+        final StringBuilder buf = new StringBuilder(128);
+        buf.append(neutralFormula.toString());
+        if (!inSourceFragmentation.isEmpty()) {
+            buf.append(" - ");
+            buf.append(inSourceFragmentation.toString());
+        }
+        if (!adduct.isEmpty()) {
+            buf.append(" + ");
+            buf.append(adduct.toString());
+        }
+        if (!ionization.getAtoms().isEmpty()) {
+            if (ionization.getAtoms().isAllPositiveOrZero()) {
+                buf.append(" + ");
+                buf.append(ionization.getAtoms().toString());
+            } else {
+                buf.append(" - ");
+                buf.append(ionization.getAtoms().negate().toString());
+            }
+        }
+        if (ionization.getCharge() == 1) buf.append("+");
+        else if (ionization.getCharge() == -1) buf.append("-");
+        else {
+            buf.append(String.valueOf(getCharge()));
+            buf.append(getCharge()>0 ? "+" : "-");
+        }
+        return buf.toString();
+    }
+
     public boolean equals(PrecursorIonType other) {
         if (other==null) return false;
         return this.ionization.equals(other.ionization) && this.modification.equals(other.modification);
@@ -72,6 +104,39 @@ public class PrecursorIonType {
         return name;
     }
 
+    private String formatToString() {
+        if (isIonizationUnknown()) {
+            return ionization.toString();
+        }
+        final StringBuilder buf = new StringBuilder(128);
+        buf.append("[M");
+        if (!inSourceFragmentation.isEmpty()) {
+            buf.append(" - ");
+            buf.append(inSourceFragmentation.toString());
+        }
+        if (!adduct.isEmpty()) {
+            buf.append(" + ");
+            buf.append(adduct.toString());
+        }
+        if (!ionization.getAtoms().isEmpty()) {
+            if (ionization.getAtoms().isAllPositiveOrZero()) {
+                buf.append(" + ");
+                buf.append(ionization.getAtoms().toString());
+            } else {
+                buf.append(" - ");
+                buf.append(ionization.getAtoms().negate().toString());
+            }
+        }
+        buf.append("]");
+        if (ionization.getCharge() == 1) buf.append("+");
+        else if (ionization.getCharge() == -1) buf.append("-");
+        else {
+            buf.append(String.valueOf(getCharge()));
+            buf.append(getCharge()>0 ? "+" : "-");
+        }
+        return buf.toString();
+    }
+/*
     private String formatToString() {
         if (isIonizationUnknown()) {
             return ionization.toString();
@@ -110,6 +175,7 @@ public class PrecursorIonType {
         }
         return buf.toString();
     }
+    */
 
     public boolean isIonizationUnknown() {
         return ionization instanceof Charge;

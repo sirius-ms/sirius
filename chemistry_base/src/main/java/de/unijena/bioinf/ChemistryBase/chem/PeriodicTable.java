@@ -41,7 +41,6 @@ import java.util.regex.Pattern;
  */
 public class PeriodicTable implements Iterable<Element>, Cloneable {
 
-
     /*
                 STATIC
      */
@@ -244,17 +243,35 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         this.EI_TYPE = new PrecursorIonType(ELECTRON_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula());
         // ADDUCTS
         final String[] adductsPositive = new String[]{
-                "[M+H]+", "[M]+", "[M+K]+", "[M+K-2H]+", "[M+OH]+",
-                "[M+Na]+", "[M+H-H2O]+", "[M-H+Na]+", "[M+Na2-H]+", "[M+Na2-H]+", "[M+NH3+H]+", "[(M+NH3)+H]+", "[M+NH4]+",
-                "[M+H-C6H10O4]+", "[M+H-C6H10O5]+", "[M - MeOH + H]+"
+                "[M+H]+", "[M]+", "[M+K]+", "[M+Na]+",
+                "[M+H-H2O]+", "[M+Na2-H]+", "[M+2K-H]+", "[M+NH4]+", "[M + H3O]+",
+                "[M + MeOH + H]+", // methanol
+                "[M + ACN + H]+", // Acetonitrile CH3CN
+                "[M + 2ACN + H]+",
+                "[M+IPA+H]+",
+                "[M + ACN + Na]+",
+                "[M + DMSO + H]+"
         };
         final String[] adductsNegative = new String[]{
-                "[M-H]-", "[M]-", "[M-2H]-", "[M+K-2H]-",
-                "[M-OH]-", "[M+Cl]-", "[M-H+OH]-", "[M-H+H2CO2]-", "[M+CH3COOH-H]-", "[(M+CH3COOH)-H]-"
+                "[M-H]-",
+                "[M]-",
+                "[M+K-2H]-",
+                "[M+Cl]-",
+                "[M - H2O - H]-",
+                "[M+Na-2H]-",
+                "[M+FA-H]-",
+                "[M+Br]-",
+                "[M+HAc-H]-",
+                "[M+TFA-H]-",
+                "[M+ACN-H]-"
         };
         final HashMap<String, PrecursorIonType> positiveIonTypes = new HashMap<String, PrecursorIonType>();
         for (String pos : adductsPositive) {
             positiveIonTypes.put(pos, parseIonType(pos));
+
+
+            System.out.println(pos + "\t=>\t" + positiveIonTypes.get(pos)+ "\t=\t" + positiveIonTypes.get(pos).getIonization().toString() + " ionization with " + positiveIonTypes.get(pos).getAdduct().toString() + " adduct");
+
             assert positiveIonTypes.get(pos).getIonization().getCharge() > 0;
         }
         final HashMap<String, PrecursorIonType> negativeIonTypes = new HashMap<String, PrecursorIonType>();
@@ -274,15 +291,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         knownIonTypes.put("M-H", hminus);
         knownIonTypes.put("M-H-", hminus);
         knownIonTypes.put("[M-H]", hminus);
-
-        final PrecursorIonType fa = knownIonTypes.get("[M-H+H2CO2]-");
-        knownIonTypes.put("[M+FA]-", fa);
-        knownIonTypes.put("[M+HCOO-]-", fa);
-        knownIonTypes.put("[M+HCOO]-", fa);
-        knownIonTypes.put("[M+HCO2H]-", fa);
-
-        //knownIonTypes.put("[M+?]+", UNKNOWN_POSITIVE_IONTYPE);
-        //knownIonTypes.put("[M+?]-", UNKNOWN_NEGATIVE_IONTYPE);
     }
 
     protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\d+M([+-]|\\])");
@@ -290,6 +298,21 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     private PrecursorIonType parseIonType(String name) {
         if (MULTIMERE_PATTERN.matcher(name).find()) throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
         // tokenize String
+        final String ACN =  "CH3CN"; // ACN
+        final String FA = "H2CO2"; // FA
+        final String MeOH = "CH4O"; // MeOH, methanol
+        final String IPA = "C3H8O"; // IPA, Isopropanol, IsoProp
+        final String DMSO = "C2H6OS"; // Dimethylsulfoxid
+        final String HAC = "C2H4O2"; // acetic acid
+        final String TFA = "CF3CO2H"; // TFA, Trifluoroacetic acid
+        final HashMap<String, String> replacement = new HashMap<>();
+        replacement.put("ACN", ACN);
+        replacement.put("FA", FA);
+        replacement.put("MEOH", MeOH);
+        replacement.put("IPA", IPA);
+        replacement.put("DMSO", DMSO);
+        replacement.put("HAC", HAC);
+        replacement.put("TFA", TFA);
         final ArrayList<String> tokens = new ArrayList<String>();
         final Matcher m = IONTYPE_PATTERN.matcher(name);
         int lastPos = 0;
@@ -350,7 +373,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                     } else {
                         final String formulaString;
                         final Matcher numm = IONTYPE_NUM_PATTERN_LEFT.matcher(token);
-                        if (numm.matches()) {
+                        if (numm.find()) {
                             if (number != 1) {
                                 throw new IllegalArgumentException("Do not support nested groups in formula string: '" + name + "'");
                             }
@@ -361,8 +384,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
                         }
                         // should be a molecular formula
                         MolecularFormula f;
-                        if (formulaString.equals("MeOH")) {
-                            f = MolecularFormula.parse("CH4O");
+                        if (replacement.containsKey(formulaString.toUpperCase())) {
+                            f = MolecularFormula.parse(replacement.get(formulaString.toUpperCase()));
                         } else {
                             f = MolecularFormula.parse(formulaString);
                         }
