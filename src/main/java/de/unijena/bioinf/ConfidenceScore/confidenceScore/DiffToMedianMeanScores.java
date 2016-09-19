@@ -19,6 +19,7 @@ import java.util.Arrays;
 public class DiffToMedianMeanScores implements FeatureCreator {
     private final String[] names;
     private final FingerblastScoring[] scorers;
+    private PredictionPerformance[] statistics;
 
     public DiffToMedianMeanScores(){
         names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
@@ -28,13 +29,15 @@ public class DiffToMedianMeanScores implements FeatureCreator {
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        scorers[0] = new CSIFingerIdScoring(statistics);
-        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
-        scorers[2] = new ProbabilityEstimateScoring(statistics);
+        this.statistics = statistics;
     }
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        scorers[2] = new ProbabilityEstimateScoring(statistics);
+
         final double[] scores = new double[scorers.length*2];
         for (int i = 0; i < scorers.length; i++) {
             FingerblastScoring scorer = scorers[i];
@@ -78,6 +81,11 @@ public class DiffToMedianMeanScores implements FeatureCreator {
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
+    }
+
+    @Override
+    public int getRequiredCandidateSize() {
+        return 1;
     }
 
     @Override

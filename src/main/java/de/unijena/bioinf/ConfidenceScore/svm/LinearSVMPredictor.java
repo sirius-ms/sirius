@@ -2,14 +2,14 @@ package de.unijena.bioinf.ConfidenceScore.svm;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
-import de.unijena.bioinf.ConfidenceScore.LinearPredictor;
+import de.unijena.bioinf.ConfidenceScore.Predictor;
 
 import java.io.*;
 
 /**
  * Created by Marcus Ludwig on 09.03.16.
  */
-public class LinearSVMPredictor implements LinearPredictor{
+public class LinearSVMPredictor implements Predictor {
 
     private double[] weight;
     private double bias;
@@ -67,7 +67,7 @@ public class LinearSVMPredictor implements LinearPredictor{
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("LinearPredictor{");
+        final StringBuffer sb = new StringBuffer("Predictor{");
         sb.append("weight=");
         if (weight == null) sb.append("null");
         else {
@@ -138,13 +138,13 @@ public class LinearSVMPredictor implements LinearPredictor{
         try {
             this.probA = document.getDoubleFromDictionary(dictionary, "probA");
         } catch (Exception e){
-            if (!e.getMessage().contains("JSONObject[\"probA\"] not found")) throw e;
+            if (!e.getMessage().contains("JSONObject[\"probA\"] not found") && !(e instanceof NullPointerException)) throw e;
             this.probA = Double.NaN;
         }
         try {
             this.probB = document.getDoubleFromDictionary(dictionary, "probB");
         } catch (Exception e){
-            if (!e.getMessage().contains("JSONObject[\"probB\"] not found")) throw e;
+            if (!e.getMessage().contains("JSONObject[\"probB\"] not found") && !(e instanceof NullPointerException)) throw e;
             this.probB = Double.NaN;
         }
 

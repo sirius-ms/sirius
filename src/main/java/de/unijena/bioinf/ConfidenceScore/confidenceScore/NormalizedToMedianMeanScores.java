@@ -20,23 +20,38 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
     private final String[] names;
     private final FingerblastScoring[] scorers;
     private int[] positions;
+    private PredictionPerformance[] statistics;
+
+    public NormalizedToMedianMeanScores(){
+        names = new String[]{"CSIFingerIdScoringMedian", "CSIFingerIdScoringAvg"};
+        scorers = new FingerblastScoring[1];
+
+        this.positions = new int[0];
+    }
 
     public NormalizedToMedianMeanScores(int... positions){
-        names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
-                                "CSIFingerIdScoringAvg", "SimpleMaximumLikelihoodScoringAvg", "ProbabilityEstimateScoringAvg"};
-        scorers = new FingerblastScoring[3];
+//        names = new String[]{"CSIFingerIdScoringMedian", "SimpleMaximumLikelihoodScoringMedian", "ProbabilityEstimateScoringMedian",
+//                                "CSIFingerIdScoringAvg", "SimpleMaximumLikelihoodScoringAvg", "ProbabilityEstimateScoringAvg"};
+//        scorers = new FingerblastScoring[3];
+        //changed
+        names = new String[]{"CSIFingerIdScoringMedian", "CSIFingerIdScoringAvg"};
+        scorers = new FingerblastScoring[1];
+
         this.positions = positions;
     }
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        scorers[0] = new CSIFingerIdScoring(statistics);
-        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
-        scorers[2] = new ProbabilityEstimateScoring(statistics);
+        this.statistics = statistics;
+
     }
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        //        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        //        scorers[2] = new ProbabilityEstimateScoring(statistics);
+
         final double[] scores = new double[scorers.length*2*positions.length];
         int scoresPos = 0;
         for (int i = 0; i < scorers.length; i++) {
@@ -71,9 +86,9 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
                     if (Math.abs(score-median)<1e-12)
                         scores[scoresPos++] = 1;
                     else{
-                        throw new IllegalArgumentException("Unexpected median scores");
-//                        scores[scoresPos++] = (score-median)/(Math.signum(allScores[0]-allScores[allScores.length-1])*0.001);
-//                        System.err.println("Unexpected median scores");
+//                        throw new IllegalArgumentException("Unexpected median scores");
+                        scores[scoresPos++] = (score-median)/(Math.signum(allScores[0]-allScores[allScores.length-1])*0.001);
+                        System.err.println("Unexpected median scores");
                     }
                 } else {
                     scores[scoresPos++] = (score-median)/diffToMedian;
@@ -111,6 +126,10 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
 
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorers[0] = new CSIFingerIdScoring(statistics);
+        //        scorers[1] = new SimpleMaximumLikelihoodScoring(statistics);
+        //        scorers[2] = new ProbabilityEstimateScoring(statistics);
+
         if (rankedCandidates.length==0) return false;
         for (int i = 0; i < scorers.length; i++) {
             FingerblastScoring scorer = scorers[i];
@@ -129,13 +148,13 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
                 int position = positions[j];
                 double score = allScores[position];
                 if (diffToMean==0){
-                    if (!(Math.abs(score-mean)<1e-12)){
+                    if (!(Math.abs(score-mean)<1e-13)){
                         return false;
                     }
                 }
 
                 if (diffToMedian==0){
-                    if (!(Math.abs(score-median)<1e-12)) {
+                    if (!(Math.abs(score-median)<1e-13)) {
                       return false;
                     }
                 }
@@ -143,6 +162,11 @@ public class NormalizedToMedianMeanScores implements FeatureCreator {
             }
         }
         return true;
+    }
+
+    @Override
+    public int getRequiredCandidateSize() {
+        return 1;
     }
 
     @Override

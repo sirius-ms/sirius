@@ -7,26 +7,23 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
+import java.util.Arrays;
+
 
 /**
  * Created by Marcus Ludwig on 30.04.16.
  */
-public class TanimotoSimilarity implements FeatureCreator{
+public class TanimotoSimilarityAvgToPos implements FeatureCreator{
     private PredictionPerformance[] statistics;
     private int[] positions;
-    private int max;
 
-    public TanimotoSimilarity(){
-        this.positions = new int[]{};
-        this.max = Integer.MIN_VALUE;
+    public TanimotoSimilarityAvgToPos(){
+        this.positions = new int[0];
     }
 
-    //todo use also diff between similarities !?
-    public TanimotoSimilarity(int... positions){
-        this.positions = positions;
-        int max = Integer.MIN_VALUE;
-        for (int i = 0; i < positions.length; i++) max = Math.max(max, positions[i]);
-        this.max = max;
+    public TanimotoSimilarityAvgToPos(int... followingPositions){
+        this.positions = followingPositions;
+        Arrays.sort(this.positions);
     }
 
     @Override
@@ -37,12 +34,18 @@ public class TanimotoSimilarity implements FeatureCreator{
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         Fingerprint topHitFp = rankedCandidates[0].getFingerprint();
-        double[] scores = new double[positions.length];
-        for (int i = 0; i < positions.length; i++) {
-            int position = positions[i];
-            scores[i] = topHitFp.tanimoto(rankedCandidates[position].getFingerprint());
+        double sum = 0;
+        int pPos = 0;
+        double[] sim = new double[positions.length];
+        for (int i = 1; i < rankedCandidates.length; i++) {
+            CompoundWithAbstractFP<Fingerprint> rankedCandidate = rankedCandidates[i];
+            sum += topHitFp.tanimoto(rankedCandidate.getFingerprint());
+            while (pPos<positions.length && positions[pPos]<=i) {
+                sim[pPos] = sum/i;
+                pPos++;
+            }
         }
-        return scores;
+        return sim;
     }
 
 
@@ -53,35 +56,32 @@ public class TanimotoSimilarity implements FeatureCreator{
 
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        return (rankedCandidates.length>max);
+        return (rankedCandidates.length>1);
     }
 
     @Override
     public int getRequiredCandidateSize() {
-        return max+1;
+        return 2;
     }
 
     @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         for (int j = 0; j < positions.length; j++) {
-            int position = positions[j];
-            names[j] = "TanimotoDiffTo"+position;
+            int p = positions[j];
+            names[j] = "TanimotoSimilarityAvgToPos"+p;
         }
         return names;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper parameterHelper, DataDocument<G, D, L> document, D dictionary) {
-        L positionsList = document.getListFromDictionary(dictionary, "positions");
-        int size = document.sizeOfList(positionsList);
-        int[] positions = new int[size];
-        for (int i = 0; i < size; i++) positions[i] = (int)document.getIntFromList(positionsList, i);
+        L percentList = document.getListFromDictionary(dictionary, "positions");
+        int size = document.sizeOfList(percentList);
+        int[] perc = new int[size];
+        for (int i = 0; i < size; i++) perc[i] = (int)document.getIntFromList(percentList, i);
 
-        this.positions = positions;
-        int max = Integer.MIN_VALUE;
-        for (int i = 0; i < positions.length; i++) max = Math.max(max, positions[i]);
-        this.max = max;
+        this.positions = perc;
     }
 
     @Override

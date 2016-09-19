@@ -27,7 +27,7 @@ import java.util.List;
 public class QueryPredictor implements Parameterized{
     private FeatureCreator[] featureCreators;
     private Scaler[] scalers;
-    private LinearPredictor[] predictors;
+    private Predictor[] predictors;
     private int[] priorities;
     private PredictionPerformance[] statistics;
     protected int[] absFPIndices;
@@ -44,7 +44,7 @@ public class QueryPredictor implements Parameterized{
      * @param priorities huge priorities are chosen first
      * @param statistics
      */
-    public QueryPredictor(FeatureCreator[] featureCreators, Scaler[] scalers, LinearPredictor[] predictors, int[] priorities, PredictionPerformance[] statistics) {
+    public QueryPredictor(FeatureCreator[] featureCreators, Scaler[] scalers, Predictor[] predictors, int[] priorities, PredictionPerformance[] statistics) {
         this.featureCreators = featureCreators;
         this.scalers = scalers;
         this.predictors = predictors;
@@ -53,7 +53,7 @@ public class QueryPredictor implements Parameterized{
     }
 
 
-    private int findCompatibleFeatureCreator(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates){
+    public int findCompatibleFeatureCreator(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates){
         int bestCompatiblePos = -1;
         int bestCompatiblePriority = -1;
         for (int i = 0; i < featureCreators.length; i++) {
@@ -72,9 +72,33 @@ public class QueryPredictor implements Parameterized{
         return findCompatibleFeatureCreator(query, rankedCandidates)>0;
     }
 
-    private double[] computeScaledFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, int predictorNumber) throws PredictionException {
+    public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) throws PredictionException {
+        final int i = findCompatibleFeatureCreator(query, rankedCandidates);
+        return computeFeatures(query, rankedCandidates, i);
+    }
+
+    public double[] computeScaledFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) throws PredictionException {
+        final int i = findCompatibleFeatureCreator(query, rankedCandidates);
+        return computeScaledFeatures(query, rankedCandidates, i);
+    }
+
+    private double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, int predictorNumber) throws PredictionException {
         if (predictorNumber<0) throw new PredictionException("no compatible predictor for this input");
         final double[] features = featureCreators[predictorNumber].computeFeatures(query, rankedCandidates);
+        final int[] divergingFeatures = scalers[predictorNumber].divergingFeatures(features);
+        if (divergingFeatures.length>0){
+            System.err.print("instance "+query.getInchi().in3D+" has features differing largely from the expected range: ");
+            String[] names = featureCreators[predictorNumber].getFeatureNames();
+            for (int i = 0; i < divergingFeatures.length; i++) {
+                System.err.print(names[divergingFeatures[i]]+", ");
+            }
+            System.err.println("");
+        }
+        return features;
+    }
+
+    private double[] computeScaledFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, int predictorNumber) throws PredictionException {
+        final double[] features = computeFeatures(query, rankedCandidates, predictorNumber);
         final double[] scaled = scalers[predictorNumber].scale(features);
         return scaled;
     }
@@ -110,6 +134,22 @@ public class QueryPredictor implements Parameterized{
 
     public int[] getAbsFPIndices() {
         return absFPIndices;
+    }
+
+    public FeatureCreator[] getFeatureCreators(){
+        return featureCreators;
+    }
+
+    public Scaler[] getScalers(){
+        return scalers;
+    }
+
+    public Predictor[] getPredictors() {
+        return predictors;
+    }
+
+    public int numberOfPredictors(){
+        return predictors.length;
     }
 
     @Override
@@ -152,7 +192,7 @@ public class QueryPredictor implements Parameterized{
 
         this.featureCreators = featureCreatorList.toArray(new FeatureCreator[0]);
         this.scalers = scalerList.toArray(new Scaler[0]);
-        this.predictors = linearPredictorList.toArray(new LinearPredictor[0]);
+        this.predictors = linearPredictorList.toArray(new Predictor[0]);
         this.priorities = priorities;
 
         for (FeatureCreator featureCreator : featureCreators)
@@ -178,7 +218,7 @@ public class QueryPredictor implements Parameterized{
         for (Scaler scaler : scalers) document.addToList(list, helper.wrap(document, scaler));
         document.addListToDictionary(dictionary, "scalers", list);
         list = document.newList();
-        for (LinearPredictor linearPredictor : predictors) document.addToList(list, helper.wrap(document, linearPredictor));
+        for (Predictor predictor : predictors) document.addToList(list, helper.wrap(document, predictor));
         document.addListToDictionary(dictionary, "predictors", list);
         list = document.newList();
         for (int p : priorities) document.addToList(list, p);

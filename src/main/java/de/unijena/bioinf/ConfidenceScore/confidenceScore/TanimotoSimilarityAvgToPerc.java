@@ -16,14 +16,15 @@ import java.util.Arrays;
 public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
     private PredictionPerformance[] statistics;
     private int[] percent;
-    private int max;
+
+    public TanimotoSimilarityAvgToPerc(){
+        this.percent = new int[]{};
+    }
 
     //todo use also diff between similarities !?
     public TanimotoSimilarityAvgToPerc(int... percent){
         this.percent = percent;
         Arrays.sort(this.percent);
-        int max = Integer.MIN_VALUE;
-
     }
 
     @Override
@@ -60,11 +61,16 @@ public class TanimotoSimilarityAvgToPerc implements FeatureCreator{
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 2;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         for (int j = 0; j < percent.length; j++) {
             int perc = percent[j];
-            names[j] = "TanimotoDiffToPerc"+perc;
+            names[j] = "TanimotoSimilarityAvgToPerc"+perc;
         }
         return names;
     }

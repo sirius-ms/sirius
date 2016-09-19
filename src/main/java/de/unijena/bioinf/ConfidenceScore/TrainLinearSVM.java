@@ -2,7 +2,6 @@ package de.unijena.bioinf.ConfidenceScore;
 
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
-import de.unijena.bioinf.ConfidenceScore.svm.LinearSVMPredictor;
 import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
 import de.unijena.bioinf.fingerid.OptimizationStrategy;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -18,7 +17,7 @@ import java.util.concurrent.*;
  */
 public class TrainLinearSVM  implements Closeable {
     private SVMInterface svmInterface;
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     @Override
     public void close() throws IOException {
@@ -28,12 +27,12 @@ public class TrainLinearSVM  implements Closeable {
     public static class Model implements Comparable<Model> {
         private static Comparator<PredictionPerformance> comp = new OptimizationStrategy.ByFScore().getComparator();
         private final PredictionPerformance performance;
-        private final double c;
+        private final SVMInterface.svm_parameter parameter;
         private final int featureSize;
 
-        public Model(PredictionPerformance performance, double c, int featureSize) {
+        public Model(PredictionPerformance performance, SVMInterface.svm_parameter parameter, int featureSize) {
             this.performance = performance;
-            this.c = c;
+            this.parameter = parameter;
             this.featureSize = featureSize;
         }
 
@@ -44,7 +43,7 @@ public class TrainLinearSVM  implements Closeable {
 
         @Override
         public String toString() {
-            return "linear svm, c = " + c;
+            return parameter.toString();
         }
     }
 
@@ -58,6 +57,18 @@ public class TrainLinearSVM  implements Closeable {
             this.identifier = identifier;
             this.classification = classification;
             this.features = features;
+        }
+
+        public String getIdentifier() {
+            return identifier;
+        }
+
+        public byte getClassification() {
+            return classification;
+        }
+
+        public double[] getFeatures() {
+            return features.clone();
         }
     }
 
@@ -73,10 +84,12 @@ public class TrainLinearSVM  implements Closeable {
     protected final double[] WEIGHT;
     protected final int[] WEIGHT_LABEL = new int[]{1,-1};
 
+    protected final int kernelType;
+
     protected ExecutorService executorService;
 
 
-    public TrainLinearSVM(ExecutorService executorService, List<Compound> compounds, SVMInterface svmInterface, int folds, int[] c_exp_range){
+    public TrainLinearSVM(ExecutorService executorService, List<Compound> compounds, SVMInterface svmInterface, int folds, int[] c_exp_range, int kernelType){
         this.executorService = executorService;
         this.compounds = compounds;
         this.svmInterface = svmInterface;
@@ -85,10 +98,11 @@ public class TrainLinearSVM  implements Closeable {
         this.C_EXP_Range = c_exp_range;
         createSVM_nodes(this.compounds);
         WEIGHT = computeUnbalancedWeight(compounds);
+        this.kernelType = kernelType;
     }
 
     public TrainLinearSVM(ExecutorService executorService, List<Compound> compounds, SVMInterface svmInterface){
-        this(executorService, compounds, svmInterface, FOLDS_DEFAULT, C_EXP_Range_DEFAULT);
+        this(executorService, compounds, svmInterface, FOLDS_DEFAULT, C_EXP_Range_DEFAULT, SVMInterface.svm_parameter.LINEAR);
     }
 
     public TrainLinearSVM(List<Compound> compounds, SVMInterface svmInterface){
@@ -96,7 +110,7 @@ public class TrainLinearSVM  implements Closeable {
     }
 
 
-    public LinearSVMPredictor trainWithCrossvalidation() throws InterruptedException {
+    public Predictor trainWithCrossvalidation() throws InterruptedException {
         final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
 
         final List<Compound>[] train = new List[FOLDS];
@@ -129,7 +143,7 @@ public class TrainLinearSVM  implements Closeable {
                     @Override
                     public Model call() throws Exception {
                         final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
-                        final Model model = new Model(performance, parameter.C, featureSize);
+                        final Model model = new Model(performance, parameter, featureSize);
                         return model;
                     }
                 }));
@@ -147,18 +161,229 @@ public class TrainLinearSVM  implements Closeable {
             }
         }
 
-        final List<Model> mergedModels = mergeModels(models);
+        final List<Model> mergedModels = mergeModelsAll(models);
         final Model bestModel = Collections.max(mergedModels);
 
-        if (DEBUG) System.out.println("best model c "+bestModel.c);
+        if (DEBUG) System.out.println("best model c "+bestModel.parameter.C);
 
         //train on complete dataset;
-        final SVMInterface.svm_model svm_model = train(bestModel.c, compounds);
+        final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);
 
         //ToDo at the moment unnecessary additional computations
-        double[] probAB = trainProABForPlatt(bestModel.c, problems, eval);
+        double[] probAB = trainProABForPlatt(bestModel.parameter, problems, eval);
 
         return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
+    }
+
+    public Predictor trainAntiCrossvalidation() throws InterruptedException {
+        final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
+
+        final SVMInterface.svm_problem  problem = defineProblem(compounds);
+
+        final List<Compound> currentEval = compounds;
+
+        for (int e = C_EXP_Range[0]; e <= C_EXP_Range[1]; e++) {
+            double c = Math.pow(2, e);
+            if (DEBUG) System.out.println("c: "+c);
+            final SVMInterface.svm_parameter parameter = defaultParameters();
+            parameter.C = c;
+            parameter.weight = WEIGHT;
+            parameter.weight_label = WEIGHT_LABEL;
+
+//                learnModel. Future..
+            fmodels.add(executorService.submit(new Callable<Model>() {
+                @Override
+                public Model call() throws Exception {
+                    final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
+                    final Model model = new Model(performance, parameter, featureSize);
+                    return model;
+                }
+            }));
+        }
+
+
+
+
+        final ArrayList<Model> models = new ArrayList<>();
+        for (Future<Model> fm : fmodels) {
+            try {
+                models.add(fm.get());
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        final Model bestModel = Collections.max(models);
+
+        if (DEBUG){
+            double tp = bestModel.performance.getTp();
+            double tn = bestModel.performance.getTn();
+            double fp = bestModel.performance.getFp();
+            double fn = bestModel.performance.getFn();
+            System.out.println("best model c "+bestModel.parameter.C+" with tp:"+tp+" tn:"+tn+" fp:"+fp+" fn:"+fn);
+        }
+
+        //train on complete dataset;
+        final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);
+
+        //ToDo at the moment unnecessary additional computations
+        double[] probAB = trainProABForPlatt(bestModel.parameter, new SVMInterface.svm_problem[]{problem}, new List[]{currentEval});
+        return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
+    }
+
+    public Predictor trainAntiCrossvalidation(double[] gammas, int[] degrees) throws InterruptedException {
+        final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
+
+        final SVMInterface.svm_problem  problem = defineProblem(compounds);
+
+        final List<Compound> currentEval = compounds;
+
+        for (int e = C_EXP_Range[0]; e <= C_EXP_Range[1]; e++) {
+            double c = Math.pow(2, e);
+            if (DEBUG) System.out.println("c: "+c);
+
+            for (int i = 0; i < gammas.length; i++) {
+                final double gamma = gammas[i];
+                for (int j = 0; j < degrees.length; j++) {
+                    final int degree = degrees[j];
+                    System.out.println("d "+degree+" | g "+gamma);
+                    final SVMInterface.svm_parameter parameter = defaultParameters();
+                    parameter.C = c;
+                    parameter.weight = WEIGHT;
+                    parameter.weight_label = WEIGHT_LABEL;
+                    parameter.degree = degree;
+                    parameter.gamma = gamma;
+
+                    // learnModel. Future..
+                    fmodels.add(executorService.submit(new Callable<Model>() {
+                        @Override
+                        public Model call() throws Exception {
+                            final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
+                            final Model model = new Model(performance, parameter, featureSize);
+                            return model;
+                        }
+                    }));
+                }
+            }
+        }
+
+
+
+        final ArrayList<Model> models = new ArrayList<>();
+        for (Future<Model> fm : fmodels) {
+            try {
+                models.add(fm.get());
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        final Model bestModel = Collections.max(models);
+
+        if (DEBUG){
+            System.out.println("best model c "+bestModel.parameter.C);
+            System.out.println("best model gamma "+bestModel.parameter.gamma);
+            System.out.println("best model degree "+bestModel.parameter.degree);
+
+            double tp = bestModel.performance.getTp();
+            double tn = bestModel.performance.getTn();
+            double fp = bestModel.performance.getFp();
+            double fn = bestModel.performance.getFn();
+            System.out.println("performance tp:"+tp+" tn:"+tn+" fp:"+fp+" fn:"+fn);
+        }
+
+
+        //train on complete dataset;
+        final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);
+
+        //ToDo at the moment unnecessary additional computations
+        double[] probAB = trainProABForPlatt(bestModel.parameter, new SVMInterface.svm_problem[]{problem}, new List[]{currentEval});
+        return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
+    }
+
+    public Predictor trainWithCrossvalidationOptimizeGammaAndDegree(double[] gammas, int[] degrees) throws InterruptedException {
+        final List<Future<Model>> fmodels = new ArrayList<Future<Model>>();
+
+        final List<Compound>[] train = new List[FOLDS];
+        final List<Compound>[] eval = new List[FOLDS];
+
+        pickupTrainAndEvalStructureDependent(compounds, train, eval, false);
+
+        final SVMInterface.svm_problem[]  problems = new SVMInterface.svm_problem[FOLDS];
+        for (int i = 0; i < train.length; i++) {
+            problems[i] = defineProblem(train[i]);
+        }
+
+
+        for (int i = 0; i < FOLDS; i++) {
+            if (DEBUG) System.out.println("Fold "+(i+1)+" of "+FOLDS);
+            final List<Compound> currentEval = eval[i];
+
+            final SVMInterface.svm_problem problem = problems[i];
+
+
+            for (int e = C_EXP_Range[0]; e <= C_EXP_Range[1]; e++) {
+                double c = Math.pow(2, e);
+                if (DEBUG) System.out.println("c: "+c);
+
+                for (int j = 0; j < gammas.length; j++) {
+                    double gamma = gammas[j];
+                    for (int k = 0; k < degrees.length; k++) {
+                        int degree = degrees[k];
+                        System.out.println("d "+degree+" | g "+gamma);
+                        final SVMInterface.svm_parameter parameter = defaultParameters();
+                        parameter.C = c;
+                        parameter.weight = WEIGHT;
+                        parameter.weight_label = WEIGHT_LABEL;
+                        parameter.degree = degree;
+                        parameter.gamma = gamma;
+
+                        // learnModel. Future..
+                        fmodels.add(executorService.submit(new Callable<Model>() {
+                            @Override
+                            public Model call() throws Exception {
+                                final PredictionPerformance performance = trainAndEvaluate(problem, parameter, currentEval);
+                                final Model model = new Model(performance, parameter, featureSize);
+                                return model;
+                            }
+                        }));
+                    }
+                }
+            }
+
+        }
+
+
+        final ArrayList<Model> models = new ArrayList<>();
+        for (Future<Model> fm : fmodels) {
+            try {
+                models.add(fm.get());
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        final List<Model> mergedModels = mergeModelsAll(models);
+        final Model bestModel = Collections.max(mergedModels);
+
+        if (DEBUG){
+            System.out.println("best model c "+bestModel.parameter.C);
+            System.out.println("best model gamma "+bestModel.parameter.gamma);
+            System.out.println("best model degree "+bestModel.parameter.degree);
+
+            double tp = bestModel.performance.getTp();
+            double tn = bestModel.performance.getTn();
+            double fp = bestModel.performance.getFp();
+            double fn = bestModel.performance.getFn();
+            System.out.println("performance tp:"+tp+" tn:"+tn+" fp:"+fp+" fn:"+fn);
+        }
+
+        //train on complete dataset;
+        final SVMInterface.svm_model svm_model = train(bestModel.parameter, compounds);
+
+        double[] probAB = trainProABForPlatt(bestModel.parameter, problems, eval);
+        return svmInterface.getPredictor(svm_model, probAB[0], probAB[1]);
+//        return svmInterface.getPredictor(svm_model, Double.NaN, Double.NaN);
     }
 
 
@@ -278,14 +503,14 @@ public class TrainLinearSVM  implements Closeable {
     }
 
 
-    private List<Model> mergeModels(List<Model> models){
+    private List<Model> mergeModelsC(List<Model> models){
         TDoubleObjectHashMap<List<Model>> map = new TDoubleObjectHashMap<>();
         for (Model model : models) {
-            if (map.containsKey(model.c)) map.get(model.c).add(model);
+            if (map.containsKey(model.parameter.C)) map.get(model.parameter.C).add(model);
             else {
                 final List<Model> list = new ArrayList<>();
                 list.add(model);
-                map.put(model.c, list);
+                map.put(model.parameter.C, list);
             }
         }
 
@@ -297,7 +522,32 @@ public class TrainLinearSVM  implements Closeable {
                 performance.merge(model.performance);
             }
             performance.calc();
-            Model model = new Model(performance, modelList.get(0).c, featureSize);
+            Model model = new Model(performance, modelList.get(0).parameter, featureSize);
+            mergedModels.add(model);
+        }
+        return mergedModels;
+    }
+
+    private List<Model> mergeModelsAll(List<Model> models){
+        Map<SVMInterface.svm_parameter, List<Model>> map = new HashMap<>();
+        for (Model model : models) {
+            if (map.containsKey(model.parameter)) map.get(model.parameter).add(model);
+            else {
+                final List<Model> list = new ArrayList<>();
+                list.add(model);
+                map.put(model.parameter, list);
+            }
+        }
+
+        List<Model> mergedModels = new ArrayList<>();
+        for (List<Model> modelList : map.values()) {
+            assert modelList.size()==FOLDS;
+            PredictionPerformance performance = new PredictionPerformance(0,0,0,0);
+            for (Model model : modelList) {
+                performance.merge(model.performance);
+            }
+            performance.calc();
+            Model model = new Model(performance, modelList.get(0).parameter, featureSize);
             mergedModels.add(model);
         }
         return mergedModels;
@@ -312,33 +562,50 @@ public class TrainLinearSVM  implements Closeable {
         return new double[]{data.size()/(2*weight[0]), data.size()/(2*weight[1])};
     }
 
-    private double[] trainProABForPlatt(double c, SVMInterface.svm_problem[] problems, List<Compound>[] evals){
-        final SVMInterface.svm_parameter parameter = defaultParameters();
-        parameter.C = c;
+    private double[] trainProABForPlatt(final SVMInterface.svm_parameter parameter, final SVMInterface.svm_problem[] problems, List<Compound>[] evals) throws InterruptedException {
         parameter.weight = WEIGHT;
         parameter.weight_label = WEIGHT_LABEL;
+
+        List<Future<SVMInterface.svm_model>> fmodels = new ArrayList<>();
 
         TDoubleArrayList scores = new TDoubleArrayList();
         TDoubleArrayList labels = new TDoubleArrayList();
         for (int fold=0; fold < problems.length; ++fold) {
-            final SVMInterface.svm_model model = svmInterface.svm_train(problems[fold], parameter);
-            for (Compound compound : evals[fold]) {
-                final double score = svmInterface.svm_predict(model, compound.nodes);
-                scores.add(score);
-                labels.add(compound.classification);
-            }
+            final int current = fold;
+            fmodels.add(executorService.submit(new Callable<SVMInterface.svm_model>() {
+                @Override
+                public SVMInterface.svm_model call() throws Exception {
+                    final SVMInterface.svm_model model = svmInterface.svm_train(problems[current], parameter);
+                    return model;
+                }
+            }));
         }
+
+        final ArrayList<SVMInterface.svm_model> models = new ArrayList<>();
+        for (int fold = 0; fold < fmodels.size(); fold++) {
+            Future<SVMInterface.svm_model> fm  = fmodels.get(fold);
+            try {
+                final SVMInterface.svm_model model = fm.get();
+                for (Compound compound : evals[fold]) {
+                    final double score = svmInterface.svm_predict(model, compound.nodes);
+                    scores.add(score);
+                    labels.add(compound.classification);
+                }
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
 
         double[] probAB = new double[2];
         sigmoid_train(scores.size(), scores.toArray(), labels.toArray(), probAB);
         return probAB;
     }
 
-    private SVMInterface.svm_model train(double c, List<Compound> train){
+
+    private SVMInterface.svm_model train(SVMInterface.svm_parameter parameter, List<Compound> train){
         final SVMInterface.svm_problem problem = defineProblem(train);
-        final SVMInterface.svm_parameter parameter = defaultParameters();
-        parameter.C = c;
-//        parameter.weight = computeUnbalancedWeight(train);
         parameter.weight = WEIGHT;
         parameter.weight_label = WEIGHT_LABEL;
 
@@ -367,12 +634,13 @@ public class TrainLinearSVM  implements Closeable {
         }
 
 
-        LinearSVMPredictor linearSVMPredictor = svmInterface.getPredictor(model, Double.NaN, Double.NaN);
+        Predictor predictor = svmInterface.getPredictor(model, Double.NaN, Double.NaN);
         int tp2 = 0, fp2 = 0, tn2 = 0, fn2 = 0;
         for (int i = 0; i < nodes.size(); i++) {
             List<SVMInterface.svm_node> currentNodes = nodes.get(i);
             Compound compound = compounds.get(i);
 
+            if (currentNodes.size()!=featureSize) throw new RuntimeException("nodes and feature size differ");
 
             double[] features = new double[featureSize];
             for (int j = 0; j < currentNodes.size(); j++) {
@@ -382,7 +650,7 @@ public class TrainLinearSVM  implements Closeable {
             }
 
             boolean isCorrect = compound.classification>0;
-            boolean predicted = linearSVMPredictor.predict(features);
+            boolean predicted = predictor.predict(features);
             if (predicted){
                 if (isCorrect) tp2++;
                 else fp2++;
@@ -396,6 +664,10 @@ public class TrainLinearSVM  implements Closeable {
         assert fp==fp2;
         assert tn==tn2;
         assert fn==fn2;
+
+        if (DEBUG){
+            System.out.println("assert train: "+tp+" "+tp2+" "+tn+" "+tn2+" "+fp+" "+fp2+" "+fn+" "+fn2);
+        }
     }
 
     private Model trainAndEvaluateCrossFolds(SVMInterface.svm_problem[] problems, SVMInterface.svm_parameter param, List<Compound>[] evals) {
@@ -406,7 +678,7 @@ public class TrainLinearSVM  implements Closeable {
             performance.merge(performance2);
         }
         performance.calc();
-        return new Model(performance, param.C, featureSize);
+        return new Model(performance, param, featureSize);
     }
 
 
@@ -592,9 +864,12 @@ public class TrainLinearSVM  implements Closeable {
 //        param.svm_type = SVMInterface.svm_parameter.C_SVC;
 //        param.kernel_type = SVMInterface.svm_parameter.LINEAR;
 //        param.nu = 0.5;
+        param.kernel_type = kernelType;
         param.cache_size = 200;
         param.C = 1;
         param.eps = 1e-3;
+        param.gamma = 1;
+        param.degree = 1;
 //        param.p = 0.1;
         param.shrinking = 1;
         param.probability = 0;

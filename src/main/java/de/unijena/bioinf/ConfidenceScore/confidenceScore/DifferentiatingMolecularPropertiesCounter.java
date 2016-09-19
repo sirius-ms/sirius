@@ -14,6 +14,12 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
     private double alpha;
     private int numOfWorseCandidates;
 
+
+    public DifferentiatingMolecularPropertiesCounter(){
+        this.alpha = -1;
+        this.numOfWorseCandidates = -1;
+    }
+
     /**
      *
      * @param alpha 0-1: Proportion of candidates which have to differ in this mol prob from the top hit to count
@@ -74,6 +80,11 @@ public class DifferentiatingMolecularPropertiesCounter implements FeatureCreator
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return (this.numOfWorseCandidates<0 ? rankedCandidates.length>1 : rankedCandidates.length>numOfWorseCandidates);
+    }
+
+    @Override
+    public int getRequiredCandidateSize() {
+        return Math.max(this.numOfWorseCandidates+1, 1);
     }
 
     @Override

@@ -54,6 +54,11 @@ public class MolecularFormulaFeature implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         return new String[]{"mf_c", "mf_h", "mf_n", "mf_o", "mf_p", "mf_s", "mf_rest", "mf_halogens"};
     }

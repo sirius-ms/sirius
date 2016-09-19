@@ -66,6 +66,11 @@ public class PlattFeatures implements FeatureCreator {
     }
 
     @Override
+    public int getRequiredCandidateSize() {
+        return 1;
+    }
+
+    @Override
     public String[] getFeatureNames() {
         final String[] names = new String[featureSize];
         for (int i = 0; i < quantiles.length; i++) {

@@ -15,6 +15,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 public class MarvinScoreFeature implements FeatureCreator {
     private final String name;
     private FingerblastScoring scorer;
+    private PredictionPerformance[] statistics;
 
     public MarvinScoreFeature(){
         name = "CSIFingerIdScoring";
@@ -22,11 +23,13 @@ public class MarvinScoreFeature implements FeatureCreator {
 
     @Override
     public void prepare(PredictionPerformance[] statistics) {
-        scorer = new CSIFingerIdScoring(statistics);
+        this.statistics = statistics;
     }
 
     @Override
     public double[] computeFeatures(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
+        scorer = new CSIFingerIdScoring(statistics);
+
         final CompoundWithAbstractFP<Fingerprint> topHit = rankedCandidates[0];
         final double[] scores = new double[1];
         scorer.prepare(query.getFingerprint());
@@ -42,6 +45,11 @@ public class MarvinScoreFeature implements FeatureCreator {
     @Override
     public boolean isCompatible(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
         return rankedCandidates.length>0;
+    }
+
+    @Override
+    public int getRequiredCandidateSize() {
+        return 1;
     }
 
     @Override

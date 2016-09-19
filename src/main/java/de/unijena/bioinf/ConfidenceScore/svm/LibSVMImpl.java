@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ConfidenceScore.svm;
 
+import de.unijena.bioinf.ConfidenceScore.Predictor;
 import libsvm.*;
 
 import java.util.List;
@@ -40,9 +41,13 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
         libsSvm_parameter.cache_size = parameter.cache_size;
 //        libsSvm_parameter.coef0 = parameter.coef0;
 //        libsSvm_parameter.degree = parameter.degree;
+        libsSvm_parameter.degree = parameter.degree;
         libsSvm_parameter.eps = parameter.eps;
-//        libsSvm_parameter.gamma = parameter.gamma;
+        libsSvm_parameter.gamma = parameter.gamma;
         libsSvm_parameter.kernel_type = parameter.kernel_type;
+        if (parameter.kernel_type==svm_parameter.RBF) System.out.println("RBF");
+        else if (parameter.kernel_type==svm_parameter.POLY) System.out.println("poly");
+        System.out.println("xx d "+libsSvm_parameter.degree+" | g "+libsSvm_parameter.gamma+" | c "+libsSvm_parameter.C);
         libsSvm_parameter.nr_weight = parameter.nr_weight;
 //        libsSvm_parameter.nu = parameter.nu;
         libsSvm_parameter.p = parameter.p;
@@ -79,17 +84,22 @@ public class LibSVMImpl implements SVMInterface<LibSVMImpl.svm_nodeImpl, LibSVMI
     }
 
     @Override
-    public LinearSVMPredictor getPredictor(SVMInterface.svm_model<libsvm.svm_model> model, double probA, double probB) {
-        double[][] d = convertDualToPrimal(model);
-        double[] w = d[0];
-        double b = d[1][0];
+    public Predictor getPredictor(SVMInterface.svm_model<libsvm.svm_model> model, double probA, double probB) {
+        if (model.getModel().param.kernel_type==svm_parameter.LINEAR){
+            double[][] d = convertDualToPrimal(model);
+            double[] w = d[0];
+            double b = d[1][0];
 
 
-        if (model.getModel().probA!=null){
-            return new LinearSVMPredictor(w, b, model.getModel().probA[0], model.getModel().probB[0]);
-        } else {
             return new LinearSVMPredictor(w, b, probA, probB);
+        } else {
+            System.out.println("KernelSVMPredictor");
+            model.getModel().probA = new double[]{probA};
+            model.getModel().probB = new double[]{probB};
+            return new KernelSVMPredictor(model.getModel());
         }
+
+
 
     }
 
