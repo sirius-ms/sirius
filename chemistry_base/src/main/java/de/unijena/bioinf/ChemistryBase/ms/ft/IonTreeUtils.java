@@ -23,7 +23,12 @@ public class IonTreeUtils {
      * This modifications might be in-place. So the caller have to ensure to copy the tree if he do not want to change it.
      */
     public FTree treeToNeutralTree(FTree tree) {
-        PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        PrecursorIonType ion;
+        if (tree.getFragmentAnnotationOrNull(PrecursorIonType.class)!=null) {
+            ion = tree.getFragmentAnnotationOrNull(PrecursorIonType.class).get(tree.getRoot());
+        } else {
+            ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        }
 
         if (ion.getInSourceFragmentation().atomCount() > 0) {
             // add the in-source fragmentation to the tree
@@ -37,6 +42,18 @@ public class IonTreeUtils {
         } else {
             setPrecursorToEachNode(tree, tree.getRoot(), ion);
         }
+
+        // check
+        {
+            PrecursorIonType plain = ion.withoutAdduct().withoutInsource();
+            final FragmentAnnotation<PrecursorIonType> ionTypeF = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
+            for (Fragment f : tree) {
+                if (!ionTypeF.get(f).equals(plain)) {
+                    System.err.println("Error: " + f.getFormula() + " has ion type " + ionTypeF.get(f));
+                }
+            }
+        }
+
         return tree;
     }
 
@@ -94,6 +111,7 @@ public class IonTreeUtils {
                 }
             }
             tree.deleteVertex(vertex);
+            fa.set(vertex, newIonType);
             for (Fragment f : children) {
                 setPrecursorToEachNode(tree, f, newIonType);
             }
@@ -106,7 +124,7 @@ public class IonTreeUtils {
             vertex.setFormula(f);
             if (peakAno.get(vertex)!=null)
                 peakAno.set(vertex, peakAno.get(vertex).withFormula(f));
-            fa.set(vertex, iontype);
+            fa.set(vertex, iontype.withoutAdduct());
             final ArrayList<Fragment> childs = new ArrayList<Fragment>(vertex.getChildren());
             for (Fragment g : childs) {
                 reduceSubtree(tree, iontype, adduct, g);
