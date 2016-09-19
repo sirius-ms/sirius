@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -43,32 +42,6 @@ import java.io.InputStream;
 import java.util.*;
 
 public class Sirius {
-    public final static Properties PROPERTIES = new Properties();
-    public final static String VERSION_STRING;
-    public final static String CITATION;
-    public final static String CITATION_BIBTEX;
-
-    static {
-        try (InputStream input = Sirius.class.getResourceAsStream("/Sirius.properties")) {
-            // load a properties file
-            PROPERTIES.load(input);
-        } catch (IOException | NullPointerException e ) {
-            e.printStackTrace();
-
-
-
-        }
-        String prop = PROPERTIES.getProperty("sirius-version");
-        VERSION_STRING = prop != null ? "Sirius "+ prop:"Sirius";
-
-        prop = PROPERTIES.getProperty("cite");
-        CITATION = prop != null ? prop:"";
-        prop = PROPERTIES.getProperty("cite-bib");
-        CITATION_BIBTEX = prop != null ? prop:"";
-
-
-    }
-
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
