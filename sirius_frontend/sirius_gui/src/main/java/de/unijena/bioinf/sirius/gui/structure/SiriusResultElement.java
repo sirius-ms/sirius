@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class SiriusResultElement {
 	
 	private TreeNode tree; //zur Anzeige
-	private FTree ft;      //Kais Datenstruktur, falls IO Klassen benötigt
+	private FTree ft, unresolvedTree;      //Kais Datenstruktur, falls IO Klassen benötigt
 	private int rank;
 	private double score;
 	private MolecularFormula mf;
@@ -51,7 +51,15 @@ public class SiriusResultElement {
 		this.ft = ft;
 	}
 
-	public int getRank() {
+    public FTree getUnresolvedTree() {
+        return unresolvedTree;
+    }
+
+    public void setUnresolvedTree(FTree unresolvedTree) {
+        this.unresolvedTree = unresolvedTree;
+    }
+
+    public int getRank() {
 		return rank;
 	}
 

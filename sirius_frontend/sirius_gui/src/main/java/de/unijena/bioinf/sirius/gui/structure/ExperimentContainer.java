@@ -132,6 +132,10 @@ public class ExperimentContainer {
 
 	public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
 		this.originalResults = results;
+        if (results!=null) {
+            for (IdentificationResult result : results)
+                result.resolveIonizationInTree();
+        }
 		this.results = myxoresults;
         if (this.computeState==ComputingStatus.COMPUTING)
 			this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;

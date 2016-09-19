@@ -38,8 +38,11 @@ public class SiriusResultElementConverter {
 		out.setRank(res.getRank());
 		out.setScore(res.getScore());
 		
-		FTree ft = res.getTree();
+		FTree ft_orig = new FTree(res.getTree());
+		res.resolveIonizationInTree();
+        FTree ft = res.getTree();
 		out.setRawTree(ft);
+        out.setUnresolvedTree(ft_orig);
 		
 //		FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
 //		LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);

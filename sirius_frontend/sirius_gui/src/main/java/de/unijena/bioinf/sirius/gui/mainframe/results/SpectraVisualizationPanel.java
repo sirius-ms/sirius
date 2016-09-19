@@ -1,8 +1,13 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanelListener;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -278,20 +283,27 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		ArrayDeque<TreeNode> deque = new ArrayDeque<>();
 		this.model.markAllPeaksAsUnimportant();
 		this.model.removeMarkings();
-		deque.add(root);
-		while(!deque.isEmpty()){
-			TreeNode tn = deque.remove();
-			for(TreeEdge te : tn.getOutEdges()){
-				deque.add(te.getTarget());
-			}
-			double mass = tn.getPeakMass();
-			double tolerance = mass>1000 ? 0.02 : 0.01;
-			int index = model.findIndexOfPeak(mass, tolerance);
-			if(index>-1){
-				this.model.setImportant(index, true);
-				this.model.setMolecularFormula(index, tn.getMolecularFormula());
-			}
-		}
+        final FragmentAnnotation<AnnotatedPeak> peakAno = sre.getUnresolvedTree().getFragmentAnnotationOrNull(AnnotatedPeak.class);
+        final PrecursorIonType ionType = sre.getRawTree().getAnnotationOrThrow(PrecursorIonType.class);
+		for (Fragment f : sre.getUnresolvedTree()) {
+			final MolecularFormula formula = f.getFormula();
+            final MolecularFormula neutral;
+            final PrecursorIonType adduct;
+            if (!ionType.getAdduct().isEmpty() && formula.isSubtractable(ionType.getAdduct())) {
+                neutral = formula.subtract(ionType.getAdduct());
+                adduct = ionType.withoutInsource();
+            } else {
+                neutral = formula;
+                adduct = ionType.withoutAdduct().withoutInsource();
+            }
+            for (Peak p : peakAno.get(f).getOriginalPeaks()) {
+                int index = model.findIndexOfPeak(p.getMass(), p.getMass()*1e-3);
+                if(index>=0){
+                    this.model.setImportant(index, true);
+                    this.model.setMolecularFormula(index, adduct.substituteName(neutral));
+                }
+            }
+        }
 		msviewer.showOverview();
 		this.zoomIn.setEnabled(false);
 		this.zoomOut.setEnabled(false);

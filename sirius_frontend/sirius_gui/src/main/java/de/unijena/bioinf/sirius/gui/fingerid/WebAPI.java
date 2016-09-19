@@ -18,7 +18,9 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
@@ -70,15 +72,8 @@ public class WebAPI implements Closeable {
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
 
 
-    public static PrecursorIonType[] positiveIons = new PrecursorIonType[]{
-            PrecursorIonType.getPrecursorIonType("[M+H]+"),
-            PrecursorIonType.getPrecursorIonType("[M]+"),
-            PrecursorIonType.getPrecursorIonType("[M-H2O+H]+")
-    };
-    public static PrecursorIonType[] negativeIons = new PrecursorIonType[]{
-            PrecursorIonType.getPrecursorIonType("[M-H]-"),
-            PrecursorIonType.getPrecursorIonType("[M]-")
-    };
+    public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
+    public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
 
     public static RESTDatabase getRESTDb(BioFilter bioFilter) {

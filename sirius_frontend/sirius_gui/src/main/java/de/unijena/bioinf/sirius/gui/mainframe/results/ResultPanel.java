@@ -45,7 +45,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		
 		if(this.ec!=null) this.listModel = new ResultTreeListModel(ec.getResults());
 		else this.listModel = new ResultTreeListModel();
-		this.resultsJList = new JList<>(this.listModel);
+		this.resultsJList = new ResultsTreeList(this.listModel);
 		this.listModel.setJList(this.resultsJList);
 //		if(this.ec!=null){
 //			listRenderer = new ResultTreeListThumbnailCellRenderers(ec.getResults());

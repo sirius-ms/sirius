@@ -237,7 +237,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
         } else {
             ionizationCB.setSelectedItem(Ionization.MPlusH);
         }
-		otherPanel.add(new JLabel("ionization"));
+		otherPanel.add(new JLabel("adduct type"));
 		otherPanel.add(ionizationCB);
 		instruments = new Vector<>();
 		instruments.add("Q-TOF");
@@ -285,6 +285,12 @@ public class ComputeDialog extends JDialog implements ActionListener{
             values.add("PubChem formulas");
             values.add("formulas from biological databases");
             formulaCombobox = new JComboBox<>(values);
+            formulaCombobox.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    enableElementSelection(formulaCombobox.getSelectedIndex()==0);
+                }
+            });
             otherPanel.add(label);
             otherPanel.add(formulaCombobox);
         }
@@ -338,6 +344,24 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 		
+	}
+
+	public void enableElementSelection(boolean enabled) {
+		if (enabled) {
+			for (JCheckBox b : Arrays.asList(boron, bromine, chlorine, fluorine, iodine, selenium)) {
+				b.setEnabled(true);
+			}
+			elementButton.setEnabled(true);
+			elementAutoDetect.setEnabled(false);
+			elementTF.setEnabled(true);
+		} else {
+			for (JCheckBox b : Arrays.asList(boron, bromine, chlorine, fluorine, iodine, selenium)) {
+				b.setEnabled(false);
+			}
+			elementButton.setEnabled(false);
+			elementAutoDetect.setEnabled(false);
+			elementTF.setEnabled(false);
+		}
 	}
 
 	private void abortComputation() {

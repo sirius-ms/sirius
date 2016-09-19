@@ -166,9 +166,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
         ionizations = new Vector<>();
         ionizations.add("treat as protonation");
-        ionizations.add("do not resolve ionization");
+        ionizations.add("try common adduct types");
         ionizationCB = new JComboBox<>(ionizations);
-        otherPanel.add(new JLabel("  fallback for unknown ionizations"));
+        ionizationCB.setSelectedIndex(0);
+        ionizationCB.setEnabled(hasCompoundWithUnknownIonization());
+        otherPanel.add(new JLabel("  fallback for unknown adduct types"));
         otherPanel.add(ionizationCB);
         stack.add(otherPanel);
 
@@ -182,6 +184,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             formulaCombobox = new JComboBox<>(values);
             otherPanel.add(label);
             otherPanel.add(formulaCombobox);
+            formulaCombobox.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    enableElementSelection(formulaCombobox.getSelectedIndex()==0);
+                }
+            });
         }
 
 
@@ -225,6 +233,37 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         setLocationRelativeTo(getParent());
         this.setVisible(true);
 
+    }
+
+    private boolean hasCompoundWithUnknownIonization() {
+        Enumeration<ExperimentContainer> compounds = owner.getCompounds();
+        while (compounds.hasMoreElements()) {
+            final ExperimentContainer ec = compounds.nextElement();
+            if (ec.isUncomputed()) {
+                if (ec.getIonization()==null || ec.getIonization().isUnknown()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void enableElementSelection(boolean enabled) {
+        if (enabled) {
+            for (JCheckBox b : Arrays.asList(borone, bromine, chlorine, fluorine, iodine, selenium)) {
+                b.setEnabled(true);
+            }
+            elementButton.setEnabled(true);
+            elementAutoDetect.setEnabled(false);
+            elementTF.setEnabled(true);
+        } else {
+            for (JCheckBox b : Arrays.asList(borone, bromine, chlorine, fluorine, iodine, selenium)) {
+                b.setEnabled(false);
+            }
+            elementButton.setEnabled(false);
+            elementAutoDetect.setEnabled(false);
+            elementTF.setEnabled(false);
+        }
     }
 
     @Override
