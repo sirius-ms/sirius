@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -111,7 +113,9 @@ public class FingerIdDialog extends JDialog {
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    storage.setDirectory(new File(field.getText()));
+                    String path = field.getText();
+                    ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.fingerID.cache" ,path);
+                    storage.setDirectory(new File(path));
                     storage.setEnforceBio(biodb.isSelected());
                     storage.configured = true;
                     returnState = COMPUTE_ALL;
@@ -125,7 +129,9 @@ public class FingerIdDialog extends JDialog {
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                storage.setDirectory(new File(field.getText()));
+                String path = field.getText();
+                ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.fingerID.cache" ,path);
+                storage.setDirectory(new File(path));
                 storage.configured = true;
                 storage.setEnforceBio(biodb.isSelected());
                 returnState = APROVED;

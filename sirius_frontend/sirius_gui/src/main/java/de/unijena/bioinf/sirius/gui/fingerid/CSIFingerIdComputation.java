@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -224,8 +225,7 @@ public class CSIFingerIdComputation {
 
     public File getDefaultDirectory() {
         final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        if (val!=null && !val.isEmpty()) return ApplicationCore.WORKSPACE.resolve(val).toFile();;
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");// todo remove fallback
+        return Paths.get(val).toFile();
     }
 
     public boolean isEnforceBio() {

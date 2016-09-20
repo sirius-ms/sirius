@@ -4,6 +4,7 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 public class ConfigStorage {
 	
@@ -38,10 +39,8 @@ public class ConfigStorage {
     }
 
     public File getDefaultDatabaseDirectory() {
-		//todo integrate properties file with gui
 		final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        if (val!=null && !val.isEmpty()) return ApplicationCore.WORKSPACE.resolve(val).toFile();;
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache"); // todo remove fallback
+        return Paths.get(val).toFile();
     }
 
     public void setDatabaseDirectory(File databaseDirectory) {
