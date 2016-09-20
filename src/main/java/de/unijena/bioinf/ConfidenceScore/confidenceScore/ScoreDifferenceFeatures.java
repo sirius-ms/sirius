@@ -84,7 +84,7 @@ public class ScoreDifferenceFeatures implements FeatureCreator {
         String[] names = new String[getFeatureSize()];
         int pos = 0;
         for (int i = 0; i < scorers.length; i++) {
-            String scoringMethod = scorers[i].getClass().getSimpleName();
+            String scoringMethod = this.names[i];
             for (int j = 0; j < positions.length; j++) {
                 int position = positions[j];
                 names[pos++] = scoringMethod+"DiffTo"+position;

@@ -37,15 +37,17 @@ public class MolecularFormulaFeature implements FeatureCreator {
         int o = formula.numberOfNitrogens();
         int p = formula.numberOf(phosphorus);
         int s = formula.numberOf(sulphor);
-        int rest = formula.atomCount()-(c+h+n+o+p+s);
+//        int rest = formula.atomCount()-(c+h+n+o+p+s);
         int halogens = formula.numberOf(fluorine)+formula.numberOf(chlorine)+formula.numberOf(bromine)+formula.numberOf(iodine);
-        return new double[]{c, h, n, o, p, s, rest, halogens};
+//        return new double[]{c, h, n, o, p, s, rest, halogens};
+        return new double[]{c, h, n, o, p, s, halogens};
     }
 
 
     @Override
     public int getFeatureSize() {
-        return 8;
+//        return 8;
+        return 7;
     }
 
     @Override
@@ -60,7 +62,8 @@ public class MolecularFormulaFeature implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        return new String[]{"mf_c", "mf_h", "mf_n", "mf_o", "mf_p", "mf_s", "mf_rest", "mf_halogens"};
+//        return new String[]{"mf_c", "mf_h", "mf_n", "mf_o", "mf_p", "mf_s", "mf_rest", "mf_halogens"};
+        return new String[]{"mf_c", "mf_h", "mf_n", "mf_o", "mf_p", "mf_s", "mf_halogens"};
     }
 
     @Override
