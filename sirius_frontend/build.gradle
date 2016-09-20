@@ -21,6 +21,8 @@ buildscript {
 //Global Properties
 ext {
     //version for external libraries
+    slf4j_version = '1.7.21'
+
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 

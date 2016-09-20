@@ -49,7 +49,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CLI<Options extends SiriusOptions> {
+public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected Sirius sirius;
     protected final boolean shellMode;

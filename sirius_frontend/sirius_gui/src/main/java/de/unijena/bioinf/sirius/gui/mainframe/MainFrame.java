@@ -45,9 +45,7 @@ import java.util.concurrent.ExecutionException;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener,MouseListener, KeyListener, JobLog.JobListener{
 
-    private Logger logger = LoggerFactory.getLogger(MainFrame.class);
-
-    private CompoundModel compoundModel;
+	private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
 	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID, jobs, db;
 
