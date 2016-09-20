@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -37,7 +38,7 @@ public class AboutDialog extends JDialog{
 
     public AboutDialog(Frame owner) {
         super(owner, true);
-        setTitle(Sirius.VERSION_STRING);
+        setTitle(ApplicationCore.VERSION_STRING);
         this.setLayout(new BorderLayout());
         setPreferredSize(new Dimension(500, 800));
         // SIRIUS logo
@@ -185,11 +186,11 @@ public class AboutDialog extends JDialog{
             "}";
 
     private void copyBibTex() {
-        copyPlainText(Sirius.CITATION_BIBTEX + "\n" + FINGERID_BIBTEX);
+        copyPlainText(ApplicationCore.CITATION_BIBTEX + "\n" + FINGERID_BIBTEX);
     }
 
     private void copyPlainText() {
-        copyPlainText(Sirius.CITATION + "\n" + FINGERID_CITATION);
+        copyPlainText(ApplicationCore.CITATION + "\n" + FINGERID_CITATION);
     }
 
     private void copyPlainText(String text) {

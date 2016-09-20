@@ -2,23 +2,19 @@ dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
 }
-
-
-
 processResources.doFirst{
     logger.lifecycle('writing properties file...')
     Properties properties = new Properties()
-    File propertiesFile = new File("$projectDir/src/main/resources/DefaultSirius.properties")
+    File propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
     propertiesFile.withInputStream {
         properties.load(it)
     }
-    properties.setProperty("sirius-version", "$version");
-    propertiesFile = new File("$projectDir/src/main/resources/Sirius.properties")
+    properties.setProperty("de.unijena.bioinf.sirius.version", "$version");
+    propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
     propertiesFile.withOutputStream{
         properties.store(it,"")
     }
 }
-
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
 project.ext.set("type", "console")
 

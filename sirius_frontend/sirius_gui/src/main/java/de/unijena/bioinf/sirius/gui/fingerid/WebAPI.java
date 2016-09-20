@@ -36,7 +36,10 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -44,8 +47,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
 
 import javax.json.Json;
@@ -89,7 +95,7 @@ public class WebAPI implements Closeable {
         try {
             get = new HttpGet(getFingerIdURI("/webapi/version.json").build());
             try (CloseableHttpResponse response = client.execute(get)) {
-                try (final JsonReader r  = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
+                try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
 
                     JsonObject o = r.readObject();
                     JsonObject gui = o.getJsonObject("SIRIUS GUI");
@@ -116,7 +122,23 @@ public class WebAPI implements Closeable {
     private final CloseableHttpClient client;
 
     public WebAPI() {
-        client = HttpClients.createDefault();
+        HttpClientBuilder clientBuilder = HttpClients.custom();
+        BasicCredentialsProvider clientCredentials = new BasicCredentialsProvider();
+        clientBuilder.setDefaultCredentialsProvider(clientCredentials);
+
+        if (Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy"))) {
+            HttpHost proxy = new HttpHost(
+                    System.getProperty("de.unijena.bioinf.sirius.proxy.hostname"),
+                    Integer.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy.port")),
+                    System.getProperty("de.unijena.bioinf.sirius.proxy.scheme"));
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+            clientBuilder.setRoutePlanner(routePlanner);
+
+            if (Boolean.getBoolean(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
+                clientCredentials.setCredentials(new AuthScope(proxy), new UsernamePasswordCredentials(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"), System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw")));
+            }
+        }
+        client = clientBuilder.build();
     }
 
     public static void SHUT_UP_STUPID_LOGGING() {
@@ -191,11 +213,11 @@ public class WebAPI implements Closeable {
         final long jobId;
         // SUBMIT JOB
         try (CloseableHttpResponse response = client.execute(post)) {
-            if (response.getStatusLine().getStatusCode()==200) {
+            if (response.getStatusLine().getStatusCode() == 200) {
                 try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
                     final JsonObject obj = json.readObject();
                     securityToken = obj.getString("securityToken");
-                    jobId =obj.getInt("jobId");
+                    jobId = obj.getInt("jobId");
                     return new FingerIdJob(jobId, securityToken, version);
                 }
             } else {
@@ -211,11 +233,11 @@ public class WebAPI implements Closeable {
                 final FingerIdJob job = submitJob(experiment, tree, version);
                 // RECEIVE RESULTS
                 final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
-                for (int k=0; k < 600; ++k) {
-                    Thread.sleep(3000 + 30*k);
+                for (int k = 0; k < 600; ++k) {
+                    Thread.sleep(3000 + 30 * k);
                     if (updateJobStatus(job)) {
                         return job.prediction;
-                    } else if (job.state=="CRASHED") {
+                    } else if (job.state == "CRASHED") {
                         throw new RuntimeException("Job crashed");
                     }
                 }
@@ -228,6 +250,7 @@ public class WebAPI implements Closeable {
     /**
      * make statistics of fingerprints and write the used indizes of fingerprints into the
      * given TIntArrayList (as this property is not contained in FingerprintStatistics)
+     *
      * @param fingerprintIndizes
      * @return
      * @throws IOException
@@ -247,7 +270,7 @@ public class WebAPI implements Closeable {
             HttpEntity e = response.getEntity();
             final BufferedReader br = new BufferedReader(new InputStreamReader(e.getContent(), ContentType.getOrDefault(e).getCharset()));
             String line; //br.readLine();
-            while ((line=br.readLine())!=null) {
+            while ((line = br.readLine()) != null) {
                 String[] tabs = line.split("\t");
                 final int index = Integer.parseInt(tabs[0]);
                 PredictionPerformance p = new PredictionPerformance(
@@ -316,17 +339,18 @@ public class WebAPI implements Closeable {
         private boolean closed = false;
 
         private MultiplexerFileAndIO(InputStream stream, OutputStream writer) throws IOException {
-            this.buffer = new byte[1024*512];
+            this.buffer = new byte[1024 * 512];
             this.stream = stream;
             this.writer = writer;
-            this.offset = 0; this.limit = 0;
+            this.offset = 0;
+            this.limit = 0;
             fillCache();
         }
 
         private boolean fillCache() throws IOException {
             this.limit = stream.read(buffer, 0, buffer.length);
             this.offset = 0;
-            if (limit<=0) return false;
+            if (limit <= 0) return false;
             writer.write(buffer, offset, limit);
             return true;
         }
@@ -343,12 +367,12 @@ public class WebAPI implements Closeable {
         public int read(byte[] b, int off, int len) throws IOException {
             int written = 0;
             while (true) {
-                final int bytesAvailable = limit-offset;
-                if (bytesAvailable<=0) {
+                final int bytesAvailable = limit - offset;
+                if (bytesAvailable <= 0) {
                     if (!fillCache()) return written;
                 }
-                final int bytesToRead = len-off;
-                if (bytesToRead==0) return written;
+                final int bytesToRead = len - off;
+                if (bytesToRead == 0) return written;
                 final int bytesToWrite = Math.min(bytesAvailable, bytesToRead);
                 System.arraycopy(buffer, offset, b, off, bytesToWrite);
                 written += bytesToWrite;
@@ -371,7 +395,7 @@ public class WebAPI implements Closeable {
             } while (finished);
             stream.close();
             writer.close();
-            closed=true;
+            closed = true;
         }
     }
 

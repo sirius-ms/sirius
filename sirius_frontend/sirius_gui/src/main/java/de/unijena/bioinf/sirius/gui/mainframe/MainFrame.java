@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.*;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
@@ -82,7 +83,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     public MainFrame(){
-		super(Sirius.VERSION_STRING);
+		super(ApplicationCore.VERSION_STRING);
 		try {
 		    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
 		        if ("Nimbus".equals(info.getName())) {

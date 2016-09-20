@@ -31,6 +31,7 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -222,9 +224,8 @@ public class CSIFingerIdComputation {
     }
 
     public File getDefaultDirectory() {
-        final String val = System.getenv("CSI_FINGERID_STORAGE");
-        if (val!=null) return new File(val);
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
+        final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
+        return Paths.get(val).toFile();
     }
 
     public boolean isEnforceBio() {
