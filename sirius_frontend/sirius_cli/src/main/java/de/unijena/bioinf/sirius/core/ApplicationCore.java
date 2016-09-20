@@ -94,40 +94,29 @@ public class ApplicationCore {
         USER_PROPERTIES_FILE = WORKSPACE.resolve("sirius.properties");
         USER_PROPERTIES = new Properties();
 
-        if (Files.exists(USER_PROPERTIES_FILE)) {
-            try (InputStream stream = Files.newInputStream(USER_PROPERTIES_FILE)){
-                USER_PROPERTIES.load(stream);
-                if (!version.equals(USER_PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"))){
-                    USER_PROPERTIES.clear();
-                    Files.delete(USER_PROPERTIES_FILE);
-                }
 
+        try (InputStream stream = ApplicationCore.class.getResourceAsStream("/sirius.properties")) {
+            USER_PROPERTIES.load(stream);
+            changeDefaultPropterty("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
+        } catch (IOException e) {
+            System.err.println("Could NOT create Properties file");//todo use logging (error)
+            e.printStackTrace();
+        }//todo Close application?
+
+
+        if (Files.exists(USER_PROPERTIES_FILE)) {
+            try (InputStream stream = Files.newInputStream(USER_PROPERTIES_FILE)) {
+                Properties tmp =  new Properties();
+                tmp.load(stream);
+                USER_PROPERTIES.putAll(tmp);
             } catch (IOException e) {
                 System.err.println("Could NOT load Properties form user properties file, falling back to default properties");//todo use logging (error)
                 e.printStackTrace();
-                try {
-                    USER_PROPERTIES.clear();
-                    Files.delete(USER_PROPERTIES_FILE);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
             }
         }
 
-        if (Files.notExists(USER_PROPERTIES_FILE)) {
-            try (InputStream stream = ApplicationCore.class.getResourceAsStream("/sirius.properties")) {
-                USER_PROPERTIES.load(stream);
-                changeDefaultPropterty("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
-                //this is needed to be sure that we rewrite the properties file if we have a new version of sirius
-                changeDefaultPropterty("de.unijena.bioinf.sirius.version", version);
-                storeUserProperties();
-            } catch (IOException e) {
-                System.err.println("Could NOT create Properties file");//todo use logging (error)
-                e.printStackTrace();
-            }//todo Close application?
-        }
-
         addDefaultProptery("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
+        storeUserProperties();
 
     }
 
