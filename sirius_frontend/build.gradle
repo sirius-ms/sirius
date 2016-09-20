@@ -203,9 +203,17 @@ subprojects {
     startScripts {
         applicationName = "${project.appName}"
         doLast {
-            def siriusLibPath = '$GUROBI_HOME/lib:$APP_HOME/lib'
-            unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
-            unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'export LD_LIBRARY_PATH=' + siriusLibPath + ':$LD_LIBRARY_PATH' + "${System.lineSeparator()}" + 'DEFAULT_JVM_OPTS="-Djava.library.path=' + siriusLibPath + '"')
+            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
+            String[] lines =  unixScript.text.split(System.lineSeparator());
+            for (int i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('CLASSPATH=')){
+                    lines[i] = lines[i].replace('CLASSPATH=', ('CLASSPATH="' + "${runtimeClasspath}:")) + '"'
+                }
+                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')){
+                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', 'export LD_LIBRARY_PATH="' + siriusLibPath + ':\\"$LD_LIBRARY_PATH\\""' + "${System.lineSeparator()}" + 'DEFAULT_JVM_OPTS="-Djava.library.path=' + siriusLibPath + '"')
+                }
+            }
+            unixScript.text = lines.join(System.lineSeparator())
         }
     }
 
