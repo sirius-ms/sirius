@@ -141,7 +141,7 @@ public class WebAPI implements Closeable {
         client = clientBuilder.build();
     }
 
-    public static void SHUT_UP_STUPID_LOGGING() {
+   /* public static void SHUT_UP_STUPID_LOGGING() {
         java.util.logging.Logger.getLogger("org.apache.http.wire").setLevel(java.util.logging.Level.FINEST);
         java.util.logging.Logger.getLogger("org.apache.http.headers").setLevel(java.util.logging.Level.FINEST);
         System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
@@ -153,7 +153,7 @@ public class WebAPI implements Closeable {
 
     static {
         SHUT_UP_STUPID_LOGGING();
-    }
+    }*/
 
     protected static URIBuilder getFingerIdURI(String path) {
         URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : "www.csi-fingerid.org");
