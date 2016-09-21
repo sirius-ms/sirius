@@ -216,7 +216,7 @@ public class ConfidenceScorePrediction {
 
     /**
      * train a confidence score model
-     * @param queries a list of {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the correct structure inchi and the predicted fingerprint
+     * @param queries a list of {@link CompoundWithAbstractFP} with the correct structure inchi and the predicted fingerprint
      * @param statistics the {@link PredictionPerformance}s of the different molecular properties (fingerprint positions)
      * @param maskedFingerprintVersion the {@link MaskedFingerprintVersion} of the predicted fingerprints
      * @param db {@link ChemicalDatabase} to search in for candidate structure
@@ -233,7 +233,7 @@ public class ConfidenceScorePrediction {
 
     /**
      * train a confidence score model
-     * @param queries a list of {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the correct structure inchi and the predicted fingerprint
+     * @param queries a list of {@link CompoundWithAbstractFP} with the correct structure inchi and the predicted fingerprint
      * @param statistics the {@link PredictionPerformance}s of the different molecular properties (fingerprint positions)
      * @param maskedFingerprintVersion the {@link MaskedFingerprintVersion} of the predicted fingerprints
      * @param db {@link ChemicalDatabase} to search for candidate structure in
@@ -276,7 +276,7 @@ public class ConfidenceScorePrediction {
 
     /**
      * fingerprint CANDIDATES must be SORTED by score or can be rescored (and sorted) using CSIFingerIdScoring
-     * @param query {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the estimated structure inchi and the predicted fingerprint
+     * @param query {@link CompoundWithAbstractFP} with the estimated structure inchi and the predicted fingerprint
      * @param candidates candidate structures with inchi and fingerprint
      * @param rescore if true, score and sort candidates by CSIFingerIdScoring
      * @return
@@ -294,7 +294,7 @@ public class ConfidenceScorePrediction {
 
     /**
      *
-     * @param query {@link CompoundWithAbstractFP<ProbabilityFingerprint>} with the estimated structure inchi and the predicted fingerprint
+     * @param query {@link CompoundWithAbstractFP} with the estimated structure inchi and the predicted fingerprint
      * @param db {@link ChemicalDatabase} to search candidates structures in
      * @return
      * @throws PredictionException
