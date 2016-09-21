@@ -24,6 +24,7 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -504,7 +505,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				new ExceptionDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ");
 				return;
 			}
-			System.out.println("Compute trees using " + builder.getDescription());
+			LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder.getDescription());
 
 			sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
 			sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
