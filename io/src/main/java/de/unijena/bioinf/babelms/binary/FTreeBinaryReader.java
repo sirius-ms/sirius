@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.dot.FTDotReader;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -32,7 +33,7 @@ public class FTreeBinaryReader {
             new FTDotWriter().writeTree(new PrintWriter(System.out), atree[0]);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(FTreeBinaryReader.class).error(e.getMessage(),e);
         }
     }
 

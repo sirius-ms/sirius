@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -91,7 +92,7 @@ public class TReductionController implements GraphReduction {
 
         if ( graph == null )
         {
-            System.err.println("Cannot reduce graph: given graph is 'NULL'!");
+			LoggerFactory.getLogger(this.getClass()).error("Cannot reduce graph: given graph is 'NULL'!");
         } else {
 
             // create new reduction instance
@@ -121,7 +122,7 @@ public class TReductionController implements GraphReduction {
     private int[] parseIntArguments( String[] args, boolean useBrackets ) {
 
         if( args == null || args.length == 0 ) {
-            System.err.println(" Cannot parse int arguments! No arguments! ");
+			LoggerFactory.getLogger(this.getClass()).error(" Cannot parse int arguments! No arguments! ");
             return null;
         }
 
@@ -129,7 +130,7 @@ public class TReductionController implements GraphReduction {
             if( args[0].matches( "\\(" ) && args[args.length-1].matches("\\)") ) {
                 return parseIntArguments( Arrays.copyOfRange( args, 1, args.length-1 ), false );
             } else {
-                System.err.println(" Cannot parse int arguments: no brackets!");
+				LoggerFactory.getLogger(this.getClass()).error(" Cannot parse int arguments: no brackets!");
                 return null;
             }
         } else {
@@ -143,7 +144,7 @@ public class TReductionController implements GraphReduction {
 
                 return ints;
             } catch ( NumberFormatException e ) {
-                System.err.println(" Cannot parse int arguments: not a number! ");
+				LoggerFactory.getLogger(this.getClass()).error(" Cannot parse int arguments: not a number! ");
 				bTerminateCurrentCommands = true;
 				return null;
             }
@@ -156,7 +157,7 @@ public class TReductionController implements GraphReduction {
 			termMsg = " terminate current commands. ";
 
 		bTerminateCurrentCommands = true;
-		System.err.println( termMsg );
+		LoggerFactory.getLogger(this.getClass()).error(termMsg);
 		return 0;
 	}
 
@@ -331,7 +332,7 @@ public class TReductionController implements GraphReduction {
 
 				System.out.println(" ~~~ CMD: compareEdges: " + arg[Ci+1] + ", " + arg[Ci+2] );
 
-				System.err.println(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
+				LoggerFactory.getLogger(this.getClass()).error(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
 
 				Ci = Ci + 4;
 			} else {
@@ -369,11 +370,11 @@ public class TReductionController implements GraphReduction {
 					}
 
 				} catch( Exception e ) {
-					System.err.println("Couldn't parse integer or out of bounds!! ");
+					LoggerFactory.getLogger(this.getClass()).error("Couldn't parse integer or out of bounds!! ");
 					System.exit( 1 );
 				}
 
-				System.err.println(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
+				LoggerFactory.getLogger(this.getClass()).error(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
 
 				/*
 				// whatever it is - the construction is right with "cmd ( name1 name2 )"
@@ -440,7 +441,7 @@ public class TReductionController implements GraphReduction {
 
 				System.out.println( " ~~~ CMD: compareStats: " + arg[Ci + 1] + ", " + arg[Ci + 2] );
 
-				System.err.println(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
+				LoggerFactory.getLogger(this.getClass()).error(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
 
 				/*
 				// whatever it is - the construction is right with "cmd ( name1 name2 )"
@@ -489,7 +490,7 @@ public class TReductionController implements GraphReduction {
 					return terminateCommandChain( " Couldn't parse integer or out of bounds!! " );
 				}
 
-				System.err.println(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
+				LoggerFactory.getLogger(this.getClass()).error(" ||||||||||||||||||||||||||||| \n||| COMPARE EDGES NOT REIMPLEMENTED YET! \n|||||||||||||||||||||||||||||\n");
 
 				/*
 				// whatever it is - the construction is right with "cmd ( name1 name2 )"
@@ -1686,11 +1687,11 @@ public class TReductionController implements GraphReduction {
 
                     } catch ( NumberFormatException e ) {
 						System.out.println(" couldn't parse command: " + sBuf );
-                        System.err.println(" couldn't parse command: " + sBuf );
+						LoggerFactory.getLogger(this.getClass()).error(" couldn't parse command: " + sBuf );
                         return EXIT_LOOP;
 					} catch( InputMismatchException e ) {
 						System.out.println(" couldn't parse command: " + sBuf );
-						System.err.println(" couldn't parse command: " + sBuf );
+						LoggerFactory.getLogger(this.getClass()).error(" couldn't parse command: " + sBuf );
 						return EXIT_LOOP;
 					}
 				}
@@ -1700,7 +1701,7 @@ public class TReductionController implements GraphReduction {
         }
 
 		if ( bTerminateCurrentCommands )
-			System.err.println(" Commands terminated. ");
+			LoggerFactory.getLogger(this.getClass()).error(" Commands terminated. ");
 
 		return ( HasDeletedEdgeLastTime ) ? TReductionController.EXECUTE_LOOP : TReductionController.EXIT_LOOP; // only necessary for "*"
 	}

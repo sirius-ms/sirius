@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -168,7 +169,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             instance.setDistribution(new IsotopicDistributionBlueObeliskReader().getFromClasspath());
             instance.addDefaultIons();
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(PeriodicTable.class).error(e.getMessage(),e);
         }
 
     }

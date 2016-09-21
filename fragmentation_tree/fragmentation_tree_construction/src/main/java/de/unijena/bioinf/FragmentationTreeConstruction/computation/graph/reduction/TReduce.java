@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import gnu.trove.map.TIntDoubleMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -78,7 +79,7 @@ public class TReduce {
 
         gTraversedVertex = new BitSet(gGraph.numberOfVertices());
         if (!checkVerticesAreTopSorted(gGraph.getRoot())) {
-            System.err.println(errMsg);
+            LoggerFactory.getLogger(this.getClass()).error(errMsg);
             System.exit(1);
         }
     }
@@ -861,7 +862,7 @@ public class TReduce {
                 double cost = bestInEdgeToColor[colorsFromColor[i].get(j)].besLoss.getWeight() - bestInEdgeToColor[colorsFromColor[i].get(j)].secondBesLoss.getWeight();
 
                 if (cost == Double.POSITIVE_INFINITY)
-                    System.err.println(" positive infinity! ");
+                    LoggerFactory.getLogger(this.getClass()).error("positive infinity!");
 
                 repairCostsFromVertex.adjustOrPutValue(bestInEdgeToColor[colorsFromColor[i].get(j)].besLoss.getSource().getVertexId(), cost, cost);
                 totalRepairCost += cost;
