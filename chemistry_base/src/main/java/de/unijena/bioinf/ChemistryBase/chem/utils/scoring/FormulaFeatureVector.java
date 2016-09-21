@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.Math.*;
 
@@ -196,7 +197,7 @@ class FormulaFeatureVector {
         final double y = (x-loc)/scale;
         final double pdf = 1d / (s*y*sqrt(2*PI)) * exp(-1d/2d*Math.pow((log(y)/s),2));
         if (Double.isInfinite(pdf) || Double.isNaN(pdf))
-            System.err.println("WTF?");
+            System.err.println("WTF?"); //todo ist this dubug?
         return pdf / scale;
     }
 

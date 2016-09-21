@@ -22,6 +22,7 @@ import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -61,7 +62,7 @@ public class SiriusResultWriter implements Closeable {
                 try {
                     writer.write(input, exp);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     throw new RuntimeException();
                 }
                 return null;
@@ -80,7 +81,7 @@ public class SiriusResultWriter implements Closeable {
                         try {
                             new FTJsonWriter().writeTree(input,ir.getTree());
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                             throw new RuntimeException(e);
                         }
                         return null;
@@ -106,7 +107,7 @@ public class SiriusResultWriter implements Closeable {
             return sw.toString();
         } catch (IOException e) {
             assert false; // StringIO should not raise IO exceptions
-            e.printStackTrace();
+            LoggerFactory.getLogger(SiriusResultWriter.class).error(e.getMessage(),e);
             throw new RuntimeException(e);
         }
     }
