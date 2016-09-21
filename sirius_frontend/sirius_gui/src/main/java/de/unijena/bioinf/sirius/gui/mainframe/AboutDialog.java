@@ -20,6 +20,8 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.load.LoadSpectraCellRenderer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -69,7 +71,7 @@ public class AboutDialog extends JDialog{
                         try {
                             Desktop.getDesktop().browse(e.getURL().toURI());
                         } catch (Exception error) {
-                            error.printStackTrace();
+                            LoggerFactory.getLogger(this.getClass()).error(error.getMessage(),error);
                         }
                     }
                 }

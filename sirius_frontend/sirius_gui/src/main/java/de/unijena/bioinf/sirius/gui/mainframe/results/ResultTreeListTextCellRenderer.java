@@ -4,6 +4,7 @@ import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 			propertyFont = tempFont.deriveFont(12f);
 			rankFont = tempFont.deriveFont(16f);
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		try{
@@ -56,7 +57,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");

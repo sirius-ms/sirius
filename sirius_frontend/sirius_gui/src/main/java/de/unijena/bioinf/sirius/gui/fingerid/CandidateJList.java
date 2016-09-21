@@ -33,6 +33,7 @@ import org.openscience.cdk.renderer.AtomContainerRenderer;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.*;
 import org.openscience.cdk.renderer.visitor.AWTDrawVisitor;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -232,7 +233,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             try {
                 Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.compound.inchi.key2D() + "%22[InChIKey]"));
             } catch (IOException | URISyntaxException e1) {
-                e1.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
             }
         } else if (e.getSource() == OpenInBrowser2) {
             if (c.compound.databases == null) return;
@@ -246,7 +247,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                         Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(entry.getValue()))));
                     }
                 } catch (IOException | URISyntaxException e1) {
-                    e1.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
                 }
             }
         }
@@ -288,7 +289,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 new CSVExporter().exportToFile(selectedFile, data);
             } catch (Exception e2) {
                 ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
-                e2.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(),e2);
             }
         }
     }
@@ -385,7 +386,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 }
             }
         } catch (IOException | URISyntaxException e1) {
-            e1.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
         }
     }
 
@@ -621,7 +622,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 try {
                     sdg.generateCoordinates();
                 } catch (CDKException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
                 renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
                 synchronized (molecule.compound) {

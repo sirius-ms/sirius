@@ -5,12 +5,13 @@ package de.unijena.bioinf.sirius.cli;
  * 15.06.16.
  */
 
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusApplication {
+public class SiriusApplication extends ApplicationCore {
 
     public static void main(String[] args) {
         final FingeridApplication cli = new FingeridApplication();

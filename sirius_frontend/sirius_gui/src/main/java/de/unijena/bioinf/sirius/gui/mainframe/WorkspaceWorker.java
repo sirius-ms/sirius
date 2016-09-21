@@ -22,6 +22,7 @@ import com.google.common.collect.Iterators;
 import de.unijena.bioinf.sirius.gui.dialogs.ImportWorkspaceDialog;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
@@ -122,7 +123,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
             try {
                 new WorkspaceIO().load(file, publishingQueue);
             } catch (Exception e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 this.errorMessage = e.toString();
                 return null;
             }

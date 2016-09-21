@@ -35,11 +35,21 @@ public abstract class ApplicationCore {
     public final static String CITATION;
     public final static String CITATION_BIBTEX;
 
-
     //creating
     static {
+        //intit build properties
+        final Properties BUILD_PROPERTIES = new Properties();
+        try (InputStream input = ApplicationCore.class.getResourceAsStream("/siriusBuild.properties")) {
+            // load a properties file
+            BUILD_PROPERTIES.load(input);
+            System.getProperties().putAll(BUILD_PROPERTIES);
+        } catch (IOException | NullPointerException e) {
+            System.err.println("WARNING: could not load Build Properties");
+            e.printStackTrace();
+        }
+
         //init workspace
-        final Path DEFAULT_WORKSPACE = Paths.get(System.getProperty("user.home")).resolve(".sirius");
+        final Path DEFAULT_WORKSPACE = Paths.get(System.getProperty("user.home")).resolve(BUILD_PROPERTIES.getProperty("de.unijena.bioinf.sirius.ws"));
         final Map<String, String> env = System.getenv();
         String ws = env.get("SIRIUS_WORKSPACE");
 
@@ -58,7 +68,7 @@ public abstract class ApplicationCore {
                     WORKSPACE = wsDir;
                 }
             } else {
-                System.err.println(wsDir.toString() + " is not a directory! Falling back to default Workspace - " + DEFAULT_WORKSPACE.toString());//todo use logging (warning)
+                System.err.println("WARNING: " + wsDir.toString() + " is not a directory! Falling back to default Workspace - " + DEFAULT_WORKSPACE.toString());
                 WORKSPACE = DEFAULT_WORKSPACE;
             }
         } else {
@@ -71,35 +81,29 @@ public abstract class ApplicationCore {
             } catch (IOException e) {
                 System.err.println("Could NOT create Workspace");
                 e.printStackTrace();
+                System.exit(1);
             }
         }
 
         //init logging stuff
-        Path loggingPropFile =  WORKSPACE.resolve("logging.properties");
-        if (Files.notExists(loggingPropFile)){
+        Path loggingPropFile = WORKSPACE.resolve("logging.properties");
+        if (Files.notExists(loggingPropFile)) {
             try (InputStream input = ApplicationCore.class.getResourceAsStream("/logging.properties")) {
                 // move default properties file
-                Files.copy(input,loggingPropFile);
+                Files.copy(input, loggingPropFile);
+
             } catch (IOException | NullPointerException e) {
+                System.err.println("Could not set logging properties, using default java logging properties and directories");
                 e.printStackTrace();
             }
         }
-        if (Files.exists(loggingPropFile)){
-            System.setProperty("java.util.logging.config.file",loggingPropFile.toString());
+
+        if (Files.exists(loggingPropFile)) {
+            System.setProperty("java.util.logging.config.file", loggingPropFile.toString());
         }
 
         DEFAULT_LOGGER = LoggerFactory.getLogger(ApplicationCore.class);
         DEFAULT_LOGGER.debug("Logging service initialized!");
-
-        //intit build properties
-        final Properties BUILD_PROPERTIES = new Properties();
-        try (InputStream input = ApplicationCore.class.getResourceAsStream("/siriusBuild.properties")) {
-            // load a properties file
-            BUILD_PROPERTIES.load(input);
-            System.getProperties().putAll(BUILD_PROPERTIES);
-        } catch (IOException | NullPointerException e) {
-            e.printStackTrace();
-        }
 
         final String version = System.getProperty("de.unijena.bioinf.sirius.version");
         VERSION_STRING = version != null ? "Sirius " + version : "Sirius";
@@ -120,24 +124,24 @@ public abstract class ApplicationCore {
             USER_PROPERTIES.load(stream);
             changeDefaultPropterty("de.unijena.bioinf.sirius.fingerID.cache", WORKSPACE.resolve("csi_fingerid_cache").toString());
         } catch (IOException e) {
-            DEFAULT_LOGGER.error("Could NOT create Properties file",e);
-//            System.exit(1);
+            DEFAULT_LOGGER.error("Could NOT create sirius properties file", e);
         }
 
 
         if (Files.exists(USER_PROPERTIES_FILE)) {
             try (InputStream stream = Files.newInputStream(USER_PROPERTIES_FILE)) {
-                Properties tmp =  new Properties();
+                Properties tmp = new Properties();
                 tmp.load(stream);
                 USER_PROPERTIES.putAll(tmp);
             } catch (IOException e) {
-                DEFAULT_LOGGER.warn("Could NOT load Properties form user properties file, falling back to default properties",e);
+                DEFAULT_LOGGER.warn("Could NOT load Properties form user properties file, falling back to default properties", e);
             }
         }
 
         addDefaultProptery("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
         storeUserProperties();
         DEFAULT_LOGGER.debug("application properties initialized!");
+        DEFAULT_LOGGER.info("Application core Successfull initialized");
     }
 
     public static void addDefaultPropteries(File properties) throws IOException {
@@ -187,10 +191,10 @@ public abstract class ApplicationCore {
             try (OutputStream stream = Files.newOutputStream(USER_PROPERTIES_FILE, StandardOpenOption.CREATE_NEW)) {
                 USER_PROPERTIES.store(stream, USER_PROPERTIES_FILE_HAEDER);
             } catch (IOException e) {
-                DEFAULT_LOGGER.error("Could not save new Properties file! Changes not saved!",e);
+                DEFAULT_LOGGER.error("Could not save new Properties file! Changes not saved!", e);
             }
         } catch (IOException e) {
-            DEFAULT_LOGGER.error("Could not remove old Properties file! Changes not saved!",e);
+            DEFAULT_LOGGER.error("Could not remove old Properties file! Changes not saved!", e);
         }
     }
 }

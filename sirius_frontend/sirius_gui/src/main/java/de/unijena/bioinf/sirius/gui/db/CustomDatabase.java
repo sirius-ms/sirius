@@ -31,6 +31,7 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.smiles.smarts.parser.SMARTSParser;
+import org.slf4j.LoggerFactory;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -160,7 +161,7 @@ public class CustomDatabase {
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
                 }
             }
@@ -172,7 +173,7 @@ public class CustomDatabase {
                 try {
                     writeSettings();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
             }
         }

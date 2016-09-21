@@ -10,6 +10,7 @@ import de.unijena.bioinf.sirius.*;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -232,7 +233,7 @@ class RunThread implements Runnable{
 			success = (results!=null && results.size()>0);
 		} catch (final Exception e) {
 			success = false;
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {

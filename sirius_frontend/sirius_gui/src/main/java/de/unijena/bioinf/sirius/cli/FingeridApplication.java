@@ -25,6 +25,8 @@ import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import gnu.trove.list.array.TIntArrayList;
 import org.openscience.cdk.exception.CDKException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -38,7 +40,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class FingeridApplication extends CLI<FingerIdOptions> {
-
     private static final String FINGERID_RESULT_HEADER = "instance\tinchi\tinchikey2D\tname\tsmiles\tscore\tconfidence\n";
     protected Fingerblast fingerblast;
     protected WebAPI webAPI;
@@ -78,7 +79,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 fingerIdResultWriter.write(FINGERID_RESULT_HEADER);
                 orderedByConfidence = new ArrayList<>();
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 fingerIdResultWriter = null;
             }
 
@@ -97,7 +98,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 if (webAPI!=null) webAPI.close();
                 if (fingerblast!=null) fingerblast.getSearchEngine().close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         }
     }
@@ -116,10 +117,8 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     System.out.println("import\t" + inchi.key2D() + "\t" + inchi.in2D);
                 }
             });
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CDKException e) {
-            e.printStackTrace();
+        } catch (IOException | CDKException e) {
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
     }
 
@@ -204,7 +203,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     fingerIdResultWriter.flush();
                     orderedByConfidence.add(new Scored<String>(line, confidenceScore));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
             }
 
@@ -255,20 +254,12 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
 
         }
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-            executorService.shutdown();
-            System.exit(1);
-        } catch (DatabaseException e) {
-            e.printStackTrace();
-            executorService.shutdown();
-            System.exit(1);
-        } catch (PredictionException e) {
-            e.printStackTrace();
+        } catch (InterruptedException | ExecutionException | DatabaseException | PredictionException e) {
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             executorService.shutdown();
             System.exit(1);
         } finally {
@@ -293,7 +284,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     public void validate() {
         super.validate();
         if (options.isIonTree() && options.isFingerid()) {
-            System.err.println("--iontree and --fingerid cannot be enabled both. Please disable one of them.");
+            LoggerFactory.getLogger(this.getClass()).error("--iontree and --fingerid cannot be enabled both. Please disable one of them.");
             System.exit(1);
         }
     }
@@ -320,7 +311,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             }
             this.fingerprintVersion = b.toMask();
         } catch (IOException e) {
-            System.err.println("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de");
+            LoggerFactory.getLogger(this.getClass()).error("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de",e);
             System.exit(1);
         }
         progress.info("CSI:FingerId initialization done.");
@@ -360,7 +351,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 }
                 return allowedSet;
             } catch (DatabaseException e) {
-                System.err.println("Connection to database fails. Probably our webservice is currently offline. You can still use SIRIUS in offline mode - you just have to remove the database flags -d or --database because database search is not available in offline mode.");
+                LoggerFactory.getLogger(this.getClass()).error("Connection to database fails. Probably our webservice is currently offline. You can still use SIRIUS in offline mode - you just have to remove the database flags -d or --database because database search is not available in offline mode.",e);
                 System.exit(1);
                 return null;
             }
@@ -378,7 +369,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
         aliasMap.put("all", 0);
         if (!aliasMap.containsKey(options.getDatabase())) {
-            System.err.println("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(aliasMap.keySet()));
+            LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(aliasMap.keySet()));
         }
         return aliasMap;
     }

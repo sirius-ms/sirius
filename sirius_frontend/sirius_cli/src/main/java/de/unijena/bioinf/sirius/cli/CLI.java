@@ -40,6 +40,8 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusResultWriter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -49,8 +51,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CLI<Options extends SiriusOptions> extends ApplicationCore {
-
+public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     protected Sirius sirius;
     protected final boolean shellMode;
     protected ShellProgress progress;
@@ -138,7 +139,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             }
             if (siriusResultWriter!=null) siriusResultWriter.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(CLI.class).error(e.getMessage(),e);
         }
     }
 
@@ -333,7 +334,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             }
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
             if (builder instanceof DPTreeBuilder) {
-                System.err.println("Cannot load ILP solver. Please read the installation instructions.");
+                LoggerFactory.getLogger(CLI.class).error("Cannot load ILP solver. Please read the installation instructions.");
                 System.exit(1);
             }
             System.out.println("Compute trees using " + builder.getDescription());
@@ -350,8 +351,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             });
             */
         } catch (IOException e) {
-            System.err.println("Cannot load profile '" + options.getProfile() + "':\n");
-            e.printStackTrace();
+            LoggerFactory.getLogger(CLI.class).error("Cannot load profile '" + options.getProfile() + "':\n",e);
             System.exit(1);
         }
     }
@@ -361,7 +361,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         final File target = options.getOutput();
         if (target != null) {
             if (target.exists() && !target.isDirectory()) {
-                System.err.println("Specify a directory name as output directory");
+                LoggerFactory.getLogger(CLI.class).error("Specify a directory name as output directory");
                 System.exit(1);
             } else if (target.getName().indexOf('.') < 0){
                 target.mkdirs();
@@ -370,7 +370,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
         final String format = options.getFormat();
         if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot") && !format.equalsIgnoreCase("sirius")) {
-            System.err.println("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
+            LoggerFactory.getLogger(CLI.class).error("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
             System.exit(1);
         }
     }
@@ -522,11 +522,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                                 try {
                                     GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
                                     if (p==null) {
-                                        System.err.println("Unknown file format: '" + currentFile + "'");
+                                        LoggerFactory.getLogger(CLI.class).error("Unknown file format: '" + currentFile + "'");
                                     } else experimentIterator = p.parseFromFileIterator(currentFile);
                                 } catch (IOException e) {
-                                    System.err.println("Cannot parse file '" + currentFile + "':\n");
-                                    e.printStackTrace();
+                                    LoggerFactory.getLogger(CLI.class).error("Cannot parse file '" + currentFile + "':\n",e);
                                 }
                             } else return null;
                         } else {

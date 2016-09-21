@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -100,7 +102,7 @@ public class StructureSearcher implements Runnable {
                 updater.id = c.index;
                 SwingUtilities.invokeLater(updater.clone());
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         }
     }

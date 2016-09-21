@@ -38,6 +38,7 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TIntArrayList;
+import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
@@ -267,7 +268,7 @@ public class CSIFingerIdComputation {
                 final List<String> content = Files.readAllLines(f.toPath(), Charset.forName("UTF-8"));
                 if (content.size()>0 && !versionNumber.databaseOutdated(content.get(0)) ) return false;
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         }
         return true;
@@ -278,7 +279,7 @@ public class CSIFingerIdComputation {
         try {
             destroyCache();
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             // might happen, especially under Windows. But I don't wanna make a proper error dialogue for that
         }
     }
@@ -488,7 +489,7 @@ public class CSIFingerIdComputation {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
                 if (webAPI.updateJobStatus(job)) {
                     platts=job.prediction;
@@ -536,7 +537,7 @@ public class CSIFingerIdComputation {
                 webAPI.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             return;
         } finally {
             globalLock.unlock();
@@ -565,7 +566,7 @@ public class CSIFingerIdComputation {
                 data.confidence = queryPredictor.estimateProbability(query, candidates);
             } catch (PredictionException e) {
                 data.confidence = Double.NaN;
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         }
 
@@ -581,7 +582,7 @@ public class CSIFingerIdComputation {
                 try {
                     wait();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
             }
             final WebAPI webAPI = new WebAPI();
@@ -603,7 +604,7 @@ public class CSIFingerIdComputation {
                             this.wait();
                         }
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
                 } else {
                     // download molecular formulas
@@ -639,7 +640,7 @@ public class CSIFingerIdComputation {
             try {
                 globalCondition.await();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             } finally {
                 globalLock.unlock();
             }
@@ -658,14 +659,14 @@ public class CSIFingerIdComputation {
                             jobQueue.add(container);
                             container.job.error(e.getMessage(), e);
                         } catch (URISyntaxException e) {
-                            e.printStackTrace();
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                             container.job.error(e.getMessage(), e);
                         }
                     }
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
                 }
                 final Iterator<Map.Entry<FingerIdTask, FingerIdJob>> iter = jobs.entrySet().iterator();
@@ -688,7 +689,7 @@ public class CSIFingerIdComputation {
                     } catch (URISyntaxException e) {
                         iter.remove();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
                 }
 
@@ -696,7 +697,7 @@ public class CSIFingerIdComputation {
                     try {
                         synchronized (this) {wait();};
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
                 }
 
@@ -715,7 +716,7 @@ public class CSIFingerIdComputation {
             try {
                 globalCondition.await();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             } finally {
                 globalLock.unlock();
             }
@@ -761,7 +762,7 @@ public class CSIFingerIdComputation {
                         container.job.error(e.getMessage(), e);
                     }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
 
 

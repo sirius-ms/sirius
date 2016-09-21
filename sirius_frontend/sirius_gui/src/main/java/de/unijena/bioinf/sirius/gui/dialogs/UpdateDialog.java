@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,10 +40,8 @@ public class UpdateDialog extends JDialog implements ActionListener{
         } else if (e.getSource()==download) {
             try {
                 Desktop.getDesktop().browse(new URI(WebAPI.SIRIUS_DOWNLOAD));
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            } catch (URISyntaxException e1) {
-                e1.printStackTrace();
+            } catch (IOException | URISyntaxException e1) {
+                LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
             }
         }
         this.dispose();

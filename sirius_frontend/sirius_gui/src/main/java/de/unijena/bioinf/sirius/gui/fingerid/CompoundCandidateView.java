@@ -22,6 +22,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,11 +119,11 @@ public class CompoundCandidateView extends JPanel {
                                 } else {
                                     return "Timeout occured. The compute cluster is too busy to process your job. Please try again at later time.";
                                 }
-                            } catch (IOException e1) {
-                                e1.printStackTrace();
-                                return e1.getMessage();
+                            } catch (IOException e) {
+                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                                return e.getMessage();
                             } catch (RuntimeException e)  {
-                                e.printStackTrace();
+                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                                 return e.getMessage();
                             }
                         }

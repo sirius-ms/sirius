@@ -1,5 +1,7 @@
 package de.unijena.bioinf.sirius.gui.ext;
 
+import org.slf4j.LoggerFactory;
+
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
@@ -32,7 +34,7 @@ public class DragAndDrop {
         }
             return files;
         } catch (UnsupportedFlavorException | IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(DragAndDrop.class).error(e.getMessage(),e);
             return Collections.emptyList();
         }
     }

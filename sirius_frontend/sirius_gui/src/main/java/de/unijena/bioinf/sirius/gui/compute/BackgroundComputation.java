@@ -28,11 +28,14 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.cli.FingeridApplication;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -41,8 +44,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BackgroundComputation {
-
-
     private final MainFrame owner;
     private final ConcurrentLinkedQueue<Task> queue;
     private final Worker[] workers;
@@ -277,7 +278,7 @@ public class BackgroundComputation {
                 container.results = results;
                 if (results==null || results.size()==0) container.state = ComputingStatus.FAILED;
             } catch (Exception e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 container.state = ComputingStatus.FAILED;
                 container.job.error(e.getMessage(), e);
                 container.results=new ArrayList<>();

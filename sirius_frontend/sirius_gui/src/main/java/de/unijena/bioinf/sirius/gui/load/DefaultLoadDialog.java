@@ -8,6 +8,7 @@ import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -494,7 +495,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 				dtde.dropComplete(true);
 			}
 	    }catch(Exception e){
-	    	e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 	    	dtde.rejectDrop();
 	    }
 	    

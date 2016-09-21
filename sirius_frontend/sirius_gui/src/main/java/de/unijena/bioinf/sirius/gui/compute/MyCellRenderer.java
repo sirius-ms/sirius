@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.myxo.structure.CompactPeak;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +91,7 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			textfont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		massColor = Color.BLACK;

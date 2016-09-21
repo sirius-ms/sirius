@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.load;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			
 			propertyFont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		try{
@@ -54,7 +55,7 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");

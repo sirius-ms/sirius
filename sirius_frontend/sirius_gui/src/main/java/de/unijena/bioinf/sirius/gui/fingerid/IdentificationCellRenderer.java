@@ -5,6 +5,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.*;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +58,7 @@ public class IdentificationCellRenderer extends JPanel implements ListCellRender
 
             propertyFont = tempFont.deriveFont(12f);
         }catch(Exception e){
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
 
         try{
@@ -66,7 +67,7 @@ public class IdentificationCellRenderer extends JPanel implements ListCellRender
             valueFont = tempFont.deriveFont(12f);
 
         }catch(Exception e){
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
 
         selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");

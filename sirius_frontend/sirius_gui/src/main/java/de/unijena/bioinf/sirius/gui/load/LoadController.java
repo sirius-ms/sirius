@@ -6,6 +6,7 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.cli.FingeridApplication;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
@@ -19,6 +20,8 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
@@ -27,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class LoadController implements LoadDialogListener{
-
 	LoadDialog loadDialog;
 	
 	private ExperimentContainer workingExp, inputExp;
@@ -260,8 +262,9 @@ public class LoadController implements LoadDialogListener{
 						importExperimentContainer(SiriusDataConverter.siriusExperimentToExperimentContainer(iter.next()),errorStorage);
 					}
 				} catch (Exception e) {
-                    e.printStackTrace();
-					errorStorage.add(file.getName()+": Invalid file format.");
+					String m = file.getName()+": Invalid file format.";
+					LoggerFactory.getLogger(this.getClass()).error(m,e);
+					errorStorage.add(m);
 					continue;
 				}
 			}
@@ -354,7 +357,7 @@ public class LoadController implements LoadDialogListener{
 			workingExp.getMs2Spectra().remove(sp);
 			this.loadDialog.spectraRemoved(sp);
 		}else{
-			System.err.println("unexpected ms level: "+sp.getMSLevel());
+			LoggerFactory.getLogger(this.getClass()).error("unexpected ms level: "+sp.getMSLevel());
 		}
 		if(workingExp.getMs1Spectra().isEmpty()&&workingExp.getMs2Spectra().isEmpty()){
 			workingExp.setDataFocusedMass(-1);

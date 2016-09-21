@@ -25,6 +25,7 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.generators.HighlightGenerator;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.util.*;
@@ -69,7 +70,7 @@ public class CompoundCandidate {
             sdg.setMolecule(compound.getMolecule(), false);
             sdg.generateCoordinates();
         } catch (CDKException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             return false;
         }
         atomCoordinatesAreComputed = true;
@@ -111,7 +112,7 @@ public class CompoundCandidate {
                     }
                 }
             } catch (CDKException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
             molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);
             return true;
@@ -135,7 +136,7 @@ public class CompoundCandidate {
             final FasterSmartsQueryTool tool = new FasterSmartsQueryTool("Br", DefaultChemObjectBuilder.getInstance());
             tool.matches(compound.getMolecule());
         } catch (CDKException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
 
     }

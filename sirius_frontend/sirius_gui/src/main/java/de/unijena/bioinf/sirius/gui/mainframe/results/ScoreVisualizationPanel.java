@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColorManager;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +39,7 @@ public class ScoreVisualizationPanel extends JPanel {
 			valueFont = tempFont.deriveFont(10f);
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 	}

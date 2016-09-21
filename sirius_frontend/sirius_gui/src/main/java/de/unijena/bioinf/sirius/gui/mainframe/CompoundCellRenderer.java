@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +57,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			
 			propertyFont = tempFont.deriveFont(12f);
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		try{
@@ -65,7 +66,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			valueFont = tempFont.deriveFont(12f);
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");

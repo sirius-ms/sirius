@@ -21,7 +21,6 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
@@ -43,12 +42,16 @@ import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
 import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -289,7 +292,7 @@ public class Compound {
             }
             // calculate xlogP
         } catch (CDKException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             return parseMoleculeFromSmiles();
         }
     }
@@ -304,7 +307,7 @@ public class Compound {
                 this.inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             }
         } catch (CDKException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
     }
 

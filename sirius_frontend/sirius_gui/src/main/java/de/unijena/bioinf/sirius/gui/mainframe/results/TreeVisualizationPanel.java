@@ -14,6 +14,7 @@ import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -248,7 +249,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 					}
 				}catch(Exception e2){
 					ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
-					e2.printStackTrace();
+					LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(),e2);
 				}
 				
 				

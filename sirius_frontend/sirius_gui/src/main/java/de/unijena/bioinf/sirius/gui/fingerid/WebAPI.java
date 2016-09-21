@@ -53,6 +53,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
+import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -109,12 +110,12 @@ public class WebAPI implements Closeable {
 
                 }
             } catch (ClientProtocolException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
         return null;
     }
@@ -261,7 +262,7 @@ public class WebAPI implements Closeable {
         try {
             get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").build());
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             throw new RuntimeException(e);
         }
         final TIntArrayList[] lists = new TIntArrayList[5];
@@ -318,14 +319,14 @@ public class WebAPI implements Closeable {
                 br.close();
                 return qp;
             } catch (ClientProtocolException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 return null;
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 return null;
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             throw new RuntimeException(e);
         }
     }

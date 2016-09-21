@@ -356,7 +356,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                     publish(result);
                     return result;
                 } catch (Exception e) {
-                    e.printStackTrace();
+					LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     final VersionsInfo resultAlternative = new VersionsInfo("unknown","unknown","unknown");
                     publish(resultAlternative);
                     return resultAlternative;
@@ -713,10 +713,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		worker.flushBuffer();
 		try {
 			worker.get();
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		} catch (ExecutionException e1) {
-			e1.printStackTrace();
+		} catch (InterruptedException | ExecutionException e1) {
+			LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
 		}
 		worker.flushBuffer();
 		if (worker.hasErrorMessage()) {

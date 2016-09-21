@@ -10,6 +10,7 @@ import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.jdesktop.swingx.StackLayout;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -251,7 +252,7 @@ public class DatabaseDialog extends JDialog {
                 right.setFont(tempFont);
                 left.setFont(tempFont.deriveFont(Font.BOLD));
             } catch (FontFormatException | IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         }
 
@@ -358,7 +359,7 @@ public class DatabaseDialog extends JDialog {
                             try {
                                 details.getDocument().insertString(details.getDocument().getLength(), status.errorMessage + "\n", null);
                             } catch (BadLocationException e) {
-                                e.printStackTrace();
+                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                             }
                         }
                     }
@@ -418,7 +419,7 @@ public class DatabaseDialog extends JDialog {
                         importer.flushBuffer();
                         doNotCancel=false;
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                         throw(e);
                     }
                     return inchis;
@@ -487,7 +488,7 @@ public class DatabaseDialog extends JDialog {
                     try {
                         importer.writeSettings();
                     } catch (IOException e1) {
-                        e1.printStackTrace();
+                        LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(),e1);
                     }
                 }
             });
