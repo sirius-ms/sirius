@@ -337,7 +337,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 LoggerFactory.getLogger(CLI.class).error("Cannot load ILP solver. Please read the installation instructions.");
                 System.exit(1);
             }
-            System.out.println("Compute trees using " + builder.getDescription());
+            LoggerFactory.getLogger(CLI.class).info("Compute trees using " + builder.getDescription());
 
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
