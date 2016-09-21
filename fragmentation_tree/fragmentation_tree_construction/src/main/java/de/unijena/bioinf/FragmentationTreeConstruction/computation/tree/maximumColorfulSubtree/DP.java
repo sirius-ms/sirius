@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -448,7 +449,7 @@ class DP {
             if (!node.isRoot()) score += node.getIncomingEdge().getWeight();
         }
         if (!isEqual(score, result.getAnnotationOrThrow(TreeScoring.class).getOverallScore())) {
-            System.err.println(")/");
+            LoggerFactory.getLogger(this.getClass()).error(")/");
         }
         return isEqual(score, result.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
     }

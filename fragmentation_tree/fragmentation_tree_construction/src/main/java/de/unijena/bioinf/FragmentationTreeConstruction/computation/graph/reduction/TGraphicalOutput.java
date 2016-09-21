@@ -20,6 +20,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduct
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -113,7 +114,7 @@ public class TGraphicalOutput {
                 drawMode = DRAW_EDGES;
                 break;
             default:
-                System.err.println("Unknown draw mode: " + drawMode );
+                LoggerFactory.getLogger(TGraphicalOutput.class).error("Unknown draw mode: " + drawMode );
                 System.out.println("||- aborted -|-|-|-|-|");
                 System.out.println("||-|-|-|-|-|-|-|-|-|-|");
                 return;
@@ -128,7 +129,7 @@ public class TGraphicalOutput {
     private static boolean drawMode_UpperBounds( Graphics2D g2d, final int width, final int height, final int maxColorEntry, final java.util.List<Fragment> vertices, final double[] ub ) {
 
         if ( ub.length != vertices.size() ) {
-            System.err.println(" ub length doesn't match vertices length! abort drawing graph!");
+            LoggerFactory.getLogger(TGraphicalOutput.class).error(" ub length doesn't match vertices length! abort drawing graph!");
             return false;
         }
 
@@ -173,7 +174,7 @@ public class TGraphicalOutput {
         }
 
         if ( min == Double.POSITIVE_INFINITY || max == Double.NEGATIVE_INFINITY || min == max ) {
-            System.err.println(" min and max of upper bound values are invalid: infinite or equal! abort drawing.");
+            LoggerFactory.getLogger(TGraphicalOutput.class).error(" min and max of upper bound values are invalid: infinite or equal! abort drawing.");
             return false;
         }
 
@@ -313,7 +314,7 @@ public class TGraphicalOutput {
     public static void setModeUpperBounds( double[] ubs ) {
 
         if ( ubs == null ) {
-            System.err.println(" Cannot use ubs to draw upper bounds, if ubs is null! Gonna use default draw mode instead...");
+            LoggerFactory.getLogger(TGraphicalOutput.class).error(" Cannot use ubs to draw upper bounds, if ubs is null! Gonna use default draw mode instead...");
             return;
         }
 

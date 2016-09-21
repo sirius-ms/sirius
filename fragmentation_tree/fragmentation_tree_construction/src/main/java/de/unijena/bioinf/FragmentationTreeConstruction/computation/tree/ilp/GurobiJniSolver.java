@@ -28,6 +28,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.*;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -54,7 +55,7 @@ public class GurobiJniSolver implements TreeBuilder {
         if (STATIC_MODEL==null) try {
             STATIC_MODEL = new GRBModel(new GRBEnv());
         } catch (GRBException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
     }
 
@@ -73,7 +74,7 @@ public class GurobiJniSolver implements TreeBuilder {
         try {
             return new Solver(graph, input, lowerbound, null, 0).solve();
         } catch (GRBException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             return null;
         }
     }

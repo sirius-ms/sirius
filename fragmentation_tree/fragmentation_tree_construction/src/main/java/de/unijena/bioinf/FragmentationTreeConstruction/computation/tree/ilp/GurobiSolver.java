@@ -27,6 +27,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gurobi.*;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -137,7 +138,7 @@ public class GurobiSolver implements TreeBuilder {
             solver.model.getTuneResult(0);
             solver.model.write(file.getName());
         } catch (GRBException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
 
     }
