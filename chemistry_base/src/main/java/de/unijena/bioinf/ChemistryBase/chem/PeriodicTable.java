@@ -270,7 +270,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             positiveIonTypes.put(pos, parseIonType(pos));
 
 
-            System.out.println(pos + "\t=>\t" + positiveIonTypes.get(pos)+ "\t=\t" + positiveIonTypes.get(pos).getIonization().toString() + " ionization with " + positiveIonTypes.get(pos).getAdduct().toString() + " adduct");
+            //System.out.println(pos + "\t=>\t" + positiveIonTypes.get(pos)+ "\t=\t" + positiveIonTypes.get(pos).getIonization().toString() + " ionization with " + positiveIonTypes.get(pos).getAdduct().toString() + " adduct");
 
             assert positiveIonTypes.get(pos).getIonization().getCharge() > 0;
         }
