@@ -9,6 +9,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduct
  * *
  */
 
+import org.slf4j.LoggerFactory;
+
 import java.util.LinkedList;
 
 /**
@@ -61,10 +63,10 @@ public abstract class ACommandable {
 			if ( ACommandable.bDebug ) {
 
 				if ( after - start == 0 )
-					System.err.println( " Some command has a runtime of 0 ms. It will not be recognized for speed! " );
+					LoggerFactory.getLogger(this.getClass()).error( " Some command has a runtime of 0 ms. It will not be recognized for speed! " );
 
 				if ( !isConsistent() ) {
-					System.err.println( getInconsistencyErrorMessage() );
+					LoggerFactory.getLogger(this.getClass()).error( getInconsistencyErrorMessage() );
 					throw new RuntimeException( " Inconsistency exception! " );
 				}
 			}
@@ -77,7 +79,7 @@ public abstract class ACommandable {
 			if ( ACommandable.bDebug ) {
 				// it is still possible that there must be a consistency check
 				if ( !isConsistent() ) {
-					System.err.println( getInconsistencyErrorMessage() );
+					LoggerFactory.getLogger(this.getClass()).error( getInconsistencyErrorMessage() );
 					throw new RuntimeException( " Inconsistency exception! " );
 				}
 			}

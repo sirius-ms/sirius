@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms.dot;
 
 import de.unijena.bioinf.graphUtils.tree.TreeAdapter;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class Graph implements Cloneable {
         try {
             write(strw);
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
         return strw.toString();
     }

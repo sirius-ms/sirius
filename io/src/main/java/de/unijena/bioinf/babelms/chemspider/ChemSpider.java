@@ -20,6 +20,7 @@ package de.unijena.bioinf.babelms.chemspider;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.chemdb.CompoundQuery;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -121,12 +122,8 @@ public class ChemSpider implements CompoundQuery {
             final SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
             parser.parse(connection.getInputStream(), handler);
             connection.disconnect();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
+        } catch (IOException | ParserConfigurationException | SAXException e) {
+            LoggerFactory.getLogger(ChemSpider.class).error(e.getMessage(),e);
         }
     }
 

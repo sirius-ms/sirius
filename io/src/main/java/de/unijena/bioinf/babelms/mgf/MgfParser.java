@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -165,7 +166,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         if (i>=0) handleKeyword(prototype, line.substring(0, i), line.substring(i+1));
                     }
                 } catch (RuntimeException e) {
-                    System.err.println(e.getMessage());
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     if (reading) {
                         while ((line=reader.readLine())!=null) {
                             if (line.startsWith("END IONS")) {

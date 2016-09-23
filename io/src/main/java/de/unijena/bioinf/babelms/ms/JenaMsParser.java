@@ -22,6 +22,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -219,7 +220,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
         private void warn(String msg) {
-            System.err.println(lineNumber + ": " + msg);
+            LoggerFactory.getLogger(this.getClass()).error(lineNumber + ": " + msg);
         }
 
         private void parseComment(String line) {

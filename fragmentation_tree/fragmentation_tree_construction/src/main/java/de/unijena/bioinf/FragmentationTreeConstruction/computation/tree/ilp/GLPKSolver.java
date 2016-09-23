@@ -27,6 +27,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.gnu.glpk.*;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
@@ -366,43 +367,43 @@ public class GLPKSolver implements TreeBuilder {
             int status = GLPK.glp_mip_status(this.LP);
             if (status == GLPKConstants.GLP_OPT) {
             } else if (status == GLPKConstants.GLP_FEAS) {
-                System.out.println("The solution is feasible.");
+               LoggerFactory.getLogger(this.getClass()).info("The solution is feasible.");
             } else if (status == GLPKConstants.GLP_INFEAS) {
-                System.out.println("The solution is infeasible!");
+               LoggerFactory.getLogger(this.getClass()).info("The solution is infeasible!");
             } else if (status == GLPKConstants.GLP_NOFEAS) {
-                System.out.println("The problem has no feasible solution!");
+               LoggerFactory.getLogger(this.getClass()).info("The problem has no feasible solution!");
             } else if (status == GLPKConstants.GLP_UNBND) {
-                System.out.println("The problem has unbound solution!");
+               LoggerFactory.getLogger(this.getClass()).info("The problem has unbound solution!");
             } else if (status == GLPKConstants.GLP_UNDEF) {
-                System.out.println("The solution is undefined!");
+               LoggerFactory.getLogger(this.getClass()).info("The solution is undefined!");
             }
 
             if (result == 0)
                 return SolverState.SHALL_BUILD_SOLUTION;
             else if (result == GLPKConstants.GLP_EBADB) {
-                System.err.println("Unable to start the search, because the initial basis speci\fed in the problem object\n" +
+                LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because the initial basis speci\fed in the problem object\n" +
                         "is invalid|the number of basic (auxiliary and structural) variables is not the same\n" +
                         "as the number of rows in the problem object.");
                 throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
             } else if (result == GLPKConstants.GLP_ESING) {
-                System.err.println("Unable to start the search, because the basis matrix corresponding to the initial\n" +
+                LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because the basis matrix corresponding to the initial\n" +
                         "basis is exactly singular.");
                 throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
             } else if (result == GLPKConstants.GLP_EBOUND) {
-                System.err.println("Unable to start the search, because some double-bounded (auxiliary or structural)\n" +
+                LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because some double-bounded (auxiliary or structural)\n" +
                         "variables have incorrect bounds.");
                 throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
             } else if (result == GLPKConstants.GLP_EFAIL) {
-                System.out.println("The problem does not have variables or conditions!");
+               LoggerFactory.getLogger(this.getClass()).error("The problem does not have variables or conditions!");
                 return SolverState.SHALL_RETURN_NULL;
             } else if (result == GLPKConstants.GLP_EITLIM) {
-                System.err.println("GLPK reached iteration limit! Prematurely termination.");
+                LoggerFactory.getLogger(this.getClass()).error("GLPK reached iteration limit! Prematurely termination.");
                 return SolverState.SHALL_RETURN_NULL;
             } else if (result == GLPKConstants.GLP_ETMLIM) {
-                System.err.println("GLPK reached time limit! Prematurely termination.");
+                LoggerFactory.getLogger(this.getClass()).error("GLPK reached time limit! Prematurely termination.");
                 return SolverState.SHALL_RETURN_NULL;
             } else {
-                System.err.println("Unrecognized return value from simplex. Abort!");
+                LoggerFactory.getLogger(this.getClass()).error("Unrecognized return value from simplex. Abort!");
                 return SolverState.SHALL_RETURN_NULL;
             }
         }

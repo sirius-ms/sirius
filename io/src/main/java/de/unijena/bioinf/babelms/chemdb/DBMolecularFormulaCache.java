@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaSet;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.procedure.TIntLongProcedure;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Set;
@@ -163,7 +164,7 @@ public class DBMolecularFormulaCache {
         final double dev = width/2d;
         final double mass = k * width + dev;
         final Set<MolecularFormula> formulas = query.findMolecularFormulasByMass(mass, dev + 1e-5);
-        System.err.println("START QUERY FROM " + (mass-dev) + " TO " + (mass+dev));
+        LoggerFactory.getLogger(this.getClass()).error("START QUERY FROM " + (mass-dev) + " TO " + (mass+dev));
         shortLock.startWriting();
         covered.put(k/64, covered.get(k/64) | (1l<<(k%64)));
         ++changes;

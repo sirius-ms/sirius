@@ -3,6 +3,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.reduct
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -35,7 +36,7 @@ public class TComperator {
 
         System.out.println(" Testing bounds...");
         if ( a.length != b.length ) {
-            System.err.println(" ERROR. Bounds cannot be equal; Unequal array length! ");
+            LoggerFactory.getLogger(TComperator.class).error(" Bounds cannot be equal; Unequal array length! ");
             return false;
         }
 
@@ -44,7 +45,7 @@ public class TComperator {
 		int mult = (int) Math.pow( 10, roundgrade );
 		for( int i=0; i<a.length; i++ ) {
             if ( (int) ( a[i] * mult ) != (int) ( b[i] * mult ) ) {
-                System.err.println(" xX: " + i + ", a: " + a[i] + " , b: " + b[i]);
+                LoggerFactory.getLogger(TComperator.class).error(" xX: " + i + ", a: " + a[i] + " , b: " + b[i]);
                 bfound = true;
             }
         }
@@ -63,7 +64,7 @@ public class TComperator {
 
         System.out.println(" Testing bounds...");
         if ( a.length != b.length ) {
-            System.err.println(" ERROR. Bounds cannot be equal; Unequal array length! ");
+            LoggerFactory.getLogger(TComperator.class).error(" ERROR. Bounds cannot be equal; Unequal array length! ");
             return false;
         }
 
@@ -74,7 +75,7 @@ public class TComperator {
             for( int j=0; j < a[i].length; j++ ) {
 
                 if ( (int) ( a[i][j] * mult ) != (int) ( b[i][j] * mult ) ) {
-                    System.err.println(" xX: ( " + i + " , " + j + " ) , a: " + a[i] + " , b: " + b[i]);
+                    LoggerFactory.getLogger(TComperator.class).error(" xX: ( " + i + " , " + j + " ) , a: " + a[i] + " , b: " + b[i]);
                     bfound = true;
                 }
             }
@@ -132,15 +133,15 @@ public class TComperator {
                 for( Loss e : wrongUnrenumbered ) {
                     System.out.println(" * " + e + " | " + dit.next() );
                 }
-                System.err.println(" ... Unequal edges from g1 in g2");
+                LoggerFactory.getLogger(TComperator.class).error(" ... Unequal edges from g1 in g2");
                 return false;
             } else {
-                System.out.println(" ... Equl edges from g1 in g2!");
+                LoggerFactory.getLogger(TComperator.class).error(" ... Equl edges from g1 in g2!");
                 return true;
             }
 
         } else {
-            System.err.println(" cannot validate correct renumbering: graph NULL or invalid vertex count!");
+            LoggerFactory.getLogger(TComperator.class).error(" cannot validate correct renumbering: graph NULL or invalid vertex count!");
             return false;
         }
     }
@@ -149,7 +150,7 @@ public class TComperator {
     public static boolean compareLowerBounds( double[] lb1, double[] lb2 ) {
 
         if( lb1.length != lb2.length ) {
-            System.err.println("The lower bound tables should have the same size to be compared!");
+            LoggerFactory.getLogger(TComperator.class).error("The lower bound tables should have the same size to be compared!");
             return false;
         }
 
@@ -159,7 +160,7 @@ public class TComperator {
     public static boolean compareLowerBounds( TReduce g1, TReduce g2 ) {
 
         if( g1.getLB().length != g2.getLB().length ) {
-            System.err.println("The lower bound tables should have the same size to be compared!");
+            LoggerFactory.getLogger(TComperator.class).error("The lower bound tables should have the same size to be compared!");
             return false;
         }
 
@@ -174,7 +175,7 @@ public class TComperator {
 	public static boolean compareSingleDoubleTable( double[] ub1, double[] ub2 ) {
 
 		if( ub1.length != ub2.length ) {
-			System.err.println("The upper bound tables should have the same size to be compared!");
+            LoggerFactory.getLogger(TComperator.class).error("The upper bound tables should have the same size to be compared!");
 			return false;
 		}
 
