@@ -17,6 +17,8 @@
  */
 package de.unijena.bioinf.babelms.utils;
 
+import org.slf4j.LoggerFactory;
+
 /**
  * <p>Encodes and decodes to and from Base64 notation.</p>
  * <p>Homepage: <a href="http://iharder.net/base64">http://iharder.net/base64</a>.</p>
@@ -1299,7 +1301,7 @@ public class Base64
 
                 }   // end try
                 catch( java.io.IOException e ) {
-                    e.printStackTrace();
+                    LoggerFactory.getLogger(Base64.class).error(e.getMessage(),e);
                     // Just return originally-decoded bytes
                 }   // end catch
                 finally {

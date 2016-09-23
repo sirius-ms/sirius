@@ -2,6 +2,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -111,7 +112,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         try {
             loadFingerprintDescriptors();
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(CdkFingerprintVersion.class).error(e.getMessage(),e);
         }
     }
 
