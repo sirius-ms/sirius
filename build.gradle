@@ -7,7 +7,7 @@ plugins {
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '1.7.13'
+    slf4j_version = '1.7.21'
     gson_version = '2.6.2'
     math3_version = '3.+'
     glpk_version = '1.7.0'

@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class IonTreeUtils {
             final FragmentAnnotation<PrecursorIonType> ionTypeF = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
             for (Fragment f : tree) {
                 if (!ionTypeF.get(f).equals(plain)) {
-                    System.err.println("Error: " + f.getFormula() + " has ion type " + ionTypeF.get(f));
+                    LoggerFactory.getLogger(this.getClass()).error("Error: " + f.getFormula() + " has ion type " + ionTypeF.get(f));
                 }
             }
         }
