@@ -154,30 +154,36 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //		compoundList.setPreferredSize(new Dimension(200,0));
 
 
-		JScrollPane paneConfidence = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        confidenceList = new ConfidenceList(this);
-		paneConfidence.setViewportView(confidenceList);
+		JPanel tmp_wrapper = new JPanel(new BorderLayout());
+		JLabel label = new JLabel("<html>Confidence score is an experimental feature.Use with caution.<html>");
+		tmp_wrapper.add(label, BorderLayout.NORTH);
 
-        csiFingerId.setConfidenceCallback(new CSIFingerIdComputation.Callback() {
-            @Override
-            public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
-                refreshCompound(container);
-            }
-        });
+		JScrollPane paneConfidence = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		confidenceList = new ConfidenceList(this);
+		paneConfidence.setViewportView(confidenceList);
+		label.setPreferredSize(new Dimension(paneConfidence.getPreferredSize().width, label.getPreferredSize().height*3));
+		tmp_wrapper.add(paneConfidence, BorderLayout.CENTER);
+
+		csiFingerId.setConfidenceCallback(new CSIFingerIdComputation.Callback() {
+			@Override
+			public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
+				refreshCompound(container);
+			}
+		});
 
 		JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		pane.setViewportView(compoundList);
-		
+
 		pane.getViewport().setPreferredSize(new Dimension(200,(int)pane.getViewport().getPreferredSize().getHeight()));
 //		pane.getViewport().setMinimumSize(new Dimension(200,(int)pane.getViewport().getPreferredSize().getHeight()));
-		
+
 //		System.err.println(pane.getViewport().getPreferredSize().getWidth()+" "+pane.getViewport().getPreferredSize().getHeight());
-//		
+//
 //		System.err.println(pane.getVerticalScrollBar().getPreferredSize().getWidth());
 //		pane.setPreferredSize(new Dimension(221,0));
 
 		tabbedPane.addTab("Experiments", pane);
-		tabbedPane.addTab("Identifications", paneConfidence);
+		tabbedPane.addTab("Identifications", tmp_wrapper);
 
 
 		//compoundPanel.add(pane,BorderLayout.WEST);
