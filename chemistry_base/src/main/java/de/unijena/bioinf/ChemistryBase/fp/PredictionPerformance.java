@@ -127,7 +127,7 @@ public final class PredictionPerformance {
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.2f\tprecision=%.2f\trecall=%.2f\taccuracy=%.2f", tp,fp,tn,fn,f,precision,recall,accuracy);
+        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.4f\tprecision=%.4f\trecall=%.4f\taccuracy=%.4f", tp,fp,tn,fn,f,precision,recall,accuracy);
     }
 
     /**
