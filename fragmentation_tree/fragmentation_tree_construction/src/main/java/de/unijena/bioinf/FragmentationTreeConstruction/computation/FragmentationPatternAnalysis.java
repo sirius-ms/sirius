@@ -1102,15 +1102,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 graphBuilder.addRoot(graphBuilder.initializeEmptyGraph(input),
                         input.getParentPeak(), Collections.singletonList(candidate)));
         graph.addAliasForFragmentAnnotation(ProcessedPeak.class, Peak.class);
-        return reduceGraph(scoreGraph(graph));
+        return performGraphReduction(performGraphScoring(graph));
     }
 
-    private FGraph reduceGraph(FGraph fragments, double lowerbound) {
+    public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
         if (reduction == null) return fragments;
         return reduction.reduce(fragments, lowerbound);
     }
 
-    private FGraph reduceGraph(FGraph fragments) {
+    public FGraph performGraphReduction(FGraph fragments) {
         if (reduction == null) return fragments;
         return reduction.reduce(fragments, 0d);
     }
@@ -1121,7 +1121,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (int i = 0; i < parentPeaks.size(); ++i) {
             graph = graphBuilder.addRoot(graph, parentPeaks.get(i), candidatesPerParentPeak.get(i));
         }
-        return reduceGraph(scoreGraph(graphBuilder.fillGraph(graph)));
+        return performGraphReduction(performGraphScoring(graphBuilder.fillGraph(graph)));
     }
 
     /**
@@ -1293,7 +1293,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else return parameterHelper.toClassName(someClass);
     }
 
-    protected FGraph scoreGraph(FGraph graph) {
+    public FGraph performGraphScoring(FGraph graph) {
         // score graph
         final Iterator<Loss> edges = graph.lossIterator();
         final ProcessedInput input = graph.getAnnotationOrThrow(ProcessedInput.class);
