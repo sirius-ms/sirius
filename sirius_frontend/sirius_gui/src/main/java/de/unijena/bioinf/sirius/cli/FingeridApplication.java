@@ -20,7 +20,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.db.CompoundImportedListener;
 import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
-import de.unijena.bioinf.sirius.gui.fingerid.DatasourceService2;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import gnu.trove.list.array.TIntArrayList;
@@ -243,7 +242,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     databases.clear();
                     if (c.getLinks()!=null) {
                         for (DBLink link : c.getLinks()) {
-                            if (link.name.equals(DatasourceService2.Sources.PUBCHEM.name)) pubchemIds.add(Integer.parseInt(link.id));
+                            if (link.name.equals(DatasourceService.Sources.PUBCHEM.name)) pubchemIds.add(Integer.parseInt(link.id));
                             else databases.put(link.name, link.id);
                         }
                     }

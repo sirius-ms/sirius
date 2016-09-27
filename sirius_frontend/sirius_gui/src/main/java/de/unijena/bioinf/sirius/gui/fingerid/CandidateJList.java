@@ -238,7 +238,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         } else if (e.getSource() == OpenInBrowser2) {
             if (c.compound.databases == null) return;
             for (Map.Entry<String, String> entry : c.compound.databases.entries()) {
-                final DatasourceService2.Sources s = DatasourceService2.getFromName(entry.getKey());
+                final DatasourceService.Sources s = DatasourceService.getFromName(entry.getKey());
                 if (entry.getValue() == null || s == null || s.URI == null) continue;
                 try {
                     if (s.URI.contains("%s")) {
@@ -374,7 +374,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     }
 
     private void clickOnDBLabel(de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label) {
-        final DatasourceService2.Sources s = DatasourceService2.getFromName(label.name);
+        final DatasourceService.Sources s = DatasourceService.getFromName(label.name);
         if (label.values == null || label.values.length==0 || s == null || s.URI == null) return;
         try {
             for (String id : label.values) {

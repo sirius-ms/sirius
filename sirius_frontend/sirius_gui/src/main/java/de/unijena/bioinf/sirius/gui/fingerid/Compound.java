@@ -90,8 +90,8 @@ public class Compound {
         this.name = candidate.getName();
         this.bitset = candidate.getBitset();
         this.fingerprint = candidate.getFingerprint();
-        final Set<String> names = DatasourceService2.getDataSourcesFromBitFlags(candidate.getBitset());
-        names.remove(DatasourceService2.Sources.PUBCHEM.name);
+        final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(candidate.getBitset());
+        names.remove(DatasourceService.Sources.PUBCHEM.name);
         this.databases = ArrayListMultimap.create(names.size(), 1);
         for (String aname : names) this.databases.put(aname,null);
     }
@@ -202,8 +202,8 @@ public class Compound {
                     compound.inchi = new InChI(inchikey, inchi);
                     // add databases without links
                     compound.bitset = flags;
-                    final Set<String> names = DatasourceService2.getDataSourcesFromBitFlags(flags);
-                    names.remove(DatasourceService2.Sources.PUBCHEM.name);
+                    final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(flags);
+                    names.remove(DatasourceService.Sources.PUBCHEM.name);
                     if (compound.databases!=null) {
                         for (String aname : names) {
                             if (!compound.databases.containsKey(aname))
