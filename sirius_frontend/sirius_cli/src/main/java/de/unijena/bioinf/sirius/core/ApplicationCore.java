@@ -104,6 +104,9 @@ public abstract class ApplicationCore {
 
         DEFAULT_LOGGER = LoggerFactory.getLogger(ApplicationCore.class);
         DEFAULT_LOGGER.debug("Logging service initialized!");
+        DEFAULT_LOGGER.debug("java.library.path = " + System.getProperty("java.library.path"));
+        DEFAULT_LOGGER.debug("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
+        DEFAULT_LOGGER.debug("java.class.path = " + System.getProperty("java.class.path"));
 
         final String version = System.getProperty("de.unijena.bioinf.sirius.version");
         VERSION_STRING = version != null ? "Sirius " + version : "Sirius";

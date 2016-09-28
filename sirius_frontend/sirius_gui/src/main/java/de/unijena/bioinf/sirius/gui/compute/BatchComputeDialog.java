@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.StacktraceDialog;
@@ -31,6 +32,7 @@ import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -384,29 +386,34 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         // CHECK ILP SOLVER
         {
-            TreeBuilder builder=null;
+            TreeBuilder builder = null;
+            String noSiriusSolver = "Could not instantiate Sirius solver";
             try {
                 builder = new Sirius().getMs2Analyzer().getTreeBuilder();
             } catch (Exception e) {
-                new StacktraceDialog(this, "Could not instantiate Sirius solver", e);
+                new StacktraceDialog(this, noSiriusSolver, e);
+                LoggerFactory.getLogger(this.getClass()).error(noSiriusSolver,e);
                 dispose(); return;
             }
             if (builder==null) {
-                new ExceptionDialog(this, "Could not instantiate Sirius solver");
+                new ExceptionDialog(this, noSiriusSolver);
                 dispose();
                 return;
             }
             if (builder instanceof DPTreeBuilder) {
+                String noILPSolver = "ILP solver cannot be loaded. Please read the installation instructions.";
                 dispose();
                 // try go get exception object
                 try {
-                    TreeBuilder solver =((Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver")).newInstance();
+                    TreeBuilder solver = new GLPKSolver();
                     solver.getDescription();
                 } catch (Throwable t) {
-                    new StacktraceDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ", t);
+
+                    new StacktraceDialog(owner, noILPSolver , t);
+                    LoggerFactory.getLogger(this.getClass()).error(noILPSolver,t);
                     return;
                 }
-                new ExceptionDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ");
+                new ExceptionDialog(owner, noILPSolver);
                 return;
             }
         }
