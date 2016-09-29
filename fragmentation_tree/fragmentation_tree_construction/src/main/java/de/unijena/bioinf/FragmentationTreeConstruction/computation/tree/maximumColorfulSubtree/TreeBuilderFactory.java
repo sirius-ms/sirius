@@ -8,7 +8,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
@@ -56,7 +55,7 @@ public final class TreeBuilderFactory {
 
     public <T extends TreeBuilder> T getTreeBuilderFromClass(String className) {
         try {
-            return getTreeBuilderFromClass(((Class<T>)ClassLoader.getSystemClassLoader().loadClass(className)));
+            return getTreeBuilderFromClass(((Class<T>) ClassLoader.getSystemClassLoader().loadClass(className)));
         } catch (Throwable e) {
             LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className, e);
             return null;
