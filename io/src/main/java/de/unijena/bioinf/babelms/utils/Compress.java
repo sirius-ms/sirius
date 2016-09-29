@@ -8,6 +8,9 @@ package de.unijena.bioinf.babelms.utils;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -47,29 +50,29 @@ public class Compress {
         }
     }
 
-    public static void compressToZipArchive(File zipFile, InputStream[] ins, String[] fileNames) {
+    public static void compressToZipArchive(File zipFile, Map<InputStream, String> input) {
         try {
-            compressToZipArchive(new FileOutputStream(zipFile), ins, fileNames);
+            compressToZipArchive(new FileOutputStream(zipFile), input);
         } catch (FileNotFoundException e) {
             LoggerFactory.getLogger(Compress.class).error("Could not Create zip archive " + zipFile.getAbsolutePath(), e);
         }
     }
 
-    public static void compressToZipArchive(OutputStream zipFile, InputStream[] ins, String[] fileNames) {
+    public static void compressToZipArchive(OutputStream zipFile, Map<InputStream, String> input) {
         try (
                 ZipOutputStream zos = new ZipOutputStream(zipFile)
         ) {
             // create byte buffer
             byte[] buffer = new byte[1024];
 
-            String filename = null;
-            for (int i = 0; i < ins.length; i++) {
-                try (InputStream stream = ins[i];) {
-                    if (fileNames != null && fileNames.length > i)
-                        filename = fileNames[i];
-                    else
-                        filename = "file" + i + ".txt";
 
+            int index = 0;
+            for (Map.Entry<InputStream, String> entry : input.entrySet()) {
+                String filename = entry.getValue();
+                if (filename == null || filename.isEmpty())
+                    filename = "file" + index + ".txt";
+                index++;
+                try (InputStream stream = entry.getKey()) {
                     // begin writing a new ZIP entry, positions the stream to the start of the entry data
                     zos.putNextEntry(new ZipEntry(filename));
                     int length;
@@ -93,20 +96,21 @@ public class Compress {
         }
     }
 
-
     /*public static void main(String[] args) throws IOException {
-        compressToZipArchive(File.createTempFile("archive", ".zip"),
+       *//* compressToZipArchive(File.createTempFile("archive", ".zip"),
                 Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("sirius.log.0").toFile(),
                 Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("logging.properties").toFile(),
                 Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("sirius.properties").toFile()
-        );
+        );*//*
+
+        Map<InputStream,String> input =  new HashMap<>();
+        input.put(new FileInputStream(Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("sirius.log.0").toFile()),"");
+        input.put(new FileInputStream(Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("logging.properties").toFile()),null);
+        input.put(new FileInputStream(Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("sirius.properties").toFile()),"validName");
+
+
         compressToZipArchive(new FileOutputStream(File.createTempFile("archive", ".zip")),
-                new FileInputStream[]{
-                        new FileInputStream(Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("sirius.log.0").toFile()),
-                        new FileInputStream(Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("logging.properties").toFile()),
-                        new FileInputStream(Paths.get(System.getProperty("user.home")).resolve(".sirius").resolve("sirius.properties").toFile())
-                },
-                new String[]{"file1","file2"}
+                input
         );
     }*/
 
