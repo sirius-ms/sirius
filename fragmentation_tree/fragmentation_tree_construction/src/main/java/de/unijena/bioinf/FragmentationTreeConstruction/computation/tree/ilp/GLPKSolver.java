@@ -84,6 +84,7 @@ public class GLPKSolver implements TreeBuilder {
     */
 
     public GLPKSolver() {
+        getDescription(); //this is to validate if c libs can be found
         //loadLibrary();
     }
 

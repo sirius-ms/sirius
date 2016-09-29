@@ -45,9 +45,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merge
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
@@ -91,7 +91,6 @@ import java.util.*;
  *
  */
 public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
-
     private List<InputValidator> inputValidators;
     private Warning validatorWarning;
     private boolean repairInput;
@@ -259,7 +258,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         postProcess(PostProcessor.Stage.AFTER_NORMALIZING, input);
         return input;
     }
-
     /**
      *
      * Step 4. Merging
@@ -615,7 +613,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
-        setTreeBuilder(new GurobiSolver());
+        setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
 
         getDefaultProfile().setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.4d).getMedian());
     }
@@ -679,7 +677,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
-        analysis.setTreeBuilder(new GurobiSolver());
+        analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
 
@@ -742,7 +740,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
 
-        final TreeBuilder solver = loadTreeBuilder();
+        final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
         analysis.setTreeBuilder(solver);
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
@@ -759,25 +757,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
 
-    private static TreeBuilder loadTreeBuilder() {
-        try {
-            // is gurobi.jar in classpath?
-            final Class<TreeBuilder> kl = (Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver");
-            // is gurobi native library in classpath?
-            final TreeBuilder b = kl.newInstance();
-            kl.getMethod("setNumberOfCPUs", int.class).invoke(b, Math.min(4, Runtime.getRuntime().availableProcessors()));
-            return b;
-        } catch (Throwable e) {
-            // try GLPK tree builder
-            try {
-                TreeBuilder solver =((Class<TreeBuilder>) ClassLoader.getSystemClassLoader().loadClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver")).newInstance();
-                solver.getDescription();
-                return solver;
-            } catch (Throwable f) {
-                return new DPTreeBuilder(12);
-            }
-        }
-    }
+
 
     /**
      * Helper function to change the parameters of a specific scorer
@@ -854,7 +834,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         this.reduction = new SimpleReduction();
 
-        final TreeBuilder solver = loadTreeBuilder();
+        final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
         setTreeBuilder(solver);
 
     }
