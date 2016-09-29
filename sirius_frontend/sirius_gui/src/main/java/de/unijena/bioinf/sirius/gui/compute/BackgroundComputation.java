@@ -56,8 +56,7 @@ public class BackgroundComputation {
         this.cancel = new ConcurrentLinkedQueue<>();
         int nw;
         try {
-//        if (new Sirius().getMs2Analyzer().getTreeBuilder().getDescription().equalsIgnoreCase("Gurobi")) {
-        if (new Sirius().getMs2Analyzer().getTreeBuilder() instanceof GurobiSolver) {
+        if (new Sirius().getMs2Analyzer().getTreeBuilder() instanceof GurobiSolver) { //todo should we really create a new treebuilder just to check which is used?
             nw = Math.max(1, Runtime.getRuntime().availableProcessors()/2);
         } else {
             nw = 1;

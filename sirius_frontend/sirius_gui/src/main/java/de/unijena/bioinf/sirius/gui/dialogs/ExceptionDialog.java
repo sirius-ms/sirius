@@ -7,16 +7,19 @@ import java.awt.event.ActionListener;
 
 public class ExceptionDialog extends JDialog implements ActionListener{
 	
-	private JButton ok;
+	private JButton close;
+	protected JPanel south;
 	
 	public ExceptionDialog(Frame owner, String message) {
 		super(owner,true);
 		initDialog(message);
+		this.setVisible(true);
 	}
 	
 	public ExceptionDialog(Dialog owner, String message) {
 		super(owner,true);
 		initDialog(message);
+		this.setVisible(true);
 	}
 	
 	public void initDialog(String message) {
@@ -27,14 +30,14 @@ public class ExceptionDialog extends JDialog implements ActionListener{
 		northPanel.add(new JLabel(icon));
 		northPanel.add(new JLabel(message));
 		this.add(northPanel,BorderLayout.CENTER);
-		JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		ok = new JButton("Ok");
-		ok.addActionListener(this);
-		south.add(ok);
+		south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
+		close = new JButton("close");
+		close.addActionListener(this);
+		south.add(close);
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
 		setLocationRelativeTo(getParent());
-		this.setVisible(true);
+
 		// TODO Auto-generated constructor stub
 	}
 

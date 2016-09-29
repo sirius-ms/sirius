@@ -9,13 +9,16 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.cli.CLI;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.SendExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
@@ -24,6 +27,7 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -491,28 +495,25 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			ms2Prof.setAllowedMassDeviation(new Deviation(ppm));
 			ms1Prof.setAllowedMassDeviation(new Deviation(ppm));
 
-			final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
-			if (builder instanceof DPTreeBuilder) {
-				dispose();
-				// try go get exception object
-				try {
+			final TreeBuilder builder = ms2.getTreeBuilder();
 
-					System.loadLibrary("glpk_4_60_java");
-				} catch (Throwable t) {
-					new StacktraceDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ", t);
-					return;
-				}
-				new ExceptionDialog(owner, "ILP solver cannot be loaded. Please read the installation instructions. ");
+
+			if (builder == null) {
+				Logger l = LoggerFactory.getLogger(this.getClass());
+				String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
+				l.error(noILPSolver);
+//				new SendExceptionDialog(owner, noILPSolver);
+				new ExceptionDialog(owner, noILPSolver);
+				dispose();
 				return;
 			}
+
 			LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder.getDescription());
 
 			sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
 			sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
 
 			//Ende setup() Methode
-
-//	            sirius.setProgress(new DummyProgress());
 
 			Object selected = box.getSelectedItem();
 			double pm=0;

@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 
@@ -145,6 +147,14 @@ public abstract class ApplicationCore {
         storeUserProperties();
         DEFAULT_LOGGER.debug("application properties initialized!");
         DEFAULT_LOGGER.info("Application core Successfull initialized");
+
+        String p = System.getProperty("de.unijena.bioinf.sirius.treebuilder");
+        if (p != null && !p.isEmpty()) {
+            if (TreeBuilderFactory.setBuilderPriorities(p.replaceAll("\\s", "").split(",")))
+                DEFAULT_LOGGER.debug("Treebuilder priorities are set to: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
+            else
+                DEFAULT_LOGGER.debug("Could not parse Treebuilder priorities, falling back to default!" + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
+        }
     }
 
     public static void addDefaultPropteries(File properties) throws IOException {

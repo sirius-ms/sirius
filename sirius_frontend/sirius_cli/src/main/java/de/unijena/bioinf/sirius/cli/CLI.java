@@ -26,8 +26,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -40,7 +40,6 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusResultWriter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -333,8 +332,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 ms1Prof.setAllowedMassDeviation(new Deviation(options.getPPMMax()));
             }
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
-            if (builder instanceof DPTreeBuilder) {
-                LoggerFactory.getLogger(CLI.class).error("Cannot load ILP solver. Please read the installation instructions.");
+            if (builder == null) {
+                String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
+                LoggerFactory.getLogger(CLI.class).error(noILPSolver);
                 System.exit(1);
             }
             LoggerFactory.getLogger(CLI.class).info("Compute trees using " + builder.getDescription());
