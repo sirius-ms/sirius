@@ -15,7 +15,6 @@ import java.util.zip.ZipOutputStream;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class Compress {
-
     public static void compressToZipArchive(File zipFile, File... srcFiles) {
         try (
                 FileOutputStream fos = new FileOutputStream(zipFile);
