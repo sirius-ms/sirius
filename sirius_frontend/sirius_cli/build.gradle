@@ -2,8 +2,6 @@ dependencies {
     compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-    compile group: 'org.apache.commons', name: 'commons-email', version: "${commons_email_version}"
-    compile group: 'com.github.dblock', name: 'oshi-core', version: "${oshi_version}"
 }
 processResources.doFirst{
     logger.lifecycle('writing properties file...')

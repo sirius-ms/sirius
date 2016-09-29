@@ -1,11 +1,10 @@
-package de.unijena.bioinf.sirius.core.errorReporting;
+package de.unijena.bioinf.sirius.core.systemInfo;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
  * 29.09.16.
  */
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
@@ -18,11 +17,8 @@ import oshi.software.os.OperatingSystem;
 import oshi.util.FormatUtil;
 import oshi.util.Util;
 
-import javax.tools.JavaFileManager;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import javax.swing.*;
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,7 +34,7 @@ public class SystemInformation {
     public static File getTMPSystemInformationFile() {
         try {
             File systemInfoFile = File.createTempFile("system", ".info");
-            writeSystemInformationFile(systemInfoFile);
+            writeSystemInformationTo(new FileOutputStream(systemInfoFile));
             return systemInfoFile;
         } catch (IOException e) {
             LoggerFactory.getLogger(SystemInformation.class).error("Could not write System info File",e);
@@ -46,141 +42,156 @@ public class SystemInformation {
         }
     }
 
-    public static void writeSystemInformationFile(File systemInfoFile) throws IOException {
-        Logger LOG = LoggerFactory.getLogger(SystemInformation.class);
+    public static void writeSystemInformationTo(final OutputStream stream) throws IOException {
+        final Logger LOG = LoggerFactory.getLogger(SystemInformation.class);
+        new SwingWorker<Integer, String>() {
+            @Override
+            protected Integer doInBackground() throws Exception {
+                try (OutputStreamWriter outputStream  = new OutputStreamWriter(stream)) {
+                    setProgress(0);
+                    LOG.info("Initializing System...");
+                    SystemInfo si = new SystemInfo();
 
-        try (BufferedWriter outputStream  = new BufferedWriter(new FileWriter(systemInfoFile))) {
+                    HardwareAbstractionLayer hal = si.getHardware();
+                    setProgress(2);
 
-            LOG.info("Initializing System...");
-            SystemInfo si = new SystemInfo();
+                    LOG.info("OS...");
+                    OperatingSystem os = si.getOperatingSystem();
+                    outputStream.write("Operating System:");
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write(os.toString());
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write(System.lineSeparator());
 
-            HardwareAbstractionLayer hal = si.getHardware();
+                    outputStream.write("JRE/JDK:");
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write(System.getProperty("java.version"));
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write(System.lineSeparator());
 
-            LOG.info("OS...");
-            OperatingSystem os = si.getOperatingSystem();
-            outputStream.write("Operating System:");
-            outputStream.newLine();
-            outputStream.write(os.toString());
-            outputStream.newLine();
-            outputStream.newLine();
-
-            outputStream.write("JRE/JDK:");
-            outputStream.newLine();
-            outputStream.write(System.getProperty("java.version"));
-            outputStream.newLine();
-            outputStream.newLine();
-
-            outputStream.write("Paths: ");
-            outputStream.newLine();
-            outputStream.write("GUROBI_HOME = " + System.getenv("$GUROBI_HOME"));
-            outputStream.newLine();
-            outputStream.write("java.library.path = " + System.getProperty("java.library.path"));
-            outputStream.newLine();
-            outputStream.write("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
-            outputStream.newLine();
-            outputStream.write("java.class.path = " + System.getProperty("java.class.path"));
-            outputStream.newLine();
-            outputStream.write("USER_HOME = " + System.getProperty("user.home"));
-            outputStream.newLine();
-            outputStream.write("USER_DIR = " + System.getProperty("user.dir"));
-//            outputStream.newLine();
+                    outputStream.write("Paths: ");
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write("GUROBI_HOME = " + System.getenv("$GUROBI_HOME"));
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write("java.library.path = " + System.getProperty("java.library.path"));
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write("java.class.path = " + System.getProperty("java.class.path"));
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write("USER_HOME = " + System.getProperty("user.home"));
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write("USER_DIR = " + System.getProperty("user.dir"));
+//            outputStream.write(System.lineSeparator());
 //            outputStream.write("APP_DIR = " + ApplicationCore.class.getProtectionDomain().getCodeSource().getLocation().toString());
-            outputStream.newLine();
-            outputStream.newLine();
+                    outputStream.write(System.lineSeparator());
+                    outputStream.write(System.lineSeparator());
+                    setProgress(5);
 
+                    LOG.info("CPU...");
+                    printProcessor(hal.getProcessor(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(10);
 
-
-            LOG.info("CPU...");
-            printProcessor(hal.getProcessor(),outputStream);
-            outputStream.newLine();
-
-            LOG.info("Checking Memory...");
-            printMemory(hal.getMemory(),outputStream);
-            outputStream.newLine();
-
+                    LOG.info("Checking Memory...");
+                    printMemory(hal.getMemory(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(20);
 //            LOG.info("Checking CPU...");
 //            printCpu(hal.getProcessor(),outputStream);
-//            outputStream.newLine();
+//            outputStream.write(System.lineSeparator());
 
-            LOG.info("Checking Processes...");
-            printProcesses(os, hal.getMemory(),outputStream);
-            outputStream.newLine();
+                    LOG.info("Checking Processes...");
+                    printProcesses(os, hal.getMemory(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(30);
 
-            LOG.info("Checking Sensors...");
-            printSensors(hal.getSensors(),outputStream);
-            outputStream.newLine();
+                    LOG.info("Checking Sensors...");
+                    printSensors(hal.getSensors(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(40);
 
-            LOG.info("Checking Power sources...");
-            printPowerSources(hal.getPowerSources(),outputStream);
-            outputStream.newLine();
+                    LOG.info("Checking Power sources...");
+                    printPowerSources(hal.getPowerSources(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(50);
 
-            LOG.info("Checking Disks...");
-            printDisks(hal.getDiskStores(),outputStream);
-            outputStream.newLine();
+                    LOG.info("Checking Disks...");
+                    printDisks(hal.getDiskStores(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(60);
 
-            LOG.info("Checking File System...");
-            printFileSystem(os.getFileSystem(),outputStream);
-            outputStream.newLine();
+                    LOG.info("Checking File System...");
+                    printFileSystem(os.getFileSystem(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(70);
 
-            LOG.info("Checking Network interfaces...");
-            printNetworkInterfaces(hal.getNetworkIFs(),outputStream);
-            outputStream.newLine();
+                    LOG.info("Checking Network interfaces...");
+                    printNetworkInterfaces(hal.getNetworkIFs(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(80);
 
-            // hardware: displays
-            LOG.info("Checking Displays...");
-            printDisplays(hal.getDisplays(),outputStream);
-            outputStream.newLine();
+                    // hardware: displays
+                    LOG.info("Checking Displays...");
+                    printDisplays(hal.getDisplays(),outputStream);
+                    outputStream.write(System.lineSeparator());
+                    setProgress(90);
 
-            // hardware: USB devices
-            LOG.info("Checking USB Devices...");
-            printUsbDevices(hal.getUsbDevices(true),outputStream);
+                    // hardware: USB devices
+                    LOG.info("Checking USB Devices...");
+                    printUsbDevices(hal.getUsbDevices(true),outputStream);
+                    setProgress(99);
 
-            outputStream.flush();
-            outputStream.close();
-        } catch (IOException e) {
-            throw e;
-        }
+                    outputStream.flush();
+                    outputStream.close();
 
-
+                    setProgress(100);
+                } catch (IOException e) {
+                    LOG.error("Could not write System information",e);
+                    return 1;
+                }
+                return 0;
+            }
+        }.execute();
     }
 
-    private static void printProcessor(CentralProcessor processor,BufferedWriter outputStream) throws IOException {
+    private static void printProcessor(CentralProcessor processor,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("CPU:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write(processor.toString());
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write(" " + processor.getPhysicalProcessorCount() + " physical CPU(s)");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write(" " + processor.getLogicalProcessorCount() + " logical CPU(s)");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
 
         outputStream.write("Identifier: " + processor.getIdentifier());
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write("Serial Num: " + processor.getSystemSerialNumber());
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
     }
 
-    private static void printMemory(GlobalMemory memory,BufferedWriter outputStream) throws IOException {
+    private static void printMemory(GlobalMemory memory,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Memory: " + FormatUtil.formatBytes(memory.getAvailable()) + "/"
                 + FormatUtil.formatBytes(memory.getTotal()));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write("Swap used: " + FormatUtil.formatBytes(memory.getSwapUsed()) + "/"
                 + FormatUtil.formatBytes(memory.getSwapTotal()));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
     }
 
-    private static void printCpu(CentralProcessor processor,BufferedWriter outputStream) throws IOException {
+    private static void printCpu(CentralProcessor processor,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Uptime: " + FormatUtil.formatElapsedSecs(processor.getSystemUptime()));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
 
         long[] prevTicks = processor.getSystemCpuLoadTicks();
         outputStream.write("CPU, IOWait, and IRQ ticks @ 0 sec:" + Arrays.toString(prevTicks));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         // Wait a second...
         Util.sleep(1000);
         long[] ticks = processor.getSystemCpuLoadTicks();
         outputStream.write("CPU, IOWait, and IRQ ticks @ 1 sec:" + Arrays.toString(ticks));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
 
         long user = ticks[TickType.USER.getIndex()] - prevTicks[TickType.USER.getIndex()];
         long nice = ticks[TickType.NICE.getIndex()] - prevTicks[TickType.NICE.getIndex()];
@@ -202,7 +213,7 @@ public class SystemInformation {
                 + (loadAverage[1] < 0 ? " N/A" : String.format(" %.2f", loadAverage[1]))
                 + (loadAverage[2] < 0 ? " N/A" : String.format(" %.2f", loadAverage[2])));
 
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         // per core CPU
         StringBuilder procCpu = new StringBuilder("CPU load per processor:");
         double[] load = processor.getProcessorCpuLoadBetweenTicks();
@@ -210,17 +221,17 @@ public class SystemInformation {
             procCpu.append(String.format(" %.1f%%", avg * 100));
         }
         outputStream.write(procCpu.toString());
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
     }
 
-    private static void printProcesses(OperatingSystem os, GlobalMemory memory,BufferedWriter outputStream) throws IOException {
+    private static void printProcesses(OperatingSystem os, GlobalMemory memory,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Processes: " + os.getProcessCount() + ", Threads: " + os.getThreadCount());
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         // Sort by highest CPU
         List<OSProcess> procs = Arrays.asList(os.getProcesses(5, OperatingSystem.ProcessSort.CPU));
 
         outputStream.write("   PID  %CPU %MEM       VSZ       RSS Name");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         for (int i = 0; i < procs.size() && i < 5; i++) {
             OSProcess p = procs.get(i);
             outputStream.write(String.format(" %5d %5.1f %4.1f %9s %9s %s%n", p.getProcessID(),
@@ -230,17 +241,17 @@ public class SystemInformation {
         }
     }
 
-    private static void printSensors(Sensors sensors,BufferedWriter outputStream) throws IOException {
+    private static void printSensors(Sensors sensors,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Sensors:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write(String.format(" CPU Temperature: %.1f°C%n", sensors.getCpuTemperature()));
         outputStream.write(" Fan Speeds: " + Arrays.toString(sensors.getFanSpeeds()));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         outputStream.write(String.format(" CPU Voltage: %.1fV%n", sensors.getCpuVoltage()));
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
     }
 
-    private static void printPowerSources(PowerSource[] powerSources,BufferedWriter outputStream) throws IOException {
+    private static void printPowerSources(PowerSource[] powerSources,OutputStreamWriter outputStream) throws IOException {
         StringBuilder sb = new StringBuilder("Power: ");
         if (powerSources.length == 0) {
             sb.append("Unknown");
@@ -259,12 +270,12 @@ public class SystemInformation {
             sb.append(String.format("%n %s @ %.1f%%", pSource.getName(), pSource.getRemainingCapacity() * 100d));
         }
         outputStream.write(sb.toString());
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
     }
 
-    private static void printDisks(HWDiskStore[] diskStores,BufferedWriter outputStream) throws IOException {
+    private static void printDisks(HWDiskStore[] diskStores,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Disks:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         for (HWDiskStore disk : diskStores) {
             boolean readwrite = disk.getReads() > 0 || disk.getWrites() > 0;
             outputStream.write(String.format(" %s: (model: %s - S/N: %s) size: %s, reads: %s (%s), writes: %s (%s), xfer: %s ms%n",
@@ -287,9 +298,9 @@ public class SystemInformation {
         }
     }
 
-    private static void printFileSystem(FileSystem fileSystem,BufferedWriter outputStream) throws IOException {
+    private static void printFileSystem(FileSystem fileSystem,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("File System:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
 
         outputStream.write(String.format(" File Descriptors: %d/%d%n", fileSystem.getOpenFileDescriptors(),
                 fileSystem.getMaxFileDescriptors()));
@@ -305,9 +316,9 @@ public class SystemInformation {
         }
     }
 
-    private static void printNetworkInterfaces(NetworkIF[] networkIFs,BufferedWriter outputStream) throws IOException {
+    private static void printNetworkInterfaces(NetworkIF[] networkIFs,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Network interfaces:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
 
         for (NetworkIF net : networkIFs) {
             outputStream.write(String.format(" Name: %s (%s)%n", net.getName(), net.getDisplayName()));
@@ -325,25 +336,25 @@ public class SystemInformation {
         }
     }
 
-    private static void printDisplays(Display[] displays,BufferedWriter outputStream) throws IOException {
+    private static void printDisplays(Display[] displays,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Displays:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         int i = 0;
         for (Display display : displays) {
             outputStream.write(" Display " + i + ":");
-            outputStream.newLine();
+            outputStream.write(System.lineSeparator());
             outputStream.write(display.toString());
-            outputStream.newLine();
+            outputStream.write(System.lineSeparator());
             i++;
         }
     }
 
-    private static void printUsbDevices(UsbDevice[] usbDevices,BufferedWriter outputStream) throws IOException {
+    private static void printUsbDevices(UsbDevice[] usbDevices,OutputStreamWriter outputStream) throws IOException {
         outputStream.write("USB Devices:");
-        outputStream.newLine();
+        outputStream.write(System.lineSeparator());
         for (UsbDevice usbDevice : usbDevices) {
             outputStream.write(usbDevice.toString());
-            outputStream.newLine();
+            outputStream.write(System.lineSeparator());
         }
     }
 

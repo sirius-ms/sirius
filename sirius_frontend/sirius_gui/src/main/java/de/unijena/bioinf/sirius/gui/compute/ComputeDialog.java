@@ -502,8 +502,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				Logger l = LoggerFactory.getLogger(this.getClass());
 				String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
 				l.error(noILPSolver);
-//				new SendExceptionDialog(owner, noILPSolver);
-				new ExceptionDialog(owner, noILPSolver);
+				new SendExceptionDialog(owner, noILPSolver);
+//				new ExceptionDialog(owner, noILPSolver);
 				dispose();
 				return;
 			}

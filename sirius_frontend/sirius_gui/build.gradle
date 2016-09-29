@@ -30,6 +30,9 @@ dependencies {
     compile "org.openscience.cdk:cdk-smarts:1.5.10"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
     compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+    compile group: 'org.apache.commons', name: 'commons-email', version: "${commons_email_version}"
+    compile group: 'com.github.dblock', name: 'oshi-core', version: "${oshi_version}"
 }
 
 /*################### Environment variables ################### */
