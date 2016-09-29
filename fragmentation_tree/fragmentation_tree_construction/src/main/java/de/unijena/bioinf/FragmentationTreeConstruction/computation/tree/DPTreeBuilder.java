@@ -39,7 +39,7 @@ public class DPTreeBuilder implements TreeBuilder {
     }
 
     public DPTreeBuilder() {
-        this(16);
+        this(12);
     }
 
     @Override
