@@ -13,22 +13,28 @@ import javax.swing.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class ErrorReporter extends SwingWorker<Integer, String> {
+    public final static String REPORT_ADRESS = "markus.fleischauer@gmail.com";
     private ErrorReport report = null;
 
 
     public ErrorReporter() {
     }
 
-    public ErrorReporter(String subject, String userMessage, String userEmail) {
-        setDefaultReport(subject, userMessage, userEmail);
+    public ErrorReporter(String subject, String userMessage, String userMail) {
+        setDefaultReport(subject, userMessage, userMail);
     }
 
     public void setReport(ErrorReport report) {
         this.report = report;
     }
 
-    public void setDefaultReport(String subject, String userMessage, String userEmail) {
-        this.report = new SiriusDefaultErrorReport(subject, userMessage, userEmail);
+    public ErrorReport getReport() {
+        return report;
+    }
+
+    public boolean setDefaultReport(String subject, String userMessage, String userMail) {
+        this.report = new SiriusDefaultErrorReport(subject, userMessage);
+        return this.report.setUserEmail(userMail);
     }
 
 
@@ -43,7 +49,7 @@ public abstract class ErrorReporter extends SwingWorker<Integer, String> {
         return reportError(report);
     }
 
-    public static MailErrorReporter newMailErrorReporter(String subject, String userMessage, String userEmail) {
-        return new MailErrorReporter(subject, userMessage, userEmail);
+    public static MailErrorReporter newMailErrorReporter(String subject, String userMessage, String userMail) {
+        return new MailErrorReporter(subject, userMessage, userMail);
     }
 }

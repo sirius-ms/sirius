@@ -26,6 +26,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.cli.CLI;
+import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
@@ -390,7 +391,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (builder == null) {
             String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
             LoggerFactory.getLogger(this.getClass()).error(noILPSolver);
-            new ExceptionDialog(this, noILPSolver);
+            new ErrorReportDialog(this, noILPSolver);
             dispose();
             return;
         }

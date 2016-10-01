@@ -7,7 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -16,10 +15,7 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.cli.CLI;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.SendExceptionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -502,7 +498,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				Logger l = LoggerFactory.getLogger(this.getClass());
 				String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
 				l.error(noILPSolver);
-				new SendExceptionDialog(owner, noILPSolver);
+				new ErrorReportDialog(owner, noILPSolver);
 //				new ExceptionDialog(owner, noILPSolver);
 				dispose();
 				return;
@@ -582,8 +578,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
                 ec.setRawResults(Collections.<IdentificationResult>emptyList());
                 ec.setComputeState(ComputingStatus.FAILED);
 				owner.refreshCompound(ec);
-                if (progDiag.getException()!=null)
-                    new StacktraceDialog(this, "Computation failed", progDiag.getException());
+                if (progDiag.getException()!=null){
+                    LoggerFactory.getLogger(this.getClass()).error("Computation failed",progDiag.getException());
+					new ErrorReportDialog(this, "Computation failed");
+				}
 			}
 			owner.refreshCompound(ec);
 			this.dispose();

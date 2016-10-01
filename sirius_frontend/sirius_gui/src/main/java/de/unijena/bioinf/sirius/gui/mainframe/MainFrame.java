@@ -634,7 +634,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         }
                     }, selectedFile);
 				}catch(Exception e2){
-					new ExceptionDialog(this, e2.getMessage());
+					new ErrorReportDialog(this, e2.getMessage());
 				}
 				
 			}
@@ -724,7 +724,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		}
 		worker.flushBuffer();
 		if (worker.hasErrorMessage()) {
-			new ExceptionDialog(this, worker.getErrorMessage());
+			new ErrorReportDialog(this, worker.getErrorMessage());
 		}
 	}
 
@@ -787,13 +787,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                     }
                 }
             } catch (IOException e) {
-                new ExceptionDialog(this, e.toString());
+                new ErrorReportDialog(this, e.toString());
             }
         } else {
             try {
                 writeMultiFiles(selectedFile, accessory.isExportingSirius(), accessory.isExportingFingerId());
             } catch (IOException e) {
-                new ExceptionDialog(this, e.toString());
+                new ErrorReportDialog(this, e.toString());
             }
         }
     }
@@ -944,7 +944,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 			if(errors.size()>1){
 				ErrorListDialog elDiag = new ErrorListDialog(this, errors);
 			}else if(errors.size()==1){
-				ExceptionDialog eDiag = new ExceptionDialog(this, errors.get(0)); 
+				ErrorReportDialog eDiag = new ErrorReportDialog(this, errors.get(0));
 			}
 			
 		}

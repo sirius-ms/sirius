@@ -5,6 +5,8 @@ package de.unijena.bioinf.sirius.core.errorReporting;
  * 29.09.16.
  */
 
+import de.unijena.bioinf.sirius.core.mailService.Mail;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -17,12 +19,12 @@ public class ErrorReport {
     protected String subject = "";
     protected String userMessage = "";
     protected List<File> additionalFiles = Collections.emptyList();
-    protected String userEmail = null;
+    private String userEmail = null;
+    private boolean sendReportToUser = true;
 
-    public ErrorReport(String subject, String userMessage, String userEmail, List<File> additionalFiles) {
+    public ErrorReport(String subject, String userMessage, List<File> additionalFiles) {
         this.subject = subject;
         this.userMessage = userMessage;
-        this.userEmail = userEmail;
         this.additionalFiles = additionalFiles;
     }
 
@@ -67,7 +69,22 @@ public class ErrorReport {
         return userEmail;
     }
 
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public boolean setUserEmail(String userEmail) {
+        if (Mail.validateMailAdress(userEmail)) {
+            this.userEmail = userEmail;
+            return true;
+        } else if (userEmail == null || userEmail.isEmpty()) {
+            this.userEmail = null;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isSendReportToUser() {
+        return sendReportToUser;
+    }
+
+    public void setSendReportToUser(boolean sendReportToUser) {
+        this.sendReportToUser = sendReportToUser;
     }
 }

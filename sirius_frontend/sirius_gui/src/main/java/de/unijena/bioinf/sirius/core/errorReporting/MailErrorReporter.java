@@ -25,11 +25,10 @@ public class MailErrorReporter extends ErrorReporter {
     public MailErrorReporter() {
     }
 
-    public MailErrorReporter(String subject, String userMessage, String userEmail) {
-        super(subject, userMessage, userEmail);
+    public MailErrorReporter(String subject, String userMessage, String userMail) {
+        super(subject, userMessage, userMail);
     }
 
-    //todo progress report?
     @Override
     protected int reportError(ErrorReport report) {
         int rValue = 0;
@@ -57,7 +56,6 @@ public class MailErrorReporter extends ErrorReporter {
             File errorReportFile = File.createTempFile("ErrorReportLog", ".zip");
             Compress.compressToZipArchive(errorReportFile, is);
 
-            //todo set user email as sender if given
 
             LoggerFactory.getLogger(ErrorUtils.class).info("Building attachment");
             errorReportAttachment = new EmailAttachment();
@@ -71,34 +69,60 @@ public class MailErrorReporter extends ErrorReporter {
             rValue = 2;
         }
 
-
         try {
             LoggerFactory.getLogger(ErrorUtils.class).info("Creating email");
-            MultiPartEmail email = new MultiPartEmail();
-            email.setFrom(Mail.getSender(), "Sirius Error Reporter");
-            email.setSubject("Sirius Error: " + report.getSubject());
+            MultiPartEmail reportMail = createMail(report);
 
-            email.setMsg(
-                    "Contact:" + report.getUserEmail() +
-                            System.lineSeparator() +
-                            System.lineSeparator() +
-                            report.getUserMessage()
-            );
-//            email.addTo("Sirius-devel@listserv.uni-jena.de");
-            email.addTo("markus.fleischauer@gmail.com");
+            String message = report.getUserMessage();
+            if (report.getUserEmail() != null) {
+                //send a copy of the report to user
+                if (report.isSendReportToUser()) {
+                    String userMessage = "This is an auto generated mail sent by the Sirius sofware containing the error report you have sent to the Sirius developers" +
+                            System.lineSeparator() + "Please do not reply to this email." +
+                            System.lineSeparator() + System.lineSeparator() + "Your message was: " + System.lineSeparator() + report.getUserMessage();
 
-            // add the attachment
+                    MultiPartEmail userMail = createMail(report);
+                    userMail.setMsg(userMessage);
+
+                    userMail.addReplyTo("noReply@sirius.de", "Sirius Error Reporter");
+                    // add the attachment
+                    if (errorReportAttachment != null)
+                        userMail.attach(errorReportAttachment);
+
+                    userMail.addTo(report.getUserEmail());
+                    LoggerFactory.getLogger(ErrorUtils.class).info("Sending error report to User: " + report.getUserEmail());
+                    Mail.send(userMail);
+                }
+
+                reportMail.addReplyTo(report.getUserEmail(), "Sirius Error Reporter");
+                message = "Sender Contact: " + report.getUserEmail() + System.lineSeparator() + System.lineSeparator() + message;
+            } else {
+                reportMail.addReplyTo("noReply@sirius.de", "Sirius Error Reporter");
+            }
+            reportMail.setMsg(message);
+            reportMail.addTo(REPORT_ADRESS);
             if (errorReportAttachment != null)
-                email.attach(errorReportAttachment);
+                reportMail.attach(errorReportAttachment);
 
-            LoggerFactory.getLogger(ErrorUtils.class).info("Sending error report");
-            Mail.send(email);
+            LoggerFactory.getLogger(ErrorUtils.class).info("Sending error report to: " + REPORT_ADRESS);
+            Mail.send(reportMail);
+
             LoggerFactory.getLogger(ErrorUtils.class).info("Error Report Successful sent!");
         } catch (EmailException e) {
             LoggerFactory.getLogger(ErrorUtils.class).error("Could not send Error report!", e);
             rValue = 1;
         }
         return rValue = 0;
+    }
+
+    private MultiPartEmail createMail(ErrorReport report) throws EmailException {
+        MultiPartEmail email = new MultiPartEmail();
+
+        email.setFrom(Mail.getSender());
+        email.setSubject("Sirius Error: " + report.getSubject());
+
+        return email;
+
     }
 
 

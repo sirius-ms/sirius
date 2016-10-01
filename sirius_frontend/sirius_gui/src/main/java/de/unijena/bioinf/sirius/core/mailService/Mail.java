@@ -9,6 +9,9 @@ import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -19,7 +22,7 @@ public class Mail {
 
     static {
         DEFAULT_SERVICE = new Service();
-        DEFAULT_SERVICE.setAuth("finleymcserver@gmail.com", "xxx");
+        DEFAULT_SERVICE.setAuth("finleymcserver@gmail.com", "");
         DEFAULT_SERVICE.setSmtpPort(465);
         DEFAULT_SERVICE.setHostName("smtp.googlemail.com");
         DEFAULT_SERVICE.setSSLOnConnect(true);
@@ -85,5 +88,14 @@ public class Mail {
             mail.setSSLOnConnect(sSLOnConnect);
             mail.send();
         }
+    }
+
+    private static final String EMAIL_REGEX =
+            "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+    public static boolean validateMailAdress(String adress){
+        return EMAIL_PATTERN.matcher(adress).matches();
     }
 }

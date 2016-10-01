@@ -21,6 +21,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.configs.Style;
+import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
@@ -288,7 +289,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             try {
                 new CSVExporter().exportToFile(selectedFile, data);
             } catch (Exception e2) {
-                ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
+                ErrorReportDialog fed = new ErrorReportDialog(owner, e2.getMessage());
                 LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(),e2);
             }
         }

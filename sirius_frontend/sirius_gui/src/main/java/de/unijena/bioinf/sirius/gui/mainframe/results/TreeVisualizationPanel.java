@@ -6,7 +6,7 @@ import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
@@ -248,7 +248,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 						new FTJsonWriter().writeTreeToFile(selectedFile, sre.getRawTree());
 					}
 				}catch(Exception e2){
-					ExceptionDialog fed = new ExceptionDialog(owner, e2.getMessage());
+					ErrorReportDialog fed = new ErrorReportDialog(owner, e2.getMessage());
 					LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(),e2);
 				}
 				

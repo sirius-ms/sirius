@@ -15,12 +15,8 @@ import java.util.ArrayList;
  */
 public class SiriusDefaultErrorReport extends ErrorReport {
     public SiriusDefaultErrorReport(String subject, String userMessage) {
-        this(subject,userMessage,"");
-    }
-    public SiriusDefaultErrorReport(String subject, String userMessage, String userEmail) {
         super(subject);
         setUserMessage(userMessage);
-        setUserEmail(userEmail);
         additionalFiles = new ArrayList<>(3);
 
         additionalFiles.add(ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile());
