@@ -6,9 +6,13 @@ package de.unijena.bioinf.sirius.core.errorReporting;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -17,10 +21,22 @@ public class SiriusDefaultErrorReport extends ErrorReport {
     public SiriusDefaultErrorReport(String subject, String userMessage) {
         super(subject);
         setUserMessage(userMessage);
-        additionalFiles = new ArrayList<>(3);
+        additionalFiles = new HashMap<>(3);
 
-        additionalFiles.add(ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile());
-        additionalFiles.add(ApplicationCore.WORKSPACE.resolve("logging.properties").toFile());
-        additionalFiles.add(new File(ErrorUtils.getCurrentLogFile()));
+        File f = null;
+        try {
+            f = ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile();
+            additionalFiles.put(new FileInputStream(f), f.getName());
+            f = ApplicationCore.WORKSPACE.resolve("logging.properties").toFile();
+            additionalFiles.put(new FileInputStream(f), f.getName());
+        } catch (FileNotFoundException e) {
+            LoggerFactory.getLogger(this.getClass()).error("Could not load file: " + f.getAbsolutePath(), e);
+        }
+        try {
+            additionalFiles.put(ErrorUtils.getErrorLoggingStream(), "sirius.log");
+//            additionalFiles.put(ErrorUtils.getFileLoggingStream(), "sirius.log");
+        } catch (IOException e) {
+            LoggerFactory.getLogger(this.getClass()).error("Could not load Logging Stream", e);
+        }
     }
 }

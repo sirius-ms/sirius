@@ -14,6 +14,8 @@ import org.apache.commons.mail.MultiPartEmail;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +37,9 @@ public class MailErrorReporter extends ErrorReporter {
         EmailAttachment errorReportAttachment = null;
 
         try (PipedOutputStream sysInfoOut = new PipedOutputStream()) {
-            Map<InputStream, String> is = new HashMap<>();
+            //collect attachments for compression
+            LoggerFactory.getLogger(ErrorUtils.class).info("Collection log files");
+            final Map<InputStream, String> is = report.getAdditionalFiles();
 
             //create system info
             if (report.isSendSystemInfo()) {
@@ -45,17 +49,9 @@ public class MailErrorReporter extends ErrorReporter {
                 is.put(sysInfoIn, "system.info");
             }
 
-            //collect attachments for compression
-            LoggerFactory.getLogger(ErrorUtils.class).info("Collection log files");
-            for (File f : report.getAdditionalFiles()) {
-                is.put(new FileInputStream(f), f.getName());
-            }
-
-
-            LoggerFactory.getLogger(ErrorUtils.class).info("Compressing data log files");
-            File errorReportFile = File.createTempFile("ErrorReportLog", ".zip");
+            LoggerFactory.getLogger(ErrorUtils.class).info("Compressing error report data");
+            final File errorReportFile = File.createTempFile("ErrorReport", ".zip");
             Compress.compressToZipArchive(errorReportFile, is);
-
 
             LoggerFactory.getLogger(ErrorUtils.class).info("Building attachment");
             errorReportAttachment = new EmailAttachment();
@@ -73,7 +69,7 @@ public class MailErrorReporter extends ErrorReporter {
             LoggerFactory.getLogger(ErrorUtils.class).info("Creating email");
             MultiPartEmail reportMail = createMail(report);
 
-            String message = report.getUserMessage();
+            String message =  report.getUserMessage();
             if (report.getUserEmail() != null) {
                 //send a copy of the report to user
                 if (report.isSendReportToUser()) {
@@ -82,7 +78,7 @@ public class MailErrorReporter extends ErrorReporter {
                             System.lineSeparator() + System.lineSeparator() + "Your message was: " + System.lineSeparator() + report.getUserMessage();
 
                     MultiPartEmail userMail = createMail(report);
-                    userMail.setMsg(userMessage);
+                    userMail.setMsg(report.getHeadline() + System.lineSeparator() + System.lineSeparator() + userMessage);
 
                     userMail.addReplyTo("noReply@sirius.de", "Sirius Error Reporter");
                     // add the attachment
@@ -99,7 +95,7 @@ public class MailErrorReporter extends ErrorReporter {
             } else {
                 reportMail.addReplyTo("noReply@sirius.de", "Sirius Error Reporter");
             }
-            reportMail.setMsg(message);
+            reportMail.setMsg(report.getHeadline() + System.lineSeparator() + System.lineSeparator() + message);
             reportMail.addTo(REPORT_ADRESS);
             if (errorReportAttachment != null)
                 reportMail.attach(errorReportAttachment);

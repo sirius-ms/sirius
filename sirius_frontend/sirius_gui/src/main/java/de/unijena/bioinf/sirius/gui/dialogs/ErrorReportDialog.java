@@ -50,7 +50,8 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     }
 
     public String buildMessage(String subject) {
-        return "<html>" + subject + "<BR>" + messageAppendix + "<BR>" + "<a href=\"file:///" + ErrorUtils.getCurrentLogFile() + "\">" + ErrorUtils.getCurrentLogFile() + "</a></html>";
+        String ws = ApplicationCore.WORKSPACE.toAbsolutePath().toString();
+        return "<html>" + subject + "<BR>" + messageAppendix + "<BR>" + "<a href=\"file:///" + ws + "\">" + ws + "</a></html>";
     }
 
 

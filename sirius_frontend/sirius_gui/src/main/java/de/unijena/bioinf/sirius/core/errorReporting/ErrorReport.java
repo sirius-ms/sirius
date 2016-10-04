@@ -8,23 +8,25 @@ package de.unijena.bioinf.sirius.core.errorReporting;
 import de.unijena.bioinf.sirius.core.mailService.Mail;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ErrorReport {
+    private final String headline = "========== Sirius Error Report (" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()) + ") ==========";
     protected boolean sendSystemInfo = true;
     protected String subject = "";
     protected String userMessage = "";
-    protected List<File> additionalFiles = Collections.emptyList();
+    protected Map<InputStream, String> additionalFiles = new HashMap<>();
     private String userEmail = null;
     private boolean sendReportToUser = true;
 
-    public ErrorReport(String subject, String userMessage, List<File> additionalFiles) {
+    public ErrorReport(String subject, String userMessage, Map<InputStream, String> additionalFiles) {
         this.subject = subject;
-        this.userMessage = userMessage;
+        setUserMessage(userMessage);
         this.additionalFiles = additionalFiles;
     }
 
@@ -57,11 +59,11 @@ public class ErrorReport {
         this.userMessage = userMessage;
     }
 
-    public List<File> getAdditionalFiles() {
+    public Map<InputStream, String> getAdditionalFiles() {
         return additionalFiles;
     }
 
-    public void setAdditionalFiles(List<File> additionalFiles) {
+    public void setAdditionalFiles(Map<InputStream, String> additionalFiles) {
         this.additionalFiles = additionalFiles;
     }
 
@@ -78,6 +80,10 @@ public class ErrorReport {
             return true;
         }
         return false;
+    }
+
+    public String getHeadline() {
+        return headline;
     }
 
     public boolean isSendReportToUser() {

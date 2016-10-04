@@ -42,117 +42,147 @@ public class SystemInformation {
         }
     }
 
-    public static void writeSystemInformationTo(final OutputStream stream) throws IOException {
-        final Logger LOG = LoggerFactory.getLogger(SystemInformation.class);
-        new SwingWorker<Integer, String>() {
-            @Override
-            protected Integer doInBackground() throws Exception {
-                try (OutputStreamWriter outputStream  = new OutputStreamWriter(stream)) {
-                    setProgress(0);
-                    LOG.info("Initializing System...");
-                    SystemInfo si = new SystemInfo();
 
-                    HardwareAbstractionLayer hal = si.getHardware();
-                    setProgress(2);
 
-                    LOG.info("OS...");
-                    OperatingSystem os = si.getOperatingSystem();
-                    outputStream.write("Operating System:");
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write(os.toString());
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write(System.lineSeparator());
 
-                    outputStream.write("JRE/JDK:");
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write(System.getProperty("java.version"));
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write(System.lineSeparator());
+    public static SwingWorker<Integer, String> writeSystemInformationTo(final OutputStream stream) throws IOException {
 
-                    outputStream.write("Paths: ");
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write("GUROBI_HOME = " + System.getenv("$GUROBI_HOME"));
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write("java.library.path = " + System.getProperty("java.library.path"));
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write("java.class.path = " + System.getProperty("java.class.path"));
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write("USER_HOME = " + System.getProperty("user.home"));
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write("USER_DIR = " + System.getProperty("user.dir"));
+        final SwingWorker<Integer, String> s =  new SystemInfoCollector(stream);
+        s.execute();
+        return s;
+    }
+
+    private static class SystemInfoCollector extends SwingWorker<Integer,String>{
+        final Logger LOG = LoggerFactory.getLogger(this.getClass());
+        final OutputStream stream;
+
+        private SystemInfoCollector(OutputStream stream) {
+            this.stream = stream;
+        }
+
+        private void publishAndWarn(final String m){
+            LOG.warn(m);
+            publish(m);
+        }
+
+        private void publishAndError(final String m, Throwable e){
+            LOG.error(m,e);
+            publish(m);
+        }
+
+        private void publishAndInfo(final String m){
+            LOG.info(m);
+            publish(m);
+        }
+
+        @Override
+        protected Integer doInBackground() throws Exception {
+            try (OutputStreamWriter outputStream  = new OutputStreamWriter(stream)) {
+                setProgress(0);
+                publishAndInfo("Initializing System...");
+                SystemInfo si = new SystemInfo();
+
+                HardwareAbstractionLayer hal = si.getHardware();
+                setProgress(2);
+
+                publishAndInfo("OS...");
+                OperatingSystem os = si.getOperatingSystem();
+                outputStream.write("Operating System:");
+                outputStream.write(System.lineSeparator());
+                outputStream.write(os.toString());
+                outputStream.write(System.lineSeparator());
+                outputStream.write(System.lineSeparator());
+
+                outputStream.write("JRE/JDK:");
+                outputStream.write(System.lineSeparator());
+                outputStream.write(System.getProperty("java.version"));
+                outputStream.write(System.lineSeparator());
+                outputStream.write(System.lineSeparator());
+
+                outputStream.write("Paths: ");
+                outputStream.write(System.lineSeparator());
+                outputStream.write("GUROBI_HOME = " + System.getenv("$GUROBI_HOME"));
+                outputStream.write(System.lineSeparator());
+                outputStream.write("java.library.path = " + System.getProperty("java.library.path"));
+                outputStream.write(System.lineSeparator());
+                outputStream.write("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
+                outputStream.write(System.lineSeparator());
+                outputStream.write("java.class.path = " + System.getProperty("java.class.path"));
+                outputStream.write(System.lineSeparator());
+                outputStream.write("USER_HOME = " + System.getProperty("user.home"));
+                outputStream.write(System.lineSeparator());
+                outputStream.write("USER_DIR = " + System.getProperty("user.dir"));
 //            outputStream.write(System.lineSeparator());
 //            outputStream.write("APP_DIR = " + ApplicationCore.class.getProtectionDomain().getCodeSource().getLocation().toString());
-                    outputStream.write(System.lineSeparator());
-                    outputStream.write(System.lineSeparator());
-                    setProgress(5);
+                outputStream.write(System.lineSeparator());
+                outputStream.write(System.lineSeparator());
+                setProgress(5);
 
-                    LOG.info("CPU...");
-                    printProcessor(hal.getProcessor(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(10);
+                publishAndInfo("CPU...");
+                printProcessor(hal.getProcessor(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(10);
 
-                    LOG.info("Checking Memory...");
-                    printMemory(hal.getMemory(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(20);
-//            LOG.info("Checking CPU...");
+                publishAndInfo("Checking Memory...");
+                printMemory(hal.getMemory(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(20);
+//            publishAndInfo("Checking CPU...");
 //            printCpu(hal.getProcessor(),outputStream);
 //            outputStream.write(System.lineSeparator());
+                setProgress(25);
 
-                    LOG.info("Checking Processes...");
-                    printProcesses(os, hal.getMemory(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(30);
+                publishAndInfo("Checking Processes...");
+                printProcesses(os, hal.getMemory(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(30);
 
-                    LOG.info("Checking Sensors...");
-                    printSensors(hal.getSensors(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(40);
+                publishAndInfo("Checking Sensors...");
+                printSensors(hal.getSensors(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(40);
 
-                    LOG.info("Checking Power sources...");
-                    printPowerSources(hal.getPowerSources(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(50);
+                publishAndInfo("Checking Power sources...");
+                printPowerSources(hal.getPowerSources(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(50);
 
-                    LOG.info("Checking Disks...");
-                    printDisks(hal.getDiskStores(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(60);
+                publishAndInfo("Checking Disks...");
+                printDisks(hal.getDiskStores(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(60);
 
-                    LOG.info("Checking File System...");
-                    printFileSystem(os.getFileSystem(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(70);
+                publishAndInfo("Checking File System...");
+                printFileSystem(os.getFileSystem(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(70);
 
-                    LOG.info("Checking Network interfaces...");
-                    printNetworkInterfaces(hal.getNetworkIFs(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(80);
+                publishAndInfo("Checking Network interfaces...");
+                printNetworkInterfaces(hal.getNetworkIFs(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(80);
 
-                    // hardware: displays
-                    LOG.info("Checking Displays...");
-                    printDisplays(hal.getDisplays(),outputStream);
-                    outputStream.write(System.lineSeparator());
-                    setProgress(90);
+                // hardware: displays
+                publishAndInfo("Checking Displays...");
+                printDisplays(hal.getDisplays(),outputStream);
+                outputStream.write(System.lineSeparator());
+                setProgress(90);
 
-                    // hardware: USB devices
-                    LOG.info("Checking USB Devices...");
-                    printUsbDevices(hal.getUsbDevices(true),outputStream);
-                    setProgress(99);
+                // hardware: USB devices
+                publishAndInfo("Checking USB Devices...");
+                printUsbDevices(hal.getUsbDevices(true),outputStream);
+                setProgress(99);
 
-                    outputStream.flush();
-                    outputStream.close();
+                outputStream.flush();
+                outputStream.close();
 
-                    setProgress(100);
-                } catch (IOException e) {
-                    LOG.error("Could not write System information",e);
-                    return 1;
-                }
-                return 0;
+                setProgress(100);
+            } catch (IOException e) {
+                publishAndError("Could not write System information",e);
+                return 1;
             }
-        }.execute();
+            return 0;
+        }
     }
 
     private static void printProcessor(CentralProcessor processor,OutputStreamWriter outputStream) throws IOException {

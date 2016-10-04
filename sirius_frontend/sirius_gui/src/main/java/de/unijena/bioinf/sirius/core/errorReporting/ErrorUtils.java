@@ -5,24 +5,25 @@ package de.unijena.bioinf.sirius.core.errorReporting;
  * 28.09.16.
  */
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
+import java.io.*;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ErrorUtils {
+public abstract class ErrorUtils {
+    private static ErrorReportHandler REPORT_HANDLER;
 
-    private ErrorUtils() {
+    public static InputStream getErrorLoggingStream() throws IOException {
+        if (REPORT_HANDLER ==  null){
+            for (Handler h : Logger.getLogger("").getHandlers()) {
+                if (h instanceof ErrorReportHandler){
+                    REPORT_HANDLER = (ErrorReportHandler) h;
+                }
+            }
+        }
+        ByteArrayInputStream in =  new ByteArrayInputStream(REPORT_HANDLER.flushToByteArray());
+        return in;
     }
-
-
-    private static String searchLogFile() {
-        return ApplicationCore.WORKSPACE.resolve("sirius.log.0").toString();
-    }
-
-    public static String getCurrentLogFile() {
-        return searchLogFile();
-    } //todo search for real log file
-
-
 }
