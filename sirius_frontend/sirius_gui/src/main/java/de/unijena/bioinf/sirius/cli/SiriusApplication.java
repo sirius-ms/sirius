@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.cli;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.core.errorReporting.ErrorUtils;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 
 /**

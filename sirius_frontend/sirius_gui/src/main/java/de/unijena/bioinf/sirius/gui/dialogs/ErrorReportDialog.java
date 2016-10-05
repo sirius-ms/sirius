@@ -6,8 +6,10 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.core.errorReporting.ErrorReporter;
-import de.unijena.bioinf.sirius.core.errorReporting.ErrorUtils;
+import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
+import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
+import de.unijena.bioinf.utils.errorReport.ErrorReporter;
+import de.unijena.bioinf.utils.errorReport.MailErrorReporter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,7 +23,7 @@ import java.awt.event.ActionEvent;
 public class ErrorReportDialog extends AbstractArccordeoDialog {
 
     private static final String messageAppendix = " Consider the console output or the log file for further details";
-    private static final String reportText = "Please us your error report and help us improving sirius.";
+    private static final String reportText = "Please send us your error report and help us improving sirius.";
 
     private static final String reportDetails = "<html> We will NOT send any personal information or data, just the sirius log and property files.";
 
@@ -88,7 +90,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
         if (email != null && !email.isEmpty())
             emailField = new JTextField(email);
         else
-            emailField = new JTextField("Enter contact Email here");
+            emailField = new JTextField("Enter contact email here");
         emailField.setEditable(true);
 
         final Box mail = Box.createHorizontalBox();
@@ -109,8 +111,8 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
         expandPanel.setLayout(new BoxLayout(expandPanel, BoxLayout.Y_AXIS));
         expandPanel.setBorder(new TitledBorder(new EmptyBorder(MEDIUM_GAP, SMALL_GAP, SMALL_GAP, SMALL_GAP), reportDetails));
 
-        hardwareInfo = new JCheckBox("Send hardware and you OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
-        uesrCopy = new JCheckBox("Send a Copy to my mail address?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
+        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
+        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
         expandPanel.add(hardwareInfo);
         expandPanel.add(uesrCopy);
 
@@ -143,14 +145,12 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == send) {
-            ErrorReporter repoter = ErrorReporter.newMailErrorReporter(subject, textarea.getText(), emailField.getText());
-            repoter.getReport().setSendSystemInfo(hardwareInfo.isSelected());
+            ErrorReporter repoter = new FinngerIDWebErrorReporter(new SiriusDefaultErrorReport(subject, textarea.getText(), emailField.getText(),hardwareInfo.isSelected()));
             repoter.getReport().setSendReportToUser(uesrCopy.isSelected());
-            repoter.execute();
+            new Thread(repoter).start();
 
-            String mail = repoter.getReport().getUserEmail();
-            if (mail != null)
-                ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.mailService.usermail", mail);
+            if (repoter.getReport().hasUserMail())
+                ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.mailService.usermail", repoter.getReport().getUserEmail());
             ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail", String.valueOf(repoter.getReport().isSendReportToUser()));
             ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.errorReporting.systemInfo", String.valueOf(repoter.getReport().isSendSystemInfo()));
 

@@ -32,6 +32,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
@@ -75,7 +76,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
 
-    protected final static boolean DEBUG = false;
+    protected final static boolean DEBUG = true;
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
 
 
@@ -110,12 +111,12 @@ public class WebAPI implements Closeable {
 
                 }
             } catch (ClientProtocolException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
         return null;
     }
@@ -262,7 +263,7 @@ public class WebAPI implements Closeable {
         try {
             get = new HttpGet(getFingerIdURI("/webapi/statistics.csv").build());
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
         final TIntArrayList[] lists = new TIntArrayList[5];
@@ -319,15 +320,46 @@ public class WebAPI implements Closeable {
                 br.close();
                 return qp;
             } catch (ClientProtocolException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 return null;
             } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 return null;
             }
         } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             throw new RuntimeException(e);
+        }
+    }
+
+    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException, URISyntaxException {
+        final HttpPost request = new HttpPost(getFingerIdURI("/webapi/report.json").build());
+        final String json = ErrorReport.toJson(report);
+
+        final NameValuePair reportValue = new BasicNameValuePair("report", json);
+        final NameValuePair softwareName = new BasicNameValuePair("name", SOFTWARE_NAME);
+        final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(reportValue, softwareName));
+        request.setEntity(params);
+
+        try (CloseableHttpResponse response = client.execute(request)) {
+            if (response.getStatusLine().getStatusCode() == 200) {
+                final BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Charset.forName("UTF-8")));
+                com.google.gson.JsonObject o = new com.google.gson.JsonParser().parse(br.readLine()).getAsJsonObject();
+
+                boolean suc = o.get("success").getAsBoolean();
+                String m = o.get("message").getAsString();
+
+                if (suc) {
+                    LoggerFactory.getLogger(this.getClass()).info(m);
+                } else {
+                    LoggerFactory.getLogger(this.getClass()).error(m);
+                }
+                return m;
+            } else {
+                RuntimeException e = new RuntimeException(response.getStatusLine().getReasonPhrase());
+                LoggerFactory.getLogger(this.getClass()).error("Could not send error report! Bad http return Value: " + response.getStatusLine().getStatusCode(), e);
+                throw e;
+            }
         }
     }
 

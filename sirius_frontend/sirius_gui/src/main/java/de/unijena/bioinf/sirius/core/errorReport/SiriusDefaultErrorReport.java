@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.core.errorReporting;
+package de.unijena.bioinf.sirius.core.errorReport;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -6,37 +6,53 @@ package de.unijena.bioinf.sirius.core.errorReporting;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusDefaultErrorReport extends ErrorReport {
-    public SiriusDefaultErrorReport(String subject, String userMessage) {
+
+    public SiriusDefaultErrorReport(String subject, String userMessage, String userEmail, boolean sendSystemInfo) {
         super(subject);
         setUserMessage(userMessage);
-        additionalFiles = new HashMap<>(3);
+        setUserEmail(userEmail);
 
         File f = null;
         try {
             f = ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile();
-            additionalFiles.put(new FileInputStream(f), f.getName());
+            addAdditionalFiles(f);
             f = ApplicationCore.WORKSPACE.resolve("logging.properties").toFile();
-            additionalFiles.put(new FileInputStream(f), f.getName());
+            addAdditionalFiles(f);
         } catch (FileNotFoundException e) {
             LoggerFactory.getLogger(this.getClass()).error("Could not load file: " + f.getAbsolutePath(), e);
         }
         try {
-            additionalFiles.put(ErrorUtils.getErrorLoggingStream(), "sirius.log");
-//            additionalFiles.put(ErrorUtils.getFileLoggingStream(), "sirius.log");
+            addAdditionalFiles(ErrorUtils.getErrorLoggingStream(), "sirius.log");
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Could not load Logging Stream", e);
         }
+
+        //create system info
+        if (sendSystemInfo) {
+            try {
+                addSystemInfoFile();
+            } catch (IOException e) {
+                LoggerFactory.getLogger(this.getClass()).error("Could not create System info file", e);
+            }
+        }
+    }
+
+    //this constructor is just for deserialisation
+    public SiriusDefaultErrorReport(){
+        super();
+
     }
 }
+
+

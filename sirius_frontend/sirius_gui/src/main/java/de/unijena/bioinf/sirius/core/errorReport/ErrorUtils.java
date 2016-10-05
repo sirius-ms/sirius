@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.core.errorReporting;
+package de.unijena.bioinf.sirius.core.errorReport;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend

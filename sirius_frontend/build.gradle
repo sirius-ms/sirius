@@ -38,8 +38,9 @@ ext {
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
     gurobiExclude = "gurobi-*.jar"
 
-    commons_email_version = '1.4'
-    oshi_version = '3.2'
+//    commons_email_version = '1.4'
+//    oshi_version = '3.2'
+    error_reporter_version = "0.9-SNAPSHOT"
 
 
 }
