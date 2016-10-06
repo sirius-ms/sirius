@@ -9,9 +9,8 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -25,12 +24,21 @@ public class SiriusDefaultErrorReport extends ErrorReport {
 
         File f = null;
         try {
-            f = ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile();
-            addAdditionalFiles(f);
+            Properties prop = new Properties();
+            prop.load(new FileInputStream(ApplicationCore.WORKSPACE.resolve("sirius.properties").toFile()));
+            prop.setProperty("de.unijena.bioinf.sirius.proxy.user","CLEANED");
+            prop.setProperty("de.unijena.bioinf.sirius.proxy.pw","CLEANED");
+            ByteArrayOutputStream stream =  new ByteArrayOutputStream();
+            prop.store(stream,"This is the cleaned (no passwords and usernames) version of the Properties File");
+            ByteArrayInputStream in = new ByteArrayInputStream(stream.toByteArray());
+            addAdditionalFiles(in,"sirius.properties");
+
             f = ApplicationCore.WORKSPACE.resolve("logging.properties").toFile();
             addAdditionalFiles(f);
         } catch (FileNotFoundException e) {
             LoggerFactory.getLogger(this.getClass()).error("Could not load file: " + f.getAbsolutePath(), e);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         try {
             addAdditionalFiles(ErrorUtils.getErrorLoggingStream(), "sirius.log");
