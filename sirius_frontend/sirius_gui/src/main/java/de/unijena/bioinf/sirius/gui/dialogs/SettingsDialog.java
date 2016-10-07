@@ -32,7 +32,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
         JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JLabel l = new JLabel();
-        l.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/new/settings2-64.png")));
+        l.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png")));
         header.add(l);
         JLabel intro = new JLabel(/*"Settings"*/);
 //        intro.setFont(intro.getFont().deriveFont(48f));
