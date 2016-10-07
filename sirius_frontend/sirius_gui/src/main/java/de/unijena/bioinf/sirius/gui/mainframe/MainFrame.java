@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.*;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
@@ -20,7 +19,6 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -29,8 +27,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.BufferedWriter;
@@ -47,7 +43,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 	private CompoundModel compoundModel;
 	private JList<ExperimentContainer> compoundList;
-	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID, jobs, db;
+	private JButton newB, loadB, closeB, saveB, editB, computeB, batchB, computeAllB, exportResultsB,aboutB,configFingerID, jobs, db, settings, about;
 
 	protected CSIFingerIdComputation csiFingerId;
 	
@@ -72,7 +68,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	private ConfidenceList confidenceList;
 	private JPopupMenu expPopMenu;
 	private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI, cancelMI;
-	private JLabel aboutL;
 	private boolean computeAllActive;
 
 
@@ -234,13 +229,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 		tempP.setBorder(BorderFactory.createEtchedBorder());
 
-		computeB = new JButton("Compute",new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+		computeB = new JButton("Compute",new ImageIcon(MainFrame.class.getResource("/icons/compute.png")));
 		/*
 		computeB.addActionListener(this);
 		computeB.setEnabled(false);
 		tempP.add(computeB);
 		*/
-		computeAllB = new JButton("Compute All", new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+		computeAllB = new JButton("Compute All", new ImageIcon(MainFrame.class.getResource("/icons/compute.png")));
 		computeAllB.addActionListener(this);
 		computeAllB.setEnabled(false);
         //computeAllB.setToolTipText("Compute all compounds asynchronously");
@@ -292,7 +287,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 //        tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
 //        tempP.setBorder(BorderFactory.createEtchedBorder());
-        JPanel rightControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,2,2));
+//        JPanel rightControlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,2,2));
+        JToolBar rightControlPanel = new JToolBar();
 //        rightControlPanel.setBorder(Borderfac);
 
 //        aboutB = new JButton(new ImageIcon(MainFrame.class.getResource("/icons/help-about.png")));
@@ -304,19 +300,44 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //        aboutB.setFocusPainted(false);
 //        aboutB.setContentAreaFilled(false);
 //        aboutB.setMargin(new Insets(0, 0, 0, 0));
-        
-        AboutMouseAdapter adapter = new AboutMouseAdapter(this);
-        
-        aboutL = new JLabel(new ImageIcon(MainFrame.class.getResource("/icons/help-about.png"))); 
-        aboutL.addMouseListener(this);
-        
-        aboutL.addMouseListener(adapter);
-        
-        rightControlPanel.add(aboutL);
-        
 
-        Box controlPanel = Box.createHorizontalBox();
-//        JPanel controlPanel = new JPanel(new BorderLayout());
+
+		configFingerID = new JButton("CSI:FingerId",new ImageIcon(MainFrame.class.getResource("/icons/fingerprint.png")));
+		configFingerID.addActionListener(this);
+		configFingerID.setEnabled(false);
+
+
+
+
+
+		settings = new ToolbarButton("Settings",new ImageIcon(MainFrame.class.getResource("/icons/new/settings2.png")));
+		settings.setToolTipText("Settings");
+//		settings.setBorderPainted(false);
+//		settings.setBorder(null);
+//		settings.setMargin(new Insets(0, 0, 0, 0));
+//		settings.setContentAreaFilled(false);
+		settings.addActionListener(this);
+		rightControlPanel.add(settings);
+
+		about = new ToolbarButton("About",new ImageIcon(MainFrame.class.getResource("/icons/new/info2.png")));
+		about.setToolTipText("About Sirius");
+//		about.setBorderPainted(false);
+//		about.setBorder(null);
+//		about.setMargin(new Insets(0, 0, 0, 0));
+//		about.setContentAreaFilled(false);
+//		Icon infoIcon = new ImageIcon(MainFrame.class.getResource("/icons/new/info2.png"));
+//		about.setIcon(infoIcon);
+//		about.setRolloverIcon(new RolloverIcon(infoIcon));
+//		about.setRolloverEnabled(true);
+		about.addActionListener(this);
+		rightControlPanel.add(about);
+
+		rightControlPanel.setRollover(true);
+		rightControlPanel.setFloatable(false);
+
+//        Box controlPanel = Box.createHorizontalBox();
+        JPanel controlPanel = new JPanel();
+		controlPanel.setLayout(new BoxLayout(controlPanel,BoxLayout.LINE_AXIS));
         controlPanel.add(leftControlPanel);
         controlPanel.add(Box.createHorizontalGlue());
         controlPanel.add(rightControlPanel);
@@ -410,9 +431,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		batchMI = new JMenuItem("Batch Import",new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
 		editMI = new JMenuItem("Edit Experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
 		closeMI = new JMenuItem("Close Experiment",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
-		computeMI = new JMenuItem("Compute",new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+		computeMI = new JMenuItem("Compute",new ImageIcon(MainFrame.class.getResource("/icons/compute.png")));
 
-        cancelMI = new JMenuItem("Cancel Computation", new ImageIcon(MainFrame.class.getResource("/icons/cancel.png")));
+        cancelMI = new JMenuItem("Cancel Computation", new ImageIcon(MainFrame.class.getResource("/icons/new/cancel16.png")));
 
 
 
@@ -705,7 +726,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 		} else if (e.getSource()==db) {
             if (dbDialog==null) dbDialog = new DatabaseDialog(this, config);
             dbDialog.setVisible(true);
-        }
+        } else if (e.getSource() == about){
+			new AboutDialog(this);
+		}else if (e.getSource() == settings){
+			new SettingsDialog(this);
+		}
 		
 		
 		
@@ -1034,14 +1059,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	public void computationStarted(){
 		this.computeAllActive = true;
 		this.computeAllB.setText("Cancel Computation");
-		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/cancel.png")));
+		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/new/cancel16.png")));
 	}
 	
 	public void computationComplete(){
         // check if computation is complete
 		this.computeAllActive = false;
 		this.computeAllB.setText("Compute All");
-		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/compute.png")));
 	}
 	
 	public void cancelComputation(){
@@ -1054,7 +1079,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 	public void computationCanceled(){
 		this.computeAllActive = false;
 		this.computeAllB.setText("Compute All");
-		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/applications-system.png")));
+		this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/compute.png")));
 	}
 	
 	//////////////////////////////////////////////////
@@ -1296,15 +1321,12 @@ class SiriusSaveFileFilter extends FileFilter{
 	
 }
 
-class AboutMouseAdapter extends MouseAdapter{
-	
-	private JFrame owner;
-	
-	public AboutMouseAdapter(JFrame owner) {
-		this.owner = owner;
-	}
-	
-	public void mousePressed(MouseEvent m){
-		new AboutDialog(owner);
+class ToolbarButton extends JButton{
+	public ToolbarButton(String text, Icon icon) {
+		super(text, icon);
+		setVerticalTextPosition(SwingConstants.BOTTOM);
+		setHorizontalTextPosition(SwingConstants.CENTER);
+//		setMargin(new Insets(1, 3, 1, 3));
+		setMargin(new Insets(0, 0, 0, 0));
 	}
 }

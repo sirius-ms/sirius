@@ -177,6 +177,9 @@ public abstract class ApplicationCore {
         System.getProperties().putAll(USER_PROPERTIES);
     }
 
+
+
+
     public static void changeDefaultPropterties(Properties properties) {
         System.getProperties().putAll(properties);
         USER_PROPERTIES.putAll(properties);
@@ -196,6 +199,10 @@ public abstract class ApplicationCore {
     public static void changeDefaultProptertyPersistent(String propertyName, String propertyValue) {
         changeDefaultPropterty(propertyName, propertyValue);
         storeUserProperties();
+    }
+
+    public static Properties getUserCopyOfUserProperties(){
+        return new Properties(USER_PROPERTIES);
     }
 
     private static void storeUserProperties() {
