@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.io.FileChooserPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +59,10 @@ public class FingerIdDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         final JPanel dirForm = new JPanel();
         dirForm.setLayout(new BoxLayout(dirForm, BoxLayout.Y_AXIS));
-        final JPanel inner = new JPanel();
+
+
+      //todo replace
+        /*final JPanel inner = new JPanel();
         inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
         dirForm.add(inner);
         dirForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"database directory"));
@@ -84,7 +88,13 @@ public class FingerIdDialog extends JDialog {
         });
         final String tooltip = "Specify the directory where CSI:FingerId should store the compound candidates.Use the environment variable CSI_FINGERID_STORAGE to set this directory permanently.";
         field.setToolTipText(tooltip);
-        changeDir.setToolTipText(tooltip);
+        changeDir.setToolTipText(tooltip);*/
+////==================================================
+
+        final FileChooserPanel fileChooser =  new FileChooserPanel(storage.getDirectory().getAbsolutePath(),JFileChooser.DIRECTORIES_ONLY);
+        fileChooser.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"database directory"));
+        fileChooser.setToolTipText("Specify the directory where CSI:FingerId should store the compound candidates.");
+        dirForm.add(fileChooser);
 
         final JPanel dbForm = new JPanel();
         dbForm.setLayout(new BoxLayout(dbForm, BoxLayout.Y_AXIS));
@@ -113,7 +123,7 @@ public class FingerIdDialog extends JDialog {
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    String path = field.getText();
+                    String path = fileChooser.getFilePath();
                     ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.fingerID.cache" ,path);
                     storage.setDirectory(new File(path));
                     storage.setEnforceBio(biodb.isSelected());
@@ -129,7 +139,7 @@ public class FingerIdDialog extends JDialog {
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String path = field.getText();
+                String path = fileChooser.getFilePath();
                 ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.fingerID.cache" ,path);
                 storage.setDirectory(new File(path));
                 storage.configured = true;

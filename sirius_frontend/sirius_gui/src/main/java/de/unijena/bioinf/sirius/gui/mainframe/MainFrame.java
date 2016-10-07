@@ -45,7 +45,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     private JList<ExperimentContainer> compoundList;
     private ToolbarButton newB, loadB, /*closeB,*/ saveB, /*editB, computeB,*/ batchB, computeAllB, exportResultsB, /*aboutB,*/ configFingerID, jobs,/* db,*/ settings, about;
     private JButton editB, computeB,aboutB,db,closeB;
-    protected CSIFingerIdComputation csiFingerId;
+    public final CSIFingerIdComputation csiFingerId;
 
     private HashSet<String> names;
     private int nameCounter;
@@ -154,7 +154,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         compoundList.addListSelectionListener(this);
         compoundList.setMinimumSize(new Dimension(200, 0));
         compoundList.addMouseListener(this);
-//		compoundList.setPreferredSize(new Dimension(200,0));
 
 
         JPanel tmp_wrapper = new JPanel(new BorderLayout());
@@ -237,14 +236,16 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         exportResultsB.addActionListener(this);
         exportResultsB.setEnabled(false);
         controlPanel.add(exportResultsB);
-        controlPanel.add(Box.createGlue());
+        controlPanel.addSeparator(new Dimension(20,20));
+//        controlPanel.add(Box.createGlue());
 
         configFingerID = new ToolbarButton("CSI:FingerId", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png")));
         configFingerID.addActionListener(this);
         configFingerID.setEnabled(false);
 
         controlPanel.add(configFingerID);
-        controlPanel.add(Box.createGlue());
+        controlPanel.addSeparator(new Dimension(20,20));
+//        controlPanel.add(Box.createGlue());
 
         /*
 		db = new JButton("Database", new ImageIcon(MainFrame.class.getResource("/icons/db.png")));
@@ -264,7 +265,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             }
         });
         controlPanel.add(jobs);
+        controlPanel.addSeparator(new Dimension(20,20));
         controlPanel.add(Box.createGlue());
+        controlPanel.addSeparator(new Dimension(20,20));
         JobLog.getInstance().addListener(this);
 
 

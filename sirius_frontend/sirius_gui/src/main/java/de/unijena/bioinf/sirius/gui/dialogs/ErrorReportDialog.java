@@ -159,7 +159,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     }
 
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -171,11 +171,11 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
 
                 JFrame frame = new JFrame("Testing");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ExceptionDialogReport(frame, "This is som reallly searious error"));
+                frame.add(new ErrorReportDialog(frame, "This is some reallly serious error"));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
             }
         });
-    }*/
+    }
 }

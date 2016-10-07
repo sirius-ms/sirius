@@ -7,7 +7,11 @@ package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.mainframe.settings.ErrorReportSettingsPanel;
+import de.unijena.bioinf.sirius.gui.mainframe.settings.GerneralSettingsPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.settings.ProxySettingsPanel;
+import de.unijena.bioinf.sirius.gui.mainframe.settings.SettingsPanel;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,12 +26,17 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private JButton discard, save;
     private final Properties nuProps;
     private ProxySettingsPanel proxSettings;
+    private GerneralSettingsPanel genSettings;
+    private ErrorReportSettingsPanel errorSettings;
+    private JTabbedPane settingsPane;
+
     public SettingsDialog(Frame owner) {
         super(owner, true);
-
+//=============NORTH =================
         nuProps = ApplicationCore.getUserCopyOfUserProperties();
         setTitle(ApplicationCore.VERSION_STRING + " - Settings");
         this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
+        this.setLayout(new BorderLayout());
         setMinimumSize(new Dimension(400, getMinimumSize().height));
 
         JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -37,12 +46,23 @@ public class SettingsDialog extends JDialog implements ActionListener {
         JLabel intro = new JLabel(/*"Settings"*/);
 //        intro.setFont(intro.getFont().deriveFont(48f));
         header.add(intro);
-        add(header);
+        add(header, BorderLayout.NORTH);
+
+
+        //============= CENTER =================
+        settingsPane = new JTabbedPane();
+        genSettings = new GerneralSettingsPanel(nuProps);
+        settingsPane.add(genSettings.name(), genSettings);
 
         proxSettings = new ProxySettingsPanel(nuProps);
-        add(proxSettings);
+        settingsPane.add(proxSettings.name(), proxSettings);
 
+        errorSettings = new ErrorReportSettingsPanel(nuProps);
+        settingsPane.add(errorSettings.name(), errorSettings);
 
+        add(settingsPane, BorderLayout.CENTER);
+
+//============= SOUTH =================
         discard = new JButton("Discard");
         discard.addActionListener(this);
         save = new JButton("Save");
@@ -52,7 +72,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         buttons.add(discard);
         buttons.add(save);
 
-        add(buttons);
+        add(buttons, BorderLayout.SOUTH);
 
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -61,20 +81,25 @@ public class SettingsDialog extends JDialog implements ActionListener {
         setVisible(true);
     }
 
-    private void collectChangedProps(){
-        proxSettings.saveProperties();
+    private void collectChangedProps() {
+        for (Component c : settingsPane.getComponents()) {
+            if (c instanceof SettingsPanel) {
+                ((SettingsPanel) c).saveProperties();
+            }
+        }
     }
 
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == discard){
+        if (e.getSource() == discard) {
             this.dispose();
-        }else{
+        } else {
             collectChangedProps();
             new SwingWorker<Integer, String>() {
                 @Override
                 protected Integer doInBackground() throws Exception {
+                    LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     ApplicationCore.changeDefaultProptertiesPersistent(nuProps);
                     return 1;
                 }
