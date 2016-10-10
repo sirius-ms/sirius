@@ -10,6 +10,7 @@ import de.unijena.bioinf.sirius.*;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -52,6 +53,8 @@ public class ProgressDialog extends JDialog implements Progress, ActionListener{
 		
 		progBar = new JProgressBar(JProgressBar.HORIZONTAL,0,1000);
 		progBar.setValue(0);
+		progBar.setStringPainted(true);
+
 		
 		JPanel progressPanel = new JPanel(new BorderLayout());
 		progressPanel.add(progBar,BorderLayout.NORTH);

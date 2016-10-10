@@ -43,8 +43,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     private CompoundModel compoundModel;
     private JList<ExperimentContainer> compoundList;
-    private ToolbarButton newB, loadB, /*closeB,*/ saveB, /*editB, computeB,*/ batchB, computeAllB, exportResultsB, /*aboutB,*/ configFingerID, jobs,/* db,*/ settings, about;
-    private JButton editB, computeB,aboutB,db,closeB;
+    private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, about;
     public final CSIFingerIdComputation csiFingerId;
 
     private HashSet<String> names;
@@ -116,20 +115,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         this.addWindowListener(this);
         this.setLayout(new BorderLayout());
 
-        //todo remove this shit
-        editB = new JButton();
-        computeB = new JButton();
-        aboutB = new JButton();
-        db = new JButton();
-        closeB = new JButton();
-        //=======================
-
-
         JPanel mainPanel = new JPanel(new BorderLayout());
         this.add(mainPanel, BorderLayout.CENTER);
-//		JButton dummy = new JButton("compute");
-//		dummy.addActionListener(this);
-//		mainPanel.add(dummy,BorderLayout.CENTER);
+
 
         resultsPanelCL = new CardLayout();
         resultsPanel = new JPanel(resultsPanelCL);
@@ -137,13 +125,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         resultsPanel.add(dummyPanel, DUMMY_CARD);
 
         showResultsPanel = new ResultPanel(this, config);
-//		resultsPanel.add(showResultsPanel,RESULTS_CARD);
-//		resultsPanelCL.show(resultsPanel, RESULTS_CARD);
         mainPanel.add(showResultsPanel, BorderLayout.CENTER);
-
-        //JPanel compoundPanel = new JPanel(new BorderLayout());
-        //compoundPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiments"));
-
 
         final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
 
@@ -175,20 +157,15 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         pane.setViewportView(compoundList);
-
         pane.getViewport().setPreferredSize(new Dimension(200, (int) pane.getViewport().getPreferredSize().getHeight()));
-//		pane.getViewport().setMinimumSize(new Dimension(200,(int)pane.getViewport().getPreferredSize().getHeight()));
-
-//		System.err.println(pane.getViewport().getPreferredSize().getWidth()+" "+pane.getViewport().getPreferredSize().getHeight());
-//
-//		System.err.println(pane.getVerticalScrollBar().getPreferredSize().getWidth());
-//		pane.setPreferredSize(new Dimension(221,0));
 
         tabbedPane.addTab("Experiments", pane);
         tabbedPane.addTab("Identifications", tmp_wrapper);
 
         mainPanel.add(tabbedPane, BorderLayout.WEST);
 
+
+        // ########## Toolbar ############
         JToolBar controlPanel = new JToolBar();
 
         newB = new ToolbarButton("Import", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-document@0.5x.png")));
@@ -200,22 +177,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         batchB.addActionListener(this);
         batchB.setToolTipText("Import measurements of several compounds");
 
-//		editB = new ToolbarButton("Edit",new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
-//		editB.addActionListener(this);
-//		editB.setEnabled(false);
         controlPanel.add(batchB);
         controlPanel.addSeparator(new Dimension(20,20));
-        //editB.setToolTipText("Edit an experiment");
-        //tempP.add(editB);
-//		closeB = new ToolbarButton("Close",new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
-//		closeB.addActionListener(this);
-//		closeB.setEnabled(false);
-        //closeB.setToolTipText("Remove an experiment together with its results from the workspace");
-        //tempP.add(closeB);
-//		leftControlPanel.add(tempP);
-
-//		tempP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,2));
-//		tempP.setBorder(BorderFactory.createEtchedBorder());
 
         loadB = new ToolbarButton("Load Workspace", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-open@0.5x.png")));
         loadB.addActionListener(this);
@@ -247,15 +210,15 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         controlPanel.addSeparator(new Dimension(20,20));
 //        controlPanel.add(Box.createGlue());
 
-        /*
-		db = new JButton("Database", new ImageIcon(MainFrame.class.getResource("/icons/db.png")));
-        tempP.add(db);
+        //todo implement database menu
+		db = new ToolbarButton("Database", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png")));
+        /*controlPanel.add(db);
         db.addActionListener(this);
-		*/
+        controlPanel.addSeparator(new Dimension(20,20));*/
 
 
-        this.jobRunning = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/loader_run4.gif"));
-        this.jobNotRunning = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/loader_run4.png")); //todo stopped version
+        this.jobRunning = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.gif"));
+        this.jobNotRunning = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png")); //todo stopped version
         jobs = new ToolbarButton("Jobs", jobNotRunning);
         jobDialog = new JobDialog(this);
         jobs.addActionListener(new ActionListener() {
@@ -270,7 +233,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         controlPanel.addSeparator(new Dimension(20,20));
         JobLog.getInstance().addListener(this);
 
-
         settings = new ToolbarButton("Settings", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png")));
         settings.setToolTipText("Settings");
         settings.addActionListener(this);
@@ -283,7 +245,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         controlPanel.setRollover(true);
         controlPanel.setFloatable(false);
-
+        //Toolbar end
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
 
@@ -526,7 +488,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             }
         } else if (e.getSource() == exportResultsB) {
             exportResults();
-        } else if (e.getSource() == computeB || e.getSource() == computeMI) {
+        } else if (e.getSource() == computeMI) {
             computeCurrentCompound();
         } else if (e.getSource() == computeAllB) {
             if (computeAllActive) {
@@ -611,11 +573,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                 config.setDefaultSaveFilePath(selFile.getParentFile());
                 importWorkspace(Arrays.asList(selFile));
             }
-        } else if (e.getSource() == aboutB) {
-            new AboutDialog(this);
-        } else if (e.getSource() == closeB || e.getSource() == closeMI) {
+        } else if (e.getSource() == closeMI) {
             deleteCurrentCompound();
-        } else if (e.getSource() == editB || e.getSource() == editMI) {
+        } else if (e.getSource() == editMI) {
             ExperimentContainer ec = this.compoundList.getSelectedValue();
             if (ec == null) return;
             String guiname = ec.getGUIName();
@@ -642,7 +602,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                 }
                 this.compoundList.repaint();
             }
-
         } else if (e.getSource() == batchB || e.getSource() == batchMI) {
             JFileChooser chooser = new JFileChooser(config.getDefaultLoadDialogPath());
             chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -954,20 +913,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             int index = compoundList.getSelectedIndex();
             refreshComputationMenuItem();
             if (index < 0) {
-                closeB.setEnabled(false);
-                editB.setEnabled(false);
                 saveB.setEnabled(false);
-                computeB.setEnabled(false);
 
                 closeMI.setEnabled(false);
                 editMI.setEnabled(false);
                 computeMI.setEnabled(false);
                 this.showResultsPanel.changeData(null);
             } else {
-                closeB.setEnabled(true);
-                editB.setEnabled(true);
                 saveB.setEnabled(true);
-                computeB.setEnabled(true);
 
                 closeMI.setEnabled(true);
                 editMI.setEnabled(true);
@@ -991,7 +944,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void computationStarted() {
         this.computeAllActive = true;
-        this.computeAllB.setText("Cancel Computation");
+        this.computeAllB.setText("    Cancel    "); //todo: ugly hack to prevent button resizing in toolbar, find nice solution
         this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-no@0.5x.png")));
     }
 

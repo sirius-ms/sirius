@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.cli;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -14,9 +15,12 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 public class SiriusApplication extends ApplicationCore {
     public static MainFrame MAIN_FRAME;
     public static void main(String[] args) {
+
         final FingeridApplication cli = new FingeridApplication();
         cli.parseArgs(args, FingerIdOptions.class);
+
         if (cli.options.isGUI()) {
+            SwingUtils.initUI();
             MAIN_FRAME = new MainFrame();
         } else {
             cli.setup();
