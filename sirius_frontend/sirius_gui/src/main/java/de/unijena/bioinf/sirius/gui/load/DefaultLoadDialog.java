@@ -8,6 +8,7 @@ import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -88,8 +89,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		
 		
 		JPanel msControls = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		add = new JButton(new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-add.png")));
-		remove = new JButton(new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-remove.png")));
+		add = new JButton(SwingUtils.LIST_ADD_16);
+		remove = new JButton(SwingUtils.LIST_REMOVE_16);
 		add.addActionListener(this);
 		remove.addActionListener(this);
 		remove.setEnabled(false);
@@ -210,8 +211,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	
 	public void constructSpectraListPopupMenu(){
 		spPopMenu = new JPopupMenu();
-		addMI = new JMenuItem("Add experiment(s)",new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-add.png")));
-		removeMI = new JMenuItem("Remove experiment(s)",new ImageIcon(DefaultLoadDialog.class.getResource("/icons/list-remove.png")));
+		addMI = new JMenuItem("Add experiment(s)", SwingUtils.LIST_ADD_16);
+		removeMI = new JMenuItem("Remove experiment(s)",SwingUtils.LIST_REMOVE_16);
 		
 		addMI.addActionListener(this);
 		removeMI.addActionListener(this);

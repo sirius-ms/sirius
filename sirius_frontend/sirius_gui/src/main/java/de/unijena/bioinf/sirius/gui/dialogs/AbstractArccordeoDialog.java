@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,7 @@ public abstract class AbstractArccordeoDialog extends JDialog implements ActionL
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
     private final ExtentionPos pos;
-    private final JButton expander = new JButton(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-add-16px.png")));
+    private final JButton expander = new JButton();
     private JPanel expandation = null;
 
     public AbstractArccordeoDialog(Frame owner, ExtentionPos pos) {
@@ -105,14 +106,14 @@ public abstract class AbstractArccordeoDialog extends JDialog implements ActionL
 
     public void expand() {
 //        expander.setText("-");
-        expander.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-minus-16px.png")));
+        expander.setIcon(SwingUtils.LIST_REMOVE_16);
         expander.setToolTipText("less");
         expandation.setVisible(true);
     }
 
     public void contract() {
 //        expander.setText("+");
-        expander.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-add-16px.png")));
+        expander.setIcon(SwingUtils.LIST_ADD_16);
         expander.setToolTipText("more");
         expandation.setVisible(false);
     }

@@ -45,6 +45,7 @@ public class FingerIdDialog extends JDialog {
         this.data = data;
         this.storage = storage;
         this.showComputeButton = showComputeButton;
+        setLocationRelativeTo(owner);
     }
 
     public int run() {
