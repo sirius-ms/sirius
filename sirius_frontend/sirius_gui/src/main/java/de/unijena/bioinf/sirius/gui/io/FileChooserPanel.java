@@ -20,8 +20,8 @@ import java.io.File;
  */
 public class FileChooserPanel extends JPanel {
     final JTextField field = new JTextField();
-    final JButton changeDir = Buttons.getFileChooserButton16();
-    
+    final JButton changeDir = Buttons.getFileChooserButton16("Choose file or directory");
+
     public FileChooserPanel() {
         this("", 2);
     }
@@ -56,7 +56,6 @@ public class FileChooserPanel extends JPanel {
                 }
             }
         });
-        setToolTipText("Choose file or directory");
     }
 
     public String getFilePath() {
