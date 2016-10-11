@@ -17,7 +17,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	
 	private ResultTreeListModel listModel;
 	private JList<SiriusResultElement> resultsJList;
-//	private ResultTreeListThumbnailCellRenderers listRenderer;
 	private TreeVisualizationPanel tvp;
 	private SpectraVisualizationPanel svp;
 	private CompoundCandidateView ccv;
@@ -25,10 +24,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	
 	private ExperimentContainer ec;
 	
-	private Frame owner;
-	
-	private ConfigStorage config;
-
 	public void dispose() {
 		ccv.dispose();
 	}
@@ -38,11 +33,13 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 	}
 	
 	public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
+		super();
 		this.setLayout(new BorderLayout());
+		this.setToolTipText("Results");
+		this.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(1,5,0,0),"Molecular formulas"));
+// this.setBorder(BorderFactory.createEmptyBorder(5,0,0,0));
 		this.ec = ec;
-		this.owner = owner;
-		this.config = config;
-		
+
 		if(this.ec!=null) this.listModel = new ResultTreeListModel(ec.getResults());
 		else this.listModel = new ResultTreeListModel();
 		this.resultsJList = new ResultsTreeList(this.listModel);
@@ -65,11 +62,12 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		
 		JScrollPane listJSP = new JScrollPane(resultsJList,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		JPanel temp = new JPanel(new BorderLayout());
-		temp.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(),"Molecular formulas"));
+//		temp.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(),"Molecular formulas"));
 		temp.add(listJSP,BorderLayout.NORTH);
 		this.add(temp,BorderLayout.NORTH);
 		
 		JTabbedPane centerPane = new JTabbedPane();
+		centerPane.setBorder(BorderFactory.createEmptyBorder());
 		tvp = new TreeVisualizationPanel(owner,config);
 		centerPane.addTab("Tree view",tvp);
 		
@@ -81,7 +79,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		
 		this.add(centerPane,BorderLayout.CENTER);
 
-		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Results"));
+//		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Results"));
 	}
 
 	public void changeData(final ExperimentContainer ec){

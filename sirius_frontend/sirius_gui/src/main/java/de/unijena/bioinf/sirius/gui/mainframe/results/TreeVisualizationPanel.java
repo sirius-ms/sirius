@@ -63,11 +63,13 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 //		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"tree view"));
 		
 		JToolBar northPanel = new JToolBar();
+		northPanel.setBorder(BorderFactory.createEmptyBorder(0,5,0,5));
 		northPanel.setFloatable(false);
+
 		nodeType = new JComboBox<>(NODE_TYPES);
 		nodeType.addActionListener(this);
 		JLabel l = new JLabel("node style");
-		l.setBorder(BorderFactory.createEmptyBorder(0,10,0,5));
+		l.setBorder(BorderFactory.createEmptyBorder(0,0,0,5));
 		northPanel.add(l);
 		northPanel.add(nodeType);
 		colorType = new JComboBox<>(COLOR_TYPES);
@@ -81,26 +83,25 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		saveTreeB.addActionListener(this);
 		saveTreeB.setEnabled(false);
 		northPanel.add(saveTreeB);
+		northPanel.add(Box.createHorizontalGlue());
+		northPanel.addSeparator(new Dimension(10,10));
+		svp = new ScoreVisualizationPanel();
+		legendText = new JLabel("score ");
+		legendText.setBorder(BorderFactory.createEmptyBorder(0,10,0,5));
+		northPanel.add(legendText);
+		northPanel.add(svp);
 
 		this.add(northPanel,BorderLayout.NORTH);
 		
-		renderPanel = new TreeRenderPanel(); 
+
+		//########### Render PANE ###############
+		renderPanel = new TreeRenderPanel();
 		renderPanel.changeBackgroundColor(Color.white);
-		
+
 		pane = new JScrollPane(renderPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		renderPanel.setScrollPane(pane);
-		
-//		this.add(panel,BorderLayout.CENTER);
+
 		this.add(pane,BorderLayout.CENTER);
-		
-		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		svp = new ScoreVisualizationPanel();
-		legendText = new JLabel("score ");
-		southPanel.add(legendText);
-		southPanel.add(svp);
-		this.add(southPanel,BorderLayout.SOUTH);
-//		this.setSize(1024,600);
-//		this.setVisible(true);
 	}
 	
 	public void showTree(SiriusResultElement sre){

@@ -19,12 +19,14 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.Colors;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
@@ -78,16 +80,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public MainFrame() {
         super(ApplicationCore.VERSION_STRING);
-        try {
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                }
-            }
-        } catch (Exception e) {
-            // If Nimbus is not available, you can set the GUI to another look and feel.
-        }
-
         csiFingerId = new CSIFingerIdComputation(new CSIFingerIdComputation.Callback() {
             @Override
             public void computationFinished(final ExperimentContainer container, final SiriusResultElement element) {
@@ -118,6 +110,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         this.setLayout(new BorderLayout());
 
         JPanel mainPanel = new JPanel(new BorderLayout());
+//        mainPanel.setBorder(BorderFactory.createLoweredSoftBevelBorder());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5,1,1,1));
         this.add(mainPanel, BorderLayout.CENTER);
 
 
@@ -169,6 +163,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         // ########## Toolbar ############
         JToolBar controlPanel = new JToolBar();
+        controlPanel.setBorder(BorderFactory.createMatteBorder(0,0,2,0, Colors.ICON_BLUE));
+//        controlPanel.setBorder(BorderFactory.createRaisedSoftBevelBorder(/*0,5,0,5*/));
 
         newB = new ToolbarButton("Import", Icons.DOC_32);
         newB.addActionListener(this);
@@ -247,7 +243,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         controlPanel.setFloatable(false);
         //Toolbar end
 
-        mainPanel.add(controlPanel, BorderLayout.NORTH);
+        this.add(controlPanel, BorderLayout.NORTH);
 
         this.dropTarget = new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 

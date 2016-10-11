@@ -18,6 +18,17 @@ public class SwingUtils {
 
 
     public static void initUI() {
+        //load nimbus look and feel, befor mainframe is built
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                }
+            }
+        } catch (Exception e) {
+            // If Nimbus is not available, you can set the GUI to another look and feel.
+        }
+
         ToolTipManager.sharedInstance().setInitialDelay(250);
         Painter painter = new ProgressPainter(Color.WHITE, ICON_GREEN);
         UIManager.put("ProgressBar[Enabled].foregroundPainter", painter);
