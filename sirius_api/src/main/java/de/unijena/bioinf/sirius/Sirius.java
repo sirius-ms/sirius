@@ -20,7 +20,10 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -38,7 +41,6 @@ import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 public class Sirius {
@@ -212,6 +214,7 @@ public class Sirius {
         final double originalTreeSize = (treeSizeScorer != null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;
         final double MAX_TREESIZE_SCORE = originalTreeSize + MAX_TREESIZE_INCREASE;
+        int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS=MIN_NUMBER_OF_EXPLAINED_PEAKS;
         try {
             final ArrayList<FTree> computedTrees = new ArrayList<FTree>();
             final FeedbackFlag feedback = new FeedbackFlag();
@@ -224,6 +227,7 @@ public class Sirius {
                     specificExp.setPrecursorIonType(wl.ionization);
                     final FormulaConstraints constraints = FormulaConstraints.allSubsetsOf(wl.whitelist);
                     final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(specificExp, constraints);
+                    SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
                     MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput).withoutRecalibration().inParallel();
                     if (!isoScores.isEmpty()) {
                         trees = trees.onlyWith(isoScores.keySet());
@@ -257,7 +261,7 @@ public class Sirius {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
                             final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
-                            if (tree.numberOfVertices() >= MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
+                            if (tree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY) {
                                 satisfied = true;
                                 break;
                             }
@@ -510,6 +514,7 @@ public class Sirius {
 
         final ArrayList<FTree> computedTrees = new ArrayList<FTree>();
         final FeedbackFlag feedback = new FeedbackFlag();
+        final int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
 
         try {
             outerLoop:
@@ -551,7 +556,7 @@ public class Sirius {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
                             final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
-                            if (tree.numberOfVertices() >= MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
+                            if (tree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY) {
                                 satisfied = true;
                                 break;
                             }
@@ -636,7 +641,7 @@ public class Sirius {
 
         final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
         final FeedbackFlag feedback = new FeedbackFlag();
-
+        int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS=MIN_NUMBER_OF_EXPLAINED_PEAKS;
         try {
             outerLoop:
             while (true) {
@@ -649,6 +654,7 @@ public class Sirius {
                     assert experiment.getMolecularFormula() == null;
                     experiment.setMoleculeNeutralMass(0d); // previous neutral mass is not correct anymore
                     final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment.clone());
+                    SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
                     MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
                     trees = trees.inParallel(3);
                     if (isoFormulas.size() > 0) {
@@ -686,7 +692,7 @@ public class Sirius {
                         if (treeIterator.hasNext()) {
                             final FTree tree = treeIterator.next();
                             final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainedPeaks(tree);
-                            if (tree.numberOfVertices() >= MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
+                            if (tree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY) {
                                 satisfied = true;
                                 break;
                             }
@@ -787,13 +793,15 @@ public class Sirius {
         final double originalTreeSize = (treeSizeScorer != null ? treeSizeScorer.getTreeSizeScore() : 0d);
         double modifiedTreeSizeScore = originalTreeSize;
         final double MAX_TREESIZE_SCORE = originalTreeSize + MAX_TREESIZE_INCREASE;
+        final int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
+
         FTree tree = null;
         try {
             while (true) {
                 tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
                 if (tree == null) return new IdentificationResult(null, 0);
                 final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
-                if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || tree.numberOfVertices() >= MIN_NUMBER_OF_EXPLAINED_PEAKS || intensity >= MIN_EXPLAINED_INTENSITY) {
+                if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || (tree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY)) {
                     break;
                 } else {
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
