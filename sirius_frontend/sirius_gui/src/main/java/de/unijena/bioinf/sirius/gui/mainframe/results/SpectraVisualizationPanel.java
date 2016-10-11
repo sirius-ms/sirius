@@ -13,6 +13,8 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ResultsMSViewerDataModel;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,40 +53,41 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		
 		this.sre = null;
 		
-		JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+//		JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 //		zoomPanel.setBorder(BorderFactory.createEtchedBorder());
-		zoomIn = new JButton("Zoom in",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/circular-icons/c-magnify-plus-16px.png")));
-		zoomOut = new JButton("Zoom out",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/circular-icons/c-magnify-minus-16px.png")));
+		zoomIn = new ToolbarButton(SwingUtils.Zoom_In_24,"Zoom In");//SwingUtils.getZoomInButton20();//new JButton("Zoom in",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/circular-icons/c-magnify-plus-16px.png")));
+		zoomOut = new ToolbarButton(SwingUtils.Zoom_Out_24,"Zoom Out");//SwingUtils.getZoomOutButton20(); //new JButton("Zoom out",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/circular-icons/c-magnify-minus-16px.png")));
 		zoomIn.addActionListener(this);
 		zoomOut.addActionListener(this);
 		zoomIn.setEnabled(false);
 		zoomOut.setEnabled(false);
-		zoomIn.setToolTipText("Zoom in");
-		zoomOut.setToolTipText("Zoom out");
 		zoomed = false;
 		
 		constructZoomPopupMenu();
 		
 		this.cEFormat = new DecimalFormat("#0.0");
 		this.setLayout(new BorderLayout());
-		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,0));
-		northPanel.setBorder(BorderFactory.createEtchedBorder());
+
+
+		JToolBar northPanel = new JToolBar();
+		northPanel.setFloatable(false);
+//		northPanel.setBorder(BorderFactory.createEtchedBorder());
 		cbModel = new DefaultComboBoxModel<>();
 		updateLogic();
 		
 		spectraSelection = new JComboBox<String>(cbModel);
 		spectraSelection.addActionListener(this);
-		
-		JPanel spectrumSelection = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-//		spectrumSelection.setBorder(BorderFactory.createEtchedBorder());
-		spectrumSelection.add(new JLabel("spectrum "));
-		spectrumSelection.add(spectraSelection);
-		northPanel.add(spectrumSelection);
-		
-		zoomPanel.add(zoomIn);
-		zoomPanel.add(zoomOut);
-		northPanel.add(zoomPanel);
-		
+		spectraSelection.setToolTipText("select spectrum");
+
+		JLabel l = new JLabel("Spectrum:");
+		l.setBorder(BorderFactory.createEmptyBorder(0,10,0,5));
+		northPanel.add(l);
+		northPanel.add(spectraSelection);
+
+		northPanel.addSeparator(new Dimension(10,10));
+		northPanel.add(zoomIn);
+		northPanel.add(zoomOut);
+
 		this.add(northPanel, BorderLayout.NORTH);
 		
 		model = new ResultsMSViewerDataModel(ec);

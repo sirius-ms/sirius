@@ -14,6 +14,8 @@ import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -59,19 +61,24 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		this.setLayout(new BorderLayout());
 //		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"tree view"));
 		
-		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+		JToolBar northPanel = new JToolBar();
+		northPanel.setFloatable(false);
 		nodeType = new JComboBox<>(NODE_TYPES);
 		nodeType.addActionListener(this);
-		northPanel.add(new JLabel("node style "));
+		JLabel l = new JLabel("node style");
+		l.setBorder(BorderFactory.createEmptyBorder(0,10,0,5));
+		northPanel.add(l);
 		northPanel.add(nodeType);
 		colorType = new JComboBox<>(COLOR_TYPES);
 		colorType.addActionListener(this);
-		northPanel.add(new JLabel(" node color style "));
+		l = new JLabel("node color");
+		l.setBorder(BorderFactory.createEmptyBorder(0,10,0,5));
+		northPanel.add(l);
 		northPanel.add(colorType);
-		saveTreeB = new JButton("Export tree",new ImageIcon(TreeVisualizationPanel.class.getResource("/icons/document-export.png")));
+		northPanel.addSeparator(new Dimension(10,10));
+		saveTreeB = new ToolbarButton(SwingUtils.EXPORT_24,"Export tree");
 		saveTreeB.addActionListener(this);
 		saveTreeB.setEnabled(false);
-		northPanel.add(new JLabel("  "));
 		northPanel.add(saveTreeB);
 
 		this.add(northPanel,BorderLayout.NORTH);

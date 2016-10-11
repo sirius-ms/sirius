@@ -1,5 +1,7 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.sirius.cli.SiriusApplication;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -37,6 +39,7 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         running.add(scrollPane1);
         done.add(scrollPane2);
         setMinimumSize(new Dimension(640, 480));
+        setLocationRelativeTo(owner);
     }
 
     protected static class JobList extends JList<JobLog.Job> {

@@ -19,6 +19,8 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -330,13 +332,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void constructExperimentListPopupMenu() {
         expPopMenu = new JPopupMenu();
-        newExpMI = new JMenuItem("Import Experiment", new ImageIcon(MainFrame.class.getResource("/icons/document-new.png")));
-        batchMI = new JMenuItem("Batch Import", new ImageIcon(MainFrame.class.getResource("/icons/document-multiple.png")));
-        editMI = new JMenuItem("Edit Experiment", new ImageIcon(MainFrame.class.getResource("/icons/document-edit.png")));
-        closeMI = new JMenuItem("Close Experiment", new ImageIcon(MainFrame.class.getResource("/icons/document-close.png")));
-        computeMI = new JMenuItem("Compute", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-controls-play-16px.png")));
-
-        cancelMI = new JMenuItem("Cancel Computation", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-no-16px.png")));
+        newExpMI = new JMenuItem("Import Experiment", SwingUtils.ADD_DOC_16);
+        batchMI = new JMenuItem("Batch Import", SwingUtils.BATCH_DOC_16);
+        editMI = new JMenuItem("Edit Experiment", SwingUtils.EDIT_16);
+        closeMI = new JMenuItem("Close Experiment", SwingUtils.REMOVE_DOC_16);
+        computeMI = new JMenuItem("Compute", SwingUtils.RUN_16);
+        cancelMI = new JMenuItem("Cancel Computation", SwingUtils.NO_16);
 
 
         newExpMI.addActionListener(this);
@@ -1207,11 +1208,3 @@ class SiriusSaveFileFilter extends FileFilter {
 
 }
 
-class ToolbarButton extends JButton {
-    public ToolbarButton(String text, Icon icon) {
-        super(text, icon);
-        setVerticalTextPosition(SwingConstants.BOTTOM);
-        setHorizontalTextPosition(SwingConstants.CENTER);
-        setMargin(new Insets(1, 2, 1, 2));
-    }
-}

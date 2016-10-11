@@ -27,6 +27,9 @@ import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -119,9 +122,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         JPanel northPanels = new JPanel(new BorderLayout());
         add(northPanels, BorderLayout.NORTH);
 
-        JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-
+        JToolBar northPanel = new JToolBar();
+        northPanel.setFloatable(false);
         northPanels.add(northPanel, BorderLayout.NORTH);
+
         filterPanel = new FilterPanel();
         filterPanel.toggle();
         filterPanel.whenFilterChanges(new Runnable() {
@@ -132,35 +136,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         });
         northPanels.add(filterPanel, BorderLayout.SOUTH);
 
-        final JButton exportToCSV = new JButton("export list", new ImageIcon(CandidateJList.class.getResource("/icons/document-export.png")));
-        exportToCSV.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doExport();
-            }
-        });
-
-        northPanel.add(exportToCSV);
-
-        final ImageIcon downIcon = new ImageIcon(CandidateJList.class.getResource("/icons/filter_down.png"));
-        final ImageIcon upIcon = new ImageIcon(CandidateJList.class.getResource("/icons/filter_up.png"));
-        final JButton filter = new JButton("filter list",  downIcon);
-        filter.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (filterPanel.toggle()) {
-                    filter.setIcon(upIcon);
-                } else {
-                    filter.setIcon(downIcon);
-                }
-            }
-        });
-
-        northPanel.add(filter);
-
         logPSlider = new LogPSlider();
-        northPanel.add(Box.createHorizontalGlue());
-        northPanel.add(new JLabel("XLogP filter: "));
+//        northPanel.add(Box.createHorizontalGlue());
+        JLabel l = new JLabel("XLogP filter: ");
+        l.setBorder(BorderFactory.createEmptyBorder(0,10,0,5));
+        northPanel.add(l);
         northPanel.add(logPSlider);
         logPSlider.setCallback(new Runnable() {
             @Override
@@ -173,6 +153,34 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 });
             }
         });
+
+        northPanel.addSeparator(new Dimension(10,10));
+
+
+        final JToggleButton filter = new ToolbarToggleButton(SwingUtils.FILTER_DOWN_24,"show filter");
+        filter.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (filterPanel.toggle()) {
+                    filter.setIcon(SwingUtils.FILTER_UP_24);
+                    filter.setToolTipText("hide filter");
+                } else {
+                    filter.setIcon(SwingUtils.FILTER_DOWN_24);
+                    filter.setToolTipText("show filter");
+                }
+            }
+        });
+        northPanel.add(filter);
+
+
+        final JButton exportToCSV = new ToolbarButton(SwingUtils.EXPORT_24,"export cadidate list");
+        exportToCSV.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                doExport();
+            }
+        });
+        northPanel.add(exportToCSV);
 
 
         candidateList = new InnerList(new ListModel());

@@ -21,6 +21,8 @@ import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.Logger;
@@ -61,6 +63,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private ExperimentContainer ec;
 	private final JSpinner candidatesSpinner;
 
+//	private JToggleButton enableFinger;
+
 	public ComputeDialog(MainFrame owner,ExperimentContainer ec) {
 		super(owner,"compute",true);
 		this.owner = owner;
@@ -72,9 +76,12 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		additionalElements = new TreeSet<>();
 		
 		this.setLayout(new BorderLayout());
+		/*JPanel north = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		north.add(new JLabel(SwingUtils.RUN_64));
+		add(north,BorderLayout.NORTH);*/
 		
+
 		Box mainPanel = Box.createVerticalBox();
-		
 //		JPanel mainPanel = new JPanel(new BorderLayout());
 		this.add(mainPanel,BorderLayout.CENTER);
 		
@@ -141,7 +148,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			}
 		});
 		focMassPanel.add(box);
-		focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"parent mass"));
+		focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Parent mass"));
 		
 		
 		
@@ -182,9 +189,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		mainPanel.add(focMassPanel,BorderLayout.NORTH);
 		
 		/////////////////////////////////////////////
-//		Box elementPanel = Box.createVerticalBox();
-		JPanel elementPanel = new JPanel(new BorderLayout());
-		elementPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"elements beside CHNOPS"));
+		JPanel elementPanel = new JPanel();
+		elementPanel.setLayout(new BoxLayout(elementPanel,BoxLayout.LINE_AXIS));
+		elementPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Elements beside CHNOPS"));
 		mainPanel.add(elementPanel);
 		
 		bromine = new JCheckBox("bromine");
@@ -194,37 +201,39 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		iodine = new JCheckBox("iodine");
 		fluorine = new JCheckBox("fluorine");
 		
-		JPanel elements = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		elements.add(bromine);
-		elements.add(boron);
-		elements.add(chlorine);
-		elements.add(fluorine);
-		elements.add(iodine);
-		elements.add(selenium);
+		elementPanel.add(bromine);
+		elementPanel.add(boron);
+		elementPanel.add(chlorine);
+		elementPanel.add(fluorine);
+		elementPanel.add(iodine);
+		elementPanel.add(selenium);
 		
-		elementAutoDetect = new JButton("Auto detect");
-		elementAutoDetect.addActionListener(this);
-		elementAutoDetect.setEnabled(false);
+
+
 		elementTF = new JTextField(10);
 		elementTF.setEditable(false);
 		elementButton = new JButton("More elements");
 		elementButton.addActionListener(this);
-		
-		elements.add(elementAutoDetect);
-		elementPanel.add(elements,BorderLayout.NORTH);
-		
+
+
+
 		JPanel elements2 = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
 		elements2.add(elementTF);
 		elements2.add(elementButton);
-		elementPanel.add(elements2,BorderLayout.SOUTH);
+		elementPanel.add(elements2);
 		
 		
-//		elementPanel.add(Box.createVerticalGlue());
-		
+		elementPanel.add(Box.createHorizontalGlue());
+
+		elementAutoDetect = new JButton("Auto detect");
+		elementAutoDetect.addActionListener(this);
+		elementAutoDetect.setEnabled(false);
+		elementPanel.add(elementAutoDetect);
+
 		/////////////////////////////////////////////
 		
 		JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"other"));
+		otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Other"));
 
         ionizations = new Vector<>();
 		for (Ionization ion : Ionization.values()) {
@@ -298,7 +307,24 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		
 		
 		mainPanel.add(otherPanel);
-		
+
+
+		//todo fingerid integration
+		/*JPanel fingeridPanel = new JPanel(new BorderLayout());
+		fingeridPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"CSI:FingerID"));
+		Box fingeridCenter =  Box.createVerticalBox();
+
+		enableFinger =  new ToolbarToggleButton("CSI:FingerID",SwingUtils.FINGER_64, "Perform online candidate search using CSI:FingerID");
+		fingeridPanel.add(enableFinger,BorderLayout.WEST);
+		mainPanel.add(fingeridPanel);*/
+
+
+
+
+
+
+
+
 		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		this.add(southPanel,BorderLayout.SOUTH);
 
