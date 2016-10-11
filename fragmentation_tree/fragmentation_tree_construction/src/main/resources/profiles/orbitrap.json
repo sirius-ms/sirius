@@ -36,13 +36,13 @@
       },
       {
         "$name": "scoring.NormalDistributedIntensityScorer",
-        "absolute_error": 0.02,
+        "absolute_error": 0.01,
         "relative_error": 0.1
       },
       {
         "$name": "scoring.MissingPeakScorer",
         "lambda": 50,
-        "threshold": 0.05
+        "threshold": 0.08
       }
     ],
     "isotopes": {
@@ -142,7 +142,7 @@
     "rootScorers": [
       {
         "$name": "MassDeviationVertexScorer",
-        "standardDeviation": "5.0 ppm (5.0E-4 m/z)",
+        "standardDeviation": "3.0 ppm (3.0E-4 m/z)",
         "useOriginalMz": true
       },
       {
@@ -154,7 +154,7 @@
       },
       {
         "$name": "StrangeElementRootScorer",
-        "penalty": -1.3862943611198906
+        "penalty": -1.6094379124341003
       },
       {
         "$name": "ChemicalPriorScorer",
