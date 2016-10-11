@@ -221,13 +221,15 @@ public class FGraph extends AbstractFragmentationGraph {
     @Override
     public Loss getLoss(Fragment u, Fragment v) {
         if (u.outDegree < v.inDegree) {
-            for (Loss l : u.outgoingEdges) {
+            for (int li =0; li < u.outDegree; ++li) {
+                Loss l = u.outgoingEdges[li];
                 if (l.source == u && l.target == v) {
                     return l;
                 }
             }
         } else {
-            for (Loss l : v.incomingEdges) {
+            for (int li =0; li < v.inDegree; ++li) {
+                Loss l = v.incomingEdges[li];
                 if (l.source == u && l.target == v) {
                     return l;
                 }
@@ -238,14 +240,16 @@ public class FGraph extends AbstractFragmentationGraph {
 
     public boolean disconnect(Fragment u, Fragment v) {
         if (u.outDegree < v.inDegree) {
-            for (Loss l : u.outgoingEdges) {
+            for (int li =0; li < u.outDegree; ++li) {
+                Loss l = u.outgoingEdges[li];
                 if (l.source == u && l.target == v) {
                     deleteLoss(l);
                     return true;
                 }
             }
         } else {
-            for (Loss l : v.incomingEdges) {
+            for (int li =0; li < v.inDegree; ++li) {
+                Loss l = v.incomingEdges[li];
                 if (l.source == u && l.target == v) {
                     deleteLoss(l);
                     return true;
