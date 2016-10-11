@@ -24,6 +24,7 @@ import java.util.Properties;
  */
 public class PasswordCrypter {
 
+    //TODO for that stuff there is a new API in JDK-8
     private static final char[] PASSWORD = "enfldsgbnlsngdlksdsgm".toCharArray();
     private static final String METHOD = "PBEWithMD5AndDES";
     private static final byte[] SALT = {

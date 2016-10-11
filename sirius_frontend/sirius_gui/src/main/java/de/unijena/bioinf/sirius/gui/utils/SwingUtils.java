@@ -5,85 +5,30 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+
+import static de.unijena.bioinf.sirius.gui.utils.Colors.ICON_GREEN;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SwingUtils {
 
-    public static Color ICON_BLUE = new Color(17,145,187);
-    public static Color ICON_GREEN = new Color(0,191,48);
-    public static Color ICON_RED = new Color(204,71,41);
-    public static Color ICON_YELLOW = new Color(255,204,0);
 
-
-    //ICONS
-    public static final Icon ADD_DOC_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-add-doc-16px.png"));
-    public static final Icon BATCH_DOC_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-documents-16px.png"));
-    public static final Icon REMOVE_DOC_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-remove-doc-16px.png"));
-    public static final Icon EDIT_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-edit-16px.png"));
-    public static final Icon EXPORT_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-export-16px.png"));
-    public static final Icon EXPORT_24 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-export-24px.png"));
-    public static final Icon EXPORT_20 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-export-20px.png"));
-    public static final Icon EXPORT_32 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-export@0.5x.png"));
-    public static final Icon EXPORT_48 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-export-48px.png"));
-    public static final Icon RUN_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-controls-play-16px.png"));
-    public static final Icon RUN_32 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-controls-play@0.5x.png"));
-    public static final Icon RUN_64 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-controls-play.png"));
-    public static final Icon NO_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-no-16px.png"));
-    public static final Icon LIST_ADD_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-list-add-16px.png"));
-    public static final Icon LIST_REMOVE_16 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-list-remove-16px.png"));
-    public static final Icon Zoom_In_24 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-magnify-plus-24px.png"));
-    public static final Icon Zoom_In_20 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-magnify-plus-20px.png"));
-    public static final Icon Zoom_Out_24 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-magnify-minus-24px.png"));
-    public static final Icon Zoom_Out_20 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-magnify-minus-20px.png"));
-    public static final Icon FILTER_UP_24 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-filter-up-24px.png"));
-    public static final Icon FILTER_DOWN_24 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-filter-down-24px.png"));
-    public static final Icon FINGER_32 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png"));
-    public static final Icon FINGER_64 = new ImageIcon(SwingUtils.class.getResource("/icons/circular-icons/c-fingerprint.png"));
-
-public static void initUI(){
-    ToolTipManager.sharedInstance().setInitialDelay(250);
-    Painter painter = new ProgressPainter(Color.WHITE, ICON_GREEN);
-    UIManager.put("ProgressBar[Enabled].foregroundPainter", painter);
-    UIManager.put("ProgressBar[Enabled+Finished].foregroundPainter", painter);
-}
-
-    public static JButton getExportButton24(String tootip){
-        return new IconButton(tootip,EXPORT_24);
+    public static void initUI() {
+        ToolTipManager.sharedInstance().setInitialDelay(250);
+        Painter painter = new ProgressPainter(Color.WHITE, ICON_GREEN);
+        UIManager.put("ProgressBar[Enabled].foregroundPainter", painter);
+        UIManager.put("ProgressBar[Enabled+Finished].foregroundPainter", painter);
     }
 
-    public static JButton getExportButton20(String tootip){
-        return new IconButton(tootip,EXPORT_20);
-    }
-
-    public static JButton getZoomInButton20(){
-        return new IconButton("Zoom in",Zoom_In_20);
-    }
-
-    public static JButton getZoomOutButton20(){
-        return new IconButton("Zoom out",Zoom_Out_20);
-    }
-
-
-    public static class IconButton extends JButton{
-        public IconButton(String text, Icon icon) {
-            super(icon);
-            setToolTipText(text);
-            setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-//            setContentAreaFilled(false);
-//            setRolloverEnabled(true);
-        }
-    }
 
     public static class SimplePainter extends AbstractRegionPainter {
 
         private Color fillColor;
+
         public SimplePainter(Color color) {
             // as a slight visual improvement, make the color transparent
             // to at least see the background gradient

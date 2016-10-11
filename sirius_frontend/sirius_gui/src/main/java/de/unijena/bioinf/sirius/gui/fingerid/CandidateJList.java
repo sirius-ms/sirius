@@ -22,13 +22,12 @@ import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
-import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
+import de.unijena.bioinf.sirius.gui.utils.Buttons;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -157,15 +156,15 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         northPanel.addSeparator(new Dimension(10,10));
 
 
-        final JToggleButton filter = new ToolbarToggleButton(SwingUtils.FILTER_DOWN_24,"show filter");
+        final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24,"show filter");
         filter.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (filterPanel.toggle()) {
-                    filter.setIcon(SwingUtils.FILTER_UP_24);
+                    filter.setIcon(Icons.FILTER_UP_24);
                     filter.setToolTipText("hide filter");
                 } else {
-                    filter.setIcon(SwingUtils.FILTER_DOWN_24);
+                    filter.setIcon(Icons.FILTER_DOWN_24);
                     filter.setToolTipText("show filter");
                 }
             }
@@ -173,7 +172,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         northPanel.add(filter);
 
 
-        final JButton exportToCSV = new ToolbarButton(SwingUtils.EXPORT_24,"export cadidate list");
+        final JButton exportToCSV = Buttons.getExportButton24("export cadidate list");
         exportToCSV.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

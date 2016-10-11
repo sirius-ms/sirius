@@ -65,23 +65,23 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		
 		JScrollPane listJSP = new JScrollPane(resultsJList,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		JPanel temp = new JPanel(new BorderLayout());
-		temp.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(),"molecular formulas"));
+		temp.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(),"Molecular formulas"));
 		temp.add(listJSP,BorderLayout.NORTH);
 		this.add(temp,BorderLayout.NORTH);
 		
 		JTabbedPane centerPane = new JTabbedPane();
 		tvp = new TreeVisualizationPanel(owner,config);
-		centerPane.addTab("tree view",tvp);
+		centerPane.addTab("Tree view",tvp);
 		
 		svp = new SpectraVisualizationPanel(ec);
-		centerPane.addTab("spectra view",svp);
+		centerPane.addTab("Spectra view",svp);
 
         ccv = new CompoundCandidateView(owner);
         centerPane.addTab("CSI:FingerId", ccv);
 		
 		this.add(centerPane,BorderLayout.CENTER);
 
-		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"results"));
+		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Results"));
 	}
 
 	public void changeData(final ExperimentContainer ec){

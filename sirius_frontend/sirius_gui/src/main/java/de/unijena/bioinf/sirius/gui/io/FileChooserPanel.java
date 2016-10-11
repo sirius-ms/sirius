@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.io;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.utils.Buttons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,9 +20,8 @@ import java.io.File;
  */
 public class FileChooserPanel extends JPanel {
     final JTextField field = new JTextField();
-    final JButton changeDir = new JButton(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file-16px.png")));
-
-
+    final JButton changeDir = Buttons.getFileChooserButton16();
+    
     public FileChooserPanel() {
         this("", 2);
     }

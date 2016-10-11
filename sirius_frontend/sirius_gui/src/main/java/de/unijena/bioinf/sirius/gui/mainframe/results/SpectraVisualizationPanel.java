@@ -13,6 +13,8 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ResultsMSViewerDataModel;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.Buttons;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
@@ -53,10 +55,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		
 		this.sre = null;
 		
-//		JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-//		zoomPanel.setBorder(BorderFactory.createEtchedBorder());
-		zoomIn = new ToolbarButton(SwingUtils.Zoom_In_24,"Zoom In");//SwingUtils.getZoomInButton20();//new JButton("Zoom in",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/circular-icons/c-magnify-plus-16px.png")));
-		zoomOut = new ToolbarButton(SwingUtils.Zoom_Out_24,"Zoom Out");//SwingUtils.getZoomOutButton20(); //new JButton("Zoom out",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/circular-icons/c-magnify-minus-16px.png")));
+		zoomIn = Buttons.getZoomInButton24();
+		zoomOut = Buttons.getZoomOutButton24();
 		zoomIn.addActionListener(this);
 		zoomOut.addActionListener(this);
 		zoomIn.setEnabled(false);
@@ -71,7 +71,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
 		JToolBar northPanel = new JToolBar();
 		northPanel.setFloatable(false);
-//		northPanel.setBorder(BorderFactory.createEtchedBorder());
 		cbModel = new DefaultComboBoxModel<>();
 		updateLogic();
 		
@@ -104,8 +103,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	
 	public void constructZoomPopupMenu(){
 		zoomPopMenu = new JPopupMenu();
-		zoomInMI = new JMenuItem("Zoom in",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/zoom-in.png")));
-		zoomOutMI = new JMenuItem("Zoom out",new ImageIcon(SpectraVisualizationPanel.class.getResource("/icons/zoom-out.png")));
+		zoomInMI = new JMenuItem("Zoom in", Icons.Zoom_In_16);
+		zoomOutMI = new JMenuItem("Zoom out",Icons.Zoom_Out_16);
 		
 		zoomInMI.addActionListener(this);
 		zoomOutMI.addActionListener(this);

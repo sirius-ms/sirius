@@ -21,6 +21,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.load.LoadSpectraCellRenderer;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class AboutDialog extends JDialog{
         this.setLayout(new BorderLayout());
         setPreferredSize(new Dimension(500, 800));
         // SIRIUS logo
-        final ImageIcon image = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
+        final Icon image = Icons.SIRIUS_SPLASH;
         final JLabel imageLabel = new JLabel(image);
         add(imageLabel, BorderLayout.NORTH);
 

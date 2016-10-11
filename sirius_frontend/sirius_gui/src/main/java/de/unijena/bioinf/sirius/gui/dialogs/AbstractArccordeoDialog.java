@@ -5,8 +5,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 30.09.16.
  */
 
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,15 +104,13 @@ public abstract class AbstractArccordeoDialog extends JDialog implements ActionL
     }
 
     public void expand() {
-//        expander.setText("-");
-        expander.setIcon(SwingUtils.LIST_REMOVE_16);
+        expander.setIcon(Icons.LIST_REMOVE_16);
         expander.setToolTipText("less");
         expandation.setVisible(true);
     }
 
     public void contract() {
-//        expander.setText("+");
-        expander.setIcon(SwingUtils.LIST_ADD_16);
+        expander.setIcon(Icons.LIST_ADD_16);
         expander.setToolTipText("more");
         expandation.setVisible(false);
     }

@@ -14,6 +14,7 @@ import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
+import de.unijena.bioinf.sirius.gui.utils.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		northPanel.add(l);
 		northPanel.add(colorType);
 		northPanel.addSeparator(new Dimension(10,10));
-		saveTreeB = new ToolbarButton(SwingUtils.EXPORT_24,"Export tree");
+		saveTreeB = Buttons.getExportButton24("Export tree");
 		saveTreeB.addActionListener(this);
 		saveTreeB.setEnabled(false);
 		northPanel.add(saveTreeB);

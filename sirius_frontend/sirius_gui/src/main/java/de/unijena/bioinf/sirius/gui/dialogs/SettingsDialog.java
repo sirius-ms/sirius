@@ -11,6 +11,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.settings.GerneralSettingsPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.settings.ProxySettingsPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.settings.SettingsPanel;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
         JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JLabel l = new JLabel();
-        l.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png")));
+        l.setIcon(Icons.GEAR_64);
         header.add(l);
         JLabel intro = new JLabel(/*"Settings"*/);
 //        intro.setFont(intro.getFont().deriveFont(48f));

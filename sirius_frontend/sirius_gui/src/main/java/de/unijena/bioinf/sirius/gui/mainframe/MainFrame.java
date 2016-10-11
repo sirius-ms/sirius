@@ -19,7 +19,7 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     private static final String RESULTS_CARD = "results";
     private ConfigStorage config;
     private JobDialog jobDialog;
-    private ImageIcon jobRunning, jobNotRunning;
+//    private Icon jobRunning, jobNotRunning;
     private DatabaseDialog dbDialog;
 
     private BackgroundComputation backgroundComputation;
@@ -170,41 +170,41 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         // ########## Toolbar ############
         JToolBar controlPanel = new JToolBar();
 
-        newB = new ToolbarButton("Import", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-document@0.5x.png")));
+        newB = new ToolbarButton("Import", Icons.DOC_32);
         newB.addActionListener(this);
         newB.setToolTipText("Import measurements of a single compound");
         controlPanel.add(newB);
 
-        batchB = new ToolbarButton("Batch Import", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-documents@0.5x.png")));
+        batchB = new ToolbarButton("Batch Import", Icons.DOCS_32);
         batchB.addActionListener(this);
         batchB.setToolTipText("Import measurements of several compounds");
 
         controlPanel.add(batchB);
         controlPanel.addSeparator(new Dimension(20,20));
 
-        loadB = new ToolbarButton("Load Workspace", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-open@0.5x.png")));
+        loadB = new ToolbarButton("Load Workspace", Icons.FOLDER_OPEN_32);
         loadB.addActionListener(this);
         loadB.setToolTipText("Load all experiments and computed results from a previously saved workspace.");
         controlPanel.add(loadB);
-        saveB = new ToolbarButton("Save Workspace", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-close@0.5x.png")));
+        saveB = new ToolbarButton("Save Workspace", Icons.FOLDER_CLOSE_32);
         saveB.addActionListener(this);
         saveB.setEnabled(false);
         controlPanel.add(saveB);
         controlPanel.addSeparator(new Dimension(20,20));
 //
-        computeAllB = new ToolbarButton("Compute All", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-controls-play@0.5x.png")));
+        computeAllB = new ToolbarButton("Compute All", Icons.RUN_32);
         computeAllB.addActionListener(this);
         computeAllB.setEnabled(false);
         controlPanel.add(computeAllB);
 
-        exportResultsB = new ToolbarButton("Export Results", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-export@0.5x.png")));
+        exportResultsB = new ToolbarButton("Export Results", Icons.EXPORT_32);
         exportResultsB.addActionListener(this);
         exportResultsB.setEnabled(false);
         controlPanel.add(exportResultsB);
         controlPanel.addSeparator(new Dimension(20,20));
 //        controlPanel.add(Box.createGlue());
 
-        configFingerID = new ToolbarButton("CSI:FingerId", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png")));
+        configFingerID = new ToolbarButton("CSI:FingerId", Icons.FINGER_32);
         configFingerID.addActionListener(this);
         configFingerID.setEnabled(false);
 
@@ -213,15 +213,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //        controlPanel.add(Box.createGlue());
 
         //todo implement database menu
-		db = new ToolbarButton("Database", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png")));
+		db = new ToolbarButton("Database", Icons.DB_32);
         /*controlPanel.add(db);
         db.addActionListener(this);
         controlPanel.addSeparator(new Dimension(20,20));*/
 
 
-        this.jobRunning = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.gif"));
-        this.jobNotRunning = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png")); //todo stopped version
-        jobs = new ToolbarButton("Jobs", jobNotRunning);
+        jobs = new ToolbarButton("Jobs", Icons.FB_LOADER_STOP_32);
         jobDialog = new JobDialog(this);
         jobs.addActionListener(new ActionListener() {
             @Override
@@ -235,12 +233,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         controlPanel.addSeparator(new Dimension(20,20));
         JobLog.getInstance().addListener(this);
 
-        settings = new ToolbarButton("Settings", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png")));
+        settings = new ToolbarButton("Settings", Icons.GEAR_32);
         settings.setToolTipText("Settings");
         settings.addActionListener(this);
         controlPanel.add(settings);
 
-        about = new ToolbarButton("About", new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png")));
+        about = new ToolbarButton("About", Icons.INFO_32);
         about.setToolTipText("About Sirius");
         about.addActionListener(this);
         controlPanel.add(about);
@@ -332,12 +330,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void constructExperimentListPopupMenu() {
         expPopMenu = new JPopupMenu();
-        newExpMI = new JMenuItem("Import Experiment", SwingUtils.ADD_DOC_16);
-        batchMI = new JMenuItem("Batch Import", SwingUtils.BATCH_DOC_16);
-        editMI = new JMenuItem("Edit Experiment", SwingUtils.EDIT_16);
-        closeMI = new JMenuItem("Close Experiment", SwingUtils.REMOVE_DOC_16);
-        computeMI = new JMenuItem("Compute", SwingUtils.RUN_16);
-        cancelMI = new JMenuItem("Cancel Computation", SwingUtils.NO_16);
+        newExpMI = new JMenuItem("Import Experiment", Icons.ADD_DOC_16);
+        batchMI = new JMenuItem("Batch Import", Icons.BATCH_DOC_16);
+        editMI = new JMenuItem("Edit Experiment", Icons.EDIT_16);
+        closeMI = new JMenuItem("Close Experiment", Icons.REMOVE_DOC_16);
+        computeMI = new JMenuItem("Compute", Icons.RUN_16);
+        cancelMI = new JMenuItem("Cancel Computation", Icons.CANCEL_16);
 
 
         newExpMI.addActionListener(this);
@@ -528,7 +526,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         if (rv == ReturnValue.Success) {
                             selectedFile = selFile;
                         }
-//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
                     } else {
                         selectedFile = selFile;
                     }
@@ -784,12 +781,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         if (ec != null) {
             ComputeDialog cd = new ComputeDialog(this, ec);
             if (cd.isSuccessful()) {
-//					System.err.println("ComputeDialog erfolgreich");
-//					System.err.println("Anzahl Ergebnisse: "+ec.getResults().size());
+                LoggerFactory.getLogger(this.getClass()).info("Computation Successful!");
                 this.showResultsPanel.changeData(ec);
                 resultsPanelCL.show(resultsPanel, RESULTS_CARD);
             } else {
-//					System.err.println("ComputeDialog nicht erfolgreich");
+                LoggerFactory.getLogger(this.getClass()).warn("Computation failed!");
             }
         }
     }
@@ -808,7 +804,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                     if (val == CloseDialogReturnValue.abort) return;
                 }
                 compoundModel.remove(index);
-                //this.compoundList.setSelectedIndex(-1);
                 names.remove(cont.getGUIName());
             }
         });
@@ -946,14 +941,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     public void computationStarted() {
         this.computeAllActive = true;
         this.computeAllB.setText("    Cancel    "); //todo: ugly hack to prevent button resizing in toolbar, find nice solution
-        this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-no@0.5x.png")));
+        this.computeAllB.setIcon(Icons.CANCEL_32);
     }
 
     public void computationComplete() {
         // check if computation is complete
         this.computeAllActive = false;
         this.computeAllB.setText("Compute All");
-        this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-controls-play@0.5x.png")));
+        this.computeAllB.setIcon(Icons.RUN_32);
     }
 
     public void cancelComputation() {
@@ -966,7 +961,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     public void computationCanceled() {
         this.computeAllActive = false;
         this.computeAllB.setText("Compute All");
-        this.computeAllB.setIcon(new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-controls-play@0.5x.png")));
+        this.computeAllB.setIcon(Icons.RUN_32);
     }
 
     //////////////////////////////////////////////////
@@ -1162,8 +1157,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             @Override
             public void run() {
                 if (JobLog.getInstance().hasActiveJobs()) {
-                    jobs.setIcon(jobRunning);
-                } else jobs.setIcon(jobNotRunning);
+                    jobs.setIcon(Icons.FB_LOADER_RUN_32);
+                } else jobs.setIcon(Icons.FB_LOADER_STOP_32);
             }
         });
     }

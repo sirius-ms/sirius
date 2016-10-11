@@ -7,6 +7,7 @@ import de.unijena.bioinf.sirius.gui.ext.ConfirmDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.gui.utils.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.jdesktop.swingx.StackLayout;
@@ -82,7 +83,7 @@ public class DatabaseDialog extends JDialog {
                 }
             }
         });
-        this.addCustomDb = new JButton("add custom db", SwingUtils.LIST_ADD_16);
+        this.addCustomDb = Buttons.getAddButton16("add custom db");
         addCustomDb.setEnabled(false);
         final Box but = Box.createHorizontalBox();
         but.add(nameField);
