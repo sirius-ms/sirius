@@ -480,7 +480,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		try{
 			//entspricht setup() Methode
 
-			Sirius sirius = new Sirius(instrument); // TODO: sollte man vielleicht cachen...
+			Sirius sirius = new Sirius(instrument);
 			final FragmentationPatternAnalysis ms2 = sirius.getMs2Analyzer();
 			final IsotopePatternAnalysis ms1 = sirius.getMs1Analyzer();
 			final MutableMeasurementProfile ms1Prof = new MutableMeasurementProfile(ms1.getDefaultProfile());
