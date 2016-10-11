@@ -31,7 +31,6 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -411,6 +410,13 @@ public class CSIFingerIdComputation {
         jobQueue.clear();
     }
 
+    public void stopTask(FingerIdTask task) {
+        formulaQueue.remove(task);
+        blastQueue.remove(task);
+        jobQueue.remove(task);
+        task.job.error("Canceled", null);
+    }
+
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
             final ComputingStatus status = task.result.fingerIdComputeState;
@@ -576,6 +582,8 @@ public class CSIFingerIdComputation {
 
         protected volatile boolean shutdown;
 
+        protected volatile boolean failedWhenLoadingStatistics=false;
+
         @Override
         public void run() {
             synchronized (this) {
@@ -592,32 +600,42 @@ public class CSIFingerIdComputation {
                 if (performances==null) loadStatistics(webAPI);
                 globalCondition.signalAll();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                this.failedWhenLoadingStatistics = true;
+                return;
             } finally {
                 globalLock.unlock();
             }
             while ((!shutdown)) {
-                final FingerIdTask container = formulaQueue.poll();
-                if (container==null) {
-                    try {
-                        synchronized (this) {
-                            this.wait();
+                try {
+                    final FingerIdTask container = formulaQueue.poll();
+                    if (container==null) {
+                        try {
+                            synchronized (this) {
+                                // add timeout to prevent deadlocks. Even if something really strange
+                                // happens, the thread will resume every 3 seconds
+                                this.wait(3000);
+                            }
+                        } catch (InterruptedException e) {
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                         }
-                    } catch (InterruptedException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-                    }
-                } else {
-                    // download molecular formulas
-                    final MolecularFormula formula = container.result.getMolecularFormula();
-                    final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
-                    try {
-                        loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.bio);
-                        synchronized (blastWorker) {blastWorker.notifyAll();}
+                    } else {
+                        // download molecular formulas
+                        final MolecularFormula formula = container.result.getMolecularFormula();
+                        final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
+                        try {
+                            loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.bio);
+                            synchronized (blastWorker) {blastWorker.notifyAll();}
 
-                        job.done();
-                    } catch (IOException e) {
-                        job.error(e.getMessage(), e);
+                            job.done();
+                        } catch (Throwable e) {
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                            job.error(e.getMessage(), e);
+                        }
                     }
+                } catch (RuntimeException e) {
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    Thread.yield();
                 }
             }
         }
@@ -695,7 +713,7 @@ public class CSIFingerIdComputation {
 
                 if (nothingToDo) {
                     try {
-                        synchronized (this) {wait();};
+                        synchronized (this) {wait(3000);};
                     } catch (InterruptedException e) {
                         LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }
@@ -724,7 +742,7 @@ public class CSIFingerIdComputation {
                 final FingerIdTask container = blastQueue.poll();
                 try {
                     if (container==null) {
-                        synchronized (this) {this.wait();}
+                        synchronized (this) {this.wait(3000);}
                         continue;
                     } else {
                         boolean canRun=true;
@@ -741,7 +759,7 @@ public class CSIFingerIdComputation {
                             blastQueue.add(container);
                             if (queueIsEmpty) {
                                 synchronized (this) {
-                                    this.wait();
+                                    this.wait(3000);
                                 }
                             }
                             continue;
