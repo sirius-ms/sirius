@@ -1,10 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.chem.utils.scoring;
 
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.math.PartialParetoDistribution;
-import org.slf4j.LoggerFactory;
 
 import static java.lang.Math.*;
 
@@ -13,8 +14,8 @@ class FormulaFeatureVector {
     protected final static PeriodicTable T = PeriodicTable.getInstance();
 
     protected final static Element S = T.getByName("S"), P = T.getByName("P"),
-    Cl = T.getByName("Cl"), Br = T.getByName("Br"), I = T.getByName("I"), F = T.getByName("F"),
-    O = T.getByName("O");
+            Cl = T.getByName("Cl"), Br = T.getByName("Br"), I = T.getByName("I"), F = T.getByName("F"),
+            O = T.getByName("O"), B=T.getByName("B"), N=T.getByName("N");
 
     private static double softlog(double density) {
         return Math.max(-10000, Math.log(density));
@@ -29,59 +30,144 @@ class FormulaFeatureVector {
         }
     }
 
+    static double[][] normalizeAndCenter(double[][] matrix) {
+        final double[] colAverages = new double[matrix[0].length];
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                colAverages[j] += matrix[i][j];
+            }
+        }
+        for (int j=0; j < colAverages.length; ++j) colAverages[j] /= matrix.length;
+
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                matrix[i][j] -= colAverages[j];
+            }
+        }
+
+        // divide by largest magnitude
+        final double[] scales = new double[colAverages.length];
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                scales[j] = Math.max(Math.abs(scales[j]), Math.abs(matrix[i][j]));
+            }
+        }
+
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                matrix[i][j] /= scales[j];
+            }
+        }
+        return new double[][]{colAverages, scales};
+    }
+
     private final MolecularFormula f;
 
     public FormulaFeatureVector(MolecularFormula formula) {
         this.f = formula;
     }
 
-    public double[] getLogFeatures() {
-        return new double[]{rdbe(), rdbeDistribution(), rdbeIsZero(), mass(), Math.log(mass()), rdbeDividedByMass(), rdbeDividedByMassDistribution(), rdbeDividedByMassDistribution2(), hetero2carbon(), hetero2carbonDistribution(), hetero2carbonWithoutOxygen(), hetero2carbonWithoutOxygenDist1(), hetero2carbonWithoutOxygenDist2(), no2carbon(), no2carbonDist(), halo2carbon(), halo2carbonDist(), hydrogen2Carbon(), hydrogen2CarbonDist(), hydrogen2CarbonDist2(), phosphor2oxygensulfur(),numberOfBenzolSubformulasPerRDBEDist(),numberOfBenzolSubformulasPerRDBEDist2(),
+    public double[] getFeatures() {
+        return new double[]{rdbe(), rdbeDistribution(), rdbeIsZero(), mass(), rdbeDividedByMass(), rdbeDividedByMassDistribution(), rdbeDividedByMassDistribution2(), hetero2carbon(), hetero2carbonDistribution(), hetero2carbonWithoutOxygen(), hetero2carbonWithoutOxygenDist1(), hetero2carbonWithoutOxygenDist2(), no2carbon(), no2carbonDist(), halo2carbon(), halo2carbonDist(), hydrogen2Carbon(), hydrogen2CarbonDist(), hydrogen2CarbonDist2(), phosphor2oxygensulfur(), numberOfBenzolSubformulasPerRDBEDist()};
+    }
 
-                softlog(rdbeDividedByMassDistribution()),
-                softlog(rdbeDividedByMassDistribution2()),
-                softlog(hetero2carbonDistribution()),
-                softlog(hetero2carbonWithoutOxygenDist1()),
-                softlog(hetero2carbonWithoutOxygenDist2()),
-                softlog(no2carbonDist()),
-                softlog(halo2carbonDist()),
-                softlog(hydrogen2CarbonDist()),
-                softlog(hydrogen2CarbonDist2()),
-                softlog(numberOfBenzolSubformulasPerRDBEDist()),
-                softlog(numberOfBenzolSubformulasPerRDBEDist2()),
+    public double[] getLogFeatures() {
+        double[] dists = distributions();
+        return new double[]{
+                rdbe(),                                         // 1
+                //rdbeDistribution(),                             // 2
+                rdbeIsZero(),                                   // 3
+                mass(),                                         // 3
+                Math.log(mass()),                               // 4
+                rdbeDividedByMass(),                            // 5
+                //rdbeDividedByMassDistribution(),                // 6
+                //rdbeDividedByMassDistribution2(),               // 7
+                hetero2carbon(),                                // 8
+                //hetero2carbonDistribution(),                    // 9
+                hetero2carbonWithoutOxygen(),                   // 10
+                //hetero2carbonWithoutOxygenDist1(),              // 11
+                //hetero2carbonWithoutOxygenDist2(),              // 12
+                no2carbon(),                                    // 13
+                //no2carbonDist(),                                // 14
+                halo2carbon(),                                  // 15
+                //halo2carbonDist(),                              // 16
+                hydrogen2Carbon(),                              // 17
+                //hydrogen2CarbonDist(),                          // 18
+                //hydrogen2CarbonDist2(),                         // 19
+                phosphor2oxygensulfur(),                        // 20
+                //numberOfBenzolSubformulasPerRDBEDist(),         // 21
+                //numberOfBenzolSubformulasPerRDBEDist2(),        // 22
+                softlog(rdbeDistribution()),
+                softlog(rdbeDividedByMassDistribution()),       // 23
+                softlog(rdbeDividedByMassDistribution2()),      // 24
+                softlog(hetero2carbonDistribution()),           // 25
+                softlog(hetero2carbonWithoutOxygenDist1()),     // 26
+                softlog(hetero2carbonWithoutOxygenDist2()),     // 27
+                softlog(no2carbonDist()),                       // 28
+                softlog(halo2carbonDist()),                     // 29
+                softlog(hydrogen2CarbonDist()),                 // 30
+                softlog(hydrogen2CarbonDist2()),                // 31
+                softlog(numberOfBenzolSubformulasPerRDBEDist()),// 32
+                softlog(numberOfBenzolSubformulasPerRDBEDist2()),// 33
 
                 //// ooooh, formula features
-                f.numberOfHydrogens(),
-                f.numberOfCarbons(),
-                f.numberOfNitrogens(),
-                f.numberOfOxygens(),
-                f.numberOf(P),
-                f.numberOf(S),
-                f.numberOf(Cl),
-                f.numberOf(Br),
-                f.numberOf(I),
-                f.numberOf(F),
-                Math.log(1+f.numberOfHydrogens()),
-                Math.log(1+f.numberOfCarbons()),
-                Math.log(1+f.numberOfNitrogens()),
-                Math.log(1+f.numberOfOxygens()),
-                Math.log(1+f.numberOf(P)),
-                Math.log(1+f.numberOf(S)),
-                Math.log(1+f.numberOf(Cl)),
-                Math.log(1+f.numberOf(Br)),
-                Math.log(1+f.numberOf(I)),
-                Math.log(1+f.numberOf(F)),
-                f.numberOfOxygens()/(f.numberOfCarbons()+0.8f),
-                f.numberOfNitrogens()/(f.numberOfCarbons()+0.8f),
-                f.numberOf(S)/(f.numberOfCarbons()+0.8f),
-                f.numberOf(P)/(f.numberOfCarbons()+0.8f),
-                f.numberOf(Cl)/(f.numberOfCarbons()+0.8f),
-                f.numberOf(Br)/(f.numberOfCarbons()+0.8f),
-                f.numberOf(I)/(f.numberOfCarbons()+0.8f),
-                f.numberOf(F)/(f.numberOfCarbons()+0.8f),
-                f.numberOfNitrogens()/(f.numberOfOxygens()+0.8f),
-                f.numberOfNitrogens()/(f.numberOfCarbons()+f.numberOfOxygens()+0.8f),
+                f.numberOfHydrogens(),                          // 33
+                f.numberOfCarbons(),                            // 34
+                f.numberOfNitrogens(),                          // 35
+                f.numberOfOxygens(),                            // 36
+                f.numberOf(P),                                  // 37
+                f.numberOf(S),                                  // 38
+                f.numberOf(Cl),                                 // 39
+                f.numberOf(Br),                                 // 40
+                f.numberOf(I),                                  // 41
+                f.numberOf(F),                                  // 42
+                Math.log(1+f.numberOfHydrogens()),              // 43
+                Math.log(1+f.numberOfCarbons()),                // 44
+                Math.log(1+f.numberOfNitrogens()),              // 45
+                Math.log(1+f.numberOfOxygens()),                // 46
+                Math.log(1+f.numberOf(P)),                      // 47
+                Math.log(1+f.numberOf(S)),                      // 48
+                Math.log(1+f.numberOf(Cl)),                     // 49
+                Math.log(1+f.numberOf(Br)),                     // 50
+                Math.log(1+f.numberOf(I)),                      // 51
+                Math.log(1+f.numberOf(F)),                      // 52
+                f.numberOfOxygens()/(f.numberOfCarbons()+0.8f), // 53
+                f.numberOfNitrogens()/(f.numberOfCarbons()+0.8f),   // 54
+                f.numberOf(S)/(f.numberOfCarbons()+0.8f),           // 55
+                f.numberOf(P)/(f.numberOfCarbons()+0.8f),           // 56
+                f.numberOf(Cl)/(f.numberOfCarbons()+0.8f),          // 57
+                f.numberOf(Br)/(f.numberOfCarbons()+0.8f),          // 58
+                f.numberOf(I)/(f.numberOfCarbons()+0.8f),           // 59
+                f.numberOf(F)/(f.numberOfCarbons()+0.8f),           // 60
+                f.numberOfNitrogens()/(f.numberOfOxygens()+0.8f),   // 61
+                f.numberOfNitrogens()/(f.numberOfCarbons()+f.numberOfOxygens()+0.8f), // 62,
+                has(f,O,P),
+                has(f,O,S),
+                has(f,P,S),
+                has(f,Br,Cl),
+
+                (1+f.numberOf(Cl)+f.numberOf(Br)+f.numberOf(I)+f.numberOf(F)+f.numberOf(S)+f.numberOf(P))/(1+f.numberOfCarbons()+f.numberOfHydrogens()+f.numberOf(N)+f.numberOf(O)),
+
+                min(dists),
+                max(dists)
+
+
         };
+    }
+
+    private static double min(double[] xs) {
+        double x = xs[0];
+        for (int k=1; k < xs.length; ++k) x = Math.min(x, xs[k]);
+        return x;
+    }
+    private static double max(double[] xs) {
+        double x = xs[0];
+        for (int k=1; k < xs.length; ++k) x = Math.max(x, xs[k]);
+        return x;
+    }
+
+    public double has(MolecularFormula f, Element a, Element b) {
+        return f.numberOf(a) * f.numberOf(b);
     }
 
     public double rdbe() {
@@ -102,6 +188,20 @@ class FormulaFeatureVector {
 
     public double rdbeDividedByMass() {
         return (1+Math.max(-0.5,f.rdbe())) / Math.pow(f.getMass(), 2.0/3.0);
+    }
+
+    public double[] distributions() {
+        final NormalDistribution NORM = new NormalDistribution(0.19582046255705296, Math.pow(0.077106354760576978,2));
+        double dist1 = NORM.getDensity((1+Math.max(-0.5,f.rdbe()))/Math.pow(f.getMass(), 2d/3d));
+        dist1 /= NORM.getDensity(0.19582046255705296);
+
+        double dist2 = h2cDist.getDensity(f.hetero2CarbonRatio());
+        dist2 /=  h2cDist.getDensity(1);
+
+        double dist3 = h2noc.getDensity(hetero2carbonWithoutOxygen());
+        dist3 /= h2noc.getDensity(0.3);
+
+        return new double[]{dist1, dist2, dist3};
     }
 
     public double rdbeDividedByMassDistribution() {
@@ -197,7 +297,7 @@ class FormulaFeatureVector {
         final double y = (x-loc)/scale;
         final double pdf = 1d / (s*y*sqrt(2*PI)) * exp(-1d/2d*Math.pow((log(y)/s),2));
         if (Double.isInfinite(pdf) || Double.isNaN(pdf))
-            System.err.println("WTF?"); //todo ist this dubug?
+            throw new RuntimeException();
         return pdf / scale;
     }
 
@@ -207,5 +307,6 @@ class FormulaFeatureVector {
         return pdf/scale;
 
     }
+
 
 }

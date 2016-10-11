@@ -36,7 +36,7 @@
       },
       {
         "$name": "scoring.NormalDistributedIntensityScorer",
-        "absolute_error": 0.02,
+        "absolute_error": 0.005,
         "relative_error": 0.1
       },
       {
@@ -154,7 +154,7 @@
       },
       {
         "$name": "StrangeElementRootScorer",
-        "penalty": -1.3862943611198906
+        "penalty": -1.6094379124341003
       },
       {
         "$name": "ChemicalPriorScorer",
