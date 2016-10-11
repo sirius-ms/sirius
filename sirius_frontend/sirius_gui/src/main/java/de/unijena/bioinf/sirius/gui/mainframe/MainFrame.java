@@ -111,7 +111,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         JPanel mainPanel = new JPanel(new BorderLayout());
 //        mainPanel.setBorder(BorderFactory.createLoweredSoftBevelBorder());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(5,1,1,1));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5,1,5,1));
         this.add(mainPanel, BorderLayout.CENTER);
 
 
