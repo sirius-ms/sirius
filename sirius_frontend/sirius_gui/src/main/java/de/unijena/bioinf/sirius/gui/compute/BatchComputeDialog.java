@@ -93,7 +93,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         iodine = new JCheckBox("iodine");
         fluorine = new JCheckBox("fluorine");
 
-        JPanel elements = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        JPanel elements = new JPanel();
+        elements.setLayout(new BoxLayout(elements,BoxLayout.LINE_AXIS));
+//        JPanel elements = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         elements.add(bromine);
         elements.add(borone);
         elements.add(chlorine);
@@ -109,6 +111,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         elementButton = new JButton("More elements");
         elementButton.addActionListener(this);
 
+        elements.add(Box.createHorizontalGlue());
         elements.add(elementAutoDetect);
         elementPanel.add(elements, BorderLayout.NORTH);
 
@@ -116,9 +119,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         elements2.add(elementTF);
         elements2.add(elementButton);
         elementPanel.add(elements2, BorderLayout.SOUTH);
-
-
-//		elementPanel.add(Box.createVerticalGlue());
 
         /////////////////////////////////////////////
         JPanel stack = new JPanel();

@@ -36,8 +36,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 		super();
 		this.setLayout(new BorderLayout());
 		this.setToolTipText("Results");
-		this.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(1,5,0,0),"Molecular formulas"));
-// this.setBorder(BorderFactory.createEmptyBorder(5,0,0,0));
+		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1,5,0,0),"Molecular formulas"));
 		this.ec = ec;
 
 		if(this.ec!=null) this.listModel = new ResultTreeListModel(ec.getResults());

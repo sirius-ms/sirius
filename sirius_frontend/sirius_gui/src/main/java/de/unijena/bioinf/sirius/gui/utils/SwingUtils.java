@@ -9,30 +9,31 @@ import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
 
-import static de.unijena.bioinf.sirius.gui.utils.Colors.ICON_GREEN;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SwingUtils {
 
-
     public static void initUI() {
-        //load nimbus look and feel, befor mainframe is built
+    //load nimbus look and feel, befor mainframe is built
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
+                    break;
                 }
             }
         } catch (Exception e) {
             // If Nimbus is not available, you can set the GUI to another look and feel.
         }
 
-        ToolTipManager.sharedInstance().setInitialDelay(250);
-        Painter painter = new ProgressPainter(Color.WHITE, ICON_GREEN);
+        Painter painter = new ProgressPainter(Color.WHITE, Colors.ICON_GREEN);
         UIManager.put("ProgressBar[Enabled].foregroundPainter", painter);
         UIManager.put("ProgressBar[Enabled+Finished].foregroundPainter", painter);
+//        ToolTipManager.sharedInstance().setInitialDelay(250);
+
+
     }
 
 
@@ -74,6 +75,7 @@ public class SwingUtils {
 
         @Override
         public void paint(Graphics2D g, Object c, int w, int h) {
+            System.out.println("my renderer!");
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             gradPaint = new GradientPaint((w / 2.0f), 0, light, (w / 2.0f), (h / 2.0f), dark, true);
             g.setPaint(gradPaint);
