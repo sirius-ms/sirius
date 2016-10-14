@@ -89,8 +89,8 @@ public class WebAPI implements Closeable {
     }
 
 
-    public static final String VERSION = "3.2";
-    public static final String DATE = "2016-07-20";
+    public static final String VERSION = "3.3"; //todo get from properties file
+    public static final String DATE = "2016-10-14";
 
     public VersionsInfo needsUpdate() {
         final HttpGet get;

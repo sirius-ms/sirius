@@ -28,8 +28,8 @@ ext {
 
     glpk_lib_version = '4.60'
 
-    siriusVersion = '3.2.1-SNAPSHOT'
-    fingeridVersion = "1.0.6-SNAPSHOT"
+    siriusVersion = '3.3'
+    fingeridVersion = "1.0.6"
 
     jewelcli_version = '0.8.+'
 
@@ -54,7 +54,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = '3.2.1-SNAPSHOT'
+    version = "$siriusVersion"
     group = 'de.unijena.bioinf.ms'
 
     repositories {
