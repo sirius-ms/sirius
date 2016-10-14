@@ -66,10 +66,10 @@ public class MissingValueValidator implements InputValidator {
         if (inchi==null) return;
         final MolecularFormula formula = inchi.extractFormula();
         if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {
-            warn.warn("InChI has different molecular formula than input formula");
+            warn.warn("InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");
         }
         if (input.getMoleculeNeutralMass() > 0 && Math.abs(formula.getMass()-input.getMoleculeNeutralMass()) > 0.01) {
-            warn.warn("neutral mass does not match to InChI formula");
+            warn.warn("neutral mass does not match to InChI formula (" + input.getMoleculeNeutralMass() + " Da vs. exact mass " + formula.getMass() + ") ");
         }
         if (repair) {
             if (input.getMolecularFormula()==null) input.setMolecularFormula(formula);
@@ -79,7 +79,6 @@ public class MissingValueValidator implements InputValidator {
 
     protected void checkNeutralMass(Warning warn, boolean repair, MutableMs2Experiment input) {
         if (input.getMoleculeNeutralMass() == 0 || !validDouble(input.getMoleculeNeutralMass(), false)) {
-            throwOrWarn(warn, repair, "Neutral mass is missing");
             if (input.getMolecularFormula() != null) {
                 input.setMoleculeNeutralMass(input.getMolecularFormula().getMass());
             } else if (input.getPrecursorIonType() != null) {
@@ -108,10 +107,10 @@ public class MissingValueValidator implements InputValidator {
             if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > 1e-2) {
                 final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, 1e-2, input.getPrecursorIonType().getCharge());
                 if (iontype != null) {
-                    throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data.");
+                    throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " but " + iontype.toString() + " is estimated after looking at the data)");
                     input.setPrecursorIonType(iontype);
                 } else {
-                    throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data.");
+                    throwOrWarn(warn, true, "PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " with m/z " + input.getPrecursorIonType().getModificationMass() + " does not match ion mass m/z = " + input.getIonMass() + " and neutral mass m/z = " + neutralmass + ")" );
                     input.setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(input.getPrecursorIonType().getCharge()));
                 }
             }
@@ -179,12 +178,12 @@ public class MissingValueValidator implements InputValidator {
                 }
             }
         }
-        throw new InvalidException("Unknown ionization");
+        throw new InvalidException("Cannot find a proper ion mode/adduct type for the given spectrum. Please specify the correct ion/adduct type.");
     }
 
     protected void checkMergedMs1(Warning warn, boolean repair, MutableMs2Experiment input) {
         if (input.getMergedMs1Spectrum() == null && !input.getMs1Spectra().isEmpty()) {
-            warn.warn("No merged spectrum is given");
+            //warn.warn("No merged spectrum is given");
             if (repair) {
                 if (input.getMs1Spectra().size() == 1)
                     input.setMergedMs1Spectrum(input.getMs1Spectra().get(0));
@@ -194,7 +193,6 @@ public class MissingValueValidator implements InputValidator {
 
     protected void checkIonMass(Warning warn, boolean repair, MutableMs2Experiment input) {
         if (!validDouble(input.getIonMass(), false) || input.getIonMass() == 0) {
-            throwOrWarn(warn, repair, "No ion mass is given");
             if (input.getMolecularFormula() == null && !validDouble(input.getMoleculeNeutralMass(), false)) {
                 final Spectrum<Peak> ms1 = input.getMergedMs1Spectrum();
                 // maybe the ms2 spectra have a common precursor
@@ -229,6 +227,7 @@ public class MissingValueValidator implements InputValidator {
                                     if (p.getIntensity() > parent.getIntensity()) parent = p;
                                 } else if (p.getMass() > parent.getMass()) parent = p;
                             }
+                        warn.warn("No ion mass is given. Choose m/z = " + parent.getMass() + " as parent peak.");
                         input.setIonMass(parent.getMass());
                     } else {
                         // take peak with highest intensity
