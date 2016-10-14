@@ -40,7 +40,7 @@ public class BugReportDialog extends JDialog {
         super(owner, true);
         setTitle("Bug Report");
         setLayout(new BorderLayout());
-        setMinimumSize(new Dimension(350, getMinimumSize().height)); //todo use maximum size of tab panes
+
         //============= NORTH =================
         add(new DialogHaeder(Icons.BUG_64), BorderLayout.NORTH);
 
@@ -65,7 +65,7 @@ public class BugReportDialog extends JDialog {
         textarea = new JTextArea();
         textarea.setEditable(true);
         final JScrollPane sc = new JScrollPane(textarea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        sc.setPreferredSize((new Dimension(sc.getPreferredSize().width, 250)));
+        sc.setPreferredSize((new Dimension(sc.getPreferredSize().width, 200)));
         sc.setBorder(new TitledBorder(new EmptyBorder(SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP), "Message"));
         reportSettings.add(sc, SwingUtils.SMALL_GAP, true);
 
@@ -114,7 +114,7 @@ public class BugReportDialog extends JDialog {
 
         add(buttons, BorderLayout.SOUTH);
 
-        setMinimumSize(new Dimension(350, getMinimumSize().height)); //todo use maximum size of tab panes?
+        setMinimumSize(new Dimension(350, getPreferredSize().height));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());

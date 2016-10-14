@@ -42,12 +42,10 @@ public class AboutDialog extends JDialog{
     public AboutDialog(Frame owner) {
         super(owner, true);
         setTitle(ApplicationCore.VERSION_STRING);
-        this.setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(500, 800));
+        setLayout(new BorderLayout());
+
         // SIRIUS logo
-        final Icon image = Icons.SIRIUS_SPLASH;
-        final JLabel imageLabel = new JLabel(image);
-        add(imageLabel, BorderLayout.NORTH);
+        add(new JLabel(Icons.SIRIUS_SPLASH), BorderLayout.NORTH);
 
         try {
             final String htmlText;
@@ -61,7 +59,6 @@ public class AboutDialog extends JDialog{
             }
             final JTextPane textPane = new JTextPane();
             final JScrollPane scroll = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            scroll.setPreferredSize(new Dimension(500, Integer.MAX_VALUE));
             textPane.setContentType("text/html");
             textPane.setText(htmlText);
             textPane.setEditable(false);
@@ -93,6 +90,10 @@ public class AboutDialog extends JDialog{
         buttons.add(clipboard);
         add(buttons, BorderLayout.SOUTH);
         defineActions();
+
+        setMinimumSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), Icons.SIRIUS_SPLASH.getIconHeight() + buttons.getPreferredSize().height + 100));
+        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), getPreferredSize().height));
+
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());
