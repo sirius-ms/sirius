@@ -34,10 +34,13 @@ import java.util.regex.Pattern;
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
     private static class MgfSpec {
+
+        private String featureId;
         private MutableMs2Spectrum spectrum;
         private PrecursorIonType ionType;
         private HashMap<String, String> fields;
         private String inchi, smiles, name;
+        private RetentionTime retentionTime;
 
         public MgfSpec(MgfSpec s) {
             this.spectrum=new MutableMs2Spectrum(s.spectrum);
@@ -46,6 +49,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             this.inchi = s.inchi;
             this.smiles=s.smiles;
             this.name = s.name;
+            this.featureId = s.featureId;
+            this.retentionTime = s.retentionTime;
         }
 
         public MgfSpec() {
@@ -58,11 +63,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private final MgfSpec prototype;
         private final ArrayDeque<MgfSpec> buffer;
         private final BufferedReader reader;
+        protected boolean ignoreUnsupportedIonTypes ;
 
         public MgfParserInstance(BufferedReader reader) {
             this.reader = reader;
             this.prototype = new MgfSpec(); this.prototype.spectrum=new MutableMs2Spectrum();
             this.buffer = new ArrayDeque<MgfSpec>();
+            this.ignoreUnsupportedIonTypes = true;
         }
 
         public boolean hasNext() throws IOException {
@@ -97,6 +104,16 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             if (value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') value = value.substring(1,value.length()-1);
             if (keyword.equals("PEPMASS")) {
                 spec.spectrum.setPrecursorMz(Double.parseDouble(value.split("\\s+")[0]));
+            } else if (keyword.startsWith("FEATURE_ID")) {
+                spec.featureId = value;
+            } else if (keyword.contains("RTINSECONDS")) {
+                final String[] parts = value.split("-");
+                if (parts.length==1) {
+                    spec.retentionTime = new RetentionTime(Double.parseDouble(parts[0]));
+                } else {
+                    double a = Double.parseDouble(parts[0]), b = Double.parseDouble(parts[1]);
+                    spec.retentionTime = new RetentionTime(a, b, a + (b-a)/2d);
+                }
             } else if (keyword.equals("CHARGE")) {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
                 m.find();
@@ -117,10 +134,20 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if ("-".equals(cm.group(2))) ion = PrecursorIonType.unknown(-1);
                     else ion = PrecursorIonType.unknown(1);
                 } else {
-                    ion = PeriodicTable.getInstance().ionByName(value);
-                    if (ion==null) throw new IOException("Unknown ion '" + value +"'");
-                    else {
+                    try {
+                        ion = PeriodicTable.getInstance().ionByName(value);
+                        if (ion==null) {
+                            LoggerFactory.getLogger(this.getClass()).error("Unknown ion '" + value + "'");
+                            if (!ignoreUnsupportedIonTypes) throw new IOException("Unknown ion '" + value +"'");
+                            else return;
+                        }
+                        else {
 
+                        }
+                    } catch (RuntimeException e) {
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                        if (!ignoreUnsupportedIonTypes) throw (e);
+                        else return;
                     }
                 }
                 spec.spectrum.setIonization(ion.getIonization());
@@ -228,8 +255,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
+        if (exp.getName()==null) exp.setName(inst.peekNext().featureId);
         final HashMap<String,String> additionalFields = new HashMap<String, String>();
-        while (inst.hasNext() && Math.abs(inst.peekNext().spectrum.getPrecursorMz()-exp.getIonMass()) < 0.002 && (inst.peekNext().name == exp.getName() || (inst.peekNext().name != null && inst.peekNext().name.equals(exp.getName())))) {
+
+        while (true) {
             final MgfSpec spec = inst.pollNext();
             if (spec.spectrum.getMsLevel()==1) exp.getMs1Spectra().add(new SimpleSpectrum(spec.spectrum));
             else exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
@@ -242,8 +271,24 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             if (spec.smiles!=null) {
                 exp.setAnnotation(Smiles.class, new Smiles(spec.smiles));
             }
+            if (spec.retentionTime != null) {
+                if (exp.hasAnnotation(RetentionTime.class)) {
+                    exp.setAnnotation(RetentionTime.class, exp.getAnnotation(RetentionTime.class).merge(spec.retentionTime));
+                } else {
+                    exp.setAnnotation(RetentionTime.class, spec.retentionTime);
+                }
+            }
             additionalFields.putAll(spec.fields);
+
+            if (inst.hasNext()) {
+                final MgfSpec nextOne = inst.peekNext();
+                if (spec.featureId!=null && !spec.featureId.equals(nextOne.featureId)) break;
+                if (spec.name != null && spec.featureId==null && !spec.name.equals(nextOne.name)) break;
+                if (exp.getPrecursorIonType()!=null && !exp.getPrecursorIonType().equals(spec.ionType)) break;
+                if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.002) break;
+            } else break;
         }
+
         if (!additionalFields.isEmpty()) {
             exp.setAnnotation(Map.class, additionalFields);
         }
