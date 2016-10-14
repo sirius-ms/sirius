@@ -15,6 +15,10 @@ import java.awt.*;
  */
 public class SwingUtils {
 
+    public final static int SMALL_GAP = 5;
+    public final static int MEDIUM_GAP = 10;
+    public final static int LARGE_GAP = 20;
+
     public static void initUI() {
     //load nimbus look and feel, befor mainframe is built
         try {
@@ -75,7 +79,6 @@ public class SwingUtils {
 
         @Override
         public void paint(Graphics2D g, Object c, int w, int h) {
-            System.out.println("my renderer!");
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             gradPaint = new GradientPaint((w / 2.0f), 0, light, (w / 2.0f), (h / 2.0f), dark, true);
             g.setPaint(gradPaint);

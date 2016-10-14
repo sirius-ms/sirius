@@ -1,10 +1,11 @@
-package de.unijena.bioinf.sirius.gui.mainframe.settings;
+package de.unijena.bioinf.sirius.gui.settings;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
  * 07.10.16.
  */
 
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.sirius.cli.SiriusApplication;
 import de.unijena.bioinf.sirius.gui.io.FileChooserPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -40,9 +41,6 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
         db = new FileChooserPanel(p, JFileChooser.DIRECTORIES_ONLY);
         db.setToolTipText("Specify the directory where CSI:FingerId should store the compound candidates.");
         add(new JLabel("Database cache:"), db);
-        addVerticalGlue();
-
-
     }
 
     @Override
@@ -53,6 +51,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
     public void saveProperties() {
 
         props.setProperty("de.unijena.bioinf.sirius.treebuilder", (String) solver.getSelectedItem());
+        TreeBuilderFactory.setBuilderPriorities(((String)solver.getSelectedItem()).replaceAll("\\s", "").split(","));
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());

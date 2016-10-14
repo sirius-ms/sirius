@@ -6,16 +6,19 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
+import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
+import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
+import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
-import de.unijena.bioinf.utils.errorReport.MailErrorReporter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -23,18 +26,19 @@ import java.awt.event.ActionEvent;
 public class ErrorReportDialog extends AbstractArccordeoDialog {
 
     private static final String messageAppendix = " Consider the console output or the log file for further details";
-    private static final String reportText = "Please send us your error report and help us improving sirius.";
+    private static final String reportText = "Please send your error report and help us improving sirius.";
 
-    private static final String reportDetails = "<html> We will NOT send any personal information or data, just the sirius log and property files.";
+    private static final String reportDetails = "We will NOT send any personal information or data, just the sirius log and property files.";
 
     private String message = null;
     private String subject = null;
 
 
     private JTextArea textarea;
-    private JTextField emailField;
     private JButton close, send;
-    private JCheckBox uesrCopy, hardwareInfo;
+
+    private ErrorReportSettingsPanel expandPanel;
+    private final Properties props = ApplicationCore.getUserCopyOfUserProperties();
 
     public ErrorReportDialog(Frame owner, String errorMessage) {
         super(owner, true, ExtentionPos.SOUTH);
@@ -61,7 +65,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     protected JPanel buildNorthPanel() {
         Icon icon = UIManager.getIcon("OptionPane.errorIcon");
 
-        final JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, LARGE_GAP, LARGE_GAP));
+        final JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, SwingUtils.LARGE_GAP, SwingUtils.LARGE_GAP));
 
         northPanel.add(new JLabel(icon));
         northPanel.add(new JLabel(message));
@@ -72,67 +76,33 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     @Override
     protected JPanel buildSouthPanel() {
 
-        final JPanel south = new JPanel();
-        south.setBorder(new TitledBorder(new EmptyBorder(MEDIUM_GAP, SMALL_GAP, SMALL_GAP, SMALL_GAP), "Send error report?"));
-        south.setLayout(new BoxLayout(south, BoxLayout.Y_AXIS));
-
-        final Box b = Box.createHorizontalBox();
-        b.add(Box.createHorizontalStrut(MEDIUM_GAP));
-        b.add(new JLabel(reportText));
-        b.add(Box.createHorizontalGlue());
-        b.add(Box.createHorizontalStrut(MEDIUM_GAP));
-
-        south.add(b);
-        south.add(Box.createVerticalStrut(SMALL_GAP));
+        final TwoCloumnPanel south = new TwoCloumnPanel();
+        south.setBorder(new TitledBorder(new EmptyBorder(SwingUtils.MEDIUM_GAP, SwingUtils.MEDIUM_GAP, SwingUtils.SMALL_GAP, SwingUtils.MEDIUM_GAP), "Send error report?"));
 
 
-        String email = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
-        if (email != null && !email.isEmpty())
-            emailField = new JTextField(email);
-        else
-            emailField = new JTextField("Enter contact email here");
-        emailField.setEditable(true);
-
-        final Box mail = Box.createHorizontalBox();
-        mail.add(Box.createHorizontalStrut(MEDIUM_GAP));
-        mail.add(new JLabel("Contact email adress: "));
-        mail.add(Box.createHorizontalGlue());
-        mail.add(Box.createVerticalStrut(SMALL_GAP));
-        mail.add(emailField);
-        mail.add(Box.createHorizontalStrut(MEDIUM_GAP));
-
-        south.add(mail);
+        south.add(new JLabel(reportText), SwingUtils.MEDIUM_GAP, false);
+        south.add(new JLabel(reportDetails));
         return south;
     }
 
     @Override
     protected JPanel buildExpandPanel() {
-        final JPanel expandPanel = new JPanel();
-        expandPanel.setLayout(new BoxLayout(expandPanel, BoxLayout.Y_AXIS));
-        expandPanel.setBorder(new TitledBorder(new EmptyBorder(MEDIUM_GAP, SMALL_GAP, SMALL_GAP, SMALL_GAP), reportDetails));
 
-        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
-        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
-        expandPanel.add(hardwareInfo);
-        expandPanel.add(uesrCopy);
-
-        expandPanel.add(Box.createVerticalStrut(LARGE_GAP));
+        expandPanel = new ErrorReportSettingsPanel(props);
 
         textarea = new JTextArea();
         textarea.setEditable(true);
         final JScrollPane sc = new JScrollPane(textarea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        sc.setPreferredSize(new Dimension(sc.getPreferredSize().width, 250));
-        sc.setBorder(new TitledBorder(new EmptyBorder(MEDIUM_GAP, SMALL_GAP, SMALL_GAP, SMALL_GAP), "Add comments or additional information here"));
-        expandPanel.add(sc);
-
+        sc.setPreferredSize((new Dimension(sc.getPreferredSize().width, 250)));
+        sc.setBorder(new TitledBorder(new EmptyBorder(SwingUtils.MEDIUM_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP), "Add comments or additional information here"));
+        expandPanel.add(sc,SwingUtils.MEDIUM_GAP , true);
 
         return expandPanel;
     }
 
     @Override
     protected JPanel buildButtonPanel() {
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, SMALL_GAP, SMALL_GAP));
-
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, SwingUtils.SMALL_GAP, SwingUtils.SMALL_GAP));
         close = new JButton("Close");
         close.addActionListener(this);
         send = new JButton("Send");
@@ -145,15 +115,22 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == send) {
-            ErrorReporter repoter = new FinngerIDWebErrorReporter(new SiriusDefaultErrorReport(subject, textarea.getText(), emailField.getText(),hardwareInfo.isSelected()));
-            repoter.getReport().setSendReportToUser(uesrCopy.isSelected());
-            new Thread(repoter).start();
 
-            if (repoter.getReport().hasUserMail())
-                ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.mailService.usermail", repoter.getReport().getUserEmail());
-            ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail", String.valueOf(repoter.getReport().isSendReportToUser()));
-            ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.core.errorReporting.systemInfo", String.valueOf(repoter.getReport().isSendSystemInfo()));
+            new SwingWorker<String, String>() {
+                @Override
+                protected String doInBackground() throws Exception {
+                    expandPanel.saveProperties();
+                    ApplicationCore.changeDefaultProptertiesPersistent(props);
 
+                    boolean senMail = Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
+                    String mail = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+                    boolean systemInfo = Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
+                    ErrorReporter repoter = new FinngerIDWebErrorReporter(new SiriusDefaultErrorReport(subject, textarea.getText(), mail, systemInfo));
+                    repoter.getReport().setSendReportToUser(senMail);
+                    repoter.call();
+                    return "SUCCESS";
+                }
+            }.execute();
         }
         this.dispose();
     }

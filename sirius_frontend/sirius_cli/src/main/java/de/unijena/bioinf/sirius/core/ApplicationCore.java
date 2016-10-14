@@ -109,6 +109,7 @@ public abstract class ApplicationCore {
         DEFAULT_LOGGER.debug("java.library.path = " + System.getProperty("java.library.path"));
         DEFAULT_LOGGER.debug("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
         DEFAULT_LOGGER.debug("java.class.path = " + System.getProperty("java.class.path"));
+        DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
         final String version = System.getProperty("de.unijena.bioinf.sirius.version");
         VERSION_STRING = version != null ? "Sirius " + version : "Sirius";
@@ -146,7 +147,7 @@ public abstract class ApplicationCore {
         addDefaultProptery("de.unijena.bioinf.sirius.workspace", WORKSPACE.toAbsolutePath().toString());
         storeUserProperties();
         DEFAULT_LOGGER.debug("application properties initialized!");
-        DEFAULT_LOGGER.info("Application core Successfull initialized");
+
 
         String p = System.getProperty("de.unijena.bioinf.sirius.treebuilder");
         if (p != null && !p.isEmpty()) {
@@ -176,8 +177,6 @@ public abstract class ApplicationCore {
         System.setProperty(propertyName, propertyValue);
         System.getProperties().putAll(USER_PROPERTIES);
     }
-
-
 
 
     public static void changeDefaultPropterties(Properties properties) {

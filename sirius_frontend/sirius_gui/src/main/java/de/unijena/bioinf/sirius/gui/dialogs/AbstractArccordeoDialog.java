@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,9 +21,6 @@ public abstract class AbstractArccordeoDialog extends JDialog implements ActionL
     public enum ExtentionPos {NORTH, CENTER, SOUTH/*, BELOW_BUTTONS*/}
 
 
-    public final static int SMALL_GAP = 5;
-    public final static int MEDIUM_GAP = 10;
-    public final static int LARGE_GAP = 20;
     private final ExtentionPos pos;
     private final JButton expander = new JButton();
     private JPanel expandation = null;
@@ -164,7 +162,7 @@ public abstract class AbstractArccordeoDialog extends JDialog implements ActionL
 
 
         for (JPanel comp : comps) {
-            body.add(Box.createVerticalStrut(MEDIUM_GAP));
+            body.add(Box.createVerticalStrut(SwingUtils.MEDIUM_GAP));
             body.add(comp);
         }
 
@@ -186,7 +184,7 @@ public abstract class AbstractArccordeoDialog extends JDialog implements ActionL
     private JPanel buildBottomPanel() {
         JPanel buttonPanel = new JPanel(new BorderLayout());
 
-        JPanel button = new JPanel(new FlowLayout(FlowLayout.LEFT, SMALL_GAP, 0));
+        JPanel button = new JPanel(new FlowLayout(FlowLayout.LEFT, SwingUtils.SMALL_GAP, 0));
         button.add(expander);
 
         buttonPanel.add(button, BorderLayout.WEST);

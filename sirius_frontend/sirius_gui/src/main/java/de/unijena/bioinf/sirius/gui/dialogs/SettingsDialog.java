@@ -6,11 +6,10 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.mainframe.settings.ErrorReportSettingsPanel;
-import de.unijena.bioinf.sirius.gui.mainframe.settings.GerneralSettingsPanel;
-import de.unijena.bioinf.sirius.gui.mainframe.settings.ProxySettingsPanel;
-import de.unijena.bioinf.sirius.gui.mainframe.settings.SettingsPanel;
+import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
+import de.unijena.bioinf.sirius.gui.settings.GerneralSettingsPanel;
+import de.unijena.bioinf.sirius.gui.settings.ProxySettingsPanel;
+import de.unijena.bioinf.sirius.gui.settings.SettingsPanel;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 
@@ -33,32 +32,25 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
     public SettingsDialog(Frame owner) {
         super(owner, true);
-//=============NORTH =================
+        setTitle("Settings");
+        setLayout(new BorderLayout());
         nuProps = ApplicationCore.getUserCopyOfUserProperties();
-        setTitle(ApplicationCore.VERSION_STRING + " - Settings");
-        this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
-        this.setLayout(new BorderLayout());
-        setMinimumSize(new Dimension(400, getMinimumSize().height));
 
-        JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JLabel l = new JLabel();
-        l.setIcon(Icons.GEAR_64);
-        header.add(l);
-        JLabel intro = new JLabel(/*"Settings"*/);
-//        intro.setFont(intro.getFont().deriveFont(48f));
-        header.add(intro);
+//=============NORTH =================
+        JPanel header = new DialogHaeder(Icons.GEAR_64);
         add(header, BorderLayout.NORTH);
 
-
-        //============= CENTER =================
+//============= CENTER =================
         settingsPane = new JTabbedPane();
         genSettings = new GerneralSettingsPanel(nuProps);
+        genSettings.addVerticalGlue();
         settingsPane.add(genSettings.name(), genSettings);
 
         proxSettings = new ProxySettingsPanel(nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
         errorSettings = new ErrorReportSettingsPanel(nuProps);
+        errorSettings.addVerticalGlue();
         settingsPane.add(errorSettings.name(), errorSettings);
 
         add(settingsPane, BorderLayout.CENTER);
@@ -75,7 +67,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
         add(buttons, BorderLayout.SOUTH);
 
-
+        setMinimumSize(new Dimension(350, getMinimumSize().height)); //todo use maximum size of tab panes?
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());

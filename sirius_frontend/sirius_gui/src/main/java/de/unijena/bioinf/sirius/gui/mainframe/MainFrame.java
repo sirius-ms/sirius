@@ -47,7 +47,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     private CompoundModel compoundModel;
     private JList<ExperimentContainer> compoundList;
-    private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, about;
+    private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, bug, about;
     public final CSIFingerIdComputation csiFingerId;
 
     private HashSet<String> names;
@@ -232,6 +232,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         settings.setToolTipText("Settings");
         settings.addActionListener(this);
         controlPanel.add(settings);
+
+        bug = new ToolbarButton("Bug Report", Icons.BUG_32);
+        bug.setToolTipText("Report a bug or send a feature request");
+        bug.addActionListener(this);
+        controlPanel.add(bug);
 
         about = new ToolbarButton("About", Icons.INFO_32);
         about.setToolTipText("About Sirius");
@@ -618,6 +623,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             new AboutDialog(this);
         } else if (e.getSource() == settings) {
             new SettingsDialog(this);
+        } else if (e.getSource() == bug) {
+            new BugReportDialog(this);
         }
 
 

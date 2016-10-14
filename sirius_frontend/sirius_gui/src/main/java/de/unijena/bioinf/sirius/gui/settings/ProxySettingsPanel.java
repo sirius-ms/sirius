@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.settings;
+package de.unijena.bioinf.sirius.gui.settings;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -7,7 +7,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.settings;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,7 +15,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

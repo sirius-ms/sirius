@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.settings;
+package de.unijena.bioinf.sirius.gui.settings;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -9,12 +9,9 @@ import de.unijena.bioinf.utils.mailService.Mail;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Properties;
 
-import static de.unijena.bioinf.sirius.gui.dialogs.AbstractArccordeoDialog.LARGE_GAP;
+import static de.unijena.bioinf.sirius.gui.utils.SwingUtils.SMALL_GAP;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -32,13 +29,12 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
         String email = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
         if (email != null && !email.isEmpty())
             emailField = new JTextField(email);
-        add(new JLabel("Contact email adress: "),emailField);
+        add(new JLabel("Contact email adress: "), emailField);
 
         hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
         uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
-        add(hardwareInfo);
+        add(hardwareInfo,SMALL_GAP,false);
         add(uesrCopy);
-        addVerticalGlue();
     }
 
 
