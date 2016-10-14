@@ -28,8 +28,8 @@ ext {
 
     glpk_lib_version = '4.60'
 
-    siriusVersion = '3.3'
-    fingeridVersion = "1.0.6"
+    siriusVersion = '3.3.1-SNAPSHOT'
+    fingeridVersion = "1.0.7-SNAPSHOT"
 
     jewelcli_version = '0.8.+'
 
