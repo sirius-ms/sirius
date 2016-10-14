@@ -655,7 +655,7 @@ public class SupportVectorMolecularFormulaScorer implements MolecularFormulaScor
 
     public static double getLogScore(MolecularFormula f) {
         if (inWhiteset(f)) return 0d;
-        else return 2 * Math.max(-5, Math.min(0, getDecisionValue(f)));
+        else return 2 * Math.max(-5, Math.min(0.5d, getDecisionValue(f)));
     }
 
     @Override
