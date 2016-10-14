@@ -550,10 +550,9 @@ public class MassDecomposer<T> {
         if (fromD > Long.MAX_VALUE || toD > Long.MAX_VALUE) {
             throw new ArithmeticException("Given mass is too large to decompose. Please use a smaller precision value, i.e. mass/precision have to be within 64 bit integer space");
         }
-        return new Interval(
-                Math.max(0, (long)fromD),
-                Math.max(0, (long)toD)
-        );
+        final long start = Math.max(0, (long)fromD);
+        final long end = Math.max(start, (long)toD);
+        return new Interval(start, end);
     }
 
 }
