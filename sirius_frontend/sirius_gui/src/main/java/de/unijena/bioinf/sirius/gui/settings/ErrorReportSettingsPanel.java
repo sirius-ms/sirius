@@ -18,9 +18,7 @@ import static de.unijena.bioinf.sirius.gui.utils.SwingUtils.SMALL_GAP;
  */
 public class ErrorReportSettingsPanel extends TwoCloumnPanel implements SettingsPanel {
     private Properties props;
-    private JTextArea textarea;
     private JTextField emailField;
-    private JButton close, send;
     private JCheckBox uesrCopy, hardwareInfo;
     public ErrorReportSettingsPanel(Properties properties) {
         super();
@@ -29,6 +27,8 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
         String email = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
         if (email != null && !email.isEmpty())
             emailField = new JTextField(email);
+        else
+            emailField = new JTextField();
         add(new JLabel("Contact email adress: "), emailField);
 
         hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
