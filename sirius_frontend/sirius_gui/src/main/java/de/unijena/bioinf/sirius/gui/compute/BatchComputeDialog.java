@@ -25,13 +25,12 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.cli.CLI;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -44,12 +43,15 @@ import java.util.*;
 
 public class BatchComputeDialog extends JDialog implements ActionListener {
 
+    private static String SEARCH_PUBCHEM = "Search PubChem structure database with CSI:FingerId";
+    private static String SEARCH_BIODB = "Search bio database with CSI:FingerId";
+
     private JButton compute, abort;
 
     private JCheckBox bromine, borone, selenium, chlorine, iodine, fluorine;
     private JTextField elementTF;
     private JButton elementButton;
-    private JCheckBox elementAutoDetect;
+    private JCheckBox elementAutoDetect, runCSIFingerId;
     private MainFrame owner;
 
     private TreeSet<String> additionalElements;
@@ -190,12 +192,26 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
                     enableElementSelection(formulaCombobox.getSelectedIndex() == 0);
+                    runCSIFingerId.setText(getSelectedFormulaSource() == FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
                 }
             });
         }
-
-
         mainPanel.add(stack);
+
+        stack = new JPanel();
+        stack.setLayout(new BorderLayout());
+        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId search"));
+
+        {
+            otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+            final JLabel label = new JLabel(Icons.FINGER_64, SwingConstants.LEFT);
+            runCSIFingerId = new JCheckBox(getSelectedFormulaSource()==FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
+            otherPanel.add(label);
+            otherPanel.add(runCSIFingerId);
+            stack.add(otherPanel, BorderLayout.CENTER);
+        }
+        mainPanel.add(stack);
+
         ///
 
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
@@ -353,10 +369,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             throw new RuntimeException("no valid instrument");
         }
 
-        FormulaSource formulaSource;
-        if (formulaCombobox.getSelectedIndex() == 0) formulaSource = FormulaSource.ALL_POSSIBLE;
-        else if (formulaCombobox.getSelectedIndex() == 1) formulaSource = FormulaSource.PUBCHEM;
-        else formulaSource = FormulaSource.BIODB;
+        FormulaSource formulaSource = getSelectedFormulaSource();
 
         FormulaConstraints constraints;
         {
@@ -418,7 +431,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates, formulaSource);
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
                 tasks.add(task);
                 compoundList.add(ec);
             }
@@ -436,4 +449,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
 
+    public FormulaSource getSelectedFormulaSource() {
+        if (formulaCombobox.getSelectedIndex() == 0) return FormulaSource.ALL_POSSIBLE;
+        else if (formulaCombobox.getSelectedIndex() == 1) return FormulaSource.PUBCHEM;
+        else return FormulaSource.BIODB;
+    }
 }

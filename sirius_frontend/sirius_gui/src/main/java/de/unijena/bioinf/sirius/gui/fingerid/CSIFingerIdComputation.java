@@ -390,6 +390,16 @@ public class CSIFingerIdComputation {
         return elements;
     }
 
+    public void compute(ExperimentContainer c, boolean bioDb) {
+        final ArrayList<FingerIdTask> tasks = new ArrayList<>();
+        for (SiriusResultElement e : getTopSiriusCandidates(c)) {
+            if (e.getCharge()>0) {
+                tasks.add(new FingerIdTask(bioDb, c, e));
+            }
+        }
+        computeAll(tasks);
+    }
+
     public void computeAll(Enumeration<ExperimentContainer> compounds) {
         stopRunningTasks();
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();

@@ -28,20 +28,17 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.*;
-import de.unijena.bioinf.sirius.cli.FingeridApplication;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class BackgroundComputation {
     private final MainFrame owner;
@@ -136,13 +133,14 @@ public class BackgroundComputation {
         private final int numberOfCandidates;
         private final String profile;
         private final JobLog.Job job;
+        private final boolean csiFingerIdSearch;
 
         private final FormulaSource formulaSource;
 
         private volatile List<IdentificationResult> results;
         private volatile ComputingStatus state;
 
-        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource) {
+        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource, boolean csiFingerIdSearch) {
             this.profile = profile;
             this.exp = exp;
             this.constraints = constraints;
@@ -152,6 +150,7 @@ public class BackgroundComputation {
             this.state = exp.getComputeState();
             this.results = exp.getRawResults();
             this.job = JobLog.getInstance().submit(exp.getGUIName(), "compute trees");
+            this.csiFingerIdSearch = csiFingerIdSearch;
         }
     }
 
@@ -168,6 +167,9 @@ public class BackgroundComputation {
                 if (c.state==ComputingStatus.COMPUTED || c.state==ComputingStatus.FAILED) {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
+                    if (c.csiFingerIdSearch) {
+                        owner.csiFingerId.compute(c.exp, c.formulaSource==FormulaSource.BIODB);
+                    }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                     c.job.run();
