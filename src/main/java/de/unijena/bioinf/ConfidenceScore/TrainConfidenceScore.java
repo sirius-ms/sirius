@@ -10,6 +10,9 @@ import de.unijena.bioinf.ConfidenceScore.svm.LibLinearImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LibSVMImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LinearSVMPredictor;
 import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
+import de.unijena.bioinf.chemdb.ChemicalDatabase;
+import de.unijena.bioinf.chemdb.DatabaseException;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -36,9 +39,10 @@ public class TrainConfidenceScore {
     private final SVMInterface svmInterface;
     private PredictionPerformance[] statistics;
 
-    private final boolean DEBUG = false;
+    private final boolean DEBUG = true;
     private final boolean DEBUG_OUT = false;
 
+    private ChemicalDatabase db;
 
     public TrainConfidenceScore(boolean useLinearSVM){
         if (useLinearSVM) svmInterface = new LibLinearImpl();
@@ -95,6 +99,12 @@ public class TrainConfidenceScore {
 
         ExecutorService executorService2 = Executors.newSingleThreadExecutor();
 
+//        Path out = Paths.get("./scores_"+step);
+//        try {
+//            BufferedWriter w = new BufferedWriter(new FileWriter(out.toFile()));
+
+
+        System.out.println("with cutting");
         Random r = new Random();
         int positiveInstances=0, negativeInstances = 0;
         int maxCandidateNumber = featureCreator.getRequiredCandidateSize();
@@ -127,7 +137,9 @@ public class TrainConfidenceScore {
                         CompoundWithAbstractFP<Fingerprint>[] candidates2;
                         do {
                             candidates2 = reduceCandidates(rankedCandidates[i], query, maxCandidateNumber, nextPositive, false); //changed!!!
+//                            System.out.println("next "+nextPositive+" "+(candidates2[0].getInchi().key2D().equals(query.getInchi().key2D())));
                         } while ((candidates2[0].getInchi().key2D().equals(query.getInchi().key2D()))!=nextPositive);
+//                        System.out.println("yeah");
                         candidates = candidates2;
                     }
 
@@ -137,6 +149,16 @@ public class TrainConfidenceScore {
                 else negativeInstances++;
 
                 usedInstances.add(i);
+                ////////////////////////////////
+//                if (DEBUG){
+//                    int size = candidates.length;
+//                    double[] scores = new double[size];
+//                    for (int j = 0; j < candidates.length; j++)
+//                        scores[j] = ((ScoredCandidate)candidates[j]).score;
+//                    System.out.println("candidates: "+size+" | "+Arrays.toString(scores));
+//                }
+
+                //////////////////////////////
                 futures.add(executorService2.submit(new Callable<FeatureWithIdx>() {
                     @Override
                     public FeatureWithIdx call() throws Exception {
@@ -177,8 +199,35 @@ public class TrainConfidenceScore {
             featureList.add(result.features);
         }
 
+//            w.close();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+//        //changed
         executorService2.shutdown();
 
+        if (DEBUG){
+            System.out.println("computed features");
+        }
+
+//        for (int i = 0; i < queries.length; i++) {
+//            CompoundWithAbstractFP<ProbabilityFingerprint> query = queries[i];
+//            CompoundWithAbstractFP<Fingerprint>[] candidates = rankedCandidates[i];
+//            if (featureCreator.isCompatible(query, candidates)){
+//                usedInstances.add(i);
+//                double[] features = featureCreator.computeFeatures(query, candidates);
+//                for (int j = 0; j < features.length; j++) {
+//                    double feature = features[j];
+//                    if (Double.isNaN(feature)){
+//                        String name = featureCreator.getFeatureNames()[j];
+//                        throw new IllegalArgumentException("NaN created by feature "+name+" in "+featureCreator.getClass().getSimpleName());
+//                    }
+//                }
+//                featureList.add(features);
+//            }
+//        }
 
         double[][] featureMatrix = featureList.toArray(new double[0][]);
 
@@ -242,12 +291,28 @@ public class TrainConfidenceScore {
 
         Predictor predictor;
         if (doCrossval){
-            TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
-            predictor = trainLinearSVM.trainWithCrossvalidation();
+            if (svmInterface instanceof LibSVMImpl){
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainWithCrossvalidationOptimizeGammaAndDegree(new double[]{1d/64, 1d/32, 1d/16, 1d/8, 1d/4, 1d/2, 1, 2, 4, 6, 8, 16}, new int[]{1});
+            } else {
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+//                predictor = trainLinearSVM.trainWithCrossvalidation(); //changed
+                System.out.println("crossvalidation.");
+                predictor = trainLinearSVM.trainWithCrossvalidation();
+            }
 
         } else {
-            TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
-            predictor = trainLinearSVM.trainAntiCrossvalidation();
+            if (DEBUG){
+                System.out.println("anti-crossvalidation");
+            }
+            if (svmInterface instanceof LibSVMImpl){
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.RBF);
+                predictor = trainLinearSVM.trainAntiCrossvalidation(new double[]{1d/64, 1d/32, 1d/16, 1d/8, 1d/4, 1d/2, 1, 2, 4, 6, 8, 16}, new int[]{1});
+            } else {
+                TrainLinearSVM trainLinearSVM = new TrainLinearSVM(executorService, compounds, svmInterface, 10, new int[]{-5,5}, SVMInterface.svm_parameter.LINEAR);
+                predictor = trainLinearSVM.trainAntiCrossvalidation();
+            }
+
         }
 
 
@@ -283,11 +348,47 @@ public class TrainConfidenceScore {
     private TrainLinearSVM.Compound createCompound(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates, double[] features){
         byte classification;
         String queryInchiKey2D = query.getInchi().key2D();
-        String candidateInchiKey2D = rankedCandidates[0].getInchi().key2D();
-        if (queryInchiKey2D.equals(candidateInchiKey2D)) classification = 1;
-        else classification = -1;
+//        String candidateInchiKey2D = rankedCandidates[0].getInchi().key2D();
+//        if (queryInchiKey2D.equals(candidateInchiKey2D)) classification = 1;
+//        else classification = -1;
+        if (equal(query, rankedCandidates[0])) classification = 1;
+        else  classification = -1;
         TrainLinearSVM.Compound compound = new TrainLinearSVM.Compound(queryInchiKey2D, classification, features);
         return compound;
+    }
+
+
+    private boolean equal(CompoundWithAbstractFP<ProbabilityFingerprint> query, CompoundWithAbstractFP<Fingerprint> candidate){
+        String tanimoto = System.getProperty("confidence.tanimoto.equal");
+        if (tanimoto==null){
+            return query.getInchi().key2D().equals(candidate.getInchi().key2D());
+        } else {
+            double minTanimoto = Double.parseDouble(tanimoto);
+            FingerprintCandidate fpc = null;
+            try {
+                if (db==null) db = new ChemicalDatabase();
+                List<FingerprintCandidate> list = db.lookupFingerprintsByInchis(Collections.singletonList(query.getInchi().key2D()));
+                if (list.size()==0){
+                    System.err.println("no fp for query"+query.getInchi().key2D());
+                    return  query.getInchi().key2D().equals(candidate.getInchi().key2D());
+                }
+                FingerprintCandidate fpc1 = list.get(0);
+
+                list = db.lookupFingerprintsByInchis(Collections.singletonList(candidate.getInchi().key2D()));
+                if (list.size()==0){
+                    System.err.println("no fp for candidate "+candidate.getInchi().key2D());
+                    return  query.getInchi().key2D().equals(candidate.getInchi().key2D());
+                }
+                FingerprintCandidate fpc2 = list.get(0);
+                double t = fpc1.getFingerprint().tanimoto(fpc2.getFingerprint());
+                return t>=minTanimoto;
+            } catch (DatabaseException e) {
+                System.err.println("no fp for query"+query.getInchi().key2D());
+                return  query.getInchi().key2D().equals(candidate.getInchi().key2D());
+//                throw new RuntimeException(e);
+            }
+
+        }
     }
 
     private CompoundWithAbstractFP<Fingerprint>[] reduceCandidates(CompoundWithAbstractFP<Fingerprint>[] candidates, CompoundWithAbstractFP query, int size, boolean keepCorrect, boolean removeCorrect){
@@ -508,6 +609,115 @@ public class TrainConfidenceScore {
         return trainConfidenceScore;
     }
 
+    public static TrainConfidenceScore CSIOnly(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new CSIScoreFeature(),
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new CSIScoreFeature(),
+                            new CSIScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new CSIScoreFeature(),
+                            new CSIScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new CSIScoreFeature(),
+                            new CSIScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+    public static TrainConfidenceScore NoLogScoresRobust(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new RobustPlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new RobustPlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new RobustPlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new RobustPlattFeatures(),
+                            new MolecularFormulaFeature()
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+
     public static TrainConfidenceScore NoLogScores(boolean useLinearSVM){
         TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
 
@@ -548,6 +758,106 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature()
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+    public static TrainConfidenceScore NoLogScoresNoMFRobust(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new RobustPlattFeatures(),
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new RobustPlattFeatures(),
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new RobustPlattFeatures(),
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new RobustPlattFeatures(),
+                    });
+                    break;
+            }
+            featureCreators[i] = featureCreator;
+
+        }
+        trainConfidenceScore.setFeatureCreators(featureCreators);
+        int[] priority = new int[length];
+        for (int i = 0; i < priority.length; i++) priority[i] = i+1;
+        trainConfidenceScore.setPriority(priority);
+
+        return trainConfidenceScore;
+    }
+
+    public static TrainConfidenceScore NoLogScoresNoMF(boolean useLinearSVM){
+        TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
+
+        int length = 5;
+        FeatureCreator[] featureCreators = new FeatureCreator[length];
+        for (int i = 0; i < length; i++) {
+            final FeatureCreator featureCreator;
+            switch (i){
+                case 0:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new PlattFeatures(),
+                    });
+                    break;
+                case 1:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                    });
+                    break;
+                case 2:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,2),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
+                    });
+                    break;
+                default:
+                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
+                            new ScoreFeatures(),
+                            new ScoreDifferenceFeatures(1,i),
+                            new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
+                            new PlattFeatures(),
                     });
                     break;
             }
