@@ -215,6 +215,10 @@ public class PrecursorIonType {
         return ionization.subtractFromMass(mz - adduct.getMass());
     }
 
+    public double addIonAndAdduct(double mz) {
+        return ionization.addToMass(mz + adduct.getMass());
+    }
+
     public double precursorMassToNeutralMass(double mz) {
         return ionization.subtractFromMass(mz - modification.getMass());
     }
