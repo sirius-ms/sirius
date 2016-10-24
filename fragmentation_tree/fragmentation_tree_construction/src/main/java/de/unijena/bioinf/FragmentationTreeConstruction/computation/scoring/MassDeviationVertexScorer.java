@@ -58,8 +58,8 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object x_) {
         if (peak.getOriginalPeaks().isEmpty())
             return 0d; // don't score synthetic peaks
-        final double theoreticalMass = formula.getMass();
-        final double realMass = useOriginalMz ? (peak.getUnmodifiedOriginalMass()) : peak.getUnmodifiedMass();
+        final double theoreticalMass = input.getExperimentInformation().getPrecursorIonType().subtractIonAndAdduct(formula.getMass());
+        final double realMass = useOriginalMz ? peak.getOriginalMz() : peak.getMz();
         final MeasurementProfile profile = input.getMeasurementProfile();
         final Deviation dev = standardDeviation != null ? standardDeviation : profile.getStandardMs2MassDeviation();
         final double sd = dev.absoluteFor(realMass);
