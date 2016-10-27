@@ -16,8 +16,8 @@ public class SiriusResultElementConverter {
 	
 	public static TreeNode convertTree(FTree ft){
 		FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
-		LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);
-		FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrNull(Score.class);
+		LossAnnotation<Score> lscore = ft.getLossAnnotationOrThrow(Score.class);
+		FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrThrow(Score.class);
 		
 		
 		double maxInt = Double.NEGATIVE_INFINITY;
