@@ -207,7 +207,7 @@ public class Sirius {
         final HashMap<PrecursorIonType, IonWhitelist> subsets = splitWhitelistByIonization(exp, whiteList);
         // now compute each subset separately...
         // first MS
-        final HashMap<MolecularFormula, Double> isoScores = handleIsoAnalysisWithWhitelist(deisotope, exp, subsets);
+        final HashMap<MolecularFormula, IsotopePattern> isoScores = handleIsoAnalysisWithWhitelist(deisotope, exp, subsets);
         // then MS/MS
         final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
@@ -361,8 +361,10 @@ public class Sirius {
 
         final double absoluteError = profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation().absoluteFor(experiment.getIonMass());
         final ArrayList<IdentificationResult> list = new ArrayList<IdentificationResult>(numberOfCandidates);
+        getProgress().info("Perform isotope pattern analysis:");
         for (int i = 0; i < Math.min(numberOfCandidates, patterns.size()); ++i) {
             final IsotopePattern pattern = patterns.get(i);
+            getProgress().info("1.) ");
             final TreeScoring scoring = new TreeScoring();
             scoring.setOverallScore(0);
             scoring.addAdditionalScore(ISOTOPE_SCORE, pattern.getScore());
@@ -373,6 +375,7 @@ public class Sirius {
             dummyTree.getOrCreateLossAnnotation(Score.class);
             dummyTree.getOrCreateFragmentAnnotation(Score.class);
             dummyTree.addAnnotation(PrecursorIonType.class, getIonization(experiment, pattern.getCandidate(), absoluteError));
+            dummyTree.addAnnotation(IsotopePattern.class, pattern);
             list.add(new IdentificationResult(dummyTree, i + 1));
         }
 
@@ -390,8 +393,8 @@ public class Sirius {
         return usedIonType;
     }
 
-    private HashMap<MolecularFormula, Double> handleIsoAnalysisWithWhitelist(IsotopePatternHandling deisotope, MutableMs2Experiment exp, HashMap<PrecursorIonType, IonWhitelist> subsets) {
-        final HashMap<MolecularFormula, Double> isoScores = new HashMap<MolecularFormula, Double>();
+    private HashMap<MolecularFormula, IsotopePattern> handleIsoAnalysisWithWhitelist(IsotopePatternHandling deisotope, MutableMs2Experiment exp, HashMap<PrecursorIonType, IonWhitelist> subsets) {
+        final HashMap<MolecularFormula, IsotopePattern> isoScores = new HashMap<>();
         if (deisotope != IsotopePatternHandling.omit) {
             final List<IsotopePattern> patterns = new ArrayList<>();
             double bestScore = 0d;
@@ -495,7 +498,7 @@ public class Sirius {
         predictElements(pinput);
         // first check if MS data is present;
         final List<IsotopePattern> candidates = lookAtMs1(pinput, deisotope != IsotopePatternHandling.omit);
-        final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<>();
+        final HashMap<MolecularFormula, IsotopePattern> isoFormulas = new HashMap<>();
         filterCandidateList(candidates, isoFormulas, deisotope);
         int maxNumberOfFormulas = 0;
         pinput = profile.fragmentationPatternAnalysis.preprocessing(pinput.getOriginalInput(), pinput.getMeasurementProfile());
@@ -621,7 +624,7 @@ public class Sirius {
         // first check if MS data is present;
         final List<IsotopePattern> candidates = lookAtMs1(validatedInput, deisotope != IsotopePatternHandling.omit);
         int maxNumberOfFormulas = 0;
-        final HashMap<MolecularFormula, Double> isoFormulas = new HashMap<MolecularFormula, Double>();
+        final HashMap<MolecularFormula, IsotopePattern> isoFormulas = new HashMap<>();
         final double optIsoScore = filterCandidateList(candidates, isoFormulas, deisotope);
         if (isoFormulas.size()>0 && deisotope.isFiltering()) {
             return identify(uexperiment, numberOfCandidates, recalibrating, deisotope, isoFormulas.keySet());
@@ -768,10 +771,12 @@ public class Sirius {
         return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment,pinput.getMeasurementProfile()) : Collections.<IsotopePattern>emptyList();
     }
 
-    protected void addIsoScore(HashMap<MolecularFormula, Double> isoFormulas, FTree tree) {
+    protected void addIsoScore(HashMap<MolecularFormula, IsotopePattern> isoFormulas, FTree tree) {
         final TreeScoring sc = tree.getAnnotationOrThrow(TreeScoring.class);
-        if (isoFormulas.get(tree.getRoot().getFormula()) != null) {
-            sc.addAdditionalScore(ISOTOPE_SCORE, isoFormulas.get(tree.getRoot().getFormula()));
+        final IsotopePattern pat = isoFormulas.get(tree.getRoot().getFormula());
+        if (pat != null) {
+            sc.addAdditionalScore(ISOTOPE_SCORE, pat.getScore());
+            tree.setAnnotation(IsotopePattern.class, pat);
         }
     }
 
@@ -1040,7 +1045,7 @@ public class Sirius {
      * - filtering: adds only a subset of isotope pattern candidates with good scores into the hashmap
      * @return score of the best isotope candidate
      */
-    private double filterCandidateList(List<IsotopePattern> candidates, HashMap<MolecularFormula, Double> formulas, IsotopePatternHandling handling) {
+    private double filterCandidateList(List<IsotopePattern> candidates, HashMap<MolecularFormula, IsotopePattern> formulas, IsotopePatternHandling handling) {
         if (handling==IsotopePatternHandling.omit) {
             return 0d;
         }
@@ -1052,23 +1057,23 @@ public class Sirius {
                 opt = Math.max(opt, p.getScore() + formulaScorer.score(p.getCandidate()));
             }
             if (opt < 0) {
-                for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), 0d);
+                for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), new IsotopePattern(p.getCandidate(), 0d, p.getPattern()));
                 return  candidates.get(0).getScore();
             }
         }
         final double optscore = candidates.get(0).getScore();
         if (!handling.isFiltering()) {
-            for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), p.getScore());
+            for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), p);
             return  candidates.get(0).getScore();
         }
-        formulas.put(candidates.get(0).getCandidate(), optscore);
+        formulas.put(candidates.get(0).getCandidate(), candidates.get(0));
         int n = 1;
         for (; n < candidates.size(); ++n) {
             final double score = candidates.get(n).getScore();
             final double prev = candidates.get(n - 1).getScore();
             if (((optscore-score) > 5) && (score <= 0 || score / optscore < 0.5 || score / prev < 0.5)) break;
         }
-        for (int i = 0; i < n; ++i) formulas.put(candidates.get(i).getCandidate(), candidates.get(i).getScore());
+        for (int i = 0; i < n; ++i) formulas.put(candidates.get(i).getCandidate(), candidates.get(i));
         return optscore;
     }
 

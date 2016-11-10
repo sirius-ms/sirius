@@ -22,6 +22,8 @@ public class PrecursorIonType {
     private final MolecularFormula modification;
     private final String name;
 
+    private final boolean unknown; // flag used to annotate unknown ion types
+
     public static PrecursorIonType getPrecursorIonType(String name) {
         return PeriodicTable.getInstance().ionByName(name);
     }
@@ -34,11 +36,12 @@ public class PrecursorIonType {
         return PeriodicTable.getInstance().getUnknownPrecursorIonType(charge);
     }
 
-    PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct) {
+    PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct, final boolean unknown) {
         this.ionization = ion;
         this.inSourceFragmentation = insource==null ? MolecularFormula.emptyFormula() : insource;
         this.adduct = adduct==null ? MolecularFormula.emptyFormula() : adduct;
         this.modification = this.adduct.subtract(this.inSourceFragmentation);
+        this.unknown = unknown;
         this.name = formatToString();
     }
 
@@ -87,11 +90,11 @@ public class PrecursorIonType {
     }
 
     public PrecursorIonType withoutAdduct() {
-        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula());
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), unknown);
     }
 
     public PrecursorIonType withoutInsource() {
-        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct);
+        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct, unknown);
     }
 
     @Override
@@ -178,7 +181,8 @@ public class PrecursorIonType {
     */
 
     public boolean isIonizationUnknown() {
-        return ionization instanceof Charge;
+        return unknown;
+        //return ionization instanceof Charge && this == unknown(getCharge());
     }
 
     public int getCharge() {
@@ -252,5 +256,9 @@ public class PrecursorIonType {
 
     public MolecularFormula getAdductAndIons() {
         return adduct.add(ionization.getAtoms());
+    }
+
+    public boolean isIntrinsicalCharged() {
+        return !isIonizationUnknown() && (adduct.isEmpty() && ionization.getAtoms().isEmpty());
     }
 }

@@ -259,6 +259,18 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens() + numberOf(getTableSelection().getPeriodicTable().getByName("S")) + numberOf(getTableSelection().getPeriodicTable().getByName("P"));
     }
 
+    private static HashSet<String> ALLOWED_ELEMS_CHNOPSBBRClIF = new HashSet<>(Arrays.asList("C", "H", "N", "O", "P", "S", "B", "Br", "Cl", "I", "F"));
+    public boolean isCHNOPSBBrClFI() {
+        final short[] buf = buffer();
+        final TableSelection sel = getTableSelection();
+        for (int k=0; k < buf.length; ++k) {
+            if (buf[k]>0 && !ALLOWED_ELEMS_CHNOPSBBRClIF.contains(sel.get(k).getSymbol())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * A formula is charged if its rdbe value is not a whole-number (for example if it is 0.5)
      * or if its doubled-rdbe is an odd number.

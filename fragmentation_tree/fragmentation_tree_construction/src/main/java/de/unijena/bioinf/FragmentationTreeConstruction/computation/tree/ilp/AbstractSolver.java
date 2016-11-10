@@ -24,6 +24,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -380,6 +382,7 @@ abstract public class AbstractSolver {
      * @return
      */
     protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
+        final double optSolScore = score;
         final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
         final Fragment pseudoRoot = graph.getRoot();
         for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
@@ -402,8 +405,12 @@ abstract public class AbstractSolver {
                 score -= pseudo.getIncomingEdge().getWeight();
             }
         }
-        return Math.abs(score) < 1e-9d;
+        if (score > 1e-9d) {
+            logger.warn("There is a large gap between the optimal solution and the score of the computed fragmentation tree: Gap is " + score + " for a score of " + optSolScore);
+        }
+        return Math.abs(score) < 1e-4d;
     }
+    private static Logger logger = LoggerFactory.getLogger(AbstractSolver.class);
 
 
     protected void resetTimeLimit() {

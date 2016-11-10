@@ -16,6 +16,8 @@ import java.util.List;
  */
 public class IonTreeUtils {
 
+    public enum Type {RAW, RESOLVED, IONIZED}
+
     /**
      * Takes a computed tree as input with a certain PrecursorIonType. Resolve the PrecursorIonType, such that insource
      * fragmentations are reflected in the tree and all vertices in the tree have a neutral molecular formula excluding
@@ -24,12 +26,12 @@ public class IonTreeUtils {
      * This modifications might be in-place. So the caller have to ensure to copy the tree if he do not want to change it.
      */
     public FTree treeToNeutralTree(FTree tree) {
-        PrecursorIonType ion;
-        if (tree.getFragmentAnnotationOrNull(PrecursorIonType.class)!=null) {
-            ion = tree.getFragmentAnnotationOrNull(PrecursorIonType.class).get(tree.getRoot());
-        } else {
-            ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        if (tree.getAnnotationOrNull(Type.class)==Type.RESOLVED) {
+            return tree;
+        } else if (tree.getAnnotationOrNull(Type.class) == Type.IONIZED) {
+            throw new IllegalArgumentException("Cannot neutralize ionized tree.");
         }
+        PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
 
         if (ion.getInSourceFragmentation().atomCount() > 0) {
             // add the in-source fragmentation to the tree
@@ -54,7 +56,7 @@ public class IonTreeUtils {
                 }
             }
         }
-
+        tree.setAnnotation(Type.class, Type.RESOLVED);
         return tree;
     }
 
@@ -65,6 +67,11 @@ public class IonTreeUtils {
      * This modifications might be in-place. So the caller have to ensure to copy the tree if he do not want to change it.
      */
     public FTree treeToIonTree(FTree tree) {
+        if (tree.getAnnotationOrNull(Type.class)==Type.IONIZED) {
+            return tree;
+        } else if (tree.getAnnotationOrNull(Type.class) == Type.RESOLVED) {
+            throw new IllegalArgumentException("Cannot neutralize ionized tree.");
+        }
         PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
         if (ion.getInSourceFragmentation().atomCount() > 0) {
@@ -79,6 +86,7 @@ public class IonTreeUtils {
             fa.set(f, empty);
         }
         tree.setAnnotation(PrecursorIonType.class, empty);
+        tree.setAnnotation(Type.class, Type.IONIZED);
         return tree;
     }
 

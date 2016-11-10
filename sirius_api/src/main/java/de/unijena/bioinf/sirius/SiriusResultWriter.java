@@ -79,7 +79,7 @@ public class SiriusResultWriter implements Closeable {
                     @Override
                     public Void apply(BufferedWriter input) {
                         try {
-                            new FTJsonWriter().writeTree(input,ir.getTree());
+                            new FTJsonWriter().writeTree(input,ir.getRawTree());
                         } catch (IOException e) {
                             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                             throw new RuntimeException(e);

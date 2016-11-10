@@ -59,7 +59,7 @@ public class FTJsonReader implements Parser<FTree> {
         final JSONDocumentType JSONdoc = new JSONDocumentType();
         final JsonParser r = new JsonParser();
         final JsonObject json = r.parse(jsonString).getAsJsonObject();
-        final FTree tree = new FTree(MolecularFormula.parse(json.get("molecularFormula").getAsString()));
+        final FTree tree = new FTree(MolecularFormula.parse(json.get("root").getAsString()));
         final JsonArray fragments = json.getAsJsonArray("fragments");
         final HashMap<MolecularFormula, JsonObject> fragmentMap = new HashMap<>(fragments.size());
         for (int k = 0; k < fragments.size(); ++k) {

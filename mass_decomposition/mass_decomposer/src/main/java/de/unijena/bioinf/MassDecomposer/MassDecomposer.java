@@ -57,12 +57,12 @@ public class MassDecomposer<T> {
 
     public List<int[]> decompose(double mass, Deviation deviation, Map<T, Interval> boundaries){
         final double abs = deviation.absoluteFor(mass);
-        return decompose(mass-abs, mass+abs, boundaries);
+        return decompose(Math.max(0,mass-abs), Math.max(0,mass+abs), boundaries);
     }
 
     public DecompIterator<T> decomposeIterator(double mass, Deviation deviation, Map<T, Interval> boundaries) {
         final double abs = deviation.absoluteFor(mass);
-        return decomposeIterator(mass-abs, mass+abs, boundaries);
+        return decomposeIterator(Math.max(0,mass-abs), Math.max(0,mass+abs), boundaries);
     }
 
     public DecompIterator<T> decomposeIterator(double from, double to) {

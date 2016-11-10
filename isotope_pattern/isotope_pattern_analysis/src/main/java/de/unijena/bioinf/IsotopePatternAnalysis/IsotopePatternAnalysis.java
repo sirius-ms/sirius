@@ -230,6 +230,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     public List<IsotopePattern> deisotope(Ms2Experiment experiment, MeasurementProfile profile, List<MolecularFormula> formulas) {
         if (experiment.getMs1Spectra().isEmpty() && experiment.getMergedMs1Spectrum()==null) return new ArrayList<>();
         final SimpleSpectrum pattern = extractPattern(experiment, getProfile(profile), experiment.getIonMass());
+        if (pattern==null) return Collections.emptyList();
         return scoreFormulas(pattern, formulas, experiment, profile);
     }
 
