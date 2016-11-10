@@ -46,7 +46,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakM
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
@@ -549,6 +548,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             else
                 analyzer.defaultProfile = new MutableMeasurementProfile(MutableMeasurementProfile.merge(prof, analyzer.defaultProfile));
         }
+
+        analyzer.initialize();
+
         return analyzer;
     }
 
@@ -690,6 +692,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         profile.setIntensityDeviation(0.02);
         analysis.setDefaultProfile(profile);
 
+        analysis.initialize();
+
         return analysis;
     }
 
@@ -753,9 +757,50 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         profile.setIntensityDeviation(0.02);
         analysis.setDefaultProfile(profile);
 
+
+        analysis.initialize();
+
         return analysis;
     }
 
+    private void initialize() {
+        for (Object o : this.inputValidators) {
+            initialize(o);
+        }
+        initialize(this.peakMerger);
+        for (Object o : this.decompositionScorers) {
+            initialize(o);
+        }
+        for (Object o : this.rootScorers) {
+            initialize(o);
+        }
+        for (Object o : this.lossScorers) {
+            initialize(o);
+        }
+        for (Object o : this.peakPairScorers) {
+            initialize(o);
+        }
+        for (Object o : this.fragmentPeakScorers) {
+            initialize(o);
+        }
+        initialize(graphBuilder);
+        for (Object o : this.preprocessors) {
+            initialize(o);
+        }
+        for (Object o : this.postProcessors) {
+            initialize(o);
+        }
+        initialize(treeBuilder);
+        initialize(recalibrationMethod);
+        initialize(reduction);
+        initialize(isoInMs2Scorer);
+    }
+    private void initialize(Object o)  {
+        if (o==null) return;
+        if (o.getClass().isAssignableFrom(Initializable.class)) {
+            ((Initializable)o).initialize(this);
+        }
+    }
 
 
 
@@ -1467,6 +1512,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     public MassToFormulaDecomposer getDecomposerFor(ChemicalAlphabet alphabet) {
         return decomposers.getDecomposer(alphabet);
+    }
+
+    public DecomposerCache getDecomposerCache() {
+        return decomposers;
     }
 
     @Override

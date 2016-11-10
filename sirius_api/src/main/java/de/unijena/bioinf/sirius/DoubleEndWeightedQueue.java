@@ -1,8 +1,7 @@
 package de.unijena.bioinf.sirius;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 
@@ -27,7 +26,13 @@ public class DoubleEndWeightedQueue implements Iterable<FTree> {
         }, new Comparator<FTree>() {
             @Override
             public int compare(FTree o1, FTree o2) {
-                return o1.getRoot().getFormula().compareTo(o2.getRoot().getFormula());
+                final int x = o1.getRoot().getFormula().compareTo(o2.getRoot().getFormula());
+                if (x==0) {
+                    final PrecursorIonType a = o1.getAnnotationOrThrow(PrecursorIonType.class);
+                    final PrecursorIonType b = o2.getAnnotationOrThrow(PrecursorIonType.class);
+                    if (a.equals(b)) return 0;
+                    else return a.toString().compareTo(b.toString());
+                } else return x;
             }
         });
         lowerbound = Double.NEGATIVE_INFINITY;

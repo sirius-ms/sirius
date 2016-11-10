@@ -180,6 +180,11 @@
     "$name": "FragmentationPatternAnalysis",
     "preProcessing": [
       {
+        "$name": "NoiseEstimateFilter",
+        "percentile": 0.9,
+        "minNumberOfNoisePeaks": 50
+      },
+      {
         "$name": "NormalizeToSumPreprocessor",
         "onlyForRelativeIntensities": true
       },

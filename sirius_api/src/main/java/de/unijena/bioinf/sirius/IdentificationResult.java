@@ -18,6 +18,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
@@ -36,7 +37,8 @@ import java.util.regex.Pattern;
 
 public class IdentificationResult implements Cloneable {
 
-    protected FTree tree;
+    protected FTree tree, resolvedTree;
+    protected MolecularFormula formula;
     protected int rank;
     protected double score;
 
@@ -69,8 +71,19 @@ public class IdentificationResult implements Cloneable {
 
     public IdentificationResult(FTree tree, int rank) {
         this.tree = tree;
+        tree.normalizeStructure();
         this.score = tree==null ? 0d : tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        this.formula = tree.getRoot().getFormula();
         this.rank = rank;
+
+        final IonTreeUtils.Type type =tree.getAnnotationOrNull(IonTreeUtils.Type.class);
+        if (type == IonTreeUtils.Type.RESOLVED) {
+            this.formula = tree.getRoot().getFormula();
+        } else if (type == IonTreeUtils.Type.IONIZED) {
+            this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).precursorIonToNeutralMolecule(tree.getRoot().getFormula());
+        } else {
+            this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+        }
     }
 
     public int getRank() {
@@ -78,7 +91,7 @@ public class IdentificationResult implements Cloneable {
     }
 
     public MolecularFormula getMolecularFormula() {
-        return tree.getRoot().getFormula();
+        return formula;
     }
 
     public RecalibrationFunction getRecalibrationFunction() {
@@ -87,20 +100,17 @@ public class IdentificationResult implements Cloneable {
         else return f;
     }
 
-    public void transformToIonTree() {
-        if (tree != null) tree = new IonTreeUtils().treeToIonTree(tree);
-    }
-
-    public void resolveIonizationInTree() {
-        if (tree != null) tree = new IonTreeUtils().treeToNeutralTree(tree);
-    }
-
     public double getScore() {
         return score;
     }
 
-    public FTree getTree() {
+    public FTree getRawTree() {
         return tree;
+    }
+
+    public FTree getResolvedTree() {
+        if (resolvedTree==null) resolvedTree = new IonTreeUtils().treeToNeutralTree(new FTree(tree));
+        return resolvedTree;
     }
 
     public double getTreeScore() {
@@ -115,7 +125,17 @@ public class IdentificationResult implements Cloneable {
         } else new FTJsonWriter().writeTreeToFile(target, tree);
     }
 
-    public String getJSONTree() {
+    public String getNeutralizedJSONTree() {
+        final StringWriter sw = new StringWriter(1024);
+        try {
+            new FTJsonWriter().writeTree(sw,getResolvedTree());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return sw.toString();
+    }
+
+    public String getRawJSONTree() {
         final StringWriter sw = new StringWriter(1024);
         try {
             new FTJsonWriter().writeTree(sw,tree);

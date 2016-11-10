@@ -17,8 +17,6 @@
  */
 package de.unijena.bioinf.MassDecomposer;
 
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-
 import java.util.*;
 
 /**
@@ -71,8 +69,9 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T>{
     @Override
     public DecompIterator<T> decomposeIterator(double from, double to, Map<T, Interval> boundaries) {
         init();
-        if (to < 0d || from < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition: [" + from + ", " + to + "]");
+        if (to < 0d) throw new IllegalArgumentException("Expect positive mass for decomposition: [" + from + ", " + to + "]");
         if (to < from) throw new IllegalArgumentException("Negative range given: [" + from + ", " + to + "]");
+        if (from < 0) from = 0d;
         final int[] minValues = new int[weights.size()];
         final int[] boundsarray = new int[weights.size()];
         boolean minAllZero = true;
