@@ -1,0 +1,143 @@
+/*
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2015 Kai Dührkop
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
+
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
+import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+
+import java.util.*;
+
+// - divide mass range in 4 blocks (each with 1/3 of the mass range, except the first low mass block which
+//   is additionally splitted into two blocks of 1/6 of the mass range)
+// - now select the n most intensive peaks such that
+//   - 1/5 n of the most intensive peaks in the spectrum are selected
+//   - 1/4 n of the most intensive peaks peaks in each block are selected
+// This processor should take care that peaks in the low mass range are not deleted just because
+// peaks in high mass range have larger intensities
+public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, Initializable {
+
+    protected DecomposerCache cache;
+    private int limit;
+
+    public DecomposerCache getCache() {
+        if (cache == null) cache = new DecomposerCache(3);
+        return cache;
+    }
+
+
+    @Override
+    public void initialize(FragmentationPatternAnalysis analysis) {
+        this.cache = analysis.getDecomposerCache();
+    }
+
+    public LimitNumberOfPeaksMassDistributedFilter() {
+        this(Integer.MAX_VALUE);
+    }
+
+    public LimitNumberOfPeaksMassDistributedFilter(int limit) {
+        this.limit = limit;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    @Override
+    public ProcessedInput process(ProcessedInput input) {
+        // remove peaks without decomposition
+        {
+            final MassToFormulaDecomposer decomposer = getCache().getDecomposer(input.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
+            final ListIterator<ProcessedPeak> iter = input.getMergedPeaks().listIterator();
+            eachPeak:
+            while (iter.hasNext()) {
+                final Iterator<MolecularFormula> fiter = decomposer.formulaIterator(iter.next().getUnmodifiedMass(), input.getMeasurementProfile().getAllowedMassDeviation(), input.getMeasurementProfile().getFormulaConstraints());
+                if (fiter.hasNext() && fiter.next() != null) continue eachPeak;
+                iter.remove();
+            }
+        }
+        final BitSet keepPeaks = new BitSet(input.getMergedPeaks().size());
+        // divide spectrum in four parts
+        // 2/3 - 1
+        // 1/3 - 2/3
+        // 1/6-2/6
+        // 0 - 1/6
+        final double parentmass = input.getExperimentInformation().getIonMass();
+        final double blocksize = parentmass/6d;
+        final int numberOfPeaksPerBlock = limit/6;
+
+        final List<ProcessedPeak> orderedByIntensity = new ArrayList<>(input.getMergedPeaks());
+        Collections.sort(orderedByIntensity, new ProcessedPeak.RelativeIntensityComparator());
+        Collections.reverse(orderedByIntensity);
+        final double maxMass = parentmass-1;
+        int selected=0;
+        selected += keep(orderedByIntensity, keepPeaks, 0, maxMass, 2*numberOfPeaksPerBlock);
+        selected += keep(orderedByIntensity, keepPeaks, 0, blocksize, numberOfPeaksPerBlock);
+        selected += keep(orderedByIntensity, keepPeaks, blocksize, 2*blocksize, numberOfPeaksPerBlock);
+        selected += keep(orderedByIntensity, keepPeaks, 2*blocksize, 4*blocksize, numberOfPeaksPerBlock);
+        selected += keep(orderedByIntensity, keepPeaks, 4*blocksize, 6*blocksize, numberOfPeaksPerBlock);
+        keep(orderedByIntensity, keepPeaks, 0, maxMass, Math.max(0, limit-selected));
+
+        final ListIterator<ProcessedPeak> iter = input.getMergedPeaks().listIterator();
+        int index=0;
+        while (iter.hasNext()) {
+            if (!keepPeaks.get(index++)) {
+                iter.remove();
+            }
+        }
+        return input;
+    }
+
+    private int keep(List<ProcessedPeak> orderedByIntensity, BitSet keepPeaks, double from, double to, int numberOfPeaks) {
+        if (numberOfPeaks<=0)  return 0;
+        int index = 0;
+        int total = numberOfPeaks;
+        for (ProcessedPeak peak : orderedByIntensity) {
+            if (peak.getMass() >= from && peak.getMass() < to && !keepPeaks.get(index)) {
+                keepPeaks.set(index, true);
+                if (--numberOfPeaks <= 0) break;
+            }
+            ++index;
+        }
+        return total-numberOfPeaks;
+    }
+
+    @Override
+    public Stage getStage() {
+        return Stage.AFTER_MERGING;
+    }
+
+    @Override
+    public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        limit = (int) document.getIntFromDictionary(dictionary, "limit");
+    }
+
+    @Override
+    public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+        document.addToDictionary(dictionary, "limit", limit);
+    }
+}

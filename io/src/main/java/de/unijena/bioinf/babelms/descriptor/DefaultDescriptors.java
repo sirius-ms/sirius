@@ -32,6 +32,8 @@ class DefaultDescriptors {
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
         registry.put(Loss.class, InsourceFragmentation.class, new InsourceDescriptor());
 
+        registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
+
     }
 
     private static class IonizationDescriptor implements Descriptor<Ionization> {
@@ -453,4 +455,38 @@ class DefaultDescriptors {
         }
     }
 
+    private static class IonTypeDescriptor implements Descriptor<IonTreeUtils.Type> {
+        private final static String TOK = "treeType";
+        @Override
+        public String[] getKeywords() {
+            return new String[]{TOK};
+        }
+
+        @Override
+        public Class<IonTreeUtils.Type> getAnnotationClass() {
+            return IonTreeUtils.Type.class;
+        }
+
+        @Override
+        public <G, D, L> IonTreeUtils.Type read(DataDocument<G, D, L> document, D dictionary) {
+            final String val = document.getStringFromDictionary(dictionary, TOK);
+            if (val.equals("neutralized")) return IonTreeUtils.Type.RESOLVED;
+            else if (val.equals("ionized")) return IonTreeUtils.Type.IONIZED;
+            else if (val.equals("raw")) return IonTreeUtils.Type.RAW;
+            else throw new IllegalArgumentException("Unknown tree type \"" + val + "\"");
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, IonTreeUtils.Type annotation) {
+            String value;
+            switch (annotation) {
+            case IONIZED: value = "ionized"; break;
+                case RESOLVED: value = "neutralized"; break;
+                case RAW: value = "raw"; break;
+                default: value = "raw";
+            }
+            document.addToDictionary(dictionary, TOK, value);
+
+        }
+    }
 }

@@ -784,6 +784,22 @@ public class Spectrums {
         return -1;
     }
 
+    // TODO: Might want to use an more efficient algorithm, e.g. median of medians
+    static double __getMedianIntensity(Spectrum<? extends Peak> spec) {
+        final int N = spec.size();
+        if (N==0) return 0;
+        if (N==1) return spec.getIntensityAt(0);
+        final double[] array = copyIntensities(spec);
+        if (N>2) Arrays.sort(array);
+        return array[array.length/2];
+    }
+    public static double getMedianIntensity(Spectrum<? extends Peak> spec) {
+        final int N = spec.size();
+        if (N <= 40) return __getMedianIntensity(spec);
+        final double[] array = copyIntensities(spec);
+        final int i = __quickselect(array, 0, array.length, array.length/2);
+        return array[i];
+    }
     /**
      * Use quicksort to sort a spectrum by its masses in ascending order
      *
@@ -967,6 +983,50 @@ public class Spectrums {
         }
         s.swap(store, high);
         return store;
+    }
+
+    // source: http://stackoverflow.com/questions/10662013/finding-the-median-of-an-unsorted-array
+    private static int __quickselect(double[] list, int lo, int hi, int k) {
+        int n = hi - lo;
+        if (n < 2)
+            return lo;
+
+        double pivot = list[lo + (ALMOST_RANDOM[k%ALMOST_RANDOM.length]) % n]; // Pick a random pivot
+
+        // Triage list to [<pivot][=pivot][>pivot]
+        int nLess = 0, nSame = 0, nMore = 0;
+        int lo3 = lo;
+        int hi3 = hi;
+        while (lo3 < hi3) {
+            double e = list[lo3];
+            int cmp = Double.compare(e, pivot);
+            if (cmp < 0) {
+                nLess++;
+                lo3++;
+            } else if (cmp > 0) {
+                __swap(list, lo3, --hi3);
+                if (nSame > 0)
+                    __swap(list, hi3, hi3 + nSame);
+                nMore++;
+            } else {
+                nSame++;
+                __swap(list, lo3, --hi3);
+            }
+        }
+        assert (nSame > 0);
+        assert (nLess + nSame + nMore == n);
+        assert (list[lo + nLess] == pivot);
+        assert (list[hi - nMore - 1] == pivot);
+        if (k >= n - nMore)
+            return __quickselect(list, hi - nMore, hi, k - nLess - nSame);
+        else if (k < nLess)
+            return __quickselect(list, lo, lo + nLess, k);
+        return lo + k;
+    }
+    private static void __swap(double[] list, int a, int b) {
+        final double z = list[a];
+        list[a] = list[b];
+        list[b] = z;
     }
 
     private static class AlreadyOrderedSpectrum<T extends Peak> implements OrderedSpectrum, Spectrum<T> {
