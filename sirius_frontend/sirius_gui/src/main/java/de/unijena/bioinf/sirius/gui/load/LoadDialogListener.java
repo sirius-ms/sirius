@@ -1,7 +1,7 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 
 import java.io.File;
 import java.util.List;
@@ -20,7 +20,7 @@ public interface LoadDialogListener {
 	
 	public void changeCollisionEnergy(CompactSpectrum sp);
 
-	public void setIonization(Ionization ionization);
+	public void setIonization(PrecursorIonType ionization);
 	
 	public void changeMSLevel(CompactSpectrum sp, int msLevel);
 	

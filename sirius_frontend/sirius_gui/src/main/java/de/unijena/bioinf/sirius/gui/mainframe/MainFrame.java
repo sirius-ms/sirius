@@ -25,8 +25,6 @@ import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
@@ -751,8 +749,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         bw.write('\t');
                         bw.write(String.valueOf(result.getIsotopeScore()));
                         bw.write('\t');
-                        final TreeScoring scoring = result.getTree().getAnnotationOrNull(TreeScoring.class);
-                        bw.write(String.valueOf(result.getTree().numberOfVertices()));
+                        final TreeScoring scoring = result.getResolvedTree().getAnnotationOrNull(TreeScoring.class);
+                        bw.write(String.valueOf(result.getResolvedTree().numberOfVertices()));
                         bw.write('\t');
                         bw.write(scoring == null ? "\"\"" : String.valueOf(scoring.getExplainedIntensity()));
                         bw.write('\n');

@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -21,8 +22,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
-import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.Logger;
@@ -52,9 +51,9 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	
 	private TreeSet<String> additionalElements;
 	
-	private Vector<Ionization> ionizations;
+	private Vector<String> ionizations;
     private Vector<String> instruments;
-	private JComboBox<Ionization> ionizationCB;
+	private JComboBox<String> ionizationCB;
     private JComboBox<String> instrumentCB,formulaCombobox;
 	private JSpinner ppmSpinner;
 	private SpinnerNumberModel snm;
@@ -236,16 +235,19 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		otherPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Other"));
 
         ionizations = new Vector<>();
+		if (SiriusDataConverter.siriusIonizationToEnum(ec.getIonization()).isUnknown() && !ec.getIonization().isIonizationUnknown()) {
+			ionizations.add(ec.getIonization().toString());
+		}
 		for (Ionization ion : Ionization.values()) {
-			ionizations.add(ion);
+			ionizations.add(ion.toString());
 		}
 
 		
 		ionizationCB = new JComboBox<>(ionizations);
         if (ec.getIonization()!=null) {
-            ionizationCB.setSelectedItem(ec.getIonization());
+            ionizationCB.setSelectedItem(ec.getIonization().toString());
         } else {
-            ionizationCB.setSelectedItem(Ionization.MPlusH);
+            ionizationCB.setSelectedItem(Ionization.MPlusH.toString());
         }
 		otherPanel.add(new JLabel("adduct type"));
 		otherPanel.add(ionizationCB);
@@ -292,7 +294,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
             JLabel label = new JLabel("Consider ");
             final Vector<String> values = new Vector<>();
             values.add("all possible molecular formulas");
-            values.add("PubChem formulas");
+			values.add("all PubChem formulas");
+			values.add("organic PubChem formulas");
             values.add("formulas from biological databases");
             formulaCombobox = new JComboBox<>(values);
             formulaCombobox.addItemListener(new ItemListener() {
@@ -514,9 +517,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
 			double ppm = snm.getNumber().doubleValue();
 
-			ms2Prof.setAllowedMassDeviation(new Deviation(ppm));
-			ms1Prof.setAllowedMassDeviation(new Deviation(ppm));
-
+			if ((int)(10*ms2Prof.getAllowedMassDeviation().getPpm()) != (int)(10*ppm)) {
+				ms2Prof.setAllowedMassDeviation(new Deviation(ppm));
+				ms1Prof.setAllowedMassDeviation(new Deviation(ppm));
+			}
 			final TreeBuilder builder = ms2.getTreeBuilder();
 
 
@@ -550,7 +554,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
 //	            System.err.println(pm);
 
-			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, (Ionization)ionizationCB.getSelectedItem(), pm);
+			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype((String)ionizationCB.getSelectedItem()), pm);
 
 			ProgressDialog progDiag = new ProgressDialog(this);
 			FormulaConstraints constraints;
@@ -580,7 +584,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
             FormulaSource formulaSource;
             if (formulaCombobox.getSelectedIndex()==0) formulaSource = FormulaSource.ALL_POSSIBLE;
-            else if (formulaCombobox.getSelectedIndex()==1) formulaSource = FormulaSource.PUBCHEM;
+            else if (formulaCombobox.getSelectedIndex()==1) formulaSource = FormulaSource.PUBCHEM_ALL;
+			else if (formulaCombobox.getSelectedIndex()==2) formulaSource = FormulaSource.PUBCHEM_ORGANIC;
             else formulaSource = FormulaSource.BIODB;
 
 
@@ -590,8 +595,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				this.success = true;
 				this.ec.setRawResults(progDiag.getResults());
                 this.ec.setComputeState(progDiag.getResults()==null || progDiag.getResults().size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
-                Ionization ion = (Ionization)ionizationCB.getSelectedItem();
-                if (ion==null) ion = Ionization.MPlusH;
+                PrecursorIonType ion = SiriusDataConverter.enumOrNameToIontype((String)ionizationCB.getSelectedItem());
+                if (ion==null) ion = PrecursorIonType.getPrecursorIonType("[M+H]+");
 				this.ec.setIonization(ion);
 				Object o = box.getSelectedItem();
 				if(o instanceof String){

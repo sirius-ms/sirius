@@ -24,12 +24,15 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InvalidException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -116,21 +119,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                         results = Arrays.asList(sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating()));
                     }
 
-                    if (options.isIonTree()) {
-                        for (IdentificationResult result : results) {
-                            result.transformToIonTree();
-                        }
-                    } else {
-                        for (IdentificationResult result : results) {
-                            result.resolveIonizationInTree();
-                        }
-                    }
-
                     if (doIdentify) {
                         int rank = 1;
                         int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
                         for (IdentificationResult result : results) {
-                            printf("%" + n + "d.) %s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\n", rank++, result.getMolecularFormula().toString(), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getTree()) * 100);
+                            final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
+                            final int isoPeaks = pat==null ? 0 : pat.getPattern().size()-1;
+                            printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
                         }
                         if (siriusResultWriter == null) output(i, results);
                     } else {
@@ -180,18 +175,19 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         if (format==null) format = "dot";
         for (IdentificationResult result : results) {
             if (target!=null) {
+                final FTree tree = options.isIonTree() ? new IonTreeUtils().treeToIonTree(new FTree(result.getRawTree())) : result.getResolvedTree();
                 final File name = getTargetName(target, instance, result, format,c);
                 if (format.equalsIgnoreCase("json")) {
-                    new FTJsonWriter().writeTreeToFile(name, result.getTree());
+                    new FTJsonWriter().writeTreeToFile(name, tree);
                 } else if (format.equalsIgnoreCase("dot")) {
-                    new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(name, result.getTree());
+                    new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(name, tree);
                 } else {
                     throw new RuntimeException("Unknown format '" + format + "'");
                 }
             }
             if (options.isAnnotating()) {
                 final File anoName = getTargetName(target!=null ? target : new File("."), instance, result, "csv",c);
-                new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
+                new AnnotatedSpectrumWriter().writeFile(anoName, result.getResolvedTree());
             }
         }
 
@@ -203,11 +199,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     }
 
     protected void outputSingle(Instance instance, IdentificationResult result, MolecularFormula formula) throws IOException {
-        if (result==null || result.getTree()==null) {
+        if (result==null || result.getResolvedTree()==null) {
             System.out.println("Cannot find valid tree with molecular formula '" + formula + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         }
-        result.getTree().normalizeStructure();
         File target = options.getOutput();
         String format = null;
 
@@ -233,17 +228,17 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         if (target.isDirectory()) {
             target = getTargetName(target, instance, result, format, 1);
         }
-
+        final FTree tree = options.isIonTree() ? new IonTreeUtils().treeToIonTree(new FTree(result.getRawTree())) : result.getResolvedTree();
         if (format.equalsIgnoreCase("json")) {
-            new FTJsonWriter().writeTreeToFile(target, result.getTree());
+            new FTJsonWriter().writeTreeToFile(target, tree);
         } else if (format.equalsIgnoreCase("dot")) {
-            new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(target, result.getTree());
+            new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(target, tree);
         } else {
             throw new RuntimeException("Unknown format '" + format + "'");
         }
         if (options.isAnnotating()) {
             final File anoName = getTargetName(target, instance, result, "csv", 1);
-            new AnnotatedSpectrumWriter().writeFile(anoName, result.getTree());
+            new AnnotatedSpectrumWriter().writeFile(anoName, result.getResolvedTree());
         }
     }
 

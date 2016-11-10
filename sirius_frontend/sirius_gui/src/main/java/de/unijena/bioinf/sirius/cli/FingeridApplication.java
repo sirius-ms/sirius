@@ -5,7 +5,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
@@ -17,14 +17,11 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.gui.db.CompoundImportedListener;
-import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
+import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import gnu.trove.list.array.TIntArrayList;
-import org.openscience.cdk.exception.CDKException;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
@@ -51,8 +48,8 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     @Override
     public void compute() {
-        if (options.isGeneratingCompoundDatabase()!=null) {
-            generateCustomDatabase();
+        if (options.getGeneratingCompoundDatabase()!=null) {
+            generateCustomDatabase(options);
             return;
         }
         if (options.isFingerid()) {
@@ -102,23 +99,8 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         }
     }
 
-    private void generateCustomDatabase() {
-        final CustomDatabase db = new CustomDatabase(options.getDatabase(), new File(RESTDatabase.defaultCacheDir(), "custom/" + new File(options.getDatabase()).getName()));
-        final List<File> files = new ArrayList<>();
-        for (String name : options.getInput()) {
-            final File file = new File(name);
-            if (file.exists()) files.add(file);
-        }
-        try {
-            db.buildDatabase(files, new CompoundImportedListener() {
-                @Override
-                public void compoundImported(InChI inchi) {
-                    System.out.println("import\t" + inchi.key2D() + "\t" + inchi.in2D);
-                }
-            });
-        } catch (IOException | CDKException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-        }
+    private void generateCustomDatabase(FingerIdOptions options) {
+        new DatabaseImporter().importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
     }
 
     @Override
@@ -133,7 +115,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             // first filter result list by top scoring formulas
             final ArrayList<IdentificationResult> filteredResults = new ArrayList<>();
             final IdentificationResult top = results.get(0);
-            if (top==null || top.getTree()==null) return;
+            if (top==null || top.getResolvedTree()==null) return;
             progress.info("Search with CSI:FingerId");
             filteredResults.add(top);
             final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.25);
@@ -146,8 +128,9 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             for (IdentificationResult result : filteredResults) {
 
                 // workaround... we should think about that carefully
-                final FTree tree = result.getTree();
-                tree.setAnnotation(PrecursorIonType.class, tree.getFragmentAnnotationOrNull(PrecursorIonType.class).get(tree.getRoot()));
+                final FTree tree = result.getResolvedTree();
+                // ???
+                //tree.setAnnotation(PrecursorIonType.class, tree.getFragmentAnnotationOrNull(PrecursorIonType.class).get(tree.getRoot()));
                 futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion));
             }
             final ArrayList<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
@@ -286,6 +269,31 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             LoggerFactory.getLogger(this.getClass()).error("--iontree and --fingerid cannot be enabled both. Please disable one of them.");
             System.exit(1);
         }
+        if (options.getFingerIdDb() != null && !options.isFingerid()) {
+            LoggerFactory.getLogger(this.getClass()).error("--fingerid_db defines the database CSI:FingerId should search in. This option makes only sense when used together with --fingerid. Use --db for setting up the database in which SIRIUS should search for molecular formulas.");
+            System.exit(1);
+        }
+    }
+
+    private AbstractChemicalDatabase getDatabase() {
+        return getDatabase(options.getDatabase());
+    }
+
+    private AbstractChemicalDatabase getDatabase(String name) {
+        final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
+        if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
+            return new FileDatabase(new File(name));
+        } else {
+            return new RESTDatabase(getBioFilter());
+        }
+    }
+
+    private AbstractChemicalDatabase getFingerIdDatabase() {
+        if (options.getFingerIdDb()!=null) {
+            return getDatabase(options.getFingerIdDb());
+        } else {
+            return getDatabase(options.getDatabase());
+        }
     }
 
     private void initFingerBlast() {
@@ -300,7 +308,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         try {
             final BioFilter bioFilter = getBioFilter();
             final PredictionPerformance[] performances = webAPI.getStatistics(indizes);
-            this.fingerblast = new Fingerblast(new RESTDatabase(bioFilter));
+            this.fingerblast = new Fingerblast(getFingerIdDatabase());
             this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter!=BioFilter.ALL);
             MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
@@ -322,7 +330,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         else {
             final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
 
-            final RESTDatabase restDatabase = new RESTDatabase(getBioFilter());
+            final AbstractChemicalDatabase database = getDatabase();
+            final int flag;
+
+            if (aliasMap.containsKey(options.getDatabase().toLowerCase())) {
+                flag = aliasMap.get(options.getDatabase().toLowerCase());
+            } else {
+                flag = 0;
+            }
             final Deviation dev ;
             if (options.getPPMMax()!=null) dev = new Deviation(options.getPPMMax());
             else dev = sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation();
@@ -337,15 +352,17 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 allowedIonTypes.add(i.experiment.getPrecursorIonType());
             }
             try {
-
-                final int flag = aliasMap.get(options.getDatabase().toLowerCase());
-                List<List<FormulaCandidate>> candidates = restDatabase.lookupMolecularFormulas(i.experiment.getIonMass(), dev,  allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()]));
+                final FormulaConstraints allowedAlphabet;
+                if (options.getElements()!=null) allowedAlphabet = options.getElements();
+                else allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF");
+                List<List<FormulaCandidate>> candidates = database.lookupMolecularFormulas(i.experiment.getIonMass(), dev,  allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()]));
                 final HashSet<MolecularFormula> allowedSet = new HashSet<>();
                 for (List<FormulaCandidate> fc : candidates)  {
                     for (FormulaCandidate f : fc) {
                         final int bitset = f.getBitset();
                         if (flag == 0 || (bitset & flag) != 0)
-                            allowedSet.add(f.getFormula());
+                            if (allowedAlphabet.isSatisfied(f.getFormula()))
+                                allowedSet.add(f.getFormula());
                     }
                 }
                 return allowedSet;
@@ -367,7 +384,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
         aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
         aliasMap.put("all", 0);
-        if (!aliasMap.containsKey(options.getDatabase())) {
+        if (!aliasMap.containsKey(options.getDatabase()) && !new File(options.getDatabase()).exists()) {
             LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(aliasMap.keySet()));
         }
         return aliasMap;

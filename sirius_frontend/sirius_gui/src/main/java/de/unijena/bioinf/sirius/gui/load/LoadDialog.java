@@ -1,13 +1,13 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 
 public interface LoadDialog {
 	
 	public void newCollisionEnergy(CompactSpectrum sp);
 
-	public void ionizationChanged(Ionization ionization);
+	public void ionizationChanged(PrecursorIonType ionization);
 	
 	public void spectraAdded(CompactSpectrum sp);
 	

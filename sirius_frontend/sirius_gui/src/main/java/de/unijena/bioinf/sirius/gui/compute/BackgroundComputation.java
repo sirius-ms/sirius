@@ -245,9 +245,11 @@ public class BackgroundComputation {
                 }
             });
             sirius.setFormulaConstraints(container.constraints);
-            sirius.getMs2Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
-            sirius.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
 
+            if ((int)(10*sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation().getPpm()) != (int)(10*container.ppm)) {
+                sirius.getMs2Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
+                sirius.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
+            }
             try {
                 final List<IdentificationResult> results;
                 final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp);
@@ -271,7 +273,11 @@ public class BackgroundComputation {
                         final HashSet<MolecularFormula> formulas = new HashSet<>();
                         for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
                             for (FormulaCandidate f : fc)
-                                formulas.add(f.getFormula());
+                                if (formulaSource == FormulaSource.PUBCHEM_ORGANIC) {
+                                    if (f.getFormula().isCHNOPSBBrClFI()) formulas.add(f.getFormula());
+                                } else {
+                                    formulas.add(f.getFormula());
+                                }
                         }
                         results = sirius.identify(experiment,
                                 container.numberOfCandidates, true, IsotopePatternHandling.score, formulas);

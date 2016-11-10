@@ -28,6 +28,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -64,7 +65,8 @@ public class WorkspaceIO {
                 } else if (name.endsWith(".json")) {
                     final int rank = Integer.parseInt(name.substring(name.lastIndexOf('/')+1, name.lastIndexOf('.')));
                     final FTree tree = readZip(new FTJsonReader(), zin);
-                    results.put(rank, new IdentificationResult(tree, rank));
+                    final IdentificationResult idr = new IdentificationResult(tree, rank);
+                    results.put(rank, idr);
                 }
             }
             if (currentExpId>=0 && currentExperiment!=null)
@@ -103,15 +105,16 @@ public class WorkspaceIO {
         }).getBytes(Charset.forName("UTF-8")));
         // if results available, write trees
         if (c.getRawResults()!=null && !c.getRawResults().isEmpty()) {
-            final List<IdentificationResult> irs = c.getRawResults();
-            for (final IdentificationResult ir : irs) {
+            //final List<IdentificationResult> irs = c.getRawResults();
+            for (final SiriusResultElement ir : c.getResults()) {
                 final ZipEntry tree = new ZipEntry(prefix + ir.getRank() + ".json");
                 stream.putNextEntry(tree);
                 stream.write(buffer(new Function<BufferedWriter, Void>() {
                     @Override
                     public Void apply(BufferedWriter input) {
                         try {
-                            new FTJsonWriter().writeTree(input,ir.getTree());
+                            System.out.println(ir.getResult().getRawTree().getRoot().getFormula());
+                            new FTJsonWriter().writeTree(input,ir.getResult().getRawTree());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

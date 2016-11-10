@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
@@ -15,8 +16,6 @@ import de.unijena.bioinf.sirius.gui.structure.ResultsMSViewerDataModel;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
-import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -283,13 +282,14 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			msviewer.repaint();
 			return;
 		}
-		TreeNode root = sre.getTree();
+		TreeNode root = sre.getTreeVisualization();
 		ArrayDeque<TreeNode> deque = new ArrayDeque<>();
 		this.model.markAllPeaksAsUnimportant();
 		this.model.removeMarkings();
-        final FragmentAnnotation<AnnotatedPeak> peakAno = sre.getUnresolvedTree().getFragmentAnnotationOrNull(AnnotatedPeak.class);
-        final PrecursorIonType ionType = sre.getRawTree().getAnnotationOrThrow(PrecursorIonType.class);
-		for (Fragment f : sre.getUnresolvedTree()) {
+		final FTree rawTree = sre.getResult().getRawTree();
+        final FragmentAnnotation<AnnotatedPeak> peakAno = rawTree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
+        final PrecursorIonType ionType = rawTree.getAnnotationOrThrow(PrecursorIonType.class);
+		for (Fragment f : rawTree) {
 			final MolecularFormula formula = f.getFormula();
             final MolecularFormula neutral;
             final PrecursorIonType adduct;
@@ -300,11 +300,13 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 neutral = formula;
                 adduct = ionType.withoutAdduct().withoutInsource();
             }
-            for (Peak p : peakAno.get(f).getOriginalPeaks()) {
-                int index = model.findIndexOfPeak(p.getMass(), p.getMass()*1e-3);
-                if(index>=0){
-                    this.model.setImportant(index, true);
-                    this.model.setMolecularFormula(index, adduct.substituteName(neutral));
+            if (peakAno.get(f)!=null && peakAno.get(f).getOriginalPeaks()!=null) {
+                for (Peak p : peakAno.get(f).getOriginalPeaks()) {
+                    int index = model.findIndexOfPeak(p.getMass(), p.getMass()*1e-3);
+                    if(index>=0){
+                        this.model.setImportant(index, true);
+                        this.model.setMolecularFormula(index, adduct.substituteName(neutral));
+                    }
                 }
             }
         }

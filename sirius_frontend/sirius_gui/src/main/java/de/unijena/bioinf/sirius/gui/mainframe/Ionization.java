@@ -36,7 +36,7 @@ public enum Ionization {
 
     public static Ionization fromSirius(PrecursorIonType ion) {
         if (!ion.isIonizationUnknown()) {
-            final String name = ion.getIonization().toString().replaceAll("\\s+","");
+            final String name = ion.toString().replaceAll("\\s+","");
             final Ionization i = byName(name);
             if (i!=null) return i;
         }

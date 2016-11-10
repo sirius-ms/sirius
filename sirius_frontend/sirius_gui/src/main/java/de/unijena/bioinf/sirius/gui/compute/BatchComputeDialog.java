@@ -26,7 +26,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -183,7 +182,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             JLabel label = new JLabel("Consider ");
             final Vector<String> values = new Vector<>();
             values.add("all possible molecular formulas");
-            values.add("PubChem formulas");
+            values.add("all PubChem formulas");
+            values.add("organic PubChem formulas");
             values.add("formulas from biological databases");
             formulaCombobox = new JComboBox<>(values);
             otherPanel.add(label);
@@ -258,7 +258,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         while (compounds.hasMoreElements()) {
             final ExperimentContainer ec = compounds.nextElement();
             if (ec.isUncomputed()) {
-                if (ec.getIonization() == null || ec.getIonization().isUnknown()) {
+                if (ec.getIonization() == null || ec.getIonization().isIonizationUnknown()) {
                     return true;
                 }
             }
@@ -423,11 +423,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             final ExperimentContainer ec = compounds.nextElement();
             if (ec.isUncomputed()) {
 
-                if (treatAsHydrogen && ec.getIonization().isUnknown()) {
-                    if (ec.getIonization() == null || ec.getIonization().toRealIonization().getCharge() > 0) {
-                        ec.setIonization(SiriusDataConverter.siriusIonizationToEnum(PrecursorIonType.getPrecursorIonType("[M+H]+")));
+                if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
+                    if (ec.getIonization() == null || ec.getIonization().getCharge() > 0) {
+                        ec.setIonization(PrecursorIonType.getPrecursorIonType("[M+H]+"));
                     } else {
-                        ec.setIonization(SiriusDataConverter.siriusIonizationToEnum(PrecursorIonType.getPrecursorIonType("[M-H]-")));
+                        ec.setIonization(PrecursorIonType.getPrecursorIonType("[M-H]-"));
                     }
                 }
 
@@ -451,7 +451,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     public FormulaSource getSelectedFormulaSource() {
         if (formulaCombobox.getSelectedIndex() == 0) return FormulaSource.ALL_POSSIBLE;
-        else if (formulaCombobox.getSelectedIndex() == 1) return FormulaSource.PUBCHEM;
+        else if (formulaCombobox.getSelectedIndex() == 1) return FormulaSource.PUBCHEM_ALL;
+        else if (formulaCombobox.getSelectedIndex() == 2) return FormulaSource.PUBCHEM_ORGANIC;
         else return FormulaSource.BIODB;
     }
 }

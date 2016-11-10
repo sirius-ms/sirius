@@ -1,10 +1,12 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
@@ -37,8 +39,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	private JTextField cEField;
 	private JTextField parentMzField;
 	private JComboBox<String> msLevelBox;
-	private Vector<Ionization> ionizations;
-	private JComboBox<Ionization> ionizationCB;
+	private Vector<String> ionizations;
+	private JComboBox<String> ionizationCB;
 	
 	private DefaultListModel<SpectrumContainer> listModel;
 	
@@ -128,11 +130,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		propsPanel.add(namePanel);
 
 		JPanel cEPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ionization"));
+		cEPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"ion/adduct type"));
 		ionizations = new Vector<>();
-		for (Ionization i : Ionization.values()) {
-			ionizations.add(i);
-		}
+        updateIonizationCandidates();
 		ionizationCB = new JComboBox<>(ionizations);
 		cEPanel.add(ionizationCB);
 		propsPanel.add(cEPanel);
@@ -207,7 +207,12 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 //		this.setSize(new Dimension(800,600));
 //		this.setVisible(true);
 	}
-	
+
+	protected void updateIonizationCandidates() {
+		ionizations.clear();
+        for (Ionization ion : Ionization.values())
+            ionizations.add(ion.toString());
+	}
 	
 	
 	public void constructSpectraListPopupMenu(){
@@ -262,9 +267,18 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 	}
 
     @Override
-    public void ionizationChanged(Ionization ionization) {
-        if (ionization!=null)
-            ionizationCB.setSelectedItem(ionization);
+    public void ionizationChanged(PrecursorIonType ionization) {
+        System.err.println(ionization);
+        if (ionization!=null) {
+            final Ionization enumbla = SiriusDataConverter.siriusIonizationToEnum(ionization);
+            if (enumbla.isUnknown() && !ionization.isIonizationUnknown()) {
+                updateIonizationCandidates();
+                ionizations.add(ionization.toString());
+                ionizationCB.setSelectedItem(ionization.toString());
+            } else {
+                ionizationCB.setSelectedItem(ionization.toString());
+            }
+        }
     }
 
     @Override
@@ -340,7 +354,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 			this.returnValue = ReturnValue.Success;
 			this.setVisible(false);
 			for(LoadDialogListener ldl : listeners){
-				ldl.setIonization((Ionization)ionizationCB.getSelectedItem());
+				ldl.setIonization((SiriusDataConverter.enumOrNameToIontype((String)ionizationCB.getSelectedItem())));
                 if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
                     ldl.setParentmass(Double.parseDouble(parentMzField.getText()));
                 }

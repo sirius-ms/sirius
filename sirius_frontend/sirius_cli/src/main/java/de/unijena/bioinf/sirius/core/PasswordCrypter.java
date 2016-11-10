@@ -5,9 +5,8 @@ package de.unijena.bioinf.sirius.core;
  * 07.10.16.
  */
 
+import de.unijena.bioinf.babelms.utils.Base64;
 import org.slf4j.LoggerFactory;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -18,6 +17,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.Properties;
+
+//import sun.misc.BASE64Decoder;
+//import sun.misc.BASE64Encoder;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -50,7 +52,7 @@ public class PasswordCrypter {
     }
 
     private static String base64Encode(byte[] bytes) {
-        return new BASE64Encoder().encode(bytes);
+        return Base64.encodeBytes(bytes);
     }
 
     private static String decrypt(String property) throws GeneralSecurityException, IOException {
@@ -62,7 +64,7 @@ public class PasswordCrypter {
     }
 
     private static byte[] base64Decode(String property) throws IOException {
-        return new BASE64Decoder().decodeBuffer(property);
+        return Base64.decode(property);
     }
 
     public static String decryptProp(String key, Properties prop) {

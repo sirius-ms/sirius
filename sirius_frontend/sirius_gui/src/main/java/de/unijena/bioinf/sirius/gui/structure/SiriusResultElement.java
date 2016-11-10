@@ -1,9 +1,11 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
+import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
 
 import java.util.regex.Pattern;
@@ -11,21 +13,24 @@ import java.util.regex.Pattern;
 public class SiriusResultElement {
 	
 	private TreeNode tree; //zur Anzeige
-	private FTree ft, unresolvedTree;      //Kais Datenstruktur, falls IO Klassen benötigt
-	private int rank;
-	private double score;
-	private MolecularFormula mf;
+	private IdentificationResult resultElement;
 
 	protected volatile FingerIdData fingerIdData;
 	public volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
-	public SiriusResultElement() {
+	public SiriusResultElement(IdentificationResult result) {
 		this.tree = null;
-		this.rank = Integer.MAX_VALUE;
-		this.score = Double.NEGATIVE_INFINITY;
-		this.mf = null;
-		this.ft = null;
+		this.resultElement = result;
+		this.fingerIdData = null;
 	}
+
+	public IdentificationResult getResult() {
+        return resultElement;
+    }
+
+	public void buildTreeVisualization(Function<FTree, TreeNode> builder) {
+        this.tree = builder.apply(resultElement.getResolvedTree());
+    }
 
     public FingerIdData getFingerIdData() {
         return fingerIdData;
@@ -35,53 +40,22 @@ public class SiriusResultElement {
         this.fingerIdData = fingerIdData;
     }
 
-    public TreeNode getTree() {
-		return tree;
-	}
-
-	public void setTree(TreeNode tree) {
-		this.tree = tree;
-	}
-	
-	public FTree getRawTree() {
-		return ft;
-	}
-
-	public void setRawTree(FTree ft) {
-		this.ft = ft;
-	}
-
-    public FTree getUnresolvedTree() {
-        return unresolvedTree;
-    }
-
-    public void setUnresolvedTree(FTree unresolvedTree) {
-        this.unresolvedTree = unresolvedTree;
-    }
-
     public int getRank() {
-		return rank;
-	}
-
-	public void setRank(int rank) {
-		this.rank = rank;
+		return resultElement.getRank();
 	}
 
 	public double getScore() {
-		return score;
-	}
-
-	public void setScore(double score) {
-		this.score = score;
+		return resultElement.getScore();
 	}
 
 	public MolecularFormula getMolecularFormula() {
-		return mf;
+		return resultElement.getMolecularFormula();
 	}
 
 	private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
 	public String getFormulaAndIonText() {
-		final PrecursorIonType ionType = ft.getAnnotationOrThrow(PrecursorIonType.class);
+		final PrecursorIonType ionType = resultElement.getRawTree().getAnnotationOrThrow(PrecursorIonType.class);
+		final MolecularFormula mf = resultElement.getMolecularFormula();
 		String niceName = ionType.toString();
 		niceName = pat.matcher(niceName).replaceAll("");
 		if (ionType.isIonizationUnknown()) {
@@ -92,13 +66,10 @@ public class SiriusResultElement {
 	}
 
 	public int getCharge() {
-		return ft.getAnnotationOrThrow(PrecursorIonType.class).getCharge();
+		return resultElement.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class).getCharge();
 	}
 
-	public void setMolecularFormula(MolecularFormula mf) {
-		this.mf = mf;
-	}
-	
-	
-
+    public TreeNode getTreeVisualization() {
+        return tree;
+    }
 }

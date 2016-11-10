@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
+import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -15,9 +16,9 @@ import java.util.List;
 public class SiriusResultElementConverter {
 	
 	public static TreeNode convertTree(FTree ft){
-		FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
-		LossAnnotation<Score> lscore = ft.getLossAnnotationOrThrow(Score.class);
-		FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrThrow(Score.class);
+		FragmentAnnotation<Peak> peakAno = ft.getOrCreateFragmentAnnotation(Peak.class);
+		LossAnnotation<Score> lscore = ft.getOrCreateLossAnnotation(Score.class);
+		FragmentAnnotation<Score> fscore = ft.getOrCreateFragmentAnnotation(Score.class);
 		
 		
 		double maxInt = Double.NEGATIVE_INFINITY;
@@ -33,17 +34,7 @@ public class SiriusResultElementConverter {
 	
 	public static SiriusResultElement convertResult(IdentificationResult res){
 		
-		SiriusResultElement out = new SiriusResultElement();
-		out.setMolecularFormula(res.getMolecularFormula());
-		out.setRank(res.getRank());
-		out.setScore(res.getScore());
-		
-		FTree ft_orig = new FTree(res.getTree());
-		res.resolveIonizationInTree();
-        FTree ft = res.getTree();
-		out.setRawTree(ft);
-        out.setUnresolvedTree(ft_orig);
-		
+		SiriusResultElement out = new SiriusResultElement(res);
 //		FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);
 //		LossAnnotation<Score> lscore = ft.getLossAnnotationOrNull(Score.class);
 //		FragmentAnnotation<Score> fscore = ft.getFragmentAnnotationOrNull(Score.class);
@@ -55,10 +46,13 @@ public class SiriusResultElementConverter {
 //		}
 //		
 //		TreeNode root = initConvertNode(ft, peakAno, lscore, fscore, maxInt);
-//		out.setTree(root);	
-		
-		out.setTree(convertTree(ft));
-		
+//		out.setTree(root);
+		out.buildTreeVisualization(new Function<FTree, TreeNode>() {
+			@Override
+			public TreeNode apply(FTree input) {
+				return convertTree(input);
+			}
+		});
 		return out;
 	}
 
@@ -79,7 +73,7 @@ public class SiriusResultElementConverter {
 //			out.setRank(res.getRank());
 //			out.setScore(res.getScore());
 //			
-//			FTree ft = res.getTree();
+//			FTree ft = res.getTreeVisualization();
 //			out.setRawTree(ft);
 //			
 //			FragmentAnnotation<Peak> peakAno = ft.getFragmentAnnotationOrThrow(Peak.class);

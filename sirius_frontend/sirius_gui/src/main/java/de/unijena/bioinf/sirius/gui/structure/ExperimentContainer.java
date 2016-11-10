@@ -1,8 +1,8 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +12,8 @@ public class ExperimentContainer {
 
 	private List<CompactSpectrum> ms1Spectra, ms2Spectra;
 
-	private Ionization ionization;
+	//private Ionization ionization;
+	private PrecursorIonType ionization;
 	private double selectedFocusedMass;
 	private double dataFocusedMass;
 	private String name,guiName;
@@ -28,7 +29,7 @@ public class ExperimentContainer {
 	public ExperimentContainer() {
 		ms1Spectra = new ArrayList<CompactSpectrum>();
 		ms2Spectra = new ArrayList<CompactSpectrum>();
-		ionization = Ionization.UnknownPlus;
+		ionization = PrecursorIonType.unknown(1);
 		selectedFocusedMass = -1;
 		dataFocusedMass = -1;
 		name = "";
@@ -91,11 +92,11 @@ public class ExperimentContainer {
 		this.ms2Spectra = ms2Spectra;
 	}
 
-	public Ionization getIonization() {
+	public PrecursorIonType getIonization() {
 		return ionization;
 	}
 
-	public void setIonization(Ionization ionization) {
+	public void setIonization(PrecursorIonType ionization) {
 		this.ionization = ionization;
 	}
 
@@ -132,13 +133,9 @@ public class ExperimentContainer {
 
 	public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
 		this.originalResults = results;
-        if (results!=null) {
-            for (IdentificationResult result : results)
-                result.resolveIonizationInTree();
-        }
 		this.results = myxoresults;
         if (this.computeState==ComputingStatus.COMPUTING)
-			this.computeState = results.size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
+			this.computeState = (results==null || results.size()==0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED;
 	}
 
 

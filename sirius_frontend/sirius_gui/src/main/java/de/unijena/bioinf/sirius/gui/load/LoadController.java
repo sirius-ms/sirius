@@ -1,12 +1,12 @@
 package de.unijena.bioinf.sirius.gui.load;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.cli.FingeridApplication;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
@@ -14,13 +14,11 @@ import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.CSVToSpectrumConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TDoubleArrayList;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -279,7 +277,7 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	public void importExperimentContainer(ExperimentContainer ec, List<String> errorStorage){
-		if(workingExp.getIonization().isUnknown() && ec.getIonization()!=null && !ec.getIonization().isUnknown()){
+		if(workingExp.getIonization().isIonizationUnknown() && ec.getIonization()!=null && !ec.getIonization().isIonizationUnknown()){
 			workingExp.setIonization(ec.getIonization());
 			loadDialog.ionizationChanged(ec.getIonization());
 		}
@@ -362,7 +360,7 @@ public class LoadController implements LoadDialogListener{
 		if(workingExp.getMs1Spectra().isEmpty()&&workingExp.getMs2Spectra().isEmpty()){
 			workingExp.setDataFocusedMass(-1);
 			workingExp.setSelectedFocusedMass(-1);
-			workingExp.setIonization(Ionization.UnknownPlus);
+			workingExp.setIonization(PrecursorIonType.unknown(1));
 			workingExp.setName("");
 			this.loadDialog.experimentNameChanged("");
 		}
@@ -419,8 +417,8 @@ public class LoadController implements LoadDialogListener{
 	}
 
 	@Override
-	public void setIonization(Ionization ionization) {
-		workingExp.setIonization(ionization);
+	public void setIonization(PrecursorIonType ionType) {
+		workingExp.setIonization(ionType);
 	}
 
 	@Override

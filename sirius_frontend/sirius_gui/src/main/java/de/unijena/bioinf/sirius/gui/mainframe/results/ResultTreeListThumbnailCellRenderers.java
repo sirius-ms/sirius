@@ -25,14 +25,14 @@ public class ResultTreeListThumbnailCellRenderers implements ListCellRenderer<Si
 		throw new RuntimeException("not implemented");
 //		for(int i=0;i<results.size();i++){
 //			SiriusResultElement sre = results.get(i);
-//			TreeRenderPanel panel = new TreeRenderPanel(sre.getTree());
+//			TreeRenderPanel panel = new TreeRenderPanel(sre.getTreeVisualization());
 //			
 //			Color color = Color.white;
 //			if(i%2==1){
 //				color = unevenColor;
 //			}
 //			
-//			panel.changeRenderParameters(color, NodeType.thumbnail, new RGBScoreNodeColorManager(sre.getTree()));
+//			panel.changeRenderParameters(color, NodeType.thumbnail, new RGBScoreNodeColorManager(sre.getTreeVisualization()));
 //			
 //			System.out.println("minSize: "+panel.getPreferredSize().getWidth()+" "+panel.getPreferredSize().getHeight());
 //			

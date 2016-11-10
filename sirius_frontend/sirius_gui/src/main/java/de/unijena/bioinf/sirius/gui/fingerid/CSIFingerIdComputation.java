@@ -37,9 +37,11 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TIntArrayList;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
+import javax.json.JsonException;
 import javax.json.stream.JsonParser;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -61,6 +63,8 @@ import java.util.zip.GZIPInputStream;
  * keeps all compounds in memory
  */
 public class CSIFingerIdComputation {
+
+    private Logger logger = LoggerFactory.getLogger(CSIFingerIdComputation.class);
 
     private VersionsInfo versionNumber;
 
@@ -327,13 +331,16 @@ public class CSIFingerIdComputation {
         final File dir = new File(directory, bio ? "bio" : "not-bio");
         if (!dir.exists()) dir.mkdirs();
         final File mfile = new File(dir, formula.toString() + ".json.gz");
-        final List<Compound> compounds;
+        List<Compound> compounds=null;
         if (mfile.exists()) {
             try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(mfile)))) {
                 compounds = new ArrayList<>();
                 Compound.parseCompounds(fingerprintVersion, compounds, parser);
+            } catch (IOException | JsonException e) {
+                logger.error("Error while reading cached formula file for \"" + formula.toString() + "\". Reload file via webservice.", e);
             }
-        } else {
+        }
+        if (compounds==null) {
             if (webAPI==null) {
                 try (final WebAPI webAPI2 = new WebAPI()) {
                     compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
@@ -378,13 +385,13 @@ public class CSIFingerIdComputation {
         final ArrayList<SiriusResultElement> elements = new ArrayList<>();
         if (container==null || !container.isComputed() || container.getResults()==null) return elements;
         final SiriusResultElement top = container.getResults().get(0);
-        if (top.getRawTree().numberOfEdges()>0)
+        if (top.getResult().getResolvedTree().numberOfEdges()>0)
             elements.add(top);
         final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.25);
         for (int k=1; k < container.getResults().size(); ++k) {
             SiriusResultElement e = container.getResults().get(k);
             if (e.getScore() < threshold) break;
-            if (e.getRawTree().numberOfEdges()>0)
+            if (e.getResult().getResolvedTree().numberOfEdges()>0)
                 elements.add(e);
         }
         return elements;
@@ -496,7 +503,7 @@ public class CSIFingerIdComputation {
                 globalLock.unlock();
             }
             if (job == null) {
-                job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getRawTree(), this.fingerprintVersion);
+                job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getResult().getResolvedTree(), this.fingerprintVersion);
             }
             final List<Compound> compounds = loadCompoundsForGivenMolecularFormula(webAPI, resultElement.getMolecularFormula(), isEnforceBio());
 
@@ -681,7 +688,7 @@ public class CSIFingerIdComputation {
                         nothingToDo=false;
                         container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Predict fingerprint");
                         try {
-                            final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getRawTree(), fingerprintVersion);
+                            final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getResult().getResolvedTree(), fingerprintVersion);
                             jobs.put(container, job);
                         } catch (IOException e) {
                             jobQueue.add(container);

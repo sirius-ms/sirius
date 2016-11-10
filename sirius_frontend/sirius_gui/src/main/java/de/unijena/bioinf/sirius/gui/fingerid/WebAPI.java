@@ -164,6 +164,19 @@ public class WebAPI implements Closeable {
         return b;
     }
 
+    /*
+    public List<Compound> getCompounds(List<String> inchikeys) {
+        final URIBuilder b = getFingerIdURI("/webapi/compounds.json");
+        try {
+            final HttpPost post = new HttpPost(b.build());
+            // TODO: implement
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    */
+
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
         final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
         try (CloseableHttpResponse response = client.execute(get)) {

@@ -15,8 +15,6 @@ import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
 import de.unijena.bioinf.sirius.gui.utils.Buttons;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
-import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -107,7 +105,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 	public void showTree(SiriusResultElement sre){
 		this.sre = sre;
 		if(sre!=null){
-			TreeNode root = sre.getTree();
+			TreeNode root = sre.getTreeVisualization();
 			NodeType nt = this.nodeType.getItemAt(this.nodeType.getSelectedIndex());
 			NodeColor nc = COLOR_TYPES[colorType.getSelectedIndex()];
 			this.renderPanel.showTree(root,nt,nc);
@@ -246,7 +244,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 				
 				try{
 					if(ff==FileFormat.dot){
-						DotIO.writeTree(selectedFile, sre.getTree(), sre.getScore());
+						DotIO.writeTree(selectedFile, sre.getTreeVisualization(), sre.getScore());
 					}else if(ff==FileFormat.gif){
 						RasterGraphicsIO.writeGIF(selectedFile, getTreeImage());
 					}else if(ff==FileFormat.jpg){
@@ -254,7 +252,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 					}else if(ff==FileFormat.png){
 						RasterGraphicsIO.writePNG(selectedFile, getTreeImage());
 					} else if (ff == FileFormat.json) {
-						new FTJsonWriter().writeTreeToFile(selectedFile, sre.getRawTree());
+						new FTJsonWriter().writeTreeToFile(selectedFile, sre.getResult().getResolvedTree());
 					}
 				}catch(Exception e2){
 					ErrorReportDialog fed = new ErrorReportDialog(owner, e2.getMessage());
@@ -277,7 +275,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 	}
 	
 	private BufferedImage getTreeImage(){
-		TreeNode root = TreeCopyTool.copyTree(this.sre.getTree());
+		TreeNode root = TreeCopyTool.copyTree(this.sre.getTreeVisualization());
 		NodeColor color = this.renderPanel.getNodeColor();
 		NodeType type = this.renderPanel.getNodeType();
 		TreeRenderPanel panel = new TreeRenderPanel();

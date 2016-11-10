@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -14,23 +13,18 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Fingerprinter;
-import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemModel;
-import org.openscience.cdk.io.FormatFactory;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
-import org.openscience.cdk.io.formats.IChemFormat;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.smiles.smarts.parser.SMARTSParser;
 import org.slf4j.LoggerFactory;
 
 import javax.json.*;
@@ -40,7 +34,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -205,7 +198,6 @@ public class CustomDatabase {
                 final BufferedReader br = new BufferedReader(new FileReader(file));
                 String line = br.readLine();
                 br.close();
-                System.out.println(String.valueOf(line));
                 final List<IAtomContainer> mols = new ArrayList<>();
                 if (line==null) {
                     throw new IOException("Unknown file format: " + file.getName());
@@ -308,9 +300,13 @@ public class CustomDatabase {
 
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fp);
             fc.setSmiles(smiles);
-            if (optionalName!=null) fc.setName(optionalName);
+            if (optionalName!=null) {
+                fc.setName(optionalName);
+                fc.setLinks(new DBLink[]{new DBLink(database.name, optionalName)});
+            } else {
+                fc.setLinks(new DBLink[0]);
+            }
             fc.setBitset(DatasourceService.Sources.CUSTOM.flag);
-            fc.setLinks(new DBLink[0]);
             synchronized (buffer){
                 buffer.add(fc);
             }

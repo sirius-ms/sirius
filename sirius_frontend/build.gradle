@@ -54,7 +54,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = "$siriusVersion"
+    version = "3.3.2"//"$siriusVersion"
     group = 'de.unijena.bioinf.ms'
 
     repositories {

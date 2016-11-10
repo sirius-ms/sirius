@@ -84,7 +84,7 @@ public class CompoundCandidateView extends JPanel {
         if (resultElement==null || !storage.enabled) {
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
-        } else if (resultElement.getRawTree().numberOfVertices()<3) {
+        } else if (resultElement.getResult().getResolvedTree().numberOfVertices()<3) {
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("Fragmentation tree must explain at least 3 peaks");
         } else {
