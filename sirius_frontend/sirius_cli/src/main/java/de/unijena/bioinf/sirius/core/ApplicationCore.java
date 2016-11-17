@@ -28,7 +28,7 @@ public abstract class ApplicationCore {
     public static final Logger DEFAULT_LOGGER;
 
     private static final String USER_PROPERTIES_FILE_HAEDER = "This is the default Sirius properties file containing default values for all sirius properties that can be set";
-    private static final Path USER_PROPERTIES_FILE;
+    public static final Path USER_PROPERTIES_FILE;
     private static final Properties USER_PROPERTIES;
 
     public final static Path WORKSPACE;

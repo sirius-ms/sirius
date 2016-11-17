@@ -24,8 +24,11 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -370,6 +373,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
         FormulaSource formulaSource = getSelectedFormulaSource();
+
+        if (formulaSource!=FormulaSource.ALL_POSSIBLE){
+            //Test connection, if needed
+            if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
+                new NoConnectionDialog(this);
+                dispose();
+                return;
+            }
+        }
 
         FormulaConstraints constraints;
         {

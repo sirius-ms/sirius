@@ -18,7 +18,9 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -106,6 +108,11 @@ public class CompoundCandidateView extends JPanel {
             searchCSIButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    //Test connection
+                    if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
+                        new NoConnectionDialog(frame);
+                        return;
+                    }
                     if (!storage.configured) {
                         if (new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), false).run() == FingerIdDialog.CANCELED) return;
                     }
