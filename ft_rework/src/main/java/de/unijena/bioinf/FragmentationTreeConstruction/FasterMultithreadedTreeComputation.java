@@ -1,12 +1,14 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.computation;
+package de.unijena.bioinf.FragmentationTreeConstruction;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.ftreeheuristics.solver.CriticalPathSolver;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +55,10 @@ public class FasterMultithreadedTreeComputation {
         this.analyzer = analyzer;
     }
 
+    public void setInput(ProcessedInput input) {
+        setInput(input,null);
+    }
+
     public void setInput(ProcessedInput input, HashSet<MolecularFormula> formulas) {
         this.input = input;
         this.formulasToConsider = new HashMap<>();
@@ -87,7 +93,7 @@ public class FasterMultithreadedTreeComputation {
     }
 
     private FTree computeTreeHeuristically(FGraph graph) {
-
+        return new CriticalPathSolver(graph).solve();
     }
 
 

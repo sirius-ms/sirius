@@ -1,0 +1,6 @@
+dependencies {
+//project
+    compile project(':chemistry_base')
+//internal
+    compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
+}
