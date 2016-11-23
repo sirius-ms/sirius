@@ -16,7 +16,7 @@ public class TestMain {
             sirius = new Sirius("qtof");
             final FasterMultithreadedTreeComputation fmtc = new FasterMultithreadedTreeComputation(sirius.getMs2Analyzer());
 
-            final Ms2Experiment experiment = sirius.parseExperiment(new File("someFile.ms")).next();
+            final Ms2Experiment experiment = sirius.parseExperiment(new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms")).next();
 
             final ProcessedInput input = sirius.getMs2Analyzer().preprocessing(experiment);
 

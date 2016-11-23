@@ -6,9 +6,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ftreeheuristics.solver.CriticalPathSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.ftreeheuristics.solver.CriticalPathSolver;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +73,11 @@ public class FasterMultithreadedTreeComputation {
      */
     public void startComputation() {
 
+        for (MolecularFormula formula : formulasToConsider.keySet()) {
+
+        }
+
+        System.out.println(getScore(computeTreeExactly(computeGraph(MolecularFormula.parse("C20H17NO6")))));
     }
 
 
