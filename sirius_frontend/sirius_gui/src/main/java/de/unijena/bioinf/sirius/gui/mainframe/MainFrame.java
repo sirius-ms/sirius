@@ -303,6 +303,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         configFingerID.setEnabled(true);
                         csiFingerId.setEnabled(true);
                     }
+                } else {
+                    new NoConnectionDialog(MainFrame.this);
                 }
             }
 

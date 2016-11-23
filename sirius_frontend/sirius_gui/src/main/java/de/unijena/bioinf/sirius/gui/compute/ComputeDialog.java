@@ -11,12 +11,15 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -34,6 +37,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.List;
 
@@ -588,6 +592,14 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			else if (formulaCombobox.getSelectedIndex()==2) formulaSource = FormulaSource.PUBCHEM_ORGANIC;
             else formulaSource = FormulaSource.BIODB;
 
+			if (formulaSource!=FormulaSource.ALL_POSSIBLE){
+				//Test connection, if needed
+				if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
+					new NoConnectionDialog(this);
+					dispose();
+					return;
+				}
+			}
 
             progDiag.start(sirius, ec, exp, constraints, candidates, formulaSource);
 			if(progDiag.isSucessful()){
@@ -610,8 +622,12 @@ public class ComputeDialog extends JDialog implements ActionListener{
                 ec.setComputeState(ComputingStatus.FAILED);
 				owner.refreshCompound(ec);
                 if (progDiag.getException()!=null){
-                    LoggerFactory.getLogger(this.getClass()).error("Computation failed",progDiag.getException());
-					new ErrorReportDialog(this, "Computation failed");
+					if (progDiag.getException().getCause() instanceof UnknownHostException){
+						new NoConnectionDialog(this);
+					} else {
+						LoggerFactory.getLogger(this.getClass()).error("Computation failed",progDiag.getException());
+						new ErrorReportDialog(this, "Computation failed");
+					}
 				}
 			}
 			owner.refreshCompound(ec);
