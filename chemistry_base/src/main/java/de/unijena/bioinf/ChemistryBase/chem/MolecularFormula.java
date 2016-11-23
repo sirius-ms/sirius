@@ -42,6 +42,32 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     }
 
     /**
+     * Converts a map of elements to amounts into a molecular formula
+     * @param map
+     * @return
+     */
+    public static MolecularFormula fromElementMap(Map<Element, Integer> map) {
+        final PeriodicTable table = PeriodicTable.getInstance();
+        int maxid = 0;
+        for (Element e : map.keySet()) maxid = Math.max(maxid, e.getId());
+        final BitSet bitset = new BitSet(maxid+1);
+        for (Element e : map.keySet()) bitset.set(e.getId(), 1);
+        final TableSelection selection = table.getSelectionFor(bitset);
+        final short[] buffer = new short[selection.size()];
+        for (int i=0; i < buffer.length; ++i) {
+            final Element e = selection.get(i);
+            final Integer amount = map.get(e);
+            if (amount != null) {
+                if (amount > Short.MAX_VALUE) {
+                    throw new IllegalArgumentException("Cannot represent a molecular formula with " + amount + " number of atoms per element");
+                }
+                buffer[i] = amount.shortValue();
+            }
+        }
+        return new ImmutableMolecularFormula(selection, buffer);
+    }
+
+    /**
      * build a new molecular formula from an array and a table selection. The array is copied during the
      * allocation.
      */
