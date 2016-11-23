@@ -42,7 +42,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     @Override
     public String toString() {
-        return "Cdk fingerprint version: " + properties.length + " bits in use.";
+        return "Cdk fingerprint version: " + properties.length + " bits in use (type = " + fastCompareFlag + ").";
     }
 
     @Override
@@ -58,7 +58,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
         if (this == fingerprintVersion) return true;
-        if (fingerprintVersion.getClass().equals(FingerprintVersion.class)) {
+        if (fingerprintVersion.getClass().equals(this.getClass())) {
             return fastCompareFlag == ((CdkFingerprintVersion)fingerprintVersion).fastCompareFlag;
         }
         if (fingerprintVersion instanceof MaskedFingerprintVersion) {
@@ -72,7 +72,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH};
 
     public static enum USED_FINGERPRINTS {
-        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), SPHERICAL(5, 261);
+        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, 1324);
 
         public final int defaultPosition, length;
 
@@ -99,7 +99,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
         switch (uf) {
-            case SPHERICAL:
+            case ECFP:
                 final MolecularProperty[] placeHolders = new MolecularProperty[uf.length];
                 Arrays.fill(placeHolders, new SpecialMolecularProperty("spherical fingerprint"));
                 return placeHolders;
