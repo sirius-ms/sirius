@@ -204,6 +204,7 @@ public class Compound {
                     compound.bitset = flags;
                     final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(flags);
                     names.remove(DatasourceService.Sources.PUBCHEM.name);
+                    names.remove(DatasourceService.Sources.CUSTOM.name);
                     if (compound.databases!=null) {
                         for (String aname : names) {
                             if (!compound.databases.containsKey(aname))

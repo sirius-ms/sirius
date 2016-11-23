@@ -222,7 +222,7 @@ subprojects {
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
                 }
             }
-            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"");
+            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"\nexport DYLD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"");
             unixScript.text = lines.join(System.lineSeparator())
         }
     }

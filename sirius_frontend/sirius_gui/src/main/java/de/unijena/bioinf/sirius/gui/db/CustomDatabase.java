@@ -203,7 +203,20 @@ public class CustomDatabase {
                     throw new IOException("Unknown file format: " + file.getName());
                 } else if (line.contains("InChI")) {
                     for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {
-                        try {mols.add(inChIGeneratorFactory.getInChIToStructure(aline, SilentChemObjectBuilder.getInstance()).getAtomContainer());} catch (CDKException e) {
+                        aline = aline.trim();
+                        if (aline.isEmpty()) continue;
+                        String id = null;
+                        final int index = aline.indexOf('\t');
+                        if (index >= 0) {
+                            String[] parts = aline.split("\t");
+                            aline = parts[0];
+                            id = parts[1];
+                        }
+                        try {
+                            final IAtomContainer mol = (inChIGeneratorFactory.getInChIToStructure(aline, SilentChemObjectBuilder.getInstance()).getAtomContainer());
+                            if (id!=null) mol.setID(id);
+                            mols.add(mol);
+                        } catch (CDKException e) {
 
                         }
 
@@ -212,8 +225,18 @@ public class CustomDatabase {
                 } else {
                     try {
                         smilesParser.parseSmiles(line);
-                        for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {
-                            try {mols.add(smilesParser.parseSmiles(aline));} catch (CDKException e) {
+                        for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {aline = aline.trim();
+                            if (aline.isEmpty()) continue;
+                            String id = null;
+                            final int index = aline.indexOf('\t');
+                            if (index >= 0) {
+                                String[] parts = aline.split("\t");
+                                aline = parts[0];
+                                id = parts[1];
+                            }
+                            try {final IAtomContainer mol = smilesParser.parseSmiles(aline);
+                                if (id!=null) mol.setID(id);
+                                mols.add(mol);} catch (CDKException e) {
 
                             }
                         }
@@ -331,9 +354,13 @@ public class CustomDatabase {
 
         private void mergeCompounds(MolecularFormula key, Collection<FingerprintCandidate> value) throws IOException {
             final File file = new File(database.path, key.toString() + ".json.gz");
+            try {
             List<FingerprintCandidate> candidates = new ArrayList<>();
             candidates.addAll(value);
             Compound.merge(candidates, file);
+            } catch (IOException | JsonException e) {
+                throw new IOException("Error while merging into " + file, e);
+            }
         }
 
 
