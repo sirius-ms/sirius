@@ -37,20 +37,21 @@ public class TestMain {
                     final ProcessedInput input = sirius.getMs2Analyzer().preprocessing(experiment);
 
                     fmtc.setInput(input);
+                    fmtc.startComputation();
 
-                    float quality = (fmtc.startComputation())*100;
-                    output[(int)quality-1] +=1;
+//                    float quality = (fmtc.startComputation())*100;
+//                    output[(int)quality-1] +=1;
                 }
-                FileWriter writer = new FileWriter("output.csv");
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(Integer.toString(output[0]));
-
-                for (int i = 1; i < 100; i++){
-                    stringBuilder.append(","+Integer.toString(output[i]));
-                }
-//                System.out.println(stringBuilder);
-                writer.write(stringBuilder.toString());
-                writer.close();
+//                FileWriter writer = new FileWriter("output.csv");
+//                StringBuilder stringBuilder = new StringBuilder();
+//                stringBuilder.append(Integer.toString(output[0]));
+//
+//                for (int i = 1; i < 100; i++){
+//                    stringBuilder.append(","+Integer.toString(output[i]));
+//                }
+////                System.out.println(stringBuilder);
+//                writer.write(stringBuilder.toString());
+//                writer.close();
             }
 
 
