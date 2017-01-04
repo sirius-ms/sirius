@@ -24,28 +24,22 @@ public class Ranking {
         this.maxRank = maxRank;
         this.rankDistribution = new double[maxRanking];
         this.randomDistribution = new double[maxRanking];
-        double restBin = 0d, restBinRandom=0d;
         for (int k=0; k < fromRank.length; ++k) {
             final int from = fromRank[k];
             final int to = toRank[k];
             final double x = 1d/(1+to-from);
             final double random = 1d/maxRank[k];
-            for (int i=from; i < Math.min(to, rankDistribution.length); ++i) {
+            for (int i=from; i < Math.min(to+1, rankDistribution.length); ++i) {
                 rankDistribution[i] += x;
             }
-            for (int i=0; i < Math.min(maxRank[k], maxRanking); ++i) randomDistribution[i]+=random;
-            restBin += Math.max(0, to - Math.min(to, rankDistribution.length))*x;
-            restBinRandom += Math.max(0, maxRank[k] - Math.min(maxRank[k], randomDistribution.length))*random;
+            for (int i=0; i < Math.min(maxRank[k]+1, maxRanking); ++i) randomDistribution[i]+=random;
         }
-        double sum = restBin;
-        for (double val : rankDistribution)  sum += val;
+        int sum = fromRank.length;
         double cumsum = 0d;
         for (int k=0; k < rankDistribution.length; ++k) {
             cumsum += rankDistribution[k];
             rankDistribution[k] = cumsum / sum;
         }
-        sum = restBinRandom;
-        for (double val : randomDistribution)  sum += val;
         cumsum = 0d;
         for (int k=0; k < randomDistribution.length; ++k) {
             cumsum += randomDistribution[k];
