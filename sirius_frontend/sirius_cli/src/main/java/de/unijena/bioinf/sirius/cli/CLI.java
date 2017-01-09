@@ -53,7 +53,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CLI<Options extends SiriusOptions> extends ApplicationCore{
@@ -136,7 +135,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                         siriusResultWriter.add(i.experiment, results);
                     }
                 } catch (InvalidException e) {
-                    System.err.println("Invalid input: " + e.getMessage());
+                    LoggerFactory.getLogger(CLI.class).error("Invalid input: " + e.getMessage(),e);
+                } catch (RuntimeException e) {
+                    LoggerFactory.getLogger(CLI.class).error(e.getMessage(),e);
                 }
             }
             if (siriusResultWriter!=null) siriusResultWriter.close();
@@ -397,7 +398,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     protected Instance setupInstance(Instance inst) {
         final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment)inst.experiment : new MutableMs2Experiment(inst.experiment);
-        if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isIonizationUnknown()) exp.setPrecursorIonType(getIonFromOptions(options));
+        if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isIonizationUnknown()) exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType()==null ? 0 : exp.getPrecursorIonType().getCharge()));
         if (formulas!=null && formulas.size()==1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
         if (options.getParentMz()!=null) exp.setIonMass(options.getParentMz());
         return new Instance(exp, inst.file);
@@ -430,19 +431,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         // two different input modes:
         // general information that should be used if this fields are missing in the file
         final Double defaultParentMass = options.getParentMz();
-        PrecursorIonType ion = getIonFromOptions(options);
-        if (ion.isIonizationUnknown()) {
-            if (!options.isAutoCharge()) {
-                ion = (ion.getCharge()>0) ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName("[M-H]-");
-            }
-        }
         final FormulaConstraints constraints = options.getElements() == null ? null/*getDefaultElementSet(options, ion)*/ : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
         if (options.getMs2()!=null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setFormulaConstraints(constraints);
             final MutableMs2Experiment exp = new MutableMs2Experiment();
-            exp.setPrecursorIonType(ion);
+            final PrecursorIonType ionType = getIonFromOptions(options, 0);
+            exp.setPrecursorIonType(ionType);
             exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
             for (File f : foreachIn(options.getMs2())) {
                 final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
@@ -452,7 +448,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                         final MutableMs2Spectrum ms;
                         if (spec instanceof MutableMs2Spectrum) ms = (MutableMs2Spectrum)spec;
                         else ms = new MutableMs2Spectrum(spec);
-                        if (ms.getIonization()==null) ms.setIonization(ion.getIonization());
+                        if (ms.getIonization()==null) ms.setIonization(ionType.getIonization());
                         if (ms.getMsLevel()==0) ms.setMsLevel(2);
                         if (ms.getPrecursorMz()==0) {
                             if (defaultParentMass==null) {
@@ -594,7 +590,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     private static final Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)[+-]?");
     private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
 
-    protected static PrecursorIonType getIonFromOptions(SiriusOptions opt) {
+    protected static PrecursorIonType getIonFromOptions(SiriusOptions opt, int charge) {
+        /*
         String ionStr = opt.getIon();
         if (ionStr==null) {
             if (opt.isAutoCharge()) return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
@@ -614,6 +611,21 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             if (ion==null)
                 throw new IllegalArgumentException("Unknown ionization mode '" + ionStr + "'");
             else return ion;
+        }
+        */
+        String ionStr = opt.getIon();
+        if (ionStr==null) {
+            if (opt.isAutoCharge()) return PrecursorIonType.unknown(charge);
+            else if (charge==0) throw new IllegalArgumentException("Please specify the charge");
+            else if (charge == 1) return PrecursorIonType.getPrecursorIonType("[M+H]+");
+            else if (charge == -1) return PrecursorIonType.getPrecursorIonType("[M-H]-");
+            else throw new IllegalArgumentException("SIRIUS does not support multiple charges");
+        } else {
+            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon());
+            if (ionType.isIonizationUnknown() && !opt.isAutoCharge()) {
+                if (ionType.getCharge()>0) return PrecursorIonType.getPrecursorIonType("[M+H]+");
+                else return PrecursorIonType.getPrecursorIonType("[M-H]-");
+            } else return ionType;
         }
     }
     private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");

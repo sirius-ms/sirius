@@ -31,12 +31,17 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
+import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TShortArrayList;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.fingerprint.IBitFingerprint;
+import org.openscience.cdk.interfaces.IAtomContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,7 +184,9 @@ public class CSIFingerIdComputation {
         this.pubchemConfidenceScorePredictor = webAPI.getConfidenceScore(false);
         this.bioConfidenceScorePredictor = webAPI.getConfidenceScore(true);
 
-        final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
+        final CdkFingerprintVersion version = de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate.ECFP_ENABLED ? CdkFingerprintVersion.withECFP() : CdkFingerprintVersion.getDefault();
+
+        final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(version);
         v.disableAll();
 
         this.fingerprintIndizes = list.toArray();
@@ -349,8 +356,17 @@ public class CSIFingerIdComputation {
                 compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
             }
         }
+        ECFPFingerprinter fingerprinter = null;
         for (Compound c : compounds) {
             c.calculateXlogP();
+            if (de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate.ECFP_ENABLED) {
+                if (fingerprinter==null) {
+                    fingerprinter = new ECFPFingerprinter();
+                }
+                // add ECFP fingerprint to compound
+                // workaround
+                c.fingerprint = recomputeECFP(fingerprinter, c.getMolecule(), c.fingerprint, fingerprintVersion);
+            }
             synchronized (this.compounds) {
                 this.compounds.put(c.inchi.key2D(), c);
             }
@@ -366,6 +382,37 @@ public class CSIFingerIdComputation {
         }
         return compounds;
     }
+
+
+    //////////////////////////////////////////////
+    ///////////// WORKAROUND ////////////////////
+
+    public static Fingerprint recomputeECFP(ECFPFingerprinter ecfp, IAtomContainer molecule, Fingerprint defaultCdkFingerprint, MaskedFingerprintVersion version) {
+        {
+            try {
+                IBitFingerprint bits = ecfp.getBitFingerprint(molecule);
+                final TShortArrayList fps = new TShortArrayList(defaultCdkFingerprint.toIndizesArray());
+                final int offset = ((CdkFingerprintVersion)version.getMaskedFingerprintVersion()).getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.ECFP);
+
+                final int[] indizes = version.allowedIndizes();
+                int start = Arrays.binarySearch(indizes, offset);
+                if (start<0) {
+                    start = -(start+1);
+                }
+                for (; start < indizes.length; ++start) {
+                    if (bits.get(indizes[start]-offset)) {
+                        fps.add((short)indizes[start]);
+                    }
+                }
+                return new ArrayFingerprint(version, fps.toArray());
+            } catch (CDKException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////
 
     public void setDirectory(File directory) {
         this.directory = directory;

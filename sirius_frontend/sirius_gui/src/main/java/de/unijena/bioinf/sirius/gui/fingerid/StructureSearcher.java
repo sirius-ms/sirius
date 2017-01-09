@@ -69,7 +69,7 @@ public class StructureSearcher implements Runnable {
                 queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize() + 10);
 
                 int i = activeCandidate+1, j = activeCandidate, n = candidateList.getSize();
-                while (j >= 0 || i < n) {
+                while ((j >= 0 && j < n) || (i >= 0 && i < n)) {
                     if (j >= 0) {
                         queue.add(candidateList.getElementAt(j--));
                     }
@@ -94,7 +94,6 @@ public class StructureSearcher implements Runnable {
                 if (c.compound == null) continue;
                 c.compoundLock.lock();
                 try {
-                    if (c.compound.molecule == null) c.parseAndPrepare();
                     if (highlight >= 0) c.highlightFingerprint(computation, highlight);
                 } finally {
                     c.compoundLock.unlock();

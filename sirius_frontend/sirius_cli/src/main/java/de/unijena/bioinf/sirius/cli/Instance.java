@@ -26,6 +26,7 @@ public class Instance {
 
     final Ms2Experiment experiment;
     final File file;
+    boolean isMultipleInstancesPerFile;
 
     FTree optTree;
 

@@ -19,8 +19,10 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.fingerprint.CircularFingerprinter;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -34,11 +36,16 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundCandidate {
 
+    public static final boolean ECFP_ENABLED = true;
+
     private final static double THRESHOLD_FP = 0.4;
 
     protected Compound compound;
     protected double score;
     protected int rank,index;
+    protected boolean prepared=false;
+
+    protected CircularFingerprinter.FP[] relevantFps; protected int[] ecfpHashs;
 
     protected FingerprintAgreement agreement, missings;
     protected DatabaseLabel[] labels;
@@ -51,6 +58,7 @@ public class CompoundCandidate {
         this.score = score;
         this.rank = rank;
         this.index = index;
+        this.relevantFps = null;
         if (compound==null || compound.databases==null) {
             this.labels = new DatabaseLabel[0];
         } else {
@@ -82,6 +90,7 @@ public class CompoundCandidate {
     }
 
     public boolean highlightFingerprint(CSIFingerIdComputation computation, int absoluteIndex) {
+        if (!prepared) parseAndPrepare();
         final FingerprintVersion version = compound.fingerprint.getFingerprintVersion();
         final IAtomContainer molecule = compound.getMolecule();
         if (!hasFingerprintIndex(absoluteIndex)) {
@@ -116,7 +125,19 @@ public class CompoundCandidate {
             }
             molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);
             return true;
-        } else return false;
+        } else if (ECFP_ENABLED && property instanceof ExtendedConnectivityProperty) {
+            final HashMap<IAtom, Integer> colorMap = new HashMap<>();
+            final int index = Arrays.binarySearch(ecfpHashs, ((ExtendedConnectivityProperty) property).getHash());
+            if (index >= 0) {
+                for (int atom : relevantFps[index].atoms) {
+                    colorMap.put(compound.molecule.getAtom(atom), 0);
+                }
+            }
+            molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public FingerprintAgreement getAgreement(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
@@ -135,6 +156,15 @@ public class CompoundCandidate {
             // we do not want to search anything in the compound but just "enforce initialization" of the molecule
             final FasterSmartsQueryTool tool = new FasterSmartsQueryTool("Br", DefaultChemObjectBuilder.getInstance());
             tool.matches(compound.getMolecule());
+
+            if (ECFP_ENABLED) {
+                final ECFPFingerprinter ecfpFingerprinter = new ECFPFingerprinter();
+                ecfpFingerprinter.getBitFingerprint(compound.getMolecule());
+                this.relevantFps = ecfpFingerprinter.getRelevantFingerprintDetails();
+                this.ecfpHashs = new int[relevantFps.length];
+                for (int k=0; k < relevantFps.length; ++k) ecfpHashs[k] = relevantFps[k].hashCode;
+            }
+            prepared=true;
         } catch (CDKException e) {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }

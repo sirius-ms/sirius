@@ -54,6 +54,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -79,6 +80,8 @@ public class WebAPI implements Closeable {
     protected final static boolean DEBUG = false;
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
 
+
+    protected static Logger logger = LoggerFactory.getLogger(WebAPI.class);
 
     public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
@@ -196,6 +199,9 @@ public class WebAPI implements Closeable {
                     job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
                 }
             }
+        } catch (Throwable t) {
+            logger.error("Error when updating job #" + job.jobId, t);
+            throw(t);
         }
         return false;
     }
