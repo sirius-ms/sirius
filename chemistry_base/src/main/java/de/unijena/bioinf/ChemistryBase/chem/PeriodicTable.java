@@ -221,6 +221,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         return likely;
     }
 
+    private static String canonicalizeIonName(String ionName) {
+        return ionName.replaceAll("\\s+", "");
+    }
+
     private void addDefaultIons() {
         // ION MODES
         PROTONATION = new IonMode(1, "[M+H]+", MolecularFormula.parse("H"));
@@ -268,7 +272,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         };
         final HashMap<String, PrecursorIonType> positiveIonTypes = new HashMap<String, PrecursorIonType>();
         for (String pos : adductsPositive) {
-            positiveIonTypes.put(pos, parseIonType(pos));
+            positiveIonTypes.put(canonicalizeIonName(pos), parseIonType(pos));
 
 
             //System.out.println(pos + "\t=>\t" + positiveIonTypes.get(pos)+ "\t=\t" + positiveIonTypes.get(pos).getIonization().toString() + " ionization with " + positiveIonTypes.get(pos).getAdduct().toString() + " adduct");
@@ -277,7 +281,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         }
         final HashMap<String, PrecursorIonType> negativeIonTypes = new HashMap<String, PrecursorIonType>();
         for (String neg : adductsNegative) {
-            negativeIonTypes.put(neg, parseIonType(neg));
+            negativeIonTypes.put(canonicalizeIonName(neg), parseIonType(neg));
             assert negativeIonTypes.get(neg).getIonization().getCharge() < 0;
         }
         knownIonTypes.putAll(positiveIonTypes);
@@ -292,6 +296,8 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         knownIonTypes.put("M-H", hminus);
         knownIonTypes.put("M-H-", hminus);
         knownIonTypes.put("[M-H]", hminus);
+        knownIonTypes.put("M+", knownIonTypes.get("[M]+"));
+        knownIonTypes.put("M-", knownIonTypes.get("[M]-"));
     }
 
     protected Pattern MULTIMERE_PATTERN = Pattern.compile("\\d+M([+-]|\\])");
@@ -768,6 +774,9 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * [M+H]+
      */
     public PrecursorIonType ionByName(String name) {
+        name = canonicalizeIonName(name);
+        if (name.equals("[M+?]+") || name.equals("M+?+")) return PrecursorIonType.unknown(1);
+        if (name.equals("[M+?]-") || name.equals("M+?-")) return PrecursorIonType.unknown(-1);
         if (knownIonTypes.containsKey(name)) return knownIonTypes.get(name);
         else return parseIonType(name);
     }

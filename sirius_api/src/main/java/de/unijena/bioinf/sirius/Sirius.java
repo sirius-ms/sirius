@@ -44,6 +44,20 @@ import java.io.IOException;
 import java.util.*;
 
 public class Sirius {
+
+    public static void main(String[] args) {
+        try {
+            final Sirius sirius = new Sirius("qtof");
+            Ms2Experiment ms2 = sirius.parseExperiment(new File("/home/kaidu/Documents/temp/huh.ms")).next();
+            ProcessedInput pip = sirius.getMs2Analyzer().performValidation(ms2);
+            System.out.println(pip.getExperimentInformation().getPrecursorIonType());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
     private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;

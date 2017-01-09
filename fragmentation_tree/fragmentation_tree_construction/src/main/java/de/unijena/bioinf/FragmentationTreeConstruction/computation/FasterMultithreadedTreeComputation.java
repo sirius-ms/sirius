@@ -87,7 +87,7 @@ public class FasterMultithreadedTreeComputation {
     }
 
     private FTree computeTreeHeuristically(FGraph graph) {
-
+        return null;
     }
 
 
