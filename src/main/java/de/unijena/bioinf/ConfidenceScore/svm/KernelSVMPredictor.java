@@ -6,7 +6,6 @@ import de.unijena.bioinf.ConfidenceScore.Predictor;
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Created by Marcus Ludwig on 16.08.16.
@@ -56,11 +55,11 @@ public class KernelSVMPredictor implements Predictor {
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 }
