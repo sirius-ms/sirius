@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  */
 public class CdkFingerprintVersion extends FingerprintVersion {
 
-    private final int fastCompareFlag;
+    private final long fastCompareFlag;
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
 
@@ -27,17 +27,50 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return DEFAULT_INSTANCE;
     }
 
+    public static CdkFingerprintVersion withECFP() {
+        return new CdkFingerprintVersion(USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP);
+    }
+
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
-        int fastCompareFlag = 0;
+        long fastCompareFlag = 0L;
         Arrays.sort(fingerprints);
         for (USED_FINGERPRINTS uf : fingerprints) {
             properties.addAll(Arrays.asList(getDefaultPropertiesFor(uf)));
-            fastCompareFlag |= (1<<uf.defaultPosition);
+            fastCompareFlag |= (1L<<uf.defaultPosition);
         }
         this.fastCompareFlag = fastCompareFlag;
         this.usedFingerprints = fingerprints;
         this.properties = properties.toArray(new MolecularProperty[properties.size()]);
+    }
+
+    public static CdkFingerprintVersion getFromBitsetIdentifier(long identifier) {
+        final ArrayList<USED_FINGERPRINTS> list = new ArrayList<>();
+        final USED_FINGERPRINTS[] all = USED_FINGERPRINTS.values();
+        for (int k=0; k < all.length; ++k) {
+            if ((identifier & (1L<<all[k].defaultPosition))!=0) {
+                list.add(all[k]);
+                identifier &= ~(1L<<all[k].defaultPosition);
+            }
+        }
+        if (identifier==0L) {
+            return new CdkFingerprintVersion(list.toArray(new USED_FINGERPRINTS[list.size()]));
+        } else {
+            throw new IllegalArgumentException("Unknown fingerprint types with bit set " + Long.toBinaryString(identifier));
+        }
+    }
+
+    public int getOffsetFor(USED_FINGERPRINTS fingerprint) {
+        int offset=0;
+        for (USED_FINGERPRINTS f : usedFingerprints) {
+            if (f == fingerprint) return offset;
+            else offset += f.length;
+        }
+        throw new IllegalArgumentException(fingerprint.name() + " is not part of this fingerprint version");
+    }
+
+    public long getBitsetIdentifier() {
+        return fastCompareFlag;
     }
 
     @Override
@@ -72,7 +105,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH};
 
     public static enum USED_FINGERPRINTS {
-        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, 1324);
+        OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, ExtendedConnectivityProperty.getFingerprintLength());
 
         public final int defaultPosition, length;
 
@@ -96,13 +129,12 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
 
     private static final MolecularProperty[][] DEFAULT_PROPERTIES = new MolecularProperty[DEFAULT_SETUP.length][];
+    private static final ExtendedConnectivityProperty[] ECFP_PROPS = new ExtendedConnectivityProperty[ExtendedConnectivityProperty.getFingerprintLength()];
 
     public static MolecularProperty[] getDefaultPropertiesFor(USED_FINGERPRINTS uf) {
         switch (uf) {
             case ECFP:
-                final MolecularProperty[] placeHolders = new MolecularProperty[uf.length];
-                Arrays.fill(placeHolders, new SpecialMolecularProperty("spherical fingerprint"));
-                return placeHolders;
+                return ECFP_PROPS;
             default:
                 return DEFAULT_PROPERTIES[uf.defaultPosition];
         }
@@ -159,6 +191,9 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             for (int i=0; i < DEFAULT_SETUP[k].length; ++i) {
                 DEFAULT_PROPERTIES[k][i] = properties.get(offset++);
             }
+        }
+        for (int k=0; k < ECFP_PROPS.length; ++k) {
+            ECFP_PROPS[k] = new ExtendedConnectivityProperty(ExtendedConnectivityProperty.getHashValue(k));
         }
     }
 

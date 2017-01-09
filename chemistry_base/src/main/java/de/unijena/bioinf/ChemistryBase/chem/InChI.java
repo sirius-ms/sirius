@@ -43,6 +43,17 @@ public class InChI {
     }
 
     @Override
+    public String toString(){
+        if (in2D==null || key==null) {
+            if (in2D!=null) return in2D;
+            if (key==null) throw new NullPointerException();
+            return key;
+        } else {
+            return key + " (" + in2D + ")";
+        }
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
