@@ -257,6 +257,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		otherPanel.add(ionizationCB);
 		instruments = new Vector<>();
 		instruments.add("Q-TOF");
+		instruments.add("Q-TOF2");
 		instruments.add("Orbitrap");
 		instruments.add("FT-ICR");
 		instrumentCB = new JComboBox<>(instruments);
@@ -283,7 +284,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				final String name = (String)e.getItem();
 				final double recommendedPPM;
 
-				if (name.equals("Q-TOF")) recommendedPPM = 10;
+				if (name.startsWith("Q-TOF")) recommendedPPM = 10;
 				else if (name.equals("Orbitrap")) recommendedPPM = 5;
 				else if (name.equals("FT-ICR")) recommendedPPM = 2;
 				else recommendedPPM = 10;
@@ -501,8 +502,10 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	public void startComputing() {
 		String val = (String) instrumentCB.getSelectedItem();
 		String instrument = "";
-		if(val.equals("Q-TOF")){
+		if(val.equals("Q-TOF")) {
 			instrument = "qtof";
+		} else if (val.equals("Q-TOF2")){
+			instrument = "qtof-peaksize";
 		}else if(val.equals("Orbitrap")){
 			instrument = "orbitrap";
 		}else if(val.equals("FT-ICR")){

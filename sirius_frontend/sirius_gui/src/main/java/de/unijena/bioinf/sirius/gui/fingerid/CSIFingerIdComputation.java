@@ -914,6 +914,11 @@ public class CSIFingerIdComputation {
         }
 
         @Override
+        public List<InChI> findInchiByNames(List<String> list) throws DatabaseException {
+            return null;
+        }
+
+        @Override
         public void close() throws IOException {
             restDatabase.close();
         }
