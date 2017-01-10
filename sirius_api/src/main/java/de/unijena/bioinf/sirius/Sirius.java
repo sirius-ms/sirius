@@ -21,7 +21,6 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -384,12 +383,15 @@ public class Sirius {
             scoring.addAdditionalScore(ISOTOPE_SCORE, pattern.getScore());
             final FTree dummyTree = new FTree(pattern.getCandidate());
             dummyTree.setAnnotation(TreeScoring.class, scoring);
-            FragmentAnnotation<Peak> annotation = dummyTree.getOrCreateFragmentAnnotation(Peak.class);
-            annotation.set(dummyTree.getRoot(), null);
             dummyTree.getOrCreateLossAnnotation(Score.class);
             dummyTree.getOrCreateFragmentAnnotation(Score.class);
             dummyTree.addAnnotation(PrecursorIonType.class, getIonization(experiment, pattern.getCandidate(), absoluteError));
             dummyTree.addAnnotation(IsotopePattern.class, pattern);
+            dummyTree.addFragmentAnnotation(AnnotatedPeak.class);
+            dummyTree.addFragmentAnnotation(Peak.class);
+            Peak parent = new Peak(pattern.getPattern().getPeakAt(0));
+            dummyTree.getFragmentAnnotationOrNull(Peak.class).set(dummyTree.getRoot(), parent);
+            dummyTree.getFragmentAnnotationOrNull(AnnotatedPeak.class).set(dummyTree.getRoot(), new AnnotatedPeak(pattern.getCandidate(), pattern.getMonoisotopicMass(), pattern.getMonoisotopicMass(), parent.getIntensity(), experiment.getPrecursorIonType().getIonization(), new Peak[]{parent}, new CollisionEnergy[]{CollisionEnergy.none()}));
             list.add(new IdentificationResult(dummyTree, i + 1));
         }
 

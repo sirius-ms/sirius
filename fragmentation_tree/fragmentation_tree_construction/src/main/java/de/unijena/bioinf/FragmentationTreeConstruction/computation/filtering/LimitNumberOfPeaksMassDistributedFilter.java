@@ -35,10 +35,16 @@ import java.util.*;
 //   - 1/4 n of the most intensive peaks peaks in each block are selected
 // This processor should take care that peaks in the low mass range are not deleted just because
 // peaks in high mass range have larger intensities
+//
 public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, Initializable {
 
     protected DecomposerCache cache;
-    private int limit;
+
+    private double[] masses;
+    private int[] limits;
+
+    private static double[] DEFAULT_MASSES = new double[]{300, 600, Double.POSITIVE_INFINITY};
+    private static int[] DEFAULT_LIMITS = new int[]{40, 60, 80};
 
     public DecomposerCache getCache() {
         if (cache == null) cache = new DecomposerCache(3);
@@ -52,23 +58,25 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
     }
 
     public LimitNumberOfPeaksMassDistributedFilter() {
-        this(Integer.MAX_VALUE);
+        this(DEFAULT_LIMITS, DEFAULT_MASSES);
     }
 
-    public LimitNumberOfPeaksMassDistributedFilter(int limit) {
-        this.limit = limit;
+    public LimitNumberOfPeaksMassDistributedFilter(int[] limits, double[] masses) {
+        if (limits.length!=masses.length) throw new IllegalArgumentException();
+        this.limits = limits.clone();
+        this.masses = masses.clone();
     }
 
-    public int getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
+    public int getLimit(double mass) {
+        for (int i=0; i < masses.length; ++i) {
+            if (mass < masses[i]) return limits[i];
+        }
+        return limits[limits.length-1];
     }
 
     @Override
     public ProcessedInput process(ProcessedInput input) {
+        final int limit = getLimit(input.getExperimentInformation().getIonMass());
         // remove peaks without decomposition
         {
             final MassToFormulaDecomposer decomposer = getCache().getDecomposer(input.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
@@ -102,27 +110,38 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
         selected += keep(orderedByIntensity, keepPeaks, 4*blocksize, 6*blocksize, numberOfPeaksPerBlock);
         keep(orderedByIntensity, keepPeaks, 0, maxMass, Math.max(0, limit-selected));
 
-        final ListIterator<ProcessedPeak> iter = input.getMergedPeaks().listIterator();
+        final ListIterator<ProcessedPeak> iter = orderedByIntensity.listIterator();
         int index=0;
         while (iter.hasNext()) {
+            iter.next();
             if (!keepPeaks.get(index++)) {
                 iter.remove();
             }
+        }
+        Collections.sort(orderedByIntensity, new ProcessedPeak.MassComparator());
+        input.setMergedPeaks(orderedByIntensity);
+
+        System.out.println(input.getMergedPeaks().size() + " PEAKS: ");
+        for (ProcessedPeak peak : input.getMergedPeaks()) {
+            System.out.println(peak);
         }
         return input;
     }
 
     private int keep(List<ProcessedPeak> orderedByIntensity, BitSet keepPeaks, double from, double to, int numberOfPeaks) {
+        System.out.println("Keep " + numberOfPeaks + " peaks from " + from +  " to " + to + ":");
         if (numberOfPeaks<=0)  return 0;
         int index = 0;
         int total = numberOfPeaks;
         for (ProcessedPeak peak : orderedByIntensity) {
             if (peak.getMass() >= from && peak.getMass() < to && !keepPeaks.get(index)) {
                 keepPeaks.set(index, true);
+                System.out.println("Select " + peak.getMass() + " with " + peak.getIntensity());
                 if (--numberOfPeaks <= 0) break;
             }
             ++index;
         }
+        System.out.println((total-numberOfPeaks) + " selected\n\n");
         return total-numberOfPeaks;
     }
 
@@ -133,11 +152,42 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        limit = (int) document.getIntFromDictionary(dictionary, "limit");
+        ArrayList<double[]> pairs = new ArrayList<>();
+        L xs = document.getListFromDictionary(dictionary, "limits");
+        for (int i=0, n = document.sizeOfList(xs); i < n; ++i) {
+            L v = document.getListFromList(xs, i);
+            if (document.sizeOfList(v)==1)
+                pairs.add(new double[]{Double.POSITIVE_INFINITY, document.getIntFromList(v, 0)});
+            else
+                pairs.add(new double[]{document.getDoubleFromList(v, 0), document.getIntFromList(v, 1)});
+        }
+        Collections.sort(pairs, new Comparator<double[]>() {
+            @Override
+            public int compare(double[] o1, double[] o2) {
+                return Double.compare(o1[0], o2[0]);
+            }
+        });
+        this.limits = new int[pairs.size()];
+        this.masses = new double[pairs.size()];
+        for (int i=0; i < pairs.size(); ++i) {
+            limits[i] = (int)pairs.get(i)[1];
+            masses[i] = pairs.get(i)[0];
+        }
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        document.addToDictionary(dictionary, "limit", limit);
+        L pairs = document.newList();
+        for (int i=0; i < masses.length; ++i) {
+            L pair = document.newList();
+            if (Double.isInfinite(masses[i])) {
+                document.addToList(pair, limits[i]);
+            } else {
+                document.addToList(pair, masses[i]);
+                document.addToList(pair, limits[i]);
+            }
+            document.addListToList(pairs, pair);
+        }
+        document.addListToDictionary(dictionary, "limits", pairs);
     }
 }
