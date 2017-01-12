@@ -34,9 +34,10 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNElementPredictor;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +65,7 @@ public class Sirius {
     private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
 
     protected Profile profile;
-    protected ElementPrediction elementPrediction;
+    protected ElementPredictor elementPrediction;
     protected Progress progress;
     protected PeriodicTable table;
     protected boolean autoIonMode;
@@ -174,11 +175,18 @@ public class Sirius {
         this.autoIonMode = false;
     }
 
-    public ElementPrediction getElementPrediction() {
+    public ElementPredictor getElementPrediction() {
+        if (elementPrediction==null) {
+            DNNElementPredictor defaultPredictor = new DNNElementPredictor();
+            defaultPredictor.setThreshold(0.05);
+            defaultPredictor.setThreshold("S", 0.1);
+            defaultPredictor.setThreshold("Si", 0.8);
+            elementPrediction = defaultPredictor;
+        }
         return elementPrediction;
     }
 
-    public void setElementPrediction(ElementPrediction elementPrediction) {
+    public void setElementPrediction(ElementPredictor elementPrediction) {
         this.elementPrediction = elementPrediction;
     }
 
@@ -761,9 +769,17 @@ public class Sirius {
         }
     }
 
+    public FormulaConstraints predictElementsFromMs1(Ms2Experiment experiment) {
+        final SimpleSpectrum pattern = getMs1Analyzer().extractPattern(experiment, experiment.getIonMass());
+        if (pattern==null) return null;
+        return getElementPrediction().predictConstraints(pattern);
+    }
+
     boolean predictElements(ProcessedInput input) {
-        if (elementPrediction != null) {
-            input.getMeasurementProfile().setFormulaConstraints(elementPrediction.extendConstraints(input.getMeasurementProfile().getFormulaConstraints(), input.getExperimentInformation(), input.getMeasurementProfile()));
+        if (getElementPrediction() != null) {
+            final FormulaConstraints prediction = predictElementsFromMs1(input.getExperimentInformation());
+            if (prediction==null) return false;
+            input.getMeasurementProfile().setFormulaConstraints(prediction);
             return true;
         } else return false;
     }

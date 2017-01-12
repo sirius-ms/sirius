@@ -120,28 +120,20 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
         }
         Collections.sort(orderedByIntensity, new ProcessedPeak.MassComparator());
         input.setMergedPeaks(orderedByIntensity);
-
-        System.out.println(input.getMergedPeaks().size() + " PEAKS: ");
-        for (ProcessedPeak peak : input.getMergedPeaks()) {
-            System.out.println(peak);
-        }
         return input;
     }
 
     private int keep(List<ProcessedPeak> orderedByIntensity, BitSet keepPeaks, double from, double to, int numberOfPeaks) {
-        System.out.println("Keep " + numberOfPeaks + " peaks from " + from +  " to " + to + ":");
         if (numberOfPeaks<=0)  return 0;
         int index = 0;
         int total = numberOfPeaks;
         for (ProcessedPeak peak : orderedByIntensity) {
             if (peak.getMass() >= from && peak.getMass() < to && !keepPeaks.get(index)) {
                 keepPeaks.set(index, true);
-                System.out.println("Select " + peak.getMass() + " with " + peak.getIntensity());
                 if (--numberOfPeaks <= 0) break;
             }
             ++index;
         }
-        System.out.println((total-numberOfPeaks) + " selected\n\n");
         return total-numberOfPeaks;
     }
 
