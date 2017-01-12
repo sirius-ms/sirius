@@ -113,7 +113,6 @@ public class DNNElementPredictor implements ElementPredictor {
                 break;
             }
         }
-
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(new Element[elements.size()]));
         final FormulaConstraints constraints = new FormulaConstraints(alphabet);
         for (int i=0; i < FREE_UPPERBOUNDS.length; ++i) {
