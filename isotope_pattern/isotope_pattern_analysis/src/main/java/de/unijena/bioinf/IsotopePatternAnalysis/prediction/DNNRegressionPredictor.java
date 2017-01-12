@@ -20,8 +20,9 @@ public class DNNRegressionPredictor implements ElementPredictor {
     public DNNRegressionPredictor() {
         this.networks = readNetworks();
         this.modifiers = new double[DETECTABLE_ELEMENTS.length];
-        Arrays.fill(modifiers, -0.25);
-        setModifiers("S", -0.22);
+        Arrays.fill(modifiers, 0.33);
+        setModifiers("S", 1d);
+        setModifiers("Si", 1d);
     }
 
     public void setModifiers(double modifier) {
@@ -105,7 +106,8 @@ public class DNNRegressionPredictor implements ElementPredictor {
                 final double[] prediction = network.predict(pickedPattern);
                 for (int i=0; i < prediction.length; ++i) {
                     final Element e = DETECTABLE_ELEMENTS[i];
-                    int number = (int)Math.ceil(prediction[i]+modifiers[i]);
+                    int number = (int)Math.ceil(prediction[i]-0.22);
+                    if (number > 0) number = (int)Math.ceil(prediction[i]+modifiers[i]);
                     if (elements.containsKey(e)) elements.put(e, Math.max(elements.get(e), number));
                     else elements.put(e, number);
                 }
