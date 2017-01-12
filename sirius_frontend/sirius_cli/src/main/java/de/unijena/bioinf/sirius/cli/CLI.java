@@ -44,7 +44,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusResultWriter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.elementpred.ElementPrediction;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -327,7 +326,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 // autodetect and use default set
                 ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
                 ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
-                sirius.setElementPrediction(new ElementPrediction(sirius.getMs1Analyzer()));
             } else {
                 ms2Prof.setFormulaConstraints(options.getElements());
                 ms1Prof.setFormulaConstraints(options.getElements());

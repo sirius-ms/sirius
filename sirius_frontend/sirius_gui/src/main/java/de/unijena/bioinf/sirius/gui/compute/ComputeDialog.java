@@ -48,7 +48,8 @@ public class ComputeDialog extends JDialog implements ActionListener{
 	private Vector<CompactPeak> masses;
 	private MyListCellRenderer renderer;
 	
-	private JCheckBox bromine, boron, selenium, chlorine, iodine, fluorine;
+	private JCheckBox sulfur, bromine, boron, selenium, chlorine, iodine, fluorine;
+	private HashMap<Element, JCheckBox> element2Checkbox;
 	private JTextField elementTF;
 	private JButton elementButton, elementAutoDetect;
 	private MainFrame owner;
@@ -194,7 +195,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		/////////////////////////////////////////////
 		JPanel elementPanel = new JPanel();
 		elementPanel.setLayout(new BoxLayout(elementPanel,BoxLayout.LINE_AXIS));
-		elementPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Elements beside CHNOPS"));
+		elementPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Elements beside CHNOP"));
 		mainPanel.add(elementPanel);
 		
 		bromine = new JCheckBox("bromine");
@@ -203,13 +204,24 @@ public class ComputeDialog extends JDialog implements ActionListener{
 		chlorine = new JCheckBox("chlorine");
 		iodine = new JCheckBox("iodine");
 		fluorine = new JCheckBox("fluorine");
-		
+		sulfur = new JCheckBox("sulfur");
+		elementPanel.add(sulfur);
 		elementPanel.add(bromine);
 		elementPanel.add(boron);
 		elementPanel.add(chlorine);
 		elementPanel.add(fluorine);
 		elementPanel.add(iodine);
 		elementPanel.add(selenium);
+		sulfur.setSelected(true);
+		this.element2Checkbox = new HashMap<>();
+		final PeriodicTable T = PeriodicTable.getInstance();
+		element2Checkbox.put(T.getByName("S"), sulfur);
+		element2Checkbox.put(T.getByName("Br"), bromine);
+		element2Checkbox.put(T.getByName("B"), boron);
+		element2Checkbox.put(T.getByName("Cl"), chlorine);
+		element2Checkbox.put(T.getByName("I"), iodine );
+		element2Checkbox.put(T.getByName("F"), fluorine);
+		element2Checkbox.put(T.getByName("Se"), selenium);
 		
 
 
@@ -230,7 +242,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 
 		elementAutoDetect = new JButton("Auto detect");
 		elementAutoDetect.addActionListener(this);
-		elementAutoDetect.setEnabled(false);
+		elementAutoDetect.setEnabled(true);
 		elementPanel.add(elementAutoDetect);
 
 		/////////////////////////////////////////////
@@ -387,7 +399,7 @@ public class ComputeDialog extends JDialog implements ActionListener{
 				b.setEnabled(true);
 			}
 			elementButton.setEnabled(true);
-			elementAutoDetect.setEnabled(false);
+			elementAutoDetect.setEnabled(true);
 			elementTF.setEnabled(true);
 		} else {
 			for (JCheckBox b : Arrays.asList(boron, bromine, chlorine, fluorine, iodine, selenium)) {
@@ -496,7 +508,27 @@ public class ComputeDialog extends JDialog implements ActionListener{
 			}
 		}else if(e.getSource() == this.compute){
 			startComputing();
+		} else if (e.getSource() == elementAutoDetect) {
+			final Sirius sirius = new Sirius();
+
+			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype((String)ionizationCB.getSelectedItem()), getSelectedIonMass());
+			final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
+			for (Element elem : element2Checkbox.keySet()) {
+				element2Checkbox.get(elem).setSelected(c.getUpperbound(elem)>0);
+			}
 		}
+	}
+
+	private double getSelectedIonMass() {
+		Object selected = box.getSelectedItem();
+		double pm=0;
+		if(selected instanceof CompactPeak){
+			CompactPeak cp = (CompactPeak) selected;
+			pm = cp.getMass();
+		}else{
+			pm = Double.parseDouble(selected.toString());
+		}
+		return pm;
 	}
 
 	public void startComputing() {
