@@ -70,6 +70,24 @@ class TrainedElementDetectionNetwork {
     }
 
 
+    private static class ExponentialLayer implements Layer {
+        public ExponentialLayer() {
+
+        }
+
+
+        @Override
+        public double[] activate(double[] vector) {
+            final double[] out = new double[vector.length];
+            for (int i=0; i < vector.length; ++i) {
+                out[i] = Math.exp(vector[i]);
+            }
+            return out;
+        }
+    }
+
+
+
     protected static class FullyConnectedLayer implements Layer {
         protected final double[][] W;
         protected final double[] b;
@@ -109,6 +127,56 @@ class TrainedElementDetectionNetwork {
             ActivationFunction.TANH,
             ActivationFunction.TANH, ActivationFunction.LINEAR
     };
+
+
+    public static TrainedElementDetectionNetwork readRegressionNetwork(InputStream inputStream) throws IOException {
+        try (final DataInputStream stream = new DataInputStream(new BufferedInputStream(inputStream))) {
+            final PeriodicTable T = PeriodicTable.getInstance();
+            final int npeaks = stream.readInt();
+            final int nfeatures = stream.readInt();
+            final int npredictors = stream.readInt();
+            final Element[] elems = new Element[npredictors];
+            for (int i=0; i < elems.length; ++i)
+                elems[i] = T.get(stream.readInt());
+            final int nlayers = stream.readInt();
+            final int[] neurons = new int[nlayers];
+            for (int i=0; i < neurons.length; ++i)
+                neurons[i] = stream.readInt();
+            final int length = stream.readInt();
+            final double[] vec = new double[length];
+            for (int i=0; i < vec.length; ++i) {
+                vec[i] = stream.readDouble();
+            }
+
+            final Layer[] layers = new Layer[nlayers+2];
+            int k=0;
+            final double[] centering = new double[nfeatures], normalization = new double[nfeatures];
+            for (int i=0; i < nfeatures; ++i) centering[i] = vec[k++];
+            for (int i=0; i < nfeatures; ++i) normalization[i] = vec[k++];
+            layers[0] = new PreprocessingLayer(centering, normalization);
+            int in = nfeatures;
+            System.out.println(nfeatures);
+            for (int l=0; l < nlayers; ++l) {
+                final double[][] W = new double[neurons[l]][in];
+                final double[] B = new double[neurons[l]];
+                for (int i=0; i < W.length; ++i) {
+                    final double[] row = W[i];
+                    for (int j=0; j < row.length; ++j) {
+                        row[j] = vec[k++];
+                    }
+                }
+                for (int i=0; i < B.length; ++i) {
+                    B[i] = vec[k++];
+                }
+                in = neurons[l];
+                layers[l+1] = new FullyConnectedLayer(W, B, l < nlayers-1 ? ActivationFunction.TANH : ActivationFunction.LINEAR);
+            }
+            layers[nlayers+1] = new ExponentialLayer();
+            return new TrainedElementDetectionNetwork(npeaks, layers);
+
+
+        }
+    }
 
     public static TrainedElementDetectionNetwork readNetwork(InputStream inputStream) throws IOException {
         try (final DataInputStream stream = new DataInputStream(new BufferedInputStream(inputStream))) {
