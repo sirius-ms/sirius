@@ -353,4 +353,20 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         }
         document.addToDictionary(dictionary, "filters", document.wrapList(filters));
     }
+
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        for (Element e : getChemicalAlphabet()) {
+            final int up = getUpperbound(e);
+            if (up>0) {
+                buf.append(e.getSymbol());
+                if (up < Short.MAX_VALUE) {
+                    buf.append('[');
+                    buf.append(String.valueOf(up));
+                    buf.append(']');
+                }
+            }
+        }
+        return buf.toString();
+    }
 }

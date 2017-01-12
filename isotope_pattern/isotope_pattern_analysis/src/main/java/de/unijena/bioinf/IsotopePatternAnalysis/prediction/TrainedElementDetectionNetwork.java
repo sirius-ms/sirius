@@ -8,7 +8,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 class TrainedElementDetectionNetwork {
 
@@ -117,7 +116,6 @@ class TrainedElementDetectionNetwork {
             final int npeaks = stream.readInt();
             final int nfeatures = stream.readInt();
             final int npredictors = stream.readInt();
-            System.out.println("features: " + nfeatures + ", predictors: " +npredictors);
             final Element[] elems = new Element[npredictors];
             final double[] As = new double[npredictors], Bs = new double[npredictors];
             for (int i=0; i < elems.length; ++i)
@@ -130,9 +128,7 @@ class TrainedElementDetectionNetwork {
             final int[] neurons = new int[nlayers];
             for (int i=0; i < neurons.length; ++i)
                 neurons[i] = stream.readInt();
-            System.out.println("Read " + nlayers + " layers  with " + Arrays.toString(neurons) + " neurons");
             final int length = stream.readInt();
-            System.out.println("Expect " + length + " parameters");
             final double[] vec = new double[length];
             for (int i=0; i < vec.length; ++i) {
                 vec[i] = stream.readDouble();
@@ -147,7 +143,6 @@ class TrainedElementDetectionNetwork {
             int in = nfeatures;
             System.out.println(nfeatures);
             for (int l=0; l < nlayers; ++l) {
-                System.out.println("Layer " + l +  " with W = " +  in + "x" + neurons[l] + " and B = " + neurons[l] + "x1" );
                 final double[][] W = new double[neurons[l]][in];
                 final double[] B = new double[neurons[l]];
                 for (int i=0; i < W.length; ++i) {
