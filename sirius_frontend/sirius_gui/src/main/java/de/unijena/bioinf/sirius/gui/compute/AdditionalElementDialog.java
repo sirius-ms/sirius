@@ -1,99 +1,53 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 public class AdditionalElementDialog extends JDialog implements ActionListener{
-	
+
+	PeriodicTable periodicTable;
+
 	private HashSet<String> elementMap;
+	private static final HashSet<String> dontEnable = new HashSet<>(Arrays.asList(new String[]{"C", "H", "N", "O", "P"}));
 	
 	private JButton ok, abort;
-	
+	private JPanel rareElements;
+
 	private boolean success;
 	
 	public AdditionalElementDialog(Window owner,Collection<String> selectedRareElements) {
 		super(owner,"additional elements",Dialog.DEFAULT_MODALITY_TYPE);
 		
 		success = false;
-		
+
+		periodicTable = PeriodicTable.getInstance();
+
 		elementMap = new HashSet<>(selectedRareElements);
 		
 		this.setLayout(new BorderLayout());
 		
-		JPanel rareElements = new JPanel(new GridLayout(6,18));
+		rareElements = new JPanel(new GridLayout(6,18));
 		rareElements.setBorder(BorderFactory.createEtchedBorder());
 //		rareElements.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"elements"));
-		
+
 		String[] row1 = {"H","","","","","","","","","","","","","","","","","He"};
-		for(String s : row1){
-			if(s.isEmpty()){
-				rareElements.add(new JLabel(""));
-			}else{
-				JToggleButton button = new JToggleButton(s);
-				if(s.equals("H")||s.isEmpty()) button.setEnabled(false);
-				if(elementMap.contains(s)) button.setSelected(true);
-				button.addActionListener(this);
-				rareElements.add(button);
-			}
-			
-		}
-		
+		addRow(row1);
 		String[] row2 = {"Li","Be","","","","","","","","","","","B","C","N","O","F","Ne"};
-		for(String s : row2){
-			if(s.isEmpty()){
-				rareElements.add(new JLabel(""));
-			}else{
-				JToggleButton button = new JToggleButton(s);
-				if(s.equals("C")||s.equals("N")||s.equals("O")||s.isEmpty()) button.setEnabled(false);
-				if(elementMap.contains(s)) button.setSelected(true);
-				button.addActionListener(this);
-				rareElements.add(button);
-			}
-		}
-		
+		addRow(row2);
 		String[] row3 = {"Na","Mg","","","","","","","","","","","Al","Si","P","S","Cl","Ar"};
-		for(String s : row3){
-			if(s.isEmpty()){
-				rareElements.add(new JLabel(""));
-			}else{
-				JToggleButton button = new JToggleButton(s);
-				if(s.equals("P")||s.isEmpty()) button.setEnabled(false);
-				if(elementMap.contains(s)) button.setSelected(true);
-				button.addActionListener(this);
-				rareElements.add(button);
-			}
-			
-		}
-		
+		addRow(row3);
 		String[] row4 = {"K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr"};
-		for(String s : row4){
-			JToggleButton button = new JToggleButton(s);
-			if(elementMap.contains(s)) button.setSelected(true);
-			button.addActionListener(this);
-			rareElements.add(button);
-		}
-		
-		
+		addRow(row4);
 		String[] row5 = {"Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe"};
-		for(String s : row5){
-			JToggleButton button = new JToggleButton(s);
-			if(elementMap.contains(s)) button.setSelected(true);
-			button.addActionListener(this);
-			rareElements.add(button);
-		}
-		
+		addRow(row5);
 		String[] row6 = {"Cs","Ba","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Ti","Pb","Bi","Po","At","Rn"};
-		for(String s : row6){
-			JToggleButton button = new JToggleButton(s);
-			if(elementMap.contains(s)) button.setSelected(true);
-			button.addActionListener(this);
-			rareElements.add(button);
-		}
+
+		addRow(row6);
 		this.add(rareElements,BorderLayout.CENTER);
 		
 		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
@@ -110,7 +64,22 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 		setLocationRelativeTo(getParent());
 		this.setVisible(true);
 	}
-	
+
+	private void addRow(String[] row){
+		for(String s : row){
+			if(s.isEmpty()){
+				rareElements.add(new JLabel(""));
+			}else{
+				JToggleButton button = new JToggleButton(s);
+				button.setToolTipText(periodicTable.getByName(s).getName());
+				if(dontEnable.contains(s)||s.isEmpty()) button.setEnabled(false);
+				if(elementMap.contains(s)) button.setSelected(true);
+				button.addActionListener(this);
+				rareElements.add(button);
+			}
+		}
+	}
+
 	public boolean successful(){
 		return success;
 	}
