@@ -20,20 +20,28 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.plaf.SeparatorUI;
+import javax.swing.plaf.SplitPaneUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -46,7 +54,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private static String SEARCH_PUBCHEM = "Search PubChem structure database with CSI:FingerId";
     private static String SEARCH_BIODB = "Search bio database with CSI:FingerId";
 
-    private JButton compute, abort;
+    private JButton compute, abort, recompute;
 
 
     private ElementsPanel elementPanel;
@@ -60,7 +68,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private boolean success;
     private HashMap<String, Ionization> stringToIonMap;
     private HashMap<Ionization, String> ionToStringMap;
-    private final JSpinner candidatesSpinner = null;
 
     public BatchComputeDialog(MainFrame owner) {
         super(owner, "compute", true);
@@ -134,14 +141,28 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         ///
 
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        this.add(southPanel, BorderLayout.SOUTH);
+
+        JPanel southPanel = new JPanel();
+        southPanel.setLayout(new BoxLayout(southPanel,BoxLayout.LINE_AXIS));
+
+        JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        recompute = new JButton("Recompute all");
+        recompute.addActionListener(this);
+        recompute.setToolTipText("Recompute all experiments. Even already computed ones.");
+        lsouthPanel.add(recompute);
+
+        JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         compute = new JButton("Compute");
         compute.addActionListener(this);
         abort = new JButton("Abort");
         abort.addActionListener(this);
-        southPanel.add(compute);
-        southPanel.add(abort);
+        rsouthPanel.add(compute);
+        rsouthPanel.add(abort);
+
+        southPanel.add(lsouthPanel);
+        southPanel.add(rsouthPanel);
+
+        this.add(southPanel, BorderLayout.SOUTH);
 
         {
             InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -188,6 +209,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     }
 
+    public boolean isAutoDetectElements(){
+        return elementAutoDetect.getText().equals(autoDetectTextEnabled);
+    }
+
     private boolean hasCompoundWithUnknownIonization() {
         Enumeration<ExperimentContainer> compounds = owner.getCompounds();
         while (compounds.hasMoreElements()) {
@@ -208,8 +233,28 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             this.dispose();
         }  else if (e.getSource() == this.compute) {
             startComputing();
-        }else if (e.getSource() == elementAutoDetect) {
-            useElementAutodetect(!elementAutoDetect.getText().equals(autoDetectTextEnabled));
+        } else if (e.getSource() == elementAutoDetect) {
+            useElementAutodetect(!isAutoDetectElements());
+        } else if (e.getSource() == recompute) {
+            final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
+            Properties properties = ApplicationCore.getUserCopyOfUserProperties();
+
+            ReturnValue value;
+            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty))==true){
+                value = ReturnValue.Success;
+            } else {
+                QuestionDialog questionDialog = new QuestionDialog(this, "Do you want to recompute all experiments?", dontAskProperty);
+                value = questionDialog.getReturnValue();
+            }
+
+            if (value==ReturnValue.Success){
+                final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
+                while (compounds.hasMoreElements()) {
+                    final ExperimentContainer ec = compounds.nextElement();
+                    ec.setComputeState(ComputingStatus.UNCOMPUTED);
+                }
+                startComputing();
+            }
         }
     }
 
@@ -241,11 +286,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         }
 
-        final FormulaConstraints constraints = elementPanel.getElementConstraints();
+        FormulaConstraints constraints = elementPanel.getElementConstraints();
 
         final double ppm = searchProfilePanel.getPpm();
 
-        final int candidates = ((Number) candidatesSpinner.getModel().getValue()).intValue();
+        final int candidates = searchProfilePanel.getNumberOfCandidates();
 
         // CHECK ILP SOLVER
 
@@ -269,6 +314,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
         final ArrayList<BackgroundComputation.Task> tasks = new ArrayList<>();
         final ArrayList<ExperimentContainer> compoundList = new ArrayList<>();
+        final Sirius sirius = new Sirius();
         while (compounds.hasMoreElements()) {
             final ExperimentContainer ec = compounds.nextElement();
             if (ec.isUncomputed()) {
@@ -279,6 +325,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     } else {
                         ec.setIonization(PrecursorIonType.getPrecursorIonType("[M-H]-"));
                     }
+                }
+
+                if (isAutoDetectElements()){
+                    MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), ec.getFocusedMass());
+                    //todo what if no isotope pattern?
+                    constraints = sirius.predictElementsFromMs1(exp);
                 }
 
                 final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());

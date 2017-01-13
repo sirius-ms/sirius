@@ -31,7 +31,6 @@ public class ElementsPanel extends JPanel implements ActionListener {
         this.owner = owner;
         additionalElements = new TreeSet<>();
 
-        this.setLayout(new BorderLayout());
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "elements beside CHNOP"));
         this.setLayout(new BoxLayout(this,BoxLayout.LINE_AXIS));
 
@@ -83,8 +82,6 @@ public class ElementsPanel extends JPanel implements ActionListener {
         elements2.add(elementTF);
         elements2.add(elementButton);
         mainP.add(elements2);
-
-        this.add(Box.createVerticalGlue());
 
     }
 

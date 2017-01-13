@@ -308,6 +308,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     @Override
 	public void spectraAdded(CompactSpectrum sp) {
 		listModel.addElement(new SpectrumContainer(sp));
+		msList.setSelectedIndex(0);
 	}
 
 	@Override
