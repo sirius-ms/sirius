@@ -22,6 +22,7 @@ public class SiriusApplication extends ApplicationCore {
         if (cli.options.isGUI()) {
             SwingUtils.initUI();
             MAIN_FRAME = new MainFrame();
+            MAIN_FRAME.setLocationRelativeTo(null);
         } else {
             cli.setup();
             cli.validate();

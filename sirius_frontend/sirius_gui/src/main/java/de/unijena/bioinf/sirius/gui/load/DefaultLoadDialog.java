@@ -199,6 +199,30 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		abort.addActionListener(this);
 		controlPanel.add(ok);
 		controlPanel.add(abort);
+
+		{
+			InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+			KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+			KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
+			String enterAction = "load";
+			String escAction = "abort";
+			inputMap.put(enterKey, enterAction);
+			inputMap.put(escKey, escAction);
+			getRootPane().getActionMap().put(enterAction, new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					load();
+				}
+			});
+			getRootPane().getActionMap().put(escAction, new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					abort();
+				}
+			});
+		}
+
+
 		
 		DropTarget dropTarget = new DropTarget(this, this);
 		
@@ -319,6 +343,26 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		this.setVisible(true);
 	}
 
+	private void load(){
+		this.returnValue = ReturnValue.Success;
+		this.setVisible(false);
+		for(LoadDialogListener ldl : listeners){
+			ldl.setIonization((SiriusDataConverter.enumOrNameToIontype((String)ionizationCB.getSelectedItem())));
+			if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
+				ldl.setParentmass(Double.parseDouble(parentMzField.getText()));
+			}
+			ldl.completeProcess();
+		}
+	}
+
+	private void abort(){
+		this.returnValue = ReturnValue.Abort;
+		this.setVisible(false);
+		for(LoadDialogListener ldl : listeners){
+			ldl.abortProcess();
+		}
+	}
+
 	/////// ActionListener /////////
 	
 	@Override
@@ -351,21 +395,9 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 				ldl.addSpectra();
 			}
 		}else if(e.getSource()==this.ok){
-			this.returnValue = ReturnValue.Success;
-			this.setVisible(false);
-			for(LoadDialogListener ldl : listeners){
-				ldl.setIonization((SiriusDataConverter.enumOrNameToIontype((String)ionizationCB.getSelectedItem())));
-                if (NUMPATTERN.matcher(parentMzField.getText()).matches()) {
-                    ldl.setParentmass(Double.parseDouble(parentMzField.getText()));
-                }
-				ldl.completeProcess();
-			}
+			load();
 		}else if(e.getSource()==this.abort){
-			this.returnValue = ReturnValue.Abort;
-			this.setVisible(false);
-			for(LoadDialogListener ldl : listeners){
-				ldl.abortProcess();
-			}
+			abort();
 		}else if(e.getSource()==this.nameB){
 			ExperimentNameDialog diag = new ExperimentNameDialog(this, nameTF.getText());
 			if(diag.getReturnValue()==ReturnValue.Success){

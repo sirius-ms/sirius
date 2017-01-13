@@ -18,9 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
@@ -50,23 +48,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private JButton compute, abort;
 
-    private JCheckBox bromine, borone, selenium, chlorine, iodine, fluorine;
-    private JTextField elementTF;
-    private JButton elementButton;
-    private JCheckBox elementAutoDetect, runCSIFingerId;
+
+    private ElementsPanel elementPanel;
+    private JButton elementAutoDetect;
+    private String autoDetectTextEnabled = "Auto detection enabled";
+    private String autoDetectTextDisabled= "Auto detection disabled";
+    private SearchProfilePanel searchProfilePanel;
+    private JCheckBox runCSIFingerId;
     private MainFrame owner;
-
-    private TreeSet<String> additionalElements;
-
-    private Vector<String> ionizations, instruments;
-    private JComboBox<String> ionizationCB, instrumentCB, formulaCombobox;
-    private JSpinner ppmSpinner;
-    private SpinnerNumberModel snm;
 
     private boolean success;
     private HashMap<String, Ionization> stringToIonMap;
     private HashMap<Ionization, String> ionToStringMap;
-    private final JSpinner candidatesSpinner;
+    private final JSpinner candidatesSpinner = null;
 
     public BatchComputeDialog(MainFrame owner) {
         super(owner, "compute", true);
@@ -74,8 +68,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         this.success = false;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        additionalElements = new TreeSet<>();
 
         this.setLayout(new BorderLayout());
 
@@ -85,130 +77,55 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
         /////////////////////////////////////////////
-//		Box elementPanel = Box.createVerticalBox();
-        JPanel elementPanel = new JPanel(new BorderLayout());
-        elementPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "elements beside CHNOPS"));
+        elementPanel = new ElementsPanel(this);
         mainPanel.add(elementPanel);
 
-        bromine = new JCheckBox("bromine");
-        borone = new JCheckBox("borone");
-        selenium = new JCheckBox("selenium");
-        chlorine = new JCheckBox("chlorine");
-        iodine = new JCheckBox("iodine");
-        fluorine = new JCheckBox("fluorine");
+//        elementPanel.add(Box.createHorizontalGlue());
 
-        JPanel elements = new JPanel();
-        elements.setLayout(new BoxLayout(elements,BoxLayout.LINE_AXIS));
-//        JPanel elements = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        elements.add(bromine);
-        elements.add(borone);
-        elements.add(chlorine);
-        elements.add(fluorine);
-        elements.add(iodine);
-        elements.add(selenium);
+        elementAutoDetect = new JButton(autoDetectTextEnabled);
 
-        elementAutoDetect = new JCheckBox("Auto detect");
-        elementAutoDetect.setEnabled(false);
+        FontMetrics metrics = elementAutoDetect.getFontMetrics(elementAutoDetect.getFont());
+        Dimension preferred = elementAutoDetect.getPreferredSize();
+        int height = preferred.height;
+        int currentWidth = preferred.width;
+        int textWidth = metrics.stringWidth(autoDetectTextEnabled);
+        int margin = currentWidth-textWidth;
+        int newWidth = Math.max(textWidth, metrics.stringWidth(autoDetectTextDisabled));
+        elementAutoDetect.setPreferredSize(new Dimension(newWidth+margin, height));
+
+
         elementAutoDetect.addActionListener(this);
-        elementTF = new JTextField(10);
-        elementTF.setEditable(false);
-        elementButton = new JButton("More elements");
-        elementButton.addActionListener(this);
+        elementAutoDetect.setEnabled(true);
+        elementPanel.add(elementAutoDetect);
 
-        elements.add(Box.createHorizontalGlue());
-        elements.add(elementAutoDetect);
-        elementPanel.add(elements, BorderLayout.NORTH);
-
-        JPanel elements2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        elements2.add(elementTF);
-        elements2.add(elementButton);
-        elementPanel.add(elements2, BorderLayout.SOUTH);
+        useElementAutodetect(true);
 
         /////////////////////////////////////////////
-        JPanel stack = new JPanel();
-        stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "other"));
 
-        JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        instruments = new Vector<>();
-        instruments.add("Q-TOF");
-        instruments.add("Orbitrap");
-        instruments.add("FT-ICR");
-        instrumentCB = new JComboBox<>(instruments);
-        otherPanel.add(new JLabel("  instrument"));
-        otherPanel.add(instrumentCB);
-
-        this.snm = new SpinnerNumberModel(10, 0.25, 20, 0.25);
-        this.ppmSpinner = new JSpinner(this.snm);
-        this.ppmSpinner.setMinimumSize(new Dimension(70, 26));
-        this.ppmSpinner.setPreferredSize(new Dimension(70, 26));
-        otherPanel.add(new JLabel("  ppm"));
-        otherPanel.add(this.ppmSpinner);
-
-        final SpinnerNumberModel candidatesNumberModel = new SpinnerNumberModel(10, 1, 1000, 1);
-        candidatesSpinner = new JSpinner(candidatesNumberModel);
-        candidatesSpinner.setMinimumSize(new Dimension(70, 26));
-        candidatesSpinner.setPreferredSize(new Dimension(70, 26));
-        otherPanel.add(new JLabel(" candidates"));
-        otherPanel.add(candidatesSpinner);
-
-        instrumentCB.addItemListener(new ItemListener() {
+        boolean enableFallback = hasCompoundWithUnknownIonization();
+        searchProfilePanel = new SearchProfilePanel(this, enableFallback);
+        mainPanel.add(searchProfilePanel);
+        searchProfilePanel.formulaCombobox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
-                final String name = (String) e.getItem();
-                final double recommendedPPM;
-
-                if (name.equals("Q-TOF")) recommendedPPM = 10;
-                else if (name.equals("Orbitrap")) recommendedPPM = 5;
-                else if (name.equals("FT-ICR")) recommendedPPM = 2;
-                else recommendedPPM = 10;
-
-                ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
+                FormulaSource source = searchProfilePanel.getFormulaSource();
+                enableElementSelection(source==FormulaSource.ALL_POSSIBLE);
+                runCSIFingerId.setText(source == FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
             }
         });
-        stack.add(otherPanel);
 
-        //
-        otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        ionizations = new Vector<>();
-        ionizations.add("treat as protonation");
-        ionizations.add("try common adduct types");
-        ionizationCB = new JComboBox<>(ionizations);
-        ionizationCB.setSelectedIndex(0);
-        ionizationCB.setEnabled(hasCompoundWithUnknownIonization());
-        otherPanel.add(new JLabel("  fallback for unknown adduct types"));
-        otherPanel.add(ionizationCB);
-        stack.add(otherPanel);
 
-        //////////
-        {
-            JLabel label = new JLabel("Consider ");
-            final Vector<String> values = new Vector<>();
-            values.add("all possible molecular formulas");
-            values.add("all PubChem formulas");
-            values.add("organic PubChem formulas");
-            values.add("formulas from biological databases");
-            formulaCombobox = new JComboBox<>(values);
-            otherPanel.add(label);
-            otherPanel.add(formulaCombobox);
-            formulaCombobox.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    enableElementSelection(formulaCombobox.getSelectedIndex() == 0);
-                    runCSIFingerId.setText(getSelectedFormulaSource() == FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
-                }
-            });
-        }
-        mainPanel.add(stack);
 
-        stack = new JPanel();
+        JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
         stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId search"));
 
         {
-            otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+            JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
             final JLabel label = new JLabel(Icons.FINGER_64, SwingConstants.LEFT);
-            runCSIFingerId = new JCheckBox(getSelectedFormulaSource()==FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
+//            runCSIFingerId = new JCheckBox(getSelectedFormulaSource()==FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
+            //changed
+            runCSIFingerId = new JCheckBox(searchProfilePanel.getFormulaSource()==FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
             otherPanel.add(label);
             otherPanel.add(runCSIFingerId);
             stack.add(otherPanel, BorderLayout.CENTER);
@@ -256,6 +173,21 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     }
 
+    public void enableElementSelection(boolean enabled) {
+        elementPanel.enableElementSelection(enabled);
+        elementAutoDetect.setEnabled(enabled);
+    }
+
+    public void useElementAutodetect(boolean enable){
+        elementPanel.enableElementSelection(!enable);
+        if (enable){
+            elementAutoDetect.setText(autoDetectTextEnabled);
+        } else {
+            elementAutoDetect.setText(autoDetectTextDisabled);
+        }
+
+    }
+
     private boolean hasCompoundWithUnknownIonization() {
         Enumeration<ExperimentContainer> compounds = owner.getCompounds();
         while (compounds.hasMoreElements()) {
@@ -269,89 +201,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return false;
     }
 
-    public void enableElementSelection(boolean enabled) {
-        if (enabled) {
-            for (JCheckBox b : Arrays.asList(borone, bromine, chlorine, fluorine, iodine, selenium)) {
-                b.setEnabled(true);
-            }
-            elementButton.setEnabled(true);
-            elementAutoDetect.setEnabled(false);
-            elementTF.setEnabled(true);
-        } else {
-            for (JCheckBox b : Arrays.asList(borone, bromine, chlorine, fluorine, iodine, selenium)) {
-                b.setEnabled(false);
-            }
-            elementButton.setEnabled(false);
-            elementAutoDetect.setEnabled(false);
-            elementTF.setEnabled(false);
-        }
-    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == abort) {
             this.dispose();
-        } else if (e.getSource() == this.elementButton) {
-            HashSet<String> eles = new HashSet<>();
-            if (borone.isSelected()) eles.add("B");
-            if (bromine.isSelected()) eles.add("Br");
-            if (chlorine.isSelected()) eles.add("Cl");
-            if (fluorine.isSelected()) eles.add("F");
-            if (iodine.isSelected()) eles.add("I");
-            if (selenium.isSelected()) eles.add("Se");
-            eles.addAll(additionalElements);
-            AdditionalElementDialog diag = new AdditionalElementDialog(this, eles);
-            if (diag.successful()) {
-                additionalElements = new TreeSet<>(diag.getSelectedElements());
-                if (additionalElements.contains("B")) {
-                    borone.setSelected(true);
-                    additionalElements.remove("B");
-                } else {
-                    borone.setSelected(false);
-                }
-                if (additionalElements.contains("Br")) {
-                    bromine.setSelected(true);
-                    additionalElements.remove("Br");
-                } else {
-                    bromine.setSelected(false);
-                }
-                if (additionalElements.contains("Cl")) {
-                    chlorine.setSelected(true);
-                    additionalElements.remove("Cl");
-                } else {
-                    chlorine.setSelected(false);
-                }
-                if (additionalElements.contains("F")) {
-                    fluorine.setSelected(true);
-                    additionalElements.remove("F");
-                } else {
-                    fluorine.setSelected(false);
-                }
-                if (additionalElements.contains("I")) {
-                    iodine.setSelected(true);
-                    additionalElements.remove("I");
-                } else {
-                    iodine.setSelected(false);
-                }
-                if (additionalElements.contains("Se")) {
-                    selenium.setSelected(true);
-                    additionalElements.remove("Se");
-                } else {
-                    selenium.setSelected(false);
-                }
-
-                StringBuilder newText = new StringBuilder();
-                Iterator<String> it = additionalElements.iterator();
-                while (it.hasNext()) {
-                    newText.append(it.next());
-                    if (it.hasNext()) newText.append(",");
-                }
-                elementTF.setText(newText.toString());
-
-
-            }
-        } else if (e.getSource() == this.compute) {
+        }  else if (e.getSource() == this.compute) {
             startComputing();
+        }else if (e.getSource() == elementAutoDetect) {
+            useElementAutodetect(!elementAutoDetect.getText().equals(autoDetectTextEnabled));
         }
     }
 
@@ -360,7 +218,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void startComputing() {
-        String val = (String) instrumentCB.getSelectedItem();
+        String val = searchProfilePanel.getInstrument();
         String instrument = "";
         if (val.equals("Q-TOF")) {
             instrument = "qtof";
@@ -372,7 +230,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             throw new RuntimeException("no valid instrument");
         }
 
-        FormulaSource formulaSource = getSelectedFormulaSource();
+        FormulaSource formulaSource = searchProfilePanel.getFormulaSource();
 
         if (formulaSource!=FormulaSource.ALL_POSSIBLE){
             //Test connection, if needed
@@ -383,29 +241,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         }
 
-        FormulaConstraints constraints;
-        {
-            HashSet<String> eles = new HashSet<>();
-            if (borone.isSelected()) eles.add("B");
-            if (bromine.isSelected()) eles.add("Br");
-            if (chlorine.isSelected()) eles.add("Cl");
-            if (fluorine.isSelected()) eles.add("F");
-            if (iodine.isSelected()) eles.add("I");
-            if (selenium.isSelected()) eles.add("Se");
-            eles.addAll(additionalElements);
-            Element[] elems = new Element[eles.size()];
-            int k = 0;
-            final PeriodicTable tb = PeriodicTable.getInstance();
-            for (String s : eles) {
-                final Element elem = tb.getByName(s);
-                if (elem != null)
-                    elems[k++] = elem;
-            }
-            if (k < elems.length) elems = Arrays.copyOf(elems, k);
-            constraints = new FormulaConstraints().getExtendedConstraints(elems);
-        }
+        final FormulaConstraints constraints = elementPanel.getElementConstraints();
 
-        final double ppm = snm.getNumber().doubleValue();
+        final double ppm = searchProfilePanel.getPpm();
 
         final int candidates = ((Number) candidatesSpinner.getModel().getValue()).intValue();
 
@@ -424,7 +262,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         // treatment of unknown ionization
         final boolean treatAsHydrogen;
-        treatAsHydrogen = (((String) ionizationCB.getSelectedItem()).equals("treat as protonation"));
+        treatAsHydrogen = (searchProfilePanel.getIonization().equals("treat as protonation"));
 
         //entspricht setup() Methode
         final BackgroundComputation bgc = owner.getBackgroundComputation();
@@ -461,10 +299,4 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
 
-    public FormulaSource getSelectedFormulaSource() {
-        if (formulaCombobox.getSelectedIndex() == 0) return FormulaSource.ALL_POSSIBLE;
-        else if (formulaCombobox.getSelectedIndex() == 1) return FormulaSource.PUBCHEM_ALL;
-        else if (formulaCombobox.getSelectedIndex() == 2) return FormulaSource.PUBCHEM_ORGANIC;
-        else return FormulaSource.BIODB;
-    }
 }

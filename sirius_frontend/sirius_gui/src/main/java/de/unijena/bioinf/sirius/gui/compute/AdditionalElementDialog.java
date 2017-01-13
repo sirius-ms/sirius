@@ -16,8 +16,8 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 	
 	private boolean success;
 	
-	public AdditionalElementDialog(JDialog owner,Collection<String> selectedRareElements) {
-		super(owner,"additional elements",true);
+	public AdditionalElementDialog(Window owner,Collection<String> selectedRareElements) {
+		super(owner,"additional elements",Dialog.DEFAULT_MODALITY_TYPE);
 		
 		success = false;
 		
@@ -62,7 +62,7 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 				rareElements.add(new JLabel(""));
 			}else{
 				JToggleButton button = new JToggleButton(s);
-				if(s.equals("P")||s.equals("S")||s.isEmpty()) button.setEnabled(false);
+				if(s.equals("P")||s.isEmpty()) button.setEnabled(false);
 				if(elementMap.contains(s)) button.setSelected(true);
 				button.addActionListener(this);
 				rareElements.add(button);
@@ -73,7 +73,6 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 		String[] row4 = {"K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr"};
 		for(String s : row4){
 			JToggleButton button = new JToggleButton(s);
-			if(s.equals("P")||s.equals("S")||s.isEmpty()) button.setEnabled(false);
 			if(elementMap.contains(s)) button.setSelected(true);
 			button.addActionListener(this);
 			rareElements.add(button);
