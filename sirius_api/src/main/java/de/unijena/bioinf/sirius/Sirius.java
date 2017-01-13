@@ -115,9 +115,8 @@ public class Sirius {
      */
     public void setFormulaConstraints(FormulaConstraints constraints) {
         final PeriodicTable tb = PeriodicTable.getInstance();
-        final Element[] chnops = new Element[]{tb.getByName("C"), tb.getByName("H"), tb.getByName("N"), tb.getByName("O"), tb.getByName("P"),
-                tb.getByName("S")};
-        final FormulaConstraints fc = constraints.getExtendedConstraints(chnops);
+        final Element[] chnop = new Element[]{tb.getByName("C"), tb.getByName("H"), tb.getByName("N"), tb.getByName("O"), tb.getByName("P")};
+        final FormulaConstraints fc = constraints.getExtendedConstraints(chnop);
         getMs1Analyzer().getDefaultProfile().setFormulaConstraints(fc);
         getMs2Analyzer().getDefaultProfile().setFormulaConstraints(fc);
     }
@@ -506,6 +505,10 @@ public class Sirius {
         return 0d;
     }
 
+    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
+        return identify(uexperiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints)null);
+    }
+
 
     /**
      * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
@@ -514,12 +517,12 @@ public class Sirius {
      * @param numberOfCandidates number of candidates to output
      * @param recalibrating      true if spectra should be recalibrated during tree computation
      * @param deisotope          set this to 'omit' to ignore isotope pattern, 'filter' to use it for selecting molecular formula candidates or 'score' to rerank the candidates according to their isotope pattern
+     * @param formulaConstraints use if specific constraints on the molecular formulas shall be imposed (may be null)
      * @return a list of identified molecular formulas together with their tree
      */
-    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
+    public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, FormulaConstraints formulaConstraints) {
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.performValidation(uexperiment);
-        final MutableMs2Experiment experiment = pinput.getExperimentInformation();
-        predictElements(pinput);
+        if (formulaConstraints!=null) pinput.getMeasurementProfile().setFormulaConstraints(formulaConstraints);
         // first check if MS data is present;
         final List<IsotopePattern> candidates = lookAtMs1(pinput, deisotope != IsotopePatternHandling.omit);
         final HashMap<MolecularFormula, IsotopePattern> isoFormulas = new HashMap<>();
@@ -635,15 +638,20 @@ public class Sirius {
         }
     }
 
+    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
+        return identifyPrecursorAndIonization(uexperiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints)null);
+    }
+
     /**
      * Identify the molecular formula of the measured compound as well as the ionization mode.
      * This method behaves like identify, but will try different ion modes and return the best trees over all different
      * ionizations. This method does not accept a whitelist, as for a neutral molecular formula candidate it is always possible to determine the
      * ionization mode.
      */
-    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
+    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope, FormulaConstraints formulaConstraints) {
         ProcessedInput validatedInput = profile.fragmentationPatternAnalysis.performValidation(uexperiment);
-        predictElements(validatedInput);
+        if (formulaConstraints!=null) validatedInput.getMeasurementProfile().setFormulaConstraints(formulaConstraints);
+
         final MutableMs2Experiment experiment = validatedInput.getExperimentInformation();
         // first check if MS data is present;
         final List<IsotopePattern> candidates = lookAtMs1(validatedInput, deisotope != IsotopePatternHandling.omit);
