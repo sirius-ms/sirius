@@ -49,7 +49,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 	private ElementsPanel elementPanel;
 	private SearchProfilePanel searchProfilePanel;
 	private MainFrame owner;
-	
+
 
 	private boolean success;
 	private ExperimentContainer ec;
@@ -180,7 +180,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 		mainPanel.add(focMassPanel,BorderLayout.NORTH);
 		
 		/////////////////////////////////////////////
-		elementPanel = new ElementsPanel(this);
+		elementPanel = new ElementsPanel(this, 4);
 		mainPanel.add(elementPanel);
 
         elementPanel.add(Box.createHorizontalGlue());

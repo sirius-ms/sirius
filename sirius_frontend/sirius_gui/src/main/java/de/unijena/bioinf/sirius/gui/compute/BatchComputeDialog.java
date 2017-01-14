@@ -84,7 +84,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
         /////////////////////////////////////////////
-        elementPanel = new ElementsPanel(this);
+        elementPanel = new ElementsPanel(this, 3);
         mainPanel.add(elementPanel);
 
 //        elementPanel.add(Box.createHorizontalGlue());

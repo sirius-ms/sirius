@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.sirius.gui.utils.SliderWithTextField;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,194 +19,142 @@ public class ElementsPanel extends JPanel implements ActionListener {
 
     private Window owner;
 
+    private static final int maxNumberOfOneElements = 10;
     private static final String[] defaultElementSymbols = new String[]{"C", "H", "N", "O", "P"};
     private final Element[] defaultElements;
-    private JCheckBox sulfur, bromine, boron, selenium, chlorine, iodine, fluorine;
-    private JTextField elementTF;
+
     private JButton elementButton;
-    private HashMap<Element, JCheckBox> element2Checkbox;
+    private HashMap<String, ElementSlider> element2Slider;
+    private JPanel elementsPanel;
+    private JScrollPane scrollPane;
+    private JPanel mainP;
 
-    private TreeSet<String> additionalElements;
+    private final PeriodicTable periodicTable;
 
-    public ElementsPanel(Window owner){
+
+    public ElementsPanel(Window owner, int columns){
         this.owner = owner;
-        additionalElements = new TreeSet<>();
+
+        periodicTable = PeriodicTable.getInstance();
+        defaultElements = new Element[defaultElementSymbols.length];
+        for (int i = 0; i < defaultElementSymbols.length; i++) {
+            defaultElements[i] = periodicTable.getByName(defaultElementSymbols[i]);
+
+        }
 
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "elements beside CHNOP"));
         this.setLayout(new BoxLayout(this,BoxLayout.LINE_AXIS));
 
-        JPanel mainP = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+        mainP = new JPanel();
+        mainP.setLayout(new BoxLayout(mainP,BoxLayout.Y_AXIS));
         this.add(mainP);
 
-        JPanel elements = new JPanel();
-        elements.setLayout(new BoxLayout(elements,BoxLayout.LINE_AXIS));
 
-        sulfur = new JCheckBox("sulfur");
-        bromine = new JCheckBox("bromine");
-        boron = new JCheckBox("boron");
-        selenium = new JCheckBox("selenium");
-        chlorine = new JCheckBox("chlorine");
-        iodine = new JCheckBox("iodine");
-        fluorine = new JCheckBox("fluorine");
+        elementsPanel = new JPanel(new GridLayout(0,columns));
+        element2Slider = new HashMap<>();
 
-        elements.add(sulfur);
-        elements.add(bromine);
-        elements.add(boron);
-        elements.add(chlorine);
-        elements.add(fluorine);
-        elements.add(iodine);
-        elements.add(selenium);
-        sulfur.setSelected(true);
-        mainP.add(elements);
+        Element sulfur = PeriodicTable.getInstance().getByName("S");
+        ElementSlider elementSlider = new ElementSlider(sulfur, maxNumberOfOneElements, maxNumberOfOneElements);
+        elementsPanel.add(elementSlider.slider);
 
-        element2Checkbox = new HashMap<>();
-        final PeriodicTable T = PeriodicTable.getInstance();
-        defaultElements = new Element[defaultElementSymbols.length];
-        for (int i = 0; i < defaultElementSymbols.length; i++) {
-            defaultElements[i] = T.getByName(defaultElementSymbols[i]);
+        element2Slider.put(sulfur.getSymbol(), elementSlider);
 
-        }
-        element2Checkbox.put(T.getByName("S"), sulfur);
-        element2Checkbox.put(T.getByName("Br"), bromine);
-        element2Checkbox.put(T.getByName("B"), boron);
-        element2Checkbox.put(T.getByName("Cl"), chlorine);
-        element2Checkbox.put(T.getByName("I"), iodine );
-        element2Checkbox.put(T.getByName("F"), fluorine);
-        element2Checkbox.put(T.getByName("Se"), selenium);
+        scrollPane = new JScrollPane(elementsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setPreferredSize(new Dimension(elementsPanel.getPreferredSize().width, 2*elementsPanel.getPreferredSize().height));
+        scrollPane.setSize(new Dimension(elementsPanel.getPreferredSize().width, 2*elementsPanel.getPreferredSize().height));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+;
+        mainP.add(scrollPane);
 
-        elementTF = new JTextField(10);
-        elementTF.setEditable(false);
-        elementButton = new JButton("More elements");
+        elementButton = new JButton("Add elements");
         elementButton.addActionListener(this);
 
         JPanel elements2 = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
-        elements2.add(elementTF);
         elements2.add(elementButton);
         mainP.add(elements2);
 
     }
 
     public FormulaConstraints getElementConstraints(){
-        HashSet<String> eles = new HashSet<>();
-        if (sulfur.isSelected()) eles.add("S");
-        if (boron.isSelected()) eles.add("B");
-        if (bromine.isSelected()) eles.add("Br");
-        if (chlorine.isSelected()) eles.add("Cl");
-        if (fluorine.isSelected()) eles.add("F");
-        if (iodine.isSelected()) eles.add("I");
-        if (selenium.isSelected()) eles.add("Se");
-        eles.addAll(additionalElements);
-        Element[] elems = Arrays.copyOf(defaultElements, defaultElements.length+eles.size());
+        Element[] elems = Arrays.copyOf(defaultElements, defaultElements.length+element2Slider.size());
         int k = 0;
-        final PeriodicTable tb = PeriodicTable.getInstance();
-        for (String s : eles) {
-            final Element elem = tb.getByName(s);
+        for (String s : element2Slider.keySet()) {
+            final Element elem = periodicTable.getByName(s);
             if (elem != null)
                 elems[defaultElementSymbols.length+k++] = elem;
         }
         if (k+defaultElements.length < elems.length) elems = Arrays.copyOf(elems, k+defaultElements.length);
 
-        return new FormulaConstraints(new ChemicalAlphabet(elems));
-
+        FormulaConstraints formulaConstraints =  new FormulaConstraints(new ChemicalAlphabet(elems));
+        for (String s : element2Slider.keySet()) {
+            int max = element2Slider.get(s).getMax();
+            if (max!= maxNumberOfOneElements) formulaConstraints.setUpperbound(periodicTable.getByName(s), max);
+        }
+        return formulaConstraints;
     }
-    
 
     
-    private void excludeAndSetElements(TreeSet<String> elements){
-        if (elements.contains("S")) {
-            sulfur.setSelected(true);
-            elements.remove("S");
-        } else {
-            sulfur.setSelected(false);
+    public void setSelectedElements(Set<String> selected){
+        Set<String> selectedNoDefaults = new HashSet<>(selected);
+        for (String symbol : defaultElementSymbols) selectedNoDefaults.remove(symbol);
+
+        Set<String> current = new HashSet<>(element2Slider.keySet());
+        for (String symbol : current) {
+            if (!selectedNoDefaults.contains(symbol)){
+                elementsPanel.remove(element2Slider.get(symbol).slider);
+                element2Slider.remove(symbol);
+            }
         }
-        if (elements.contains("B")) {
-            boron.setSelected(true);
-            elements.remove("B");
-        } else {
-            boron.setSelected(false);
+        for (String symbol : selectedNoDefaults) {
+            if (!element2Slider.containsKey(symbol)){
+                Element ele = periodicTable.getByName(symbol);
+                ElementSlider slider = new ElementSlider(ele, maxNumberOfOneElements, maxNumberOfOneElements);
+                element2Slider.put(ele.getSymbol(), slider);
+                elementsPanel.add(slider.slider);
+            }
         }
-        if (elements.contains("Br")) {
-            bromine.setSelected(true);
-            elements.remove("Br");
-        } else {
-            bromine.setSelected(false);
-        }
-        if (elements.contains("Cl")) {
-            chlorine.setSelected(true);
-            elements.remove("Cl");
-        } else {
-            chlorine.setSelected(false);
-        }
-        if (elements.contains("F")) {
-            fluorine.setSelected(true);
-            elements.remove("F");
-        } else {
-            fluorine.setSelected(false);
-        }
-        if (elements.contains("I")) {
-            iodine.setSelected(true);
-            elements.remove("I");
-        } else {
-            iodine.setSelected(false);
-        }
-        if (elements.contains("Se")) {
-            selenium.setSelected(true);
-            elements.remove("Se");
-        } else {
-            selenium.setSelected(false);
-        }
-    }
-    
-    public void setSelectedElements(Set<String> eles){
-        additionalElements = new TreeSet<>(eles);
-        excludeAndSetElements(additionalElements);
+
+        owner.revalidate();
+        owner.repaint();
     }
 
 
     public void enableElementSelection(boolean enabled) {
-        if (enabled) {
-            for (JCheckBox b : Arrays.asList(sulfur, boron, bromine, chlorine, fluorine, iodine, selenium)) {
-                b.setEnabled(true);
-            }
-            elementButton.setEnabled(true);
-            elementTF.setEnabled(true);
-        } else {
-            for (JCheckBox b : Arrays.asList(sulfur, boron, bromine, chlorine, fluorine, iodine, selenium)) {
-                b.setEnabled(false);
-            }
-            elementButton.setEnabled(false);
-            elementTF.setEnabled(false);
+        for (ElementSlider elementSlider : element2Slider.values()) {
+            elementSlider.slider.setEnabled(enabled);
         }
+        elementButton.setEnabled(enabled);
+        elementsPanel.setEnabled(enabled);
     }
 
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == this.elementButton) {
-            HashSet<String> eles = new HashSet<>();
-            if (sulfur.isSelected()) eles.add("S");
-            if (boron.isSelected()) eles.add("B");
-            if (bromine.isSelected()) eles.add("Br");
-            if (chlorine.isSelected()) eles.add("Cl");
-            if (fluorine.isSelected()) eles.add("F");
-            if (iodine.isSelected()) eles.add("I");
-            if (selenium.isSelected()) eles.add("Se");
-            eles.addAll(additionalElements);
-            AdditionalElementDialog diag = new AdditionalElementDialog(owner, eles);
+            Set<String> selectedElements = new HashSet<>(element2Slider.keySet());
+            AdditionalElementDialog diag = new AdditionalElementDialog(owner, selectedElements);
             if (diag.successful()) {
-                additionalElements = new TreeSet<>(diag.getSelectedElements());
-                excludeAndSetElements(additionalElements);
-                StringBuilder newText = new StringBuilder();
-
-                Iterator<String> it = additionalElements.iterator();
-                while (it.hasNext()) {
-                    newText.append(it.next());
-                    if (it.hasNext()) newText.append(",");
-                }
-                elementTF.setText(newText.toString());
-
-
+                Set<String> newSelected = new HashSet<>(diag.getSelectedElements());
+                setSelectedElements(newSelected);
             }
+        }
+    }
+
+    private class ElementSlider{
+        private Element element;
+        private SliderWithTextField slider;
+        public ElementSlider(Element element, int min, int max){
+            this.element = element;
+            //// TODO: range upper value not working
+            this.slider = new SliderWithTextField(element.getSymbol(), 0, maxNumberOfOneElements, max, -1);
+        }
+
+        int getMin(){
+            return slider.getMinValue();
+        }
+
+        int getMax(){
+            return slider.getMaxValue();
         }
     }
 }
