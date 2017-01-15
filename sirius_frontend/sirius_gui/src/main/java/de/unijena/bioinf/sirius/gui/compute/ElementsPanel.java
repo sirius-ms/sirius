@@ -42,7 +42,7 @@ public class ElementsPanel extends JPanel implements ActionListener {
 
         }
 
-        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "elements beside CHNOP"));
+        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Elements beside CHNOP"));
         this.setLayout(new BoxLayout(this,BoxLayout.LINE_AXIS));
 
         mainP = new JPanel();
@@ -66,7 +66,7 @@ public class ElementsPanel extends JPanel implements ActionListener {
 ;
         mainP.add(scrollPane);
 
-        elementButton = new JButton("Add elements");
+        elementButton = new JButton("Select elements");
         elementButton.addActionListener(this);
 
         JPanel elements2 = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
