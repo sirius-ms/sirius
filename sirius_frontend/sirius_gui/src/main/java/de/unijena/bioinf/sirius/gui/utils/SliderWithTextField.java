@@ -18,7 +18,8 @@ public class SliderWithTextField extends JPanel {
     final boolean isRangeSlider;
 
     private final JTextField text1, text2;
-
+    public final JLabel nameLabel;
+    private final int min, max;
 
     public SliderWithTextField(String name, int min, final int max, int value) {
         this(name, min, max, value, -1);
@@ -27,11 +28,15 @@ public class SliderWithTextField extends JPanel {
     //// TODO: range upper value not working
     public SliderWithTextField(String name, int min, final int max, int currentMin, int currentMax) {
         this.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        this.min = min;
+        this.max = max;
+
         final int length = (int)(Math.log10(max)+1);
         isRangeSlider = (currentMax>0);
         if (!isRangeSlider) currentMax = currentMin;
 
-        this.add(new JLabel(name));
+        this.nameLabel = new JLabel(name);
+        this.add(nameLabel);
 
         if (!isRangeSlider){
             slider = new JSlider(min,max,currentMin);
@@ -88,26 +93,7 @@ public class SliderWithTextField extends JPanel {
         slider.addChangeListener(new ChangeListener(){
             @Override
             public void stateChanged(ChangeEvent e) {
-                if (isRangeSlider){
-                    int minValue = ((RangeSlider)slider).getLowerValue();
-                    int maxValue = ((RangeSlider)slider).getUpperValue();
-                    if (minValue==max){
-                        text1.setText("inf");
-                    } else {
-                        text1.setText(String.valueOf(minValue));
-                    }
-                    if (maxValue==max){
-                        text2.setText("inf");
-                    } else {
-                        text2.setText(String.valueOf(maxValue));
-                    }
-                } else {
-                    if (slider.getValue()==max){
-                        text2.setText("inf");
-                    } else {
-                        text2.setText(String.valueOf(slider.getValue()));
-                    }
-                }
+                refreshText();
             }
         });
         text2.addKeyListener(new KeyAdapter(){
@@ -151,6 +137,37 @@ public class SliderWithTextField extends JPanel {
             return ((RangeSlider)slider).getUpperValue();
         } else {
             return slider.getValue();
+        }
+    }
+
+    public JTextField getLeftTextField(){
+        return text1;
+    }
+
+    public JTextField getRightTextField(){
+        return text2;
+    }
+
+    public void refreshText(){
+        if (isRangeSlider){
+            int minValue = ((RangeSlider)slider).getLowerValue();
+            int maxValue = ((RangeSlider)slider).getUpperValue();
+            if (minValue==max){
+                text1.setText("inf");
+            } else {
+                text1.setText(String.valueOf(minValue));
+            }
+            if (maxValue==max){
+                text2.setText("inf");
+            } else {
+                text2.setText(String.valueOf(maxValue));
+            }
+        } else {
+            if (slider.getValue()==max){
+                text2.setText("inf");
+            } else {
+                text2.setText(String.valueOf(slider.getValue()));
+            }
         }
     }
 
