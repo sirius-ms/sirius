@@ -18,7 +18,9 @@
 
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -48,6 +50,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
+import java.util.List;
 
 public class BatchComputeDialog extends JDialog implements ActionListener {
 
@@ -58,9 +61,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
     private ElementsPanel elementPanel;
-    private JButton elementAutoDetect;
-    private String autoDetectTextEnabled = "Auto detection enabled";
-    private String autoDetectTextDisabled= "Auto detection disabled";
     private SearchProfilePanel searchProfilePanel;
     private JCheckBox runCSIFingerId;
     private MainFrame owner;
@@ -84,28 +84,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
         /////////////////////////////////////////////
-        elementPanel = new ElementsPanel(this, 3);
+        //todo remove hardCoded!!!!!!!
+        PeriodicTable T = PeriodicTable.getInstance();
+        Element[] detectableElements = new Element[]{
+                T.getByName("B"),
+                T.getByName("Br"),
+                T.getByName("Cl"),
+                T.getByName("S"),
+                T.getByName("Si"),
+                T.getByName("Se"),
+        };
+
+        elementPanel = new ElementsPanel(this, 3, Arrays.asList(detectableElements));
         mainPanel.add(elementPanel);
-
-//        elementPanel.add(Box.createHorizontalGlue());
-
-        elementAutoDetect = new JButton(autoDetectTextEnabled);
-
-        FontMetrics metrics = elementAutoDetect.getFontMetrics(elementAutoDetect.getFont());
-        Dimension preferred = elementAutoDetect.getPreferredSize();
-        int height = preferred.height;
-        int currentWidth = preferred.width;
-        int textWidth = metrics.stringWidth(autoDetectTextEnabled);
-        int margin = currentWidth-textWidth;
-        int newWidth = Math.max(textWidth, metrics.stringWidth(autoDetectTextDisabled));
-        elementAutoDetect.setPreferredSize(new Dimension(newWidth+margin, height));
-
-
-        elementAutoDetect.addActionListener(this);
-        elementAutoDetect.setEnabled(true);
-        elementPanel.add(elementAutoDetect);
-
-        useElementAutodetect(true);
 
         /////////////////////////////////////////////
 
@@ -196,22 +187,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     public void enableElementSelection(boolean enabled) {
         elementPanel.enableElementSelection(enabled);
-        elementAutoDetect.setEnabled(enabled);
     }
 
-    public void useElementAutodetect(boolean enable){
-        elementPanel.enableElementSelection(!enable);
-        if (enable){
-            elementAutoDetect.setText(autoDetectTextEnabled);
-        } else {
-            elementAutoDetect.setText(autoDetectTextDisabled);
-        }
-
-    }
-
-    public boolean isAutoDetectElements(){
-        return elementAutoDetect.getText().equals(autoDetectTextEnabled);
-    }
 
     private boolean hasCompoundWithUnknownIonization() {
         Enumeration<ExperimentContainer> compounds = owner.getCompounds();
@@ -233,8 +210,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             this.dispose();
         }  else if (e.getSource() == this.compute) {
             startComputing();
-        } else if (e.getSource() == elementAutoDetect) {
-            useElementAutodetect(!isAutoDetectElements());
         } else if (e.getSource() == recompute) {
             final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
             Properties properties = ApplicationCore.getUserCopyOfUserProperties();
@@ -287,6 +262,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
         FormulaConstraints constraints = elementPanel.getElementConstraints();
+        List<Element> elementsToAutoDetect = elementPanel.getElementsToAutoDetect();
 
         final double ppm = searchProfilePanel.getPpm();
 
@@ -327,13 +303,16 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                if (isAutoDetectElements()){
+                FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
+                if (!elementsToAutoDetect.isEmpty()){
                     MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), ec.getFocusedMass());
-                    //todo what if no isotope pattern?
-                    constraints = sirius.predictElementsFromMs1(exp);
+                    FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
+                    for (Element element : elementsToAutoDetect) {
+                        individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                    }
                 }
 
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, constraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
                 tasks.add(task);
                 compoundList.add(ec);
             }

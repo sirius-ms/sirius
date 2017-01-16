@@ -318,16 +318,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 
 			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
 			final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
-
-
-			//Collect symbols of predicted elements
-			Set<String> predictedElements = new HashSet<>();
-			for (Element element : c.getChemicalAlphabet().getElements()) {
-				if (c.getUpperbound(element)>0){
-					predictedElements.add(element.getSymbol());
-				}
-			}
-			elementPanel.setSelectedElements(predictedElements);
+			elementPanel.setSelectedElements(c);
 
 		}
 	}

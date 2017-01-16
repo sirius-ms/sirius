@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by Marcus Ludwig on 12.01.17.
@@ -19,27 +20,38 @@ public class ElementsPanel extends JPanel implements ActionListener {
 
     private Window owner;
 
-    private static final int maxNumberOfOneElements = 10;
+    private static final int maxNumberOfOneElements = 20;
     private static final String[] defaultElementSymbols = new String[]{"C", "H", "N", "O", "P"};
-    private final Element[] defaultElements;
+    private static final String[] additionalElementSymbols = new String[]{"S", "B", "Br", "Cl", "F", "I", "Se"};
+    private static final int[] additionalElementStartCounts = new int[]{maxNumberOfOneElements, 0, 0, 0, 0, 0, 0};
 
+    private final Element[] defaultElements;
+    private final boolean individualAutoDetect;
     private JButton elementButton;
     private HashMap<String, ElementSlider> element2Slider;
     private JPanel elementsPanel;
     private JScrollPane scrollPane;
     private JPanel mainP;
 
+    private Set<Element> detectableElements;
+
     private final PeriodicTable periodicTable;
 
-
     public ElementsPanel(Window owner, int columns){
+        this(owner, columns, null);
+    }
+
+    public ElementsPanel(Window owner, int columns, Collection<Element> detectableElements){
         this.owner = owner;
+        this.individualAutoDetect = (detectableElements!=null);
+        if (individualAutoDetect){
+            this.detectableElements = new HashSet<>(detectableElements);
+        }
 
         periodicTable = PeriodicTable.getInstance();
         defaultElements = new Element[defaultElementSymbols.length];
         for (int i = 0; i < defaultElementSymbols.length; i++) {
             defaultElements[i] = periodicTable.getByName(defaultElementSymbols[i]);
-
         }
 
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Elements beside CHNOP"));
@@ -49,19 +61,35 @@ public class ElementsPanel extends JPanel implements ActionListener {
         mainP.setLayout(new BoxLayout(mainP,BoxLayout.Y_AXIS));
         this.add(mainP);
 
-
         elementsPanel = new JPanel(new GridLayout(0,columns));
         element2Slider = new HashMap<>();
 
-        Element sulfur = PeriodicTable.getInstance().getByName("S");
-        ElementSlider elementSlider = new ElementSlider(sulfur, maxNumberOfOneElements, maxNumberOfOneElements);
-        elementsPanel.add(elementSlider.slider);
 
-        element2Slider.put(sulfur.getSymbol(), elementSlider);
+        if (individualAutoDetect){
+            for (Element detectableElement : detectableElements) {
+                if (!element2Slider.containsKey(detectableElement.getSymbol())){
+                    ElementSlider elementSlider = new ElementSlider(detectableElement, 0, 0);
+                    addElementSlider(elementSlider);
+                }
+            }
+        }
+
+        for (int i = 0; i < additionalElementSymbols.length; i++) {
+            String symbol = additionalElementSymbols[i];
+            int count = additionalElementStartCounts[i];
+            if (!element2Slider.containsKey(symbol)){
+                Element element = PeriodicTable.getInstance().getByName(symbol);
+                ElementSlider elementSlider = new ElementSlider(element, count, count);
+                addElementSlider(elementSlider);
+            }
+        }
+
 
         scrollPane = new JScrollPane(elementsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setPreferredSize(new Dimension(elementsPanel.getPreferredSize().width, 2*elementsPanel.getPreferredSize().height));
-        scrollPane.setSize(new Dimension(elementsPanel.getPreferredSize().width, 2*elementsPanel.getPreferredSize().height));
+        int width = elementsPanel.getPreferredSize().width;
+        int height = 2*element2Slider.values().iterator().next().getPanel().getPreferredSize().height;
+        scrollPane.setPreferredSize(new Dimension(width, height));
+        scrollPane.setSize(new Dimension(width, height));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
 ;
         mainP.add(scrollPane);
@@ -93,6 +121,21 @@ public class ElementsPanel extends JPanel implements ActionListener {
         return formulaConstraints;
     }
 
+    public List<Element> getElementsToAutoDetect(){
+        //todo what if all shall be detected?
+        if (individualAutoDetect){
+            List<Element> elementsToDetect = new ArrayList<>();
+            for (ElementSlider slider : element2Slider.values()) {
+                if (slider.isAutoDetectable()){
+                    elementsToDetect.add(slider.element);
+                }
+            }
+            return elementsToDetect;
+        } else {
+            throw new RuntimeException("individual auto detect selection is not enabled");
+        }
+    }
+
     
     public void setSelectedElements(Set<String> selected){
         Set<String> selectedNoDefaults = new HashSet<>(selected);
@@ -101,16 +144,14 @@ public class ElementsPanel extends JPanel implements ActionListener {
         Set<String> current = new HashSet<>(element2Slider.keySet());
         for (String symbol : current) {
             if (!selectedNoDefaults.contains(symbol)){
-                elementsPanel.remove(element2Slider.get(symbol).slider);
-                element2Slider.remove(symbol);
+                removeElementSlider(symbol);
             }
         }
         for (String symbol : selectedNoDefaults) {
             if (!element2Slider.containsKey(symbol)){
                 Element ele = periodicTable.getByName(symbol);
                 ElementSlider slider = new ElementSlider(ele, maxNumberOfOneElements, maxNumberOfOneElements);
-                element2Slider.put(ele.getSymbol(), slider);
-                elementsPanel.add(slider.slider);
+                addElementSlider(slider);
             }
         }
 
@@ -119,9 +160,42 @@ public class ElementsPanel extends JPanel implements ActionListener {
     }
 
 
+    public void setSelectedElements(FormulaConstraints constraints){
+        Set<Element> selectedNoDefaults = new HashSet<>(constraints.getChemicalAlphabet().getElements());
+        for (Element element : defaultElements) selectedNoDefaults.remove(element);
+
+        Set<String> current = new HashSet<>(element2Slider.keySet());
+        for (String symbol : current) {
+            if (!selectedNoDefaults.contains(symbol)){
+                removeElementSlider(symbol);
+            }
+        }
+        for (Element ele : selectedNoDefaults) {
+            if (!element2Slider.containsKey(ele.getSymbol())){
+                int max = Math.min(maxNumberOfOneElements, constraints.getUpperbound(ele));
+                ElementSlider slider = new ElementSlider(ele, max, max);
+                addElementSlider(slider);
+            }
+        }
+
+        owner.revalidate();
+        owner.repaint();
+    }
+
+    private void addElementSlider(ElementSlider slider){
+        element2Slider.put(slider.element.getSymbol(), slider);
+        elementsPanel.add(slider.getPanel());
+    }
+
+    private void removeElementSlider(String symbol){
+        elementsPanel.remove(element2Slider.get(symbol).getPanel());
+        element2Slider.remove(symbol);
+    }
+
+
     public void enableElementSelection(boolean enabled) {
         for (ElementSlider elementSlider : element2Slider.values()) {
-            elementSlider.slider.setEnabled(enabled);
+            elementSlider.setEnabled(enabled);
         }
         elementButton.setEnabled(enabled);
         elementsPanel.setEnabled(enabled);
@@ -140,13 +214,27 @@ public class ElementsPanel extends JPanel implements ActionListener {
         }
     }
 
-    private class ElementSlider{
+    private class ElementSlider implements ActionListener{
         private Element element;
         private SliderWithTextField slider;
+        private JCheckBox checkBox;
+        private JPanel panel;
         public ElementSlider(Element element, int min, int max){
             this.element = element;
             //// TODO: range upper value not working
             this.slider = new SliderWithTextField(element.getSymbol(), 0, maxNumberOfOneElements, max, -1);
+            Dimension dimension = slider.nameLabel.getPreferredSize();
+            slider.nameLabel.setPreferredSize(new Dimension((int)(1.5*dimension.height), dimension.height));
+            this.panel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
+            panel.add(slider);
+            if (individualAutoDetect){
+                if (detectableElements.contains(element)){
+                    checkBox = new JCheckBox();
+                    checkBox.addActionListener(this);
+                    panel.add(checkBox);
+                    setAutoDetectable(true);
+                }
+            }
         }
 
         int getMin(){
@@ -156,5 +244,41 @@ public class ElementsPanel extends JPanel implements ActionListener {
         int getMax(){
             return slider.getMaxValue();
         }
+
+        JPanel getPanel(){
+            return panel;
+        }
+
+        boolean isAutoDetectable(){
+            return (checkBox!=null && checkBox.isSelected());
+        }
+
+
+        void setEnabled(boolean enabled){
+            if (!isAutoDetectable()){
+                panel.setEnabled(enabled);
+                slider.setEnabled(enabled);
+            }
+            if (checkBox!=null) checkBox.setEnabled(enabled);
+        }
+
+        void setAutoDetectable(boolean isAuto){
+            checkBox.setSelected(isAuto);
+            if (isAuto){
+                slider.getRightTextField().setText("auto");
+                slider.setEnabled(false);
+            } else {
+                this.slider.refreshText();
+                slider.setEnabled(true);
+            }
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource()==checkBox) {
+                setAutoDetectable(checkBox.isSelected());
+            }
+        }
     }
+
 }
