@@ -255,8 +255,10 @@ public class ElementsPanel extends JPanel implements ActionListener {
 
 
         void setEnabled(boolean enabled){
-            panel.setEnabled(enabled);
-            slider.setEnabled(enabled);
+            if (!isAutoDetectable()){
+                panel.setEnabled(enabled);
+                slider.setEnabled(enabled);
+            }
             if (checkBox!=null) checkBox.setEnabled(enabled);
         }
 
