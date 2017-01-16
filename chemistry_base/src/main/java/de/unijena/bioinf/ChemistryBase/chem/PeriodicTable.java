@@ -272,17 +272,19 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         };
         final HashMap<String, PrecursorIonType> positiveIonTypes = new HashMap<String, PrecursorIonType>();
         for (String pos : adductsPositive) {
-            positiveIonTypes.put(canonicalizeIonName(pos), parseIonType(pos));
+            String posName = canonicalizeIonName(pos);
+            positiveIonTypes.put(posName, parseIonType(pos));
 
 
             //System.out.println(pos + "\t=>\t" + positiveIonTypes.get(pos)+ "\t=\t" + positiveIonTypes.get(pos).getIonization().toString() + " ionization with " + positiveIonTypes.get(pos).getAdduct().toString() + " adduct");
 
-            assert positiveIonTypes.get(pos).getIonization().getCharge() > 0;
+            assert positiveIonTypes.get(posName).getIonization().getCharge() > 0;
         }
         final HashMap<String, PrecursorIonType> negativeIonTypes = new HashMap<String, PrecursorIonType>();
         for (String neg : adductsNegative) {
-            negativeIonTypes.put(canonicalizeIonName(neg), parseIonType(neg));
-            assert negativeIonTypes.get(neg).getIonization().getCharge() < 0;
+            final String negName = canonicalizeIonName(neg);
+            negativeIonTypes.put(negName, parseIonType(neg));
+            assert negativeIonTypes.get(negName).getIonization().getCharge() < 0;
         }
         knownIonTypes.putAll(positiveIonTypes);
         knownIonTypes.putAll(negativeIonTypes);

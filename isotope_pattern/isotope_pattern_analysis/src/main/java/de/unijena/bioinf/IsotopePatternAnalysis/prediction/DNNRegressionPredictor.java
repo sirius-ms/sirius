@@ -14,7 +14,7 @@ import java.util.Iterator;
 public class DNNRegressionPredictor implements ElementPredictor {
 
     protected TrainedElementDetectionNetwork[] networks;
-
+    protected ChemicalAlphabet alphabet;
     protected double[] modifiers;
 
     public DNNRegressionPredictor() {
@@ -23,6 +23,10 @@ public class DNNRegressionPredictor implements ElementPredictor {
         Arrays.fill(modifiers, 0.33);
         setModifiers("S", 1d);
         setModifiers("Si", 1d);
+        final Element[] elems = new Element[FREE_ELEMENTS.length+DETECTABLE_ELEMENTS.length];
+        System.arraycopy(FREE_ELEMENTS, 0, elems, 0, FREE_ELEMENTS.length);
+        System.arraycopy(DETECTABLE_ELEMENTS, 0, elems, FREE_ELEMENTS.length, DETECTABLE_ELEMENTS.length);
+        this.alphabet = new ChemicalAlphabet(elems);
     }
 
     public void setModifiers(double modifier) {
@@ -130,5 +134,18 @@ public class DNNRegressionPredictor implements ElementPredictor {
                 constraints.setUpperbound(DETECTABLE_ELEMENTS[i], elements.get(DETECTABLE_ELEMENTS[i]));
         }
         return constraints;
+    }
+
+    @Override
+    public ChemicalAlphabet getChemicalAlphabet() {
+        return alphabet;
+    }
+
+    @Override
+    public boolean isPredictable(Element element) {
+        for (Element detectable : DETECTABLE_ELEMENTS) {
+            if (detectable.equals(element)) return true;
+        }
+        return false;
     }
 }

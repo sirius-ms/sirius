@@ -45,17 +45,19 @@ import java.util.regex.Pattern;
 public class FormulaConstraints implements ImmutableParameterized<FormulaConstraints> {
 
     private final ChemicalAlphabet chemicalAlphabet;
-    private final int[] upperbounds;
+    private final int[] upperbounds, lowerbounds;
     private final List<FormulaFilter> filters;
 
-    private final static Pattern INTERVAL = Pattern.compile("\\[(\\d+)\\]");
+    private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
 
     public FormulaConstraints(String string) {
         final PeriodicTable PT = PeriodicTable.getInstance();
         final Pattern pattern = PT.getPattern();
         final Matcher matcher = pattern.matcher(string);
         if (!matcher.find()) throw new IllegalArgumentException("Invalid alphabet: " + string);
-        HashMap<Element, Integer> elements = new HashMap<Element, Integer>();
+        final List<Object> bounds = new ArrayList<>();
+        final Set<Element> elements = new HashSet<>(10);
+        final Integer MAX_VALUE = Integer.MAX_VALUE;
         while(true) {
             final String m = matcher.group(0);
             if (m.charAt(0)=='(' || m.charAt(0) == ')') throw new IllegalArgumentException("Invalid alphabet: " + string);
@@ -64,21 +66,50 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
             final int start = matcher.end();
             final boolean next = matcher.find();
             final int end = next ? matcher.start() : string.length();
-            elements.put(element, Integer.MAX_VALUE);
             if (end-start > 0) {
                 final Matcher n = INTERVAL.matcher(string.substring(start, end));
                 if (n.find()) {
-                    final int a = Integer.parseInt(n.group(1));
-                    elements.put(element, a);
+                    final String sa = n.group(1);
+                    final String sb = n.group(2);
+                    final int a, b;
+                    if (sa != null && sa.length()>0) {
+                        a = Integer.parseInt(sa);
+                    } else {
+                        a = 0;
+                    }
+                    if (sb != null && sb.length()>0) {
+                        b = Integer.parseInt(sb);
+                    } else {
+                        b = Short.MAX_VALUE;
+                    }
+                    if (b < a) {
+                        throw new IllegalArgumentException("Maximum number of allowed element is smaller than minimum number: '" + m + "'");
+                    }
+                    if (b > 0) {
+                        elements.add(element);
+                        bounds.add(element);
+                        bounds.add(a);
+                        bounds.add(b);
+                    }
                 }
+            } else {
+                bounds.add(element);
+                elements.add(element);
+                bounds.add(0);
+                bounds.add(MAX_VALUE);
             }
             if (!next) break;
         }
-        this.chemicalAlphabet = new ChemicalAlphabet(elements.keySet().toArray(new Element[0]));
+        this.chemicalAlphabet = new ChemicalAlphabet(elements.toArray(new Element[elements.size()]));
         this.upperbounds = new int[chemicalAlphabet.size()];
-        int k=0;
-        for (Element e : chemicalAlphabet.getElements()) {
-            upperbounds[k++] = elements.get(e);
+        this.lowerbounds = upperbounds.clone();
+        for (int k=0; k < bounds.size(); k += 3) {
+            final Element e = (Element)bounds.get(k);
+            final Integer min = (Integer)bounds.get(k+1);
+            final Integer max = (Integer)bounds.get(k+2);
+            final int i = chemicalAlphabet.indexOf(e);
+            lowerbounds[i] = min;
+            upperbounds[i] = max;
         }
         this.filters = new ArrayList<FormulaFilter>();
         addFilter(new ValenceFilter());
@@ -100,24 +131,53 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     public static FormulaConstraints create(Object... varargs) {
         final ArrayList<FormulaFilter> filters = new ArrayList<FormulaFilter>();
         if (varargs.length == 0) return new FormulaConstraints(new ChemicalAlphabet());
+        int stringsOrNumbers = 0;
+        int indexOfOnlyString = -1;
+        for (int i=0; i < varargs.length; ++i) {
+            final Object v = varargs[i];
+            if (v instanceof String) {
+                ++stringsOrNumbers;
+                indexOfOnlyString = i;
+            } else if (v instanceof FormulaFilter) continue;
+            else stringsOrNumbers = Short.MAX_VALUE;
+        }
+        if (stringsOrNumbers==1) {
+            final FormulaConstraints constraints = new FormulaConstraints((String)varargs[indexOfOnlyString]);
+            for (Object vararg : varargs) {
+                if (vararg instanceof FormulaFilter) constraints.addFilter((FormulaFilter)vararg);
+            }
+            return constraints;
+        }
         final PeriodicTable t = PeriodicTable.getInstance();
         int i=0;
         TableSelection sel = null;
         final ArrayList<Element> elements = new ArrayList<Element>();
         final TIntArrayList bounds = new TIntArrayList();
+        int bound = 2;
         for (; i < varargs.length; ++i) {
             final Object o = varargs[i];
+
+            if (o instanceof Element || o instanceof String) {
+                if (bound==0) {
+                    bounds.add(0);
+                    bounds.add(Integer.MAX_VALUE);
+                    bound = 0;
+                } else if (bound==1) {
+                    bounds.add(bounds.get(bounds.size()-1));
+                    bounds.set(bounds.size()-2, 0);
+                    bound = 0;
+                } else bound = 0;
+            }
+
             if (o instanceof Element) {
                 elements.add((Element)varargs[i]);
-                bounds.add(Integer.MAX_VALUE);
             } else if (o instanceof String) {
                 elements.add(t.getByName((String)varargs[i]));
-                bounds.add(Integer.MAX_VALUE);
             } else if (o instanceof Integer) {
-                final int k=bounds.size()-1;
-                if (k < 0 || bounds.get(k) != Integer.MAX_VALUE)
-                    throw new IllegalArgumentException("Illegal format of parameters. Allowed is: [tableselection], {element, [number]}");
-                bounds.set(k, (Integer)varargs[i]);
+                if (bound >= 2)
+                    throw new IllegalArgumentException("Only an interval of two numbers is allowed");
+                bounds.add((Integer)varargs[i]);
+                ++bound;
             } else if (o instanceof TableSelection) {
                 if (sel != null) throw new IllegalArgumentException("Multiple table selections given for one formula constraints");
                 sel = (TableSelection)o;
@@ -127,10 +187,19 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
                 throw new IllegalArgumentException("Expect String,Element,Integer,FormulaFilter or TableSelection, but " + i + "th parameter is of type " + o.getClass());
             }
         }
+        if (bound==0) {
+            bounds.add(0);
+            bounds.add(Integer.MAX_VALUE);
+        } else if (bound==1) {
+            bounds.add(bounds.get(bounds.size()-1));
+            bounds.set(bounds.size()-2, 0);
+        }
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(new Element[elements.size()]));
         final FormulaConstraints c= new FormulaConstraints(alphabet, filters);
-        for (int j=0; i < bounds.size(); ++i) {
-            c.upperbounds[alphabet.getElements().indexOf(elements.get(j))] = bounds.get(j);
+        for (int j=0; j < bounds.size(); j += 2) {
+            final int elem = alphabet.getElements().indexOf(elements.get(j/2));
+            c.lowerbounds[elem] = bounds.get(j);
+            c.upperbounds[elem] = bounds.get(j+1);
         }
         return c;
     }
@@ -138,6 +207,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     public FormulaConstraints(FormulaConstraints c) {
         this(c.getChemicalAlphabet());
         System.arraycopy(c.upperbounds, 0, upperbounds, 0, c.upperbounds.length);
+        System.arraycopy(c.lowerbounds, 0, lowerbounds, 0, c.lowerbounds.length);
         filters.addAll(c.getFilters());
     }
 
@@ -183,12 +253,44 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     public FormulaConstraints(ChemicalAlphabet alphabet, List<FormulaFilter> filters) {
         this.chemicalAlphabet = alphabet;
         this.upperbounds = new int[alphabet.size()];
+        this.lowerbounds = upperbounds.clone();
         Arrays.fill(upperbounds, Integer.MAX_VALUE);
         this.filters = filters == null ? new ArrayList<FormulaFilter>(Arrays.asList(new ValenceFilter())) : new ArrayList<FormulaFilter>(filters);
     }
 
     public ChemicalAlphabet getChemicalAlphabet() {
         return chemicalAlphabet;
+    }
+
+    public int[] getLowerbounds() {
+        return lowerbounds;
+    }
+
+    public int getLowerbound(Element e) {
+        final int i = chemicalAlphabet.indexOf(e);
+        if (i < 0) return 0;
+        return lowerbounds[i];
+    }
+
+    public void setBound(Element e, int lowerbound, int upperbound) {
+        final int i = chemicalAlphabet.indexOf(e);
+        if (i < 0 && lowerbound > 0 || upperbound > 0) {
+            throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
+        }
+        if (lowerbound > upperbound)
+            throw new IllegalArgumentException("Lowerbound is larger than upperbound: " + e.getSymbol() + "[" + lowerbound + " - " + upperbound);
+        lowerbounds[i] = lowerbound;
+        upperbounds[i] = upperbound;
+    }
+
+    public void setLowerbound(Element e, int lowerbound) {
+        final int i = chemicalAlphabet.indexOf(e);
+        if (i < 0 && lowerbound > 0) {
+            throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
+        }
+        if (lowerbound > upperbounds[i])
+            throw new IllegalArgumentException("Lowerbound is larger than upperbound: " + e.getSymbol() + "[" + lowerbound + " - " + upperbounds[i]);
+        lowerbounds[i] = lowerbound;
     }
 
     public int[] getUpperbounds() {
@@ -206,7 +308,14 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         if (i < 0 && upperbound > 0) {
             throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
         }
+        if (lowerbounds[i] > upperbound)
+            throw new IllegalArgumentException("Upperbound is larger than lowerbound: " + e.getSymbol() + "[" + lowerbounds[i] + " - " + upperbound);
         upperbounds[i] = upperbound;
+    }
+
+    public boolean hasElement(Element e) {
+        final int i = chemicalAlphabet.indexOf(e);
+        return i>=0 && upperbounds[i]>0;
     }
 
     public void addFilter(FormulaFilter filter) {
@@ -229,6 +338,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(elems.toArray(new Element[elems.size()])));
         for (Element e :getChemicalAlphabet()) {
             c.setUpperbound(e, getUpperbound(e));
+            c.setLowerbound(e, getLowerbound(e));
         }
         final ArrayList<FormulaFilter> filters = new ArrayList<FormulaFilter>(getFilters());
         filters.removeAll(c.getFilters());
@@ -250,6 +360,13 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         final FormulaConstraints c = new FormulaConstraints(new ChemicalAlphabet(elems.toArray(new Element[elems.size()])));
         for (Element e : elems) {
             c.setUpperbound(e, Math.max(otherConstraints.getUpperbound(e), getUpperbound(e)));
+            if (hasElement(e)) {
+                if (otherConstraints.hasElement(e)) {
+                    c.setLowerbound(e, Math.min(otherConstraints.getLowerbound(e), getLowerbound(e)));
+                } else c.setLowerbound(e, getLowerbound(e));
+            } else {
+                c.setLowerbound(e,otherConstraints.getLowerbound(e));
+            }
         }
         final ArrayList<FormulaFilter> filters = new ArrayList<FormulaFilter>(getFilters());
         filters.removeAll(otherConstraints.getFilters());
@@ -291,7 +408,8 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
             @Override
             public Object visit(Element element, int amount) {
                 if (violation[0]) return null;
-                if (getUpperbound(element) < amount) {
+                final int i = chemicalAlphabet.indexOf(element);
+                if (amount < lowerbounds[i] || amount > upperbounds[i]) {
                     violation[0] = true;
                 }
                 return null;
@@ -357,12 +475,20 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     public String toString() {
         StringBuilder buf = new StringBuilder();
         for (Element e : getChemicalAlphabet()) {
-            final int up = getUpperbound(e);
+            final int i = chemicalAlphabet.indexOf(e);
+            final int up = upperbounds[i];
+            final int low = lowerbounds[i];
             if (up>0) {
                 buf.append(e.getSymbol());
-                if (up < Short.MAX_VALUE) {
+                if (low > 0 || up < Short.MAX_VALUE) {
                     buf.append('[');
-                    buf.append(String.valueOf(up));
+                    if (low > 0) {
+                        buf.append(String.valueOf(low));
+                        buf.append('-');
+                    }
+                    if (up < Short.MAX_VALUE) {
+                        buf.append(String.valueOf(up));
+                    }
                     buf.append(']');
                 }
             }

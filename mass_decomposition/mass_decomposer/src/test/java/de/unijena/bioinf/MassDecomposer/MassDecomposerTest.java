@@ -8,8 +8,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,6 +19,22 @@ import static junit.framework.Assert.assertTrue;
  */
 public class MassDecomposerTest {
 
+
+    @Test
+    public void testFormulaConstraints() {
+        double mass = 212.11;
+        final MassToFormulaDecomposer decomposer = new MassToFormulaDecomposer();
+        final FormulaConstraints constraints = new FormulaConstraints("CHNO[1-3]");
+        final List<MolecularFormula> formulas = decomposer.decomposeToFormulas(mass, new Deviation(10), constraints);
+        String violation=null;
+        for (MolecularFormula formula : formulas) {
+            if (formula.numberOfOxygens() < 1 || formula.numberOfOxygens() > 3) {
+                violation = formula.toString();
+                break;
+            }
+        }
+        assertNull("All formulas satisfy constraint: CHNO[1-3].", violation);
+    }
 
     @Test
     public void testElementBoundaries() {
@@ -400,24 +415,6 @@ public class MassDecomposerTest {
         }
 
 
-
-        //with filter
-        mass = 479.43;
-        boundary = new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(mass + dev.absoluteFor(mass), boundary);
-        final DecompositionValidator<Element> valenceValidator = new ValenceValidator<Element>(0);
-
-        compomers = decomposer.decompose(mass, dev, boundary, valenceValidator);
-        formulas = new ArrayList<MolecularFormula>(compomers.size());
-        for (int[] c : compomers) {
-            formulas.add(alphabet.decompositionToFormula(c));
-        }
-
-        assertTrue("result2[] and formulas-List differ in length", result2.length == formulas.size());
-        for (MolecularFormula formula : formulas) {
-            assertTrue(formula+" was not found", searchedFormula2.contains(formula));
-        }
-
-
         //with more Elements
         boundary = new HashMap<Element, Interval>();
         boundary.put(table.getByName("C"), new Interval(0, Integer.MAX_VALUE));
@@ -459,7 +456,7 @@ public class MassDecomposerTest {
         //getting same results?
         mass = 279.43;
         alphabet = new ChemicalAlphabet();
-        MassDecomposerFast<Element> decomposerFast = new MassDecomposerFast<Element>(new ChemicalAlphabetWrapper(alphabet));
+        RangeMassDecomposer<Element> decomposerFast = new RangeMassDecomposer<Element>(new ChemicalAlphabetWrapper(alphabet));
 
 
         boundary = new HashMap<Element, Interval>();
@@ -482,24 +479,6 @@ public class MassDecomposerTest {
             assertTrue(formula+" was not found", searchedFormula1.contains(formula));
         }
 
-
-        //with filter
-        mass = 479.43;
-        boundary = new ValenceBoundary<Element>(new ChemicalAlphabetWrapper(alphabet)).getMapFor(mass + dev.absoluteFor(mass), boundary);
-        final DecompositionValidator<Element> valenceValidator2 = new ValenceValidator<Element>(0);
-
-        compomers = decomposerFast.decompose(mass, dev, boundary, valenceValidator2);
-        formulas = new ArrayList<MolecularFormula>(compomers.size());
-        for (int[] c : compomers) {
-            formulas.add(alphabet.decompositionToFormula(c));
-        }
-
-        assertTrue("result2[] and formulas-List differ in length", result2.length == formulas.size());
-        for (MolecularFormula formula : formulas) {
-            assertTrue(formula+" was not found", searchedFormula2.contains(formula));
-        }
-
-
         //with more Elements
         boundary = new HashMap<Element, Interval>();
         boundary.put(table.getByName("C"), new Interval(0, Integer.MAX_VALUE));
@@ -513,7 +492,7 @@ public class MassDecomposerTest {
         boundary.put(table.getByName("Br"), new Interval(0, Integer.MAX_VALUE));
 
         alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C", "H","N","O","P","S","Fe","Cl", "Br"));
-        decomposerFast = new MassDecomposerFast<Element>(new ChemicalAlphabetWrapper(alphabet));
+        decomposerFast = new RangeMassDecomposer<Element>(new ChemicalAlphabetWrapper(alphabet));
 
         mass = 222.22;
         compomers = decomposerFast.decompose(mass, dev, boundary);

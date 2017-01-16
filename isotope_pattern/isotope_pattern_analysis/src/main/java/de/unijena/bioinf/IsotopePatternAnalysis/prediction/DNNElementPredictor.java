@@ -13,7 +13,7 @@ import java.util.HashSet;
 public class DNNElementPredictor implements ElementPredictor {
 
     protected TrainedElementDetectionNetwork[] networks;
-
+    protected ChemicalAlphabet alphabet;
     protected double[] thresholds;
 
     public DNNElementPredictor() {
@@ -21,6 +21,10 @@ public class DNNElementPredictor implements ElementPredictor {
         this.thresholds = new double[DETECTABLE_ELEMENTS.length];
         Arrays.fill(thresholds, 0.05);
         setThreshold("Si", 0.5);
+        final Element[] elems = new Element[FREE_ELEMENTS.length+DETECTABLE_ELEMENTS.length];
+        System.arraycopy(FREE_ELEMENTS, 0, elems, 0, FREE_ELEMENTS.length);
+        System.arraycopy(DETECTABLE_ELEMENTS, 0, elems, FREE_ELEMENTS.length, DETECTABLE_ELEMENTS.length);
+        this.alphabet = new ChemicalAlphabet(elems);
     }
 
     public void disableSilicon() {
@@ -123,5 +127,18 @@ public class DNNElementPredictor implements ElementPredictor {
                 constraints.setUpperbound(DETECTABLE_ELEMENTS[i], UPPERBOUNDS[i]);
         }
         return constraints;
+    }
+
+    @Override
+    public ChemicalAlphabet getChemicalAlphabet() {
+        return alphabet;
+    }
+
+    @Override
+    public boolean isPredictable(Element element) {
+        for (Element detectable : DETECTABLE_ELEMENTS) {
+            if (detectable.equals(element)) return true;
+        }
+        return false;
     }
 }
