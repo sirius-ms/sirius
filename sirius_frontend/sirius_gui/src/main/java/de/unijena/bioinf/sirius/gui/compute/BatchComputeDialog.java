@@ -300,13 +300,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
 
                 FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
-                if (!elementsToAutoDetect.isEmpty()){
+                if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()){
                     MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), ec.getFocusedMass());
                     FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
-                    ElementPredictor predictor = sirius.getElementPrediction();
-                    for (Element element : elementsToAutoDetect) {
-                        if (predictor.isPredictable(element)){
-                            individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                    if (autoConstraints!=null){
+                        ElementPredictor predictor = sirius.getElementPrediction();
+                        for (Element element : elementsToAutoDetect) {
+                            if (predictor.isPredictable(element)){
+                                individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                            }
                         }
                     }
                 }

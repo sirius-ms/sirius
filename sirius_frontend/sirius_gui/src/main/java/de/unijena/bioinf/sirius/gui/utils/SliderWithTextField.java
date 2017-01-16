@@ -67,8 +67,7 @@ public class SliderWithTextField extends JPanel {
                     } else {
                         value = Integer.parseInt(typed);
                     }
-
-                    ((RangeSlider)slider).setLowerValue(value);
+                    setLowerValue(value);
                 }
             });
         }
@@ -115,11 +114,7 @@ public class SliderWithTextField extends JPanel {
                     value = Integer.parseInt(typed);
                 }
 
-                if (isRangeSlider){
-                    ((RangeSlider)slider).setUpperValue(value);
-                } else {
-                    slider.setValue(value);
-                }
+                setUpperValue(value);
             }
         });
     }
@@ -142,8 +137,11 @@ public class SliderWithTextField extends JPanel {
         }
     }
 
-    public void setMinValue(int value){
+    public void setLowerValue(int value){
         if (isRangeSlider){
+            if (getUpperValue()<value) {
+                ((RangeSlider)slider).setUpperValue(value);
+            }
             ((RangeSlider)slider).setLowerValue(value);
         } else {
             throw new UnsupportedOperationException("cannot set min value for non-range slider");
@@ -151,9 +149,13 @@ public class SliderWithTextField extends JPanel {
         refreshText();
     }
 
-    public void setMaxValue(int value){
+    public void setUpperValue(int value){
         if (isRangeSlider){
+            if (getLowerValue()>value) {
+                ((RangeSlider) slider).setLowerValue(value);
+            }
             ((RangeSlider)slider).setUpperValue(value);
+
         } else {
             slider.setValue(value);
         }

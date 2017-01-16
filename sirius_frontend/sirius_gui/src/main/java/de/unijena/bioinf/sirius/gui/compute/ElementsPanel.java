@@ -175,8 +175,8 @@ public class ElementsPanel extends JPanel implements ActionListener {
         for (String symbol : current) {
             if (!selectedNoDefaults.contains(symbol)){
                 Element element = periodicTable.getByName(symbol);
-                element2Slider.get(symbol).slider.setMinValue(constraints.getLowerbound(element));
-                element2Slider.get(symbol).slider.setMaxValue(constraints.getUpperbound(element));
+                element2Slider.get(symbol).slider.setLowerValue(constraints.getLowerbound(element));
+                element2Slider.get(symbol).slider.setUpperValue(constraints.getUpperbound(element));
             }
         }
         for (Element ele : selectedNoDefaults) {

@@ -19,6 +19,7 @@ import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
@@ -326,16 +327,26 @@ public class ComputeDialog extends JDialog implements ActionListener {
 			startComputing();
 		}
 		else if (e.getSource() == elementAutoDetect) {
-			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
-			ElementPredictor predictor = sirius.getElementPrediction();
-			final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
-			for (Element element : c.getChemicalAlphabet()) {
-				if (!predictor.isPredictable(element)){
-					c.setLowerbound(element,0);
-					c.setUpperbound(element,0);
+			String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
+			if (!ec.getMs1Spectra().isEmpty()){
+				MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
+				ElementPredictor predictor = sirius.getElementPrediction();
+				final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
+				if (c!=null){
+					for (Element element : c.getChemicalAlphabet()) {
+						if (!predictor.isPredictable(element)){
+							c.setLowerbound(element,0);
+							c.setUpperbound(element,0);
+						}
+					}
+					elementPanel.setSelectedElements(c);
+				} else {
+					new ExceptionDialog(this, notWorkingMessage);
 				}
+			} else {
+				new ExceptionDialog(this, notWorkingMessage);
 			}
-			elementPanel.setSelectedElements(c);
+
 
 		}
 	}

@@ -253,14 +253,20 @@ public class BackgroundComputation {
             try {
                 final List<IdentificationResult> results;
                 final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp);
+                boolean hasMS2 = experiment.getMs2Spectra().size()!=0;
                 if (formulaSource==FormulaSource.ALL_POSSIBLE) {
-                    if (experiment.getPrecursorIonType().isIonizationUnknown()) {
-                        results = sirius.identifyPrecursorAndIonization(experiment,
-                                container.numberOfCandidates, true, IsotopePatternHandling.score);
+                    if (hasMS2){
+                        if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+                            results = sirius.identifyPrecursorAndIonization(experiment,
+                                    container.numberOfCandidates, true, IsotopePatternHandling.score);
+                        } else {
+                            results = sirius.identify(experiment,
+                                    container.numberOfCandidates, true, IsotopePatternHandling.score);
+                        }
                     } else {
-                        results = sirius.identify(experiment,
-                                container.numberOfCandidates, true, IsotopePatternHandling.score);
+                        results = sirius.identifyByIsotopePattern(experiment, container.numberOfCandidates);
                     }
+
                 } else {
                     try (final RESTDatabase db = WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL)) {
                         PrecursorIonType ionType = experiment.getPrecursorIonType();
@@ -279,8 +285,9 @@ public class BackgroundComputation {
                                     formulas.add(f.getFormula());
                                 }
                         }
-                        results = sirius.identify(experiment,
-                                container.numberOfCandidates, true, IsotopePatternHandling.score, formulas);
+                        results = hasMS2 ? sirius.identify(experiment,
+                                container.numberOfCandidates, true, IsotopePatternHandling.score, formulas) :
+                                sirius.identifyByIsotopePattern(experiment, container.numberOfCandidates, formulas);
                     }
                 }
                 container.results = results;
