@@ -44,12 +44,7 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
     }
 
     public Iterator<MolecularFormula> formulaIterator(double mass, Deviation deviation, final FormulaConstraints constraints) {
-        if (!constraints.getChemicalAlphabet().equals(alphabet)) throw new IllegalArgumentException("Incompatible alphabet");
-        final Map<Element, Interval> boundaries = alphabet.toMap();
-        final int[] upperbounds = constraints.getUpperbounds();
-        for (int i=0; i < alphabet.size(); ++i) {
-            boundaries.put(alphabet.get(i), new Interval(0, upperbounds[i]));
-        }
+        final Map<Element, Interval> boundaries = getBoundaries(constraints);
         final DecompIterator<Element> decompIterator = decomposeIterator(mass, deviation, boundaries);
         return new Iterator<MolecularFormula>() {
 
@@ -88,13 +83,29 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
     }
 
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {
-        if (!constraints.getChemicalAlphabet().equals(alphabet)) throw new IllegalArgumentException("Incompatible alphabet");
+
+        return decomposeToFormulas(mass, deviation, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    }
+
+    private Map<Element, Interval> getBoundaries(FormulaConstraints constraints) {
         final Map<Element, Interval> boundaries = alphabet.toMap();
-        final int[] upperbounds = constraints.getUpperbounds();
-        for (int i=0; i < alphabet.size(); ++i) {
-            boundaries.put(alphabet.get(i), new Interval(0, upperbounds[i]));
+        if (!constraints.getChemicalAlphabet().equals(alphabet)) {
+            for (Element e : constraints.getChemicalAlphabet()) {
+                if (constraints.hasElement(e) && alphabet.indexOf(e)<0) {
+                    throw new IllegalArgumentException("Incompatible alphabet: " + alphabet +  " vs " + constraints);
+                }
+            }
+            for (Element e : alphabet) {
+                boundaries.put(e, new Interval(constraints.getLowerbound(e), constraints.getUpperbound(e)));
+            }
+        } else {
+            final int[] upperbounds = constraints.getUpperbounds();
+            final int[] lowerbounds = constraints.getLowerbounds();
+            for (int i=0; i < alphabet.size(); ++i) {
+                boundaries.put(alphabet.get(i), new Interval(lowerbounds[i], upperbounds[i]));
+            }
         }
-        return decomposeToFormulas(mass, deviation, boundaries, FormulaFilterList.create(constraints.getFilters()));
+        return boundaries;
     }
 
     public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation) {

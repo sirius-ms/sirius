@@ -1,5 +1,7 @@
 package de.unijena.bioinf.IsotopePatternAnalysis.prediction;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
@@ -9,5 +11,9 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 public interface ElementPredictor {
 
     public FormulaConstraints predictConstraints(SimpleSpectrum pickedPattern);
+
+    public ChemicalAlphabet getChemicalAlphabet();
+
+    public boolean isPredictable(Element element);
 
 }
