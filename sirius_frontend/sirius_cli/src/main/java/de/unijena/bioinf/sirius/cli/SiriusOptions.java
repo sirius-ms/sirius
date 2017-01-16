@@ -91,7 +91,7 @@ public interface SiriusOptions {
     public List<String> getInput();
 
 
-    @Option(shortName = "e", longName = "elements", description = "The allowed elements. Write CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the maximal allowed occurence of these elements: CHNOP[5]S[8]Cl[1]", defaultToNull = true)
+    @Option(shortName = "e", longName = "elements", description = "The allowed elements. Write CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upperbound.", defaultToNull = true)
     public FormulaConstraints getElements();
 
 
