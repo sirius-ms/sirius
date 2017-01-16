@@ -11,6 +11,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.Fragmentation
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
@@ -50,6 +51,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 	private SearchProfilePanel searchProfilePanel;
 	private MainFrame owner;
 
+	private Sirius sirius;
 
 	private boolean success;
 	private ExperimentContainer ec;
@@ -65,7 +67,6 @@ public class ComputeDialog extends JDialog implements ActionListener {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		
 //		additionalElements = new TreeSet<>();
-		
 		this.setLayout(new BorderLayout());
 		/*JPanel north = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		north.add(new JLabel(SwingUtils.RUN_64));
@@ -183,13 +184,24 @@ public class ComputeDialog extends JDialog implements ActionListener {
 		elementPanel = new ElementsPanel(this, 4);
 		mainPanel.add(elementPanel);
 
-        elementPanel.add(Box.createHorizontalGlue());
-		elementPanel.add(Box.createVerticalGlue());
 
+		this.sirius = new Sirius();
+		ElementPredictor elementPredictor = sirius.getElementPrediction();
+		List<Element> detectableElements = new ArrayList<>();
+		for (Element element : elementPredictor.getChemicalAlphabet().getElements()) {
+			if (elementPredictor.isPredictable(element)) detectableElements.add(element);
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append("Auto detectable element are: ");
+		for (int i = 0; i < detectableElements.size(); i++) {
+			if (i!=0) builder.append(", ");
+			builder.append(detectableElements.get(i).getSymbol());
+		}
 		elementAutoDetect = new JButton("Auto detect");
+		elementAutoDetect.setToolTipText(builder.toString());
 		elementAutoDetect.addActionListener(this);
 		elementAutoDetect.setEnabled(true);
-		elementPanel.add(elementAutoDetect);
+		elementPanel.lowerPanel.add(elementAutoDetect);
 
 
 
@@ -314,10 +326,15 @@ public class ComputeDialog extends JDialog implements ActionListener {
 			startComputing();
 		}
 		else if (e.getSource() == elementAutoDetect) {
-			final Sirius sirius = new Sirius();
-
 			MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
+			ElementPredictor predictor = sirius.getElementPrediction();
 			final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
+			for (Element element : c.getChemicalAlphabet()) {
+				if (!predictor.isPredictable(element)){
+					c.setLowerbound(element,0);
+					c.setUpperbound(element,0);
+				}
+			}
 			elementPanel.setSelectedElements(c);
 
 		}

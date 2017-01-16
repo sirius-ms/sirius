@@ -32,7 +32,7 @@ public class SliderWithTextField extends JPanel {
         this.max = max;
 
         final int length = (int)(Math.log10(max)+1);
-        isRangeSlider = (currentMax>0);
+        isRangeSlider = (currentMax>=0);
         if (!isRangeSlider) currentMax = currentMin;
 
         this.nameLabel = new JLabel(name);
@@ -124,20 +124,40 @@ public class SliderWithTextField extends JPanel {
         });
     }
 
-    public int getMinValue(){
+    public int getLowerValue(){
         if (isRangeSlider){
             return ((RangeSlider)slider).getLowerValue();
+        } else {
+            return min;
+        }
+    }
+
+    public int getUpperValue(){
+        if (isRangeSlider){
+            final int minValue = ((RangeSlider)slider).getLowerValue();
+            final int maxValue = minValue+((RangeSlider)slider).getExtent();
+            return maxValue;
         } else {
             return slider.getValue();
         }
     }
 
-    public int getMaxValue(){
+    public void setMinValue(int value){
         if (isRangeSlider){
-            return ((RangeSlider)slider).getUpperValue();
+            ((RangeSlider)slider).setLowerValue(value);
         } else {
-            return slider.getValue();
+            throw new UnsupportedOperationException("cannot set min value for non-range slider");
         }
+        refreshText();
+    }
+
+    public void setMaxValue(int value){
+        if (isRangeSlider){
+            ((RangeSlider)slider).setUpperValue(value);
+        } else {
+            slider.setValue(value);
+        }
+        refreshText();
     }
 
     public JTextField getLeftTextField(){
@@ -151,7 +171,7 @@ public class SliderWithTextField extends JPanel {
     public void refreshText(){
         if (isRangeSlider){
             int minValue = ((RangeSlider)slider).getLowerValue();
-            int maxValue = ((RangeSlider)slider).getUpperValue();
+            int maxValue = minValue+((RangeSlider)slider).getExtent();// ((RangeSlider)slider).getUpperValue();
             if (minValue==max){
                 text1.setText("inf");
             } else {

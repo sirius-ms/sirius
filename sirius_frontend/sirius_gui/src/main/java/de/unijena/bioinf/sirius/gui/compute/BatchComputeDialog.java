@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -65,6 +66,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private JCheckBox runCSIFingerId;
     private MainFrame owner;
 
+    private Sirius sirius;
+
     private boolean success;
     private HashMap<String, Ionization> stringToIonMap;
     private HashMap<Ionization, String> ionToStringMap;
@@ -82,20 +85,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         this.add(mainPanel, BorderLayout.CENTER);
 
-
         /////////////////////////////////////////////
-        //todo remove hardCoded!!!!!!!
-        PeriodicTable T = PeriodicTable.getInstance();
-        Element[] detectableElements = new Element[]{
-                T.getByName("B"),
-                T.getByName("Br"),
-                T.getByName("Cl"),
-                T.getByName("S"),
-                T.getByName("Si"),
-                T.getByName("Se"),
-        };
-
-        elementPanel = new ElementsPanel(this, 3, Arrays.asList(detectableElements));
+        this.sirius = new Sirius();
+        ElementPredictor elementPredictor = sirius.getElementPrediction();
+        List<Element> detectableElements = new ArrayList<>();
+        for (Element element : elementPredictor.getChemicalAlphabet().getElements()) {
+            if (elementPredictor.isPredictable(element)) detectableElements.add(element);
+        }
+        elementPanel = new ElementsPanel(this, 3, detectableElements);
         mainPanel.add(elementPanel);
 
         /////////////////////////////////////////////
@@ -290,7 +287,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
         final ArrayList<BackgroundComputation.Task> tasks = new ArrayList<>();
         final ArrayList<ExperimentContainer> compoundList = new ArrayList<>();
-        final Sirius sirius = new Sirius();
         while (compounds.hasMoreElements()) {
             final ExperimentContainer ec = compounds.nextElement();
             if (ec.isUncomputed()) {
@@ -307,8 +303,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 if (!elementsToAutoDetect.isEmpty()){
                     MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), ec.getFocusedMass());
                     FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
+                    ElementPredictor predictor = sirius.getElementPrediction();
                     for (Element element : elementsToAutoDetect) {
-                        individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                        if (predictor.isPredictable(element)){
+                            individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
+                        }
                     }
                 }
 

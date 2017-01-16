@@ -144,6 +144,10 @@ class RangeSliderUI extends BasicSliderUI {
         super.paint(G, COMPONENT);
         Rectangle clipRect = G.getClipBounds();
         if (((RangeSlider) slider).isRangeSelectionEnabled()) {
+            final RangeSlider rs = (RangeSlider)slider;
+            //fix selection on edges
+            if (rs.getMinimum()==rs.getLowerValue()&&rs.getExtent()==0) upperThumbSelected = true;
+            else if (rs.getMaximum()==rs.getLowerValue()&&rs.getExtent()==0) upperThumbSelected = false;
             if (upperThumbSelected) {
                 // Paint lower thumb first, then threshold and upper thumb.
                 if (clipRect.intersects(thumbRect)) {

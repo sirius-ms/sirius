@@ -32,6 +32,7 @@ public class ElementsPanel extends JPanel implements ActionListener {
     private JPanel elementsPanel;
     private JScrollPane scrollPane;
     private JPanel mainP;
+    public JPanel lowerPanel;
 
     private Set<Element> detectableElements;
 
@@ -79,27 +80,28 @@ public class ElementsPanel extends JPanel implements ActionListener {
             int count = additionalElementStartCounts[i];
             if (!element2Slider.containsKey(symbol)){
                 Element element = PeriodicTable.getInstance().getByName(symbol);
-                ElementSlider elementSlider = new ElementSlider(element, count, count);
+                ElementSlider elementSlider = new ElementSlider(element, 0, count);
                 addElementSlider(elementSlider);
             }
         }
 
 
-        scrollPane = new JScrollPane(elementsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane = new JScrollPane(elementsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         int width = elementsPanel.getPreferredSize().width;
-        int height = 2*element2Slider.values().iterator().next().getPanel().getPreferredSize().height;
-        scrollPane.setPreferredSize(new Dimension(width, height));
+        int height = Math.max((int)Math.ceil(1.0*element2Slider.size()/columns),2)*element2Slider.values().iterator().next().getPanel().getPreferredSize().height;
+        scrollPane.setPreferredSize(new Dimension(scrollPane.getPreferredSize().width, height));
         scrollPane.setSize(new Dimension(width, height));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-;
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainP.add(scrollPane);
 
         elementButton = new JButton("Select elements");
         elementButton.addActionListener(this);
 
-        JPanel elements2 = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
-        elements2.add(elementButton);
-        mainP.add(elements2);
+        lowerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
+        lowerPanel.add(elementButton);
+        mainP.add(lowerPanel);
 
     }
 
@@ -115,8 +117,11 @@ public class ElementsPanel extends JPanel implements ActionListener {
 
         FormulaConstraints formulaConstraints =  new FormulaConstraints(new ChemicalAlphabet(elems));
         for (String s : element2Slider.keySet()) {
+            Element element = periodicTable.getByName(s);
+            int min = element2Slider.get(s).getMin();
             int max = element2Slider.get(s).getMax();
-            if (max!= maxNumberOfOneElements) formulaConstraints.setUpperbound(periodicTable.getByName(s), max);
+            formulaConstraints.setLowerbound(element, min);
+            if (max!= maxNumberOfOneElements) formulaConstraints.setUpperbound(element, max);
         }
         return formulaConstraints;
     }
@@ -150,7 +155,7 @@ public class ElementsPanel extends JPanel implements ActionListener {
         for (String symbol : selectedNoDefaults) {
             if (!element2Slider.containsKey(symbol)){
                 Element ele = periodicTable.getByName(symbol);
-                ElementSlider slider = new ElementSlider(ele, maxNumberOfOneElements, maxNumberOfOneElements);
+                ElementSlider slider = new ElementSlider(ele, 0, maxNumberOfOneElements);
                 addElementSlider(slider);
             }
         }
@@ -163,17 +168,22 @@ public class ElementsPanel extends JPanel implements ActionListener {
     public void setSelectedElements(FormulaConstraints constraints){
         Set<Element> selectedNoDefaults = new HashSet<>(constraints.getChemicalAlphabet().getElements());
         for (Element element : defaultElements) selectedNoDefaults.remove(element);
+        for (Element element : constraints.getChemicalAlphabet().getElements())
+            if (constraints.getUpperbound(element)==0) selectedNoDefaults.remove(element);
 
         Set<String> current = new HashSet<>(element2Slider.keySet());
         for (String symbol : current) {
             if (!selectedNoDefaults.contains(symbol)){
-                removeElementSlider(symbol);
+                Element element = periodicTable.getByName(symbol);
+                element2Slider.get(symbol).slider.setMinValue(constraints.getLowerbound(element));
+                element2Slider.get(symbol).slider.setMaxValue(constraints.getUpperbound(element));
             }
         }
         for (Element ele : selectedNoDefaults) {
             if (!element2Slider.containsKey(ele.getSymbol())){
+                int min = constraints.getLowerbound(ele);
                 int max = Math.min(maxNumberOfOneElements, constraints.getUpperbound(ele));
-                ElementSlider slider = new ElementSlider(ele, max, max);
+                ElementSlider slider = new ElementSlider(ele, min, max);
                 addElementSlider(slider);
             }
         }
@@ -222,7 +232,8 @@ public class ElementsPanel extends JPanel implements ActionListener {
         public ElementSlider(Element element, int min, int max){
             this.element = element;
             //// TODO: range upper value not working
-            this.slider = new SliderWithTextField(element.getSymbol(), 0, maxNumberOfOneElements, max, -1);
+            this.slider = new SliderWithTextField(element.getSymbol(), 0, maxNumberOfOneElements, min, max);
+
             Dimension dimension = slider.nameLabel.getPreferredSize();
             slider.nameLabel.setPreferredSize(new Dimension((int)(1.5*dimension.height), dimension.height));
             this.panel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -238,11 +249,11 @@ public class ElementsPanel extends JPanel implements ActionListener {
         }
 
         int getMin(){
-            return slider.getMinValue();
+            return slider.getLowerValue();
         }
 
         int getMax(){
-            return slider.getMaxValue();
+            return slider.getUpperValue();
         }
 
         JPanel getPanel(){
