@@ -28,9 +28,10 @@ public class TestMain {
             new GurobiSolver();
             System.out.println(sirius.getMs2Analyzer().getTreeBuilder().getClass().getSimpleName());
 
-            final FasterMultithreadedTreeComputation fmtc = new FasterMultithreadedTreeComputation(sirius.getMs2Analyzer());
+
             for (File file : listOfFiles) {
                 if (file.isFile()) {
+                    final FasterMultithreadedTreeComputation fmtc = new FasterMultithreadedTreeComputation(sirius.getMs2Analyzer());
                     System.out.println(file.getName());
                     final Ms2Experiment experiment = sirius.parseExperiment(new File(file.getPath())).next();
 
@@ -56,10 +57,13 @@ public class TestMain {
 
 
         } catch (IOException e) {
+            System.out.println("Warning");
             e.printStackTrace();
         } catch (InterruptedException e) {
+            System.out.println("Warning");
             e.printStackTrace();
         } catch (ExecutionException e) {
+            System.out.println("Warning");
             e.printStackTrace();
         }
 
