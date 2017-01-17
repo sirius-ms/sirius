@@ -21,15 +21,19 @@ public class TestMain {
 
         File folder = new File("/home/florian/Uni/projektmodul/gnps/");
         File[] listOfFiles = folder.listFiles();
-        int[] output = new int[100];
+//        int[] output = new int[100];
 
         try {
             sirius = new Sirius("qtof");
             new GurobiSolver();
             System.out.println(sirius.getMs2Analyzer().getTreeBuilder().getClass().getSimpleName());
-
+            StringBuilder stringBuilderCut = new StringBuilder();
+            StringBuilder stringBuilderPrediction = new StringBuilder();
+            StringBuilder stringBuilderResult = new StringBuilder();
+            StringBuilder stringBuilderPosition = new StringBuilder();
 
             for (File file : listOfFiles) {
+
                 if (file.isFile()) {
                     final FasterMultithreadedTreeComputation fmtc = new FasterMultithreadedTreeComputation(sirius.getMs2Analyzer());
                     System.out.println(file.getName());
@@ -38,14 +42,24 @@ public class TestMain {
                     final ProcessedInput input = sirius.getMs2Analyzer().preprocessing(experiment);
 
                     fmtc.setInput(input);
-                    fmtc.startComputation();
+                    FasterMultithreadedTreeComputation.Output out = fmtc.startComputation();
 
 //                    float quality = (fmtc.startComputation())*100;
 //                    output[(int)quality-1] +=1;
+                    FileWriter writer = new FileWriter("output3.csv");
+
+                    stringBuilderCut.append(out.cut+",");
+                    stringBuilderPrediction.append(out.prediction+",");
+                    stringBuilderResult.append(out.result+",");
+                    stringBuilderPosition.append(out.index+",");
+
+                    writer.write(stringBuilderCut.toString()+"\n");
+                    writer.write(stringBuilderPrediction.toString()+"\n");
+                    writer.write(stringBuilderResult.toString()+"\n");
+                    writer.write(stringBuilderPosition.toString());
+                    writer.close();
                 }
-//                FileWriter writer = new FileWriter("output.csv");
-//                StringBuilder stringBuilder = new StringBuilder();
-//                stringBuilder.append(Integer.toString(output[0]));
+//                Runtime.getRuntime().gc();//TODO take out again
 //
 //                for (int i = 1; i < 100; i++){
 //                    stringBuilder.append(","+Integer.toString(output[i]));
