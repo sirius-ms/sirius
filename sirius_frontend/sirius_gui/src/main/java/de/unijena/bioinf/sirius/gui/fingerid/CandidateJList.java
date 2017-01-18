@@ -172,7 +172,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         northPanel.add(filter);
 
 
-        final JButton exportToCSV = Buttons.getExportButton24("export cadidate list");
+        final JButton exportToCSV = Buttons.getExportButton24("export candidate list");
         exportToCSV.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
