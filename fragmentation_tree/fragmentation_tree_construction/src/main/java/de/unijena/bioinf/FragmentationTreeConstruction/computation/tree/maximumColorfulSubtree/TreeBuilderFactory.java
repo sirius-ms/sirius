@@ -10,12 +10,35 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+
 public final class TreeBuilderFactory {
+    public final static String GUROBI_VERSION;
+    public final static String GLPK_VERSION;
+    public final static String ILP_VERSIONS_STRING;
+
+
+    static {
+        try (InputStream input = TreeBuilderFactory.class.getResourceAsStream("/ilp.properties")) {
+            Properties ILP_PROPERTIES = new Properties();
+            ILP_PROPERTIES.load(input);
+            System.getProperties().putAll(ILP_PROPERTIES);
+        } catch (IOException | NullPointerException e) {
+            LoggerFactory.getLogger(TreeBuilderFactory.class).warn("Could not load Build Properties",e);
+
+        }
+        GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version");
+        GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version");
+        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK v" + GLPK_VERSION + ", " + "Gurobi v" + GUROBI_VERSION;
+    }
+
     private static TreeBuilderFactory INSTANCE = null;
 
     public enum DefaultBuilder {GUROBI, /*GUROBI_JNI,*/ /*CPLEX,*/ GLPK, DP}
@@ -57,7 +80,7 @@ public final class TreeBuilderFactory {
         try {
             return getTreeBuilderFromClass(((Class<T>) ClassLoader.getSystemClassLoader().loadClass(className)));
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + ILP_VERSIONS_STRING, e);
             return null;
         }
 
@@ -67,7 +90,7 @@ public final class TreeBuilderFactory {
         try {
             return builderClass.getConstructor().newInstance();
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName(), e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
