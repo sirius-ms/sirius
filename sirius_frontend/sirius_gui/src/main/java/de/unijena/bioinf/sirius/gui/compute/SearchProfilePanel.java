@@ -65,7 +65,7 @@ public class SearchProfilePanel extends JPanel {
 
             ionizationCB = new JComboBox<>(ionizations);
             if (ionType!=null) {
-                ionizationCB.setSelectedItem(ionType.toString());
+                ionizationCB.setSelectedItem(SiriusDataConverter.siriusIonizationToEnum(ionType).toString());
             } else {
                 ionizationCB.setSelectedItem(Ionization.MPlusH.toString());
             }
