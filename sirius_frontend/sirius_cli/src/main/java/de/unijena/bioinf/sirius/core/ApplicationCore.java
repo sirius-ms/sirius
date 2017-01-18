@@ -156,6 +156,8 @@ public abstract class ApplicationCore {
             else
                 DEFAULT_LOGGER.debug("Could not parse Treebuilder priorities, falling back to default!" + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
         }
+
+        DEFAULT_LOGGER.debug(TreeBuilderFactory.ILP_VERSIONS_STRING);
     }
 
     public static void addDefaultPropteries(File properties) throws IOException {
