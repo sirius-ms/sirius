@@ -403,19 +403,27 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
     public boolean isViolated(MolecularFormula formula) {
         for (FormulaFilter f : filters)
             if (!f.isValid(formula)) return true;
-        final boolean[] violation = new boolean[]{false};
+        /*
         formula.visit(new FormulaVisitor<Object>() {
             @Override
             public Object visit(Element element, int amount) {
                 if (violation[0]) return null;
                 final int i = chemicalAlphabet.indexOf(element);
-                if (amount < lowerbounds[i] || amount > upperbounds[i]) {
+                if (i < 0 || amount < lowerbounds[i] || amount > upperbounds[i]) {
                     violation[0] = true;
                 }
                 return null;
             }
         });
-        return violation[0];
+        */
+        int atomNumber = 0;
+        for (int i=0; i < lowerbounds.length; ++i) {
+            final Element e = chemicalAlphabet.get(i);
+            final int amount = formula.numberOf(e);
+            if (amount < lowerbounds[i] || amount > upperbounds[i]) return false;
+            atomNumber += amount;
+        }
+        return (atomNumber != formula.atomCount());
     }
     public boolean isViolated(ChemicalAlphabet formula) {
         for (Element e : formula.getElements()) {

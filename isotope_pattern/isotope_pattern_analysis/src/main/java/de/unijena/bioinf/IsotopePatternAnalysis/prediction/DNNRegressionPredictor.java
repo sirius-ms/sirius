@@ -124,6 +124,7 @@ public class DNNRegressionPredictor implements ElementPredictor {
                 if (elements.get(iter.next())<=0) iter.remove();
             }
         }
+        if (!silicon) elements.remove(PeriodicTable.getInstance().getByName("Si"));
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.keySet().toArray(new Element[elements.size()]));
         final FormulaConstraints constraints = new FormulaConstraints(alphabet);
         for (int i=0; i < FREE_UPPERBOUNDS.length; ++i) {
@@ -143,9 +144,19 @@ public class DNNRegressionPredictor implements ElementPredictor {
 
     @Override
     public boolean isPredictable(Element element) {
+        if (element.getSymbol().equals("Si") && !silicon) return false;
         for (Element detectable : DETECTABLE_ELEMENTS) {
             if (detectable.equals(element)) return true;
         }
         return false;
+    }
+
+    // workaround
+    boolean silicon=true;
+    public void disableSilicon() {
+        silicon = false;
+    }
+    public void enableSilicon() {
+        silicon = true;
     }
 }
