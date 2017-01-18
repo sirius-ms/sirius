@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -34,29 +35,18 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.IsotopePatternGenerator;
-import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNElementPredictor;
+import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 
 public class Sirius {
-
-    public static void main(String[] args) {
-        try {
-            final Sirius sirius = new Sirius("qtof");
-            Ms2Experiment ms2 = sirius.parseExperiment(new File("/home/kaidu/Documents/temp/huh.ms")).next();
-            ProcessedInput pip = sirius.getMs2Analyzer().performValidation(ms2);
-            System.out.println(pip.getExperimentInformation().getPrecursorIonType());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
@@ -69,6 +59,64 @@ public class Sirius {
     protected Progress progress;
     protected PeriodicTable table;
     protected boolean autoIonMode;
+
+    public static void main(String[] args)  {
+        Sirius s = new Sirius();
+        ElementPredictor predictor = s.getElementPrediction();
+        final HashMap<String, File> doof = new HashMap<>();
+        for (File f : new File("/home/kaidu/data/datasets/casmi_ms1/MS1_positive/").listFiles()) {
+            doof.put(f.getName().split("_")[1], f);
+        }
+        try {
+            final List<String> lines = Files.readAllLines(new File("/home/kaidu/data/datasets/casmi_ms1/pos.csv").toPath(), Charset.forName("UTF-8"));
+
+            for (String line : lines.subList(1,lines.size())) {
+                final String[] tabs = line.split("\t");
+                final String id = tabs[0];
+                final MolecularFormula formula = MolecularFormula.parse(tabs[4]);
+                if (doof.containsKey(id)) {
+                    final File f = doof.get(id);
+                    final List<String> xs = Files.readAllLines(f.toPath(), Charset.forName("UTF-8"));
+                    final SimpleMutableSpectrum spec = new SimpleMutableSpectrum(lines.size());
+                    for (String l : xs) {
+                        String[] vls = l.split("\\s+");
+                        spec.addPeak(Double.parseDouble(vls[0]), Double.parseDouble(vls[1]));
+                    }
+                    final MutableMs2Experiment experiment = new MutableMs2Experiment();
+                    final PrecursorIonType hplus = PrecursorIonType.getPrecursorIonType("[M+H]+");
+                    experiment.setIonMass(hplus.neutralMassToPrecursorMass(formula.getMass()));
+                    experiment.setMergedMs1Spectrum(new SimpleSpectrum(spec));
+
+                    SimpleSpectrum extracted = s.getMs1Analyzer().extractPattern(experiment, experiment.getIonMass());
+
+                    final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
+                    // pick 3 peaks
+                    if (extracted.size() < 3) continue;
+                    buf.addPeak(extracted.getPeakAt(0));
+                    buf.addPeak(extracted.getPeakAt(1));
+                    buf.addPeak(extracted.getPeakAt(2));
+                    // add additional 2 peaks if intensity is decreasing
+                    for (int i=3; i <= Math.min(4, extracted.size()-1); ++i) {
+                        if (extracted.getPeakAt(i).getIntensity()>= buf.getIntensityAt(buf.size()-1)) break;
+                        buf.addPeak(extracted.getPeakAt(i));
+                    }
+
+                    extracted = new SimpleSpectrum(buf);
+
+                    final FormulaConstraints constraints = predictor.predictConstraints(extracted);
+                    if (!constraints.isSatisfied(formula)) {
+                        System.out.println(f.getName() + "\t" + formula + "\t" + constraints + "\t" + experiment.getIonMass());
+                        System.out.println(Spectrums.getNormalizedSpectrum(extracted, Normalization.Sum(100d)));
+                    }
+
+                }
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     public final static String ISOTOPE_SCORE = "isotope";
@@ -176,10 +224,15 @@ public class Sirius {
 
     public ElementPredictor getElementPrediction() {
         if (elementPrediction==null) {
+            /*
             DNNElementPredictor defaultPredictor = new DNNElementPredictor();
             defaultPredictor.setThreshold(0.05);
             defaultPredictor.setThreshold("S", 0.1);
             defaultPredictor.setThreshold("Si", 0.8);
+            elementPrediction = defaultPredictor;
+            */
+            DNNRegressionPredictor defaultPredictor = new DNNRegressionPredictor();
+            //defaultPredictor.disableSilicon();
             elementPrediction = defaultPredictor;
         }
         return elementPrediction;
