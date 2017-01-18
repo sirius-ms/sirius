@@ -1,4 +1,16 @@
-import java.nio.file.Files
+processResources.doFirst{
+    logger.lifecycle('writing ilp properties file...')
+    Properties properties = new Properties()
+    File propertiesFile = new File("$projectDir/src/main/resources/ilp.properties")
+    propertiesFile.withReader ("UTF8",{
+        properties.load(it)
+    })
+    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version", "$gurobi_version");
+    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version", "$glpk_version");
+    propertiesFile.withWriter("UTF8",{
+        properties.store(it,"")
+    })
+}
 
 dependencies {
 //project
