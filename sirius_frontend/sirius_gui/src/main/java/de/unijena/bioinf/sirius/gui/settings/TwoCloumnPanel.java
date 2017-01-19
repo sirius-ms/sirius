@@ -46,6 +46,11 @@ public class TwoCloumnPanel extends JPanel {
         setRow(0);
     }
 
+    public TwoCloumnPanel(JComponent left, JComponent right) {
+        this();
+        add(left,right);
+    }
+
     public void setRow(int i) {
         left.gridy = i;
         right.gridy = i;

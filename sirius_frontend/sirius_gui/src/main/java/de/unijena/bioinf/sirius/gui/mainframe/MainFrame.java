@@ -29,6 +29,7 @@ import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
@@ -171,9 +172,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 //        pane.setViewportView(compoundListPanel);
         pane.getViewport().setPreferredSize(new Dimension(200, (int) pane.getViewport().getPreferredSize().getHeight()));
 
-        TwoCloumnPanel compoundListPanel = new TwoCloumnPanel();
-        compoundListPanel.add(new JLabel("Filter:"), searchField);
+        TwoCloumnPanel compoundListPanel = new TwoCloumnPanel(new JLabel(" Filter:"), searchField);
         compoundListPanel.add(pane, 0, true);
+        compoundListPanel.setBorder(new EmptyBorder(0,0,0,0));
 
 
         tabbedPane.addTab("Experiments", compoundListPanel);
