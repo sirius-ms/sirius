@@ -1,5 +1,8 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import ca.odell.glazedlists.*;
+import ca.odell.glazedlists.swing.DefaultEventListModel;
+import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -15,6 +18,7 @@ import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
+import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -43,7 +47,8 @@ import java.util.concurrent.ExecutionException;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener, MouseListener, KeyListener, JobLog.JobListener {
 
-    private CompoundModel compoundModel;
+    private DefaultEventListModel<ExperimentContainer> compoundModel;
+    private FilterList<ExperimentContainer> compoundEventList;
     private JList<ExperimentContainer> compoundList;
     private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, bug, about;
     public final CSIFingerIdComputation csiFingerId;
@@ -58,7 +63,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     private static final String RESULTS_CARD = "results";
     private ConfigStorage config;
     private JobDialog jobDialog;
-//    private Icon jobRunning, jobNotRunning;
+    //    private Icon jobRunning, jobNotRunning;
     private DatabaseDialog dbDialog;
 
     private BackgroundComputation backgroundComputation;
@@ -108,7 +113,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         this.setLayout(new BorderLayout());
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(5,1,5,1));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
         this.add(mainPanel, BorderLayout.CENTER);
 
 
@@ -122,9 +127,21 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
 
-        compoundModel = new CompoundModel();
+
+        JTextField searchField = new JTextField();
+        compoundEventList = new FilterList<>(new ObservableElementList<>(new BasicEventList<ExperimentContainer>(), GlazedLists.beanConnector(ExperimentContainer.class)), new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
+            @Override
+            public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
+                baseList.add(element.getGUIName());
+                baseList.add(element.getIonization().toString());
+                baseList.add(String.valueOf(element.getFocusedMass()));
+            }
+        }, true));
+
+
+        compoundModel = new DefaultEventListModel<>(compoundEventList);
         compoundList = new JList<>(compoundModel);
-        compoundList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        compoundList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundList.setCellRenderer(new CompoundCellRenderer());
         compoundList.addListSelectionListener(this);
         compoundList.setMinimumSize(new Dimension(200, 0));
@@ -148,11 +165,18 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             }
         });
 
+
         JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         pane.setViewportView(compoundList);
+//        pane.setViewportView(compoundListPanel);
         pane.getViewport().setPreferredSize(new Dimension(200, (int) pane.getViewport().getPreferredSize().getHeight()));
 
-        tabbedPane.addTab("Experiments", pane);
+        TwoCloumnPanel compoundListPanel = new TwoCloumnPanel();
+        compoundListPanel.add(new JLabel("Filter:"), searchField);
+        compoundListPanel.add(pane, 0, true);
+
+
+        tabbedPane.addTab("Experiments", compoundListPanel);
         tabbedPane.addTab("Identifications", tmp_wrapper);
 
         mainPanel.add(tabbedPane, BorderLayout.WEST);
@@ -160,7 +184,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         // ########## Toolbar ############
         JToolBar controlPanel = new JToolBar();
-        controlPanel.setBorder(BorderFactory.createMatteBorder(0,0,2,0, Colors.ICON_BLUE));
+        controlPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
 //        controlPanel.setBorder(BorderFactory.createRaisedSoftBevelBorder(/*0,5,0,5*/));
 
         newB = new ToolbarButton("Import", Icons.DOC_32);
@@ -173,7 +197,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         batchB.setToolTipText("Import measurements of several compounds");
 
         controlPanel.add(batchB);
-        controlPanel.addSeparator(new Dimension(20,20));
+        controlPanel.addSeparator(new Dimension(20, 20));
 
         loadB = new ToolbarButton("Load Workspace", Icons.FOLDER_OPEN_32);
         loadB.addActionListener(this);
@@ -183,7 +207,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         saveB.addActionListener(this);
         saveB.setEnabled(false);
         controlPanel.add(saveB);
-        controlPanel.addSeparator(new Dimension(20,20));
+        controlPanel.addSeparator(new Dimension(20, 20));
 //
         computeAllB = new ToolbarButton("Compute All", Icons.RUN_32);
         computeAllB.addActionListener(this);
@@ -194,7 +218,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         exportResultsB.addActionListener(this);
         exportResultsB.setEnabled(false);
         controlPanel.add(exportResultsB);
-        controlPanel.addSeparator(new Dimension(20,20));
+        controlPanel.addSeparator(new Dimension(20, 20));
 //        controlPanel.add(Box.createGlue());
 
         configFingerID = new ToolbarButton("CSI:FingerId", Icons.FINGER_32);
@@ -202,11 +226,11 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         configFingerID.setEnabled(false);
 
         controlPanel.add(configFingerID);
-        controlPanel.addSeparator(new Dimension(20,20));
+        controlPanel.addSeparator(new Dimension(20, 20));
 //        controlPanel.add(Box.createGlue());
 
         //todo implement database menu
-		db = new ToolbarButton("Database", Icons.DB_32);
+        db = new ToolbarButton("Database", Icons.DB_32);
         /*controlPanel.add(db);
         db.addActionListener(this);
         controlPanel.addSeparator(new Dimension(20,20));*/
@@ -221,9 +245,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             }
         });
         controlPanel.add(jobs);
-        controlPanel.addSeparator(new Dimension(20,20));
+        controlPanel.addSeparator(new Dimension(20, 20));
         controlPanel.add(Box.createGlue());
-        controlPanel.addSeparator(new Dimension(20,20));
+        controlPanel.addSeparator(new Dimension(20, 20));
         JobLog.getInstance().addListener(this);
 
         settings = new ToolbarButton("Settings", Icons.GEAR_32);
@@ -333,7 +357,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         newExpMI = new JMenuItem("Import Experiment", Icons.ADD_DOC_16);
         batchMI = new JMenuItem("Batch Import", Icons.BATCH_DOC_16);
         editMI = new JMenuItem("Edit Experiment", Icons.EDIT_16);
-        closeMI = new JMenuItem("Close Experiment", Icons.REMOVE_DOC_16);
+        closeMI = new JMenuItem("Remove Experiment(s)", Icons.REMOVE_DOC_16);
         computeMI = new JMenuItem("Compute", Icons.RUN_16);
         cancelMI = new JMenuItem("Cancel Computation", Icons.CANCEL_16);
 
@@ -407,19 +431,22 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     }
 
-    public Enumeration<ExperimentContainer> getCompounds() {
-        return compoundModel.elements();
+    public Iterator<ExperimentContainer> getCompounds() {
+        return compoundEventList.iterator();
     }
 
-    public CompoundModel getCompoundModel() {
-        return compoundModel;
+    public EventList<ExperimentContainer> getCompoundsList() {
+        return compoundEventList;
     }
+
+    /* public ListModel getCompoundModel() {
+        return compoundModel;
+    }*/
 
     public void refreshCompound(final ExperimentContainer c) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                compoundModel.refresh(c);
                 refreshResultListFor(c);
                 refreshComputationMenuItem();
                 refreshExportMenuButton();
@@ -435,9 +462,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     private void refreshExportMenuButton() {
-        final Enumeration<ExperimentContainer> ecs = getCompounds();
-        while (ecs.hasMoreElements()) {
-            final ExperimentContainer e = ecs.nextElement();
+        final Iterator<ExperimentContainer> ecs = getCompounds();
+        while (ecs.hasNext()) {
+            final ExperimentContainer e = ecs.next();
             if (e.getComputeState() == ComputingStatus.COMPUTED) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
@@ -493,12 +520,12 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             if (computeAllActive) {
                 cancelComputation();
             } else {
-                final BatchComputeDialog dia = new BatchComputeDialog(this);
+                final BatchComputeDialog dia = new BatchComputeDialog(this, compoundEventList);
             }
         } else if (e.getSource() == cancelMI) {
-            final ExperimentContainer ec = compoundList.getSelectedValue();
-            if (ec != null)
+            for (ExperimentContainer ec : compoundList.getSelectedValuesList()) {
                 backgroundComputation.cancel(ec);
+            }
         } else if (e.getSource() == saveB) {
 
             JFileChooser jfc = new JFileChooser();
@@ -698,9 +725,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         if (selectedFile == null) return;
         if (accessory.isSingleFile()) {
             try (final BufferedWriter fw = new BufferedWriter(new FileWriter(selectedFile))) {
-                final Enumeration<ExperimentContainer> ecs = getCompounds();
-                while (ecs.hasMoreElements()) {
-                    final ExperimentContainer ec = ecs.nextElement();
+                final Iterator<ExperimentContainer> ecs = getCompounds();
+                while (ecs.hasNext()) {
+                    final ExperimentContainer ec = ecs.next();
                     if (ec.isComputed() && ec.getResults().size() > 0) {
                         IdentificationResult.writeIdentifications(fw, SiriusDataConverter.experimentContainerToSiriusExperiment(ec), ec.getRawResults());
                     }
@@ -718,10 +745,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     private void writeMultiFiles(File selectedFile, boolean withSirius, boolean withFingerid) throws IOException {
-        final Enumeration<ExperimentContainer> containers = getCompounds();
+        final Iterator<ExperimentContainer> containers = getCompounds();
         final HashSet<String> names = new HashSet<>();
-        while (containers.hasMoreElements()) {
-            final ExperimentContainer container = containers.nextElement();
+        while (containers.hasNext()) {
+            final ExperimentContainer container = containers.next();
             if (container.getResults() == null || container.getResults().size() == 0) continue;
             final String name;
             {
@@ -779,15 +806,20 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     private void computeCurrentCompound() {
-        ExperimentContainer ec = this.compoundList.getSelectedValue();
-        if (ec != null) {
-            ComputeDialog cd = new ComputeDialog(this, ec);
-            if (cd.isSuccessful()) {
-                LoggerFactory.getLogger(this.getClass()).info("Computation Successful!");
-                this.showResultsPanel.changeData(ec);
-                resultsPanelCL.show(resultsPanel, RESULTS_CARD);
+        List<ExperimentContainer> ecs = compoundList.getSelectedValuesList();
+        if (ecs != null && !ecs.isEmpty()) {
+            if (ecs.size() == 1) {
+                ExperimentContainer ec = ecs.get(0);
+                ComputeDialog cd = new ComputeDialog(this, ec);
+                if (cd.isSuccessful()) {
+                    LoggerFactory.getLogger(this.getClass()).info("Computation Successful!");
+                    this.showResultsPanel.changeData(ec);
+                    resultsPanelCL.show(resultsPanel, RESULTS_CARD);
+                } else {
+                    LoggerFactory.getLogger(this.getClass()).warn("Computation failed!");
+                }
             } else {
-                LoggerFactory.getLogger(this.getClass()).warn("Computation failed!");
+                final BatchComputeDialog bc = new BatchComputeDialog(this, ecs);
             }
         }
     }
@@ -796,17 +828,19 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                int index = compoundList.getSelectedIndex();
-                if (index < 0) return;
-                ExperimentContainer cont = compoundModel.get(index);
-                backgroundComputation.cancel(cont);
-                if (cont.getResults() != null && cont.getResults().size() > 0 && !config.isCloseNeverAskAgain()) {
-                    CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MainFrame.this, "When removing this experiment you will loose the computed identification results for \"" + cont.getGUIName() + "\"?", config);
+                List<ExperimentContainer> toRemove = compoundList.getSelectedValuesList();
+
+                if (!config.isCloseNeverAskAgain()) {
+                    CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MainFrame.this, "When removing the selected experiment(s) you will loose all computed identification results?", config);
                     CloseDialogReturnValue val = diag.getReturnValue();
                     if (val == CloseDialogReturnValue.abort) return;
                 }
-                compoundModel.remove(index);
-                names.remove(cont.getGUIName());
+                for (ExperimentContainer cont : toRemove) {
+                    backgroundComputation.cancel(cont);
+                    names.remove(cont.getGUIName());
+                }
+                compoundEventList.removeAll(toRemove);
+                compoundList.clearSelection();
             }
         });
     }
@@ -885,7 +919,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         ec.setSuffix(1);
                     }
                 }
-                compoundModel.addElement(ec);
+                compoundEventList.add(ec);
                 compoundList.setSelectedValue(ec, true);
                 if (ec.getResults().size() > 0) ec.setComputeState(ComputingStatus.COMPUTED);
                 if (ec.getComputeState() == ComputingStatus.COMPUTED) {
@@ -897,13 +931,13 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void clearWorkspace() {
         this.names.clear();
-        this.compoundModel.removeAllElements();
+        this.compoundEventList.clear();
     }
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
         if (e.getSource() == this.compoundList) {
-            if (this.compoundModel.size() > 0) {
+            if (this.compoundEventList.size() > 0) {
                 this.computeAllB.setEnabled(true);
             } else {
                 this.computeAllB.setEnabled(false);
@@ -923,7 +957,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                 closeMI.setEnabled(true);
                 editMI.setEnabled(true);
                 computeMI.setEnabled(true);
-                this.showResultsPanel.changeData(compoundModel.getElementAt(index));
+                this.showResultsPanel.changeData(compoundEventList.get(index));
                 resultsPanelCL.show(resultsPanel, RESULTS_CARD);
             }
         }
@@ -931,7 +965,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     public void selectExperimentContainer(ExperimentContainer container) {
         this.showResultsPanel.changeData(container);
-        compoundList.setSelectedIndex(compoundModel.indexOf(container));
+        compoundList.setSelectedValue(container, true);
         resultsPanelCL.show(resultsPanel, RESULTS_CARD);
     }
 
@@ -1003,7 +1037,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
 	/*
-	@Override
+    @Override
 	public void drop(DropTargetDropEvent dtde) {
 		dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
 		Transferable tr = dtde.getTransferable();
@@ -1108,6 +1142,19 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     @Override
     public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+            int indx = compoundList.locationToIndex(e.getPoint());
+            boolean select = true;
+            for (int i : compoundList.getSelectedIndices()) {
+                if (indx == i) {
+                    select = false;
+                    break;
+                }
+            }
+            if (select){
+                compoundList.setSelectedIndex(indx);
+            }
+        }
         if (e.isPopupTrigger()) {
             this.expPopMenu.show(e.getComponent(), e.getX(), e.getY());
         }
@@ -1115,9 +1162,10 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.isPopupTrigger()) {
+        // fleisch thinks that is not needed
+        /*if (e.isPopupTrigger()) {
             this.expPopMenu.show(e.getComponent(), e.getX(), e.getY());
-        }
+        }*/
     }
 
     @Override

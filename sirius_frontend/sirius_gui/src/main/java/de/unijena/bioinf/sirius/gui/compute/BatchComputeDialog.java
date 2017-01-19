@@ -20,7 +20,6 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -43,8 +42,6 @@ import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.plaf.SeparatorUI;
-import javax.swing.plaf.SplitPaneUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,6 +62,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private SearchProfilePanel searchProfilePanel;
     private JCheckBox runCSIFingerId;
     private MainFrame owner;
+    List<ExperimentContainer> compoundsToProcess;
 
     private Sirius sirius;
 
@@ -72,9 +70,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private HashMap<String, Ionization> stringToIonMap;
     private HashMap<Ionization, String> ionToStringMap;
 
-    public BatchComputeDialog(MainFrame owner) {
+    public BatchComputeDialog(MainFrame owner,List<ExperimentContainer> compoundsToProcess) {
         super(owner, "compute", true);
         this.owner = owner;
+        this.compoundsToProcess = compoundsToProcess;
         this.success = false;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -188,9 +187,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
     private boolean hasCompoundWithUnknownIonization() {
-        Enumeration<ExperimentContainer> compounds = owner.getCompounds();
-        while (compounds.hasMoreElements()) {
-            final ExperimentContainer ec = compounds.nextElement();
+        Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
+        while (compounds.hasNext()) {
+            final ExperimentContainer ec = compounds.next();
             if (ec.isUncomputed()) {
                 if (ec.getIonization() == null || ec.getIonization().isIonizationUnknown()) {
                     return true;
@@ -220,9 +219,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
 
             if (value==ReturnValue.Success){
-                final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
-                while (compounds.hasMoreElements()) {
-                    final ExperimentContainer ec = compounds.nextElement();
+                final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
+                while (compounds.hasNext()) {
+                    final ExperimentContainer ec = compounds.next();
                     ec.setComputeState(ComputingStatus.UNCOMPUTED);
                 }
                 startComputing();
@@ -284,11 +283,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         //entspricht setup() Methode
         final BackgroundComputation bgc = owner.getBackgroundComputation();
-        final Enumeration<ExperimentContainer> compounds = owner.getCompounds();
+        final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
         final ArrayList<BackgroundComputation.Task> tasks = new ArrayList<>();
         final ArrayList<ExperimentContainer> compoundList = new ArrayList<>();
-        while (compounds.hasMoreElements()) {
-            final ExperimentContainer ec = compounds.nextElement();
+        while (compounds.hasNext()) {
+            final ExperimentContainer ec = compounds.next();
             if (ec.isUncomputed()) {
 
                 if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {

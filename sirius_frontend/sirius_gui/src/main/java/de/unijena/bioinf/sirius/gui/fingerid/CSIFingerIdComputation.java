@@ -454,11 +454,11 @@ public class CSIFingerIdComputation {
         computeAll(tasks);
     }
 
-    public void computeAll(Enumeration<ExperimentContainer> compounds) {
+    public void computeAll(Iterator<ExperimentContainer> compounds) {
         stopRunningTasks();
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
-        while (compounds.hasMoreElements()) {
-            final ExperimentContainer c = compounds.nextElement();
+        while (compounds.hasNext()) {
+            final ExperimentContainer c = compounds.next();
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
                 if (e.getCharge()>0) {
                     tasks.add(new FingerIdTask(isEnforceBio(), c, e));
@@ -913,7 +913,7 @@ public class CSIFingerIdComputation {
             restDatabase.annotateCompounds(list);
         }
 
-        @Override
+//        @Override
         public List<InChI> findInchiByNames(List<String> list) throws DatabaseException {
             return null;
         }

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.sirius.gui.compute.CompoundModel;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -17,7 +18,7 @@ public class ConfidenceList extends JPanel implements ListSelectionListener {
     protected MainFrame owner;
 
     public ConfidenceList(MainFrame owner) {
-        this.results = new JList<>(new ListModel(owner.getCompoundModel()));
+        this.results = new JList<>(new ListModel(owner.getCompoundsList()));
         this.owner = owner;
         results.setCellRenderer(new IdentificationCellRenderer());
 
@@ -39,10 +40,10 @@ public class ConfidenceList extends JPanel implements ListSelectionListener {
 
     protected class ListModel extends AbstractListModel<ExperimentContainer> {
 
-        CompoundModel outerList;
+        EventList<ExperimentContainer> outerList;
         List<ExperimentContainer> innerList;
 
-        public ListModel(CompoundModel outerList) {
+        public ListModel(EventList<ExperimentContainer> outerList) {
             this.outerList = outerList;
             this.innerList = new ArrayList<>(outerList.size());
             refreshInnerList();
@@ -50,9 +51,9 @@ public class ConfidenceList extends JPanel implements ListSelectionListener {
 
         protected void refreshInnerList() {
             innerList.clear();
-            Enumeration<ExperimentContainer> en = outerList.elements();
-            while (en.hasMoreElements()) {
-                ExperimentContainer ec = en.nextElement();
+            Iterator<ExperimentContainer> en = outerList.iterator();
+            while (en.hasNext()) {
+                ExperimentContainer ec = en.next();
                 if (ec.getBestHit()!=null && ec.getBestHit().getFingerIdData()!=null && !Double.isNaN(ec.getBestHit().getFingerIdData().confidence)) {
                     innerList.add(ec);
                 }
