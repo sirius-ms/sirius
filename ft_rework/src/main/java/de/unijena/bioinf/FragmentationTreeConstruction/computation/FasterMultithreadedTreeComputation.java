@@ -190,7 +190,6 @@ public class FasterMultithreadedTreeComputation {
             this.sortedHeuScores = sortedHeuScores;
         }
         public void run(){
-//            System.out.println("start heu Tree");
             int processors = Runtime.getRuntime().availableProcessors();
             ExecutorService service = Executors.newFixedThreadPool(processors);
 
@@ -199,12 +198,8 @@ public class FasterMultithreadedTreeComputation {
             for (int i = 0; i < sortedHeuScores.length; i++) {
                 final int index = i;
                 final Collection<MolecularFormula> formulas_for_exact_method = multimap.get(sortedHeuScores[i]);
-//                if (formulas_for_exact_method.size()>1){
-//                    j += formulas_for_exact_method.size()-1;
-//                }
                 for (final MolecularFormula formula : formulas_for_exact_method) {
                     j++;
-//            for (final MolecularFormula formula : formulasToConsider.keySet()) {
                     final int finalJ = j;
                     futures.add(service.submit(new Callable<Response>() {
                         @Override
@@ -217,49 +212,20 @@ public class FasterMultithreadedTreeComputation {
                         out.prediction = sortedHeuScores[index];
                         return out;
                     }
-//                        public FTree call() throws Exception {
-////                        final Response out = new Response();
-////                        out.index = index;
-//                            FTree result = computeTreeExactly(computeGraph(formula));
-//                            return result;
-//                        }
+
                     }));
                 }
             }
 
             service.shutdown();
-            //            while (true) {
-//                try {
-//
-//                    final Future<FGraph> graph = graphsToCompute.take();
-//                    // check if job is done (gets poison_pill)
-//                    if (graph.get() == poison_pill_FGraph) {
-//                        treesToCompute.put(service.submit(new Callable<FTree>() {
-//                            @Override
-//                            public FTree call() throws Exception {
-////                            adds poison_pill tree to output
-//                                return poison_pill_FTree;
-//                            }
-//                        }));
-//                        service.shutdown();
-////                        service.shutdownNow();
-//                        break;
-//                    } else {
-//                        treesToCompute.put(service.submit(new Callable<FTree>() {
-//                            @Override
-//                            public FTree call() throws Exception {
-////                                Thread.currentThread().setName("CompHeu");
-//                                return computeTreeExactly(graph.get());
-//                            }
-//                        }));
-//                    }
-//
-//
-//                } catch (Exception e) {
-//                    System.out.println("Warning");
-//                    e.printStackTrace();
-//                }
-//            }
+
+        }
+    }
+    private class test implements Runnable{
+        public void run(){
+            for(MolecularFormula formula: formulasToConsider.keySet()){
+                getScore(computeTreeHeuristically(computeGraph(formula)));
+            }
         }
     }
 
@@ -311,6 +277,9 @@ public class FasterMultithreadedTreeComputation {
         // build list with response objects
 
 
+//        for (int i = 0; i<8; i++){
+//            new Thread(new test()).start();
+//        }
 //        int thresh = (sortedHeuScores.length / 2);
         int thresh = 0;
         (new Thread(new ConsumeGraphExact(sortedHeuScores))).start();
@@ -370,7 +339,6 @@ public class FasterMultithreadedTreeComputation {
         while (futures.size() >0 ) {
             Future<Response> future = futures.poll();
             Response response= future.get();
-//            future.get();
             presortedExScores[response.index] = response.result;
             predictedScores[response.index] = response.prediction;
 
@@ -386,8 +354,8 @@ public class FasterMultithreadedTreeComputation {
                 maxPosition = j;
             }
         }
-        int position = sortedHeuScores.length - 1 - maxPosition;
-        float cut = ((float) maxPosition / (sortedHeuScores.length - 1));
+        int position = presortedExScores.length - 1 - maxPosition;
+        float cut = ((float) maxPosition / (presortedExScores.length - 1));
         Output output = new Output();
         output.cut = cut;
         output.result = maxValue;
@@ -410,7 +378,7 @@ public class FasterMultithreadedTreeComputation {
         return tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
     }
 
-    private synchronized FTree computeTreeExactly(FGraph graph) {
+    private FTree computeTreeExactly(FGraph graph) {
 //        System.out.println("3");
 //        long starttime = System.nanoTime();
         FTree test = analyzer.computeTree(graph);
