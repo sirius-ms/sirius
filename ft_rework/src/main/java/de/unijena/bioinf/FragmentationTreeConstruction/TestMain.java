@@ -21,7 +21,6 @@ public class TestMain {
 
         File folder = new File("/home/florian/Uni/projektmodul/gnps/");
         File[] listOfFiles = folder.listFiles();
-//        int[] output = new int[100];
 
         try {
             sirius = new Sirius("qtof");
@@ -33,20 +32,29 @@ public class TestMain {
             StringBuilder stringBuilderPosition = new StringBuilder();
 
             for (File file : listOfFiles) {
-
+                long starttime = System.currentTimeMillis();
                 if (file.isFile()) {
+//                    System.out.println("Hey Ho");
                     final FasterMultithreadedTreeComputation fmtc = new FasterMultithreadedTreeComputation(sirius.getMs2Analyzer());
                     System.out.println(file.getName());
                     final Ms2Experiment experiment = sirius.parseExperiment(new File(file.getPath())).next();
 
                     final ProcessedInput input = sirius.getMs2Analyzer().preprocessing(experiment);
-
+//                    if (input.getExperimentInformation().getIonMass() <  700){
+//                        System.out.println("skipped");
+//                        continue;
+//                    }
+                    if (input.getExperimentInformation().getIonMass() >=  800){
+                        System.out.println("skipped");
+                        continue;
+                    }
                     fmtc.setInput(input);
+//                    System.out.println("let's go!");
                     FasterMultithreadedTreeComputation.Output out = fmtc.startComputation();
 
-//                    float quality = (fmtc.startComputation())*100;
-//                    output[(int)quality-1] +=1;
-                    FileWriter writer = new FileWriter("output3.csv");
+                    long endtime = System.currentTimeMillis();
+                    System.out.println(endtime-starttime);
+                    FileWriter writer = new FileWriter("outputFinal.csv");
 
                     stringBuilderCut.append(out.cut+",");
                     stringBuilderPrediction.append(out.prediction+",");
@@ -59,14 +67,6 @@ public class TestMain {
                     writer.write(stringBuilderPosition.toString());
                     writer.close();
                 }
-//                Runtime.getRuntime().gc();//TODO take out again
-//
-//                for (int i = 1; i < 100; i++){
-//                    stringBuilder.append(","+Integer.toString(output[i]));
-//                }
-////                System.out.println(stringBuilder);
-//                writer.write(stringBuilder.toString());
-//                writer.close();
             }
 
 
