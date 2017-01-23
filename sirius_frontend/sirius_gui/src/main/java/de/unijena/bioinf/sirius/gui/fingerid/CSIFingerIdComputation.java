@@ -37,6 +37,7 @@ import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import org.openscience.cdk.exception.CDKException;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.stream.JsonParser;
+import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -94,7 +96,7 @@ public class CSIFingerIdComputation {
     protected RESTDatabase restDatabase;
     protected boolean configured = false;
     private File directory;
-    protected Callback callback, confidenceCallback;
+    protected Callback callback, confidenceCallback;//todo why do we have 2 callbacks
     protected boolean enabled;
     protected List<Runnable> enabledListeners=new ArrayList<>();
 
@@ -525,7 +527,9 @@ public class CSIFingerIdComputation {
         }
     }
 
+    //todo why not computing all csi tasks in backround? is there a need to freeze the gui for a web job?
     public boolean synchronousPredictionTask(ExperimentContainer container, SiriusResultElement resultElement) throws IOException {
+        resultElement.fingerIdComputeState = ComputingStatus.COMPUTING;
         // first: delete this job from all queues
         final FingerIdTask task = new FingerIdTask(isEnforceBio(), container, resultElement);
         formulaQueue.remove(task);
@@ -574,13 +578,14 @@ public class CSIFingerIdComputation {
             refreshConfidence(container);
             callback.computationFinished(container, resultElement);
             confidenceCallback.computationFinished(container, resultElement);
+            resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
             return true;
         } catch (URISyntaxException e) {
             throw new IOException(e);
         }
     }
 
-    protected void refreshConfidence(ExperimentContainer exp) {
+    protected void refreshConfidence(final ExperimentContainer exp) {
         if (exp.getResults()==null || exp.getResults().isEmpty()) return;
         SiriusResultElement best = null;
         for (SiriusResultElement elem : exp.getResults()) {

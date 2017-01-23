@@ -4,6 +4,7 @@ import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.Colors;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -147,12 +148,13 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
         if (sre!=null && sre.fingerIdComputeState!=null) {
             final ComputingStatus ec = sre.fingerIdComputeState;
             if (ec==ComputingStatus.COMPUTED) {
-                g2.drawString("\u2713", getWidth()-16, getHeight()-8);
+				g2.setColor(Colors.ICON_GREEN);
+				g2.drawString("\u2713", getWidth()-16, getHeight()-8);
             } else if (ec==ComputingStatus.COMPUTING) {
                 g2.drawString("\u2699", getWidth()-16, getHeight()-8);
             } else if (ec==ComputingStatus.FAILED){
                 final Color prevCol = g2.getColor();
-                g2.setColor(Color.RED);
+                g2.setColor(Colors.ICON_RED);
                 g2.drawString("\u2718", getWidth()-16, getHeight()-8);
                 g2.setColor(prevCol);
             } else if (ec==ComputingStatus.QUEUED) {

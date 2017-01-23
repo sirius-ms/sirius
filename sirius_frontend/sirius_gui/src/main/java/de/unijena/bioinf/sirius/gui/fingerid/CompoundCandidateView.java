@@ -22,8 +22,11 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -41,6 +44,7 @@ public class CompoundCandidateView extends JPanel {
     protected CSIFingerIdComputation storage;
     protected CandidateJList list;
     protected JButton searchCSIButton;
+    protected JLabel loader = new JLabel(Icons.FP_LOADER);
 
     protected CardLayout layout;
     private MainFrame frame;
@@ -69,6 +73,8 @@ public class CompoundCandidateView extends JPanel {
         setLayout(layout);
         add(new JPanel(), "empty");
         add(new ComputeElement(), "computeButton");
+        add(loader,"loader");
+
         list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement==null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
@@ -76,12 +82,30 @@ public class CompoundCandidateView extends JPanel {
     }
 
     public void changeData(ExperimentContainer container, SiriusResultElement element) {
+        System.out.println("CHANGE_DATA");
         this.experimentContainer = container;
         this.resultElement = element;
         list.refresh(container, resultElement==null ? null : resultElement.getFingerIdData());
-        if (resultElement==null) layout.show(this, "empty");
-        else if (resultElement.getFingerIdData()==null) layout.show(this, "computeButton");
-        else layout.show(this, "list");
+
+        //todo use states for all these.
+        if (resultElement==null)
+            layout.show(this, "empty");
+        else{
+            switch (resultElement.fingerIdComputeState) {
+                case COMPUTING:
+                    System.out.println("loader");
+                    layout.show(this, "loader");
+                    break;
+                case COMPUTED:
+                    System.out.println("list");
+                    layout.show(this, "list");
+                    break;
+               default:
+                   System.out.println("button");
+                   layout.show(this, "computeButton");//todo other states
+                   break;
+            }
+        }
 
         if (resultElement==null || !storage.enabled) {
             searchCSIButton.setEnabled(false);
@@ -100,14 +124,18 @@ public class CompoundCandidateView extends JPanel {
         }
     }
 
+
     public class ComputeElement extends JPanel {
         public ComputeElement() {
             searchCSIButton = new JButton("Search online with CSI:FingerId");
             add(searchCSIButton);
+
+
             searchCSIButton.setEnabled((resultElement!=null && storage.enabled));
             searchCSIButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+
                     //Test connection
                     if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
                         new NoConnectionDialog(frame);
@@ -116,8 +144,11 @@ public class CompoundCandidateView extends JPanel {
                     if (!storage.configured) {
                         if (new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), false).run() == FingerIdDialog.CANCELED) return;
                     }
-                    frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+                    resultElement.fingerIdComputeState = ComputingStatus.COMPUTING;
+                    changeData(experimentContainer, resultElement);
                     final SwingWorker<String,Void> worker = new SwingWorker<String,Void>() {
+
                         @Override
                         public String doInBackground() {
                             try {
@@ -135,10 +166,11 @@ public class CompoundCandidateView extends JPanel {
                             }
                         }
 
+
                         @Override
                         protected void done() {
                             super.done();
-                            frame.setCursor(Cursor.getDefaultCursor());
+//                          frame.setCursor(Cursor.getDefaultCursor());
                             changeData(experimentContainer, resultElement);
                             String msg;
                             try {

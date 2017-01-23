@@ -41,30 +41,30 @@ public class QuestionDialog extends JDialog implements ActionListener{
 		northPanel.add(new JLabel(icon));
 		northPanel.add(new JLabel(question));
 		this.add(northPanel,BorderLayout.CENTER);
-		JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		JPanel buttonPanel = south;
+		JPanel south = new JPanel();
+		south.setLayout(new BoxLayout(south,BoxLayout.X_AXIS));
+		south.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
 
 		if (propertyKey!=null){
 			dontAsk = new JCheckBox();
 			dontAsk.addActionListener(this);
 			dontAsk.setText("Do not ask me again.");
-			south = new JPanel();
-			south.setLayout(new BoxLayout(south,BoxLayout.Y_AXIS));
 			south.add(dontAsk);
-			south.add(buttonPanel);
+
 		}
 
+		south.add(Box.createHorizontalGlue());
 		ok = new JButton("Yes");
 		ok.addActionListener(this);
 		abort = new JButton("No");
 		abort.addActionListener(this);
-		buttonPanel.add(ok);
-		buttonPanel.add(abort);
+		south.add(ok);
+		south.add(abort);
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
+		this.setResizable(false);
 		setLocationRelativeTo(getParent());
 		this.setVisible(true);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public ReturnValue getReturnValue(){

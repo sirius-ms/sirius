@@ -1,17 +1,16 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import ca.odell.glazedlists.TextFilterable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import org.jdesktop.beans.AbstractBean;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import javax.swing.event.SwingPropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExperimentContainer  {
+public class ExperimentContainer extends AbstractBean {
 
     private List<CompactSpectrum> ms1Spectra, ms2Spectra;
 
@@ -28,7 +27,6 @@ public class ExperimentContainer  {
     private volatile List<IdentificationResult> originalResults;
     private volatile SiriusResultElement bestHit;
 
-    private final PropertyChangeSupport changes = new PropertyChangeSupport(this);
 
     public ExperimentContainer() {
         ms1Spectra = new ArrayList<CompactSpectrum>();
@@ -136,8 +134,6 @@ public class ExperimentContainer  {
     }
 
 
-
-
     public void setRawResults(List<IdentificationResult> results) {
         this.originalResults = results;
         this.results = SiriusResultElementConverter.convertResults(originalResults);
@@ -151,6 +147,7 @@ public class ExperimentContainer  {
         if (this.computeState == ComputingStatus.COMPUTING)
             setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
     }
+
     public void setName(String name) {
         this.name = name;
         setGuiName(this.suffix >= 2 ? this.name + " (" + suffix + ")" : this.name);
@@ -161,36 +158,33 @@ public class ExperimentContainer  {
         setGuiName(this.suffix >= 2 ? this.name + " (" + suffix + ")" : this.name);
     }
 
-
     // with change event
     protected void setGuiName(String guiName) {
         String old = this.guiName;
         this.guiName = guiName;
-        changes.firePropertyChange("guiName",old,this.guiName);
+        firePropertyChange("guiName", old, this.guiName);
     }
 
-    public void setBestHit(SiriusResultElement bestHit) {
-//        SiriusResultElement old =  this.bestHit;
-        this.bestHit = bestHit; // todo we have to find a good sync solution for these experiment container
-//        changes.firePropertyChange("bestHit",old,this.bestHit);
+    public void setBestHit(final SiriusResultElement bestHit) {
+        this.bestHit = bestHit;
     }
 
     public void setIonization(PrecursorIonType ionization) {
         PrecursorIonType old = this.ionization;
         this.ionization = ionization;
-        changes.firePropertyChange("ionization",old,this.ionization);
+        firePropertyChange("ionization", old, this.ionization);
     }
 
     public void setSelectedFocusedMass(double focusedMass) {
         double old = selectedFocusedMass;
         selectedFocusedMass = focusedMass;
-        changes.firePropertyChange("selectedFocusedMass",old,selectedFocusedMass);
+        firePropertyChange("selectedFocusedMass", old, selectedFocusedMass);
     }
 
     public void setDataFocusedMass(double focusedMass) {
         double old = dataFocusedMass;
         dataFocusedMass = focusedMass;
-        changes.firePropertyChange("dataFocusedMass",old,dataFocusedMass);
+        firePropertyChange("dataFocusedMass", old, dataFocusedMass);
     }
 
     public void setErrorMessage(String errorMessage) {
@@ -200,13 +194,10 @@ public class ExperimentContainer  {
     public void setComputeState(ComputingStatus st) {
         ComputingStatus oldST = this.computeState;
         this.computeState = st;
-        changes.firePropertyChange("computeState",oldST,this.computeState);
+        firePropertyChange("computeState", oldST, this.computeState);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        changes.addPropertyChangeListener(l);
-    }
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        changes.removePropertyChangeListener(l);
+    public void fireUpdateEvent(){
+        firePropertyChange("updated", false, true);
     }
 }

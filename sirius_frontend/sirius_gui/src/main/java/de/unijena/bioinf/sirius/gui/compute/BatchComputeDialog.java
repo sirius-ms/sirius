@@ -35,6 +35,7 @@ import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -55,7 +56,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private static String SEARCH_PUBCHEM = "Search PubChem structure database with CSI:FingerId";
     private static String SEARCH_BIODB = "Search bio database with CSI:FingerId";
 
-    private JButton compute, abort, recompute;
+    private JButton compute, abort;
+    private JCheckBox recompute;
 
 
     private ElementsPanel elementPanel;
@@ -133,9 +135,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         southPanel.setLayout(new BoxLayout(southPanel,BoxLayout.LINE_AXIS));
 
         JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        recompute = new JButton("Recompute all");
-        recompute.addActionListener(this);
-        recompute.setToolTipText("Recompute all experiments. Even already computed ones.");
+        recompute = new JCheckBox("Recompute already computed compounds?",false);
+        recompute.setToolTipText("If checked, all selected experiments will be computed. Already computed ones we be recomputed.");
         lsouthPanel.add(recompute);
 
         JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
@@ -206,26 +207,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             this.dispose();
         }  else if (e.getSource() == this.compute) {
             startComputing();
-        } else if (e.getSource() == recompute) {
-            final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
-            Properties properties = ApplicationCore.getUserCopyOfUserProperties();
-
-            ReturnValue value;
-            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty))==true){
-                value = ReturnValue.Success;
-            } else {
-                QuestionDialog questionDialog = new QuestionDialog(this, "Do you want to recompute all experiments?", dontAskProperty);
-                value = questionDialog.getReturnValue();
-            }
-
-            if (value==ReturnValue.Success){
-                final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
-                while (compounds.hasNext()) {
-                    final ExperimentContainer ec = compounds.next();
-                    ec.setComputeState(ComputingStatus.UNCOMPUTED);
-                }
-                startComputing();
-            }
         }
     }
 
@@ -234,6 +215,30 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void startComputing() {
+        if (recompute.isSelected()) {
+            final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
+            Properties properties = ApplicationCore.getUserCopyOfUserProperties();
+
+            ReturnValue value;
+            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty))==true){
+                value = ReturnValue.Success;
+            } else {
+                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All already computed results will get lost!</body></html>", dontAskProperty);
+                value = questionDialog.getReturnValue();
+            }
+
+            //reset status of uncomputed values
+            if (value==ReturnValue.Success){
+                final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
+                while (compounds.hasNext()) {
+                    final ExperimentContainer ec = compounds.next();
+                    ec.setComputeState(ComputingStatus.UNCOMPUTED);
+                }
+            }
+        }
+
+
+
         String val = searchProfilePanel.getInstrument();
         String instrument = "";
         if (val.equals("Q-TOF")) {

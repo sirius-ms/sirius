@@ -1,6 +1,8 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.utils.Colors;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -14,7 +16,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 
 	private Color backColor, foreColor;
 	
-	private Font valueFont, compoundFont, propertyFont;
+	private Font valueFont, compoundFont, propertyFont, statusFont;
 
 	private static Image icon;
 	
@@ -54,8 +56,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			compoundFont = tempFont.deriveFont(13f);
-			
 			propertyFont = tempFont.deriveFont(12f);
+			statusFont = tempFont.deriveFont(18f);
 		}catch(Exception e){
 			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
@@ -64,7 +66,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			valueFont = tempFont.deriveFont(12f);
-			
 		}catch(Exception e){
 			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
@@ -174,13 +175,15 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			g2.drawString(ms2String, 4, yPos);
 		}
 
+		g2.setFont(statusFont);
 		if (ec.isComputed()) {
+			g2.setColor(Colors.ICON_GREEN);
 			g2.drawString("\u2713", getWidth()-16, getHeight()-8);
 		} else if (ec.isComputing()) {
 			g2.drawString("\u2699", getWidth()-16, getHeight()-8);
 		} else if (ec.isFailed()){
 			final Color prevCol = g2.getColor();
-			g2.setColor(Color.RED);
+			g2.setColor(Colors.ICON_RED);
 			g2.drawString("\u2718", getWidth()-16, getHeight()-8);
 			g2.setColor(prevCol);
 		} else if (ec.isQueued()) {

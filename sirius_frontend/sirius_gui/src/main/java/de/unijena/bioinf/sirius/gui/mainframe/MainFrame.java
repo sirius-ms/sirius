@@ -48,9 +48,10 @@ import java.util.concurrent.ExecutionException;
 
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener, MouseListener, KeyListener, JobLog.JobListener {
 
-    private DefaultEventListModel<ExperimentContainer> compoundModel;
     private FilterList<ExperimentContainer> compoundEventList;
     private JList<ExperimentContainer> compoundList;
+
+
     private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, bug, about;
     public final CSIFingerIdComputation csiFingerId;
 
@@ -91,7 +92,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                     @Override
                     public void run() {
                         refreshCompound(container);
-                        confidenceList.refreshList();
                     }
                 });
             }
@@ -130,7 +130,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
 
         JTextField searchField = new JTextField();
-        compoundEventList = new FilterList<>(new ObservableElementList<>(new BasicEventList<ExperimentContainer>(), GlazedLists.beanConnector(ExperimentContainer.class)), new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
+        BasicEventList<ExperimentContainer> compountBaseList = new BasicEventList<>();
+        compoundEventList = new FilterList<>(new ObservableElementList<>(compountBaseList, GlazedLists.beanConnector(ExperimentContainer.class)), new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
             @Override
             public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
                 baseList.add(element.getGUIName());
@@ -140,8 +141,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         }, true));
 
 
-        compoundModel = new DefaultEventListModel<>(compoundEventList);
-        compoundList = new JList<>(compoundModel);
+        compoundList = new JList<>(new DefaultEventListModel<>(compoundEventList));
         compoundList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundList.setCellRenderer(new CompoundCellRenderer());
         compoundList.addListSelectionListener(this);
@@ -153,8 +153,19 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         JLabel label = new JLabel("<html>Confidence score is an experimental feature.Use with caution.<html>");
         tmp_wrapper.add(label, BorderLayout.NORTH);
 
+
+        confidenceList = new ConfidenceList(compountBaseList);
+        confidenceList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!confidenceList.isSelectionEmpty()) {
+                    final ExperimentContainer container = confidenceList.getSelectedValue();
+                    selectExperimentContainer(container, container.getBestHit());
+                }
+            }
+        });
+
         JScrollPane paneConfidence = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        confidenceList = new ConfidenceList(this);
         paneConfidence.setViewportView(confidenceList);
         label.setPreferredSize(new Dimension(paneConfidence.getPreferredSize().width, label.getPreferredSize().height * 3));
         tmp_wrapper.add(paneConfidence, BorderLayout.CENTER);
@@ -451,6 +462,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                 refreshResultListFor(c);
                 refreshComputationMenuItem();
                 refreshExportMenuButton();
+                c.fireUpdateEvent();
             }
         });
 
@@ -1178,7 +1190,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     }
 
     public int numberOfCompounds() {
-        return compoundModel.getSize();
+        return compoundEventList.size();
     }
 
     @Override
