@@ -446,6 +446,7 @@ public class CSIFingerIdComputation {
         return elements;
     }
 
+    //compute for a single experiment
     public void compute(ExperimentContainer c, boolean bioDb) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (SiriusResultElement e : getTopSiriusCandidates(c)) {
@@ -456,6 +457,7 @@ public class CSIFingerIdComputation {
         computeAll(tasks);
     }
 
+    //csi fingerid compute all button in main panel
     public void computeAll(Iterator<ExperimentContainer> compounds) {
         stopRunningTasks();
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
@@ -483,6 +485,7 @@ public class CSIFingerIdComputation {
         task.job.error("Canceled", null);
     }
 
+    // this is really the conputation mehtod everything should use in die end
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
             final ComputingStatus status = task.result.fingerIdComputeState;
@@ -524,64 +527,6 @@ public class CSIFingerIdComputation {
             }
         } catch (InterruptedException e) {
             // just give up
-        }
-    }
-
-    //todo why not computing all csi tasks in backround? is there a need to freeze the gui for a web job?
-    public boolean synchronousPredictionTask(ExperimentContainer container, SiriusResultElement resultElement) throws IOException {
-        resultElement.fingerIdComputeState = ComputingStatus.COMPUTING;
-        // first: delete this job from all queues
-        final FingerIdTask task = new FingerIdTask(isEnforceBio(), container, resultElement);
-        formulaQueue.remove(task);
-        jobQueue.remove(task);
-        blastQueue.remove(task);
-        final WebAPI webAPI = new WebAPI();
-        // second: push job to cluster
-        final double[] prediction;
-        FingerIdJob job = null;
-        if (jobWorker.jobs.containsKey(task)) {
-            job = jobWorker.jobs.get(task);
-        }
-        try {
-            // first read statistics
-            globalLock.lock();
-            try {
-                if (performances==null || this.fingerprintVersion==null) loadStatistics(webAPI);
-                globalCondition.signalAll();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } finally {
-                globalLock.unlock();
-            }
-            if (job == null) {
-                job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(task.experiment), resultElement.getResult().getResolvedTree(), this.fingerprintVersion);
-            }
-            final List<Compound> compounds = loadCompoundsForGivenMolecularFormula(webAPI, resultElement.getMolecularFormula(), isEnforceBio());
-
-            ProbabilityFingerprint platts=null;
-            for (int k=0; k < 60; ++k) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-                }
-                if (webAPI.updateJobStatus(job)) {
-                    platts=job.prediction;
-                    break;
-                }
-            }
-            if (platts==null) {
-                return false;
-            }
-            final FingerIdData data = blast(resultElement, platts, isEnforceBio());
-            resultElement.setFingerIdData(data); // todo: etwas kritisch... dürfte aber keine Probleme geben... oder?
-            refreshConfidence(container);
-            callback.computationFinished(container, resultElement);
-            confidenceCallback.computationFinished(container, resultElement);
-            resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
-            return true;
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
         }
     }
 

@@ -19,23 +19,19 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
+import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
 
 public class CompoundCandidateView extends JPanel {
 
@@ -44,7 +40,6 @@ public class CompoundCandidateView extends JPanel {
     protected CSIFingerIdComputation storage;
     protected CandidateJList list;
     protected JButton searchCSIButton;
-    protected JLabel loader = new JLabel(Icons.FP_LOADER);
 
     protected CardLayout layout;
     private MainFrame frame;
@@ -71,26 +66,31 @@ public class CompoundCandidateView extends JPanel {
     public void refresh() {
         this.layout = new CardLayout();
         setLayout(layout);
-        add(new JPanel(), "empty");
+        add(new JPanel(), "null");
         add(new ComputeElement(), "computeButton");
-        add(loader,"loader");
+        add(new JLabel(Icons.FP_LOADER), "loader");
 
-        list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement==null ? null : resultElement.getFingerIdData());
+
+        TwoCloumnPanel nothing =  new TwoCloumnPanel();
+        nothing.add(new JLabel(Icons.NO_MATCH_128));
+        nothing.add(new JLabel("<html><B>Sorry, but we are unable to find anything according to your query.</B></html>"),5,false);
+        add(nothing, "empty");
+
+        list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
-        changeData(null,null);
+        changeData(null, null);
     }
 
     public void changeData(ExperimentContainer container, SiriusResultElement element) {
         System.out.println("CHANGE_DATA");
         this.experimentContainer = container;
         this.resultElement = element;
-        list.refresh(container, resultElement==null ? null : resultElement.getFingerIdData());
+        list.refresh(container, resultElement == null ? null : resultElement.getFingerIdData());
 
-        //todo use states for all these.
-        if (resultElement==null)
-            layout.show(this, "empty");
-        else{
+        if (resultElement == null)
+            layout.show(this, "null");
+        else {
             switch (resultElement.fingerIdComputeState) {
                 case COMPUTING:
                     System.out.println("loader");
@@ -98,19 +98,23 @@ public class CompoundCandidateView extends JPanel {
                     break;
                 case COMPUTED:
                     System.out.println("list");
-                    layout.show(this, "list");
+                    if (list == null || list.candidateList.getModel().getSize() <= 0) {
+                        layout.show(this, "empty");
+                    }else{
+                        layout.show(this, "list");
+                    }
                     break;
-               default:
-                   System.out.println("button");
-                   layout.show(this, "computeButton");//todo other states
-                   break;
+                default:
+                    System.out.println("button");
+                    layout.show(this, "computeButton");//todo other states
+                    break;
             }
         }
 
-        if (resultElement==null || !storage.enabled) {
+        if (resultElement == null || !storage.enabled) {
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
-        } else if (resultElement.getResult().getResolvedTree().numberOfVertices()<3) {
+        } else if (resultElement.getResult().getResolvedTree().numberOfVertices() < 3) {
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("Fragmentation tree must explain at least 3 peaks");
         } else {
@@ -125,65 +129,35 @@ public class CompoundCandidateView extends JPanel {
     }
 
 
-    public class ComputeElement extends JPanel {
+    public class ComputeElement extends TwoCloumnPanel {
         public ComputeElement() {
-            searchCSIButton = new JButton("Search online with CSI:FingerId");
+            searchCSIButton = new ToolbarButton(Icons.FINGER_64);
+            searchCSIButton.setText("Search with CSI:FingerId");
             add(searchCSIButton);
 
 
-            searchCSIButton.setEnabled((resultElement!=null && storage.enabled));
+            searchCSIButton.setEnabled((resultElement != null && storage.enabled));
             searchCSIButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
 
                     //Test connection
-                    if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
+                    if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
                         new NoConnectionDialog(frame);
                         return;
                     }
-                    if (!storage.configured) {
-                        if (new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), false).run() == FingerIdDialog.CANCELED) return;
+
+                    //calculate csi
+                    final FingerIdDialog dialog = new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), true);
+                    final int returnState = dialog.run();
+                    if (returnState != FingerIdDialog.CANCELED) {
+                        if (returnState == FingerIdDialog.COMPUTE_ALL) {
+                            storage.compute(experimentContainer, dialog.biodb.isSelected());
+                        } else {
+                            storage.computeAll(Arrays.asList(new FingerIdTask(dialog.biodb.isSelected(), experimentContainer, resultElement)));
+                        }
+                        changeData(experimentContainer, resultElement);
                     }
-
-                    resultElement.fingerIdComputeState = ComputingStatus.COMPUTING;
-                    changeData(experimentContainer, resultElement);
-                    final SwingWorker<String,Void> worker = new SwingWorker<String,Void>() {
-
-                        @Override
-                        public String doInBackground() {
-                            try {
-                                if (storage.synchronousPredictionTask(experimentContainer, resultElement)) {
-                                    return null;
-                                } else {
-                                    return "Timeout occured. The compute cluster is too busy to process your job. Please try again at later time.";
-                                }
-                            } catch (IOException e) {
-                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-                                return e.getMessage();
-                            } catch (RuntimeException e)  {
-                                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-                                return e.getMessage();
-                            }
-                        }
-
-
-                        @Override
-                        protected void done() {
-                            super.done();
-//                          frame.setCursor(Cursor.getDefaultCursor());
-                            changeData(experimentContainer, resultElement);
-                            String msg;
-                            try {
-                                msg = get();
-                            } catch (InterruptedException | ExecutionException e1) {
-                                msg = e1.getMessage();
-                            }
-                            if (msg!=null) {
-                                new ErrorListDialog(frame, Arrays.asList(msg));
-                            }
-                        }
-                    };
-                    worker.run();
                 }
             });
             setVisible(true);

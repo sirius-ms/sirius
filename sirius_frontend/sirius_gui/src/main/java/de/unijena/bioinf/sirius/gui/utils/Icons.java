@@ -19,6 +19,8 @@ public abstract class Icons {
 
     public static final Icon FP_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/fp-binary-sirius.gif"));
 
+    public static final Icon NO_MATCH_128 = new ImageIcon(MainFrame.class.getResource("/icons/nothing-found.png"));
+
     public static final Icon FB_LOADER_RUN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.gif"));
     public static final Icon FB_LOADER_STOP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png"));
 
