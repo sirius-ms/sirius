@@ -28,6 +28,7 @@ public class TreeScoring {
 
     private double rootScore;
     private double recalibrationBonus;
+    private double beautificationPenalty;
     private double overallScore;
     private TObjectDoubleHashMap<String> additionalScores;
 
@@ -122,6 +123,14 @@ public class TreeScoring {
 
     public void setRecalibrationBonus(double recalibrationBonus) {
         this.recalibrationBonus = recalibrationBonus;
+    }
+
+    public double getBeautificationPenalty() {
+        return beautificationPenalty;
+    }
+
+    public void setBeautificationPenalty(double beautificationPenalty) {
+        this.beautificationPenalty = beautificationPenalty;
     }
 
     public double getOverallScore() {

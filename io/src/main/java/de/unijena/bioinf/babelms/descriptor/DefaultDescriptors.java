@@ -237,9 +237,10 @@ class DefaultDescriptors {
             }
 
             scoring.setRecalibrationBonus(document.getDoubleFromDictionary(score, "recalibrationBonus"));
+            scoring.setBeautificationPenalty(document.getDoubleFromDictionary(score, "beautificationPenalty"));
 
             for (String key : document.keySetOfDictionary(score)) {
-                if (key.equals("total") || key.equals("root") || key.equals("recalibrationBonus") || key.equals("tree")) continue;
+                if (key.equals("total") || key.equals("root") || key.equals("recalibrationBonus") || key.equals("beautificationPenalty") || key.equals("tree")) continue;
                 scoring.addAdditionalScore(key, document.getDoubleFromDictionary(score, key));
             }
 
@@ -262,6 +263,7 @@ class DefaultDescriptors {
             final D score = document.newDictionary();
             document.addToDictionary(score, "total", annotation.getOverallScore());
             document.addToDictionary(score, "recalibrationBonus", annotation.getRecalibrationBonus());
+            document.addToDictionary(score, "beautificationPenalty", annotation.getBeautificationPenalty());
             document.addToDictionary(score, "root", annotation.getRootScore());
             double sum = 0d;
             for (Map.Entry<String, Double> special : annotation.getAdditionalScores().entrySet()) {

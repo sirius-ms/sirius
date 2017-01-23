@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 public class IdentificationResult implements Cloneable {
 
-    protected FTree tree, resolvedTree;
+    protected FTree tree, beautifulTree, resolvedBeautifulTree;
     protected MolecularFormula formula;
     protected int rank;
     protected double score;
@@ -95,7 +95,7 @@ public class IdentificationResult implements Cloneable {
     }
 
     public RecalibrationFunction getRecalibrationFunction() {
-        final RecalibrationFunction f = (RecalibrationFunction) tree.getAnnotations().get(RecalibrationFunction.class);
+        final RecalibrationFunction f = (RecalibrationFunction) getRawTree().getAnnotations().get(RecalibrationFunction.class);
         if (f==null) return RecalibrationFunction.identity();
         else return f;
     }
@@ -104,13 +104,45 @@ public class IdentificationResult implements Cloneable {
         return score;
     }
 
+    /**
+     * true if a beautiful (bigger, better explaining spectrum) tree is available
+     * @return
+     */
+    public boolean isBeautiful(){
+        return beautifulTree!=null;
+    }
+
     public FTree getRawTree() {
-        return tree;
+        if (isBeautiful()){
+            return beautifulTree;
+        } else {
+            return tree;
+        }
     }
 
     public FTree getResolvedTree() {
-        if (resolvedTree==null) resolvedTree = new IonTreeUtils().treeToNeutralTree(new FTree(tree));
-        return resolvedTree;
+        if (resolvedBeautifulTree==null) {
+            resolvedBeautifulTree = new IonTreeUtils().treeToNeutralTree(new FTree(getRawTree()));
+        }
+        return resolvedBeautifulTree;
+    }
+
+    public FTree getStandardTree() {
+        return tree;
+    }
+
+    public FTree getBeautifulTree() {
+        return beautifulTree;
+    }
+
+    public void setBeautifulTree(FTree beautifulTree) {
+        this.resolvedBeautifulTree = null;
+        this.beautifulTree = beautifulTree;
+        TreeScoring beautifulScoring = this.beautifulTree.getAnnotationOrThrow(TreeScoring.class);
+        TreeScoring treeScoring = this.tree.getAnnotationOrThrow(TreeScoring.class);
+        beautifulScoring.setBeautificationPenalty(beautifulScoring.getOverallScore()-treeScoring.getOverallScore());
+        beautifulScoring.setOverallScore(treeScoring.getOverallScore());
+
     }
 
     public double getTreeScore() {
@@ -121,8 +153,8 @@ public class IdentificationResult implements Cloneable {
     public void writeTreeToFile(File target) throws IOException {
         final String name = target.getName();
         if (name.endsWith(".dot")) {
-            new FTDotWriter().writeTreeToFile(target, tree);
-        } else new FTJsonWriter().writeTreeToFile(target, tree);
+            new FTDotWriter().writeTreeToFile(target, getRawTree());
+        } else new FTJsonWriter().writeTreeToFile(target, getRawTree());
     }
 
     public String getNeutralizedJSONTree() {
@@ -138,7 +170,7 @@ public class IdentificationResult implements Cloneable {
     public String getRawJSONTree() {
         final StringWriter sw = new StringWriter(1024);
         try {
-            new FTJsonWriter().writeTree(sw,tree);
+            new FTJsonWriter().writeTree(sw,getRawTree());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -146,7 +178,7 @@ public class IdentificationResult implements Cloneable {
     }
 
     public void writeAnnotatedSpectrumToFile(File target) throws IOException {
-        new AnnotatedSpectrumWriter().writeFile(target, tree);
+        new AnnotatedSpectrumWriter().writeFile(target, getRawTree());
     }
 
     public double getIsotopeScore() {
@@ -156,6 +188,7 @@ public class IdentificationResult implements Cloneable {
 
     public IdentificationResult clone() {
         final IdentificationResult r = new IdentificationResult(new FTree(tree), rank);
+        if (beautifulTree!=null) r.beautifulTree = new FTree(beautifulTree);
         r.score = score;
         return r;
     }
