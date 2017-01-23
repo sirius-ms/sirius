@@ -60,13 +60,14 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.text.AttributedCharacterIterator;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 
 public class CandidateJList extends JPanel implements MouseListener, ActionListener {
 
-    private final static int CELL_SIZE = 15;
-    private static final int MIN_CELL_SIZE = 3;
+    private final static int CELL_SIZE = 20;
+    private static final int MIN_CELL_SIZE = 5;
 
     protected CSIFingerIdComputation computation;
     private ConfigStorage config;
@@ -82,7 +83,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
     protected JPopupMenu popupMenu;
 
-    protected int highlightMissing = -1, highlightAgree = -1, highlightedCandidate = -1;
+    protected int highlightAgree = -1, highlightedCandidate = -1;
     protected int selectedCompoundId;
     protected HashSet<String> logPCalculated = new HashSet<>();
 
@@ -321,7 +322,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         if (e.isPopupTrigger()) return;
         highlightedCandidate = -1;
         highlightAgree = -1;
-        highlightMissing = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
@@ -332,7 +332,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         final boolean in;
         int rx, ry;
         {
-            final Rectangle box = candidate.agreement.getBounds();
+            final Rectangle box = candidate.substructures.getBounds();
             final int absX = box.x + relativeRect.x;
             final int absY = box.y + relativeRect.y;
             final int absX2 = box.width + absX;
@@ -344,39 +344,20 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         if (in) {
             final int row = ry / CELL_SIZE;
             final int col = rx / CELL_SIZE;
-            highlightAgree = candidate.agreement.indexAt(row, col);
+            highlightAgree = candidate.substructures.indexAt(row, col);
             structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
         } else {
-            final Rectangle box = candidate.missings.getBounds();
-            final int absX = box.x + relativeRect.x;
-            final int absY = box.y + relativeRect.y;
-            final int absX2 = box.width + absX;
-            final int absY2 = box.height + absY;
-            if (point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2) {
-                rx = point.x - absX;
-                ry = point.y - absY;
-                final int row = ry / CELL_SIZE;
-                final int col = rx / CELL_SIZE;
-                highlightMissing = candidate.missings.indexAt(row, col);
-                structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate);
-            } else {
-                if (highlightAgree >= 0) {
-                    highlightAgree = -1;
-                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
-                }
-                if (highlightMissing >= 0) {
-                    highlightMissing = -1;
-                    structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightMissing, highlightedCandidate);
-                }
+            if (highlightAgree >= 0) {
+                highlightAgree = -1;
+                structureSearcher.reloadList((ListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
+            }
 
-                double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
-                for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel l : candidate.labels) {
-                    if (l.rect.contains(rpx, rpy)) {
-                        clickOnDBLabel(l);
-                        break;
-                    }
+            double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
+            for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel l : candidate.labels) {
+                if (l.rect.contains(rpx, rpy)) {
+                    clickOnDBLabel(l);
+                    break;
                 }
-
             }
         }
     }
@@ -416,7 +397,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final boolean in;
             int rx, ry;
             {
-                final Rectangle box = candidate.agreement.getBounds();
+                final Rectangle box = candidate.substructures.getBounds();
                 final int absX = box.x + relativeRect.x;
                 final int absY = box.y + relativeRect.y;
                 final int absX2 = box.width + absX;
@@ -429,27 +410,15 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             if (in) {
                 final int row = ry / CELL_SIZE;
                 final int col = rx / CELL_SIZE;
-                fpindex = candidate.agreement.indexAt(row, col);
-            } else {
-                final Rectangle box = candidate.missings.getBounds();
-                final int absX = box.x + relativeRect.x;
-                final int absY = box.y + relativeRect.y;
-                final int absX2 = box.width + absX;
-                final int absY2 = box.height + absY;
-                if (point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2) {
-                    rx = point.x - absX;
-                    ry = point.y - absY;
-                    final int row = ry / CELL_SIZE;
-                    final int col = rx / CELL_SIZE;
-                    fpindex = candidate.missings.indexAt(row, col);
-                }
+                fpindex = candidate.substructures.indexAt(row, col);
             }
             if (fpindex >= 0) {
-                return candidate.compound.fingerprint.getFingerprintVersion().getMolecularProperty(fpindex).getDescription();
+                return candidate.compound.fingerprint.getFingerprintVersion().getMolecularProperty(fpindex).getDescription() + "  (" + prob.format(data.platts.getProbability(fpindex)) + " %)";
             } else return null;
 
         }
     }
+    private static NumberFormat prob = new DecimalFormat("%");
 
     private void popup(MouseEvent e, CompoundCandidate candidate) {
         popupMenu.show(candidateList, e.getX(), e.getY());
@@ -459,7 +428,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     public void mousePressed(MouseEvent e) {
         highlightedCandidate = -1;
         highlightAgree = -1;
-        highlightMissing = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
@@ -475,7 +443,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     public void mouseReleased(MouseEvent e) {
         highlightedCandidate = -1;
         highlightAgree = -1;
-        highlightMissing = -1;
         final Point point = e.getPoint();
         final int index = candidateList.locationToIndex(point);
         selectedCompoundId = index;
@@ -582,17 +549,13 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         @Override
         public void paint(Graphics g) {
             super.paint(g);
-            // memoize coordinates of agreement boxes
+            // memoize coordinates of substructures boxes
             final Rectangle ra = descriptionPanel.ag.getBounds();
-            final Rectangle rv = descriptionPanel.vio.getBounds();
             // add offset of parents
             ra.setLocation(ra.x + descriptionPanel.getX(), ra.y + descriptionPanel.getY());
-            rv.setLocation(rv.x + descriptionPanel.getX(), rv.y + descriptionPanel.getY());
             ra.setLocation(ra.x + descriptionPanel.agpanel.getX(), ra.y + descriptionPanel.agpanel.getY());
-            rv.setLocation(rv.x + descriptionPanel.viopanel.getX(), rv.y + descriptionPanel.viopanel.getY());
 
-            currentCandidate.agreement.setBounds(ra.x, ra.y, ra.width, ra.height);
-            currentCandidate.missings.setBounds(rv.x, rv.y, rv.width, rv.height);
+            currentCandidate.substructures.setBounds(ra.x, ra.y, ra.width, ra.height);
         }
     }
 
@@ -674,13 +637,12 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
+    private static Color LOW = Color.RED, MED = Color.WHITE, HIGH = Color.GREEN;
     public class FingerprintView extends JPanel {
 
         private FingerprintAgreement agreement;
-        Color color;
 
-        public FingerprintView(int height, Color color) {
-            this.color = color;
+        public FingerprintView(int height) {
             setOpaque(false);
             setPreferredSize(new Dimension(Integer.MAX_VALUE, height));
         }
@@ -717,20 +679,31 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             }
             */
             final float[] components = new float[3];
-            Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), components);
+            //Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), components);
 
             // highlight current INDEX
 
             final int useable_cell_size = CELL_SIZE - 1;
             for (int i = 0; i < agreement.indizes.length; ++i) {
                 final float weight = (float) agreement.weights[i];
+
+                final double colorWeight;
+                final Color primary, secondary;
+                if (weight >= 0.5) {
+                    colorWeight = 2*(weight-0.5d);
+                    primary = HIGH; secondary = MED;
+                } else {
+                    colorWeight = 2*(0.5d-weight);
+                    primary = LOW; secondary = MED;
+                }
+
                 final int row = i / numberOfCols;
                 final int col = i % numberOfCols;
 
                 final double weight2 = Math.max(0.25, agreement.weights2[i]);
                 final int reduction = (int) Math.round((useable_cell_size - (((useable_cell_size - MIN_CELL_SIZE) / 0.75) * weight2)) / 2d) + 2;
                 final int b;
-                if (agreement.indizes[i] == highlightAgree || agreement.indizes[i] == highlightMissing) {
+                if (agreement.indizes[i] == highlightAgree) {
                     g.setColor(Color.BLUE);
                     b = 2;
                 } else {
@@ -739,11 +712,21 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                 }
                 g.fillRect((CELL_SIZE * col) + reduction - b, (CELL_SIZE * row) + reduction - b, (CELL_SIZE - reduction - reduction) + b + b, (CELL_SIZE - reduction - reduction) + b + b);
 
-                g.setColor(Color.getHSBColor(components[0], components[1], weight));
+                g.setColor(gradient(primary, secondary, colorWeight));
+
+//                g.setColor(Color.getHSBColor(components[0], components[1], weight));
                 g.fillRect(reduction + CELL_SIZE * col, reduction + CELL_SIZE * row, CELL_SIZE - reduction - reduction, CELL_SIZE - reduction - reduction);
             }
 
 
+        }
+
+        private Color gradient(Color primary, Color secondary, double colorWeight) {
+            final double w = 1d-colorWeight;
+            final int r = (int)Math.round(primary.getRed()*colorWeight + secondary.getRed()*w);
+            final int g = (int)Math.round(primary.getGreen()*colorWeight + secondary.getGreen()*w);
+            final int b = (int)Math.round(primary.getBlue()*colorWeight + secondary.getBlue()*w);
+            return new Color(r,g,b);
         }
     }
 
@@ -882,10 +865,10 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
     public class DescriptionPanel extends JPanel {
 
-        protected JLabel inchi, agreements, violations;
+        protected JLabel inchi, agreements;
         protected XLogPLabel xlogP;
-        protected FingerprintView ag, vio;
-        protected JPanel agpanel, viopanel;
+        protected FingerprintView ag;
+        protected JPanel agpanel;
         protected DatabasePanel databasePanel;
 
         public DescriptionPanel() {
@@ -899,30 +882,20 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             agpanel.setOpaque(false);
             agpanel.setLayout(new BoxLayout(agpanel, BoxLayout.Y_AXIS));
             agpanel.setBorder(new EmptyBorder(5, 0, 0, 2));
-            viopanel = new JPanel();
-            viopanel.setOpaque(false);
-            viopanel.setBorder(new EmptyBorder(5, 0, 0, 2));
-            viopanel.setLayout(new BoxLayout(viopanel, BoxLayout.Y_AXIS));
-            agreements = new JLabel("True Positive Predictions:", SwingConstants.LEFT);
+            agreements = new JLabel("Substructures:", SwingConstants.LEFT);
             Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
             map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
             map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-            violations = new JLabel("False Negative Predictions:", SwingConstants.LEFT);
             agreements.setFont(nameFont.deriveFont(map));
-            violations.setFont(nameFont.deriveFont(map));
             xlogP = new XLogPLabel();
             namePanel.setOpaque(false);
             namePanel.add(inchi, BorderLayout.WEST);
             namePanel.add(xlogP, BorderLayout.EAST);
             add(namePanel);
-            ag = new FingerprintView(70, Color.GREEN);
-            vio = new FingerprintView(50, Color.RED);
+            ag = new FingerprintView(120);
             agpanel.add(agreements);
             agpanel.add(ag);
-            viopanel.add(violations);
-            viopanel.add(vio);
             add(agpanel);
-            add(viopanel);
             Box db = Box.createVerticalBox();
             db.setOpaque(false);
             final Box b1 = Box.createHorizontalBox();
@@ -948,10 +921,8 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             xlogP.setLogP(value.compound.xlogP);
             if (data == null) {
                 ag.agreement = null;
-                vio.agreement = null;
             } else {
-                ag.setAgreement(value.getAgreement(computation, data.platts));
-                vio.setAgreement(value.getMissings(computation, data.platts));
+                ag.setAgreement(value.getSubstructures(computation, data.platts));
             }
         }
     }

@@ -47,7 +47,7 @@ public class CompoundCandidate {
 
     protected CircularFingerprinter.FP[] relevantFps; protected int[] ecfpHashs;
 
-    protected FingerprintAgreement agreement, missings;
+    protected FingerprintAgreement substructures;
     protected DatabaseLabel[] labels;
     protected int highlightedIndex=-1;
     protected boolean atomCoordinatesAreComputed=false;
@@ -140,14 +140,9 @@ public class CompoundCandidate {
         }
     }
 
-    public FingerprintAgreement getAgreement(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
-        if (agreement==null) agreement = FingerprintAgreement.getAgreement(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.performances, 1-THRESHOLD_FP, 0.25);
-        return agreement;
-    }
-
-    public FingerprintAgreement getMissings(CSIFingerIdComputation computations,  ProbabilityFingerprint prediction) {
-        if (missings==null) missings = FingerprintAgreement.getMissing(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(),computations.performances,  THRESHOLD_FP);
-        return missings;
+    public FingerprintAgreement getSubstructures(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
+        if (substructures ==null) substructures = FingerprintAgreement.getSubstructures(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.performances, 0.25);
+        return substructures;
     }
 
 
