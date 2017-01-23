@@ -17,10 +17,12 @@
  */
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -913,6 +915,71 @@ public class Sirius {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
         return new IdentificationResult(tree, 0);
+    }
+
+
+    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment){
+        return beautifyTree(result, experiment, true);
+    }
+
+    /**
+     * compute and set the beautiful version of the {@link IdentificationResult}s {@link FTree}.
+     * Aka: try to find a {@link FTree} with the same root molecular formula which explains the desired amount of the spectrum - if necessary by increasing the tree size scorer.
+     * @param result
+     * @param experiment
+     * @return true if a beautiful tree was found
+     */
+    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment, boolean recalibrating){
+        if (result.getBeautifulTree()!=null) return true;
+        final MolecularFormula formula = result.getMolecularFormula();
+        final FTree tree = result.getStandardTree();
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment, FormulaConstraints.allSubsetsOf(formula));
+        final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
+        if (treeSizeScorer==null) return false;
+        final double originalTreeSize = treeSizeScorer.getTreeSizeScore();
+
+        double modifiedTreeSizeScore = originalTreeSize;
+        //try to find used treeSize score
+        if (tree.numberOfVertices()>1){
+            FragmentAnnotation<Score> anno = tree.getFragmentAnnotationOrNull(Score.class);
+            ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
+            if (anno!=null){
+                Double treeSizeScore = anno.get(tree.getFragmentAt(1)).get(parameterHelper.toClassName(TreeSizeScorer.class));
+                if (treeSizeScore!=null){
+                    modifiedTreeSizeScore = treeSizeScore;
+                }
+            }
+        }
+
+        final double MAX_TREESIZE_SCORE = originalTreeSize + MAX_TREESIZE_INCREASE;
+        final int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
+
+        FTree beautifulTree = new FTree(tree);
+        try {
+            while (true) {
+                final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
+                if (modifiedTreeSizeScore >= MAX_TREESIZE_SCORE){
+                    return false;
+                }else if (beautifulTree!=null && (beautifulTree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY)) {
+                    profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
+                    result.setBeautifulTree(beautifulTree);
+                    return true;
+                } else {
+                    modifiedTreeSizeScore += TREE_SIZE_INCREASE;
+                    treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
+                    // TODO!!!! find a smarter way to do this -_-
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+                }
+
+                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+            return false;
+        } finally {
+            treeSizeScorer.setTreeSizeScore(originalTreeSize);
+        }
     }
 
 
