@@ -237,7 +237,10 @@ class DefaultDescriptors {
             }
 
             scoring.setRecalibrationBonus(document.getDoubleFromDictionary(score, "recalibrationBonus"));
-            scoring.setBeautificationPenalty(document.getDoubleFromDictionary(score, "beautificationPenalty"));
+            if (document.hasKeyInDictionary(score, "beautificationPenalty")){
+                scoring.setBeautificationPenalty(document.getDoubleFromDictionary(score, "beautificationPenalty"));
+            } else scoring.setBeautificationPenalty(0);
+
 
             for (String key : document.keySetOfDictionary(score)) {
                 if (key.equals("total") || key.equals("root") || key.equals("recalibrationBonus") || key.equals("beautificationPenalty") || key.equals("tree")) continue;
