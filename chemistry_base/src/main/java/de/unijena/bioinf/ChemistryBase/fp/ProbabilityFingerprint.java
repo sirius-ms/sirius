@@ -37,6 +37,10 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         return fingerprint.clone();
     }
 
+    public double getProbability(int index) {
+        return fingerprint[getFingerprintVersion().getRelativeIndexOf(index)];
+    }
+
     @Override
     public boolean isSet(int index) {
         return fingerprint[getFingerprintVersion().getRelativeIndexOf(index)]>=0.5;
