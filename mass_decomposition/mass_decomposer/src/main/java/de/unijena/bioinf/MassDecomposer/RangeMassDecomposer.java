@@ -358,6 +358,8 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T>{
      */
     protected ArrayList<int[]> integerDecompose(long mass, long deviation, int[] bounds){
         assert (deviation<weights.get(0).getIntegerMass()); //todo throw Exception or not that problematic?
+        if (weights.size()==1) return integerDecomposeSingleElement(mass, deviation, bounds[0]);
+
         final long[][][] _ERTs_ = this.ERTs;
         //calculate the required ERTs
         if ((1<<(ERTs.length-1)) <=deviation){
@@ -443,6 +445,28 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T>{
 
         return result;
     } // end function
+
+    private ArrayList<int[]> integerDecomposeSingleElement(long mass, long deviation, int bound){
+        ArrayList<int[]> result = new ArrayList<>();
+
+        final long a = weights.get(0).getIntegerMass();
+        final long minMass = mass-deviation;
+
+        final int lb = (int)(minMass/a);
+        final long rest = minMass - lb*a;
+
+        int count;
+        //set lowest possible frequency
+        if (rest==0) count = lb;
+        else count = lb+1;
+
+        while (count*a<=mass && count<=bound){
+            final int[] c = new int[]{count};
+            result.add(c);
+            count++;
+        }
+        return result;
+    }
 
     /**
      * calculates ERTs to look up whether a mass or lower masses within a certain deviation are decomposable.
