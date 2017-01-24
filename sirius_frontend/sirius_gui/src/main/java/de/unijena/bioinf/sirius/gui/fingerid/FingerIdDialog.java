@@ -18,32 +18,25 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.io.FileChooserPanel;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 
 public class FingerIdDialog extends JDialog {
 
-    public static final int APROVED=1, CANCELED=0, COMPUTE_ALL=2;
-
-    protected CSIFingerIdComputation storage;
+    public static final int COMPUTE =1, CANCELED=0, COMPUTE_ALL=2;
     protected FingerIdData data;
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
-    protected String db;
-    protected JRadioButton pubchem, biodb;
-
-    protected final static String BIO="bio database", ALL = "PubChem";
+    protected FingerIDComputationPanel dbForm;
+    protected CSIFingerIdComputation storage;
 
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, FingerIdData data, boolean showComputeButton) {
         super(owner, "Search with CSI:FingerId", true);
-        this.data = data;
         this.storage = storage;
+        this.dbForm = new FingerIDComputationPanel(this.storage.enforceBio);
+        this.data = data;
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
     }
@@ -61,58 +54,6 @@ public class FingerIdDialog extends JDialog {
         final JPanel dirForm = new JPanel();
         dirForm.setLayout(new BoxLayout(dirForm, BoxLayout.Y_AXIS));
 
-
-      //todo replace
-        /*final JPanel inner = new JPanel();
-        inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
-        dirForm.add(inner);
-        dirForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"database directory"));
-        final JTextField field = new JTextField(storage.getDirectory().toString());
-        field.setPreferredSize(new Dimension(150, 26));
-        final JButton changeDir = new JButton("change directory");
-        final JFileChooser fileChooser = new JFileChooser(storage.getDirectory());
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
-        inner.add(field);
-        inner.add(changeDir);
-        changeDir.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final int r = fileChooser.showOpenDialog(FingerIdDialog.this);
-                if (r==JFileChooser.APPROVE_OPTION) {
-                    final File file = fileChooser.getSelectedFile();
-                    if (file != null && file.isDirectory()) {
-                        field.setText(file.toString());
-                    }
-                }
-            }
-        });
-        final String tooltip = "Specify the directory where CSI:FingerId should store the compound candidates.Use the environment variable CSI_FINGERID_STORAGE to set this directory permanently.";
-        field.setToolTipText(tooltip);
-        changeDir.setToolTipText(tooltip);*/
-////==================================================
-
-        final FileChooserPanel fileChooser =  new FileChooserPanel(storage.getDirectory().getAbsolutePath(),JFileChooser.DIRECTORIES_ONLY);
-        fileChooser.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"database directory"));
-        fileChooser.setToolTipText("Specify the directory where CSI:FingerId should store the compound candidates.");
-        dirForm.add(fileChooser);
-
-        final JPanel dbForm = new JPanel();
-        dbForm.setLayout(new BoxLayout(dbForm, BoxLayout.Y_AXIS));
-        final JPanel inner2 = new JPanel();
-
-        inner2.setLayout(new FlowLayout());
-        //dbForm.setAlignmentX(0);dbForm.setAlignmentY(0);
-        final ButtonGroup database = new ButtonGroup();
-        pubchem = new JRadioButton("PubChem", !storage.isEnforceBio());
-        biodb = new JRadioButton("bio databases", storage.isEnforceBio());
-        database.add(pubchem);
-        database.add(biodb);
-
-        inner2.add(pubchem);
-        inner2.add(biodb);
-        dbForm.add(inner2);
-        dbForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"search in"));
         mainPanel.add(dirForm);
         mainPanel.add(dbForm);
 
@@ -121,13 +62,11 @@ public class FingerIdDialog extends JDialog {
 
         if (showComputeButton) {
             final JButton computeAll = new JButton("Search all");
+            computeAll.setToolTipText("Search ALL items with CSI:FingerID");
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    String path = fileChooser.getFilePath();
-                    ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.fingerID.cache" ,path);
-                    storage.setDirectory(new File(path));
-                    storage.setEnforceBio(biodb.isSelected());
+                    storage.setEnforceBio(dbForm.biodb.isSelected());
                     storage.configured = true;
                     returnState = COMPUTE_ALL;
                     dispose();
@@ -136,16 +75,14 @@ public class FingerIdDialog extends JDialog {
             southPanel.add(computeAll);
         }
 
-        JButton approve = new JButton("approve");
+        JButton approve = new JButton("Search");
+        approve.setToolTipText("Search SELECTED items with CSI:FingerID");
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String path = fileChooser.getFilePath();
-                ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.fingerID.cache" ,path);
-                storage.setDirectory(new File(path));
+                storage.setEnforceBio(dbForm.biodb.isSelected());
                 storage.configured = true;
-                storage.setEnforceBio(biodb.isSelected());
-                returnState = APROVED;
+                returnState = COMPUTE;
                 dispose();
             }
         });
@@ -162,4 +99,7 @@ public class FingerIdDialog extends JDialog {
         setVisible(true);
     }
 
+    public boolean isBio() {
+        return dbForm.biodb.isSelected();
+    }
 }

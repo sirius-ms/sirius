@@ -57,7 +57,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			compoundFont = tempFont.deriveFont(13f);
 			propertyFont = tempFont.deriveFont(12f);
-			statusFont = tempFont.deriveFont(18f);
+			statusFont = tempFont.deriveFont(24f);
 		}catch(Exception e){
 			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
@@ -175,19 +175,21 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			g2.drawString(ms2String, 4, yPos);
 		}
 
+
+
 		g2.setFont(statusFont);
 		if (ec.isComputed()) {
 			g2.setColor(Colors.ICON_GREEN);
-			g2.drawString("\u2713", getWidth()-16, getHeight()-8);
+			g2.drawString("\u2713", getWidth()-24, getHeight()-8);
 		} else if (ec.isComputing()) {
-			g2.drawString("\u2699", getWidth()-16, getHeight()-8);
+			g2.drawString("\u2699", getWidth()-24, getHeight()-8);
 		} else if (ec.isFailed()){
 			final Color prevCol = g2.getColor();
 			g2.setColor(Colors.ICON_RED);
-			g2.drawString("\u2718", getWidth()-16, getHeight()-8);
+			g2.drawString("\u2718", getWidth()-24, getHeight()-8);
 			g2.setColor(prevCol);
 		} else if (ec.isQueued()) {
-            g2.drawString("...", getWidth()-16, getHeight()-8);
+            g2.drawString("...", getWidth()-24, getHeight()-8);
         }
 	}
 

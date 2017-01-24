@@ -16,7 +16,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 
 	private Color backColor, foreColor;
 	
-	private Font valueFont, mfFont, propertyFont, rankFont;
+	private Font valueFont, mfFont, propertyFont, rankFont,statusFont;
 	
 	private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
 	private Color activatedForeground, deactivatedForeground, disableBackground;
@@ -29,7 +29,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 //	private DecimalFormat massFormat, ppmFormat, intFormat;
 	
 	private DecimalFormat numberFormat;
-	
+
 	public ResultTreeListTextCellRenderer(){
 		this.setPreferredSize(new Dimension(200,45));
 		initColorsAndFonts();
@@ -47,6 +47,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			mfFont = tempFont.deriveFont(13f);
 			propertyFont = tempFont.deriveFont(12f);
+			statusFont = tempFont.deriveFont(24f);
 			rankFont = tempFont.deriveFont(16f);
 		}catch(Exception e){
 			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
@@ -146,19 +147,20 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 		g2.drawString(numberFormat.format(sre.getScore()), 15+scoreLength,35);
 //
         if (sre!=null && sre.fingerIdComputeState!=null) {
-            final ComputingStatus ec = sre.fingerIdComputeState;
+            g.setFont(statusFont);
+			final ComputingStatus ec = sre.fingerIdComputeState;
             if (ec==ComputingStatus.COMPUTED) {
 				g2.setColor(Colors.ICON_GREEN);
-				g2.drawString("\u2713", getWidth()-16, getHeight()-8);
+				g2.drawString("\u2713", getWidth()-24, getHeight()-8);
             } else if (ec==ComputingStatus.COMPUTING) {
-                g2.drawString("\u2699", getWidth()-16, getHeight()-8);
+                g2.drawString("\u2699", getWidth()-24, getHeight()-8);
             } else if (ec==ComputingStatus.FAILED){
                 final Color prevCol = g2.getColor();
                 g2.setColor(Colors.ICON_RED);
-                g2.drawString("\u2718", getWidth()-16, getHeight()-8);
+                g2.drawString("\u2718", getWidth()-24, getHeight()-8);
                 g2.setColor(prevCol);
             } else if (ec==ComputingStatus.QUEUED) {
-                g2.drawString("...", getWidth()-16, getHeight()-8);
+                g2.drawString("...", getWidth()-24, getHeight()-8);
             }
         }
 

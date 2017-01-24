@@ -21,16 +21,21 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.myxo.structure.CompactPeak;
+import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
@@ -40,6 +45,9 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
+import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -56,13 +64,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private static String SEARCH_PUBCHEM = "Search PubChem structure database with CSI:FingerId";
     private static String SEARCH_BIODB = "Search bio database with CSI:FingerId";
 
-    private JButton compute, abort;
+    private JButton compute;
+    private JButton abort;
+
     private JCheckBox recompute;
 
 
     private ElementsPanel elementPanel;
+    private JButton elementAutoDetect = null;
+    private JComboBox<CompactPeak> box = null;
+
     private SearchProfilePanel searchProfilePanel;
-    private JCheckBox runCSIFingerId;
+    private ToolbarToggleButton runCSIFingerId;
+    private FingerIDComputationPanel csiOptions;
     private MainFrame owner;
     List<ExperimentContainer> compoundsToProcess;
 
@@ -72,7 +86,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private HashMap<String, Ionization> stringToIonMap;
     private HashMap<Ionization, String> ionToStringMap;
 
-    public BatchComputeDialog(MainFrame owner,List<ExperimentContainer> compoundsToProcess) {
+    public BatchComputeDialog(MainFrame owner, List<ExperimentContainer> compoundsToProcess) {
         super(owner, "compute", true);
         this.owner = owner;
         this.compoundsToProcess = compoundsToProcess;
@@ -83,20 +97,29 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         this.setLayout(new BorderLayout());
 
         Box mainPanel = Box.createVerticalBox();
-
         this.add(mainPanel, BorderLayout.CENTER);
+        //mainpanel done
 
-        /////////////////////////////////////////////
+
+
         this.sirius = new Sirius();
         ElementPredictor elementPredictor = sirius.getElementPrediction();
         List<Element> detectableElements = new ArrayList<>();
         for (Element element : elementPredictor.getChemicalAlphabet().getElements()) {
             if (elementPredictor.isPredictable(element)) detectableElements.add(element);
         }
-        elementPanel = new ElementsPanel(this, 3, detectableElements);
-        mainPanel.add(elementPanel);
 
-        /////////////////////////////////////////////
+
+        if (compoundsToProcess.size() > 1) {
+            ///////////////////Multi Element//////////////////////
+            elementPanel = new ElementsPanel(this, 4, detectableElements);
+            mainPanel.add(elementPanel);
+            /////////////////////////////////////////////
+        }else{
+            initSingleExperiment(mainPanel,detectableElements);
+        }
+
+
 
         boolean enableFallback = hasCompoundWithUnknownIonization();
         searchProfilePanel = new SearchProfilePanel(this, enableFallback);
@@ -105,37 +128,47 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 FormulaSource source = searchProfilePanel.getFormulaSource();
-                enableElementSelection(source==FormulaSource.ALL_POSSIBLE);
-                runCSIFingerId.setText(source == FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
+                enableElementSelection(source == FormulaSource.ALL_POSSIBLE);
+                csiOptions.setIsBioDB(source == FormulaSource.BIODB);
             }
         });
-
 
 
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
         stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId search"));
 
-        {
-            JPanel otherPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-            final JLabel label = new JLabel(Icons.FINGER_64, SwingConstants.LEFT);
-//            runCSIFingerId = new JCheckBox(getSelectedFormulaSource()==FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
-            //changed
-            runCSIFingerId = new JCheckBox(searchProfilePanel.getFormulaSource()==FormulaSource.BIODB ? SEARCH_BIODB : SEARCH_PUBCHEM);
-            otherPanel.add(label);
-            otherPanel.add(runCSIFingerId);
-            stack.add(otherPanel, BorderLayout.CENTER);
-        }
+
+        JPanel otherPanel = new JPanel();
+        otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        csiOptions = new FingerIDComputationPanel(searchProfilePanel.getFormulaSource() == FormulaSource.BIODB);
+        csiOptions.setMaximumSize(csiOptions.getPreferredSize());
+        runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_64, "Enable/Disable CSI:FingerID search");
+        runCSIFingerId.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                csiOptions.setEnabled(runCSIFingerId.isSelected());
+            }
+        });
+
+
+        otherPanel.add(runCSIFingerId);
+//        otherPanel.add(Box.createHorizontalGlue());
+        otherPanel.add(csiOptions);
+//        otherPanel.add(Box.createHorizontalGlue());
+        runCSIFingerId.setSelected(false);
+        csiOptions.setEnabled(false);
+
+        stack.add(otherPanel, BorderLayout.CENTER);
         mainPanel.add(stack);
 
-        ///
 
 
         JPanel southPanel = new JPanel();
-        southPanel.setLayout(new BoxLayout(southPanel,BoxLayout.LINE_AXIS));
+        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
 
         JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        recompute = new JCheckBox("Recompute already computed compounds?",false);
+        recompute = new JCheckBox("Recompute already computed compounds?", false);
         recompute.setToolTipText("If checked, all selected experiments will be computed. Already computed ones we be recomputed.");
         lsouthPanel.add(recompute);
 
@@ -184,6 +217,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     public void enableElementSelection(boolean enabled) {
         elementPanel.enableElementSelection(enabled);
+        if (elementAutoDetect != null)
+            elementAutoDetect.setEnabled(enabled);
     }
 
 
@@ -205,9 +240,42 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == abort) {
             this.dispose();
-        }  else if (e.getSource() == this.compute) {
+        } else if (e.getSource() == this.compute) {
             startComputing();
+        } else if (e.getSource() == elementAutoDetect) {
+            String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
+            ExperimentContainer ec = compoundsToProcess.get(0);
+            if (!ec.getMs1Spectra().isEmpty()){
+                MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
+                ElementPredictor predictor = sirius.getElementPrediction();
+                final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
+                if (c!=null){
+                    for (Element element : c.getChemicalAlphabet()) {
+                        if (!predictor.isPredictable(element)){
+                            c.setLowerbound(element,0);
+                            c.setUpperbound(element,0);
+                        }
+                    }
+                    elementPanel.setSelectedElements(c);
+                } else {
+                    new ExceptionDialog(this, notWorkingMessage);
+                }
+            } else {
+                new ExceptionDialog(this, notWorkingMessage);
+            }
         }
+    }
+
+    private double getSelectedIonMass() {
+        Object selected = box.getSelectedItem();
+        double pm=0;
+        if(selected instanceof CompactPeak){
+            CompactPeak cp = (CompactPeak) selected;
+            pm = cp.getMass();
+        }else{
+            pm = Double.parseDouble(selected.toString());
+        }
+        return pm;
     }
 
     private void abortComputing() {
@@ -220,7 +288,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             Properties properties = ApplicationCore.getUserCopyOfUserProperties();
 
             ReturnValue value;
-            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty))==true){
+            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty)) == true) {
                 value = ReturnValue.Success;
             } else {
                 QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All already computed results will get lost!</body></html>", dontAskProperty);
@@ -228,7 +296,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
 
             //reset status of uncomputed values
-            if (value==ReturnValue.Success){
+            if (value == ReturnValue.Success) {
                 final Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
                 while (compounds.hasNext()) {
                     final ExperimentContainer ec = compounds.next();
@@ -236,7 +304,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
             }
         }
-
 
 
         String val = searchProfilePanel.getInstrument();
@@ -253,9 +320,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         FormulaSource formulaSource = searchProfilePanel.getFormulaSource();
 
-        if (formulaSource!=FormulaSource.ALL_POSSIBLE){
+        if (formulaSource != FormulaSource.ALL_POSSIBLE) {
             //Test connection, if needed
-            if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
+            if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
                 new NoConnectionDialog(this);
                 dispose();
                 return;
@@ -263,7 +330,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
         FormulaConstraints constraints = elementPanel.getElementConstraints();
-        List<Element> elementsToAutoDetect = elementPanel.getElementsToAutoDetect();
+        List<Element> elementsToAutoDetect = Collections.EMPTY_LIST;
+        if (elementPanel.individualAutoDetect)
+            elementsToAutoDetect = elementPanel.getElementsToAutoDetect();
+
 
         final double ppm = searchProfilePanel.getPpm();
 
@@ -304,19 +374,20 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
 
                 FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
-                if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()){
+                if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()) {
                     MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), ec.getFocusedMass());
                     FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
-                    if (autoConstraints!=null){
+                    if (autoConstraints != null) {
                         ElementPredictor predictor = sirius.getElementPrediction();
                         for (Element element : elementsToAutoDetect) {
-                            if (predictor.isPredictable(element)){
+                            if (predictor.isPredictable(element)) {
                                 individualConstraints.setUpperbound(element, autoConstraints.getUpperbound(element));
                             }
                         }
                     }
                 }
 
+                owner.csiFingerId.setEnforceBio(csiOptions.biodb.isSelected());
                 final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
                 tasks.add(task);
                 compoundList.add(ec);
@@ -334,5 +405,122 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return this.success;
     }
 
+    public void initSingleExperiment(Box mainPanel, List<Element> detectableElements){
+        ExperimentContainer ec = compoundsToProcess.get(0);
+        JPanel focMassPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+        Vector<CompactPeak> masses = new Vector<>();
+        double maxInt = -1;
+        Object maxObj = null;
+        List<CompactSpectrum> ms1Spectra = ec.getMs1Spectra();
+        // falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
+        boolean useMS1;
+        CompactPeak bestDataIon = null;
+        final Deviation dev = new Deviation(10);
+        final double focusedMass = ec.getDataFocusedMass();
+        if(!ms1Spectra.isEmpty()){
+            useMS1 = true;
+            CompactSpectrum sp = ms1Spectra.get(0);
+            for(int i=0;i<sp.getSize();i++){
+                if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
+                    maxInt = sp.getPeak(i).getAbsoluteIntensity();
+                    maxObj = sp.getPeak(i);
+                }
+                if (focusedMass> 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+                    if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
+                        bestDataIon = sp.getPeak(i);
+                }
+                masses.add(sp.getPeak(i));
+            }
+        }else{
+            useMS1 = false;
+            for(CompactSpectrum sp : ec.getMs2Spectra()){
+                for(int i=0;i<sp.getSize();i++){
+                    if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
+                        maxInt = sp.getPeak(i).getAbsoluteIntensity();
+                        maxObj = sp.getPeak(i);
+                    }
+                    masses.add(sp.getPeak(i));
+                    if (focusedMass> 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+                        if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
+                            bestDataIon = sp.getPeak(i);
+                    }
+                }
+            }
+        }
+        if (bestDataIon != null) masses.add(bestDataIon);
+        box = new JComboBox<>(masses);
+
+        box.setEditable(true);
+        MyListCellRenderer renderer = new MyListCellRenderer(masses);
+        box.setRenderer(renderer);
+
+        AutoCompleteDecorator.decorate(box,new ObjectToStringConverter() {
+            @Override
+            public String getPreferredStringForItem(Object item) {
+                if(item instanceof CompactPeak){
+                    CompactPeak peak = (CompactPeak) item;
+                    return String.valueOf(peak.getMass());
+                }else{
+                    return (String) item;
+                }
+
+            }
+        });
+        focMassPanel.add(box);
+        focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Parent mass"));
+
+
+
+		/*
+		 * Was abgefragt werden muss:
+		 *
+		 * foc. mass
+		 * Ionisierung
+		 * seltene Elemente abseits von CHNOPS Br, B, Cl, Se, F, I
+		 *
+		 */
+
+        JButton autoDetectFM = new JButton("Most intensive peak");
+        autoDetectFM.addActionListener(this);
+        if(masses.isEmpty()) autoDetectFM.setEnabled(false);
+        JButton expFM = new JButton("File value");
+        expFM.addActionListener(this);
+        if(ec.getDataFocusedMass()<=0) {
+            expFM.setEnabled(false);
+            if(masses.isEmpty()){
+                box.setSelectedItem("");
+            }else{
+                box.setSelectedItem(maxObj);
+            }
+        }
+        else if (bestDataIon!=null) {
+            box.setSelectedItem(bestDataIon);
+        } else {
+            box.setSelectedItem(String.valueOf(focusedMass));
+        }
+
+        focMassPanel.add(autoDetectFM);
+        focMassPanel.add(expFM);
+        mainPanel.add(focMassPanel,BorderLayout.NORTH);
+
+
+
+        /////////////Solo Element//////////////////////
+        elementPanel = new ElementsPanel(this, 4);
+        mainPanel.add(elementPanel);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("Auto detectable element are: ");
+        for (int i = 0; i < detectableElements.size(); i++) {
+            if (i!=0) builder.append(", ");
+            builder.append(detectableElements.get(i).getSymbol());
+        }
+        elementAutoDetect = new JButton("Auto detect");
+        elementAutoDetect.setToolTipText(builder.toString());
+        elementAutoDetect.addActionListener(this);
+        elementAutoDetect.setEnabled(true);
+        elementPanel.lowerPanel.add(elementAutoDetect);
+        /////////////////////////////////////////////
+    }
 
 }

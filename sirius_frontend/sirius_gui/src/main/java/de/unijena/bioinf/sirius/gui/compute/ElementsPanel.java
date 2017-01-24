@@ -26,7 +26,7 @@ public class ElementsPanel extends JPanel implements ActionListener {
     private static final int[] additionalElementStartCounts = new int[]{maxNumberOfOneElements, 0, 0, 0, 0, 0, 0};
 
     private final Element[] defaultElements;
-    private final boolean individualAutoDetect;
+    public final boolean individualAutoDetect;
     private JButton elementButton;
     private HashMap<String, ElementSlider> element2Slider;
     private JPanel elementsPanel;

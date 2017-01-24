@@ -1,48 +1,59 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
+import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.List;
 
-public class ResultPanel extends JPanel implements ListSelectionListener{
-	
-	private ResultTreeListModel listModel;
-	private JList<SiriusResultElement> resultsJList;
-	private TreeVisualizationPanel tvp;
-	private SpectraVisualizationPanel svp;
-	private CompoundCandidateView ccv;
-	private ResultTreeListTextCellRenderer cellRenderer;
-	
-	private ExperimentContainer ec;
-	
-	public void dispose() {
-		ccv.dispose();
-	}
+public class ResultPanel extends JPanel implements ListSelectionListener {
 
-	public ResultPanel(MainFrame owner, ConfigStorage config) {
-		this(null, owner, config);
-	}
-	
-	public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
-		super();
-		this.setLayout(new BorderLayout());
-		this.setToolTipText("Results");
-		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1,5,0,0),"Molecular formulas"));
-		this.ec = ec;
+    private ResultTreeListModel listModel;
+    private JList<SiriusResultElement> resultsJList;
+    private TreeVisualizationPanel tvp;
+    private SpectraVisualizationPanel svp;
+    private CompoundCandidateView ccv;
+    private ResultTreeListTextCellRenderer cellRenderer;
+    private JTabbedPane centerPane;
+    private MainFrame owner;
+    private ExperimentContainer ec;
 
-		if(this.ec!=null) this.listModel = new ResultTreeListModel(ec.getResults());
-		else this.listModel = new ResultTreeListModel();
-		this.resultsJList = new ResultsTreeList(this.listModel);
-		this.listModel.setJList(this.resultsJList);
+    public void dispose() {
+        ccv.dispose();
+    }
+
+    public ResultPanel(MainFrame owner, ConfigStorage config) {
+        this(null, owner, config);
+    }
+
+    public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
+        super();
+        this.owner = owner;
+        this.setLayout(new BorderLayout());
+        this.setToolTipText("Results");
+        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));
+        this.ec = ec;
+
+        if (this.ec != null) this.listModel = new ResultTreeListModel(ec.getResults());
+        else this.listModel = new ResultTreeListModel();
+        this.resultsJList = new ResultsTreeList(this.listModel);
+        this.listModel.setJList(this.resultsJList);
 //		if(this.ec!=null){
 //			listRenderer = new ResultTreeListThumbnailCellRenderers(ec.getResults());
 //		}else{
@@ -50,82 +61,157 @@ public class ResultPanel extends JPanel implements ListSelectionListener{
 //		}
 //		resultsJList.setCellRenderer(listRenderer);
         cellRenderer = new ResultTreeListTextCellRenderer();
-		resultsJList.setCellRenderer(cellRenderer);
-		resultsJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		resultsJList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-		resultsJList.setVisibleRowCount(1);
+        resultsJList.setCellRenderer(cellRenderer);
+        resultsJList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        resultsJList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        resultsJList.setVisibleRowCount(1);
 //		resultsJList.getPreferredSize()
-		resultsJList.setMinimumSize(new Dimension(0,45));
-		resultsJList.setPreferredSize(new Dimension(0,45));
-		resultsJList.addListSelectionListener(this);
-		
-		JScrollPane listJSP = new JScrollPane(resultsJList,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		JPanel temp = new JPanel(new BorderLayout());
-//		temp.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(),"Molecular formulas"));
-		temp.add(listJSP,BorderLayout.NORTH);
-		this.add(temp,BorderLayout.NORTH);
-		
-		JTabbedPane centerPane = new JTabbedPane();
-		centerPane.setBorder(BorderFactory.createEmptyBorder());
-		tvp = new TreeVisualizationPanel(owner,config);
-		centerPane.addTab("Tree view",tvp);
-		
-		svp = new SpectraVisualizationPanel(ec);
-		centerPane.addTab("Spectra view",svp);
+        resultsJList.setMinimumSize(new Dimension(0, 45));
+        resultsJList.setPreferredSize(new Dimension(0, 45));
+        resultsJList.addListSelectionListener(this);
+
+
+        resultsJList.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getSource().equals(resultsJList)) { // todo do i need that?
+                    if (e.getClickCount() == 2) {
+                        // Double-click detected
+                        int index = resultsJList.locationToIndex(e.getPoint());
+                        resultsJList.setSelectedIndex(index);
+                        centerPane.setSelectedIndex(2);
+                        if (ccv.computationEnabled()) {
+                            computeFingerID(false);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
+
+
+        JScrollPane listJSP = new JScrollPane(resultsJList, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        JPanel temp = new JPanel(new BorderLayout());
+        temp.add(listJSP, BorderLayout.NORTH);
+        this.add(temp, BorderLayout.NORTH);
+
+        centerPane = new JTabbedPane();
+        centerPane.setBorder(BorderFactory.createEmptyBorder());
+        tvp = new TreeVisualizationPanel(owner, config);
+        centerPane.addTab("Tree view", tvp);
+
+        svp = new SpectraVisualizationPanel(ec);
+        centerPane.addTab("Spectra view", svp);
 
         ccv = new CompoundCandidateView(owner);
         centerPane.addTab("CSI:FingerId", ccv);
-		
-		this.add(centerPane,BorderLayout.CENTER);
+        ccv.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (ccv.computationEnabled()) {
+                    computeFingerID(true);
+                }
+            }
+        });
+
+        this.add(centerPane, BorderLayout.CENTER);
 
 //		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Results"));
-	}
+    }
 
-	public void changeData(final ExperimentContainer ec){
-		this.ec = ec;
+    public void changeData(final ExperimentContainer ec) {
+        int i = Math.max(resultsJList.getSelectedIndex(), 0);
         cellRenderer.ec = ec;
-		SiriusResultElement sre = null;
-		resultsJList.removeListSelectionListener(this);
-		if(this.ec!=null&&ec.getResults()!=null&&!this.ec.getResults().isEmpty()){
-			this.listModel.setData(ec.getResults());
-			if(this.listModel.getSize()>0){
-				this.resultsJList.setSelectedIndex(0);
-				sre = ec.getResults().get(0);
-			}
-		}else{
-			this.listModel.setData(new ArrayList<SiriusResultElement>());
-		}
-		resultsJList.addListSelectionListener(this);
-		final SiriusResultElement element = sre;
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				svp.changeExperiment(ec,element);
-				if(element==null) tvp.showTree(null);
-				else tvp.showTree(element);
-			}
-		});
+        SiriusResultElement sre = null;
+        resultsJList.removeListSelectionListener(this);
+        if (ec != null && ec.getResults() != null && !ec.getResults().isEmpty()) {
+            this.listModel.setData(ec.getResults());
+            if (this.listModel.getSize() > 0) {
+                if (this.ec != ec) {
+                    this.ec = ec;
+                    this.resultsJList.setSelectedIndex(0);
+                } else {
+                    resultsJList.setSelectedIndex(i);
+                }
+                sre = ec.getResults().get(this.resultsJList.getSelectedIndex());
+            }
+        } else {
+            this.listModel.setData(new ArrayList<SiriusResultElement>());
+        }
+        resultsJList.addListSelectionListener(this);
+        final SiriusResultElement element = sre;
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                svp.changeExperiment(ec, element);
+                if (element == null) tvp.showTree(null);
+                else tvp.showTree(element);
+            }
+        });
         ccv.changeData(ec, sre);
 
-	}
+    }
 
-	public void select(SiriusResultElement sre, boolean fireEvent) {
+    public void select(SiriusResultElement sre, boolean fireEvent) {
         if (fireEvent) resultsJList.setSelectedValue(sre, true);
-        if(sre==null){
+        if (sre == null) {
             tvp.showTree(null);
             svp.changeSiriusResultElement(null);
             ccv.changeData(ec, sre);
-        }else{
+        } else {
             tvp.showTree(sre);
             svp.changeSiriusResultElement(sre);
             ccv.changeData(ec, sre);
         }
-	}
+    }
 
-	@Override
-	public void valueChanged(ListSelectionEvent e) {
-		SiriusResultElement sre = this.resultsJList.getSelectedValue();
-		select(sre, false);
-	}
+    public void computeFingerID(boolean searchAllEnabled) {
+        //Test connection
+        if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
+            new NoConnectionDialog(owner);
+            return;
+        }
+        SiriusResultElement resultElement = resultsJList.getSelectedValue();
+
+        //calculate csi
+        final FingerIdDialog dialog = new FingerIdDialog(owner, owner.csiFingerId, resultElement.getFingerIdData(), searchAllEnabled);
+
+        final int returnState = dialog.run();
+        if (returnState != FingerIdDialog.CANCELED) {
+            if (returnState == FingerIdDialog.COMPUTE_ALL) {
+                owner.csiFingerId.compute(ec, dialog.isBio());
+            } else {
+                List<SiriusResultElement> selected = resultsJList.getSelectedValuesList();
+                java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
+                for (SiriusResultElement element : selected) {
+                    if (element.getCharge()>0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
+                        tasks.add(new FingerIdTask(dialog.isBio(), ec, element));
+                }
+                owner.csiFingerId.computeAll(tasks);
+            }
+            ccv.changeData(ec, resultElement);
+        }
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        SiriusResultElement sre = this.resultsJList.getSelectedValue();
+        select(sre, false);
+    }
 
 }

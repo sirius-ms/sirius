@@ -516,6 +516,8 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             final int returnState = dialog.run();
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
                 csiFingerId.computeAll(getCompounds());
+            }else if (returnState == FingerIdDialog.COMPUTE){
+                csiFingerId.computeAll(compoundList.getSelectedValuesList().iterator());
             }
         } else if (e.getSource() == newB || e.getSource() == newExpMI) {
             LoadController lc = new LoadController(this, config);
@@ -821,19 +823,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     private void computeCurrentCompound() {
         List<ExperimentContainer> ecs = compoundList.getSelectedValuesList();
         if (ecs != null && !ecs.isEmpty()) {
-            if (ecs.size() == 1) {
-                ExperimentContainer ec = ecs.get(0);
-                ComputeDialog cd = new ComputeDialog(this, ec);
-                if (cd.isSuccessful()) {
-                    LoggerFactory.getLogger(this.getClass()).info("Computation Successful!");
-                    this.showResultsPanel.changeData(ec);
-                    resultsPanelCL.show(resultsPanel, RESULTS_CARD);
-                } else {
-                    LoggerFactory.getLogger(this.getClass()).warn("Computation failed!");
-                }
-            } else {
-                final BatchComputeDialog bc = new BatchComputeDialog(this, ecs);
-            }
+            new BatchComputeDialog(this, ecs);
         }
     }
 
@@ -1049,39 +1039,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         }
     }
 
-	/*
-    @Override
-	public void drop(DropTargetDropEvent dtde) {
-		dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-		Transferable tr = dtde.getTransferable();
-		DataFlavor[] flavors = tr.getTransferDataFlavors();
-	    List<File> newFiles = new ArrayList<File>();
-	    try{
-			for (int i = 0; i < flavors.length; i++) {
-				if (flavors[i].isFlavorJavaFileListType()) {
-					List files = (List) tr.getTransferData(flavors[i]);
-					for (Object o : files) {
-						File file = (File) o;
-						newFiles.add(file);
-					}
-				}
-				dtde.dropComplete(true);
-			}
-	    }catch(Exception e){
-	    	e.printStackTrace();
-	    	try {
-                dtde.rejectDrop();
-            } catch (Exception e2) {
-                e.printStackTrace();
-            }
-	    }
-	    
-		if(newFiles.size()>0){
-			importDragAndDropFiles(Arrays.asList(resolveFileList(newFiles.toArray(new File[newFiles.size()]))));
-		}
-	}
-	*/
-
     private void importDragAndDropFiles(List<File> rawFiles) {
 
         // entferne nicht unterstuetzte Files und suche nach CSVs
@@ -1150,7 +1107,14 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
     @Override
     public void mouseClicked(MouseEvent e) {
-
+        if (e.getSource().equals(compoundList)) {
+            if (e.getClickCount() == 2) {
+                // Double-click detected
+                int index = compoundList.locationToIndex(e.getPoint());
+                compoundList.setSelectedIndex(index);
+                computeCurrentCompound();
+            }
+        }
     }
 
     @Override

@@ -18,8 +18,6 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -29,14 +27,12 @@ import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 
 public class CompoundCandidateView extends JPanel {
 
-    protected ExperimentContainer experimentContainer;
-    protected SiriusResultElement resultElement;
+    private ExperimentContainer experimentContainer;
+    private SiriusResultElement resultElement;
     protected CSIFingerIdComputation storage;
     protected CandidateJList list;
     protected JButton searchCSIButton;
@@ -71,9 +67,9 @@ public class CompoundCandidateView extends JPanel {
         add(new JLabel(Icons.FP_LOADER), "loader");
 
 
-        TwoCloumnPanel nothing =  new TwoCloumnPanel();
+        TwoCloumnPanel nothing = new TwoCloumnPanel();
         nothing.add(new JLabel(Icons.NO_MATCH_128));
-        nothing.add(new JLabel("<html><B>Sorry, but we are unable to find anything according to your query.</B></html>"),5,false);
+        nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
         list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
@@ -81,6 +77,7 @@ public class CompoundCandidateView extends JPanel {
         setVisible(true);
         changeData(null, null);
     }
+
 
     public void changeData(ExperimentContainer container, SiriusResultElement element) {
         System.out.println("CHANGE_DATA");
@@ -100,7 +97,7 @@ public class CompoundCandidateView extends JPanel {
                     System.out.println("list");
                     if (list == null || list.candidateList.getModel().getSize() <= 0) {
                         layout.show(this, "empty");
-                    }else{
+                    } else {
                         layout.show(this, "list");
                     }
                     break;
@@ -112,6 +109,7 @@ public class CompoundCandidateView extends JPanel {
         }
 
         if (resultElement == null || !storage.enabled) {
+
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
         } else if (resultElement.getResult().getResolvedTree().numberOfVertices() < 3) {
@@ -129,39 +127,21 @@ public class CompoundCandidateView extends JPanel {
     }
 
 
+    public boolean computationEnabled() {
+        return searchCSIButton.isEnabled(); // this is ugly but good enough ;-)
+    }
+
+    public void addActionListener(ActionListener l) {
+        searchCSIButton.addActionListener(l);
+    }
+
     public class ComputeElement extends TwoCloumnPanel {
         public ComputeElement() {
             searchCSIButton = new ToolbarButton(Icons.FINGER_64);
             searchCSIButton.setText("Search with CSI:FingerId");
             add(searchCSIButton);
-
-
             searchCSIButton.setEnabled((resultElement != null && storage.enabled));
-            searchCSIButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-
-                    //Test connection
-                    if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
-                        new NoConnectionDialog(frame);
-                        return;
-                    }
-
-                    //calculate csi
-                    final FingerIdDialog dialog = new FingerIdDialog(frame, storage, resultElement.getFingerIdData(), true);
-                    final int returnState = dialog.run();
-                    if (returnState != FingerIdDialog.CANCELED) {
-                        if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                            storage.compute(experimentContainer, dialog.biodb.isSelected());
-                        } else {
-                            storage.computeAll(Arrays.asList(new FingerIdTask(dialog.biodb.isSelected(), experimentContainer, resultElement)));
-                        }
-                        changeData(experimentContainer, resultElement);
-                    }
-                }
-            });
             setVisible(true);
-
         }
     }
 

@@ -168,7 +168,7 @@ public class BackgroundComputation {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
-                        owner.csiFingerId.compute(c.exp, c.formulaSource==FormulaSource.BIODB);//todo add max value
+                        owner.csiFingerId.compute(c.exp,owner.csiFingerId.isEnforceBio());//todo add max value
                     }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;

@@ -77,7 +77,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
 
-    protected final static boolean DEBUG = true;
+    protected final static boolean DEBUG = false;
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
 
 
