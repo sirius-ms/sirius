@@ -507,4 +507,28 @@ public class MassDecomposerTest {
         }
 
     }
+
+
+    @Test
+    public void singleElementTest(){
+        final PeriodicTable table = PeriodicTable.getInstance();
+        final TableSelection tableSelection = TableSelection.fromString(table, "CHNOPS");
+        final MolecularFormula mf = MolecularFormula.parse("C16");
+        final double mass = mf.getMass();
+        final Deviation dev = new Deviation(100, 0.001);
+        ChemicalAlphabet alphabet = new ChemicalAlphabet(tableSelection, table.getAllByName("C"));
+        MassDecomposer<Element> decomposer = new RangeMassDecomposer<>(new ChemicalAlphabetWrapper(alphabet));
+
+        Map<Element, Interval> boundary = new HashMap<Element, Interval>();
+        boundary.put(table.getByName("C"), new Interval(0, Integer.MAX_VALUE));
+
+        List<int[]> compomers = decomposer.decompose(mass, dev, boundary);
+
+        List<MolecularFormula> formulas = new ArrayList<MolecularFormula>(compomers.size());
+        for (int[] c : compomers) {
+            formulas.add(alphabet.decompositionToFormula(c));
+        }
+
+        assertEquals(mf, formulas.get(0));
+    }
 }
