@@ -32,6 +32,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.sirius.gui.dialogs.News;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -68,6 +69,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -107,11 +109,15 @@ public class WebAPI implements Closeable {
 
                     final String id = gui.getString("version");
                     final String date = gui.getString("date");
-
                     String database = o.getJsonObject("database").getString("version");
-                    return new VersionsInfo(id, date, database);
 
+                    List<News> newsList = Collections.emptyList();
+                    if (o.containsKey("news")){
+                        final String newsJson = o.getJsonArray("news").toString();
+                        newsList = News.parseJsonNews(newsJson);
+                    }
 
+                    return new VersionsInfo(id, date, database, newsList);
                 }
             } catch (ClientProtocolException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);

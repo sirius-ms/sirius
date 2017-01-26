@@ -1,0 +1,78 @@
+package de.unijena.bioinf.sirius.gui.dialogs;
+
+
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+
+/**
+ * Created by Marcus Ludwig on 25.01.17.
+ */
+public class NewsDialog extends JDialog implements ActionListener {
+    private List<News> newsList;
+    private JButton ok;
+
+    public NewsDialog(Frame owner, List<News> newsList) {
+        super(owner, "We have news!");
+        this.setLocationRelativeTo(owner);
+        this.newsList = newsList;
+
+        for (News news : newsList) {
+            System.out.println("next news");
+            System.out.println("id "+news.getId());
+            System.out.println("date "+news.getDateString());
+            System.out.println("message "+news.getMessage());
+        }
+
+        this.setLocationRelativeTo(owner);
+        setLayout(new BorderLayout());
+        final JPanel newsPanel = new JPanel();
+        newsPanel.setLayout(new BoxLayout(newsPanel,BoxLayout.Y_AXIS));
+        newsPanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
+        Iterator<News> iterator = newsList.iterator();
+        while (iterator.hasNext()) {
+            News news = iterator.next();
+            final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT)); //news aligned left
+            panel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
+            final JLabel messageLabel = new JLabel(news.getMessage());
+            panel.add(messageLabel);
+            newsPanel.add(panel);
+            if (iterator.hasNext()) newsPanel.add(new JSeparator(SwingConstants.HORIZONTAL));
+        }
+
+        add(newsPanel, BorderLayout.CENTER);
+        final JPanel subpanel = new JPanel(new FlowLayout());
+        ok = new JButton("Close");
+        ok.addActionListener(this);
+        subpanel.add(ok);
+        subpanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
+        add(subpanel, BorderLayout.SOUTH);
+
+        pack();
+        setVisible(true);
+
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource()==ok){
+            //remember displayed news
+            final String property = News.PROPERTY_KEY;
+            Properties properties = ApplicationCore.getUserCopyOfUserProperties();
+            StringBuilder knownNews = new StringBuilder(properties.getProperty(property, ""));
+            for (News news : newsList) {
+                knownNews.append(","+news.getId());
+            }
+            ApplicationCore.changeDefaultProptertyPersistent(property, knownNews.toString());
+
+            this.dispose();
+        }
+    }
+}
