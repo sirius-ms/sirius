@@ -61,9 +61,6 @@ import java.util.List;
 
 public class BatchComputeDialog extends JDialog implements ActionListener {
 
-    private static String SEARCH_PUBCHEM = "Search PubChem structure database with CSI:FingerId";
-    private static String SEARCH_BIODB = "Search bio database with CSI:FingerId";
-
     private JButton compute;
     private JButton abort;
 
@@ -81,10 +78,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     List<ExperimentContainer> compoundsToProcess;
 
     private Sirius sirius;
-
     private boolean success;
-    private HashMap<String, Ionization> stringToIonMap;
-    private HashMap<Ionization, String> ionToStringMap;
 
     public BatchComputeDialog(MainFrame owner, List<ExperimentContainer> compoundsToProcess) {
         super(owner, "compute", true);
@@ -114,15 +108,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             ///////////////////Multi Element//////////////////////
             elementPanel = new ElementsPanel(this, 4, detectableElements);
             mainPanel.add(elementPanel);
+            boolean enableFallback = hasCompoundWithUnknownIonization();
+            searchProfilePanel = new SearchProfilePanel(this, enableFallback);
             /////////////////////////////////////////////
         }else{
             initSingleExperiment(mainPanel,detectableElements);
+            searchProfilePanel = new SearchProfilePanel(this,compoundsToProcess.get(0).getIonization());
         }
 
 
-
-        boolean enableFallback = hasCompoundWithUnknownIonization();
-        searchProfilePanel = new SearchProfilePanel(this, enableFallback);
         mainPanel.add(searchProfilePanel);
         searchProfilePanel.formulaCombobox.addItemListener(new ItemListener() {
             @Override
@@ -143,7 +137,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         csiOptions = new FingerIDComputationPanel(searchProfilePanel.getFormulaSource() == FormulaSource.BIODB);
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
-        runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_64, "Enable/Disable CSI:FingerID search");
+        runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Enable/Disable CSI:FingerID search");
         runCSIFingerId.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

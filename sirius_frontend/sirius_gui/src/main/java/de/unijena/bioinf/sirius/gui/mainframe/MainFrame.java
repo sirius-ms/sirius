@@ -180,16 +180,18 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         pane.setViewportView(compoundList);
-//        pane.setViewportView(compoundListPanel);
-        pane.getViewport().setPreferredSize(new Dimension(200, (int) pane.getViewport().getPreferredSize().getHeight()));
 
         TwoCloumnPanel compoundListPanel = new TwoCloumnPanel(new JLabel(" Filter:"), searchField);
         compoundListPanel.add(pane, 0, true);
         compoundListPanel.setBorder(new EmptyBorder(0,0,0,0));
 
 
+
         tabbedPane.addTab("Experiments", compoundListPanel);
         tabbedPane.addTab("Identifications", tmp_wrapper);
+        tabbedPane.setEnabledAt(1, false);
+        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
+
 
         mainPanel.add(tabbedPane, BorderLayout.WEST);
 
@@ -197,7 +199,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         // ########## Toolbar ############
         JToolBar controlPanel = new JToolBar();
         controlPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
-//        controlPanel.setBorder(BorderFactory.createRaisedSoftBevelBorder(/*0,5,0,5*/));
 
         newB = new ToolbarButton("Import", Icons.DOC_32);
         newB.addActionListener(this);
