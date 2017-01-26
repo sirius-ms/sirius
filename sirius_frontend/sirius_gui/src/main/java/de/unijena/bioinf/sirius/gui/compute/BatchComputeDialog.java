@@ -166,6 +166,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         recompute.setToolTipText("If checked, all selected experiments will be computed. Already computed ones we be recomputed.");
         lsouthPanel.add(recompute);
 
+        //check by default when just one experiment is selected
+        if (compoundsToProcess.size()==1) recompute.setSelected(true);
+
         JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         compute = new JButton("Compute");
         compute.addActionListener(this);
@@ -359,7 +362,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             final ExperimentContainer ec = compounds.next();
             if (ec.isUncomputed()) {
 
-                if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
+                if (this.compoundsToProcess.size()==1){
+                    //if one experiment is selected, force ionization
+                    ec.setIonization(SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()));
+                } if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
                     if (ec.getIonization() == null || ec.getIonization().getCharge() > 0) {
                         ec.setIonization(PrecursorIonType.getPrecursorIonType("[M+H]+"));
                     } else {
