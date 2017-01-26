@@ -282,10 +282,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             Properties properties = ApplicationCore.getUserCopyOfUserProperties();
 
             ReturnValue value;
-            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty)) == true) {
+            if (Boolean.parseBoolean(properties.getProperty(dontAskProperty, "false")) == true) {
                 value = ReturnValue.Success;
             } else {
-                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All already computed results will get lost!</body></html>", dontAskProperty);
+                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", dontAskProperty);
                 value = questionDialog.getReturnValue();
             }
 

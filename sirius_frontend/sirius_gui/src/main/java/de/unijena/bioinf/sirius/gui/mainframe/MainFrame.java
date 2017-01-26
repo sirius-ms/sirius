@@ -341,6 +341,9 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         configFingerID.setEnabled(true);
                         csiFingerId.setEnabled(true);
                     }
+                    if (versionsNumber.hasNews()){
+                        new NewsDialog(MainFrame.this, versionsNumber.getNews());
+                    }
                 } else {
                     new NoConnectionDialog(MainFrame.this);
                 }
