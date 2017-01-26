@@ -10,10 +10,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
-import de.unijena.bioinf.sirius.gui.structure.FileFormat;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.structure.TreeCopyTool;
+import de.unijena.bioinf.sirius.gui.structure.*;
 import de.unijena.bioinf.sirius.gui.utils.Buttons;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +22,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-public class TreeVisualizationPanel extends JPanel implements ActionListener{
+public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveResultChangedListener{
 
 	private JScrollPane pane;
 	
@@ -287,6 +284,11 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener{
 		return panel.getImage();
 	}
 
+	@Override
+	public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre) {
+		if (sre == null || sre.getResult()==null) showTree(null);
+		else showTree(sre);
+	}
 }
 
 abstract class FTreeFilter extends FileFilter{

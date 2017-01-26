@@ -36,6 +36,15 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
     private MainFrame owner;
     private ExperimentContainer ec;
 
+    private List<ActiveResultChangedListener> listeners;
+
+    public void addActiveResultChangedListener(ActiveResultChangedListener listener) {
+        listeners.add(listener);
+    }
+    public void removeActiveResultChangedListener(ActiveResultChangedListener listener) {
+        listeners.remove(listener);
+    }
+
     public void dispose() {
         ccv.dispose();
     }
@@ -46,6 +55,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
 
     public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
         super();
+        this.listeners = new ArrayList<>();
         this.owner = owner;
         this.setLayout(new BorderLayout());
         this.setToolTipText("Results");
@@ -137,6 +147,10 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
 
         this.add(centerPane, BorderLayout.CENTER);
 
+        // register listeners
+        addActiveResultChangedListener(svp);
+        addActiveResultChangedListener(tvp);
+
 //		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Results"));
     }
 
@@ -161,15 +175,16 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         }
         resultsJList.addListSelectionListener(this);
         final SiriusResultElement element = sre;
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                svp.changeExperiment(ec, element);
-                if (element == null) tvp.showTree(null);
-                else tvp.showTree(element);
-            }
-        });
         ccv.changeData(ec, sre);
+
+        ////////////////
+        // TODO: put all the stuff about into listeners
+        ////////////////
+        for (ActiveResultChangedListener listener : listeners) {
+            listener.resultsChanged(ec, sre);
+        }
+
+
     }
 
     public void select(SiriusResultElement sre, boolean fireEvent) {
@@ -182,6 +197,12 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
             tvp.showTree(sre);
             svp.changeSiriusResultElement(sre);
             ccv.changeData(ec, sre);
+        }
+        ////////////////
+        // TODO: put all the stuff about into listeners
+        ////////////////
+        for (ActiveResultChangedListener listener : listeners) {
+            listener.resultsChanged(ec, sre);
         }
     }
 
