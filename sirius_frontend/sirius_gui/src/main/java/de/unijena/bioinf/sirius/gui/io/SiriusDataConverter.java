@@ -101,6 +101,7 @@ public class SiriusDataConverter {
         for (CompactSpectrum cs : myxo.getMs1Spectra()) {
             exp.getMs1Spectra().add(myxoMs1ToSiriusMs1(cs));
         }
+        exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(exp.getMs1Spectra()));
         for (CompactSpectrum cs : myxo.getMs2Spectra()) {
             exp.getMs2Spectra().add(myxoMs2ToSiriusMs2(cs, myxo.getDataFocusedMass()));
         }

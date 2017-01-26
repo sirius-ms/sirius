@@ -1,9 +1,9 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import de.unijena.bioinf.myxo.gui.msviewer.data.DefaultPeakInformation;
-import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModel;
-import de.unijena.bioinf.myxo.gui.msviewer.data.PeakInformation;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.msviewer.data.DefaultPeakInformation;
+import de.unijena.bioinf.sirius.gui.msviewer.data.MSViewerDataModel;
+import de.unijena.bioinf.sirius.gui.msviewer.data.PeakInformation;
 
 import java.util.Arrays;
 import java.util.List;
