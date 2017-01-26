@@ -219,7 +219,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         if (correspondingExperimentContainer==null || correspondingExperimentContainer.getBestHit()==null || correspondingExperimentContainer.getBestHit().getFingerIdData()==null) {
             topScore = 0d;
         } else {
-            topScore = correspondingExperimentContainer.getBestHit().getFingerIdData().topScore;
+            topScore = correspondingExperimentContainer.getBestHit().getFingerIdData().getTopScore();
         }
     }
 
@@ -314,7 +314,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         this.filterPanel.setActiveExperiment(data);
         ((ListModel) candidateList.getModel()).change();
         this.structureSearcher.reloadList((ListModel) candidateList.getModel());
-        this.logPSlider.refresh(data);
+        this.logPSlider.setData(data);
     }
 
     @Override
@@ -493,7 +493,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             if (data != null) {
                 candidates.clear();
                 int toFlag = 0;
-                final double minValue = data.minLogPFilter, maxValue = data.maxLogPFilter;
+                final double minValue = data.getMinLogPFilter(), maxValue = data.getMaxLogPFilter();
                 if (data.dbSelection.contains(DatasourceService.Sources.PUBCHEM)) toFlag = -1;
                 else for (DatasourceService.Sources s : data.dbSelection) toFlag |= s.flag;
                 for (int i = 0; i < data.compounds.length; ++i) {

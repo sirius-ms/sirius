@@ -18,6 +18,7 @@ import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
+import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -49,7 +50,7 @@ import java.util.concurrent.ExecutionException;
 public class MainFrame extends JFrame implements WindowListener, ActionListener, ListSelectionListener, DropTargetListener, MouseListener, KeyListener, JobLog.JobListener {
 
     private FilterList<ExperimentContainer> compoundEventList;
-    private JList<ExperimentContainer> compoundList;
+    public final JList<ExperimentContainer> compoundList;
 
 
     private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, bug, about;
@@ -102,7 +103,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         computeAllActive = false;
 
-
         this.config = new ConfigStorage();
 
         this.backgroundComputation = new BackgroundComputation(this);
@@ -118,27 +118,19 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         this.add(mainPanel, BorderLayout.CENTER);
 
 
-        resultsPanelCL = new CardLayout();
-        resultsPanel = new JPanel(resultsPanelCL);
-        JPanel dummyPanel = new JPanel();
-        resultsPanel.add(dummyPanel, DUMMY_CARD);
-
-        showResultsPanel = new ResultPanel(this, config);
-        mainPanel.add(showResultsPanel, BorderLayout.CENTER);
-
+        /////////////////////////////// LEFT Panel (Compunt list) //////////////////////////////
         final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-
-
         JTextField searchField = new JTextField();
         BasicEventList<ExperimentContainer> compountBaseList = new BasicEventList<>();
-        compoundEventList = new FilterList<>(new ObservableElementList<>(compountBaseList, GlazedLists.beanConnector(ExperimentContainer.class)), new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
-            @Override
-            public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
-                baseList.add(element.getGUIName());
-                baseList.add(element.getIonization().toString());
-                baseList.add(String.valueOf(element.getFocusedMass()));
-            }
-        }, true));
+        compoundEventList = new FilterList<>(new ObservableElementList<>(compountBaseList, GlazedLists.beanConnector(ExperimentContainer.class)),
+                new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
+                    @Override
+                    public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
+                        baseList.add(element.getGUIName());
+                        baseList.add(element.getIonization().toString());
+                        baseList.add(String.valueOf(element.getFocusedMass()));
+                    }
+                }, true));
 
 
         compoundList = new JList<>(new DefaultEventListModel<>(compoundEventList));
@@ -177,7 +169,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             }
         });
 
-
         JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         pane.setViewportView(compoundList);
 
@@ -185,15 +176,25 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         compoundListPanel.add(pane, 0, true);
         compoundListPanel.setBorder(new EmptyBorder(0,0,0,0));
 
-
-
         tabbedPane.addTab("Experiments", compoundListPanel);
         tabbedPane.addTab("Identifications", tmp_wrapper);
         tabbedPane.setEnabledAt(1, false);
         tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
 
-
         mainPanel.add(tabbedPane, BorderLayout.WEST);
+        /////////////////////////////// LEFT Panel (Compunt list) DONE //////////////////////////////
+
+
+        // results PAnel
+        resultsPanelCL = new CardLayout();
+        resultsPanel = new JPanel(resultsPanelCL);
+        JPanel dummyPanel = new JPanel();
+        resultsPanel.add(dummyPanel, DUMMY_CARD);
+
+        showResultsPanel = new ResultPanel(this, config);
+        mainPanel.add(showResultsPanel, BorderLayout.CENTER);
+        // resluts done
+
 
 
         // ########## Toolbar ############

@@ -196,7 +196,7 @@ public class IdentificationCellRenderer extends JPanel implements ListCellRender
 
         g2.drawString(confidence, 4, yPos);
         g2.setFont(valueFont);
-        g2.drawString(numberFormat.format(ec.getBestHit().getFingerIdData().confidence), xPos, yPos);
+        g2.drawString(numberFormat.format(ec.getBestHit().getFingerIdData().getConfidence()), xPos, yPos);
     }
 
 }

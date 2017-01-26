@@ -7,10 +7,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
+import org.jdesktop.beans.AbstractBean;
 
 import java.util.regex.Pattern;
 
-public class SiriusResultElement {
+public class SiriusResultElement extends AbstractBean implements Comparable<SiriusResultElement> {
 	
 	private TreeNode tree; //zur Anzeige
 	private IdentificationResult resultElement;
@@ -72,4 +73,10 @@ public class SiriusResultElement {
     public TreeNode getTreeVisualization() {
         return tree;
     }
+
+
+	@Override
+	public int compareTo(SiriusResultElement o) {
+		return Integer.compare(getRank(),o.getRank());
+	}
 }

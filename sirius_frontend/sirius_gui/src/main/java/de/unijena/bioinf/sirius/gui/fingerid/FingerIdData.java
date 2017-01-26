@@ -20,22 +20,22 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.DatasourceService;
-import org.apache.commons.math3.analysis.function.Cbrt;
+import org.jdesktop.beans.AbstractBean;
 
 import java.util.EnumSet;
 
-public class FingerIdData {
+public class FingerIdData extends AbstractBean {
 
-    protected ProbabilityFingerprint platts;
-    protected Compound[] compounds;
-    protected double[] scores;
-    protected double confidence;
-    public double topScore;
-    public boolean bio;
-    protected double minLogPFilter=Double.NEGATIVE_INFINITY, maxLogPFilter=Double.POSITIVE_INFINITY;
+    protected final ProbabilityFingerprint platts;
+    protected final Compound[] compounds;
+    protected final double[] scores;
+    private double confidence;
+    private double topScore;
+    public final boolean bio;
+    protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
     public EnumSet<DatasourceService.Sources> dbSelection;
 
-    public FingerIdData(boolean bio, Compound[]compounds, double[] scores, ProbabilityFingerprint platts) {
+    public FingerIdData(boolean bio, Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
         this.bio = bio;
         this.compounds = compounds;
         this.scores = scores;
@@ -50,6 +50,38 @@ public class FingerIdData {
     }
 
     public void setConfidence(double confidence) {
+        double old = this.confidence;
         this.confidence = confidence;
+        firePropertyChange("confidence",old,this.confidence);
+    }
+
+    public double getTopScore() {
+        return topScore;
+    }
+
+    public void setTopScore(double topScore) {
+        double old = this.topScore;
+        this.topScore = topScore;
+        firePropertyChange("topScore",old,this.topScore);
+    }
+
+    public double getMinLogPFilter() {
+        return minLogPFilter;
+    }
+
+    public void setMinLogPFilter(double minLogPFilter) {
+        double old = this.minLogPFilter;
+        this.minLogPFilter = minLogPFilter;
+        firePropertyChange("minLogPFilter",old,this.minLogPFilter);
+    }
+
+    public double getMaxLogPFilter() {
+        return maxLogPFilter;
+    }
+
+    public void setMaxLogPFilter(double maxLogPFilter) {
+        double old = this.maxLogPFilter;
+        this.maxLogPFilter = maxLogPFilter;
+        firePropertyChange("maxLogPFilter",old,this.maxLogPFilter);
     }
 }

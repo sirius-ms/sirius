@@ -55,8 +55,8 @@ public class LogPSlider extends JPanel {
                 left.setText(format.format(getMinSelected()));
                 right.setText(format.format(getMaxSelected()));
                 if (data!=null) {
-                    data.minLogPFilter = getMinSelected();
-                    data.maxLogPFilter = getMaxSelected();
+                    data.setMinLogPFilter(getMinSelected());
+                    data.setMaxLogPFilter(getMaxSelected());
                 }
                 callback.run();
             }
@@ -81,7 +81,8 @@ public class LogPSlider extends JPanel {
         this.callback = callback;
     }
 
-    public void refresh(FingerIdData data) {
+
+    public void setData(FingerIdData data) {
         isRefreshing=true;
         try {
         this.data = data;
@@ -99,13 +100,13 @@ public class LogPSlider extends JPanel {
         rangeSlider.setMinimum(pmin);
         rangeSlider.setMaximum(pmax);
         if (data!=null) {
-            if (!Double.isInfinite(data.maxLogPFilter)) {
-                rangeSlider.setUpperValue(Math.min(pmax, (int)Math.ceil(data.maxLogPFilter*10)));
+            if (!Double.isInfinite(data.getMaxLogPFilter())) {
+                rangeSlider.setUpperValue(Math.min(pmax, (int)Math.ceil(data.getMaxLogPFilter()*10)));
             } else {
                 rangeSlider.setUpperValue(pmax);
             }
-            if (!Double.isInfinite(data.minLogPFilter)) {
-                rangeSlider.setLowerValue(Math.max(pmin, (int)Math.floor(data.minLogPFilter*10)));
+            if (!Double.isInfinite(data.getMinLogPFilter())) {
+                rangeSlider.setLowerValue(Math.max(pmin, (int)Math.floor(data.getMinLogPFilter()*10)));
             } else {
                 rangeSlider.setLowerValue(pmin);
             }

@@ -8,6 +8,7 @@ import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -26,6 +27,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
 
     private ResultTreeListModel listModel;
     private JList<SiriusResultElement> resultsJList;
+    private SiriusResultTablePanel rvp;
     private TreeVisualizationPanel tvp;
     private SpectraVisualizationPanel svp;
     private CompoundCandidateView ccv;
@@ -111,6 +113,10 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         this.add(temp, BorderLayout.NORTH);
 
         centerPane = new JTabbedPane();
+        rvp = new SiriusResultTablePanel(owner.compoundList);
+        centerPane.add(rvp,"Sirius");
+
+
         centerPane.setBorder(BorderFactory.createEmptyBorder());
         tvp = new TreeVisualizationPanel(owner, config);
         centerPane.addTab("Tree view", tvp);
@@ -164,7 +170,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
             }
         });
         ccv.changeData(ec, sre);
-
     }
 
     public void select(SiriusResultElement sre, boolean fireEvent) {

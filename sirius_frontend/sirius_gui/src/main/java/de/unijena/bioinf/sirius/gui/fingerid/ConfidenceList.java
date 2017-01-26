@@ -37,14 +37,14 @@ public class ConfidenceList extends JList<ExperimentContainer> {
     protected static class ConfidenceMatcher implements Matcher<ExperimentContainer>{
         @Override
         public boolean matches(ExperimentContainer ec) {
-            return ec.getBestHit()!=null && ec.getBestHit().getFingerIdData()!=null && ec.getBestHit().fingerIdComputeState == ComputingStatus.COMPUTED && !Double.isNaN(ec.getBestHit().getFingerIdData().confidence);
+            return ec.getBestHit()!=null && ec.getBestHit().getFingerIdData()!=null && ec.getBestHit().fingerIdComputeState == ComputingStatus.COMPUTED && !Double.isNaN(ec.getBestHit().getFingerIdData().getConfidence());
         }
     }
 
     protected static class ConfidenceComparator implements Comparator<ExperimentContainer>{
         @Override
         public int compare(ExperimentContainer o1, ExperimentContainer o2) {
-            return Double.compare(o1.getBestHit().getFingerIdData().confidence,o2.getBestHit().getFingerIdData().confidence);
+            return Double.compare(o1.getBestHit().getFingerIdData().getConfidence(),o2.getBestHit().getFingerIdData().getConfidence());
         }
     }
 }

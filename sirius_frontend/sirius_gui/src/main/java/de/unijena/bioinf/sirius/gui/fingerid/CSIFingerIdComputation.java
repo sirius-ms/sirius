@@ -536,14 +536,14 @@ public class CSIFingerIdComputation {
         for (SiriusResultElement elem : exp.getResults()) {
             if (elem!= null && elem.getFingerIdData()!=null) {
                 if (best==null) best = elem;
-                else if (elem.getFingerIdData().scores.length>0 && elem.getFingerIdData().topScore > best.getFingerIdData().topScore) {
+                else if (elem.getFingerIdData().scores.length>0 && elem.getFingerIdData().getTopScore() > best.getFingerIdData().getTopScore()) {
                     best = elem;
                 }
             }
         }
 
         if (best!=null) {
-            if (Double.isNaN(best.getFingerIdData().confidence)) recomputeConfidence(best);
+            if (Double.isNaN(best.getFingerIdData().getConfidence())) recomputeConfidence(best);
         }
         exp.setBestHit(best);
     }
@@ -583,9 +583,9 @@ public class CSIFingerIdComputation {
                 candidates[k] = data.compounds[k].asCandidate();
             }
             try {
-                data.confidence = queryPredictor.estimateProbability(query, candidates);
+                data.setConfidence(queryPredictor.estimateProbability(query, candidates));
             } catch (PredictionException e) {
-                data.confidence = Double.NaN;
+                data.setConfidence(Double.NaN);
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
             }
         }
