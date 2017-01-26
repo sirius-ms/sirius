@@ -26,13 +26,13 @@ import java.util.Set;
  */
 public class SiriusResultTablePanel extends JPanel {
 
+    private static final int[] BAR_COLS = {2,3,4};
     public final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
     private final ListSelectionListener selectionObserver = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
             addData(toObserve.getSelectedValuesList());
-
         }
     };
 
@@ -92,9 +92,13 @@ public class SiriusResultTablePanel extends JPanel {
         super(new BorderLayout());
         searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
         this.table = new ActionTable<SiriusResultElement>(new ArrayList<SiriusResultElement>(), new SiriusResultTableFormat(), new SiriusResultMatcherEditor(searchField), SiriusResultElement.class);
-        TableColumn col = table.getColumnModel().getColumn(2);
-        col.setCellRenderer(new BarTableCellRenderer());
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
+
+        for (int i = 0; i < BAR_COLS.length; i++) {
+            TableColumn col = table.getColumnModel().getColumn(BAR_COLS[i]);
+            col.setCellRenderer(new BarTableCellRenderer());
+        }
+
 
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),

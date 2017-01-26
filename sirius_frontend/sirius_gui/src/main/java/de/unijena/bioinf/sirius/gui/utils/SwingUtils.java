@@ -41,6 +41,8 @@ public class SwingUtils {
     }
 
 
+
+
     public static class SimplePainter extends AbstractRegionPainter {
 
         private Color fillColor;

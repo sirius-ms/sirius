@@ -14,7 +14,7 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat implements TableFormat<SiriusResultElement> {
-    public static final int COL_COUNT = 6;
+    public static final int COL_COUNT = 5;
 
     public int getColumnCount() {
         return COL_COUNT;
@@ -26,7 +26,7 @@ public class SiriusResultTableFormat implements TableFormat<SiriusResultElement>
         else if (column == 2) return "Score";
         else if (column == 3) return "Isotope Score";
         else if (column == 4) return "Tree Score";
-        else if (column == 5) return "Summary";
+//        else if (column == 5) return "Summary";
 
         throw new IllegalStateException();
     }
@@ -38,11 +38,11 @@ public class SiriusResultTableFormat implements TableFormat<SiriusResultElement>
 
     public static Object getValue(SiriusResultElement result, int column) {
         if (column == 0) return result.getRank();
-        else if (column == 1) return result.getMolecularFormula().toString();
-        else if (column == 2) return Math.round(result.getScore() * 100d)/100d;
-        else if (column == 3) return Math.round(result.getResult().getIsotopeScore() * 100d)/100d;
-        else if (column == 4) return Math.round(result.getResult().getTreeScore() * 100d)/100d;
-        else if (column == 5) return result.getFormulaAndIonText();
+        else if (column == 1) return result.getFormulaAndIonText();
+        else if (column == 2) return result.getScore();
+        else if (column == 3) return result.getResult().getIsotopeScore();
+        else if (column == 4) return result.getResult().getTreeScore();
+//        else if (column == 5) return result.getFormulaAndIonText();
 
         throw new IllegalStateException();
     }
