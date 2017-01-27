@@ -191,11 +191,9 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         if (fireEvent) resultsJList.setSelectedValue(sre, true);
         if (sre == null) {
             tvp.showTree(null);
-            svp.changeSiriusResultElement(null);
             ccv.changeData(ec, sre);
         } else {
             tvp.showTree(sre);
-            svp.changeSiriusResultElement(sre);
             ccv.changeData(ec, sre);
         }
         ////////////////
