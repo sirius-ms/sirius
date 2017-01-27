@@ -119,14 +119,15 @@ public class FingerIdBackgroundComputation {
                 if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                 }
-                owner.refreshCompound(c.exp);
+//                owner.refreshCompound(c.exp); //todo Proof refresh
             }
         }
 
-        @Override
+        //todo Proof refres
+       /* @Override
         protected void done() {
             owner.fingerIdComputationComplete();
-        }
+        }*/
 
         @Override
         protected List<ExperimentContainer> doInBackground() throws Exception {

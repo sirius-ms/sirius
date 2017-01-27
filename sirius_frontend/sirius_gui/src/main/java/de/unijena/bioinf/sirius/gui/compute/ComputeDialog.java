@@ -459,7 +459,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 			} else {
                 ec.setRawResults(Collections.<IdentificationResult>emptyList());
                 ec.setComputeState(ComputingStatus.FAILED);
-				owner.refreshCompound(ec);
+				//owner.refreshCompound(ec); //todo proof
                 if (progDiag.getException()!=null){
 					if (progDiag.getException().getCause() instanceof UnknownHostException){
 						new NoConnectionDialog(this);
@@ -469,7 +469,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 					}
 				}
 			}
-			owner.refreshCompound(ec);
+//			owner.refreshCompound(ec); //todo proofrefresh
 			this.dispose();
 
 //	            List<IdentificationResult> results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);

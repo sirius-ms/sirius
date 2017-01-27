@@ -458,11 +458,10 @@ public class CSIFingerIdComputation {
     }
 
     //csi fingerid compute all button in main panel
-    public void computeAll(Iterator<ExperimentContainer> compounds) {
+    public void computeAll(List<ExperimentContainer> compounds) {
         stopRunningTasks();
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
-        while (compounds.hasNext()) {
-            final ExperimentContainer c = compounds.next();
+        for (ExperimentContainer c : compounds) {
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
                 if (e.getCharge()>0) {
                     tasks.add(new FingerIdTask(isEnforceBio(), c, e));

@@ -5,6 +5,8 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
@@ -18,6 +20,9 @@ public class SwingUtils {
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
+
+
+
 
     public static void initUI() {
     //load nimbus look and feel, befor mainframe is built
@@ -40,7 +45,26 @@ public class SwingUtils {
 
     }
 
+    public static void drawListStatusElement(ExperimentContainer ec, Graphics2D g2, Component c){
+        final Color prevCol = g2.getColor();
+        String icon = "";
 
+        if (ec.isComputed()) {
+            g2.setColor(Colors.ICON_GREEN);
+            icon = "\u2713";
+        } else if (ec.isComputing()) {
+            icon = "\u2699";
+        } else if (ec.isFailed()){
+            g2.setColor(Colors.ICON_RED);
+            icon = "\u2718";
+        } else if (ec.isQueued()) {
+            icon = "...";
+        }
+
+        int offset =  g2.getFontMetrics().stringWidth(icon);
+        g2.drawString(icon, c.getWidth()-offset-10, c.getHeight()-8);
+        g2.setColor(prevCol);
+    }
 
 
     public static class SimplePainter extends AbstractRegionPainter {

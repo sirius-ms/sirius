@@ -72,7 +72,7 @@ public class CompoundCandidateView extends JPanel {
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList(frame, storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
         changeData(null, null);
@@ -103,7 +103,7 @@ public class CompoundCandidateView extends JPanel {
                     break;
                 default:
                     System.out.println("button");
-                    layout.show(this, "computeButton");//todo other states
+                    layout.show(this, "computeButton");//todo other types
                     break;
             }
         }

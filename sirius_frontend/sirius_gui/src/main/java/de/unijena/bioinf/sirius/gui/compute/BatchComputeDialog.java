@@ -387,17 +387,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                owner.csiFingerId.setEnforceBio(csiOptions.biodb.isSelected());
+                owner.getCsiFingerId().setEnforceBio(csiOptions.biodb.isSelected());
                 final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
                 tasks.add(task);
                 compoundList.add(ec);
             }
         }
         bgc.addAll(tasks);
-        for (ExperimentContainer ec : compoundList) {
+
+        //todo proof
+        /*for (ExperimentContainer ec : compoundList) {
             owner.refreshCompound(ec);
         }
-        owner.computationStarted();
+        owner.computationStarted();*/
         dispose();
     }
 

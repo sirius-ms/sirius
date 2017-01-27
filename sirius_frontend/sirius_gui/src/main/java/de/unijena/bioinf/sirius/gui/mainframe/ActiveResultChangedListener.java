@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results;
+package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;

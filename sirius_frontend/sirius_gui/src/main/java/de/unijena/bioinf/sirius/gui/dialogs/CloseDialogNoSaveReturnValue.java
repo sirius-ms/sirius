@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,11 +34,9 @@ public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListe
 
 	private JButton delete,abort;
 	private JCheckBox dontaskagain;
-	private ConfigStorage config;
 
-	public CloseDialogNoSaveReturnValue(Frame owner, String question, ConfigStorage config) {
+	public CloseDialogNoSaveReturnValue(Frame owner, String question) {
 		super(owner,true);
-		this.config = config;
 		rv = CloseDialogReturnValue.abort;
 
 		this.setLayout(new BorderLayout());
@@ -86,9 +85,9 @@ public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListe
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			config.setCloseNeverAskAgain(true);
+			Workspace.CONFIG_STORAGE.setCloseNeverAskAgain(true);
 		} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-			config.setCloseNeverAskAgain(false);
+			Workspace.CONFIG_STORAGE.setCloseNeverAskAgain(false);
 		}
 	}
 }

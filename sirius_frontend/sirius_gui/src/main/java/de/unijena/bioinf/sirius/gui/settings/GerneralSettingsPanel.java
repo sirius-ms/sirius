@@ -17,6 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -58,7 +60,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
             new SwingWorker<Integer, String>() {
                 @Override
                 protected Integer doInBackground() throws Exception {
-                    SiriusApplication.MAIN_FRAME.csiFingerId.setDirectory(dir.toFile());
+                    MF.getCsiFingerId().setDirectory(dir.toFile());
                     return 1;
                 }
             }.execute();

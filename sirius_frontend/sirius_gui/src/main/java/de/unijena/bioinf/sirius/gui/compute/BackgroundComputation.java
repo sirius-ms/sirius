@@ -168,13 +168,13 @@ public class BackgroundComputation {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
-                        owner.csiFingerId.compute(c.exp,owner.csiFingerId.isEnforceBio());//todo add max value
+                        owner.getCsiFingerId().compute(c.exp,owner.getCsiFingerId().isEnforceBio());//todo add max value
                     }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                     c.job.run();
                 }
-                owner.refreshCompound(c.exp);
+//                owner.refreshCompound(c.exp); //todo id think we aleady listen to that
             }
         }
 
@@ -187,10 +187,10 @@ public class BackgroundComputation {
             }
         }
 
-        @Override
+       /* @Override
         protected void done() {
-            owner.computationComplete();
-        }
+            owner.computationComplete();//todo DAMN
+        }*/
 
         @Override
         protected List<ExperimentContainer> doInBackground() throws Exception {

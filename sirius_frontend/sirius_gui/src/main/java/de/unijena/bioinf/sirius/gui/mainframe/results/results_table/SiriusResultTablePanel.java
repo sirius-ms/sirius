@@ -14,6 +14,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
@@ -26,9 +27,11 @@ import java.util.Set;
  */
 public class SiriusResultTablePanel extends JPanel {
 
-    private static final int[] BAR_COLS = {2,3,4};
+    private static final int[] BAR_COLS = {2, 3, 4};
     public final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
+
+    //listener to observable table
     private final ListSelectionListener selectionObserver = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
@@ -57,15 +60,80 @@ public class SiriusResultTablePanel extends JPanel {
         }
     };
 
-
+    //observable table
     private JList<ExperimentContainer> toObserve;
     private Set<ExperimentContainer> selected = new HashSet<>();
 
 
+    ///////////////// Constructors //////////////////////////
     public SiriusResultTablePanel(JList<ExperimentContainer> listToObserve) {
         this();
         observe(listToObserve);
     }
+
+    public SiriusResultTablePanel() {
+        super(new BorderLayout());
+        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
+        this.table = new ActionTable<>(new ArrayList<SiriusResultElement>(),
+                new SiriusResultTableFormat(),
+                new SiriusResultMatcherEditor(searchField),
+                SiriusResultElement.class);
+
+        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
+
+        for (int i = 0; i < BAR_COLS.length; i++) {
+            TableColumn col = table.getColumnModel().getColumn(BAR_COLS[i]);
+            col.setCellRenderer(new BarTableCellRenderer());
+        }
+
+
+        this.add(
+                new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
+                BorderLayout.CENTER
+        );
+
+        addNorthPanel();
+        addSouthPanel();
+        addLeftPanel();
+        addRightPanel();
+    }
+
+
+
+    ///////////////// API //////////////////////////
+    public void observe(JList<ExperimentContainer> dataList) {
+        if (toObserve != null) {
+            toObserve.removeListSelectionListener(selectionObserver);
+            toObserve.getModel().removeListDataListener(entryObserver);
+        }
+        toObserve = dataList;
+
+        addData(toObserve.getSelectedValuesList());
+        toObserve.addListSelectionListener(selectionObserver);
+        toObserve.getModel().addListDataListener(entryObserver);
+    }
+
+
+
+
+
+    ///////////////// Internal //////////////////////////
+    protected void addNorthPanel() {
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        JPanel sp = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
+        sp.add(new JLabel("Filter"));
+        sp.add(searchField);
+        top.add(sp);
+
+        this.add(top, BorderLayout.NORTH);
+    }
+
+    protected void addRightPanel() {}
+
+    protected void addLeftPanel() {}
+
+    protected void addSouthPanel() {}
+
 
     private void addData(final Collection<ExperimentContainer> data) {
         if (data == null || data.isEmpty()) {
@@ -86,76 +154,4 @@ public class SiriusResultTablePanel extends JPanel {
             selected = new HashSet<>(data);
         }
     }
-
-
-    public SiriusResultTablePanel() {
-        super(new BorderLayout());
-        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
-        this.table = new ActionTable<SiriusResultElement>(new ArrayList<SiriusResultElement>(), new SiriusResultTableFormat(), new SiriusResultMatcherEditor(searchField), SiriusResultElement.class);
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
-
-        for (int i = 0; i < BAR_COLS.length; i++) {
-            TableColumn col = table.getColumnModel().getColumn(BAR_COLS[i]);
-            col.setCellRenderer(new BarTableCellRenderer());
-        }
-
-
-        this.add(
-                new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-                BorderLayout.CENTER
-        );
-
-        addNorthPanel();
-        addSouthPanel();
-        addLeftPanel();
-        addRightPanel();
-    }
-
-    private void addNorthPanel() {
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        JPanel sp = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
-        sp.add(new JLabel("Filter"));
-        sp.add(searchField);
-        top.add(sp);
-
-        this.add(top, BorderLayout.NORTH);
-    }
-
-    private void addRightPanel() {
-
-    }
-
-    private void addLeftPanel() {
-
-    }
-
-    private void addSouthPanel() {
-
-    }
-
-
-    public void observe(JList<ExperimentContainer> dataList) {
-        if (toObserve != null) {
-            toObserve.removeListSelectionListener(selectionObserver);
-            toObserve.getModel().removeListDataListener(entryObserver);
-        }
-        toObserve = dataList;
-
-        addData(toObserve.getSelectedValuesList());
-        toObserve.addListSelectionListener(selectionObserver);
-        toObserve.getModel().addListDataListener(entryObserver);
-    }
-
-    public static void main(String[] args) {
-
-        SiriusResultTablePanel srt = new SiriusResultTablePanel();
-        // create a frame with that panel
-        JFrame frame = new JFrame("Issues");
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(540, 380);
-        frame.getContentPane().add(srt);
-        frame.show();
-    }
-
-
 }

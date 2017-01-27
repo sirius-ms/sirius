@@ -5,6 +5,7 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.Colors;
+import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -148,72 +149,8 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 //
         if (sre!=null && sre.fingerIdComputeState!=null) {
             g.setFont(statusFont);
-			final ComputingStatus ec = sre.fingerIdComputeState;
-            if (ec==ComputingStatus.COMPUTED) {
-				g2.setColor(Colors.ICON_GREEN);
-				g2.drawString("\u2713", getWidth()-24, getHeight()-8);
-            } else if (ec==ComputingStatus.COMPUTING) {
-                g2.drawString("\u2699", getWidth()-24, getHeight()-8);
-            } else if (ec==ComputingStatus.FAILED){
-                final Color prevCol = g2.getColor();
-                g2.setColor(Colors.ICON_RED);
-                g2.drawString("\u2718", getWidth()-24, getHeight()-8);
-                g2.setColor(prevCol);
-            } else if (ec==ComputingStatus.QUEUED) {
-                g2.drawString("...", getWidth()-24, getHeight()-8);
-            }
+			SwingUtils.drawListStatusElement(ec,g2,this);
         }
-
-
-
-//		int ms1No = ec.getMs1Spectra().size();
-//		int ms2No = ec.getMs2Spectra().size();
-//		
-//		System.out.println(ms1No+" "+ms2No);
-//		
-//		String ionizationProp = "ionization";
-//		String focMassProp = "focused mass";
-//		int ionLength = propertyFm.stringWidth(ionizationProp);
-//		int focLength = propertyFm.stringWidth(focMassProp);
-//		
-//		g2.setFont(propertyFont);
-//		g2.drawString(ionizationProp,4,32);
-//		g2.drawString(focMassProp,4,48);
-//		
-//		int xPos = Math.max(ionLength,focLength)+15;
-//		
-//		String ionValue = null;
-//		Ionization ioni = ec.getIonization();
-//		if(ioni == Ionization.M) ionValue = "M+";
-//		else if(ioni == Ionization.MMinusH) ionValue = "[M-H]-";
-//		else if(ioni == Ionization.MPlusH) ionValue = "[M+H]+";
-//		else if(ioni == Ionization.MPlusNa) ionValue = "[M+Na]+";
-//		if(ionValue==null||ionValue.isEmpty()) ionValue = "unknown";
-//		double focD = ec.getSelectedFocusedMass();
-//		String focMass = focD>0 ? numberFormat.format(focD) : "unknown";
-//		
-//		g2.setFont(valueFont);
-//		g2.drawString(ionValue,xPos,32);
-//		g2.drawString(focMass,xPos,48);
-//		
-//		int yPos = 64;
-//		
-//		g2.setFont(valueFont);
-//		
-//		if(ms1No>0){
-//			String ms1String = ms1No==1 ? "spectrum " : "spectra";
-//			ms1String = ms1No+" ms1 "+ms1String;
-//			g2.drawString(ms1String, 4, yPos);
-//			yPos+=16;
-//		}
-//		
-//		if(ms2No>0){
-//			String ms2String = ms2No==1 ? "spectrum " : "spectra";
-//			ms2String = ms2No+" ms2 "+ms2String;
-//			g2.drawString(ms2String, 4, yPos);
-//		}
-		
-
 	}
 
 }

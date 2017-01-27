@@ -1,12 +1,14 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.sirius.cli.SiriusApplication;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.gui.mainframe.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -23,6 +25,8 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
 public class ResultPanel extends JPanel implements ListSelectionListener {
 
     private ResultTreeListModel listModel;
@@ -33,7 +37,6 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
     private CompoundCandidateView ccv;
     private ResultTreeListTextCellRenderer cellRenderer;
     private JTabbedPane centerPane;
-    private MainFrame owner;
     private ExperimentContainer ec;
 
     private List<ActiveResultChangedListener> listeners;
@@ -49,14 +52,13 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         ccv.dispose();
     }
 
-    public ResultPanel(MainFrame owner, ConfigStorage config) {
-        this(null, owner, config);
+    public ResultPanel() {
+        this(null);
     }
 
-    public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
+    public ResultPanel(ExperimentContainer ec) {
         super();
         this.listeners = new ArrayList<>();
-        this.owner = owner;
         this.setLayout(new BorderLayout());
         this.setToolTipText("Results");
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));
@@ -123,18 +125,18 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         this.add(temp, BorderLayout.NORTH);
 
         centerPane = new JTabbedPane();
-        rvp = new SiriusResultTablePanel(owner.compoundList);
+        rvp = new SiriusResultTablePanel(MF.getCompountListPanel().compoundList);
         centerPane.add(rvp,"Sirius");
 
 
         centerPane.setBorder(BorderFactory.createEmptyBorder());
-        tvp = new TreeVisualizationPanel(owner, config);
+        tvp = new TreeVisualizationPanel(MF);
         centerPane.addTab("Tree view", tvp);
 
         svp = new SpectraVisualizationPanel(ec);
         centerPane.addTab("Spectra view", svp);
 
-        ccv = new CompoundCandidateView(owner);
+        ccv = new CompoundCandidateView(MF);
         centerPane.addTab("CSI:FingerId", ccv);
         ccv.addActionListener(new ActionListener() {
             @Override
@@ -191,11 +193,9 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         if (fireEvent) resultsJList.setSelectedValue(sre, true);
         if (sre == null) {
             tvp.showTree(null);
-            svp.changeSiriusResultElement(null);
             ccv.changeData(ec, sre);
         } else {
             tvp.showTree(sre);
-            svp.changeSiriusResultElement(sre);
             ccv.changeData(ec, sre);
         }
         ////////////////
@@ -209,18 +209,18 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
     public void computeFingerID(boolean searchAllEnabled) {
         //Test connection
         if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
-            new NoConnectionDialog(owner);
+            new NoConnectionDialog(MF);
             return;
         }
         SiriusResultElement resultElement = resultsJList.getSelectedValue();
 
         //calculate csi
-        final FingerIdDialog dialog = new FingerIdDialog(owner, owner.csiFingerId, resultElement.getFingerIdData(), searchAllEnabled);
+        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), resultElement.getFingerIdData(), searchAllEnabled);
 
         final int returnState = dialog.run();
         if (returnState != FingerIdDialog.CANCELED) {
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                owner.csiFingerId.compute(ec, dialog.isBio());
+                MF.getCsiFingerId().compute(ec, dialog.isBio());
             } else {
                 List<SiriusResultElement> selected = resultsJList.getSelectedValuesList();
                 java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
@@ -228,7 +228,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
                     if (element.getCharge()>0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
                         tasks.add(new FingerIdTask(dialog.isBio(), ec, element));
                 }
-                owner.csiFingerId.computeAll(tasks);
+                MF.getCsiFingerId().computeAll(tasks);
             }
             ccv.changeData(ec, resultElement);
         }
