@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -41,6 +42,7 @@ public class IdentificationResult implements Cloneable {
     protected MolecularFormula formula;
     protected int rank;
     protected double score;
+    protected HashMap<Class<?>, Object> annotations;
 
     private final static Pattern NeedToEscape = Pattern.compile("[\t\n\"]");
     public static void writeIdentifications(Writer writer, Ms2Experiment input, List<IdentificationResult> results) throws IOException {
@@ -84,6 +86,7 @@ public class IdentificationResult implements Cloneable {
         } else {
             this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
         }
+        this.annotations = new HashMap<>();
     }
 
     public int getRank() {
@@ -192,4 +195,27 @@ public class IdentificationResult implements Cloneable {
         r.score = score;
         return r;
     }
+
+    @SuppressWarnings("unchecked cast")
+    public <T> T getAnnotationOrThrow(Class<T> klass) {
+        final T ano = (T) annotations.get(klass);
+        if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
+        return ano;
+    }
+
+    @SuppressWarnings("unchecked cast")
+    public <T> T getAnnotationOrNull(Class<T> klass) {
+        return (T) annotations.get(klass);
+    }
+
+    public boolean removeAnnotation(Class<?> klass) {
+        return annotations.remove(klass) != null;
+    }
+
+
+    public <T> boolean setAnnotation(Class<T> klass, T annotation) {
+        return annotations.put((Class<Object>) klass, annotation) == annotation;
+    }
+
+
 }
