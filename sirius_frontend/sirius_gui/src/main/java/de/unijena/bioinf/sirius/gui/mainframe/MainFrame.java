@@ -6,7 +6,10 @@ import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.compute.*;
+import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
+import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
+import de.unijena.bioinf.sirius.gui.compute.JobDialog;
+import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -18,7 +21,6 @@ import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
-import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -174,7 +176,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
 
         TwoCloumnPanel compoundListPanel = new TwoCloumnPanel(new JLabel(" Filter:"), searchField);
         compoundListPanel.add(pane, 0, true);
-        compoundListPanel.setBorder(new EmptyBorder(0,0,0,0));
+        compoundListPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
         tabbedPane.addTab("Experiments", compoundListPanel);
         tabbedPane.addTab("Identifications", tmp_wrapper);
@@ -194,7 +196,6 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
         showResultsPanel = new ResultPanel(this, config);
         mainPanel.add(showResultsPanel, BorderLayout.CENTER);
         // resluts done
-
 
 
         // ########## Toolbar ############
@@ -341,7 +342,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                         configFingerID.setEnabled(true);
                         csiFingerId.setEnabled(true);
                     }
-                    if (versionsNumber.hasNews()){
+                    if (versionsNumber.hasNews()) {
                         new NewsDialog(MainFrame.this, versionsNumber.getNews());
                     }
                 } else {
@@ -521,7 +522,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             final int returnState = dialog.run();
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
                 csiFingerId.computeAll(getCompounds());
-            }else if (returnState == FingerIdDialog.COMPUTE){
+            } else if (returnState == FingerIdDialog.COMPUTE) {
                 csiFingerId.computeAll(compoundList.getSelectedValuesList().iterator());
             }
         } else if (e.getSource() == newB || e.getSource() == newExpMI) {
@@ -1133,7 +1134,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
                     break;
                 }
             }
-            if (select){
+            if (select) {
                 compoundList.setSelectedIndex(indx);
             }
         }

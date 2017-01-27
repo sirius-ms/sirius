@@ -9,8 +9,6 @@ import de.unijena.bioinf.sirius.gui.utils.Colors;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -25,7 +23,6 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
     protected Color foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
     protected Color backColor = Colors.LIST_EVEN_BACKGROUND;
     protected String value;
-
 
 
     @Override
@@ -52,11 +49,17 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             setHorizontalAlignment(SwingConstants.RIGHT);
         }
 
-//        if (column == 0)
-//            table.getColumnModel().getColumn(column).setPreferredWidth(Math.max(rendererWidth + getIntercellSpacing().width, tableColumn.getPreferredWidth()));
+        if (table.getColumnName(column).equals("Rank")) {
+            table.getColumnModel().getColumn(column).setMaxWidth(50);
+            setHorizontalAlignment(SwingConstants.CENTER);
+        }
 
-        return super.getTableCellRendererComponent(table,this.value,isSelected,hasFocus,row,column);
+
+        return super.getTableCellRendererComponent(table, this.value, isSelected, hasFocus, row, column);
     }
 
-
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+    }
 }
