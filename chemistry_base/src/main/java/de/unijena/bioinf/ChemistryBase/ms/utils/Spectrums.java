@@ -18,7 +18,10 @@
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -400,6 +403,130 @@ public class Spectrums {
         for (int i=msms.size()-1; i >= k; --i) {
             msms.removePeakAt(i);
         }
+    }
+
+    public static<P extends Peak, S extends MutableSpectrum<P>>  void filterIsotpePeaks(S spec, Deviation deviation) {
+        filterIsotpePeaks(spec, deviation, 0.2, 0.55, 3, new ChemicalAlphabet()); //a fixed 0.45 ratio would filter about 95% of CHONPS in 100-800Da
+    }
+
+    /**
+     * remove isotope peaks from spectrum
+     * @param spec
+     * @param deviation allowed mass deviation
+     * @param maxIntensityRatioAt0 intensity ratio at 0 Da above which peaks are treated as independent, non-isotope peaks
+     * @param maxIntensityRatioAt1000 intensity ratio at 1000 Da above which peaks are treated as independent, non-isotope peaks
+     * @param maxNumberOfIsotopePeaks maximum number of iosotope peaks
+     * @param alphabet {@link ChemicalAlphabet} which is used to compute the mass windows in which isotope peaks are expected.
+     * @param <P>
+     * @param <S>
+     */
+    public static<P extends Peak, S extends MutableSpectrum<P>>  void filterIsotpePeaks(S spec, Deviation deviation, double maxIntensityRatioAt0, double maxIntensityRatioAt1000, int maxNumberOfIsotopePeaks, ChemicalAlphabet alphabet) {
+        final PeriodicTable pt = PeriodicTable.getInstance();
+
+        final SimpleMutableSpectrum byInt = new SimpleMutableSpectrum(spec);
+        Spectrums.sortSpectrumByDescendingIntensity(byInt);
+        Spectrums.sortSpectrumByMass(spec);
+        for (int i=0; i < byInt.size(); ++i) {
+            final Peak peak = byInt.getPeakAt(i);
+            final int index = Spectrums.binarySearch(spec, peak.getMass());
+            if (index >= 0) {
+                TIntArrayList toDelete = new TIntArrayList(maxNumberOfIsotopePeaks);
+
+                int offset = 1;
+                Range<Double> range = pt.getIsotopicMassWindow(alphabet, deviation, peak.getMass(), offset);
+                double lower = range.lowerEndpoint().doubleValue();
+                double upper = range.upperEndpoint().doubleValue();
+
+                boolean isotopePeakFound = false;
+                int isoIndex = index+1;
+                while (isoIndex<spec.size()){
+                    final double mass = spec.getMzAt(isoIndex);
+                    if (mass<lower){
+                        ++isoIndex;
+                    } else if (mass<=upper){
+                        final double maxIntensityRatio = (maxIntensityRatioAt1000-maxIntensityRatioAt0)*mass/1000d+maxIntensityRatioAt0;
+                        if (spec.getIntensityAt(isoIndex)/peak.getIntensity()<=maxIntensityRatio){
+                            //remove peak (multiple peak are allowed to be in the same window and removed)
+                            toDelete.add(isoIndex);
+                            isotopePeakFound = true;
+                        }
+                        ++isoIndex;
+                    } else {
+                        if (isotopePeakFound && offset<maxNumberOfIsotopePeaks){
+                            //look for next isotope peak
+                            ++offset;
+                            range = pt.getIsotopicMassWindow(alphabet, deviation, peak.getMass(), offset);
+                            lower = range.lowerEndpoint().doubleValue();
+                            upper = range.upperEndpoint().doubleValue();
+                            isotopePeakFound = false;
+                        } else {
+                            //end
+                            break;
+                        }
+                    }
+                }
+
+
+                for (int j = 0; j < toDelete.size(); j++) {
+                    int pos = toDelete.get(j);
+                    spec.removePeakAt(pos-j);
+                }
+
+            }
+        }
+    }
+
+    /**
+     * try to guess the ionization by looking for mass differences to other peaks which might be the same compound ionized with a different adduct.
+     * Before usage APPLY A BASELINE! THIS METHOD IGNORES INTENSITIES
+     * In doubt [M]+/[M-H]- is ignored (cannot distinguish from isotope pattern)!
+     * @param ms1
+     * @param ionMass peak of interest
+     * @param deviation
+     * @param ionTypes possible ion types
+     * @return
+     */
+    public static PrecursorIonType[] guessIonization(Spectrum<Peak> ms1, double ionMass, Deviation deviation, PrecursorIonType[] ionTypes) {
+        SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum(ms1);
+        sortSpectrumByMass(spectrum);
+
+        final PrecursorIonType lighterType, heavierType;
+
+        if (ionTypes[0].getCharge()>0){
+            lighterType  = PrecursorIonType.getPrecursorIonType("[M]+");
+            heavierType = PrecursorIonType.getPrecursorIonType("[M+H]+");
+        } else {
+            lighterType  = PrecursorIonType.getPrecursorIonType("[M-H]-");
+            heavierType = PrecursorIonType.getPrecursorIonType("[M]-");
+        }
+
+        HashMap<PrecursorIonType, Set<PrecursorIonType>> adductDiffs = new HashMap<>();
+        for (int i = 0; i < ionTypes.length; i++) {
+            final PrecursorIonType removedIT = ionTypes[i];
+            for (int j = 0; j < ionTypes.length; j++) {
+                final PrecursorIonType addedIT = ionTypes[j];
+                if (i==j) continue;
+                if (removedIT.equals(lighterType) && addedIT.equals(heavierType)) continue; //probably just +1 isotope peak
+                double diffAdductMass = addedIT.addIonAndAdduct(removedIT.subtractIonAndAdduct(ionMass));
+                int idx = Spectrums.binarySearch(spectrum, diffAdductMass, deviation);
+                if (idx<0) continue; // no corresponding mass found;
+                Set<PrecursorIonType> addedList = adductDiffs.get(removedIT);
+                if (addedList==null) {
+                    addedList = new HashSet<>();
+                    adductDiffs.put(removedIT, addedList);
+                }
+                addedList.add(addedIT);
+            }
+        }
+
+        if (adductDiffs.containsKey(lighterType) && adductDiffs.containsKey(heavierType)){
+            if (adductDiffs.get(heavierType).containsAll(adductDiffs.get(lighterType))){ //probably just isotopes;
+                adductDiffs.remove(lighterType);
+            }
+        }
+
+        final Set<PrecursorIonType> set = adductDiffs.keySet();
+        return set.toArray(new PrecursorIonType[0]);
     }
 
 
