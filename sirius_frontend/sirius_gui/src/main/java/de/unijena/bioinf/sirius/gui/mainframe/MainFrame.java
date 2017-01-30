@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
@@ -10,6 +11,7 @@ import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.fingerid.*;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
+import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTable;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -46,9 +48,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return toolbar;
     }
 
-    private JPanel resultsPanel;
+
+    private FormulaTable formulaList;
+    public FormulaTable getFormulaList() {return formulaList;}
+
+    private ResultPanel resultsPanel;
+    public ResultPanel getResultsPanel() {return resultsPanel;}
+
+
+    private JPanel resultsContainerPanel;
     private CardLayout resultsPanelCL;
-    private ResultPanel showResultsPanel;
+
     private static final String DUMMY_CARD = "dummy";
     private static final String RESULTS_CARD = "results";
     private DatabaseDialog dbDialog;
@@ -97,6 +107,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mf.compountListPanel = new ExperimentListPanel();
         mf.compountListPanel.compoundListView.setMinimumSize(new Dimension(200, 0));
         /////////////////////////////// LEFT Panel (Compunt list) DONE //////////////////////////////
+
+        mf.formulaList = new FormulaTable(mf.compountListPanel);
+
         mf.jobDialog = new JobDialog(mf);
 
         //todo reintegrate this panel wenn confidence works
@@ -137,12 +150,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         // results PAnel
         mf.resultsPanelCL = new CardLayout();
-        mf.resultsPanel = new JPanel(mf.resultsPanelCL);
+        mf.resultsContainerPanel = new JPanel(mf.resultsPanelCL);
         JPanel dummyPanel = new JPanel();
-        mf.resultsPanel.add(dummyPanel, DUMMY_CARD);
+        mf.resultsContainerPanel.add(dummyPanel, DUMMY_CARD);
 
-        mf.showResultsPanel = new ResultPanel();
-        mainPanel.add(mf.showResultsPanel, BorderLayout.CENTER);
+        mf.resultsPanel = new ResultPanel(mf.formulaList);
+        mainPanel.add(mf.resultsPanel, BorderLayout.CENTER);
         // resluts done
 
         mf.toolbar = new SiriusToolbar();
@@ -209,7 +222,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Override
     public void dispose() {
-        showResultsPanel.dispose();
+        resultsPanel.dispose();
         csiFingerId.shutdown();
         super.dispose();
     }
@@ -241,7 +254,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             @Override
             public void run() {
                 if (compoundListView.getSelectedValue() == c) {
-                    showResultsPanel.changeData(c);
+                    resultsPanel.changeData(c);
                 }
                 refreshComputationMenuItem();
                 refreshExportMenuButton();
@@ -300,24 +313,24 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
             if (index < 0) {
 
-                this.showResultsPanel.changeData(null);
+                this.resultsPanel.changeData(null);
             } else {
 
-                this.showResultsPanel.changeData(compoundList.get(index));
-                resultsPanelCL.show(resultsPanel, RESULTS_CARD);
+                this.resultsPanel.changeData(compoundList.get(index));
+                resultsPanelCL.show(resultsContainerPanel, RESULTS_CARD);
             }
         }
     }*/
 
   /*  public void selectExperimentContainer(ExperimentContainer container) {
-        this.showResultsPanel.changeData(container);
+        this.resultsPanel.changeData(container);
         compoundListView.setSelectedValue(container, true);
-        resultsPanelCL.show(resultsPanel, RESULTS_CARD);
+        resultsPanelCL.show(resultsContainerPanel, RESULTS_CARD);
     }
 
     public void selectExperimentContainer(ExperimentContainer container, SiriusResultElement element) {
         selectExperimentContainer(container);
-        showResultsPanel.select(element, true);
+        resultsPanel.select(element, true);
     }*/
 
 
@@ -419,6 +432,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 Workspace.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
+    }
+
+    public boolean csiConnectionAvailable() {
+        //Test connection
+        if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
+            new NoConnectionDialog(this);
+            return false;
+        }
+        return true;
     }
 }
 

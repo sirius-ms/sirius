@@ -28,7 +28,6 @@ import java.awt.event.MouseListener;
 import java.util.LinkedList;
 import java.util.List;
 
-import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
 /**
@@ -64,7 +63,12 @@ public class ExperimentListPanel extends TwoCloumnPanel {
         compoundListView.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                notifyListener(new ExperimentListChangeEvent(compoundListView));
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        notifyListenerSelectionChange();
+                    }
+                });
             }
         });
 
@@ -84,7 +88,7 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
             @Override
             public void mousePressed(MouseEvent e) {
-                System.out.println("HERE");
+                System.out.println("LEFT MOUSE");
                 if (SwingUtilities.isRightMouseButton(e)) {
                     int indx = compoundListView.locationToIndex(e.getPoint());
                     boolean select = true;
@@ -116,8 +120,20 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
         compoundList.addListEventListener(new ListEventListener<ExperimentContainer>() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> listChanges) {
-                notifyListener(new ExperimentListChangeEvent(compoundListView, listChanges));
+            public void listChanged(final ListEvent<ExperimentContainer> listChanges) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        /*if (compoundListView.getMaxSelectionIndex() > compoundListView.getModel().getSize())
+                            if (compoundListView.getMinSelectionIndex() > compoundListView.getModel().getSize())
+                                compoundListView.clearSelection();
+                            else
+                                compoundListView.setSelectedIndex(compoundListView.getMinSelectionIndex());*/
+
+                        notifyListenerDataChange(listChanges);
+                    }
+                });
+
             }
         });
 
@@ -140,16 +156,16 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
     }
 
-    protected void notifyListener(final ExperimentListChangeEvent event) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                for (ExperimentListChangeListener l : listeners) {
-                    l.listChanged(event);
-                }
-            }
-        });
+    private void notifyListenerDataChange(ListEvent<ExperimentContainer> event) {
+        for (ExperimentListChangeListener l : listeners) {
+            l.listChanged(event,compoundListView);
+        }
+    }
 
+    private void notifyListenerSelectionChange() {
+        for (ExperimentListChangeListener l : listeners) {
+            l.listSelectionChanged(compoundListView);
+        }
     }
 
     //API methods

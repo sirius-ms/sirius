@@ -9,6 +9,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
 import org.jdesktop.beans.AbstractBean;
 
+import javax.swing.*;
 import java.util.regex.Pattern;
 
 public class SiriusResultElement extends AbstractBean implements Comparable<SiriusResultElement> {
@@ -39,7 +40,8 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     }
 
     public void setFingerIdData(FingerIdData fingerIdData) {
-        this.fingerIdData = fingerIdData;
+        //todo maybe property change needed. but i hope that can be done via computation state
+		this.fingerIdData = fingerIdData;
     }
 
     public int getRank() {
@@ -79,10 +81,15 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
 		return bestHit;
 	}
 
-	public void setBestHit(boolean bestHit) {
-		boolean old = this.bestHit;
+	public void setBestHit(final boolean bestHit) {
+		final boolean old = this.bestHit;
 		this.bestHit = bestHit;
-		firePropertyChange("best_hit",old, this.bestHit);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				firePropertyChange("best_hit",old, bestHit);
+			}
+		});
 	}
 
 	@Override

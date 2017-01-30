@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.gui.mainframe.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanelListener;
 import de.unijena.bioinf.sirius.gui.msviewer.data.ExperimentContainerDataModel;
@@ -42,8 +41,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	JPopupMenu zoomPopMenu;
 	JMenuItem zoomInMI, zoomOutMI;
 
-	public SpectraVisualizationPanel(ExperimentContainer ec) {
-		this.ec = ec;
+	public SpectraVisualizationPanel() {
+		this.ec = null;
 		this.sre = null;
 
 		zoomIn = Buttons.getZoomInButton24();

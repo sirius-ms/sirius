@@ -26,19 +26,20 @@ import java.awt.event.ActionListener;
 public class FingerIdDialog extends JDialog {
 
     public static final int COMPUTE =1, CANCELED=0, COMPUTE_ALL=2;
-    protected FingerIdData data;
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
     protected FingerIDComputationPanel dbForm;
     protected CSIFingerIdComputation storage;
+    private String buttonSuffix = "experiments";
 
-    public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, FingerIdData data, boolean showComputeButton) {
+    public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerId", true);
         this.storage = storage;
         this.dbForm = new FingerIDComputationPanel(this.storage.enforceBio);
-        this.data = data;
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
+        if (local)
+            buttonSuffix = "molecular formulas";
     }
 
     public int run() {
@@ -62,7 +63,7 @@ public class FingerIdDialog extends JDialog {
 
         if (showComputeButton) {
             final JButton computeAll = new JButton("Search all");
-            computeAll.setToolTipText("Search ALL items with CSI:FingerID");
+            computeAll.setToolTipText("Search ALL "  + buttonSuffix + " with CSI:FingerID");
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -75,8 +76,8 @@ public class FingerIdDialog extends JDialog {
             southPanel.add(computeAll);
         }
 
-        JButton approve = new JButton("Search");
-        approve.setToolTipText("Search SELECTED items with CSI:FingerID");
+        JButton approve = new JButton("Search selected");
+        approve.setToolTipText("Search SELECTED " + buttonSuffix + " with CSI:FingerID");
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -86,7 +87,8 @@ public class FingerIdDialog extends JDialog {
                 dispose();
             }
         });
-        final JButton abort = new JButton("Abort");
+
+        final JButton abort = new JButton("Close");
         abort.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

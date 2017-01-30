@@ -88,7 +88,6 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        System.out.println("Action");
         if (e.getSource() == useProxy) {
             refreshValues();
         } else if (e.getSource() == useCredentials) {

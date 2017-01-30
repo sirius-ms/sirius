@@ -5,16 +5,14 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.results_table;
  * 24.01.17.
  */
 
+import ca.odell.glazedlists.event.ListEvent;
+import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.ActionTable;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
@@ -25,53 +23,17 @@ import java.util.Set;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusResultTablePanel extends JPanel {
+public class SiriusResultTablePanel extends JPanel implements ExperimentListChangeListener {
 
     private static final int[] BAR_COLS = {2, 3, 4};
     public final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
 
-    //listener to observable resultElementTable
-    private final ListSelectionListener selectionObserver = new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-            addData(toObserve.getSelectedValuesList());
-        }
-    };
-
-    final ListDataListener entryObserver = new ListDataListener() {
-        @Override
-        public void intervalAdded(ListDataEvent e) {
-            // done by selection listener
-        }
-
-        @Override
-        public void intervalRemoved(ListDataEvent e) {
-            //done bey selection listener
-        }
-
-        @Override
-        public void contentsChanged(ListDataEvent e) {
-            if (toObserve.getMinSelectionIndex() <= e.getIndex0() && toObserve.getMaxSelectionIndex() >= e.getIndex1()) {
-                table.elements.clear();
-                selected.clear();
-                addData(toObserve.getSelectedValuesList());
-            }
-        }
-    };
-
-    //observable resultElementTable
-    private JList<ExperimentContainer> toObserve;
     private Set<ExperimentContainer> selected = new HashSet<>();
 
 
     ///////////////// Constructors //////////////////////////
-    public SiriusResultTablePanel(JList<ExperimentContainer> listToObserve) {
-        this();
-        observe(listToObserve);
-    }
-
-    public SiriusResultTablePanel() {
+    public SiriusResultTablePanel(ExperimentListPanel toObserve) {
         super(new BorderLayout());
         searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
         this.table = new ActionTable<>(new ArrayList<SiriusResultElement>(),
@@ -96,25 +58,9 @@ public class SiriusResultTablePanel extends JPanel {
         addSouthPanel();
         addLeftPanel();
         addRightPanel();
+
+        toObserve.addChangeListener(this);
     }
-
-
-
-    ///////////////// API //////////////////////////
-    public void observe(JList<ExperimentContainer> dataList) {
-        if (toObserve != null) {
-            toObserve.removeListSelectionListener(selectionObserver);
-            toObserve.getModel().removeListDataListener(entryObserver);
-        }
-        toObserve = dataList;
-
-        addData(toObserve.getSelectedValuesList());
-        toObserve.addListSelectionListener(selectionObserver);
-        toObserve.getModel().addListDataListener(entryObserver);
-    }
-
-
-
 
 
     ///////////////// Internal //////////////////////////
@@ -128,11 +74,14 @@ public class SiriusResultTablePanel extends JPanel {
         this.add(top, BorderLayout.NORTH);
     }
 
-    protected void addRightPanel() {}
+    protected void addRightPanel() {
+    }
 
-    protected void addLeftPanel() {}
+    protected void addLeftPanel() {
+    }
 
-    protected void addSouthPanel() {}
+    protected void addSouthPanel() {
+    }
 
 
     private void addData(final Collection<ExperimentContainer> data) {
@@ -153,5 +102,24 @@ public class SiriusResultTablePanel extends JPanel {
             }
             selected = new HashSet<>(data);
         }
+    }
+
+    @Override
+    public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
+        if (!source.isSelectionEmpty()) {
+            while (event.next()){
+                if (event.getType() == ListEvent.UPDATE && source.isSelectedIndex(event.getIndex())) {
+                    table.elements.clear();
+                    selected.clear();
+                    addData(source.getSelectedValuesList()); //todo should i readd only the changed ones?
+                    return;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void listSelectionChanged(JList<ExperimentContainer> source) {
+        addData(source.getSelectedValuesList());
     }
 }

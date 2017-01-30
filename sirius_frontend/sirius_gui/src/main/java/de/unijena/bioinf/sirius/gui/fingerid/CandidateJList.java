@@ -109,7 +109,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
-    public CandidateJList(Frame owner, CSIFingerIdComputation computation, ExperimentContainer correspondingExperimentContainer, FingerIdData data) {
+    public CandidateJList(CSIFingerIdComputation computation, ExperimentContainer correspondingExperimentContainer, FingerIdData data) {
         this.computation = computation;
         this.correspondingExperimentContainer = correspondingExperimentContainer;
         updateTopScore();

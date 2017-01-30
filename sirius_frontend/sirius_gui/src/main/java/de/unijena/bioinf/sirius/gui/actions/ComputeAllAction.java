@@ -5,14 +5,16 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import ca.odell.glazedlists.event.ListEvent;
 import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeEvent;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
@@ -31,9 +33,11 @@ public class ComputeAllAction extends AbstractAction {
         //filtered Workspace Listener
         MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ExperimentListChangeEvent listChanges) {
-                setEnabled(listChanges.sourceList.getModel().getSize() > 0);
+            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
+                setEnabled(event.getSourceList().size() > 0);
             }
+            @Override
+            public void listSelectionChanged(JList<ExperimentContainer> source) {}
         });
 
         JobLog.getInstance().addListener(new JobLog.JobListener() {
@@ -74,13 +78,10 @@ public class ComputeAllAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        System.out.println("Action");
         if (isActive.get()) {
             MF.getBackgroundComputation().cancelAll();
-            computationCanceled();
         } else {
             new BatchComputeDialog(MF, MF.getCompounds());
-            computationStarted();
         }
     }
 

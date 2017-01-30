@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;
@@ -20,19 +21,26 @@ public class ComputeCSIAction extends AbstractAction {
 
     public ComputeCSIAction() {
         super("CSI:FingerId");
-        putValue(Action.LARGE_ICON_KEY, Icons.FINGER_32);
-        putValue(Action.SMALL_ICON, Icons.FINGER_16);
-        putValue(Action.SHORT_DESCRIPTION,"Search all computed Experiments with CSI:FingerID");
+        putValue(Action.SMALL_ICON, Icons.FINGER_32);
+        putValue(Action.SHORT_DESCRIPTION, "Search computed Experiments with CSI:FingerID");
+        setEnabled(MF.csiConnectionAvailable());
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), null, true);
+        if (!MainFrame.MF.csiConnectionAvailable())
+            return;
+
+        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, false);
         final int returnState = dialog.run();
+
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
             MF.getCsiFingerId().computeAll(MF.getCompounds());
+            MF.getResultsPanel().setSelectedIndex(3);
         } else if (returnState == FingerIdDialog.COMPUTE) {
             MF.getCsiFingerId().computeAll(MF.getCompoundView().getSelectedValuesList());
+            MF.getResultsPanel().setSelectedIndex(3);
         }
+
     }
 }

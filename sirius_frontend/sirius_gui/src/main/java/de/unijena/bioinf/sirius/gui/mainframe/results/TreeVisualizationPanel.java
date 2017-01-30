@@ -9,7 +9,6 @@ import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
-import de.unijena.bioinf.sirius.gui.mainframe.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.*;
 import de.unijena.bioinf.sirius.gui.utils.Buttons;
@@ -23,6 +22,8 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
 public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveResultChangedListener {
 
     private JScrollPane pane;
@@ -34,7 +35,6 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     private JLabel legendText;
     private JButton saveTreeB;
 
-    private Frame owner;
 
     private SiriusResultElement sre;
 
@@ -47,9 +47,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
             NodeColor.rwbScore, NodeColor.rwbIntensity, NodeColor.none};
 
 
-    public TreeVisualizationPanel(Frame owner) {
-
-        this.owner = owner;
+    public TreeVisualizationPanel() {
         this.sre = null;
 
         this.setLayout(new BorderLayout());
@@ -216,7 +214,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
                     }
 
                     if (selFile.exists()) {
-                        FilePresentDialog fpd = new FilePresentDialog(owner, selFile.getName());
+                        FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
                         ReturnValue rv = fpd.getReturnValue();
                         if (rv == ReturnValue.Success) {
                             selectedFile = selFile;
@@ -249,7 +247,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
                         new FTJsonWriter().writeTreeToFile(selectedFile, sre.getResult().getResolvedTree());
                     }
                 } catch (Exception e2) {
-                    ErrorReportDialog fed = new ErrorReportDialog(owner, e2.getMessage());
+                    ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());
                     LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
                 }
 

@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.sirius.gui.actions.ComputeCSIAction;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
@@ -28,7 +30,11 @@ import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.*;
+
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 public class CompoundCandidateView extends JPanel implements ActiveResultChangedListener {
 
@@ -39,12 +45,10 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
-    private MainFrame frame;
     protected Runnable enableCsiFingerId;
 
-    public CompoundCandidateView(MainFrame owner){
-        this.frame = owner;
-        this.storage = owner.getCsiFingerId();
+    public CompoundCandidateView(){
+        this.storage = MF.getCsiFingerId(); //todo not nice find a beter solution
         this.enableCsiFingerId = new Runnable() {
             @Override
             public void run() {
@@ -73,7 +77,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateJList(frame, storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList( storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
         resultsChanged(null, null);
@@ -139,12 +143,14 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
 
     public class ComputeElement extends TwoCloumnPanel {
         public ComputeElement() {
-            searchCSIButton = new ToolbarButton(Icons.FINGER_64);
-            searchCSIButton.setText("Search with CSI:FingerId");
+            searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);
+
+
             searchCSIButton.setEnabled((resultElement != null && storage.isEnabled()));
             setVisible(true);
         }
     }
+
 
 }

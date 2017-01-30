@@ -18,16 +18,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 	
 	private Font valueFont, compoundFont, propertyFont, statusFont;
 
-	private static Image icon;
-	
-//	private int index;
-	
 	private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
 	private Color activatedForeground, deactivatedForeground, disableBackground;
-	
-//	private FormulaDisassambler disamb;
-	
-//	private DecimalFormat massFormat, ppmFormat, intFormat;
 	
 	private DecimalFormat numberFormat;
 	private ImageIcon loadingGif;
@@ -36,22 +28,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 		this.setPreferredSize(new Dimension(200,86));
 		initColorsAndFonts();
 		this.numberFormat = new DecimalFormat("#0.00");
-//		this.disamb = new FormulaDisassambler();
-//		this.ppmFormat = new DecimalFormat("#0.00");
-//		this.massFormat = new DecimalFormat("#0.00");
 	}
 	
 	public void initColorsAndFonts(){
-//		try{
-//			File fontFile = new File("ttf/DejaVuSans-Bold.ttf");
-//			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-//			compoundFont = tempFont.deriveFont(13f);
-//			
-////			propertyFont = tempFont.deriveFont(12f);
-//		}catch(Exception e){
-//			System.out.println(e.getMessage());
-//		}
-		
 		try{
 			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
@@ -91,8 +70,6 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 			if(index%2==0) this.backColor = this.evenBackground;
 			else this.backColor = this.unevenBackground;
 			this.foreColor = this.activatedForeground;
-//			if(value.formulaUsed()) this.foreColor = this.activatedForeground;
-//			else this.foreColor = this.foreColor = this.deactivatedForeground;
 		}
 		
 		this.setToolTipText(ec.getGUIName());
@@ -178,7 +155,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 
 
 		g2.setFont(statusFont);
-		SwingUtils.drawListStatusElement(ec,g2,this);
+		SwingUtils.drawListStatusElement(ec.getComputeState(),g2,this);
 	}
 
 }

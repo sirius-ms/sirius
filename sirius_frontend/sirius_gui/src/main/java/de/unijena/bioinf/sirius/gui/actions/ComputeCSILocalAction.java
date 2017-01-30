@@ -5,8 +5,52 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 30.01.17.
  */
 
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.Icons;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ComputeCSILocalAction {
+public class ComputeCSILocalAction extends ComputeCSIAction {
+
+    public ComputeCSILocalAction() {
+        super();
+        putValue(Action.LARGE_ICON_KEY, Icons.FINGER_64);
+        putValue(Action.SHORT_DESCRIPTION, "Search molecular formulas with CSI:FingerID");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (!MainFrame.MF.csiConnectionAvailable())
+            return;
+        //calculate csi
+        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, true);
+        final int returnState = dialog.run();
+
+        if (returnState != FingerIdDialog.CANCELED) {
+            final ExperimentContainer ec = MF.getCompoundView().getSelectedValue();
+            if (returnState == FingerIdDialog.COMPUTE_ALL) {
+                MF.getCsiFingerId().compute(ec, dialog.isBio());
+            } else {
+                java.util.List<SiriusResultElement> selected = MF.getFormulaList().getResultListView().getSelectedValuesList();
+                java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
+                for (SiriusResultElement element : selected) {
+                    if (element.getCharge() > 0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
+                        tasks.add(new FingerIdTask(dialog.isBio(), ec, element));
+                }
+                MF.getCsiFingerId().computeAll(tasks);
+            }
+            MF.getResultsPanel().setSelectedIndex(3);
+        }
+    }
 }

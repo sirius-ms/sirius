@@ -10,15 +10,15 @@ import javax.swing.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class DefaultResultElementListenerPanel extends ScharedComponentTabbedPanel {
+public class DefaultResultElementListenerPanel extends FormulaSelectionResultPanel {
     protected JComponent centerView;
     protected JComponent southView;
     protected JComponent eastView;
     protected JComponent westView;
 
 
-    public DefaultResultElementListenerPanel(FormulaTable resultElementTable, JComponent centerView, JComponent southView, JComponent eastView, JComponent westView) {
-        super(resultElementTable);
+    public DefaultResultElementListenerPanel(FormulaTable resultElementTable, JComponent centerView, JComponent southView, JComponent eastView, JComponent westView, boolean clone) {
+        super(resultElementTable, clone);
         this.centerView = centerView;
         this.southView = southView;
         this.eastView = eastView;
@@ -27,8 +27,8 @@ public class DefaultResultElementListenerPanel extends ScharedComponentTabbedPan
         buildPanel();
     }
 
-    public DefaultResultElementListenerPanel(FormulaTable resultElementTable, JComponent centerView) {
-        this(resultElementTable, centerView, null, null, null);
+    public DefaultResultElementListenerPanel(FormulaTable resultElementTable, JComponent centerView, boolean clone) {
+        this(resultElementTable, centerView, null, null, null, clone);
     }
 
 

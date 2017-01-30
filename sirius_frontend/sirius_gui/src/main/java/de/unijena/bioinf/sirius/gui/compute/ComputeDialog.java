@@ -431,8 +431,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 
 			if (formulaSource!=FormulaSource.ALL_POSSIBLE){
 				//Test connection, if needed
-				if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()){
-					new NoConnectionDialog(this);
+				if (!MainFrame.MF.csiConnectionAvailable()) {
 					dispose();
 					return;
 				}

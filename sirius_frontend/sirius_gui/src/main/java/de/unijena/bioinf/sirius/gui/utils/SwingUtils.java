@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
@@ -45,20 +46,27 @@ public class SwingUtils {
 
     }
 
-    public static void drawListStatusElement(ExperimentContainer ec, Graphics2D g2, Component c){
+    public static void drawListStatusElement(ComputingStatus state, Graphics2D g2, Component c){
         final Color prevCol = g2.getColor();
         String icon = "";
 
-        if (ec.isComputed()) {
-            g2.setColor(Colors.ICON_GREEN);
-            icon = "\u2713";
-        } else if (ec.isComputing()) {
-            icon = "\u2699";
-        } else if (ec.isFailed()){
-            g2.setColor(Colors.ICON_RED);
-            icon = "\u2718";
-        } else if (ec.isQueued()) {
-            icon = "...";
+        switch (state) {
+            case COMPUTING:
+                icon = "\u2699";
+                break;
+            case COMPUTED:
+                g2.setColor(Colors.ICON_GREEN);
+                icon = "\u2713";
+                break;
+            case QUEUED:
+                icon = "...";
+                break;
+            case FAILED:
+                g2.setColor(Colors.ICON_RED);
+                icon = "\u2718";
+                break;
+            default:
+                icon = "";
         }
 
         int offset =  g2.getFontMetrics().stringWidth(icon);

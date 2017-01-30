@@ -26,17 +26,14 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
-import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIDComputationPanel;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -93,7 +90,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         //mainpanel done
 
 
-
         this.sirius = new Sirius();
         ElementPredictor elementPredictor = sirius.getElementPrediction();
         List<Element> detectableElements = new ArrayList<>();
@@ -109,9 +105,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             boolean enableFallback = hasCompoundWithUnknownIonization();
             searchProfilePanel = new SearchProfilePanel(this, enableFallback);
             /////////////////////////////////////////////
-        }else{
-            initSingleExperiment(mainPanel,detectableElements);
-            searchProfilePanel = new SearchProfilePanel(this,compoundsToProcess.get(0).getIonization());
+        } else {
+            initSingleExperiment(mainPanel, detectableElements);
+            searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess.get(0).getIonization());
         }
 
 
@@ -155,7 +151,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         mainPanel.add(stack);
 
 
-
         JPanel southPanel = new JPanel();
         southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
 
@@ -165,7 +160,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         lsouthPanel.add(recompute);
 
         //check by default when just one experiment is selected
-        if (compoundsToProcess.size()==1) recompute.setSelected(true);
+        if (compoundsToProcess.size() == 1) recompute.setSelected(true);
 
         JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         compute = new JButton("Compute");
@@ -240,15 +235,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         } else if (e.getSource() == elementAutoDetect) {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             ExperimentContainer ec = compoundsToProcess.get(0);
-            if (!ec.getMs1Spectra().isEmpty()){
+            if (!ec.getMs1Spectra().isEmpty()) {
                 MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
-                if (c!=null){
+                if (c != null) {
                     for (Element element : c.getChemicalAlphabet()) {
-                        if (!predictor.isPredictable(element)){
-                            c.setLowerbound(element,0);
-                            c.setUpperbound(element,0);
+                        if (!predictor.isPredictable(element)) {
+                            c.setLowerbound(element, 0);
+                            c.setUpperbound(element, 0);
                         }
                     }
                     elementPanel.setSelectedElements(c);
@@ -263,11 +258,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private double getSelectedIonMass() {
         Object selected = box.getSelectedItem();
-        double pm=0;
-        if(selected instanceof CompactPeak){
+        double pm = 0;
+        if (selected instanceof CompactPeak) {
             CompactPeak cp = (CompactPeak) selected;
             pm = cp.getMass();
-        }else{
+        } else {
             pm = Double.parseDouble(selected.toString());
         }
         return pm;
@@ -317,8 +312,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         if (formulaSource != FormulaSource.ALL_POSSIBLE) {
             //Test connection, if needed
-            if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
-                new NoConnectionDialog(this);
+            if (!MainFrame.MF.csiConnectionAvailable()) {
                 dispose();
                 return;
             }
@@ -360,10 +354,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             final ExperimentContainer ec = compounds.next();
             if (ec.isUncomputed()) {
 
-                if (this.compoundsToProcess.size()==1){
+                if (this.compoundsToProcess.size() == 1) {
                     //if one experiment is selected, force ionization
                     ec.setIonization(SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()));
-                } if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
+                }
+                if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
                     if (ec.getIonization() == null || ec.getIonization().getCharge() > 0) {
                         ec.setIonization(PrecursorIonType.getPrecursorIonType("[M+H]+"));
                     } else {
@@ -405,9 +400,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return this.success;
     }
 
-    public void initSingleExperiment(Box mainPanel, List<Element> detectableElements){
+    public void initSingleExperiment(Box mainPanel, List<Element> detectableElements) {
         ExperimentContainer ec = compoundsToProcess.get(0);
-        JPanel focMassPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
+        JPanel focMassPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         Vector<CompactPeak> masses = new Vector<>();
         double maxInt = -1;
         Object maxObj = null;
@@ -417,30 +412,30 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         CompactPeak bestDataIon = null;
         final Deviation dev = new Deviation(10);
         final double focusedMass = ec.getDataFocusedMass();
-        if(!ms1Spectra.isEmpty()){
+        if (!ms1Spectra.isEmpty()) {
             useMS1 = true;
             CompactSpectrum sp = ms1Spectra.get(0);
-            for(int i=0;i<sp.getSize();i++){
-                if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
+            for (int i = 0; i < sp.getSize(); i++) {
+                if (sp.getPeak(i).getAbsoluteIntensity() > maxInt) {
                     maxInt = sp.getPeak(i).getAbsoluteIntensity();
                     maxObj = sp.getPeak(i);
                 }
-                if (focusedMass> 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+                if (focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
                     if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
                         bestDataIon = sp.getPeak(i);
                 }
                 masses.add(sp.getPeak(i));
             }
-        }else{
+        } else {
             useMS1 = false;
-            for(CompactSpectrum sp : ec.getMs2Spectra()){
-                for(int i=0;i<sp.getSize();i++){
-                    if(sp.getPeak(i).getAbsoluteIntensity()>maxInt){
+            for (CompactSpectrum sp : ec.getMs2Spectra()) {
+                for (int i = 0; i < sp.getSize(); i++) {
+                    if (sp.getPeak(i).getAbsoluteIntensity() > maxInt) {
                         maxInt = sp.getPeak(i).getAbsoluteIntensity();
                         maxObj = sp.getPeak(i);
                     }
                     masses.add(sp.getPeak(i));
-                    if (focusedMass> 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+                    if (focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
                         if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
                             bestDataIon = sp.getPeak(i);
                     }
@@ -454,25 +449,25 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         MyListCellRenderer renderer = new MyListCellRenderer(masses);
         box.setRenderer(renderer);
 
-        AutoCompleteDecorator.decorate(box,new ObjectToStringConverter() {
+        AutoCompleteDecorator.decorate(box, new ObjectToStringConverter() {
             @Override
             public String getPreferredStringForItem(Object item) {
-                if(item instanceof CompactPeak){
+                if (item instanceof CompactPeak) {
                     CompactPeak peak = (CompactPeak) item;
                     return String.valueOf(peak.getMass());
-                }else{
+                } else {
                     return (String) item;
                 }
 
             }
         });
         focMassPanel.add(box);
-        focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Parent mass"));
+        focMassPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Parent mass"));
 
 
 
 		/*
-		 * Was abgefragt werden muss:
+         * Was abgefragt werden muss:
 		 *
 		 * foc. mass
 		 * Ionisierung
@@ -482,18 +477,17 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         JButton autoDetectFM = new JButton("Most intensive peak");
         autoDetectFM.addActionListener(this);
-        if(masses.isEmpty()) autoDetectFM.setEnabled(false);
+        if (masses.isEmpty()) autoDetectFM.setEnabled(false);
         JButton expFM = new JButton("File value");
         expFM.addActionListener(this);
-        if(ec.getDataFocusedMass()<=0) {
+        if (ec.getDataFocusedMass() <= 0) {
             expFM.setEnabled(false);
-            if(masses.isEmpty()){
+            if (masses.isEmpty()) {
                 box.setSelectedItem("");
-            }else{
+            } else {
                 box.setSelectedItem(maxObj);
             }
-        }
-        else if (bestDataIon!=null) {
+        } else if (bestDataIon != null) {
             box.setSelectedItem(bestDataIon);
         } else {
             box.setSelectedItem(String.valueOf(focusedMass));
@@ -501,8 +495,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         focMassPanel.add(autoDetectFM);
         focMassPanel.add(expFM);
-        mainPanel.add(focMassPanel,BorderLayout.NORTH);
-
+        mainPanel.add(focMassPanel, BorderLayout.NORTH);
 
 
         /////////////Solo Element//////////////////////
@@ -512,7 +505,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         StringBuilder builder = new StringBuilder();
         builder.append("Auto detectable element are: ");
         for (int i = 0; i < detectableElements.size(); i++) {
-            if (i!=0) builder.append(", ");
+            if (i != 0) builder.append(", ");
             builder.append(detectableElements.get(i).getSymbol());
         }
         elementAutoDetect = new JButton("Auto detect");

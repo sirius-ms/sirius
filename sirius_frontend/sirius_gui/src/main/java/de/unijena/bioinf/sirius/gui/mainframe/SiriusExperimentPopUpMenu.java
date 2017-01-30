@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
  * 27.01.17.
  */
 
+import ca.odell.glazedlists.event.ListEvent;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -49,32 +50,29 @@ public class SiriusExperimentPopUpMenu extends JPopupMenu {
         //filtered Workspace Listener
         toObserve.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ExperimentListChangeEvent listChanges) {
-                if (listChanges.types.contains(ExperimentListChangeEvent.SELECTION)) {
-                    if (listChanges.sourceList.isSelectionEmpty()){
-                        closeMI.setEnabled(false);
-                        editMI.setEnabled(false);
-                        computeMI.setEnabled(false);
-                    }else{
-                        closeMI.setEnabled(true);
-                        editMI.setEnabled(true);
-                        computeMI.setEnabled(true);
-                    }
-                }
-
-
-                //hast to be last because of return
-                for (ExperimentContainer ec : listChanges.getSelected()) {
+            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
+                for (ExperimentContainer ec : source.getSelectedValuesList()) {
                     if (ec != null && (ec.isComputing() || ec.isQueued())) {
-                        cancelMI.setEnabled(true);
+                        cancelMI.setEnabled(true); //todo move to action
                         return;
                     }
                 }
                 cancelMI.setEnabled(false);
             }
+
+            @Override
+            public void listSelectionChanged(JList<ExperimentContainer> source) {
+                if (source.isSelectionEmpty()){
+                    closeMI.setEnabled(false);
+                    editMI.setEnabled(false);
+                    computeMI.setEnabled(false);
+                }else{
+                    closeMI.setEnabled(true);
+                    editMI.setEnabled(true);
+                    computeMI.setEnabled(true);
+                }
+            }
         });
-
-
     }
 
     private ActionMap initActions(){

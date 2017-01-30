@@ -20,6 +20,7 @@ public enum SiriusActions {
 //    CANCEL_ALL(CancelComputeAllAction.class),
 
     COMPUTE_CSI(ComputeCSIAction.class),
+    COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
 
     IMPORT_EXP(ImportExperimentAction.class),
     IMPORT_EXP_BATCH(ImportExperimentBatchAction.class),

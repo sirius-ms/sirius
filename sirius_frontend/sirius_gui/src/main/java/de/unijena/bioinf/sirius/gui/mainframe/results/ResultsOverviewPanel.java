@@ -5,32 +5,87 @@ package de.unijena.bioinf.sirius.gui.mainframe.results;
  * 26.01.17.
  */
 
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import javafx.geometry.Orientation;
-import javafx.scene.control.SplitPane;
 
 import javax.swing.*;
+
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ResultsOverviewPanel extends JSplitPane {
-    private JList<ExperimentContainer> compoundList = new JList<>();
-    public ResultsOverviewPanel(MainFrame owner) {
-        super(JSplitPane.HORIZONTAL_SPLIT, true);
-        compoundList = owner.compoundList;
+    public ResultsOverviewPanel(final ResultPanel owner, final JComponent left, final int lIndex, final JComponent right, final int rIndex) {
+        super(JSplitPane.VERTICAL_SPLIT, true);
 
-        JPanel north = new SiriusResultTablePanel(compoundList);
-        JPanel south = createSouthPanel();
+        JPanel north = new SiriusResultTablePanel(MF.getCompountListPanel());
 
-    }
+        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true);
 
-    private JPanel createSouthPanel() {
-        JSplitPane s =  new JSplitPane(JSplitPane.VERTICAL_SPLIT,true);
-        JPanel left =  new SpectraVisualizationPanel(compoundList.getSelectedValue());
-        return null;
+        left.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                owner.setSelectedIndex(lIndex);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        right.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                owner.setSelectedIndex(rIndex);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        south.add(left);
+        south.add(right);
+
+        add(north);
+        add(south);
+
+
     }
 
 
