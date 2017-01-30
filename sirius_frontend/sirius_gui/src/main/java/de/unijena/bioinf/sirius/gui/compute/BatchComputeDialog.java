@@ -38,9 +38,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -303,17 +301,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
 
-        String val = searchProfilePanel.getInstrument();
-        String instrument = "";
-        if (val.equals("Q-TOF")) {
-            instrument = "qtof";
-        } else if (val.equals("Orbitrap")) {
-            instrument = "orbitrap";
-        } else if (val.equals("FT-ICR")) {
-            instrument = "fticr";
-        } else {
-            throw new RuntimeException("no valid instrument");
-        }
+        String instrument = searchProfilePanel.getInstrument().profile;
 
         FormulaSource formulaSource = searchProfilePanel.getFormulaSource();
 

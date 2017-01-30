@@ -16,13 +16,37 @@ import java.util.Vector;
  */
 public class SearchProfilePanel extends JPanel {
 
+    public static enum Instruments {
+        QTOF("Q-TOF", "qtof", 10),
+        ORBI("Orbitrap", "orbitrap", 5),
+        FTICR("FT-ICR", "fticr", 2)
+
+        //,EXP1("Exp1", "exp", 10),
+        //EXP2("Exp2", "exp2", 10)
+        ;
+
+        final String name, profile;
+        final int ppm;
+
+        Instruments(String name, String profile, int ppm) {
+            this.name = name;
+            this.profile = profile;
+            this.ppm = ppm;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
     private Window owner;
 
     private Vector<String> ionizations;
-    private Vector<String> instruments;
+    private Vector<Instruments> instruments;
     private JComboBox<String> ionizationCB;
     public final JComboBox<String> formulaCombobox;
-    private JComboBox<String> instrumentCB;
+    private JComboBox<Instruments> instrumentCB;
     private JSpinner ppmSpinner;
     private SpinnerNumberModel snm;
     private final JSpinner candidatesSpinner;
@@ -85,9 +109,9 @@ public class SearchProfilePanel extends JPanel {
 
 
         instruments = new Vector<>();
-        instruments.add("Q-TOF");
-        instruments.add("Orbitrap");
-        instruments.add("FT-ICR");
+        for (Instruments i : Instruments.values()) {
+            instruments.add(i);
+        }
         instrumentCB = new JComboBox<>(instruments);
         mainwindow.add(new TwoCloumnPanel(new JLabel("instrument"),instrumentCB));
 
@@ -106,13 +130,8 @@ public class SearchProfilePanel extends JPanel {
         instrumentCB.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
-                final String name = (String) e.getItem();
-                final double recommendedPPM;
-
-                if (name.startsWith("Q-TOF")) recommendedPPM = 10;
-                else if (name.equals("Orbitrap")) recommendedPPM = 5;
-                else if (name.equals("FT-ICR")) recommendedPPM = 2;
-                else recommendedPPM = 10;
+                final Instruments i = (Instruments) e.getItem();
+                final double recommendedPPM = i.ppm;
 
                 ppmSpinner.setValue(new Double(recommendedPPM)); // TODO: test
             }
@@ -133,8 +152,8 @@ public class SearchProfilePanel extends JPanel {
     }
 
 
-    public String getInstrument() {
-        return (String) instrumentCB.getSelectedItem();
+    public Instruments getInstrument() {
+        return (Instruments) instrumentCB.getSelectedItem();
     }
 
     public String getIonization() {

@@ -33,6 +33,7 @@ import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -154,6 +155,8 @@ public class BackgroundComputation {
         }
     }
 
+    private static Logger logger = LoggerFactory.getLogger(BackgroundComputation.class);
+
     private class Worker extends SwingWorker<List<ExperimentContainer>, Task> {
 
         protected final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
@@ -210,8 +213,18 @@ public class BackgroundComputation {
         }
 
         protected void compute(final Task container) {
-            checkProfile(container);
+            System.err.println("COMPUTE!!!!!!!");
+            try {
+                checkProfile(container);
+            } catch (RuntimeException e) {
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                container.state = ComputingStatus.FAILED;
+                container.job.error(e.getMessage(), e);
+                container.results=new ArrayList<>();
+                return;
+            }
             final Sirius sirius = siriusPerProfile.get(container.profile);
+            System.err.println("START!!!!");
             final FormulaSource formulaSource = container.formulaSource;
             sirius.setProgress(new Progress() {
                 @Override

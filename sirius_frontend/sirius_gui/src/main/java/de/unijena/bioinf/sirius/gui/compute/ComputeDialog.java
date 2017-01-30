@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
@@ -23,7 +22,6 @@ import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -34,7 +32,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -364,17 +365,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 	}
 
 	public void startComputing() {
-		String val = searchProfilePanel.getInstrument();
-		String instrument = "";
-		if(val.equals("Q-TOF")) {
-			instrument = "qtof";
-		}else if(val.equals("Orbitrap")){
-			instrument = "orbitrap";
-		}else if(val.equals("FT-ICR")){
-			instrument = "fticr";
-		}else{
-			throw new RuntimeException("no valid instrument");
-		}
+		String instrument = searchProfilePanel.getInstrument().profile;
 		try{
 			//entspricht setup() Methode
 
