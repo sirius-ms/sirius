@@ -2,21 +2,12 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.matchers.Matcher;
-import ca.odell.glazedlists.matchers.Matchers;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
-import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.sirius.gui.compute.CompoundModel;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.awt.geom.Arc2D;
 import java.util.*;
-import java.util.List;
 
 public class ConfidenceList extends JList<ExperimentContainer> {
     public final static ConfidenceComparator COMPARATOR =  new ConfidenceComparator();

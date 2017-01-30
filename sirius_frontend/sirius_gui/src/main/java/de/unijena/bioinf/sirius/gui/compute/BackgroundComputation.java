@@ -28,27 +28,31 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import org.jdesktop.beans.AbstractBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class BackgroundComputation {
-    private final MainFrame owner;
+public class BackgroundComputation extends AbstractBean {
+//    private final MainFrame owner;
+    private final CSIFingerIdComputation csiFingerID;
     private final ConcurrentLinkedQueue<Task> queue;
     private final Worker[] workers;
     private final int nworkers;
     private final ConcurrentLinkedQueue<ExperimentContainer> cancel;
 
-    public BackgroundComputation(MainFrame owner) {
-        this.owner = owner;
+    public BackgroundComputation(CSIFingerIdComputation csi) {
+        this.csiFingerID =  csi;
         this.queue = new ConcurrentLinkedQueue<>();
         this.cancel = new ConcurrentLinkedQueue<>();
         int nw;
@@ -168,13 +172,13 @@ public class BackgroundComputation {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
-                        owner.getCsiFingerId().compute(c.exp,owner.getCsiFingerId().isEnforceBio());//todo add max value
+                        csiFingerID.compute(c.exp, csiFingerID.isEnforceBio());//todo add max value
                     }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                     c.job.run();
                 }
-//                owner.refreshCompound(c.exp); //todo id think we aleady listen to that
+                c.exp.fireUpdateEvent(); // owner.refreshCompound(c.exp); //todo i think we aleady listen to that
             }
         }
 

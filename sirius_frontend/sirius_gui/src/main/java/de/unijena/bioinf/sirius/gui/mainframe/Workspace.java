@@ -69,7 +69,7 @@ public abstract class Workspace {
         }
     }
 
-    private static void exportResults() {
+    public static void exportResults() {
         JFileChooser jfc = new JFileChooser();
         jfc.setCurrentDirectory(CONFIG_STORAGE.getCsvExportPath());
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -286,7 +286,7 @@ public abstract class Workspace {
     }
 
 
-    static class SiriusSaveFileFilter extends FileFilter {
+    public static class SiriusSaveFileFilter extends FileFilter {
 
         @Override
         public boolean accept(File f) {

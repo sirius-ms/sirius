@@ -47,7 +47,7 @@ public class CompoundCandidateView extends JPanel {
         this.enableCsiFingerId = new Runnable() {
             @Override
             public void run() {
-                searchCSIButton.setEnabled(storage.enabled);
+                searchCSIButton.setEnabled(storage.isEnabled());//todo is that in conflict with the action??
             }
         };
         storage.getEnabledListeners().add(enableCsiFingerId);
@@ -108,7 +108,7 @@ public class CompoundCandidateView extends JPanel {
             }
         }
 
-        if (resultElement == null || !storage.enabled) {
+        if (resultElement == null || !storage.isEnabled()) {
 
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
@@ -140,7 +140,7 @@ public class CompoundCandidateView extends JPanel {
             searchCSIButton = new ToolbarButton(Icons.FINGER_64);
             searchCSIButton.setText("Search with CSI:FingerId");
             add(searchCSIButton);
-            searchCSIButton.setEnabled((resultElement != null && storage.enabled));
+            searchCSIButton.setEnabled((resultElement != null && storage.isEnabled()));
             setVisible(true);
         }
     }

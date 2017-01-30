@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.settings;
  */
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
-import de.unijena.bioinf.sirius.cli.SiriusApplication;
 import de.unijena.bioinf.sirius.gui.io.FileChooserPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;

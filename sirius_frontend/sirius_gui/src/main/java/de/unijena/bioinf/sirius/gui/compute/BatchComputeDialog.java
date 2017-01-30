@@ -38,9 +38,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -396,7 +394,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         bgc.addAll(tasks);
 
         //todo proof
-        /*for (ExperimentContainer ec : compoundList) {
+        /*for (ExperimentContainer ec : compoundListView) {
             owner.refreshCompound(ec);
         }
         owner.computationStarted();*/

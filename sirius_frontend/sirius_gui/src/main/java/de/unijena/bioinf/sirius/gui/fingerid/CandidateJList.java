@@ -19,12 +19,10 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.sirius.cli.SiriusApplication;
 import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;

@@ -1,15 +1,13 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
-import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
-import de.unijena.bioinf.sirius.gui.filefilter.SupportedBatchDataFormatFilter;
 import de.unijena.bioinf.sirius.gui.fingerid.*;
-import de.unijena.bioinf.sirius.gui.io.WorkspaceIO;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -20,26 +18,20 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
 
-public class MainFrame extends JFrame implements /*WindowListener,*//* ActionListener,*/ /*ListSelectionListener,*/ DropTargetListener/*, KeyListener*/ {
-     //todo better place
-    public static final MainFrame MF;
+public class MainFrame extends JFrame implements DropTargetListener {
+    public static final MainFrame MF = new MainFrame();
 
     static {
-        MF = new MainFrame();
         decoradeMainFrameInstance(MF);
     }
-
-
+    //left side panel
     private ExperimentListPanel compountListPanel;
     public ExperimentListPanel getCompountListPanel() {return compountListPanel;}
 
@@ -49,13 +41,11 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
     private JobDialog jobDialog;
     public JobDialog getJobDialog() {return jobDialog;}
 
-    private ActionMap ACTIONS;
-
-    public ActionMap getACTIONS() {
-        return ACTIONS;
+    private SiriusToolbar toolbar;
+    public SiriusToolbar getToolbar() {
+        return toolbar;
     }
 
-    private SiriusToolbar toolbar;
     private JPanel resultsPanel;
     private CardLayout resultsPanelCL;
     private ResultPanel showResultsPanel;
@@ -71,11 +61,23 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
     private ConfidenceList confidenceList;
 
 
-    private MainFrame() { //todo should not be public. but where to store
+    private MainFrame() {
         super(ApplicationCore.VERSION_STRING);
     }
 
     private static void decoradeMainFrameInstance(final MainFrame mf) {
+
+        mf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+//        this.addWindowListener(this);
+        mf.setLayout(new BorderLayout());
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setActionMap(SiriusActionManager.ROOT_MANAGER);
+
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
+        mf.add(mainPanel, BorderLayout.CENTER);
+
+
         mf.csiFingerId = new CSIFingerIdComputation(new CSIFingerIdComputation.Callback() {
             @Override
             public void computationFinished(final ExperimentContainer container, final SiriusResultElement element) {
@@ -88,29 +90,12 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
             }
         });
 
-        mf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
-        mf.backgroundComputation = new BackgroundComputation(mf);
-
-//        nameCounter = 1;
-
-
-//        this.addWindowListener(this);
-        mf.setLayout(new BorderLayout());
-
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mf.ACTIONS = mainPanel.getActionMap();
-        mf.initActions();
-
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
-        mf.add(mainPanel, BorderLayout.CENTER);
+        mf.backgroundComputation = new BackgroundComputation(mf.csiFingerId);
 
 
         /////////////////////////////// LEFT Panel (Compunt list) //////////////////////////////
-
         mf.compountListPanel = new ExperimentListPanel();
-//        compountListPanel.compoundList.addListSelectionListener(this);
-        mf.compountListPanel.compoundList.setMinimumSize(new Dimension(200, 0));
+        mf.compountListPanel.compoundListView.setMinimumSize(new Dimension(200, 0));
         /////////////////////////////// LEFT Panel (Compunt list) DONE //////////////////////////////
         mf.jobDialog = new JobDialog(mf);
 
@@ -160,7 +145,7 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
         mainPanel.add(mf.showResultsPanel, BorderLayout.CENTER);
         // resluts done
 
-        mf.toolbar = new SiriusToolbar(mf.jobDialog);
+        mf.toolbar = new SiriusToolbar();
         mf.add(mf.toolbar, BorderLayout.NORTH);
 
         mf.dropTarget = new DropTarget(mf, DnDConstants.ACTION_COPY_OR_MOVE, mf);
@@ -195,7 +180,6 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
                     if (versionsNumber.outdated()) {
                         new UpdateDialog(mf, versionsNumber.siriusGuiVersion);
                     } else {
-                        mf.toolbar.setFingerIDEnabled(true);
                         mf.csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {
@@ -233,52 +217,19 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
     public BackgroundComputation getBackgroundComputation() {
         return backgroundComputation;
     }
-
-
-    /*public void windowOpened(WindowEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void windowClosing(WindowEvent e) {
-        this.dispose();
-    }
-
-    public void windowClosed(WindowEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void windowIconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void windowDeiconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void windowActivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void windowDeactivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
-    }*/
-
     public List<ExperimentContainer> getCompounds() {
-        return compountListPanel.compoundEventList;
+        return compountListPanel.compoundList;
+    }
+    public JList<ExperimentContainer> getCompoundView() {
+        return compountListPanel.compoundListView;
     }
 
     /*public List<ExperimentContainer> getSelectedCompounds() {
-        return compountListPanel.compoundList.getSelectedValuesList();
+        return compountListPanel.compoundListView.getSelectedValuesList();
     }*/
 
 //    public EventList<ExperimentContainer> getCompoundsList() {
-//        return compoundEventList;
+//        return compoundList;
 //    }
 
     /* public ListModel getCompoundModel() {
@@ -289,7 +240,7 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (compoundList.getSelectedValue() == c) {
+                if (compoundListView.getSelectedValue() == c) {
                     showResultsPanel.changeData(c);
                 }
                 refreshComputationMenuItem();
@@ -340,232 +291,19 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
     }*/
 
 
-    private void initActions() {
-        final ActionMap am = ACTIONS;
-        am.put("compute_csi", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final FingerIdDialog dialog = new FingerIdDialog(MF, MF.csiFingerId, null, true);
-                final int returnState = dialog.run();
-                if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                    csiFingerId.computeAll(getCompounds());
-                } else if (returnState == FingerIdDialog.COMPUTE) {
-                    csiFingerId.computeAll(compountListPanel.compoundList.getSelectedValuesList());
-                }
-            }
-        });
-        am.put("compute", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                List<ExperimentContainer> ecs = compountListPanel.compoundList.getSelectedValuesList();
-                if (ecs != null && !ecs.isEmpty()) {
-                    new BatchComputeDialog(MF, ecs); //todo no check button should not be active
-                }
-            }
-        });
 
-        am.put("cancel_compute", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                for (ExperimentContainer ec : compountListPanel.compoundList.getSelectedValuesList()) {
-                    backgroundComputation.cancel(ec);
-                }
-            }
-        });
-
-        am.put("compute_all", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (toolbar.computeAllActive) {
-                    backgroundComputation.cancelAll();
-                } else {
-                    new BatchComputeDialog(MF, compountListPanel.compoundEventList);
-                }
-            }
-        });
-
-
-        am.put("new_exp", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LoadController lc = new LoadController(MF, CONFIG_STORAGE);
-                lc.showDialog();
-                if (lc.getReturnValue() == ReturnValue.Success) {
-                    ExperimentContainer ec = lc.getExperiment();
-                    Workspace.importCompound(ec);
-                }
-            }
-        });
-
-        am.put("edit_exp", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ExperimentContainer ec = compountListPanel.compoundList.getSelectedValue();
-                if (ec == null) return;
-                String guiname = ec.getGUIName();
-                LoadController lc = new LoadController(MF, ec, CONFIG_STORAGE);
-                lc.showDialog();
-                if (lc.getReturnValue() == ReturnValue.Success) {
-                    if (!ec.getGUIName().equals(guiname)) {
-                        Workspace.resolveCompundNameConflict(ec);
-                    }
-                }
-            }
-        });
-
-
-        am.put("save-ws", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser jfc = new JFileChooser();
-                jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultSaveFilePath());
-                jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                jfc.setAcceptAllFileFilterUsed(false);
-                jfc.addChoosableFileFilter(new Workspace.SiriusSaveFileFilter());
-
-                File selectedFile = null;
-
-                while (selectedFile == null) {
-                    int returnval = jfc.showSaveDialog(MF);
-                    if (returnval == JFileChooser.APPROVE_OPTION) {
-                        File selFile = jfc.getSelectedFile();
-                        CONFIG_STORAGE.setDefaultSaveFilePath(selFile.getParentFile());
-
-                        String name = selFile.getName();
-                        if (!selFile.getAbsolutePath().endsWith(".sirius")) {
-                            selFile = new File(selFile.getAbsolutePath() + ".sirius");
-                        }
-
-                        if (selFile.exists()) {
-                            FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
-                            ReturnValue rv = fpd.getReturnValue();
-                            if (rv == ReturnValue.Success) {
-                                selectedFile = selFile;
-                            }
-                        } else {
-                            selectedFile = selFile;
-                        }
-                    } else {
-                        break;
-                    }
-                }
-                if (selectedFile != null) {
-                    try {
-                        WorkspaceIO io = new WorkspaceIO();
-                        io.store(new AbstractList<ExperimentContainer>() {
-                            @Override
-                            public ExperimentContainer get(int index) {
-                                return COMPOUNT_LIST.get(index);
-                            }
-
-                            @Override
-                            public int size() {
-                                return COMPOUNT_LIST.size();
-                            }
-                        }, selectedFile);
-                    } catch (Exception e2) {
-                        new ErrorReportDialog(MF, e2.getMessage());
-                    }
-
-                }
-            }
-        });
-
-        am.put("load_ws", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser jfc = new JFileChooser();
-                jfc.setCurrentDirectory(CONFIG_STORAGE.getDefaultSaveFilePath());
-                jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                jfc.setAcceptAllFileFilterUsed(false);
-                jfc.addChoosableFileFilter(new Workspace.SiriusSaveFileFilter());
-
-                int returnVal = jfc.showOpenDialog(MF);
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    File selFile = jfc.getSelectedFile();
-                    CONFIG_STORAGE.setDefaultSaveFilePath(selFile.getParentFile());
-                    Workspace.importWorkspace(Arrays.asList(selFile));
-                }
-            }
-        });
-
-        am.put("batch_import", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser(CONFIG_STORAGE.getDefaultLoadDialogPath());
-                chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-                chooser.setMultiSelectionEnabled(true);
-                chooser.addChoosableFileFilter(new SupportedBatchDataFormatFilter());
-                chooser.setAcceptAllFileFilterUsed(false);
-                int returnVal = chooser.showOpenDialog(MF);
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    File[] files = chooser.getSelectedFiles();
-                    CONFIG_STORAGE.setDefaultLoadDialogPath(files[0].getParentFile());
-                    Workspace.importOneExperimentPerFile(files);
-                }
-            }
-        });
-
-        am.put("delete", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                List<ExperimentContainer> toRemove = compountListPanel.compoundList.getSelectedValuesList();
-
-                if (!CONFIG_STORAGE.isCloseNeverAskAgain()) {
-                    CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MainFrame.this, "When removing the selected experiment(s) you will loose all computed identification results?");
-                    CloseDialogReturnValue val = diag.getReturnValue();
-                    if (val == CloseDialogReturnValue.abort) return;
-                }
-                for (ExperimentContainer cont : toRemove) {
-                    backgroundComputation.cancel(cont);
-                }
-                Workspace.removeAll(toRemove);
-            }
-        });
-
-        am.put("show_settings", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new SettingsDialog(MF);
-            }
-        });
-
-        am.put("show_bug", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new BugReportDialog(MF);
-            }
-        });
-
-        am.put("show_about", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new AboutDialog(MF);
-            }
-        });
-
-        am.put("show_db", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (dbDialog == null) dbDialog = new DatabaseDialog(MF, CONFIG_STORAGE);
-                dbDialog.setVisible(true);
-            }
-        });
-
-
-    }
 
     //todo i think we nee a listener for this
     /*@Override
     public void valueChanged(ListSelectionEvent e) {
-        if (e.getSource() == this.compoundList) {
+        if (e.getSource() == this.compoundListView) {
 
             if (index < 0) {
 
                 this.showResultsPanel.changeData(null);
             } else {
 
-                this.showResultsPanel.changeData(compoundEventList.get(index));
+                this.showResultsPanel.changeData(compoundList.get(index));
                 resultsPanelCL.show(resultsPanel, RESULTS_CARD);
             }
         }
@@ -573,7 +311,7 @@ public class MainFrame extends JFrame implements /*WindowListener,*//* ActionLis
 
   /*  public void selectExperimentContainer(ExperimentContainer container) {
         this.showResultsPanel.changeData(container);
-        compoundList.setSelectedValue(container, true);
+        compoundListView.setSelectedValue(container, true);
         resultsPanelCL.show(resultsPanel, RESULTS_CARD);
     }
 

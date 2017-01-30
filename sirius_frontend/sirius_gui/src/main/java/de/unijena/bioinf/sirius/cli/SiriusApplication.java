@@ -5,8 +5,8 @@ package de.unijena.bioinf.sirius.cli;
  * 15.06.16.
  */
 
-import ca.odell.glazedlists.impl.Main;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 
@@ -22,7 +22,9 @@ public class SiriusApplication extends ApplicationCore {
 
         if (cli.options.isGUI()) {
             SwingUtils.initUI();
-            MainFrame.MF.setLocationRelativeTo(null);
+            MainFrame.MF.setLocationRelativeTo(null);//init mainframe
+            SiriusActionManager.initRootManager();
+
         } else {
             cli.setup();
             cli.validate();

@@ -13,6 +13,8 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
@@ -34,8 +36,9 @@ import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
  */
 public class ExperimentListPanel extends TwoCloumnPanel {
 
-    public final JList<ExperimentContainer> compoundList;
-    protected final FilterList<ExperimentContainer> compoundEventList;
+    protected final JList<ExperimentContainer> compoundListView;
+    protected final FilterList<ExperimentContainer> compoundList;
+
     private final JTextField searchField;
     private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
     private JPopupMenu expPopMenu;
@@ -43,7 +46,7 @@ public class ExperimentListPanel extends TwoCloumnPanel {
     public ExperimentListPanel() {
         searchField = new JTextField();
 
-        compoundEventList = new FilterList<>(new ObservableElementList<>(COMPOUNT_LIST, GlazedLists.beanConnector(ExperimentContainer.class)),
+        compoundList = new FilterList<>(new ObservableElementList<>(COMPOUNT_LIST, GlazedLists.beanConnector(ExperimentContainer.class)),
                 new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
                     @Override
                     public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
@@ -54,30 +57,28 @@ public class ExperimentListPanel extends TwoCloumnPanel {
                 }, true));
 
 
-        compoundList = new JList<>(new DefaultEventListModel<>(compoundEventList));
-        compoundList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        compoundList.setCellRenderer(new CompoundCellRenderer());
+        compoundListView = new JList<>(new DefaultEventListModel<>(compoundList));
+        compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        compoundListView.setCellRenderer(new CompoundCellRenderer());
 
-        compoundList.addListSelectionListener(new ListSelectionListener() {
+        compoundListView.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                notifyListener(new ExperimentListChangeEvent(compoundList));
+                notifyListener(new ExperimentListChangeEvent(compoundListView));
             }
         });
 
         expPopMenu = new SiriusExperimentPopUpMenu(this);
-        compoundList.setComponentPopupMenu(expPopMenu);
+        compoundListView.setComponentPopupMenu(expPopMenu);
 
-        compoundList.addMouseListener(new MouseListener() {
+        compoundListView.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     // Double-click detected
-                    int index = compoundList.locationToIndex(e.getPoint());
-                    compoundList.setSelectedIndex(index);
-                    ActionMap am = MF.getACTIONS();
-                    MF.getACTIONS().get("compute").actionPerformed(new ActionEvent(compoundList, 123, "compute"));
-                    //todo does this work?
+                    int index = compoundListView.locationToIndex(e.getPoint());
+                    compoundListView.setSelectedIndex(index);
+                    SiriusActions.COMPUTE.getInstance().actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
                 }
             }
 
@@ -85,16 +86,16 @@ public class ExperimentListPanel extends TwoCloumnPanel {
             public void mousePressed(MouseEvent e) {
                 System.out.println("HERE");
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    int indx = compoundList.locationToIndex(e.getPoint());
+                    int indx = compoundListView.locationToIndex(e.getPoint());
                     boolean select = true;
-                    for (int i : compoundList.getSelectedIndices()) {
+                    for (int i : compoundListView.getSelectedIndices()) {
                         if (indx == i) {
                             select = false;
                             break;
                         }
                     }
                     if (select) {
-                        compoundList.setSelectedIndex(indx);
+                        compoundListView.setSelectedIndex(indx);
                     }
                 }
             }
@@ -113,16 +114,16 @@ public class ExperimentListPanel extends TwoCloumnPanel {
         });
 
 
-        compoundEventList.addListEventListener(new ListEventListener<ExperimentContainer>() {
+        compoundList.addListEventListener(new ListEventListener<ExperimentContainer>() {
             @Override
             public void listChanged(ListEvent<ExperimentContainer> listChanges) {
-                notifyListener(new ExperimentListChangeEvent(compoundList, listChanges));
+                notifyListener(new ExperimentListChangeEvent(compoundListView, listChanges));
             }
         });
 
 
         JScrollPane pane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        pane.setViewportView(compoundList);
+        pane.setViewportView(compoundListView);
 
         add(new JLabel(" Filter:"), searchField);
         add(pane, 0, true);
@@ -130,11 +131,11 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
         //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-        compoundList.getInputMap().put(enterKey, "compute");
+        compoundListView.getInputMap().put(enterKey, SiriusActions.COMPUTE.name());
 
         KeyStroke delKey = KeyStroke.getKeyStroke("DELETE");
-        compoundList.getInputMap().put(delKey, "delete");
-        compoundList.getActionMap().setParent(MF.getACTIONS());
+        compoundListView.getInputMap().put(delKey, SiriusActions.DELETE_EXP.name());
+        compoundListView.getActionMap().setParent(SiriusActionManager.ROOT_MANAGER);
 
 
     }
@@ -151,11 +152,20 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
     }
 
+    //API methods
     public void addChangeListener(ExperimentListChangeListener l) {
         listeners.add(l);
     }
 
     public void removeChangeListener(ExperimentListChangeListener l) {
         listeners.remove(l);
+    }
+
+    public JList<ExperimentContainer> getCompoundListView() {
+        return compoundListView;
+    }
+
+    public FilterList<ExperimentContainer> getCompoundList() {
+        return compoundList;
     }
 }

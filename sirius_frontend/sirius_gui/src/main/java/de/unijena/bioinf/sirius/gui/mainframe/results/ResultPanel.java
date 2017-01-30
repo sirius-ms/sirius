@@ -1,15 +1,12 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.sirius.cli.SiriusApplication;
-import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.ActiveResultChangedListener;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -125,7 +122,7 @@ public class ResultPanel extends JPanel implements ListSelectionListener {
         this.add(temp, BorderLayout.NORTH);
 
         centerPane = new JTabbedPane();
-        rvp = new SiriusResultTablePanel(MF.getCompountListPanel().compoundList);
+        rvp = new SiriusResultTablePanel(MF.getCompoundView());
         centerPane.add(rvp,"Sirius");
 
 

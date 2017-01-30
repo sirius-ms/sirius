@@ -5,7 +5,8 @@ package de.unijena.bioinf.sirius.gui.mainframe;
  * 27.01.17.
  */
 
-import de.unijena.bioinf.sirius.cli.SiriusApplication;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
@@ -19,25 +20,16 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 public class SiriusExperimentPopUpMenu extends JPopupMenu {
     private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI, cancelMI;
 
-//    JList<ExperimentContainer> parent;
-
-    final ActionMap am = initActions();
-
     public SiriusExperimentPopUpMenu(ExperimentListPanel toObserve) {
-        newExpMI = new JMenuItem("Import Experiment",Icons.ADD_DOC_16);
-        batchMI = new JMenuItem("Batch Import", Icons.BATCH_DOC_16);
+        initActions();
+        newExpMI = new JMenuItem(SiriusActions.IMPORT_EXP.getInstance());
+        batchMI = new JMenuItem(SiriusActions.IMPORT_EXP_BATCH.getInstance());
         editMI = new JMenuItem("Edit Experiment", Icons.EDIT_16);
         closeMI = new JMenuItem("Remove Experiment(s)", Icons.REMOVE_DOC_16);
         computeMI = new JMenuItem("Compute", Icons.RUN_16);
         cancelMI = new JMenuItem("Cancel Computation", Icons.CANCEL_16);
 
-        newExpMI.addActionListener(am.get("new_exp"));
-        batchMI.addActionListener(am.get("batch_import"));
-        editMI.addActionListener(am.get("edit_exp"));
-        closeMI.addActionListener(am.get("delete"));
-        computeMI.addActionListener(am.get("compute"));
-        cancelMI.addActionListener(am.get("cancel_compute"));
-
+        //TODO finish actions!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         editMI.setEnabled(false);
         closeMI.setEnabled(false);
         computeMI.setEnabled(false);
@@ -87,7 +79,7 @@ public class SiriusExperimentPopUpMenu extends JPopupMenu {
 
     private ActionMap initActions(){
         ActionMap am = getActionMap();
-        am.setParent(MF.getACTIONS());
+        am.setParent(SiriusActionManager.ROOT_MANAGER);
         return am;
     }
 }

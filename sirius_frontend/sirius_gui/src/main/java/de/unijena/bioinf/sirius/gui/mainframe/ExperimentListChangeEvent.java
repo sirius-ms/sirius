@@ -25,7 +25,7 @@ public class ExperimentListChangeEvent {
     public final static int UPDATE_SELECTED = ListEvent.UPDATE + SELECTION;
     public final static int INSERT_SELECTED = ListEvent.INSERT + SELECTION;
 
-    protected final JList<ExperimentContainer> sourceList;
+    public final JList<ExperimentContainer> sourceList;
     public final ListEvent<ExperimentContainer> changes;
     public final TIntSet types;
 
