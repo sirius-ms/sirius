@@ -253,6 +253,20 @@ public class Sirius {
     }
 
     /**
+     * try to guess ionization from MS1. multiple  suggestions possible. In doubt [M]+ is ignored (cannot distinguish from isotope pattern)!
+     * @param experiment
+     * @param candidateIonizations array of possible ionizations (lots of different adducts very likely make no sense!)
+     * @return
+     */
+    public PrecursorIonType[] guessIonization(Ms2Experiment experiment, PrecursorIonType[] candidateIonizations){
+        Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
+        if (spec==null && experiment.getMs1Spectra().size()==1) spec = experiment.getMs1Spectra().get(0);
+
+        PrecursorIonType[] ionType = Spectrums.guessIonization(spec, experiment.getIonMass(), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), candidateIonizations);
+        return ionType;
+    }
+
+    /**
      * Identify the molecular formula of the measured compound using the provided MS and MSMS data
      *
      * @param uexperiment input data
@@ -959,7 +973,13 @@ public class Sirius {
             while (true) {
                 final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
                 if (modifiedTreeSizeScore >= MAX_TREESIZE_SCORE){
-                    return false;
+                    if (beautifulTree!=null){
+                        profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
+                        result.setBeautifulTree(beautifulTree);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }else if (beautifulTree!=null && (beautifulTree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY)) {
                     profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
                     result.setBeautifulTree(beautifulTree);
