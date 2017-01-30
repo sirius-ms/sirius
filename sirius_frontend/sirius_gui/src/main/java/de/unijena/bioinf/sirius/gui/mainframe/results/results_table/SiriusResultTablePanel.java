@@ -31,7 +31,7 @@ public class SiriusResultTablePanel extends JPanel {
     public final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
 
-    //listener to observable table
+    //listener to observable resultElementTable
     private final ListSelectionListener selectionObserver = new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
@@ -60,7 +60,7 @@ public class SiriusResultTablePanel extends JPanel {
         }
     };
 
-    //observable table
+    //observable resultElementTable
     private JList<ExperimentContainer> toObserve;
     private Set<ExperimentContainer> selected = new HashSet<>();
 

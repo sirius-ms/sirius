@@ -981,6 +981,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
     public void selectExperimentContainer(ExperimentContainer container, SiriusResultElement element) {
         selectExperimentContainer(container);
         showResultsPanel.select(element, true);
+
     }
 
     public void computationStarted() {

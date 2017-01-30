@@ -66,13 +66,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Currently the CDK supports the following SMARTS symbols, that are not described in the Daylight specification.
  * However they are supported by other packages and are noted as such.
  * <p>
- * <table border=1 cellpadding=3 summary=""> <thead> <tr> <th>Symbol</th><th>Meaning</th><th>Default</th><th>Notes</th> </tr>
+ * <resultElementTable border=1 cellpadding=3 summary=""> <thead> <tr> <th>Symbol</th><th>Meaning</th><th>Default</th><th>Notes</th> </tr>
  * </thead> <tbody> <tr> <td>Gx</td><td>Periodic group number</td><td>None</td><td>x must be specified and must be a
  * number between 1 and 18. This symbol is supported by the MOE SMARTS implementation</td> <tr> <td>#X</td><td>Any
  * non-carbon heavy element</td><td>None</td><td>This symbol is supported by the MOE SMARTS implementation</td> </tr>
  * <tr> <td>^x</td><td>Any atom with the a specified hybridization state</td><td>None</td><td>x must be specified and
  * should be between 1 and 8 (inclusive), corresponding to SP1, SP2, SP3, SP3D1, SP3D2 SP3D3, SP3D4 and SP3D5. Supported
- * by the OpenEye SMARTS implementation</td> </tr> </tbody> </table>
+ * by the OpenEye SMARTS implementation</td> </tr> </tbody> </resultElementTable>
  * <p>
  * <h3>Notes</h3> <ul> <li>As <a href="http://sourceforge.net/mailarchive/message.php?msg_name=4964F605.1070502%40emolecules.com">described</a>
  * by Craig James the <code>h&lt;n&gt;</code> SMARTS pattern should not be used. It was included in the Daylight spec

@@ -5,7 +5,6 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jdesktop.beans.AbstractBean;
 
-import javax.swing.event.SwingPropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -166,7 +165,13 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     public void setBestHit(final SiriusResultElement bestHit) {
-        this.bestHit = bestHit;
+        if (this.bestHit != bestHit) {
+            if (this.bestHit != null)
+                this.bestHit.setBestHit(false);
+            this.bestHit = bestHit;
+            this.bestHit.setBestHit(true);
+        }
+        //todo do we need change event her. I think not becaus the element fires one
     }
 
     public void setIonization(PrecursorIonType ionization) {

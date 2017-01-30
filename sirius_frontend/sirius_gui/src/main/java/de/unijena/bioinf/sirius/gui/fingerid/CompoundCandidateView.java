@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -29,7 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-public class CompoundCandidateView extends JPanel {
+public class CompoundCandidateView extends JPanel implements ActiveResultChangedListener {
 
     private ExperimentContainer experimentContainer;
     private SiriusResultElement resultElement;
@@ -41,7 +42,7 @@ public class CompoundCandidateView extends JPanel {
     private MainFrame frame;
     protected Runnable enableCsiFingerId;
 
-    public CompoundCandidateView(MainFrame owner) {
+    public CompoundCandidateView(MainFrame owner){
         this.frame = owner;
         this.storage = owner.getCsiFingerId();
         this.enableCsiFingerId = new Runnable() {
@@ -59,7 +60,7 @@ public class CompoundCandidateView extends JPanel {
         storage.getEnabledListeners().remove(enableCsiFingerId);
     }
 
-    public void refresh() {
+    private void refresh() {
         this.layout = new CardLayout();
         setLayout(layout);
         add(new JPanel(), "null");
@@ -75,11 +76,20 @@ public class CompoundCandidateView extends JPanel {
         list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
-        changeData(null, null);
+        resultsChanged(null, null);
     }
 
 
-    public void changeData(ExperimentContainer container, SiriusResultElement element) {
+    public boolean computationEnabled() {
+        return searchCSIButton.isEnabled(); // this is ugly but good enough ;-)
+    }
+
+    public void addActionListener(ActionListener l) {
+        searchCSIButton.addActionListener(l);
+    }
+
+    @Override
+    public void resultsChanged(ExperimentContainer container, SiriusResultElement element) {
         System.out.println("CHANGE_DATA");
         this.experimentContainer = container;
         this.resultElement = element;
@@ -124,15 +134,7 @@ public class CompoundCandidateView extends JPanel {
                 searchCSIButton.setToolTipText("With this version, negative ion mode is not supported for CSI:FingerId");
             }
         }
-    }
 
-
-    public boolean computationEnabled() {
-        return searchCSIButton.isEnabled(); // this is ugly but good enough ;-)
-    }
-
-    public void addActionListener(ActionListener l) {
-        searchCSIButton.addActionListener(l);
     }
 
     public class ComputeElement extends TwoCloumnPanel {

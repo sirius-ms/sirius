@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 public class SiriusResultElement extends AbstractBean implements Comparable<SiriusResultElement> {
 	
+	private boolean bestHit = false;
 	private TreeNode tree; //zur Anzeige
 	private IdentificationResult resultElement;
 
@@ -74,6 +75,15 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
         return tree;
     }
 
+	public boolean isBestHit() {
+		return bestHit;
+	}
+
+	public void setBestHit(boolean bestHit) {
+		boolean old = this.bestHit;
+		this.bestHit = bestHit;
+		firePropertyChange("best_hit",old, this.bestHit);
+	}
 
 	@Override
 	public int compareTo(SiriusResultElement o) {
