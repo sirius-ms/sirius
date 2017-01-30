@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
@@ -23,7 +22,6 @@ import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -459,7 +457,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 			} else {
                 ec.setRawResults(Collections.<IdentificationResult>emptyList());
                 ec.setComputeState(ComputingStatus.FAILED);
-				owner.refreshCompound(ec);
+				//owner.refreshCompound(ec); //todo proof
                 if (progDiag.getException()!=null){
 					if (progDiag.getException().getCause() instanceof UnknownHostException){
 						new NoConnectionDialog(this);
@@ -469,7 +467,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 					}
 				}
 			}
-			owner.refreshCompound(ec);
+//			owner.refreshCompound(ec); //todo proofrefresh
 			this.dispose();
 
 //	            List<IdentificationResult> results = sirius.identify(exp, 10, true, IsotopePatternHandling.omit, whiteset);

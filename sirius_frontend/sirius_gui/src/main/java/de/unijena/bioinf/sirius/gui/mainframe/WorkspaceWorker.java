@@ -84,7 +84,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
         if (dialog.getDecision() == ImportWorkspaceDialog.Decision.ABORT || dialog.getDecision() == ImportWorkspaceDialog.Decision.NONE) return;
         if (errorMessage!=null) return;
         while (!buffer.isEmpty()) {
-            mainFrame.importCompound(buffer.pollFirst());
+            Workspace.importCompound(buffer.pollFirst());
         }
     }
 

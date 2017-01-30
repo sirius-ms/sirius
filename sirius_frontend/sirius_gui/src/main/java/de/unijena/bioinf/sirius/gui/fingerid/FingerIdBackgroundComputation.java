@@ -18,16 +18,11 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.sirius.*;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -119,14 +114,15 @@ public class FingerIdBackgroundComputation {
                 if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
                 }
-                owner.refreshCompound(c.exp);
+//                owner.refreshCompound(c.exp); //todo Proof refresh
             }
         }
 
-        @Override
+        //todo Proof refres
+       /* @Override
         protected void done() {
             owner.fingerIdComputationComplete();
-        }
+        }*/
 
         @Override
         protected List<ExperimentContainer> doInBackground() throws Exception {

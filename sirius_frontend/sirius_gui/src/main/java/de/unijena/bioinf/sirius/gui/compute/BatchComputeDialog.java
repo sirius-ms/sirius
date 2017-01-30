@@ -38,9 +38,7 @@ import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -387,17 +385,19 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                owner.csiFingerId.setEnforceBio(csiOptions.biodb.isSelected());
+                owner.getCsiFingerId().setEnforceBio(csiOptions.biodb.isSelected());
                 final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
                 tasks.add(task);
                 compoundList.add(ec);
             }
         }
         bgc.addAll(tasks);
-        for (ExperimentContainer ec : compoundList) {
+
+        //todo proof
+        /*for (ExperimentContainer ec : compoundListView) {
             owner.refreshCompound(ec);
         }
-        owner.computationStarted();
+        owner.computationStarted();*/
         dispose();
     }
 

@@ -178,19 +178,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Exp
 
 
 		g2.setFont(statusFont);
-		if (ec.isComputed()) {
-			g2.setColor(Colors.ICON_GREEN);
-			g2.drawString("\u2713", getWidth()-24, getHeight()-8);
-		} else if (ec.isComputing()) {
-			g2.drawString("\u2699", getWidth()-24, getHeight()-8);
-		} else if (ec.isFailed()){
-			final Color prevCol = g2.getColor();
-			g2.setColor(Colors.ICON_RED);
-			g2.drawString("\u2718", getWidth()-24, getHeight()-8);
-			g2.setColor(prevCol);
-		} else if (ec.isQueued()) {
-            g2.drawString("...", getWidth()-24, getHeight()-8);
-        }
+		SwingUtils.drawListStatusElement(ec,g2,this);
 	}
 
 }

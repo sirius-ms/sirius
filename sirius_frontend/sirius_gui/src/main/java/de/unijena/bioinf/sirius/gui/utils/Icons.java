@@ -66,8 +66,10 @@ public abstract class Icons {
     public static final Icon Zoom_Out_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-magnify-minus-16px.png"));
     public static final Icon FILTER_UP_24 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-filter-up-24px.png"));
     public static final Icon FILTER_DOWN_24 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-filter-down-24px.png"));
+    public static final Icon FINGER_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint-16px.png"));
     public static final Icon FINGER_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png"));
     public static final Icon FINGER_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint.png"));
 
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
+
 }

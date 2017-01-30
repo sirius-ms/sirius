@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.mainframe.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanelListener;
 import de.unijena.bioinf.sirius.gui.msviewer.data.ExperimentContainerDataModel;

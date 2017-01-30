@@ -48,7 +48,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         this.enableCsiFingerId = new Runnable() {
             @Override
             public void run() {
-                searchCSIButton.setEnabled(storage.enabled);
+                searchCSIButton.setEnabled(storage.isEnabled());//todo is that in conflict with the action??
             }
         };
         storage.getEnabledListeners().add(enableCsiFingerId);
@@ -73,7 +73,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateJList(frame, storage, frame.getConfig(), experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList(frame, storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
         resultsChanged(null, null);
@@ -113,12 +113,12 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
                     break;
                 default:
                     System.out.println("button");
-                    layout.show(this, "computeButton");//todo other states
+                    layout.show(this, "computeButton");//todo other types
                     break;
             }
         }
 
-        if (resultElement == null || !storage.enabled) {
+        if (resultElement == null || !storage.isEnabled()) {
 
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
@@ -142,7 +142,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
             searchCSIButton = new ToolbarButton(Icons.FINGER_64);
             searchCSIButton.setText("Search with CSI:FingerId");
             add(searchCSIButton);
-            searchCSIButton.setEnabled((resultElement != null && storage.enabled));
+            searchCSIButton.setEnabled((resultElement != null && storage.isEnabled()));
             setVisible(true);
         }
     }

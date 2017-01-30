@@ -29,20 +29,6 @@ public class LogPSlider extends JPanel {
         left = new JLabel();
         left.setText("00.00");
         right = new JLabel("00.00");
-        /*
-        left.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                rangeSlider.setLowerValue((int)Math.round(Double.parseDouble(left.getText())*10));
-            }
-        });
-        right.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                rangeSlider.setUpperValue((int)Math.round(Double.parseDouble(right.getText())*10));
-            }
-        });
-        */
 
         add(left, BorderLayout.WEST);
         add(rangeSlider, BorderLayout.CENTER);
@@ -81,8 +67,7 @@ public class LogPSlider extends JPanel {
         this.callback = callback;
     }
 
-
-    public void setData(FingerIdData data) {
+    public void refresh(FingerIdData data) {
         isRefreshing=true;
         try {
         this.data = data;

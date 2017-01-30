@@ -20,11 +20,13 @@ public abstract class FormulaSelectionResultPanel extends JPanel {
         super(new BorderLayout());
         this.resultElementTable = resultElementTable;
         add(resultElementTable, BorderLayout.NORTH);
+    }
 
-            addElement(createCenter(), BorderLayout.CENTER);
-            addElement(createWest(), BorderLayout.WEST);
-            addElement(createEast(), BorderLayout.EAST);
-            addElement(createSouth(), BorderLayout.SOUTH);
+    protected void buildPanel(){
+        addElement(createCenter(), BorderLayout.CENTER);
+        addElement(createWest(), BorderLayout.WEST);
+        addElement(createEast(), BorderLayout.EAST);
+        addElement(createSouth(), BorderLayout.SOUTH);
     }
 
     protected abstract JComponent createSouth();

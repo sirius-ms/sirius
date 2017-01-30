@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ResultPanel extends JTabbedPane implements ActiveResults {
+import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+
+public class ResultPanel extends JPanel implements ListSelectionListener {
 
 
     private SiriusResultTablePanel rvp;
@@ -48,14 +51,13 @@ public class ResultPanel extends JTabbedPane implements ActiveResults {
         ccvv.dispose();
     }
 
-    public ResultPanel(MainFrame owner, ConfigStorage config) {
-        this(null, owner, config);
+    public ResultPanel() {
+        this(null);
     }
 
-    public ResultPanel(ExperimentContainer ec, MainFrame owner, ConfigStorage config) {
+    public ResultPanel(ExperimentContainer ec) {
         super();
         this.listeners = new ArrayList<>();
-        this.owner = owner;
         this.setToolTipText("Results");
         this.ec = ec;
 
@@ -154,18 +156,18 @@ public class ResultPanel extends JTabbedPane implements ActiveResults {
     public void computeFingerID(boolean searchAllEnabled) {
         //Test connection
         if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
-            new NoConnectionDialog(owner);
+            new NoConnectionDialog(MF);
             return;
         }
         SiriusResultElement resultElement = suriusResultElements.getResultsJList().getSelectedValue();
 
         //calculate csi
-        final FingerIdDialog dialog = new FingerIdDialog(owner, owner.csiFingerId, resultElement.getFingerIdData(), searchAllEnabled);
+        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), resultElement.getFingerIdData(), searchAllEnabled);
 
         final int returnState = dialog.run();
         if (returnState != FingerIdDialog.CANCELED) {
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                owner.csiFingerId.compute(ec, dialog.isBio());
+                MF.getCsiFingerId().compute(ec, dialog.isBio());
             } else {
                 List<SiriusResultElement> selected = suriusResultElements.getResultsJList().getSelectedValuesList();
                 java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
@@ -173,7 +175,7 @@ public class ResultPanel extends JTabbedPane implements ActiveResults {
                     if (element.getCharge()>0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
                         tasks.add(new FingerIdTask(dialog.isBio(), ec, element));
                 }
-                owner.csiFingerId.computeAll(tasks);
+                MF.getCsiFingerId().computeAll(tasks);
             }
         }
     }

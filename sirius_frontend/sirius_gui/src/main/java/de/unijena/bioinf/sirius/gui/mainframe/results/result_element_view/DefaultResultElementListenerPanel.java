@@ -10,7 +10,7 @@ import javax.swing.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class DefaultResultElementListenerPanel extends FormulaSelectionResultPanel {
+public class DefaultResultElementListenerPanel extends ScharedComponentTabbedPanel {
     protected JComponent centerView;
     protected JComponent southView;
     protected JComponent eastView;
@@ -23,6 +23,8 @@ public class DefaultResultElementListenerPanel extends FormulaSelectionResultPan
         this.southView = southView;
         this.eastView = eastView;
         this.westView = westView;
+
+        buildPanel();
     }
 
     public DefaultResultElementListenerPanel(FormulaTable resultElementTable, JComponent centerView) {

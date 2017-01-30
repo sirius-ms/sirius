@@ -1,7 +1,5 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.sirius.cli.SiriusApplication;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -16,9 +14,10 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
     protected DefaultListModel<JobLog.Job> r, t;
 
     public JobDialog(JFrame owner) {
-        super(owner,"Jobs", false);
+        super(owner, "Jobs", false);
         this.owner = owner;
-        final JPanel innerPanel = new JPanel(); innerPanel.setLayout(new BoxLayout(innerPanel,BoxLayout.Y_AXIS));
+        final JPanel innerPanel = new JPanel();
+        innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.Y_AXIS));
         final JPanel running = new JPanel(new BorderLayout());
         final JPanel done = new JPanel(new BorderLayout());
         innerPanel.add(running);
@@ -31,7 +30,7 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         this.t = new DefaultListModel<>();
         this.running = new JobList(r);
         this.terminated = new JobList(t);
-        final JobCell cell = new JobCell(null,0);
+        final JobCell cell = new JobCell(null, 0);
         this.running.setCellRenderer(cell);
         this.terminated.setCellRenderer(cell);
         final JScrollPane scrollPane1 = new JScrollPane(this.running, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -83,13 +82,13 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
     @Override
     public void jobIsRunning(JobLog.Job job) {
         int i = r.indexOf(job);
-        if (i>=0) r.setElementAt(job, i);
+        if (i >= 0) r.setElementAt(job, i);
     }
 
     @Override
     public void jobIsDone(final JobLog.Job job) {
         r.removeElement(job);
-        t.add(0,job);
+        t.add(0, job);
     }
 
     @Override
@@ -111,11 +110,12 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         protected JobLog.Job job;
         protected int index;
         protected Font font;
+
         public JobCell(JobLog.Job job, int index) {
             super();
             this.job = job;
             this.index = index;
-            setPreferredSize(new Dimension(500,14));
+            setPreferredSize(new Dimension(500, 14));
             InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
             try {
                 font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(13f);
@@ -128,37 +128,37 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
         @Override
         public void paint(Graphics g) {
             super.paint(g);
-            final Graphics2D g2 = (Graphics2D)g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            final Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setFont(font);
             g2.setColor(Color.BLACK);
             {
                 if (job.isError()) {
-                    g2.setColor(new Color(203,91,76));
-                    g2.fillRect(0,0,getWidth(),getHeight());
+                    g2.setColor(new Color(203, 91, 76));
+                    g2.fillRect(0, 0, getWidth(), getHeight());
                     g2.setColor(Color.BLACK);
                 } else if (job.isRunning()) {
-                    g2.setColor(new Color(51,116,149));
-                    g2.fillRect(0,0,getWidth(),getHeight());
+                    g2.setColor(new Color(51, 116, 149));
+                    g2.fillRect(0, 0, getWidth(), getHeight());
                     g2.setColor(Color.BLACK);
                 } else {
-                    if (index%2==0) {
+                    if (index % 2 == 0) {
                         g2.setColor(Color.WHITE);
                     } else {
                         g2.setColor(new Color(213, 227, 238));
                     }
-                    g2.fillRect(0,0,getWidth(),getHeight());
+                    g2.fillRect(0, 0, getWidth(), getHeight());
                     g2.setColor(Color.BLACK);
                 }
             }
-            if (job==null) return;
+            if (job == null) return;
 
             {
                 final int namewidth = g2.getFontMetrics().stringWidth(job.name());
                 final String name;
                 if (namewidth > 160) {
                     final int width = g2.getFontMetrics().charWidth('m');
-                    final int maxlength = (160/width);
+                    final int maxlength = (160 / width);
                     name = job.name().substring(0, maxlength) + "...";
                 } else name = job.name();
                 g2.drawString(name, 0, 12);
@@ -168,21 +168,21 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
                 final String desc;
                 if (descwidth > 380) {
                     final int width = g2.getFontMetrics().charWidth('W');
-                    final int maxlength = (380/width);
+                    final int maxlength = (380 / width);
                     desc = job.description().substring(0, maxlength) + "...";
-                } else desc= job.description();
+                } else desc = job.description();
                 g2.drawString(desc, 170, 12);
             }
             {
                 final int width = g2.getFontMetrics().stringWidth("enqueued");
                 if (job.isDone()) {
-                    g2.drawString("done", getWidth()-width, 12);
+                    g2.drawString("done", getWidth() - width, 12);
                 } else if (job.isRunning()) {
-                    g2.drawString("running", getWidth()-width, 12);
+                    g2.drawString("running", getWidth() - width, 12);
                 } else if (job.isError()) {
-                    g2.drawString("failed", getWidth()-width, 12);
+                    g2.drawString("failed", getWidth() - width, 12);
                 } else {
-                    g2.drawString("enqueued", getWidth()-width, 12);
+                    g2.drawString("enqueued", getWidth() - width, 12);
                 }
             }
         }
@@ -194,14 +194,4 @@ public class JobDialog extends JDialog implements JobLog.JobListener {
             return this;
         }
     }
-
-/*
-    protected class JobRenderer implements ListCellRenderer<JobLog.Job> {
-
-        @Override
-        public Component getListCellRendererComponent(JList<? extends JobLog.Job> list, JobLog.Job value, int index, boolean isSelected, boolean cellHasFocus) {
-
-        }
-    }
-    */
 }

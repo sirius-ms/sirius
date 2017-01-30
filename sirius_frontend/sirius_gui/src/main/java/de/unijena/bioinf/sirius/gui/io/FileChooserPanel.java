@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.io;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.Buttons;
 
 import javax.swing.*;

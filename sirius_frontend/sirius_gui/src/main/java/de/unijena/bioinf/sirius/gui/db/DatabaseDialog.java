@@ -7,6 +7,7 @@ import de.unijena.bioinf.sirius.gui.ext.ConfirmDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.utils.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.jdesktop.swingx.JXRadioGroup;
@@ -38,19 +39,17 @@ import java.util.List;
 
 public class DatabaseDialog extends JDialog {
 
-    protected ConfigStorage config;
+    //todo we should saperade the Dialog from the Database Managing part.
     protected JList<String> dbList;
     protected JButton addCustomDb;
     protected DatabaseView dbView;
     protected JTextField nameField;
     protected final Frame owner;
 
-    public DatabaseDialog(final Frame owner, final ConfigStorage configStorage) {
+    public DatabaseDialog(final Frame owner) {
         super(owner, "Databases", true);
         this.owner = owner;
         setLayout(new BorderLayout());
-
-        this.config = configStorage;
 
         final List<String> databases = collectDatabases();
         this.dbList = new DatabaseList(databases);
@@ -146,7 +145,7 @@ public class DatabaseDialog extends JDialog {
                         "Do you really want to delete the custom database '" + name + "'?" : "Do you really want to clear the cache of the PubChem database?";
                 if (ConfirmDialog.confirm(owner, "Delete database", msg)) {
                     if (index>0) {
-                        new CustomDatabase(name, new File(configStorage.getCustomDatabaseDirectory(), name)).getImporter().deleteDatabase();
+                        new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).getImporter().deleteDatabase();
                         dbList.setListData(collectDatabases().toArray(new String[0]));
                     } else {
                         // TODO: implement
@@ -205,7 +204,7 @@ public class DatabaseDialog extends JDialog {
     private List<String> collectDatabases() {
         final List<String> databases = new ArrayList<>();
         databases.add("PubChem");
-        final File root = config.getDatabaseDirectory();
+        final File root = Workspace.CONFIG_STORAGE.getDatabaseDirectory();
         final File custom = new File(root, "custom");
         if (!custom.exists()) {
             return databases;
@@ -463,7 +462,7 @@ public class DatabaseDialog extends JDialog {
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", true);
 
-            database = new CustomDatabase(name, new File(config.getCustomDatabaseDirectory(), name));
+            database = new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name));
             importer = database.getImporter();
             importer.init();
             collector = new Collector(importer, this);

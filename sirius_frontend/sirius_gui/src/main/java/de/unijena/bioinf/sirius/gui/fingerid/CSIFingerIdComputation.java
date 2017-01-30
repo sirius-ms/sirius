@@ -32,6 +32,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -97,7 +98,7 @@ public class CSIFingerIdComputation {
     protected boolean configured = false;
     private File directory;
     protected Callback callback, confidenceCallback;//todo why do we have 2 callbacks
-    protected boolean enabled;
+    private boolean enabled;
     protected List<Runnable> enabledListeners=new ArrayList<>();
 
     protected QueryPredictor pubchemConfidenceScorePredictor, bioConfidenceScorePredictor;
@@ -161,8 +162,11 @@ public class CSIFingerIdComputation {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+        SiriusActions.COMPUTE_CSI.getInstance().setEnabled(enabled);
         for (Runnable r : enabledListeners) r.run();
     }
+
+
 
     public Callback getConfidenceCallback() {
         return confidenceCallback;
@@ -458,11 +462,10 @@ public class CSIFingerIdComputation {
     }
 
     //csi fingerid compute all button in main panel
-    public void computeAll(Iterator<ExperimentContainer> compounds) {
+    public void computeAll(List<ExperimentContainer> compounds) {
         stopRunningTasks();
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
-        while (compounds.hasNext()) {
-            final ExperimentContainer c = compounds.next();
+        for (ExperimentContainer c : compounds) {
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
                 if (e.getCharge()>0) {
                     tasks.add(new FingerIdTask(isEnforceBio(), c, e));
