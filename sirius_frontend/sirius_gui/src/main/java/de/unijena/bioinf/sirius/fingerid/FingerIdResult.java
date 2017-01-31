@@ -8,6 +8,9 @@ import java.util.List;
 
 public class FingerIdResult {
 
+    // ADDITIONAL OUTPUT OPTIONS
+    public static final String CANDIDATE_LISTS = "fingerid.candidates";
+
     protected List<Scored<FingerprintCandidate>> candidates;
     protected double confidence;
     protected ProbabilityFingerprint predictedFingerprint;
@@ -41,4 +44,6 @@ public class FingerIdResult {
     public void setPredictedFingerprint(ProbabilityFingerprint predictedFingerprint) {
         this.predictedFingerprint = predictedFingerprint;
     }
+
+
 }

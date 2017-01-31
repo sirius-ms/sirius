@@ -6,7 +6,10 @@ import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.compute.*;
+import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
+import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
+import de.unijena.bioinf.sirius.gui.compute.JobDialog;
+import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -585,7 +588,7 @@ public class MainFrame extends JFrame implements WindowListener, ActionListener,
             if (selectedFile != null) {
                 try {
                     WorkspaceIO io = new WorkspaceIO();
-                    io.store(new AbstractList<ExperimentContainer>() {
+                    io.newStore(new AbstractList<ExperimentContainer>() {
                         @Override
                         public ExperimentContainer get(int index) {
                             return compoundList.getModel().getElementAt(index);

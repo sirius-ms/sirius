@@ -17,10 +17,13 @@ import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
+import de.unijena.bioinf.sirius.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
+import de.unijena.bioinf.sirius.projectspace.ProjectReader;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
 import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
@@ -51,6 +54,16 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     @Override
     protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
         return new FingerIdResultWriter(env);
+    }
+
+    @Override
+    protected ProjectReader getSiriusOutputReader(String sirius, DirectoryReader.ReadingEnvironment env) {
+        return new FingerIdResultReader(env);
+    }
+
+    @Override
+    protected ProjectReader getDirectoryOutputReader(String sirius, DirectoryReader.ReadingEnvironment env) {
+        return new FingerIdResultReader(env);
     }
 
     @Override

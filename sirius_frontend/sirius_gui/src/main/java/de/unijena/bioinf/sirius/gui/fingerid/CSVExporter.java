@@ -81,7 +81,7 @@ public class CSVExporter {
                 if (l.name.equals(DatasourceService.Sources.PUBCHEM.name)) {
                     pubchemIds.add(l.id);
                 } else {
-                    dbMap.put(l.id, l.name);
+                    dbMap.put(l.name, l.id);
                 }
             }
             writer.write(Joiner.on(';').join(pubchemIds));
@@ -213,12 +213,12 @@ public class CSVExporter {
         }
     }
 
-    private static String escape(String name) {
+    public static String escape(String name) {
         if (name==null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
     }
 
-    private static Collection<String> withoutNulls(Collection<String> in) {
+    public static Collection<String> withoutNulls(Collection<String> in) {
         return Collections2.filter(in, new Predicate<String>() {
             @Override
             public boolean apply(String input) {

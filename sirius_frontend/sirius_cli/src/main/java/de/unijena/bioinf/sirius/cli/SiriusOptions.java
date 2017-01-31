@@ -41,7 +41,6 @@ public interface SiriusOptions {
     @Option(longName = {"sirius", "workspace"}, shortName = "w", description = "store workspace into given file, such that it can be loaded by SIRIUS GUI afterwards", defaultToNull = true)
     public String getSirius();
 
-
     /////////////////////////////////////////////////
 
 

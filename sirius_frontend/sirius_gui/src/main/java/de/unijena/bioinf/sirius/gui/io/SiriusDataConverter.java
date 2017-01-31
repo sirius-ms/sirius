@@ -62,6 +62,7 @@ public class SiriusDataConverter {
         final ExperimentContainer c = new ExperimentContainer();
         c.setDataFocusedMass(sirius.getIonMass());
         c.setName(sirius.getName());
+        c.setSource(sirius.getSource());
         c.setIonization(sirius.getPrecursorIonType()==null ? PrecursorIonType.getPrecursorIonType("[M+H]+") : sirius.getPrecursorIonType());
         for (Spectrum<Peak> s : sirius.getMs1Spectra()) {
             c.getMs1Spectra().add(siriusSpectrumToMyxoSpectrum(s));
@@ -97,6 +98,7 @@ public class SiriusDataConverter {
     public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, PrecursorIonType ionType, double ionMass) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(myxo.getName());
+        exp.setSource(myxo.getSource());
         exp.setIonMass(ionMass);
         exp.setPrecursorIonType(ionType);
         for (CompactSpectrum cs : myxo.getMs1Spectra()) {
