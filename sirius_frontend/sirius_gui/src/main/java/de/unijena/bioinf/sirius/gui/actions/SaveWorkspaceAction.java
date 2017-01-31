@@ -81,7 +81,7 @@ public class SaveWorkspaceAction extends AbstractAction {
         if (selectedFile != null) {
             try {
                 WorkspaceIO io = new WorkspaceIO();
-                io.store(new AbstractList<ExperimentContainer>() {
+                io.newStore(new AbstractList<ExperimentContainer>() {
                     @Override
                     public ExperimentContainer get(int index) {
                         return COMPOUNT_LIST.get(index);
