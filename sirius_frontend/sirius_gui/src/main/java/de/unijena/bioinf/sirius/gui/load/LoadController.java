@@ -102,6 +102,7 @@ public class LoadController implements LoadDialogListener{
 		newExp.setDataFocusedMass(exp.getDataFocusedMass());
 		newExp.setIonization(exp.getIonization());
 		newExp.setName(exp.getName());
+		newExp.setSource(exp.getSource());
 		newExp.setSelectedFocusedMass(exp.getSelectedFocusedMass());
 		newExp.setSuffix(exp.getSuffix());
 		List<CompactSpectrum> newMS1 = new ArrayList<>();

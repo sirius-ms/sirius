@@ -35,6 +35,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,6 +62,7 @@ public class SiriusDataConverter {
         final ExperimentContainer c = new ExperimentContainer();
         c.setDataFocusedMass(sirius.getIonMass());
         c.setName(sirius.getName());
+        c.setSource(sirius.getSource());
         c.setIonization(sirius.getPrecursorIonType()==null ? PrecursorIonType.getPrecursorIonType("[M+H]+") : sirius.getPrecursorIonType());
         for (Spectrum<Peak> s : sirius.getMs1Spectra()) {
             c.getMs1Spectra().add(siriusSpectrumToMyxoSpectrum(s));
@@ -96,6 +98,7 @@ public class SiriusDataConverter {
     public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, PrecursorIonType ionType, double ionMass) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(myxo.getName());
+        exp.setSource(myxo.getSource());
         exp.setIonMass(ionMass);
         exp.setPrecursorIonType(ionType);
         for (CompactSpectrum cs : myxo.getMs1Spectra()) {
@@ -117,6 +120,7 @@ public class SiriusDataConverter {
     }
 
     public static ExperimentContainer siriusToMyxoContainer(Ms2Experiment experiment, List<IdentificationResult> results) {
+        if (experiment==null) throw new NullPointerException();
         final ExperimentContainer c = siriusExperimentToExperimentContainer(experiment);
         if (results.size()>0) {
             c.setRawResults(results);
@@ -154,6 +158,15 @@ public class SiriusDataConverter {
             ms.addPeak(cp.getMass(), cp.getAbsoluteIntensity());
         }
         return new SimpleSpectrum(ms);
+    }
+
+    public static SimpleSpectrum myxoMs1ToSiriusMs1(List<CompactSpectrum> myxo) {
+        if (myxo.size()==1) return myxoMs1ToSiriusMs1(myxo.get(0));
+        final List<SimpleSpectrum> spectra = new ArrayList<>(myxo.size());
+        for (CompactSpectrum cs : myxo) {
+            spectra.add(myxoMs1ToSiriusMs1(cs));
+        }
+        return (Spectrums.mergeSpectra(spectra));
     }
 
     public static PrecursorIonType enumOrNameToIontype(String selectedItem) {

@@ -296,17 +296,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
 
 
-        String val = searchProfilePanel.getInstrument();
-        String instrument = "";
-        if (val.equals("Q-TOF")) {
-            instrument = "qtof";
-        } else if (val.equals("Orbitrap")) {
-            instrument = "orbitrap";
-        } else if (val.equals("FT-ICR")) {
-            instrument = "fticr";
-        } else {
-            throw new RuntimeException("no valid instrument");
-        }
+        String instrument = searchProfilePanel.getInstrument().profile;
 
         FormulaSource formulaSource = searchProfilePanel.getFormulaSource();
 
