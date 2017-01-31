@@ -106,6 +106,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         /////////////////////////////// LEFT Panel (Compunt list) //////////////////////////////
         mf.compountListPanel = new ExperimentListPanel();
         mf.compountListPanel.compoundListView.setMinimumSize(new Dimension(200, 0));
+        mf.compountListPanel.setExpPopMenu(new SiriusExperimentPopUpMenu());
+
         /////////////////////////////// LEFT Panel (Compunt list) DONE //////////////////////////////
 
         mf.formulaList = new FormulaTable(mf.compountListPanel);

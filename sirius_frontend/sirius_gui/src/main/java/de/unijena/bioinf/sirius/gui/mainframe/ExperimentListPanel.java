@@ -40,7 +40,7 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
     private final JTextField searchField;
     private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
-    private JPopupMenu expPopMenu;
+    private JPopupMenu expPopMenu = null;
 
     public ExperimentListPanel() {
         searchField = new JTextField();
@@ -67,9 +67,6 @@ public class ExperimentListPanel extends TwoCloumnPanel {
             }
         });
 
-        expPopMenu = new SiriusExperimentPopUpMenu(this);
-        compoundListView.setComponentPopupMenu(expPopMenu);
-
         compoundListView.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -95,6 +92,11 @@ public class ExperimentListPanel extends TwoCloumnPanel {
                     }
                     if (select) {
                         compoundListView.setSelectedIndex(indx);
+                    }
+
+                    if (e.isPopupTrigger()) {
+                        if (expPopMenu != null)
+                            expPopMenu.show(e.getComponent(), e.getX(), e.getY());
                     }
                 }
             }
@@ -166,5 +168,13 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
     public FilterList<ExperimentContainer> getCompoundList() {
         return compoundList;
+    }
+
+    public JPopupMenu getExpPopMenu() {
+        return expPopMenu;
+    }
+
+    public void setExpPopMenu(JPopupMenu expPopMenu) {
+        this.expPopMenu = expPopMenu;
     }
 }
