@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.configs.Style;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
@@ -11,6 +12,7 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 
 public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRenderer<SiriusResultElement> {
+    public static final DummySiriusResult PROTOTYPE = new DummySiriusResult();
 
     private Color backColor, foreColor;
 
@@ -130,6 +132,33 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
         if (sre != null && sre.fingerIdComputeState != null) {
             g.setFont(statusFont);
             SwingUtils.drawListStatusElement(sre.fingerIdComputeState, g2, this);
+        }
+    }
+
+    private static class DummySiriusResult extends SiriusResultElement{
+
+        @Override
+        public int getRank() {
+            return 25;
+        }
+
+        @Override
+        public String getFormulaAndIonText() {
+            return "CH6H12O6CHLOR2";
+        }
+
+        @Override
+        public int getCharge() {
+            return 1;
+        }
+
+        @Override
+        public double getScore() {
+            return 9000;
+        }
+
+        public DummySiriusResult() {
+            super(null);
         }
     }
 }

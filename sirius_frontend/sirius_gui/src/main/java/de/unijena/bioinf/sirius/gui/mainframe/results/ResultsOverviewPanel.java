@@ -5,13 +5,8 @@ package de.unijena.bioinf.sirius.gui.mainframe.results;
  * 26.01.17.
  */
 
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTableDetailView;
-import de.unijena.bioinf.sirius.gui.mainframe.results.results_table.SiriusResultTablePanel;
-
 import javax.swing.*;
 import java.awt.*;
-
-import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -21,14 +16,12 @@ public class ResultsOverviewPanel extends JPanel {
         super(new BorderLayout());
 
 
-        JSplitPane east =  new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,left,right);
+        JSplitPane east = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
         east.setDividerLocation(.5d);
         east.setResizeWeight(.5d);
-        JSplitPane major =  new JSplitPane(JSplitPane.VERTICAL_SPLIT,north,east);
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, east);
         major.setDividerLocation(250);
-        add(major,BorderLayout.CENTER);
-
-
+        add(major, BorderLayout.CENTER);
 
 
 // setResizeWeight(.5d);
