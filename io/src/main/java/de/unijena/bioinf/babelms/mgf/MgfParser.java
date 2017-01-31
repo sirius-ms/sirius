@@ -63,6 +63,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private final MgfSpec prototype;
         private final ArrayDeque<MgfSpec> buffer;
         private final BufferedReader reader;
+        private int specIndex = 0;
         protected boolean ignoreUnsupportedIonTypes ;
 
         public MgfParserInstance(BufferedReader reader) {
@@ -250,12 +251,16 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     public synchronized Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
         if (inst==null || inst.reader!=reader) inst = new MgfParserInstance(reader);
         if (!inst.hasNext()) return null;
+        ++inst.specIndex;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
         exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
         if (exp.getName()==null) exp.setName(inst.peekNext().featureId);
+        if (exp.getName()==null) {
+            exp.setName("FEATURE_" + inst.specIndex);
+        }
         final HashMap<String,String> additionalFields = new HashMap<String, String>();
 
         while (true) {

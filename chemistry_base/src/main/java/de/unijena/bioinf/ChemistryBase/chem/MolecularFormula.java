@@ -51,7 +51,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         int maxid = 0;
         for (Element e : map.keySet()) maxid = Math.max(maxid, e.getId());
         final BitSet bitset = new BitSet(maxid+1);
-        for (Element e : map.keySet()) bitset.set(e.getId(), 1);
+        for (Element e : map.keySet()) bitset.set(e.getId());
         final TableSelection selection = table.getSelectionFor(bitset);
         final short[] buffer = new short[selection.size()];
         for (int i=0; i < buffer.length; ++i) {

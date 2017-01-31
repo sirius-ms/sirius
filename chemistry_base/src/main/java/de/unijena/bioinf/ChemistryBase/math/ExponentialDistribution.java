@@ -87,6 +87,10 @@ public final class ExponentialDistribution extends RealDistribution {
         return new EstimateByMedian();
     }
 
+    public double getLambda() {
+        return lambda;
+    }
+
     @HasParameters
     public static class EstimateByMedian implements ByMedianEstimatable<ExponentialDistribution> {
         public EstimateByMedian() {
