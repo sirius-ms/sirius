@@ -80,6 +80,8 @@ public class FTJsonWriter {
             Descriptor<Object> d = registry.get(FTree.class, anot.getKey());
             if (d != null) {
                 d.write(JSON, ano, anot.getValue());
+            } else {
+                hardCodedAnnotations(JSON, ano, tree);
             }
         }
 
@@ -121,6 +123,9 @@ public class FTJsonWriter {
         }
 
         return j;
+    }
+
+    private void hardCodedAnnotations(JSONDocumentType json, JsonObject ano, FTree tree) {
     }
 
     private PrecursorIonType getFragmentIon(FragmentAnnotation<PrecursorIonType> ionPerFragment, Fragment vertex, PrecursorIonType generalIonType) {

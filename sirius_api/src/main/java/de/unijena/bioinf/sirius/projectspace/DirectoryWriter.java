@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
+import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.CSVOutputWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.slf4j.Logger;
@@ -19,9 +20,73 @@ public class DirectoryWriter extends AbstractProjectWriter {
     protected String currentExperimentName;
     protected WritingEnvironment W;
 
+
+    public DirectoryWriter(WritingEnvironment w) {
+        W = w;
+    }
+
     @Override
     public void close() throws IOException {
         W.close();
+    }
+
+    protected static class DoNotCloseWriter extends Writer {
+
+        protected final Writer w;
+
+        public DoNotCloseWriter(Writer w) {
+            this.w = w;
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            w.write(cbuf, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            w.flush();
+        }
+
+        @Override
+        public void write(int c) throws IOException {
+            w.write(c);
+        }
+
+        @Override
+        public void write(char[] cbuf) throws IOException {
+            w.write(cbuf);
+        }
+
+        @Override
+        public void write(String str) throws IOException {
+            w.write(str);
+        }
+
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+            w.write(str, off, len);
+        }
+
+        @Override
+        public Writer append(CharSequence csq) throws IOException {
+            return w.append(csq);
+        }
+
+        @Override
+        public Writer append(CharSequence csq, int start, int end) throws IOException {
+            return w.append(csq, start, end);
+        }
+
+        @Override
+        public Writer append(char c) throws IOException {
+            return w.append(c);
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+        }
     }
 
     public interface WritingEnvironment {
@@ -42,7 +107,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
         try {
             final BufferedWriter outWriter = new BufferedWriter(new OutputStreamWriter(stream));
             try {
-                f.run(outWriter);
+                f.run(new DoNotCloseWriter(outWriter));
             } catch (IOException e) {
                 logger.error(e.getMessage(), e);
                 throw e;
@@ -59,14 +124,16 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     @Override
-    protected void writeInput(Ms2Experiment experiment) throws IOException {
+    protected void writeInput(ExperimentResult result, Ms2Experiment experiment) throws IOException {
         ++counter;
-        this.currentExperimentName = makeFileName(experiment);
+        this.currentExperimentName = makeFileName(result);
         W.enterDirectory(currentExperimentName);
     }
 
     @Override
-    protected void startWritingIdentificationResults(List<IdentificationResult> results)throws IOException  {
+    protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results)throws IOException  {
+        // ms file
+        writeMsFile(er, results);
         // JSON and DOT
         W.enterDirectory("trees");
         writeTrees(results);
@@ -77,6 +144,26 @@ public class DirectoryWriter extends AbstractProjectWriter {
         W.leaveDirectory();
         // formula summary
         writeFormulaSummary(results);
+    }
+
+    private void writeMsFile(ExperimentResult er, List<IdentificationResult> results) throws IOException {
+        // if experiment is stored in results we favour it, as it might be already cleaned and annotated
+        final Ms2Experiment experiment;
+        if (results.size()>0 && results.get(0).getAnnotationOrNull(Ms2Experiment.class)!=null) {
+            experiment = results.get(0).getAnnotationOrNull(Ms2Experiment.class);
+        } else {
+            experiment = er.getExperiment();
+        }
+        if (experiment!=null) {
+            write("spectrum.ms", new Do() {
+                @Override
+                public void run(Writer w) throws IOException {
+                    final BufferedWriter bw = new BufferedWriter(w);
+                    new JenaMsWriter().write(bw, experiment);
+                    bw.flush();
+                }
+            });
+        }
     }
 
     private void writeFormulaSummary(final List<IdentificationResult> results) throws IOException {
@@ -95,7 +182,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     protected void writeRecalibratedSpectrum(final IdentificationResult result) throws IOException {
-        write(makeFileName(result), new Do() {
+        write(makeFileName(result) + ".ms", new Do() {
             @Override
             public void run(Writer w) throws IOException {
                 new AnnotatedSpectrumWriter().write(w, result.getRawTree());
@@ -159,13 +246,8 @@ public class DirectoryWriter extends AbstractProjectWriter {
         return filename;
     }
 
-    protected String makeFileName(Ms2Experiment experiment) {
-        final String filename = experiment.getSource().getFile();
-        return counter + "_" + filename.substring(0, filename.lastIndexOf('.')) + simplify(experiment.getName());
-    }
-
-    private String simplify(String name) {
-        return name.replaceAll("[^A-Za-z0-9,\\-]]+", "");
+    protected String makeFileName(ExperimentResult exp) {
+        return counter + "_" + exp.experimentSource + "_" + exp.experimentName;
     }
 
     protected interface Do {

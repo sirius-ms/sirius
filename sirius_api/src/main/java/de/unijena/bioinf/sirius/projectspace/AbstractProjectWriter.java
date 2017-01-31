@@ -13,8 +13,8 @@ public abstract class AbstractProjectWriter implements ProjectWriter {
     @Override
     public void writeExperiment(ExperimentResult result) throws IOException {
         this.experimentResult = result;
-        writeInput(result.experiment);
-        startWritingIdentificationResults(result.results);
+        writeInput(result, result.experiment);
+        startWritingIdentificationResults(result, result.results);
         for (IdentificationResult r : result.results) {
             startWritingIdentificationResult(r);
             writeIdentificationResult(r);
@@ -34,7 +34,7 @@ public abstract class AbstractProjectWriter implements ProjectWriter {
 
     protected abstract void startWritingIdentificationResult(IdentificationResult result)throws IOException ;
 
-    protected abstract void startWritingIdentificationResults(List<IdentificationResult> results)throws IOException ;
+    protected abstract void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results)throws IOException ;
 
-    protected abstract void writeInput(Ms2Experiment experiment)throws IOException ;
+    protected abstract void writeInput(ExperimentResult result, Ms2Experiment experiment)throws IOException ;
 }
