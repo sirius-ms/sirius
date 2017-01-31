@@ -260,9 +260,13 @@ public class Sirius {
      */
     public PrecursorIonType[] guessIonization(Ms2Experiment experiment, PrecursorIonType[] candidateIonizations){
         Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
-        if (spec==null && experiment.getMs1Spectra().size()==1) spec = experiment.getMs1Spectra().get(0);
+        if (spec==null) spec = experiment.getMs1Spectra().get(0);
 
-        PrecursorIonType[] ionType = Spectrums.guessIonization(spec, experiment.getIonMass(), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), candidateIonizations);
+        SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spec);
+        Spectrums.normalizeToMax(mutableSpectrum, 100d);
+        Spectrums.applyBaseline(mutableSpectrum, 1d);
+
+        PrecursorIonType[] ionType = Spectrums.guessIonization(mutableSpectrum, experiment.getIonMass(), profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation(), candidateIonizations);
         return ionType;
     }
 
