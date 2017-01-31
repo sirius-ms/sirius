@@ -21,7 +21,6 @@ public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment
     @Override
     public void enterDirectory(String name) {
         pathElements.add(name);
-        System.out.println("ENTER DIRECTORY " + join(pathElements));
         try {
             zip.putNextEntry(new ZipEntry(join(pathElements)));
             zip.closeEntry();
@@ -38,7 +37,6 @@ public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment
 
     @Override
     public OutputStream openFile(String name) {
-        System.out.println("OPEN FILE " + (join(pathElements) + name));
         try {
             zip.putNextEntry(new ZipEntry(join(pathElements) + name));
         } catch (IOException e) {
@@ -49,7 +47,6 @@ public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment
 
     @Override
     public void closeFile() {
-        System.out.println("CLOSE FILE");
         try {
             zip.closeEntry();
         } catch (IOException e) {
@@ -59,13 +56,11 @@ public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment
 
     @Override
     public void leaveDirectory() {
-        System.out.println("LEAVE DIRECTORY");
         pathElements.remove(pathElements.size()-1);
     }
 
     @Override
     public void close() throws IOException {
-        System.out.println("CLOSE STREAM");
         zip.close();
     }
 }
