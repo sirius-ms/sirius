@@ -5,138 +5,129 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  * 30.01.17.
  */
 
+import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.GlazedLists;
+import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResults;
-import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListModel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListTextCellRenderer;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaTable extends JScrollPane implements ActiveResults {
-    protected java.util.List<ActiveResultChangedListener> listeners = new ArrayList<>();
-    private ResultTreeListModel resultList;
-    private JList<SiriusResultElement> resultListView;
+public class FormulaTable implements ActiveResults {
+    java.util.List<ActiveResultChangedListener> listeners = new ArrayList<>();
+    ObservableElementList<SiriusResultElement> resultList;
+    ResultTreeListTextCellRenderer cellRenderer;
+    ListSelectionModel selectionModel;
+    ExperimentContainer ec = null;
 
     public FormulaTable(final ExperimentListPanel compundList) {
-        super(VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_ALWAYS);
-//        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));
+        super();
 
-        resultList = new ResultTreeListModel(new ArrayList<SiriusResultElement>());//new ObservableElementList<>(new BasicEventList<SiriusResultElement>(), GlazedLists.beanConnector(SiriusResultElement.class));
-        resultListView = new JList<>(resultList);
-        resultList.setJList(resultListView);
-
-        ResultTreeListTextCellRenderer cellRenderer = new ResultTreeListTextCellRenderer();
-        resultListView.setCellRenderer(cellRenderer);
-        resultListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        resultListView.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        resultListView.setVisibleRowCount(1);
-        resultListView.setMinimumSize(new Dimension(0, 45));
-        resultListView.setPreferredSize(new Dimension(0, 45));
-
-        add(resultListView);
+        resultList = new ObservableElementList<>(new BasicEventList<SiriusResultElement>(), GlazedLists.beanConnector(SiriusResultElement.class));
+        cellRenderer = new ResultTreeListTextCellRenderer();
+        selectionModel = new DefaultListSelectionModel();
+        selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         setData(compundList.getCompoundListView().getSelectedValue());
 
-        //this is the selsction refresh, element chages are detected by eventlist
+        //this is the selection refresh, element chages are detected by eventlist
         compundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(final ListEvent<ExperimentContainer> event, final JList<ExperimentContainer> source) {
+            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
                 if (!source.isSelectionEmpty()) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (event.next()) {
-                                if (event.getType() == ListEvent.UPDATE && source.getMinSelectionIndex() == event.getIndex()) {
-                                    System.out.println("DATA Listener");
-                                    setData(source.getSelectedValue());
-                                    return;
-                                }
-                            }
+                    while (event.next()) {
+                        System.out.println("iteration");
+                        if (source.getMinSelectionIndex() == event.getIndex()) {
+                            System.out.println("DATA Listener");
+                            setData(source.getSelectedValue());
+                            return;
                         }
-                    });
-                }
-            }
-
-            @Override
-            public void listSelectionChanged(final JList<ExperimentContainer> source) {
-                System.out.println("Slection Listener");
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        setData(source.getSelectedValue());
                     }
-                });
-
-            }
-        });
-
-        resultListView.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    // Double-click detected
-                    int index = resultListView.locationToIndex(e.getPoint());
-                    resultListView.setSelectedIndex(index);
-                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(resultListView, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
                 }
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
+            public void listSelectionChanged(JList<ExperimentContainer> source) {
+                System.out.println("PARENT SELECTION Listener");
+                setData(source.getSelectedValue());
             }
         });
 
-
+        selectionModel.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                System.out.println("SELECTION Listener");
+                if (!selectionModel.getValueIsAdjusting()) {
+                    if (selectionModel.isSelectionEmpty() || resultList == null || resultList.isEmpty())
+                        notifyListeners(ec, null, resultList, selectionModel);
+                    else
+                        notifyListeners(ec, resultList.get(selectionModel.getMinSelectionIndex()), resultList, selectionModel);
+                } else {
+                    System.out.println("adjusting");
+                }
+            }
+        });
     }
 
-    private void setData(ExperimentContainer ec) {
+    private void setData(final ExperimentContainer ec) {
         System.out.println("SetData");
-        resultList.setData(new ArrayList<SiriusResultElement>());
-        if (ec != null) {
-            if (ec.getResults() != null && !ec.getResults().isEmpty()) {
+        this.ec = ec;
+        selectionModel.setValueIsAdjusting(true);
+        resultList.getReadWriteLock().writeLock().lock();
+        if (this.ec != null && this.ec.getResults() != null && !this.ec.getResults().isEmpty()) {
+            if (!this.ec.getResults().equals(resultList)) {
                 System.out.println("SetDataREALLY");
-                resultList.setData(ec.getResults());
-                if (resultListView.getModel().getSize() > 0) {
-                    resultListView.setSelectedValue(ec.getBestHit(), true);
-                    System.out.println(resultListView.getSelectedIndex());
-                }
+                selectionModel.clearSelection();
+                resultList.clear();
+                resultList.addAll(this.ec.getResults());
             }
-            notifyListeners(ec, resultListView.getSelectedValue());
+        } else {
+            if (!resultList.isEmpty()) {
+                selectionModel.setValueIsAdjusting(true);
+                selectionModel.clearSelection();
+                resultList.clear();
+                selectionModel.setValueIsAdjusting(false);
+            }
         }
+        SiriusResultElement sre = null;
+        if (!resultList.isEmpty()) {
+            selectionModel.setSelectionInterval(0, 0);
+            sre = resultList.get(selectionModel.getMinSelectionIndex());
+        }
+        resultList.getReadWriteLock().writeLock().unlock();
+        selectionModel.setValueIsAdjusting(false);
+        notifyListeners(this.ec, sre, resultList, selectionModel);
     }
 
-    public ResultTreeListModel getResultList() {
+    public ObservableElementList<SiriusResultElement> getResultList() {
         return resultList;
     }
 
-    public JList<SiriusResultElement> getResultListView() {
-        return resultListView;
+    public ListSelectionModel getResultListSelectionModel() {
+        return selectionModel;
+    }
+
+    public List<SiriusResultElement> getSelecteValues(){
+        List<SiriusResultElement> selected = new ArrayList<>();
+        for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
+             if (selectionModel.isSelectedIndex(i)){
+                 selected.add(resultList.get(i));
+             }
+        }
+        return selected;
     }
 
     public void addActiveResultChangedListener(ActiveResultChangedListener listener) {
@@ -147,9 +138,9 @@ public class FormulaTable extends JScrollPane implements ActiveResults {
         listeners.remove(listener);
     }
 
-    protected void notifyListeners(ExperimentContainer ec, SiriusResultElement sre) {
+    protected void notifyListeners(ExperimentContainer ec, SiriusResultElement siriusResultElement, List<SiriusResultElement> sre, ListSelectionModel selections) {
         for (ActiveResultChangedListener listener : listeners) {
-            listener.resultsChanged(ec, sre);
+            listener.resultsChanged(ec, siriusResultElement, sre, selections);
         }
     }
 }

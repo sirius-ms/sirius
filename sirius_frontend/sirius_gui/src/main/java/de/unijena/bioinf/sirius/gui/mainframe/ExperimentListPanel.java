@@ -63,12 +63,7 @@ public class ExperimentListPanel extends TwoCloumnPanel {
         compoundListView.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        notifyListenerSelectionChange();
-                    }
-                });
+                notifyListenerSelectionChange();
             }
         });
 
@@ -121,19 +116,7 @@ public class ExperimentListPanel extends TwoCloumnPanel {
         compoundList.addListEventListener(new ListEventListener<ExperimentContainer>() {
             @Override
             public void listChanged(final ListEvent<ExperimentContainer> listChanges) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        /*if (compoundListView.getMaxSelectionIndex() > compoundListView.getModel().getSize())
-                            if (compoundListView.getMinSelectionIndex() > compoundListView.getModel().getSize())
-                                compoundListView.clearSelection();
-                            else
-                                compoundListView.setSelectedIndex(compoundListView.getMinSelectionIndex());*/
-
-                        notifyListenerDataChange(listChanges);
-                    }
-                });
-
+                notifyListenerDataChange(listChanges);
             }
         });
 

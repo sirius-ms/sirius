@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
@@ -80,7 +81,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         list = new CandidateJList( storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
-        resultsChanged(null, null);
+        resultsChanged(null, null,null,null);
     }
 
 
@@ -93,11 +94,11 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
     }
 
     @Override
-    public void resultsChanged(ExperimentContainer container, SiriusResultElement element) {
+    public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre, List<SiriusResultElement> sres, ListSelectionModel selection) {
         System.out.println("CHANGE_DATA");
-        this.experimentContainer = container;
-        this.resultElement = element;
-        list.refresh(container, resultElement == null ? null : resultElement.getFingerIdData());
+        this.experimentContainer = ec;
+        this.resultElement = sre;
+        list.refresh(ec, resultElement == null ? null : resultElement.getFingerIdData());
 
         if (resultElement == null)
             layout.show(this, "null");

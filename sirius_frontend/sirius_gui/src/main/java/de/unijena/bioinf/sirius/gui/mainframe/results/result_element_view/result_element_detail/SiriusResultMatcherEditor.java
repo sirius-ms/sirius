@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.results_table;
+package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -10,7 +10,6 @@ import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.text.JTextComponent;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

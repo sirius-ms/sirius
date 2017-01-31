@@ -51,10 +51,12 @@ public class SiriusExperimentPopUpMenu extends JPopupMenu {
         toObserve.addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
-                for (ExperimentContainer ec : source.getSelectedValuesList()) {
-                    if (ec != null && (ec.isComputing() || ec.isQueued())) {
-                        cancelMI.setEnabled(true); //todo move to action
-                        return;
+                if (!event.getSourceList().isEmpty()) {
+                    for (ExperimentContainer ec : source.getSelectedValuesList()) {
+                        if (ec != null && (ec.isComputing() || ec.isQueued())) {
+                            cancelMI.setEnabled(true); //todo move to action
+                            return;
+                        }
                     }
                 }
                 cancelMI.setEnabled(false);

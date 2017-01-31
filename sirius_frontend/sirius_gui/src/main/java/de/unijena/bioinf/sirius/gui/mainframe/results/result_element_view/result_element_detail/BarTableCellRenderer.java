@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.results_table;
+package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -9,7 +9,6 @@ import de.unijena.bioinf.sirius.gui.utils.Colors;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.DecimalFormat;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -28,12 +27,19 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         double max = 0d; //todo cache the max?
+        double min = Double.MAX_VALUE; //todo cache the min?
         for (int i = 0; i < table.getRowCount(); i++) {
-            max = Math.max(max, ((Double) table.getValueAt(i, column)).doubleValue());
+            double val = ((Double) table.getValueAt(i, column)).doubleValue();
+            max = Math.max(max,val );
+            min = Math.min(min, val);
 
         }
+
+        min =  min - Math.abs(0.1*max);
+
+        double current = ((Double) value).doubleValue();
         this.max = NF.format(max);
-        toFill = (float) (((Double) value).doubleValue() / max);
+        toFill = (float) ((current - min) / (max - min));
         selected = isSelected;
 
 //        this.value = new DecimalFormat("#.00").format(((Double)value).doubleValue());

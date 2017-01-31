@@ -199,7 +199,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		}
 	}
 
-	public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre) {
+	public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre, List<SiriusResultElement> sres, ListSelectionModel selection) {
 		if (this.ec != ec || this.sre != sre) {
 			System.out.println("update Spec");
 			this.ec = ec;
@@ -208,7 +208,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			updateLogic();
 
 			if (ec != null) {
-				this.model.changeData(ec, sre, getDisplayMode(), getSelectedMs2Spectrum());
+				this.model.changeData(ec, this.sre, getDisplayMode(), getSelectedMs2Spectrum());
 			} else {
 				this.model = new ExperimentContainerDataModel(null);
 			}

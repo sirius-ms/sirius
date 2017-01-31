@@ -21,6 +21,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.*;
+import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
@@ -58,13 +60,13 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
 
         nodeType = new JComboBox<>(NODE_TYPES);
         nodeType.addActionListener(this);
-        JLabel l = new JLabel("node style");
+        JLabel l = new JLabel("Nodes");
         l.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
         northPanel.add(l);
         northPanel.add(nodeType);
         colorType = new JComboBox<>(COLOR_TYPES);
         colorType.addActionListener(this);
-        l = new JLabel("node color");
+        l = new JLabel("Colors");
         l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(l);
         northPanel.add(colorType);
@@ -76,7 +78,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
         northPanel.add(Box.createHorizontalGlue());
         northPanel.addSeparator(new Dimension(10, 10));
         svp = new ScoreVisualizationPanel();
-        legendText = new JLabel("score ");
+        legendText = new JLabel("Score ");
         legendText.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(legendText);
         northPanel.add(svp);
@@ -279,7 +281,7 @@ public class TreeVisualizationPanel extends JPanel implements ActionListener, Ac
     }
 
     @Override
-    public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre) {
+    public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
         if (sre == null || sre.getResult() == null) showTree(null);
         else showTree(sre);
     }

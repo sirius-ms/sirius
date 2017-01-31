@@ -36,10 +36,8 @@ public class ComputeCSIAction extends AbstractAction {
 
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
             MF.getCsiFingerId().computeAll(MF.getCompounds());
-            MF.getResultsPanel().setSelectedIndex(3);
         } else if (returnState == FingerIdDialog.COMPUTE) {
             MF.getCsiFingerId().computeAll(MF.getCompoundView().getSelectedValuesList());
-            MF.getResultsPanel().setSelectedIndex(3);
         }
 
     }

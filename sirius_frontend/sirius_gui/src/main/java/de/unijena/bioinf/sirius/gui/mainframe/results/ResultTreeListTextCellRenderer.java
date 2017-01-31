@@ -66,7 +66,6 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
     public Component getListCellRendererComponent(
             JList<? extends SiriusResultElement> list, SiriusResultElement value,
             int index, boolean isSelected, boolean cellHasFocus) {
-        System.out.println("Configure rendering");
         this.sre = value;
 
         if (isSelected) {

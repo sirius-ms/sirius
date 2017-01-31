@@ -172,7 +172,7 @@ public class BackgroundComputation extends AbstractBean {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
-                        csiFingerID.compute(c.exp, csiFingerID.isEnforceBio());//todo add max value
+                        csiFingerID.compute(c.exp, csiFingerID.isEnforceBio());
                     }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;

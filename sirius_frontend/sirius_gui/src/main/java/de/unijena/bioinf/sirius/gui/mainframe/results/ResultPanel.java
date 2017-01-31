@@ -1,8 +1,10 @@
 package de.unijena.bioinf.sirius.gui.mainframe.results;
 
 import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.DefaultResultElementListenerPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTable;
+import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTableCompactView;
+import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTableDetailView;
+import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTableHeaderPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -15,10 +17,9 @@ public class ResultPanel extends JTabbedPane {
 
 
     private ResultsOverviewPanel rvp;
-    protected DefaultResultElementListenerPanel tvp;
-    protected DefaultResultElementListenerPanel svp;
-    private DefaultResultElementListenerPanel ccv;
-    private CompoundCandidateView ccvv; //todo get rid of that
+    protected TreeVisualizationPanel tvp;
+    protected SpectraVisualizationPanel svp;
+    private CompoundCandidateView ccv;
 
     private List<ActiveResultChangedListener> listeners;
 
@@ -31,7 +32,7 @@ public class ResultPanel extends JTabbedPane {
     }
 
     public void dispose() {
-        ccvv.dispose();
+        ccv.dispose();
     }
 
 //    public ResultPanel() {
@@ -44,32 +45,20 @@ public class ResultPanel extends JTabbedPane {
         this.listeners = new ArrayList<>();
         this.setToolTipText("Results");
 
-//        centerPane.setBorder(BorderFactory.createEmptyBorder());
         TreeVisualizationPanel tvpTmp = new TreeVisualizationPanel();
-//        tvp = new DefaultResultElementListenerPanel(suriusResultElements, new TreeVisualizationPanel(),true);
-
+        suriusResultElements.addActiveResultChangedListener(tvpTmp);
         SpectraVisualizationPanel svpTmp = new SpectraVisualizationPanel();
-//        svp = new DefaultResultElementListenerPanel(suriusResultElements, new SpectraVisualizationPanel(),true);
-        ccvv = new CompoundCandidateView();
-//        ccv = new DefaultResultElementListenerPanel(suriusResultElements, ccvv,true);
+        suriusResultElements.addActiveResultChangedListener(svpTmp);
+        rvp = new ResultsOverviewPanel(new FormulaTableDetailView(suriusResultElements), svpTmp, 1, tvpTmp, 2);
 
-        JPanel jp = new JPanel(new BorderLayout());
-        jp.add(suriusResultElements, BorderLayout.NORTH);
-        SpectraVisualizationPanel sp = new SpectraVisualizationPanel();
-        jp.add(sp, BorderLayout.CENTER);
-        suriusResultElements.addActiveResultChangedListener(sp);
+        tvp = new TreeVisualizationPanel();
+        svp = new SpectraVisualizationPanel();
+        ccv = new CompoundCandidateView();
 
-        rvp = new ResultsOverviewPanel(this, svpTmp, 1, tvpTmp, 2);
         addTab("Overview", rvp);
-        addTab("Spectra view", jp);
-//        addTab("Tree view", tvp);
-//        addTab("CSI:FingerId", ccv);
-
-        // register listeners //todo moved
-//        addActiveResultChangedListener(svp);
-//        addActiveResultChangedListener(tvp);
-
-//		this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"Results"));
+        addTab("Spectra view", new FormulaTableHeaderPanel(suriusResultElements,svp));
+        addTab("Tree view", new FormulaTableHeaderPanel(suriusResultElements,tvp));
+        addTab("CSI:FingerId", new FormulaTableHeaderPanel(suriusResultElements,ccv));
     }
 
     public void changeData(final ExperimentContainer ec) {

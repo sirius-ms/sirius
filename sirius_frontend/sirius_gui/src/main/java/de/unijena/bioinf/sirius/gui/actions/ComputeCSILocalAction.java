@@ -42,7 +42,7 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
                 MF.getCsiFingerId().compute(ec, dialog.isBio());
             } else {
-                java.util.List<SiriusResultElement> selected = MF.getFormulaList().getResultListView().getSelectedValuesList();
+                java.util.List<SiriusResultElement> selected = MF.getFormulaList().getSelecteValues();
                 java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
                 for (SiriusResultElement element : selected) {
                     if (element.getCharge() > 0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
@@ -50,7 +50,6 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
                 }
                 MF.getCsiFingerId().computeAll(tasks);
             }
-            MF.getResultsPanel().setSelectedIndex(3);
         }
     }
 }
