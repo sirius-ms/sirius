@@ -7,6 +7,10 @@ public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
     protected File root;
     protected OutputStream currentStream = null;
 
+    public SiriusFileWriter(File root) {
+        this.root = root;
+    }
+
     @Override
     public void enterDirectory(String name) {
         this.root = new File(root, name);
