@@ -39,13 +39,13 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     private double normalization;
 
     public FreeRadicalEdgeScorer() {
-        this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>();
+        this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>(50, 0.75f, Double.NEGATIVE_INFINITY);
         this.generalRadicalScore = 0d;
         this.normalization = 0d;
     }
 
     public FreeRadicalEdgeScorer(Map<MolecularFormula, Double> freeRadicals, double generalRadicalScore, double normalization) {
-        this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>(freeRadicals.size() * 2);
+        this.freeRadicals = new TObjectDoubleHashMap<MolecularFormula>(freeRadicals.size() * 2, 0.75f, Double.NEGATIVE_INFINITY);
         this.freeRadicals.putAll(freeRadicals);
         this.generalRadicalScore = generalRadicalScore;
         this.normalization = normalization;
@@ -106,8 +106,8 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
 
     @Override
     public double score(MolecularFormula formula) {
-        final Double score = freeRadicals.get(formula);
-        if (score != null) return score.doubleValue();
+        final double score = freeRadicals.get(formula);
+        if (!Double.isInfinite(score)) return score;
         if (formula.maybeCharged()) return generalRadicalScore;
         return 0d;
     }

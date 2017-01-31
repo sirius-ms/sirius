@@ -33,9 +33,29 @@ import java.util.regex.Pattern;
 
 public class JenaMsParser implements Parser<Ms2Experiment> {
 
+    // quickn dirty hack
+    BufferedReader lastReader=null;
+    String lastCompundName=null;
+
     @Override
     public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
-        return new ParserInstance(source, reader).parse();
+        ParserInstance p=null;
+        try {
+        if (reader==lastReader) {
+            p = new ParserInstance(source, reader);
+            p.newCompound(lastCompundName);
+            return p.parse();
+        } else {
+            p = new ParserInstance(source, reader);
+            return p.parse();
+        }}finally {
+            if (p!=null) {
+                if (p.compoundName!=null) {
+                    lastReader = reader;
+                }
+                lastCompundName = p.compoundName;
+            }
+        }
     }
 
     private static class ParserInstance {
@@ -61,6 +81,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
         private String inchi, inchikey, smiles, splash;
+        private MutableMs2Experiment experiment;
+
+        private void newCompound(String name) {
+            inchi=null; inchikey=null; smiles=null; splash=null;
+            ms1spectra = new ArrayList<>();
+            ms2spectra = new ArrayList<>();
+            tic=0; parentMass=0; retentionTime=0;
+            currentEnergy = null;
+            ionization = null;
+            isMs1=false;
+            charge=0;
+            formula=null;
+            compoundName = name;
+        }
 
         private MutableMs2Experiment parse() throws IOException {
             String line;
@@ -72,7 +106,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     } else {
                         final char firstCharacter = line.charAt(0);
                         if (firstCharacter == '>') {
-                            parseOption(line);
+                            if (parseOption(line))
+                                return experiment;
                         } else if (firstCharacter == '#') {
                             parseComment(line);
                         } else if (Character.isDigit(firstCharacter)) {
@@ -97,28 +132,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     error(e.toString());
                 }
             }
-            parseEmptyLine();
-            if (compoundName==null) return null;
-            final MutableMs2Experiment exp = new MutableMs2Experiment();
-            exp.setIonMass(parentMass);
-            if (parentMass!=0 && ionization!=null)
-                exp.setMoleculeNeutralMass(ionization.precursorMassToNeutralMass(exp.getIonMass()));
-            exp.setMolecularFormula(formula);
-            exp.setName(compoundName);
-            if (ionization==null) {
-                if (charge!=0) {
-                    exp.setPrecursorIonType(PrecursorIonType.unknown(charge));
-                }
-            } else  {
-                exp.setPrecursorIonType(ionization);
-            }
-            exp.setMs1Spectra(ms1spectra);
-            exp.setMs2Spectra(ms2spectra);
-            exp.setSource(source);
-            if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
-            if (splash!=null) exp.setAnnotation(Splash.class, new Splash(splash));
-            if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
-            return exp;
+            flushCompound();
+            return experiment;
         }
 
         private static Pattern LINE_PATTERN = Pattern.compile("^\\s*([>#]|\\d)");
@@ -135,13 +150,19 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static final Pattern PEAK_PATTERN = Pattern.compile("(" + decimalPattern + ")\\s+(" + decimalPattern + ")");
 
-        private void parseOption(String line) throws IOException {
+        private boolean parseOption(String line) throws IOException {
             final String[] options = line.substring(line.indexOf('>')+1).split("\\s+", 2);
             final String optionName = options[0].toLowerCase();
             final String value = options.length==2 ? options[1] : "";
             if (optionName.equals("compound")) {
-                if (compoundName!=null) warn("Compound name is set twice");
-                this.compoundName = value;
+                System.err.println(value + " (BEFORE: " + compoundName + ")");
+                final boolean newCompound = compoundName!=null;
+                if (newCompound) {
+                    flushCompound();
+                }
+                newCompound(value);
+                if (newCompound) return true;
+
             } else if (optionName.equals("formula")) {
                 if (formula != null) warn("Molecular formula is set twice");
                 this.formula = MolecularFormula.parse(value);
@@ -213,6 +234,33 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else {
                 warn("Unknown option '>" + optionName + "'");
             }
+            return false;
+        }
+
+        private void flushCompound() {
+            experiment = null;
+            if (compoundName==null) return;
+            final MutableMs2Experiment exp = new MutableMs2Experiment();
+            exp.setIonMass(parentMass);
+            if (parentMass!=0 && ionization!=null)
+                exp.setMoleculeNeutralMass(ionization.precursorMassToNeutralMass(exp.getIonMass()));
+            exp.setMolecularFormula(formula);
+            exp.setName(compoundName);
+            if (ionization==null) {
+                if (charge!=0) {
+                    exp.setPrecursorIonType(PrecursorIonType.unknown(charge));
+                }
+            } else  {
+                exp.setPrecursorIonType(ionization);
+            }
+            exp.setMs1Spectra(ms1spectra);
+            exp.setMs2Spectra(ms2spectra);
+            exp.setSource(source);
+            if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
+            if (splash!=null) exp.setAnnotation(Splash.class, new Splash(splash));
+            if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
+            this.experiment = exp;
+            this.compoundName = null;
         }
 
         private void error(String s) throws IOException {
