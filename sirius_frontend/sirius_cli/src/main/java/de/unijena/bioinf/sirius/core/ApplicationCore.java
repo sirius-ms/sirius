@@ -9,10 +9,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumC
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +41,7 @@ public abstract class ApplicationCore {
         final Properties BUILD_PROPERTIES = new Properties();
         try (InputStream input = ApplicationCore.class.getResourceAsStream("/siriusBuild.properties")) {
             // load a properties file
-            BUILD_PROPERTIES.load(input);
+            BUILD_PROPERTIES.load(new InputStreamReader(input, Charset.forName("UTF-8")));
             System.getProperties().putAll(BUILD_PROPERTIES);
         } catch (IOException | NullPointerException e) {
             System.err.println("WARNING: could not load Build Properties");
