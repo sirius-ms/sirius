@@ -139,7 +139,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     protected void handleResults(Instance i, List<IdentificationResult> results) {
         if (results==null || results.isEmpty()) {
-            System.out.println("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
+            logger.error("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         }
     }
@@ -158,14 +158,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
         if (projectWriter!=null) {
-            System.out.println(String.valueOf(instance.fileNameWithoutExtension()) + ": " + String.valueOf(instance.experiment));
             projectWriter.writeExperiment(new ExperimentResult(instance.experiment, results));
         }
     }
 
     protected void cite() {
-        System.out.println("Please cite the following paper when using our method:");
-        System.out.println(ApplicationCore.CITATION);
+        println("Please cite the following paper when using our method:");
+        println(ApplicationCore.CITATION);
     }
 
     protected void parseArgsAndInit(String[] args) {
@@ -184,8 +183,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     public void parseArgs(String[] args, Class<Options> optionsClass ) {
         if (args.length==0) {
-            System.out.println(ApplicationCore.VERSION_STRING);
-            System.out.println(CliFactory.createCli(optionsClass).getHelpMessage());
+            println(ApplicationCore.VERSION_STRING);
+            println(CliFactory.createCli(optionsClass).getHelpMessage());
             System.exit(0);
         }
         try {
@@ -195,13 +194,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 System.exit(0);
             }
         } catch (HelpRequestedException e) {
-            System.out.println(e.getMessage());
-            System.out.println("");
+            println(e.getMessage());
+            println("");
             cite();
             System.exit(0);
         }
         if (options.isVersion()) {
-            System.out.println(ApplicationCore.VERSION_STRING);
+            println(ApplicationCore.VERSION_STRING);
             cite();
             System.exit(0);
         }
