@@ -18,13 +18,14 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -62,7 +63,48 @@ public class Sirius {
     protected PeriodicTable table;
     protected boolean autoIonMode;
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
+        final File F = new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms");
+        try {
+            Sirius s = new Sirius("exp2");
+
+
+
+
+            if (false){
+
+                final double[] is = new double[]{0.0025, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
+                final ExponentialDistribution a = ExponentialDistribution.getMedianEstimator().extimateByMedian(0.02);
+                System.out.println(a.getLambda());
+                final ParetoDistribution b = ParetoDistribution.getMedianEstimator(0.002).extimateByMedian(0.015);
+                for (double i : is) {
+                    System.out.printf("%.4f: exp = %.4f, pareto = %.4f\n", i, -a.getInverseLogCumulativeProbability(i-0.002), -b.getInverseLogCumulativeProbability(i));
+                }
+
+            }
+
+
+
+
+
+
+
+
+            final Ms2Experiment exp = s.parseExperiment(F).next();
+            final ProcessedInput pin = s.getMs2Analyzer().preprocessing(exp);
+            final FGraph graph = s.getMs2Analyzer().buildGraph(pin, new Scored<MolecularFormula>(MolecularFormula.parse("C20H17NO6"), 0d));
+            final FTree tree = s.getMs2Analyzer().computeTree(graph);
+            final IdentificationResult r = s.compute(exp, MolecularFormula.parse("C20H17NO6"), true);
+            r.writeTreeToFile(new File("/home/kaidu/Documents/test.json"));
+            r.writeTreeToFile(new File("/home/kaidu/Documents/test.dot"));
+            System.out.println("Done");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void mainElem(String[] args)  {
         Sirius s = new Sirius();
         ElementPredictor predictor = s.getElementPrediction();
         final HashMap<String, File> doof = new HashMap<>();
@@ -296,8 +338,8 @@ public class Sirius {
         }
         // fix parentmass
         final MutableMs2Experiment exp = detectParentPeakFromWhitelist(uexperiment, whiteList);
-        // split whitelist into sublists matching a certain ionization
-        final HashMap<PrecursorIonType, IonWhitelist> subsets = splitWhitelistByIonization(exp, whiteList);
+        // split whitelist into sublists matching a certain ionization and alphabet
+        final List<IonWhitelist> subsets = splitWhitelistByIonizationAndAlphabet(exp, whiteList);
         // now compute each subset separately...
         // first MS
         final HashMap<MolecularFormula, IsotopePattern> isoScores = handleIsoAnalysisWithWhitelist(deisotope, exp, subsets);
@@ -315,7 +357,7 @@ public class Sirius {
             while (true) {
                 progress.init(whiteList.size());
                 int counter = 0;
-                for (IonWhitelist wl : subsets.values()) {
+                for (IonWhitelist wl : subsets) {
                     final MutableMs2Experiment specificExp = exp.clone();
                     specificExp.setPrecursorIonType(wl.ionization);
                     final FormulaConstraints constraints = FormulaConstraints.allSubsetsOf(wl.whitelist);
@@ -405,8 +447,24 @@ public class Sirius {
         }
     }
 
-    private HashMap<PrecursorIonType, IonWhitelist> splitWhitelistByIonization(Ms2Experiment exp, Set<MolecularFormula> whiteList){
-        // split whitelist into sublists matching a certain ionization
+    private List<IonWhitelist> splitWhitelistByIonizationAndAlphabet(Ms2Experiment exp, Set<MolecularFormula> whiteList){
+
+        final HashMap<Element, Integer> elementMap = new HashMap<>();
+        for (Element e : MolecularFormula.parse("CHNOPS").elementArray()) {
+            elementMap.put(e, elementMap.size());
+        }
+        for (MolecularFormula f : whiteList) {
+            f.visit(new FormulaVisitor<Object>() {
+                @Override
+                public Object visit(Element element, int amount) {
+                    if (!elementMap.containsKey(element))
+                        elementMap.put(element, elementMap.size());
+                    return null;
+                }
+            });
+        }
+
+        // split whitelist into sublists matching a certain ionization and alphabet
         final HashMap<PrecursorIonType, IonWhitelist> subsets = new HashMap<PrecursorIonType, IonWhitelist>();
         final double absoluteError = profile.fragmentationPatternAnalysis.getDefaultProfile().getAllowedMassDeviation().absoluteFor(exp.getIonMass());
         for (MolecularFormula f : whiteList) {
@@ -420,7 +478,38 @@ public class Sirius {
                 iw.whitelist.add(f);
             }
         }
-        return subsets;
+        // now split each of these subsets into alphabets
+
+        final List<IonWhitelist> whitelists = new ArrayList<>();
+        final HashMap<BitSet, IonWhitelist> subsets2 = new HashMap<>();
+        final BitSet defaultSet = new BitSet();
+        for (Element e : MolecularFormula.parse("CHNOPS").elementArray()) {
+            defaultSet.set(elementMap.get(e));
+        }
+        for (IonWhitelist list : subsets.values()) {
+            subsets2.clear();
+
+            for (MolecularFormula f : list.whitelist) {
+                final BitSet elems = (BitSet)defaultSet.clone();
+                f.visit(new FormulaVisitor<Object>() {
+                    @Override
+                    public Object visit(Element element, int amount) {
+                        elems.set(elementMap.get(element));
+                        return null;
+                    }
+                });
+                IonWhitelist iw = subsets2.get(elems);
+                if (iw == null) {
+                    iw = new IonWhitelist(list.ionization);
+                    subsets2.put(elems, iw);
+                }
+                iw.whitelist.add(f);
+            }
+            for (IonWhitelist iw : subsets2.values()) {
+                whitelists.add(iw);
+            }
+        }
+        return whitelists;
     }
 
     public List<IdentificationResult> identifyByIsotopePattern(Ms2Experiment experiment, int numberOfCandidates) {
@@ -437,11 +526,11 @@ public class Sirius {
             // fix parentmass
             final MutableMs2Experiment exp = detectParentPeakFromWhitelist(experiment, whiteList);
             // split whitelist into sublists matching a certain ionization
-            final HashMap<PrecursorIonType, IonWhitelist> subsets = splitWhitelistByIonization(exp, whiteList);
+            final List<IonWhitelist> subsets = splitWhitelistByIonizationAndAlphabet(exp, whiteList);
 
             final PrecursorIonType before = exp.getPrecursorIonType();
             try {
-                for (IonWhitelist wl : subsets.values()) {
+                for (IonWhitelist wl : subsets) {
                     final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(wl.whitelist);
                     exp.setPrecursorIonType(wl.ionization);
                     patterns.addAll(profile.isotopePatternAnalysis.deisotope(exp, profile.isotopePatternAnalysis.getDefaultProfile(), formulas));
@@ -489,14 +578,14 @@ public class Sirius {
         return usedIonType;
     }
 
-    private HashMap<MolecularFormula, IsotopePattern> handleIsoAnalysisWithWhitelist(IsotopePatternHandling deisotope, MutableMs2Experiment exp, HashMap<PrecursorIonType, IonWhitelist> subsets) {
+    private HashMap<MolecularFormula, IsotopePattern> handleIsoAnalysisWithWhitelist(IsotopePatternHandling deisotope, MutableMs2Experiment exp, List<IonWhitelist> subsets) {
         final HashMap<MolecularFormula, IsotopePattern> isoScores = new HashMap<>();
         if (deisotope != IsotopePatternHandling.omit) {
             final List<IsotopePattern> patterns = new ArrayList<>();
             double bestScore = 0d;
             final PrecursorIonType before = exp.getPrecursorIonType();
             try {
-                for (IonWhitelist wl : subsets.values()) {
+                for (IonWhitelist wl : subsets) {
                     final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(wl.whitelist);
                     exp.setPrecursorIonType(wl.ionization);
                     patterns.addAll(profile.isotopePatternAnalysis.deisotope(exp, profile.isotopePatternAnalysis.getDefaultProfile(), formulas));
@@ -917,7 +1006,7 @@ public class Sirius {
         try {
             while (true) {
                 tree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
-                if (tree == null) return new IdentificationResult(null, 0);
+                if (tree == null) return new IdentificationResult(null, 1);
                 final double intensity = profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(tree);
                 if (treeSizeScorer == null || modifiedTreeSizeScore >= MAX_TREESIZE_SCORE || (tree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY)) {
                     break;
@@ -932,7 +1021,7 @@ public class Sirius {
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
-        return new IdentificationResult(tree, 0);
+        return new IdentificationResult(tree, 1);
     }
 
 
