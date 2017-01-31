@@ -121,7 +121,7 @@ class WorkspaceWorker extends SwingWorker<List<ExperimentContainer>, ExperimentC
         };
         for (File file : files) {
             try {
-                new WorkspaceIO().load(file, publishingQueue);
+                new WorkspaceIO().newLoad(file, publishingQueue);
             } catch (Exception e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 this.errorMessage = e.toString();

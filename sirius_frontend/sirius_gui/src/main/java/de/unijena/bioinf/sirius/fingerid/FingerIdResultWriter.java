@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.fingerid;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
+import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -13,9 +14,13 @@ import java.util.List;
 public class FingerIdResultWriter extends DirectoryWriter {
 
 
+    public FingerIdResultWriter(WritingEnvironment w) {
+        super(w);
+    }
+
     @Override
-    protected void startWritingIdentificationResults(List<IdentificationResult> results) throws IOException {
-        super.startWritingIdentificationResults(results);
+    protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results) throws IOException {
+        super.startWritingIdentificationResults(er, results);
         // now write CSI:FingerId results
         W.enterDirectory("csi_fingerid");
         final List<FingerIdResult> frs = new ArrayList<>();

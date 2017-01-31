@@ -2,27 +2,27 @@ package de.unijena.bioinf.sirius.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
 import java.util.List;
 
 public class FingerIdResult {
 
-    protected List<Scored<CompoundCandidate>> candidates;
+    protected List<Scored<FingerprintCandidate>> candidates;
     protected double confidence;
     protected ProbabilityFingerprint predictedFingerprint;
 
-    public FingerIdResult(List<Scored<CompoundCandidate>> candidates, double confidence, ProbabilityFingerprint predictedFingerprint) {
+    public FingerIdResult(List<Scored<FingerprintCandidate>> candidates, double confidence, ProbabilityFingerprint predictedFingerprint) {
         this.candidates = candidates;
         this.confidence = confidence;
         this.predictedFingerprint = predictedFingerprint;
     }
 
-    public List<Scored<CompoundCandidate>> getCandidates() {
+    public List<Scored<FingerprintCandidate>> getCandidates() {
         return candidates;
     }
 
-    public void setCandidates(List<Scored<CompoundCandidate>> candidates) {
+    public void setCandidates(List<Scored<FingerprintCandidate>> candidates) {
         this.candidates = candidates;
     }
 

@@ -35,6 +35,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -117,6 +118,7 @@ public class SiriusDataConverter {
     }
 
     public static ExperimentContainer siriusToMyxoContainer(Ms2Experiment experiment, List<IdentificationResult> results) {
+        if (experiment==null) throw new NullPointerException();
         final ExperimentContainer c = siriusExperimentToExperimentContainer(experiment);
         if (results.size()>0) {
             c.setRawResults(results);
@@ -154,6 +156,15 @@ public class SiriusDataConverter {
             ms.addPeak(cp.getMass(), cp.getAbsoluteIntensity());
         }
         return new SimpleSpectrum(ms);
+    }
+
+    public static SimpleSpectrum myxoMs1ToSiriusMs1(List<CompactSpectrum> myxo) {
+        if (myxo.size()==1) return myxoMs1ToSiriusMs1(myxo.get(0));
+        final List<SimpleSpectrum> spectra = new ArrayList<>(myxo.size());
+        for (CompactSpectrum cs : myxo) {
+            spectra.add(myxoMs1ToSiriusMs1(cs));
+        }
+        return (Spectrums.mergeSpectra(spectra));
     }
 
     public static PrecursorIonType enumOrNameToIontype(String selectedItem) {

@@ -27,6 +27,24 @@ import java.util.List;
 
 public interface SiriusOptions {
 
+    //////////////////
+    // OUTPUT OPTIONS
+    //////////////////
+
+    @Option(shortName = "q", description = "surpress shell output")
+    public boolean isQuiet();
+
+    @Option(shortName = "o", description = "output directory.", defaultToNull = true)
+    public String getOutput();
+
+
+    @Option(longName = {"sirius", "workspace"}, shortName = "w", description = "store workspace into given file, such that it can be loaded by SIRIUS GUI afterwards", defaultToNull = true)
+    public String getSirius();
+
+
+    /////////////////////////////////////////////////
+
+
     @Option
     public boolean isVersion();
 
@@ -56,7 +74,7 @@ public interface SiriusOptions {
 
     @Option
     public boolean isCite();
-
+/*
     @Option(shortName = "o", description = "target directory/filename for the output", defaultToNull = true)
     public File getOutput();
 
@@ -71,7 +89,7 @@ public interface SiriusOptions {
 
     @Option(longName = "iontree", description = "Print molecular formulas and node labels with the ion formula instead of the neutral formula")
     public boolean isIonTree();
-
+*/
     @Option(shortName = "p", description = "name of the configuration profile. Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.", defaultValue = "default")
     public String getProfile();
 

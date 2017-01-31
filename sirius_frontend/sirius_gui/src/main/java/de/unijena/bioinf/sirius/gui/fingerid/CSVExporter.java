@@ -24,9 +24,9 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
 
 import java.io.BufferedWriter;
@@ -52,13 +52,13 @@ public class CSVExporter {
 
     public void exportFingerIdResults(Writer writer, List<FingerIdResult> results) throws IOException {
         writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
-        final ArrayList<Scored<de.unijena.bioinf.chemdb.CompoundCandidate>> candidates = new ArrayList<>();
+        final ArrayList<Scored<FingerprintCandidate>> candidates = new ArrayList<>();
         for (FingerIdResult r : results) candidates.addAll(r.getCandidates());
-        Collections.sort(candidates, Scored.<CompoundCandidate>desc());
+        Collections.sort(candidates, Scored.<FingerprintCandidate>desc());
         final Multimap<String,String> dbMap = HashMultimap.create();
         final List<String> pubchemIds = new ArrayList<>();
         int rank = 0;
-        for (Scored<CompoundCandidate> r : candidates)  {
+        for (Scored<FingerprintCandidate> r : candidates)  {
             writer.write(r.getCandidate().getInchiKey2D());
             writer.write('\t');
             writer.write(r.getCandidate().getInchi().in2D);
@@ -85,7 +85,9 @@ public class CSVExporter {
                 }
             }
             writer.write(Joiner.on(';').join(pubchemIds));
+            writer.write('\t');
             links(writer, dbMap);
+            writer.write('\n');
 
         }
 

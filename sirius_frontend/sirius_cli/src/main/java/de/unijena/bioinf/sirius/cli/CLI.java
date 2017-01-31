@@ -24,32 +24,25 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InvalidException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
-import de.unijena.bioinf.babelms.dot.FTDotWriter;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.SiriusResultWriter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -58,6 +51,23 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     protected Sirius sirius;
     protected final boolean shellMode;
     protected ShellProgress progress;
+
+    protected ProjectWriter projectWriter;
+    protected boolean shellOutputSurpressed = false;
+
+    protected org.slf4j.Logger logger = LoggerFactory.getLogger(CLI.class);
+
+
+    public void print(String s) {
+        if (!shellOutputSurpressed) System.out.print(s);
+    }
+    public void println(String s) {
+        if (!shellOutputSurpressed) System.out.println(s);
+    }
+    protected void printf(String msg, Object... args) {
+        if (!shellOutputSurpressed)
+            System.out.printf(Locale.US, msg, args);
+    }
 
     public static void main(String[] args) {
         final CLI cli = new CLI();
@@ -75,23 +85,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     public void compute() {
         try {
-            final SiriusResultWriter siriusResultWriter;
-            if (isUsingSiriusFormat()) {
-                File output = options.getOutput();
-                if (output == null) {
-                    if (inputs.size()==1) {
-                        output = new File(".",fileNameWithoutExtension(new File(inputs.get(0))) + ".sirius");
-                    } else {
-                        output = new File(".",new File(".").getAbsoluteFile().getName() + ".sirius");
-                    }
-                } else if (output.isDirectory()) {
-                    output = new File(output, "results.sirius");
-                }
-                final FileOutputStream fout = new FileOutputStream(output);
-                siriusResultWriter = new SiriusResultWriter(fout);
-            } else {
-                siriusResultWriter = null;
-            }
             sirius.setProgress(progress);
             final Iterator<Instance> instances = handleInput(options);
             while (instances.hasNext()) {
@@ -105,43 +98,42 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
                     if ((whiteset == null) && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                         results = sirius.identifyPrecursorAndIonization(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
-                        doIdentify = true;
                     } else if (whiteset != null && whiteset.isEmpty()) {
                         results = new ArrayList<>();
-                        doIdentify = true;
                     } else if (whiteset == null || whiteset.size() != 1) {
                         results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
-                        doIdentify = true;
                     } else {
-                        doIdentify = false;
                         results = Arrays.asList(sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating()));
                     }
 
-                    if (doIdentify) {
-                        int rank = 1;
-                        int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
-                        for (IdentificationResult result : results) {
-                            final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
-                            final int isoPeaks = pat==null ? 0 : pat.getPattern().size()-1;
-                            printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\t%.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
+                    int rank = 1;
+                    int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
+                    for (IdentificationResult result : results) {
+                        {
+                            final ProcessedInput processedInput = result.getStandardTree().getAnnotationOrNull(ProcessedInput.class);
+                            if (processedInput!=null) result.setAnnotation(Ms2Experiment.class, processedInput.getExperimentInformation());
+                            else result.setAnnotation(Ms2Experiment.class, i.experiment);
                         }
-                        if (siriusResultWriter == null) output(i, results);
-                    } else {
-                        if (siriusResultWriter == null) outputSingle(i, results.get(0), whiteset.iterator().next());
+                        final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
+                        final int isoPeaks = pat==null ? 0 : pat.getPattern().size()-1;
+                        printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
                     }
                     handleResults(i, results);
-                    if (siriusResultWriter != null) {
-                        siriusResultWriter.add(i.experiment, results);
-                    }
+                    output(i, results);
                 } catch (InvalidException e) {
                     LoggerFactory.getLogger(CLI.class).error("Invalid input: " + e.getMessage(),e);
                 } catch (RuntimeException e) {
                     LoggerFactory.getLogger(CLI.class).error(e.getMessage(),e);
                 }
             }
-            if (siriusResultWriter!=null) siriusResultWriter.close();
         } catch (IOException e) {
             LoggerFactory.getLogger(CLI.class).error(e.getMessage(),e);
+        } finally {
+            if (projectWriter != null) try {
+                projectWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -160,37 +152,15 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         return whiteset.isEmpty() ? null : whiteset;
     }
 
-    private boolean isUsingSiriusFormat() {
-        return (options.getFormat()!=null && options.getFormat().toLowerCase().contains("sirius")) || (options.getOutput()!=null && options.getOutput().getName().toLowerCase().endsWith(".sirius"));
-    }
-
     private Integer getNumberOfCandidates() {
         return options.getNumberOfCandidates()!=null ? options.getNumberOfCandidates() : 5;
     }
 
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
-        final int c = getNumberOfCandidates();
-        File target = options.getOutput();
-        String format = options.getFormat();
-        if (format==null) format = "dot";
-        for (IdentificationResult result : results) {
-            if (target!=null) {
-                final FTree tree = options.isIonTree() ? new IonTreeUtils().treeToIonTree(new FTree(result.getRawTree())) : result.getResolvedTree();
-                final File name = getTargetName(target, instance, result, format,c);
-                if (format.equalsIgnoreCase("json")) {
-                    new FTJsonWriter().writeTreeToFile(name, tree);
-                } else if (format.equalsIgnoreCase("dot")) {
-                    new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(name, tree);
-                } else {
-                    throw new RuntimeException("Unknown format '" + format + "'");
-                }
-            }
-            if (options.isAnnotating()) {
-                final File anoName = getTargetName(target!=null ? target : new File("."), instance, result, "csv",c);
-                new AnnotatedSpectrumWriter().writeFile(anoName, result.getResolvedTree());
-            }
+        if (projectWriter!=null) {
+            System.out.println(String.valueOf(instance.fileNameWithoutExtension()) + ": " + String.valueOf(instance.experiment));
+            projectWriter.writeExperiment(new ExperimentResult(instance.experiment, results));
         }
-
     }
 
     protected void cite() {
@@ -198,84 +168,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         System.out.println(ApplicationCore.CITATION);
     }
 
-    protected void outputSingle(Instance instance, IdentificationResult result, MolecularFormula formula) throws IOException {
-        if (result==null || result.getResolvedTree()==null) {
-            System.out.println("Cannot find valid tree with molecular formula '" + formula + "' that supports the data. You might try to increase the allowed mass deviation with parameter --ppm-max");
-            return;
-        }
-        File target = options.getOutput();
-        String format = null;
-
-        if (options.getFormat() != null) {
-            format = options.getFormat();
-        }
-
-        if (target==null) {
-            target = getTargetName(new File("."), instance, result, format==null ? "dot" : format, 1);
-        } else if (format==null){
-            final String n = target.getName();
-            final int i = n.lastIndexOf('.');
-            if (i >= 0) {
-                final String ext = n.substring(i + 1).toLowerCase();
-                if (ext.equals("json") || ext.equals("dot")) {
-                    format = ext;
-                } else format = "dot";
-            } else format = "dot";
-        }
-
-        if (format==null) format = "dot";
-
-        if (target.isDirectory()) {
-            target = getTargetName(target, instance, result, format, 1);
-        }
-        final FTree tree = options.isIonTree() ? new IonTreeUtils().treeToIonTree(new FTree(result.getRawTree())) : result.getResolvedTree();
-        if (format.equalsIgnoreCase("json")) {
-            new FTJsonWriter().writeTreeToFile(target, tree);
-        } else if (format.equalsIgnoreCase("dot")) {
-            new FTDotWriter(!options.isNoHTML(), !options.isIonTree()).writeTreeToFile(target, tree);
-        } else {
-            throw new RuntimeException("Unknown format '" + format + "'");
-        }
-        if (options.isAnnotating()) {
-            final File anoName = getTargetName(target, instance, result, "csv", 1);
-            new AnnotatedSpectrumWriter().writeFile(anoName, result.getResolvedTree());
-        }
-    }
-
-    protected File getTargetName(File target, Instance i, String format) {
-        if (!target.isDirectory()) {
-            final String name = target.getName();
-            final int j = name.lastIndexOf('.');
-            if (j>=0) return new File(target.getParentFile(), name.substring(0, j) + "." + format);
-            else return new File(target.getParentFile(), name + "." + format);
-        } else {
-            final String inputName = i.fileNameWithoutExtension();
-            return new File(target, inputName + "." + format);
-        }
-    }
-
-    protected File getTargetName(File target, Instance i, IdentificationResult result, String format, int n) {
-        if (!target.isDirectory()) {
-            final String name = target.getName();
-            final int j = name.lastIndexOf('.');
-            if (j>=0) return new File(target.getParentFile(), name.substring(0, j) + "." + format);
-            else return new File(target.getParentFile(), name + "." + format);
-        } else {
-            final String inputName = i.fileNameWithoutExtension();
-            final File name;
-            if (n<=1) {
-                name = new File(target, inputName + "." + format);
-            } else {
-                name = new File(target, inputName + "_" + result.getRank() + "_" + result.getMolecularFormula().toString() + "." + format);
-            }
-            return name;
-        }
-    }
-
     protected void parseArgsAndInit(String[] args) {
         parseArgs(args);
         setup();
         validate();
+    }
+
+    protected void validate() {
+
     }
 
     public void parseArgs(String[] args) {
@@ -305,7 +205,130 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             cite();
             System.exit(0);
         }
+        handleOutputOptions(options);
+    }
 
+    protected void handleOutputOptions(Options options) {
+        if (options.isQuiet() || "-".equals(options.getSirius())) {
+            this.shellOutputSurpressed = true;
+        }
+        if ("-".equals(options.getOutput())) {
+            logger.error("Cannot write output files and folders into standard output stream. Please use --sirius t get a zip file of SIRIUS output into the standard output stream");
+            System.exit(1);
+        }
+
+        final List<ProjectWriter> writers = new ArrayList<>();
+
+        if (options.getOutput() != null) {
+            final ProjectWriter pw;
+            if (new File(options.getOutput()).exists()) {
+                try {
+                    pw = new ProjectSpaceMerger(this, options.getOutput(), false);
+                } catch (IOException e) {
+
+                    logger.error("Cannot merge project " + options.getOutput() + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace", e);
+                    System.exit(1);
+                    return;
+                }
+            } else {
+                pw = getDirectoryOutputWriter(options.getOutput(), getWorkspaceWritingEnvironmentForDirectoryOutput(options.getOutput()));
+            }
+            writers.add(pw);
+        }
+        if (options.getSirius() != null) {
+            final ProjectWriter pw;
+            if (options.getSirius().equals("-")) {
+                pw = getSiriusOutputWriter(options.getSirius(), getWorkspaceWritingEnvironmentForSirius(options.getSirius()));
+                shellOutputSurpressed = true;
+            } else if (new File(options.getSirius()).exists()) {
+                try {
+                    pw = new ProjectSpaceMerger(this, options.getSirius(), true);
+                } catch (IOException e) {
+                    System.err.println("Cannot merge " + options.getSirius() + ". The specified file might be no valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.");
+                    System.exit(1);
+                    return;
+                }
+            } else {
+                pw = getSiriusOutputWriter(options.getSirius(), getWorkspaceWritingEnvironmentForSirius(options.getSirius()));
+            }
+
+            writers.add(pw);
+        }
+
+        if (writers.size() > 1) {
+            this.projectWriter = new MultipleProjectWriter(writers.toArray(new ProjectWriter[writers.size()]));
+        } else if (writers.size() > 0){
+            this.projectWriter = writers.get(0);
+        } else {
+            this.projectWriter = new ProjectWriter() {
+                @Override
+                public void writeExperiment(ExperimentResult result) throws IOException {
+                    // dummy stub
+                }
+
+                @Override
+                public void close() throws IOException {
+                    // dummy stub
+                }
+            };
+        }
+    }
+
+    // TODO: implement merge?
+    protected DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForSirius(String value) {
+        try {
+            if (value.equals("-")) {
+                return new SiriusWorkspaceWriter(System.out);
+            } else {
+                return new SiriusWorkspaceWriter(new FileOutputStream(new File(value)));
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("Cannot write into " + value + ". The given file name might already exists.");
+            System.exit(1);
+            return null;
+        }
+    }
+
+    protected DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForDirectoryOutput(String value) {
+        final File root = new File(value);
+        if (root.exists()) {
+            System.err.println("Cannot create directory " + root.getName() + ". File already exist.");
+            System.exit(1);
+            return null;
+        }
+        root.mkdirs();
+        return new SiriusFileWriter(root);
+    }
+
+    protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
+        return new DirectoryWriter(env);
+    }
+
+    protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
+        return new DirectoryWriter(env);
+    }
+
+    protected DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForSirius(String value) {
+        try {
+            return new SiriusWorkspaceReader(new File(value));
+        } catch (IOException e) {
+            System.err.println("Cannot read " + value + ":\n" + e.getMessage() );
+            System.exit(1);
+            return null;
+        }
+    }
+
+    protected DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForDirectoryOutput(String value) {
+        final File root = new File(value);
+        return new SiriusFileReader(root);
+    }
+
+    protected ProjectReader getSiriusOutputReader(String sirius, DirectoryReader.ReadingEnvironment env) {
+        return new DirectoryReader(env);
+    }
+
+    protected ProjectReader getDirectoryOutputReader(String sirius, DirectoryReader.ReadingEnvironment env) {
+        return new DirectoryReader(env);
     }
 
     public void setup() {
@@ -352,46 +375,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
-
-            /*
-            sirius.getMs2Analyzer().setValidatorWarning(new Warning() {
-                @Override
-                public void warn(String message) {
-                    progress.info(message);
-                }
-            });
-            */
         } catch (IOException e) {
             LoggerFactory.getLogger(CLI.class).error("Cannot load profile '" + options.getProfile() + "':\n",e);
             System.exit(1);
         }
-    }
-
-    public void validate(){
-        // validate
-        final File target = options.getOutput();
-        if (target != null) {
-            if (target.exists() && !target.isDirectory()) {
-                LoggerFactory.getLogger(CLI.class).error("Specify a directory name as output directory");
-                System.exit(1);
-            } else if (target.getName().indexOf('.') < 0){
-                target.mkdirs();
-            }
-        }
-
-        final String format = options.getFormat();
-        if (format!=null && !format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("dot") && !format.equalsIgnoreCase("sirius")) {
-            LoggerFactory.getLogger(CLI.class).error("Unknown file format '" + format + "'. Available are 'dot' and 'json'");
-            System.exit(1);
-        }
-    }
-
-
-    protected void println(String msg) {
-        System.out.println(msg);
-    }
-    protected void printf(String msg, Object... args) {
-        System.out.printf(Locale.US, msg, args);
     }
 
     protected Instance setupInstance(Instance inst) {
@@ -506,6 +493,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
 
             exp.setIonMass(expPrecursor);
+            if (exp.getName()==null) {
+                exp.setName("unknown");
+            }
             instances.add(new Instance(exp, options.getMs2().get(0)));
         } else if (options.getMs1()!=null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
@@ -589,28 +579,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
 
     protected static PrecursorIonType getIonFromOptions(SiriusOptions opt, int charge) {
-        /*
-        String ionStr = opt.getIon();
-        if (ionStr==null) {
-            if (opt.isAutoCharge()) return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
-            else return PeriodicTable.getInstance().ionByName("[M+H]+");
-        }
-        final Matcher m1 = CHARGE_PATTERN.matcher(ionStr);
-        final Matcher m2 = CHARGE_PATTERN2.matcher(ionStr);
-        final Matcher m = m1.matches() ? m1 : (m2.matches() ? m2 : null);
-        if (m != null) {
-            if (m.group(1)!=null && ionStr.contains("-")) {
-                return PeriodicTable.getInstance().getUnknownPrecursorIonType(-Integer.parseInt(m.group(1)));
-            } else {
-                return PeriodicTable.getInstance().getUnknownPrecursorIonType(Integer.parseInt(m.group(1)));
-            }
-        } else {
-            final PrecursorIonType ion = PeriodicTable.getInstance().ionByName(ionStr);
-            if (ion==null)
-                throw new IllegalArgumentException("Unknown ionization mode '" + ionStr + "'");
-            else return ion;
-        }
-        */
         String ionStr = opt.getIon();
         if (ionStr==null) {
             if (opt.isAutoCharge()) return PrecursorIonType.unknown(charge);

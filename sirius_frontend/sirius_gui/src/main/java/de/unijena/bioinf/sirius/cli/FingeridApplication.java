@@ -1,8 +1,6 @@
 package de.unijena.bioinf.sirius.cli;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
@@ -18,17 +16,17 @@ import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
-import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
+import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
+import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
+import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
 import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -38,12 +36,22 @@ import java.util.concurrent.Future;
 public class FingeridApplication extends CLI<FingerIdOptions> {
     private static final String FINGERID_RESULT_HEADER = "file\tinstance\tprecursor m/z\tinchi\tinchikey2D\tname\tsmiles\tscore\tconfidence\n";
     protected Fingerblast fingerblast;
-    protected QueryPredictor confidence;
+    protected QueryPredictor confidence, bioConfidence;
     protected ExecutorService executorService;
     protected MaskedFingerprintVersion fingerprintVersion;
-    protected BufferedWriter fingerIdResultWriter;
     protected List<Scored<String>> orderedByConfidence;
-    protected File fingerIdResultFile;
+
+    protected boolean fingeridEnabled = false;
+
+    @Override
+    protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
+        return new FingerIdResultWriter(env);
+    }
+
+    @Override
+    protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
+        return new FingerIdResultWriter(env);
+    }
 
     @Override
     public void compute() {
@@ -51,45 +59,12 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             generateCustomDatabase(options);
             return;
         }
-        if (options.isFingerid()) {
-            initFingerBlast();
-            File out;
-            if (options.getOutput() == null) {
-                out = new File("csi_fingerid_results.csv");
-            } else if (!options.getOutput().exists()) {
-                if (options.getOutput().getName().indexOf('.') >= 0) {
-                    options.getOutput().mkdirs();
-                    out = new File(options.getOutput(), "csi_fingerid_results.csv");
-                } else {
-                    out = new File(options.getOutput().getParentFile(), "csi_fingerid_results.csv");
-                }
-            } else if (options.getOutput().isDirectory()) {
-                out = new File(options.getOutput(), "csi_fingerid_results.csv");
-            } else {
-                out = new File(options.getOutput().getParentFile(), "csi_fingerid_results.csv");
-            }
-            try {
-                fingerIdResultFile = out;
-                fingerIdResultWriter = Files.newBufferedWriter(out.toPath(), Charset.forName("UTF-8"));
-                fingerIdResultWriter.write(FINGERID_RESULT_HEADER);
-                orderedByConfidence = new ArrayList<>();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                fingerIdResultWriter = null;
-            }
-
-        } else fingerIdResultWriter = null;
+        fingeridEnabled = options.isFingerid();
+        if (fingeridEnabled) initFingerBlast();
         try {
             super.compute();
         } finally {
             try {
-                if (fingerIdResultWriter != null) {
-                    fingerIdResultWriter.close();
-                    Collections.sort(orderedByConfidence, Scored.<String>desc());
-                    try (final BufferedWriter bw = Files.newBufferedWriter(fingerIdResultFile.toPath(), Charset.forName("UTF-8"))) {
-                        for (Scored<String> line : orderedByConfidence) bw.write(line.getCandidate());
-                    }
-                }
                 if (fingerblast != null) fingerblast.getSearchEngine().close();
             } catch (IOException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
@@ -105,6 +80,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     protected void handleResults(Instance i, List<IdentificationResult> results) {
         super.handleResults(i, results);
         if (results.isEmpty()) return;
+        final BioFilter bioFilter = getBioFilter();
         // this service is just use to submit several fingerprint jobs at the same time
         executorService = Executors.newFixedThreadPool(16);
         try (WebAPI webAPI = new WebAPI()) {
@@ -139,17 +115,20 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final HashMap<MolecularFormula, ProbabilityFingerprint> predictedFingerprints = new HashMap<>();
                 for (int k = 0; k < filteredResults.size(); ++k) {
                     final ProbabilityFingerprint fp = futures.get(k).get();
-                    allCandidates.addAll(fingerblast.search(filteredResults.get(k).getMolecularFormula(), fp));
-                    predictedFingerprints.put(filteredResults.get(k).getMolecularFormula(), fp);
-                }
-                {
-                    final Iterator<Scored<FingerprintCandidate>> iter = allCandidates.iterator();
-                    while (iter.hasNext()) {
-                        final Scored<FingerprintCandidate> c = iter.next();
-                        if (flag != 0 && (c.getCandidate().getBitset() & flag) == 0) {
-                            iter.remove();
+                    final List<Scored<FingerprintCandidate>> cds = fingerblast.search(filteredResults.get(k).getMolecularFormula(), fp);
+                    if (bioFilter != BioFilter.ALL) {
+                        final Iterator<Scored<FingerprintCandidate>> iter = cds.iterator();
+                        while (iter.hasNext()) {
+                            final Scored<FingerprintCandidate> c = iter.next();
+                            if (flag != 0 && (c.getCandidate().getBitset() & flag) == 0) {
+                                iter.remove();
+                            }
                         }
                     }
+                    Collections.sort(cds);
+                    allCandidates.addAll(cds);
+                    predictedFingerprints.put(filteredResults.get(k).getMolecularFormula(), fp);
+                    filteredResults.get(k).setAnnotation(FingerIdResult.class, new FingerIdResult(cds, 0d, fp));
                 }
                 Collections.sort(allCandidates, Scored.<FingerprintCandidate>desc());
                 if (allCandidates.size() == 0) {
@@ -158,34 +137,53 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 }
                 // compute confidence for top hit from bio database
                 final ArrayList<Scored<CompoundWithAbstractFP<Fingerprint>>> confidenceList = new ArrayList<>();
-                MolecularFormula topFormula = null;
-                FingerprintCandidate topCandidate = null;
+                final ArrayList<Scored<CompoundWithAbstractFP<Fingerprint>>> bioConfidenceList = new ArrayList<>();
+                CompoundCandidate topBio = null;
                 for (Scored<FingerprintCandidate> fc : allCandidates) {
-                    if (fc.getCandidate().getBitset() > 0) {
-                        if (topFormula == null) topFormula = fc.getCandidate().getInchi().extractFormula();
-                        if (fc.getCandidate().getInchi().extractFormula().equals(topFormula))
-                            confidenceList.add(new Scored<>(new CompoundWithAbstractFP<Fingerprint>(fc.getCandidate().getInchi(), fc.getCandidate().getFingerprint()), fc.getScore()));
-                        if (topCandidate == null) topCandidate = fc.getCandidate();
+                    Scored<CompoundWithAbstractFP<Fingerprint>> c = new Scored<>(new CompoundWithAbstractFP<Fingerprint>(fc.getCandidate().getInchi(), fc.getCandidate().getFingerprint()), fc.getScore());
+
+                    confidenceList.add(c);
+                    if (DatasourceService.isBio(fc.getCandidate().getBitset())) {
+                        bioConfidenceList.add(c);
+                        if (topBio==null) topBio = fc.getCandidate();
                     }
                 }
+
+                // find top result
+                FingerIdResult topResult = null;
+                for (IdentificationResult ir : results) {
+                    FingerIdResult r = ir.getAnnotationOrNull(FingerIdResult.class);
+                    if (r != null && r.getCandidates().size()>0 && r.getCandidates().get(0).equals(allCandidates.get(0))) {
+                        topResult = r;
+                        break;
+                    }
+                }
+
                 if (!confidenceList.isEmpty()) {
+                    final Scored<CompoundWithAbstractFP<Fingerprint>> c = confidenceList.get(0);
+                    final CompoundCandidate fc = allCandidates.get(0).getCandidate();
                     final CompoundWithAbstractFP[] list = new CompoundWithAbstractFP[confidenceList.size()];
                     for (int k = 0; k < confidenceList.size(); ++k) list[k] = confidenceList.get(k).getCandidate();
-                    final double confidenceScore = confidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(confidenceList.get(0).getCandidate().getInchi(), predictedFingerprints.get(topFormula)), list);
+                    final double confidenceScore = confidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(c.getCandidate().getInchi(), predictedFingerprints.get(c.getCandidate().getInchi().extractFormula())), list);
 
-                    String name = topCandidate.getName();
-                    if (name == null || name.isEmpty()) name = topCandidate.getSmiles();
+                    if (topResult!=null) topResult.setConfidence(confidenceScore);
+
+                    String name = fc.getName();
+                    if (name == null || name.isEmpty()) name = fc.getSmiles();
                     if (name == null || name.isEmpty()) name = "";
-                    progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, topCandidate.getInchi().in2D, confidenceScore));
-                    try {
+                    progress.info(String.format(Locale.US, "Top compound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
+                }
+                if (bioFilter != BioFilter.ONLY_BIO && topBio!=null && topBio != allCandidates.get(0).getCandidate()) {
+                    final Scored<CompoundWithAbstractFP<Fingerprint>> c = bioConfidenceList.get(0);
+                    final CompoundCandidate fc = topBio;
+                    final CompoundWithAbstractFP[] list = new CompoundWithAbstractFP[bioConfidenceList.size()];
+                    for (int k = 0; k < bioConfidenceList.size(); ++k) list[k] = bioConfidenceList.get(k).getCandidate();
+                    final double confidenceScore = bioConfidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(c.getCandidate().getInchi(), predictedFingerprints.get(c.getCandidate().getInchi().extractFormula())), list);
 
-                        final String line = String.format(Locale.US, "%s\t%s\t%f\t%s\t%s\t%s\t%s\t%f\t%f\n", i.fileNameWithoutExtension(), i.experiment.getName(), i.experiment.getIonMass(), topCandidate.getInchi().in2D, topCandidate.getInchi().key2D(), escape(topCandidate.getName()), topCandidate.getSmiles(), confidenceList.get(0).getScore(), confidenceScore);
-                        fingerIdResultWriter.write(line);
-                        fingerIdResultWriter.flush();
-                        orderedByConfidence.add(new Scored<String>(line, confidenceScore));
-                    } catch (IOException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                    }
+                    String name = fc.getName();
+                    if (name == null || name.isEmpty()) name = fc.getSmiles();
+                    if (name == null || name.isEmpty()) name = "";
+                    progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
                 }
 
                 for (int k = 0; k < Math.min(20, allCandidates.size()); ++k) {
@@ -193,52 +191,12 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     String n = f.getName();
                     if (n == null || n.isEmpty()) n = f.getSmiles();
                     if (n == null) n = "";
-                    System.out.println(String.format(Locale.US, "%2d.) %s\t%s\tscore: %.2f", (k + 1), n, f.getInchi().in2D, allCandidates.get(k).getScore()));
+                    println(String.format(Locale.US, "%2d.) %s\t%s\tscore: %.2f", (k + 1), n, f.getInchi().in2D, allCandidates.get(k).getScore()));
                 }
                 if (allCandidates.size() > 20) {
-                    System.out.println("... " + (allCandidates.size() - 20) + " further candidates.");
+                    println("... " + (allCandidates.size() - 20) + " further candidates.");
                 }
-                System.out.println("");
-
-                // write to file
-                final File targetFile = getTargetName(options.getOutput() != null ? options.getOutput() : new File("."), i, "csv");
-                final TIntArrayList pubchemIds = new TIntArrayList();
-                final Multimap<String, String> databases = ArrayListMultimap.create();
-                try (BufferedWriter bw = Files.newBufferedWriter(targetFile.toPath(), Charset.forName("UTF-8"))) {
-                    bw.write("inchikey2D\tinchi\trank\tscore\tname\tsmiles\tpubchemids\tlinks\n");
-                    for (int k = 0; k < allCandidates.size(); ++k) {
-                        final FingerprintCandidate c = allCandidates.get(k).getCandidate();
-                        bw.write(c.getInchiKey2D());
-                        bw.write('\t');
-                        bw.write(c.getInchi().in2D);
-                        bw.write('\t');
-                        bw.write(String.valueOf(k + 1));
-                        bw.write('\t');
-                        bw.write(String.valueOf(allCandidates.get(k).getScore()));
-                        bw.write('\t');
-                        bw.write(escape(c.getName()));
-                        bw.write('\t');
-                        bw.write(c.getSmiles());
-                        bw.write('\t');
-                        pubchemIds.clear();
-                        databases.clear();
-                        if (c.getLinks() != null) {
-                            for (DBLink link : c.getLinks()) {
-                                if (link.name.equals(DatasourceService.Sources.PUBCHEM.name))
-                                    pubchemIds.add(Integer.parseInt(link.id));
-                                else databases.put(link.name, link.id);
-                            }
-                        }
-                        CSVExporter.list(bw, pubchemIds.toArray());
-                        bw.write('\t');
-                        CSVExporter.links(bw, databases);
-                        bw.newLine();
-
-                    }
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                }
-
+                println("");
             }
         } catch (InterruptedException | ExecutionException | DatabaseException | PredictionException | IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Error while searching structure for " + i.experiment.getName() + " (" + i.file + "): " + e.getMessage(), e);
@@ -263,10 +221,6 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     @Override
     public void validate() {
         super.validate();
-        if (options.isIonTree() && options.isFingerid()) {
-            LoggerFactory.getLogger(this.getClass()).error("--iontree and --fingerid cannot be enabled both. Please disable one of them.");
-            System.exit(1);
-        }
         if (options.getFingerIdDb() != null && !options.isFingerid()) {
             LoggerFactory.getLogger(this.getClass()).error("--fingerid_db defines the database CSI:FingerId should search in. This option makes only sense when used together with --fingerid. Use --db for setting up the database in which SIRIUS should search for molecular formulas.");
             System.exit(1);
@@ -308,6 +262,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             this.fingerblast = new Fingerblast(getFingerIdDatabase());
             this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
+            this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
             MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
             b.disableAll();
             for (int index : indizes.toArray()) {

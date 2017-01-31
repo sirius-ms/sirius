@@ -48,6 +48,8 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
                 if (i>=0) indizes.add(i);
             }
             this.indizes = indizes.toArray();
+        } else {
+            indizes = new int[0];
         }
     }
 }
