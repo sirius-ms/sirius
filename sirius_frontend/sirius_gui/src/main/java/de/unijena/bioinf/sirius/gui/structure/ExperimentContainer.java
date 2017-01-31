@@ -5,6 +5,8 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jdesktop.beans.AbstractBean;
 
+import javax.swing.event.SwingPropertyChangeSupport;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +20,7 @@ public class ExperimentContainer extends AbstractBean {
     private double selectedFocusedMass;
     private double dataFocusedMass;
     private String name, guiName;
+    private URL source;
     private int suffix;
     private volatile ComputingStatus computeState;
     private String errorMessage;
@@ -204,5 +207,13 @@ public class ExperimentContainer extends AbstractBean {
 
     public void fireUpdateEvent(){
         firePropertyChange("updated", false, true);
+    }
+
+    public URL getSource() {
+        return source;
+    }
+
+    public void setSource(URL source) {
+        this.source = source;
     }
 }

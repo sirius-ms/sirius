@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  */
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListTextCellRenderer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -34,9 +33,6 @@ public class FormulaTableCompactView extends FormulaTableView {
         resultListView.setVisibleRowCount(1);
         resultListView.setPrototypeCellValue(ResultTreeListTextCellRenderer.PROTOTYPE);
         resultListView.setMinimumSize(new Dimension(0, 45));
-        resultListView.setPreferredSize(new Dimension(0, 45));
-
-
 
         setLayout(new BorderLayout());
 

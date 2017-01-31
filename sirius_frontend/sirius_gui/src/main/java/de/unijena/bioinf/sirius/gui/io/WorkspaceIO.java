@@ -29,6 +29,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.projectspace.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -38,6 +39,37 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class WorkspaceIO {
+
+    public void newStore(List<ExperimentContainer> containers, File file) throws IOException {
+        final DirectoryWriter.WritingEnvironment env;
+        if (file.isDirectory()) {
+            env = new SiriusFileWriter(file);
+        } else {
+            env = new SiriusWorkspaceWriter(file);
+        }
+        final DirectoryWriter w = new DirectoryWriter(env);
+        for (ExperimentContainer c : containers) {
+            final Ms2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(c);
+            w.writeExperiment(new ExperimentResult(exp, c.getRawResults()));
+        }
+        w.close();
+    }
+
+    public Queue<ExperimentContainer> newLoad(File file, Queue<ExperimentContainer> queue) throws IOException {
+        final DirectoryReader.ReadingEnvironment env;
+        if (file.isDirectory()) {
+            env = new SiriusFileReader(file);
+        } else {
+            env = new SiriusWorkspaceReader(file);
+        }
+        final DirectoryReader reader = new DirectoryReader(env);
+
+        while (reader.hasNext()) {
+            final ExperimentResult result = reader.next();
+            queue.add(SiriusDataConverter.siriusToMyxoContainer(result.getExperiment(), result.getResults()));
+        }
+        return queue;
+    }
 
     public List<ExperimentContainer> load(File file) throws IOException {
         final ArrayDeque<ExperimentContainer> queue = new ArrayDeque<>();
