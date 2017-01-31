@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 
 import java.io.IOException;
@@ -9,9 +10,12 @@ import java.util.List;
 public class CSVOutputWriter {
 
     public static void writeHits(Writer w, List<IdentificationResult> results) throws IOException {
-        w.write("formula\trank\tscore\ttreeScore\tisoScore\texplainedPeaks\texplainedIntensity\n");
+        w.write("formula\tadduct\trank\tscore\ttreeScore\tisoScore\texplainedPeaks\texplainedIntensity\n");
         for (IdentificationResult r : results) {
+            PrecursorIonType ion = r.getStandardTree().getAnnotationOrNull(PrecursorIonType.class);
             w.write(r.getMolecularFormula().toString());
+            w.write('\t');
+            w.write(ion!=null ? ion.toString() : "?");
             w.write('\t');
             w.write(String.valueOf(r.getRank()));
             w.write('\t');
