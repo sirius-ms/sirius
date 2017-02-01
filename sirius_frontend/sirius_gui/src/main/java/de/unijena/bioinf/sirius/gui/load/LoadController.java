@@ -278,6 +278,8 @@ public class LoadController implements LoadDialogListener{
 	}
 	
 	public void importExperimentContainer(ExperimentContainer ec, List<String> errorStorage){
+		workingExp.setSource(ec.getSource());
+
 		if(workingExp.getIonization().isIonizationUnknown() && ec.getIonization()!=null && !ec.getIonization().isIonizationUnknown()){
 			workingExp.setIonization(ec.getIonization());
 			loadDialog.ionizationChanged(ec.getIonization());
