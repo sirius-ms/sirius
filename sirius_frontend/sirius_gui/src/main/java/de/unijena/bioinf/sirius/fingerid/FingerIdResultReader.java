@@ -33,6 +33,7 @@ public class FingerIdResultReader extends DirectoryReader {
     @Override
     protected void addMetaData(Ms2Experiment input, List<IdentificationResult> results) throws IOException {
         super.addMetaData(input, results);
+        if (!new HashSet<>(env.list()).contains("csi_fingerid")) return;
         try {
             env.enterDirectory("csi_fingerid");
             // read compound candidates result list

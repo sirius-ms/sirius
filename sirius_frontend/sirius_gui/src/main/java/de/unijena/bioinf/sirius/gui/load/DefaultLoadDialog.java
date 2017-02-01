@@ -300,7 +300,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
                 ionizations.add(ionization.toString());
                 ionizationCB.setSelectedItem(ionization.toString());
             } else {
-                ionizationCB.setSelectedItem(ionization.toString());
+                ionizationCB.setSelectedItem(enumbla.toString());
             }
         }
     }

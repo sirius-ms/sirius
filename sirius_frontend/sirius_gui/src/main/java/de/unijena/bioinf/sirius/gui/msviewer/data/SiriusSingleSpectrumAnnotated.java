@@ -43,6 +43,9 @@ public class SiriusSingleSpectrumAnnotated extends SiriusSingleSpectrumModel {
         double scale = 0d;
         for (Fragment f : tree) {
             AnnotatedPeak peak = annotatedPeak.get(f);
+            if (peak == null) {
+                continue;
+            }
             for (Peak p : peak.getOriginalPeaks()) {
                 int i = Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, peak.getMass()-1e-6);
                 for (int j=i; j < spectrum.size(); ++j) {
