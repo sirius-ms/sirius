@@ -22,17 +22,7 @@ public class ScoreVisualizationPanel extends JPanel {
 	}
 	
 	public void initColorsAndFonts(){
-		
-//		try{
-//			File fontFile = new File("ttf/DejaVuSans-Bold.ttf");
-//			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-//			compoundFont = tempFont.deriveFont(13f);
-//			
-//			propertyFont = tempFont.deriveFont(12f);
-//		}catch(Exception e){
-//			System.out.println(e.getMessage());
-//		}
-		
+
 		try{
 			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
 			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);

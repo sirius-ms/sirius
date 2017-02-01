@@ -6,11 +6,9 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
-import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
-import de.unijena.bioinf.sirius.gui.fingerid.ConfidenceList;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
@@ -21,7 +19,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTable;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -48,6 +45,26 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return experimentList;
     }
 
+    public List<ExperimentContainer> getCompounds() {
+        return experimentList.getCompoundList();
+    }
+
+    public DefaultEventSelectionModel<ExperimentContainer> getCompoundListSelectionModel() {
+        return experimentList.getCompoundListSelectionModel();
+    }
+
+    private FormulaTable formulaList;
+
+    public FormulaTable getFormulaList() {
+        return formulaList;
+    }
+
+    private ResultPanel resultsPanel;
+
+    public ResultPanel getResultsPanel() {
+        return resultsPanel;
+    }
+
     private CSIFingerIdComputation csiFingerId;
 
     public CSIFingerIdComputation getCsiFingerId() {
@@ -66,123 +83,50 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return toolbar;
     }
 
-
-    private FormulaTable formulaList;
-
-    public FormulaTable getFormulaList() {
-        return formulaList;
-    }
-
-    private ResultPanel resultsPanel;
-
-    public ResultPanel getResultsPanel() {
-        return resultsPanel;
-    }
-
-
-    private JPanel resultsContainerPanel;
-    private CardLayout resultsPanelCL;
-
-    private static final String DUMMY_CARD = "dummy";
-    private static final String RESULTS_CARD = "results";
-    private DatabaseDialog dbDialog;
-
     private BackgroundComputation backgroundComputation;
 
-    private boolean removeWithoutWarning = false; //todo config storage
+    public BackgroundComputation getBackgroundComputation() {
+        return backgroundComputation;
+    }
 
+    private boolean removeWithoutWarning = false; //todo config storage
     private DropTarget dropTarget;
-    private ConfidenceList confidenceList;
 
 
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
     }
 
     private static void decoradeMainFrameInstance(final MainFrame mf) {
+        //create computation
+        mf.csiFingerId = new CSIFingerIdComputation();
+        mf.backgroundComputation = new BackgroundComputation(mf.csiFingerId);
 
-        mf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//        this.addWindowListener(this);
-        mf.setLayout(new BorderLayout());
+        // create models for views
+        mf.experimentList = new ExperimentList();
+        mf.formulaList = new FormulaTable(mf.experimentList);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        //CREATE VIEWS
+        mf.jobDialog = new JobDialog(mf);
+        // results Panel
+        mf.resultsPanel = new ResultPanel(mf.formulaList);
+
+        mf.toolbar = new SiriusToolbar();
+        mf.dropTarget = new DropTarget(mf, DnDConstants.ACTION_COPY_OR_MOVE, mf);
+
+        //Init actions
+        SiriusActionManager.initRootManager();
+
+        final JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setActionMap(SiriusActionManager.ROOT_MANAGER);
 
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
         mf.add(mainPanel, BorderLayout.CENTER);
 
-
-        mf.csiFingerId = new CSIFingerIdComputation(new CSIFingerIdComputation.Callback() {
-            @Override
-            public void computationFinished(final ExperimentContainer container, final SiriusResultElement element) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        container.fireUpdateEvent();
-                    }
-                });
-            }
-        });
-
-        mf.backgroundComputation = new BackgroundComputation(mf.csiFingerId);
-
-
-        /////////////////////////////// LEFT Panel (Compunt list) //////////////////////////////
-        mf.experimentList = new ExperimentList();
-        /////////////////////////////// LEFT Panel (Compunt list) DONE //////////////////////////////
-
-        mf.formulaList = new FormulaTable(mf.experimentList);
-
-        mf.jobDialog = new JobDialog(mf);
-
-        //todo reintegrate this panel wenn confidence works
-        /*JPanel tmp_wrapper = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("<html>Confidence score is an experimental feature.Use with caution.<html>");
-        tmp_wrapper.add(label, BorderLayout.NORTH);
-
-        confidenceList = new ConfidenceList(COMPOUNT_LIST);
-        confidenceList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!confidenceList.isSelectionEmpty()) {
-                    final ExperimentContainer container = confidenceList.getSelectedValue();
-                    selectExperimentContainer(container, container.getBestHit());
-                }
-            }
-        });
-
-        JScrollPane paneConfidence = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        paneConfidence.setViewportView(confidenceList);
-        label.setPreferredSize(new Dimension(paneConfidence.getPreferredSize().width, label.getPreferredSize().height * 3));
-        tmp_wrapper.add(paneConfidence, BorderLayout.CENTER);
-
-        csiFingerId.setConfidenceCallback(new CSIFingerIdComputation.Callback() {
-            @Override
-            public void computationFinished(ExperimentContainer container, SiriusResultElement element) {
-                refreshCompound(container);
-            }
-        });*/
-
-
-        // results PAnel
-        mf.resultsPanelCL = new CardLayout();
-        mf.resultsContainerPanel = new JPanel(mf.resultsPanelCL);
-        JPanel dummyPanel = new JPanel();
-        mf.resultsContainerPanel.add(dummyPanel, DUMMY_CARD);
-
-        mf.resultsPanel = new ResultPanel(mf.formulaList);
-
-        // resluts done
-
-        mf.toolbar = new SiriusToolbar();
-
-
-        mf.dropTarget = new DropTarget(mf, DnDConstants.ACTION_COPY_OR_MOVE, mf);
-
-
-        SiriusActionManager.initRootManager();
-
-
+        //build left sidepane
         FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(mf.experimentList));
 
         //BUILD the MainFrame (GUI)
@@ -197,6 +141,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mf.setSize(new Dimension(1368, 1024));
 
 
+        //finger id observer
         final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
 
             @Override
@@ -254,112 +199,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         csiFingerId.shutdown();
         super.dispose();
     }
-
-    public BackgroundComputation getBackgroundComputation() {
-        return backgroundComputation;
-    }
-
-    public List<ExperimentContainer> getCompounds() {
-        return experimentList.getCompoundList();
-    }
-
-    public DefaultEventSelectionModel<ExperimentContainer> getCompoundListSelectionModel() {
-        return experimentList.getCompoundListSelectionModel();
-    }
-
-    /*public List<ExperimentContainer> getSelectedCompounds() {
-        return experimentList.compoundListView.getSelectedValuesList();
-    }*/
-
-//    public EventList<ExperimentContainer> getCompoundsList() {
-//        return compoundList;
-//    }
-
-    /* public ListModel getCompoundModel() {
-        return compoundModel;
-    }*/
-
-   /* public void refreshCompound(final ExperimentContainer c) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (compoundListView.getSelectedValue() == c) {
-                    resultsPanel.changeData(c);
-                }
-                refreshComputationMenuItem();
-                refreshExportMenuButton();
-
-            }
-        });
-
-    }*/
-
-
-    /*public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == configFingerID) { //compute fingerid
-
-        } else if (e.getSource() == newB || e.getSource() == newExpMI) {
-
-        } else if (e.getSource() == exportResultsB) {
-            exportResults();
-        } else if (e.getSource() == computeMI) {
-
-        } else if (e.getSource() == computeAllB) {
-            if (computeAllActive) {
-
-            }
-        } else if (e.getSource() == cancelMI) {
-
-        } else if (e.getSource() == saveB) {
-
-
-
-
-        } else if (e.getSource() == loadB) {
-
-
-        } else if (e.getSource() == closeMI) {
-
-        } else if (e.getSource() == editMI) {
-
-        } else if (e.getSource() == batchB || e.getSource() == batchMI) {
-
-
-
-            //zu unfangreich, extra Methode
-
-        }
-
-
-    }*/
-
-
-    //todo i think we nee a listener for this
-    /*@Override
-    public void valueChanged(ListSelectionEvent e) {
-        if (e.getSource() == this.compoundListView) {
-
-            if (index < 0) {
-
-                this.resultsPanel.changeData(null);
-            } else {
-
-                this.resultsPanel.changeData(compoundList.get(index));
-                resultsPanelCL.show(resultsContainerPanel, RESULTS_CARD);
-            }
-        }
-    }*/
-
-  /*  public void selectExperimentContainer(ExperimentContainer container) {
-        this.resultsPanel.changeData(container);
-        compoundListView.setSelectedValue(container, true);
-        resultsPanelCL.show(resultsContainerPanel, RESULTS_CARD);
-    }
-
-    public void selectExperimentContainer(ExperimentContainer container, SiriusResultElement element) {
-        selectExperimentContainer(container);
-        resultsPanel.select(element, true);
-    }*/
 
 
     //////////////////////////////////////////////////
@@ -462,8 +301,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
     }
 
+    //Test connection
     public boolean csiConnectionAvailable() {
-        //Test connection
         if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
             new NoConnectionDialog(this);
             return false;

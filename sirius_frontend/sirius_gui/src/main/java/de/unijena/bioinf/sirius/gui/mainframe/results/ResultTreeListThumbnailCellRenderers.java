@@ -18,26 +18,6 @@ public class ResultTreeListThumbnailCellRenderers implements ListCellRenderer<Si
 		renderPanels = new HashMap<>();
 		unevenColor = new Color(230,239,255);
 		selectedColor = new Color(187,210,255);
-		updateData(results);
-	}
-	
-	public void updateData(List<SiriusResultElement> results){
-		throw new RuntimeException("not implemented");
-//		for(int i=0;i<results.size();i++){
-//			SiriusResultElement sre = results.get(i);
-//			TreeRenderPanel panel = new TreeRenderPanel(sre.getTreeVisualization());
-//			
-//			Color color = Color.white;
-//			if(i%2==1){
-//				color = unevenColor;
-//			}
-//			
-//			panel.changeRenderParameters(color, NodeType.thumbnail, new RGBScoreNodeColorManager(sre.getTreeVisualization()));
-//			
-//			System.out.println("minSize: "+panel.getPreferredSize().getWidth()+" "+panel.getPreferredSize().getHeight());
-//			
-//			renderPanels.put(sre, panel);
-//		}
 	}
 
 	@Override

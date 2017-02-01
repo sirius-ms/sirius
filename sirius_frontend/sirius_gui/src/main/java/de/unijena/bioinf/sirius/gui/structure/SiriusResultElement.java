@@ -27,8 +27,6 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     protected volatile FingerIdData fingerIdData;
     private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
-    private final  PropertyChangeSupport pcd = new SwingPropertyChangeSupport(this);
-
     public SiriusResultElement(IdentificationResult result) {
         this.tree = null;
         this.resultElement = result;
@@ -48,7 +46,6 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     }
 
     public void setFingerIdData(FingerIdData fingerIdData) {
-        //todo maybe property change needed. but i hope that can be done via computation state
         this.fingerIdData = fingerIdData;
     }
 
@@ -109,7 +106,6 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
         final ComputingStatus old = this.fingerIdComputeState;
         this.fingerIdComputeState = fingerIdComputeState;
         fireEDTPropertyChange("finger_compute_state", old, this.fingerIdComputeState);
-        System.out.println(this.fingerIdComputeState);
     }
 
 

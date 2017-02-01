@@ -11,6 +11,7 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+//todo this is beta state
 public class ResultsOverviewPanel extends JPanel {
     public ResultsOverviewPanel(final JPanel north, final JPanel left, final int lIndex, final JPanel right, final int rIndex) {
         super(new BorderLayout());
@@ -22,79 +23,6 @@ public class ResultsOverviewPanel extends JPanel {
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, east);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
-
-
-// setResizeWeight(.5d);
-//        JPanel north = new SiriusResultTablePanel(MF.getExperimentList());
-//        north.setMinimumSize(new Dimension(400,north.getMinimumSize().height));
-
-
-//        JPanel south = new JPanel(new BorderLayout());
-
-//        left.setPreferredSize();
-//        right.setPreferredSize(new Dimension(150,500));
-
-        /*left.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                owner.setSelectedIndex(lIndex);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });
-
-        right.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                owner.setSelectedIndex(rIndex);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });
-*/
-//        south.add(left, BorderLayout.WEST);
-//        south.add(right, BorderLayout.EAST);
-//
-//        add(north, BorderLayout.NORTH);
-//        add(south, BorderLayout.SOUTH);
-
-
     }
 
 

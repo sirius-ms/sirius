@@ -33,7 +33,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
     }
 
     public void initColorsAndFonts() {
-        //todo replace font with them from utils
+        //todo replace font with them from utils class
         try {
             InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
             Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);

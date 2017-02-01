@@ -97,7 +97,6 @@ public class CSIFingerIdComputation {
     protected RESTDatabase restDatabase;
     protected boolean configured = false;
     private File directory;
-    protected Callback callback, confidenceCallback;//todo why do we have 2 callbacks
     private boolean enabled;
     protected List<Runnable> enabledListeners=new ArrayList<>();
 
@@ -117,7 +116,7 @@ public class CSIFingerIdComputation {
 
     private final ConcurrentLinkedQueue<FingerIdTask> formulaQueue, jobQueue, blastQueue;
 
-    public CSIFingerIdComputation(Callback callback) {
+    public CSIFingerIdComputation() {
         globalLock = new ReentrantLock();
         globalCondition = globalLock.newCondition();
         this.compounds = new HashMap<>(32768);
@@ -129,7 +128,6 @@ public class CSIFingerIdComputation {
         this.formulaQueue = new ConcurrentLinkedQueue<>();
         this.blastQueue = new ConcurrentLinkedQueue<>();
         this.jobQueue = new ConcurrentLinkedQueue<>();
-        this.callback = callback;
 
         final int numberOfBlastThreads = Runtime.getRuntime().availableProcessors()-1;
 
@@ -163,16 +161,6 @@ public class CSIFingerIdComputation {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         for (Runnable r : enabledListeners) r.run();
-    }
-
-
-
-    public Callback getConfidenceCallback() {
-        return confidenceCallback;
-    }
-
-    public void setConfidenceCallback(Callback confidenceCallback) {
-        this.confidenceCallback = confidenceCallback;
     }
 
     public MaskedFingerprintVersion getFingerprintVersion() {
@@ -790,7 +778,6 @@ public class CSIFingerIdComputation {
                     resultElement.setFingerIdData(data);
                     resultElement.setFingerIdComputeState(ComputingStatus.COMPUTED);
                     refreshConfidence(experiment);
-                    callback.computationFinished(experiment, resultElement);
                     container.job.done();
                     } catch (RuntimeException e) {
                         container.job.error(e.getMessage(), e);

@@ -47,7 +47,6 @@ public class ExperimentListView extends JScrollPane {
 
             @Override
             public void mousePressed(MouseEvent e) {
-                System.out.println("LEFT MOUSE");
                 if (SwingUtilities.isRightMouseButton(e)) {
                     int indx = compoundListView.locationToIndex(e.getPoint());
                     boolean select = true;
@@ -62,8 +61,7 @@ public class ExperimentListView extends JScrollPane {
                     }
 
                     if (e.isPopupTrigger()) {
-                        if (expPopMenu != null)
-                            expPopMenu.show(e.getComponent(), e.getX(), e.getY());
+                        expPopMenu.show(e.getComponent(), e.getX(), e.getY());
                     }
                 }
             }
@@ -91,8 +89,8 @@ public class ExperimentListView extends JScrollPane {
         KeyStroke delKey = KeyStroke.getKeyStroke("DELETE");
         compoundListView.getInputMap().put(delKey, SiriusActions.DELETE_EXP.name());
 
-        compoundListView.getActionMap().put(SiriusActions.DELETE_EXP.name(),SiriusActions.DELETE_EXP.getInstance());
-        compoundListView.getActionMap().put(SiriusActions.COMPUTE.name(),SiriusActions.COMPUTE.getInstance());
+        compoundListView.getActionMap().put(SiriusActions.DELETE_EXP.name(), SiriusActions.DELETE_EXP.getInstance());
+        compoundListView.getActionMap().put(SiriusActions.COMPUTE.name(), SiriusActions.COMPUTE.getInstance());
     }
 
     public JPopupMenu getExpPopMenu() {

@@ -26,7 +26,6 @@ public class SiriusResultTableFormat implements TableFormat<SiriusResultElement>
         else if (column == 2) return "Score";
         else if (column == 3) return "Isotope Score";
         else if (column == 4) return "Tree Score";
-//        else if (column == 5) return "Summary";
 
         throw new IllegalStateException();
     }
@@ -42,7 +41,6 @@ public class SiriusResultTableFormat implements TableFormat<SiriusResultElement>
         else if (column == 2) return result.getScore();
         else if (column == 3) return result.getResult().getIsotopeScore();
         else if (column == 4) return result.getResult().getTreeScore();
-//        else if (column == 5) return result.getFormulaAndIonText();
 
         throw new IllegalStateException();
     }

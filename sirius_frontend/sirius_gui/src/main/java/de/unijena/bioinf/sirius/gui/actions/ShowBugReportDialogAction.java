@@ -19,7 +19,7 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 public class ShowBugReportDialogAction extends AbstractAction {
 
     public ShowBugReportDialogAction() {
-        super("Bug_Report");
+        super("Bug Report");
         putValue(Action.LARGE_ICON_KEY, Icons.BUG_32);
         putValue(Action.SHORT_DESCRIPTION,"Report a bug or send a feature request");
     }

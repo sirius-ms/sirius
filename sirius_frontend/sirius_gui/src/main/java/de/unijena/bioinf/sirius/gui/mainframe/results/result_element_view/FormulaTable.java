@@ -12,8 +12,8 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResults;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListTextCellRenderer;
@@ -57,9 +57,7 @@ public class FormulaTable implements ActiveResults {
             public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
-                        System.out.println("iteration");
                         if (selection.isSelectedIndex(event.getIndex())) {
-                            System.out.println("DATA Listener");
                             setData(event.getSourceList().get(event.getIndex()));
                             return;
                         }
@@ -69,7 +67,6 @@ public class FormulaTable implements ActiveResults {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
-                System.out.println("PARENT SELECTION Listener");
                 if (!selection.isSelectionEmpty())
                     setData(selection.getSelected().get(0));
                 else
@@ -80,14 +77,11 @@ public class FormulaTable implements ActiveResults {
         selectionModel.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                System.out.println("SELECTION Listener");
                 if (!selectionModel.getValueIsAdjusting()) {
                     if (selectionModel.isSelectionEmpty() || resultList == null || resultList.isEmpty())
                         notifyListeners(ec, null, resultList, selectionModel);
                     else
                         notifyListeners(ec, resultList.get(selectionModel.getMinSelectionIndex()), resultList, selectionModel);
-                } else {
-                    System.out.println("adjusting");
                 }
             }
         });
@@ -110,15 +104,12 @@ public class FormulaTable implements ActiveResults {
     }
 
     private void setData(final ExperimentContainer ec) {
-        System.out.println("SetData");
         this.ec = ec;
         selectionModel.setValueIsAdjusting(true);
         resultList.getReadWriteLock().writeLock().lock();
 
         if (this.ec != null && this.ec.getResults() != null && !this.ec.getResults().isEmpty()) {
-            System.out.println("ther are results");
             if (!this.ec.getResults().equals(resultList)) {
-                System.out.println("SetDataREALLY");
                 selectionModel.clearSelection();
                 resultList.clear();
                 resultList.addAll(this.ec.getResults());

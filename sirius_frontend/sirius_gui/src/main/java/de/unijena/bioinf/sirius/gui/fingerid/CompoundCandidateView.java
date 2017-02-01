@@ -18,9 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.sirius.gui.actions.ComputeCSIAction;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -30,9 +28,6 @@ import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
@@ -46,23 +41,14 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
-//    protected Runnable enableCsiFingerId;
 
-    public CompoundCandidateView(){
+    public CompoundCandidateView() {
         this.storage = MF.getCsiFingerId(); //todo not nice find a beter solution
-        /*this.enableCsiFingerId = new Runnable() {
-            @Override
-            public void run() {
-                searchCSIButton.setEnabled(storage.isEnabled());//todo is that in conflict with the action??
-            }
-        };
-        storage.getEnabledListeners().add(enableCsiFingerId);*/
         refresh();
     }
 
     public void dispose() {
         list.dispose();
-//        storage.getEnabledListeners().remove(enableCsiFingerId);
     }
 
     private void refresh() {
@@ -78,24 +64,14 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateJList( storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList(storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
         add(list, "list");
         setVisible(true);
-        resultsChanged(null, null,null,null);
+        resultsChanged(null, null, null, null);
     }
-
-
-   /* public boolean computationEnabled() {
-        return searchCSIButton.isEnabled(); // this is ugly but good enough ;-)
-    }*/
-
-//    public void addActionListener(ActionListener l) {
-//        searchCSIButton.addActionListener(l);
-//    }
 
     @Override
     public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre, List<SiriusResultElement> sres, ListSelectionModel selection) {
-        System.out.println("CHANGE_DATA");
         this.experimentContainer = ec;
         this.resultElement = sre;
         list.refresh(ec, resultElement == null ? null : resultElement.getFingerIdData());
@@ -105,11 +81,9 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         else {
             switch (resultElement.getFingerIdComputeState()) {
                 case COMPUTING:
-                    System.out.println("loader");
                     layout.show(this, "loader");
                     break;
                 case COMPUTED:
-                    System.out.println("list");
                     if (list == null || list.candidateList.getModel().getSize() <= 0) {
                         layout.show(this, "empty");
                     } else {
@@ -117,7 +91,6 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
                     }
                     break;
                 default:
-                    System.out.println("button");
                     layout.show(this, "computeButton");//todo other types
                     break;
             }
@@ -146,7 +119,6 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         public ComputeElement() {
             searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);
-
 
             searchCSIButton.setEnabled((resultElement != null && storage.isEnabled()));
             setVisible(true);
