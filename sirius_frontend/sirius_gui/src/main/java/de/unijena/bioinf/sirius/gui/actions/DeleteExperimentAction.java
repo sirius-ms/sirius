@@ -16,6 +16,7 @@ import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
@@ -50,8 +51,7 @@ public class DeleteExperimentAction extends AbstractAction {
             if (val == CloseDialogReturnValue.abort) return;
         }
 
-        List<ExperimentContainer> toRemove = MF.getExperimentList().getCompoundListSelectionModel().getSelected();
-        MF.getCompoundListSelectionModel().clearSelection();
+        List<ExperimentContainer> toRemove = new ArrayList<>(MF.getExperimentList().getCompoundListSelectionModel().getSelected());
         for (ExperimentContainer cont : toRemove) {
             MF.getBackgroundComputation().cancel(cont);
         }
