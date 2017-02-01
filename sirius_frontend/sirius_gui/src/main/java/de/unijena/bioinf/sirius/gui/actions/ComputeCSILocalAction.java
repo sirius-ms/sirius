@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 30.01.17.
  */
 
+import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -38,7 +39,12 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
         final int returnState = dialog.run();
 
         if (returnState != FingerIdDialog.CANCELED) {
-            final ExperimentContainer ec = MF.getCompoundView().getSelectedValue();
+            ExperimentContainer ec = null;
+            EventList<ExperimentContainer> l = MF.getCompoundListSelectionModel().getSelected();
+            if (l != null && !l.isEmpty()) {
+                ec = l.get(0);
+            }
+
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
                 MF.getCsiFingerId().compute(ec, dialog.isBio());
             } else {

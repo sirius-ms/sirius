@@ -6,10 +6,12 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  */
 
 import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
@@ -42,16 +44,21 @@ public class FormulaTable implements ActiveResults {
         selectionModel = new DefaultListSelectionModel();
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        setData(compundList.getCompoundListView().getSelectedValue());
+        EventList<ExperimentContainer> l = compundList.getCompoundListSelectionModel().getSelected();
+        if (l != null && !l.isEmpty()) {
+            setData(l.get(0));
+        } else {
+            setData(null);
+        }
 
         //this is the selection refresh, element chages are detected by eventlist
         compundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
-                if (!source.isSelectionEmpty()) {
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
+                if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         System.out.println("iteration");
-                        if (source.getSelectedIndex() == event.getIndex()) {
+                        if (selection.isSelectedIndex(event.getIndex())) {
                             System.out.println("DATA Listener");
                             setData(event.getSourceList().get(event.getIndex()));
                             return;
@@ -61,9 +68,12 @@ public class FormulaTable implements ActiveResults {
             }
 
             @Override
-            public void listSelectionChanged(JList<ExperimentContainer> source) {
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
                 System.out.println("PARENT SELECTION Listener");
-                setData(source.getSelectedValue());
+                if (!selection.isSelectionEmpty())
+                    setData(selection.getSelected().get(0));
+                else
+                    setData(null);
             }
         });
 

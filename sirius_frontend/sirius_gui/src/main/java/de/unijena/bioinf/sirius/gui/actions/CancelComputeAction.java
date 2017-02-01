@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
@@ -25,13 +26,13 @@ public class CancelComputeAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
         putValue(Action.SHORT_DESCRIPTION, "Cancel the running Computation(s) of the selected Experiment(s)");
 
-        setEnabled(!MF.getCompoundView().isSelectionEmpty() && MF.getCompoundView().getSelectedValue().isComputing());
+        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty() && MF.getCompoundListSelectionModel().getSelected().get(0).isComputing());
 
         MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
-                if (!event.getSourceList().isEmpty()) {
-                    for (ExperimentContainer ec : source.getSelectedValuesList()) {
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
+                if (!selection.isSelectionEmpty()) {
+                    for (ExperimentContainer ec : selection.getSelected()) {
                         if (ec != null && (ec.isComputing() || ec.isQueued())) { //todo minor but: isQueued is somehow not detected -> maybe not property change fired?
                             setEnabled(true);
                             return;
@@ -40,9 +41,8 @@ public class CancelComputeAction extends AbstractAction {
                 }
                 setEnabled(false);
             }
-
             @Override
-            public void listSelectionChanged(JList<ExperimentContainer> source) {
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
 
             }
         });
@@ -52,7 +52,7 @@ public class CancelComputeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        for (ExperimentContainer ec : MF.getCompoundView().getSelectedValuesList()) {
+        for (ExperimentContainer ec : MF.getCompoundListSelectionModel().getSelected()) {
             MF.getBackgroundComputation().cancel(ec);
         }
     }

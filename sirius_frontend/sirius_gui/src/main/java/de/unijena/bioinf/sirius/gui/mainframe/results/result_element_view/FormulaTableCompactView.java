@@ -23,8 +23,6 @@ public class FormulaTableCompactView extends FormulaTableView {
     public FormulaTableCompactView(FormulaTable source) {
         super(source);
 
-
-
         final JList<SiriusResultElement> resultListView;
         resultListView = new JList<>(new DefaultEventListModel<>(source.resultList));
         resultListView.setCellRenderer(source.cellRenderer);
@@ -73,5 +71,9 @@ public class FormulaTableCompactView extends FormulaTableView {
             }
         });
 
+        //decorate this guy
+        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+        resultListView.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
+        resultListView.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
     }
 }

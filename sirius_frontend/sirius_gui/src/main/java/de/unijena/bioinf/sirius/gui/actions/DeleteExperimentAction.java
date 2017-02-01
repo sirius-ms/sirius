@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
@@ -29,15 +30,15 @@ public class DeleteExperimentAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Remove selected Experiment(s)");
 
-        setEnabled(!MF.getCompoundView().isSelectionEmpty());
+        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 
         MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {}
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {}
 
             @Override
-            public void listSelectionChanged(JList<ExperimentContainer> source) {
-                setEnabled(!source.isSelectionEmpty());
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
+                setEnabled(!selection.isSelectionEmpty());
             }
         });
     }
@@ -48,8 +49,9 @@ public class DeleteExperimentAction extends AbstractAction {
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
-        List<ExperimentContainer> toRemove = MF.getCompountListPanel().getCompoundListView().getSelectedValuesList();
-        MF.getCompoundView().clearSelection();
+
+        List<ExperimentContainer> toRemove = MF.getCompountListPanel().getCompoundListSelectionModel().getSelected();
+        MF.getCompoundListSelectionModel().clearSelection();
         for (ExperimentContainer cont : toRemove) {
             MF.getBackgroundComputation().cancel(cont);
         }

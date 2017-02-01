@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -27,22 +28,22 @@ public class ComputeAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SHORT_DESCRIPTION, "Compute selected Experiment(s)");
 
-        setEnabled(!MF.getCompoundView().isSelectionEmpty());
+        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 
         MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {}
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {}
 
             @Override
-            public void listSelectionChanged(JList<ExperimentContainer> source) {
-                setEnabled(!source.isSelectionEmpty());
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
+                setEnabled(!selection.isSelectionEmpty());
             }
         });
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<ExperimentContainer> ecs = MF.getCompoundView().getSelectedValuesList();
+        List<ExperimentContainer> ecs = MF.getCompoundListSelectionModel().getSelected();
         if (ecs != null && !ecs.isEmpty()) {
             new BatchComputeDialog(MF, ecs); //todo no check button should not be active
         }

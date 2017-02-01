@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  */
 
 import javax.swing.*;
-import java.awt.event.MouseListener;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -17,9 +16,8 @@ public abstract class FormulaTableView extends JPanel {
     public FormulaTableView(FormulaTable source) {
         super();
         this.source = source;
-        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));
+//        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));
     }
-
 }
 
 

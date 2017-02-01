@@ -1,8 +1,10 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
@@ -170,6 +172,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 //        addKeyListener(this); //todo maybe we need this??
 
+        SiriusActionManager.initRootManager();
+        SiriusActionManager.ROOT_MANAGER.keys();
+        //todo this is a workaround, improve Action manager model for better solution
+        mf.compountListPanel.compoundListView.getActionMap().put(SiriusActions.DELETE_EXP.name(),SiriusActions.DELETE_EXP.getInstance());
+        mf.compountListPanel.compoundListView.getActionMap().put(SiriusActions.COMPUTE.name(),SiriusActions.COMPUTE.getInstance());
+
         final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
 
             @Override
@@ -217,7 +225,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         });
 
-
         mf.setVisible(true);
     }
 
@@ -235,8 +242,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public List<ExperimentContainer> getCompounds() {
         return compountListPanel.compoundList;
     }
-    public JList<ExperimentContainer> getCompoundView() {
-        return compountListPanel.compoundListView;
+    public DefaultEventSelectionModel<ExperimentContainer> getCompoundListSelectionModel() {
+        return getCompountListPanel().getCompoundListSelectionModel();
     }
 
     /*public List<ExperimentContainer> getSelectedCompounds() {

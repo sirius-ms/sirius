@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -31,56 +32,22 @@ public class ComputeCSIAction extends AbstractAction {
 
         MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source) {
-                boolean proofList = false;
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
                 if (MF.getCsiFingerId().isEnabled()) {
-                    while (event.next()) {
-                        switch (event.getType()) {
-                            case 0://delete
-                                if (isEnabled()) {
-                                    if (event.getSourceList().get(event.getIndex()).isComputed()) {
-                                        proofList = true;
-                                    }
-                                }
-                                break;
-                            case 1://update
-                                if (event.getSourceList().get(event.getIndex()).isComputed()) {
-                                    setEnabled(true);
-                                    return;
-                                } else if (isEnabled() && !event.getSourceList().get(event.getIndex()).isComputed()) {
-                                    proofList = true;
-                                }
-
-                                break;
-                            case 2://insert
-                                if (!isEnabled()) {
-                                    if (event.getSourceList().get(event.getIndex()).isComputed()) {
-                                        setEnabled(true);
-                                        return;
-                                    }
-                                }
-                                break;
+                    for (ExperimentContainer container : event.getSourceList()) {
+                        if (container.isComputed()) {
+                            setEnabled(true);
+                            return;
                         }
-                        if (proofList)
-                            break;
                     }
-                    if (proofList) {
-                        for (ExperimentContainer container : event.getSourceList()) {
-                            if (container.isComputed()) {
-                                setEnabled(true);
-                                return;
-                            }
-                        }
-                        setEnabled(false);
-                    }
-                }else{
+                    setEnabled(false);
+                } else {
                     setEnabled(false);
                 }
             }
 
             @Override
-            public void listSelectionChanged(JList<ExperimentContainer> source) {
-            }
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {}
         });
 
         MF.getCsiFingerId().getEnabledListeners().add(new Runnable() {
@@ -102,11 +69,11 @@ public class ComputeCSIAction extends AbstractAction {
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
             MF.getCsiFingerId().computeAll(MF.getCompounds());
         } else if (returnState == FingerIdDialog.COMPUTE) {
-            MF.getCsiFingerId().computeAll(MF.getCompoundView().getSelectedValuesList());
+            MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected());
         }
     }
 
-    protected void proofCSI(){
+    protected void proofCSI() {
         setEnabled(false);
         if (MF.getCsiFingerId().isEnabled() && MF.csiConnectionAvailable() && MF.getCompounds().size() > 0) {
             for (ExperimentContainer container : MF.getCompounds()) {

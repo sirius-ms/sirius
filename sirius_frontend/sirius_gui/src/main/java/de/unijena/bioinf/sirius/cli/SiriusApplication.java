@@ -23,7 +23,7 @@ public class SiriusApplication extends ApplicationCore {
         if (cli.options.isGUI()) {
             SwingUtils.initUI();
             MainFrame.MF.setLocationRelativeTo(null);//init mainframe
-            SiriusActionManager.initRootManager();
+
 
         } else {
             cli.setup();

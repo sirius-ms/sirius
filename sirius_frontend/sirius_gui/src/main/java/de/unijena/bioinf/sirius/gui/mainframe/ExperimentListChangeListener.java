@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;/**
  */
 
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
@@ -14,6 +15,6 @@ import java.util.List;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public interface ExperimentListChangeListener{
-    void listChanged(ListEvent<ExperimentContainer> event, JList<ExperimentContainer> source);
-    void listSelectionChanged(JList<ExperimentContainer> source);
+    void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection);
+    void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection);
 }

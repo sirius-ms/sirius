@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  * 31.01.17.
  */
 
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.BarTableCellRenderer;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.SiriusResultMatcherEditor;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.SiriusResultTableCellRenderer;
@@ -15,6 +16,9 @@ import de.unijena.bioinf.sirius.gui.utils.ActionTable;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -41,6 +45,43 @@ public class FormulaTableDetailView extends FormulaTableView {
             col.setCellRenderer(new BarTableCellRenderer());
         }
 
+        table.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    // Double-click detected
+                    int index = table.rowAtPoint(e.getPoint());
+                    table.setRowSelectionInterval(index, index);
+                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(table, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        //decorate this guy
+        //decorate this guy
+        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
+        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
 
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
