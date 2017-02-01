@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.resul
  * 26.01.17.
  */
 
-import de.unijena.bioinf.sirius.gui.utils.Colors;
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -27,13 +27,23 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        final boolean best = ((Boolean) table.getModel().getValueAt(row,5)).booleanValue();
         if (isSelected) {
-            backColor = Colors.LIST_SELECTED_BACKGROUND;
+            if (best) {
+                backColor = Colors.LIST_SELECTED_GREEN;
+            } else {
+                backColor = Colors.LIST_SELECTED_BACKGROUND;
+            }
             foreColor = Colors.LIST_SELECTED_FOREGROUND;
         } else {
-            if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
-            else backColor = Colors.LIST_UNEVEN_BACKGROUND;
+            if (best) {
+                this.backColor = Colors.LIST_LIGHT_GREEN;
+            }else{
+                if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
+                else backColor = Colors.LIST_UNEVEN_BACKGROUND;
+            }
             foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
+
         }
 
         setBackground(backColor);

@@ -13,17 +13,17 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaTableHeaderPanel extends JPanel {
-    public FormulaTableHeaderPanel(FormulaTable table, JComponent center) {
+public class FormulaListHeaderPanel extends JPanel {
+    public FormulaListHeaderPanel(FormulaList table, JComponent center) {
         this(table,center,false);
     }
 
-    public FormulaTableHeaderPanel(FormulaTable table, JComponent center, boolean detailed) {
+    public FormulaListHeaderPanel(FormulaList table, JComponent center, boolean detailed) {
         super(new BorderLayout());
         if (detailed){
-            add(new FormulaTableDetailView(table),BorderLayout.NORTH);
+            add(new FormulaListDetailView(table),BorderLayout.NORTH);
         }else{
-            add(new FormulaTableCompactView(table),BorderLayout.NORTH);
+            add(new FormulaListCompactView(table),BorderLayout.NORTH);
         }
         add(center,BorderLayout.CENTER);
         if (center instanceof ActiveResultChangedListener)

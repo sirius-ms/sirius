@@ -7,7 +7,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListTextCellRenderer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
 import javax.swing.*;
@@ -19,17 +18,17 @@ import java.awt.event.MouseListener;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaTableCompactView extends FormulaTableView {
-    public FormulaTableCompactView(FormulaTable source) {
+public class FormulaListCompactView extends FormulaListView {
+    public FormulaListCompactView(FormulaList source) {
         super(source);
 
         final JList<SiriusResultElement> resultListView;
         resultListView = new JList<>(new DefaultEventListModel<>(source.resultList));
-        resultListView.setCellRenderer(source.cellRenderer);
+        resultListView.setCellRenderer(new FormulaListTextCellRenderer());
         resultListView.setSelectionModel(source.selectionModel);
         resultListView.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         resultListView.setVisibleRowCount(1);
-        resultListView.setPrototypeCellValue(ResultTreeListTextCellRenderer.PROTOTYPE);
+        resultListView.setPrototypeCellValue(FormulaListTextCellRenderer.PROTOTYPE);
         resultListView.setMinimumSize(new Dimension(0, 45));
 
         setLayout(new BorderLayout());

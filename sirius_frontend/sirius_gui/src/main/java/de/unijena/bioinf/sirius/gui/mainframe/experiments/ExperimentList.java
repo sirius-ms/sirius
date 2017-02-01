@@ -11,20 +11,13 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.TextFilterator;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
-import ca.odell.glazedlists.swing.DefaultEventListModel;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.LinkedList;
 import java.util.List;
 

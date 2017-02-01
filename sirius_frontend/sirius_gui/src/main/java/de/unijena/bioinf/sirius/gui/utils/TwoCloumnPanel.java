@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.settings;
+package de.unijena.bioinf.sirius.gui.utils;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend

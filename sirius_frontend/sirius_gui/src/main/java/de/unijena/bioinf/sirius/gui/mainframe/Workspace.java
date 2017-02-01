@@ -54,7 +54,7 @@ public abstract class Workspace {
 
     public static void importWorkspace(List<File> selFile) {
         ImportWorkspaceDialog workspaceDialog = new ImportWorkspaceDialog(MF);
-        final WorkspaceWorker worker = new WorkspaceWorker(MF, workspaceDialog, selFile);
+        final WorkspaceWorker worker = new WorkspaceWorker(workspaceDialog, selFile);
         worker.execute();
         workspaceDialog.start();
         worker.flushBuffer();

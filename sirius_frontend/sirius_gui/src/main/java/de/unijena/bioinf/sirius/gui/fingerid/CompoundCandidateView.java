@@ -20,7 +20,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.Icons;

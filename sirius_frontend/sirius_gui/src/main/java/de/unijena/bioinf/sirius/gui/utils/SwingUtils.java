@@ -5,8 +5,8 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;

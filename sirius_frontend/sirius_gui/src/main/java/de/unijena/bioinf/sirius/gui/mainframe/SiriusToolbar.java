@@ -5,40 +5,22 @@ package de.unijena.bioinf.sirius.gui.mainframe;
  * 27.01.17.
  */
 
-import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.compute.JobDialog;
-import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.utils.Colors;
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusToolbar extends JToolBar {
+class SiriusToolbar extends JToolBar {
     private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, bug, about;
-    private static AtomicBoolean isActive = new AtomicBoolean(true);
 
-    public SiriusToolbar() {
-        // ########## Toolbar ############
+    SiriusToolbar() {
 
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
-        initActions();
 
         newB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance());
         add(newB);
@@ -90,13 +72,5 @@ public class SiriusToolbar extends JToolBar {
 
         setRollover(true);
         setFloatable(false);
-        //Toolbar end
     }
-
-    private void initActions(){
-        final ActionMap am = getActionMap();
-        am .setParent(SiriusActionManager.ROOT_MANAGER);
-    }
-
-
 }

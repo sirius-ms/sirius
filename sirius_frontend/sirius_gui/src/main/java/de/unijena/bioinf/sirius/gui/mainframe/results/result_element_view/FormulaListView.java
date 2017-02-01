@@ -10,10 +10,10 @@ import javax.swing.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public abstract class FormulaTableView extends JPanel {
-    protected final FormulaTable source;
+public abstract class FormulaListView extends JPanel {
+    protected final FormulaList source;
 
-    public FormulaTableView(FormulaTable source) {
+    public FormulaListView(FormulaList source) {
         super();
         this.source = source;
 //        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));

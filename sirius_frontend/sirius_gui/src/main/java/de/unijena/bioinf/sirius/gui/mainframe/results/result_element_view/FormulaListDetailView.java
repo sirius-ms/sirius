@@ -23,12 +23,12 @@ import java.awt.event.MouseListener;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaTableDetailView extends FormulaTableView {
+public class FormulaListDetailView extends FormulaListView {
     private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
 
-    public FormulaTableDetailView(FormulaTable source) {
+    public FormulaListDetailView(FormulaList source) {
         super(source);
         setLayout(new BorderLayout());
         searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));

@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.mainframe.AboutDialog;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;

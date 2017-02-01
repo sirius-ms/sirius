@@ -3,7 +3,7 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 
 import javax.swing.*;
 import java.awt.*;

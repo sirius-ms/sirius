@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results;
+package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
 
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -8,13 +8,13 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 
-public class ResultTreeListThumbnailCellRenderers implements ListCellRenderer<SiriusResultElement> {
+public class FormulaListThumbnailCellRenderers implements ListCellRenderer<SiriusResultElement> {
 	
 	private HashMap<SiriusResultElement,TreeRenderPanel> renderPanels;
 	
 	private Color unevenColor, selectedColor;
 	
-	public ResultTreeListThumbnailCellRenderers(List<SiriusResultElement> results){
+	public FormulaListThumbnailCellRenderers(List<SiriusResultElement> results){
 		renderPanels = new HashMap<>();
 		unevenColor = new Color(230,239,255);
 		selectedColor = new Color(187,210,255);

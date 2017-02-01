@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.resul
  * 25.01.17.
  */
 
-import de.unijena.bioinf.sirius.gui.utils.Colors;
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 
 import javax.swing.*;
 import java.awt.*;

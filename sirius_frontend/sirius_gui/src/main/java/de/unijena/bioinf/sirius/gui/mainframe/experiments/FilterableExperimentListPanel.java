@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.experiments;
  * 01.02.17.
  */
 
-import de.unijena.bioinf.sirius.gui.settings.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

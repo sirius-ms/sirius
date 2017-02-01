@@ -11,7 +11,7 @@ import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.*;
-import de.unijena.bioinf.sirius.gui.utils.Buttons;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -21,7 +21,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
 import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;

@@ -1,39 +1,26 @@
 package de.unijena.bioinf.sirius.gui.db;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.sirius.gui.compute.ProgressDialog;
-import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.ext.ConfirmDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
-import de.unijena.bioinf.sirius.gui.utils.Buttons;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import org.jdesktop.swingx.JXRadioGroup;
-import org.jdesktop.swingx.StackLayout;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.*;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.InputMethodListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.*;
 import java.util.List;
 

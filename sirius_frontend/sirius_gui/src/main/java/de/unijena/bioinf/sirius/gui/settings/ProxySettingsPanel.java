@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.settings;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

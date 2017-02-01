@@ -7,7 +7,7 @@ import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanelListener;
 import de.unijena.bioinf.sirius.gui.msviewer.data.ExperimentContainerDataModel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.utils.Buttons;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;

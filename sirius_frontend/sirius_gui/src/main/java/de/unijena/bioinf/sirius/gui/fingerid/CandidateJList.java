@@ -19,14 +19,14 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.sirius.gui.configs.Style;
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.utils.Buttons;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.openscience.cdk.exception.CDKException;
@@ -537,7 +537,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         public Component getListCellRendererComponent(JList<? extends CompoundCandidate> list, CompoundCandidate value, int index, boolean isSelected, boolean cellHasFocus) {
             image.molecule = value;
             if (value != null && value.score >= topScore) {
-                image.backgroundColor = Style.LIGHT_GREEN;
+                image.backgroundColor = Colors.LIST_LIGHT_GREEN;
             } else {
                 image.backgroundColor = (index % 2 == 0 ? even : odd);
             }

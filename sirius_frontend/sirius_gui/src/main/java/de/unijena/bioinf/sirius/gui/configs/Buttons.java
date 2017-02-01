@@ -1,9 +1,11 @@
-package de.unijena.bioinf.sirius.gui.utils;
+package de.unijena.bioinf.sirius.gui.configs;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
  * 11.10.16.
  */
+
+import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 

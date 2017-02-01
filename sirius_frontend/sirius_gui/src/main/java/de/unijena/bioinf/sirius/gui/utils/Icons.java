@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.utils;
  * 11.10.16.
  */
 
-import de.unijena.bioinf.sirius.gui.mainframe.AboutDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.AboutDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 
 import javax.swing.*;

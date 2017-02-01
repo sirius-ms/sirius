@@ -16,7 +16,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResults;
-import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListTextCellRenderer;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -24,23 +23,23 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaTable implements ActiveResults {
-    java.util.List<ActiveResultChangedListener> listeners = new ArrayList<>();
+public class FormulaList implements ActiveResults {
+    private final List<ActiveResultChangedListener> listeners = new LinkedList<>();
+
     ObservableElementList<SiriusResultElement> resultList;
-    ResultTreeListTextCellRenderer cellRenderer;
     DefaultEventSelectionModel<SiriusResultElement> selectionModel;
-    ExperimentContainer ec = null;
 
-    public FormulaTable(final ExperimentList compundList) {
+    private ExperimentContainer ec = null;
+
+    public FormulaList(final ExperimentList compundList) {
         super();
-
         resultList = new ObservableElementList<>(new BasicEventList<SiriusResultElement>(), GlazedLists.beanConnector(SiriusResultElement.class));
-        cellRenderer = new ResultTreeListTextCellRenderer();
         selectionModel = new DefaultEventSelectionModel<>(resultList);
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 

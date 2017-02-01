@@ -16,7 +16,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.FilterableExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTable;
+import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaList;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import org.slf4j.LoggerFactory;
@@ -53,9 +53,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return experimentList.getCompoundListSelectionModel();
     }
 
-    private FormulaTable formulaList;
+    private FormulaList formulaList;
 
-    public FormulaTable getFormulaList() {
+    public FormulaList getFormulaList() {
         return formulaList;
     }
 
@@ -89,7 +89,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return backgroundComputation;
     }
 
-    private boolean removeWithoutWarning = false; //todo config storage
     private DropTarget dropTarget;
 
 
@@ -97,6 +96,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         super(ApplicationCore.VERSION_STRING);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
     }
 
     private static void decoradeMainFrameInstance(final MainFrame mf) {
@@ -106,7 +106,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         // create models for views
         mf.experimentList = new ExperimentList();
-        mf.formulaList = new FormulaTable(mf.experimentList);
+        mf.formulaList = new FormulaList(mf.experimentList);
 
 
         //CREATE VIEWS
@@ -115,7 +115,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mf.resultsPanel = new ResultPanel(mf.formulaList);
 
         mf.toolbar = new SiriusToolbar();
-        mf.dropTarget = new DropTarget(mf, DnDConstants.ACTION_COPY_OR_MOVE, mf);
+
 
         //Init actions
         SiriusActionManager.initRootManager();
@@ -240,7 +240,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private void importDragAndDropFiles(List<File> rawFiles) {
 
         // entferne nicht unterstuetzte Files und suche nach CSVs
-
         // suche nach Sirius files
         final List<File> siriusFiles = new ArrayList<>();
         for (File f : rawFiles) {
@@ -264,11 +263,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if (csvFiles.isEmpty() && msFiles.isEmpty() && mgfFiles.isEmpty()) return;
 
         //Frage den Anwender ob er batch-Import oder alles zu einen Experiment packen moechte
-
         if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0)) ||
                 (csvFiles.size() == 0 && msFiles.size() == 1 && mgfFiles.size() == 0)) {   //nur CSV bzw. nur ein File
             LoadController lc = new LoadController(this, CONFIG_STORAGE);
-//			files
 
             lc.addSpectra(csvFiles, msFiles, mgfFiles);
             lc.showDialog();

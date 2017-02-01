@@ -16,11 +16,9 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.bioinf.sirius.gui.mainframe;
+package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.load.LoadSpectraCellRenderer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,6 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results;
+package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
 
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.gui.configs.Style;
+import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import org.slf4j.LoggerFactory;
@@ -11,7 +10,7 @@ import java.awt.*;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 
-public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRenderer<SiriusResultElement> {
+public class FormulaListTextCellRenderer extends JLabel implements ListCellRenderer<SiriusResultElement> {
     public static final DummySiriusResult PROTOTYPE = new DummySiriusResult();
 
     private Color backColor, foreColor;
@@ -25,7 +24,7 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 
     private DecimalFormat numberFormat;
 
-    public ResultTreeListTextCellRenderer() {
+    public FormulaListTextCellRenderer() {
         this.setPreferredSize(new Dimension(200, 45));
         initColorsAndFonts();
         sre = null;
@@ -72,14 +71,14 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
 
         if (isSelected) {
             if (value.isBestHit()) {
-                this.backColor = Style.SELECTED_GREEN;
+                this.backColor = Colors.LIST_SELECTED_GREEN;
             } else {
                 this.backColor = this.selectedBackground;
             }
             this.foreColor = this.selectedForeground;
         } else {
             if (value.isBestHit()) {
-                this.backColor = Style.LIGHT_GREEN;
+                this.backColor = Colors.LIST_LIGHT_GREEN;
             } else {
                 if (index % 2 == 0) this.backColor = this.evenBackground;
                 else this.backColor = this.unevenBackground;
