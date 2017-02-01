@@ -17,6 +17,7 @@ public abstract class FormulaTableView extends JPanel {
     public FormulaTableView(FormulaTable source) {
         super();
         this.source = source;
+        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(1, 5, 0, 0), "Molecular formulas"));
     }
 
 }
