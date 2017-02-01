@@ -9,6 +9,7 @@ import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
@@ -77,6 +78,22 @@ public class FormulaTable implements ActiveResults {
                         notifyListeners(ec, resultList.get(selectionModel.getMinSelectionIndex()), resultList, selectionModel);
                 } else {
                     System.out.println("adjusting");
+                }
+            }
+        });
+
+        resultList.addListEventListener(new ListEventListener<SiriusResultElement>() {
+            @Override
+            public void listChanged(ListEvent<SiriusResultElement> listChanges) {
+                if (!selectionModel.getValueIsAdjusting()) {
+                    if (!selectionModel.isSelectionEmpty() && resultList != null && !resultList.isEmpty()) {
+                        while (listChanges.next()) {
+                            if (selectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
+                                notifyListeners(ec, resultList.get(selectionModel.getMinSelectionIndex()), resultList, selectionModel);
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         });

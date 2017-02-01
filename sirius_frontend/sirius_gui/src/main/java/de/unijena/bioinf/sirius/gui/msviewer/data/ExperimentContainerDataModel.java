@@ -1,8 +1,12 @@
 package de.unijena.bioinf.sirius.gui.msviewer.data;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
@@ -60,11 +64,21 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
             if (currentResult != null) {
                 final FTree tree = currentResult.getRawTree();
                 final ProcessedInput experiment = tree.getAnnotationOrNull(ProcessedInput.class);
-                final Ms2Experiment ms2;
+                final MutableMs2Experiment ms2;
                 if (experiment!=null) {
                     ms2 = experiment.getExperimentInformation();
                 } else {
                     ms2 =  SiriusDataConverter.experimentContainerToSiriusExperiment(ec);
+                }
+                double ionMass;
+                if (tree != null && tree.getAnnotationOrNull(PrecursorIonType.class)!=null) {
+                    ionMass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
+                } else {
+                    ionMass = ec.getSelectedFocusedMass();
+                }
+                // remove peaks behind the parent
+                for (MutableMs2Spectrum ms2spec : ms2.getMs2Spectra()) {
+                    Spectrums.cutByMassThreshold(ms2spec, ionMass + 1d);
                 }
 
                 if (mode==DisplayMode.MSMS) {

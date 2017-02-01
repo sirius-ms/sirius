@@ -42,7 +42,7 @@ public class ExperimentResult {
     }
 
     private static String simplify(String name) {
-        return name.replaceAll("[^A-Za-z0-9,\\-]]+", "");
+        return name.replaceAll("[^A-Za-z0-9,\\-]+", "");
     }
     private static String simplifyURL(String filename) {
         filename = new File(filename).getName();

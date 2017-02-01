@@ -33,13 +33,12 @@ public class FormulaTableCompactView extends FormulaTableView {
         resultListView.setVisibleRowCount(1);
         resultListView.setPrototypeCellValue(ResultTreeListTextCellRenderer.PROTOTYPE);
         resultListView.setMinimumSize(new Dimension(0, 45));
-        resultListView.setPreferredSize(new Dimension(resultListView.getPreferredSize().width, 45));
 
         setLayout(new BorderLayout());
 
 
         JScrollPane listJSP = new JScrollPane(resultListView,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        add(listJSP, BorderLayout.CENTER);
+        add(listJSP, BorderLayout.NORTH);
 
 
 
