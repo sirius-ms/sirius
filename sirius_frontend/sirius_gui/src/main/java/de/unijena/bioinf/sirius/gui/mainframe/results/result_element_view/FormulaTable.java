@@ -50,9 +50,9 @@ public class FormulaTable implements ActiveResults {
                 if (!source.isSelectionEmpty()) {
                     while (event.next()) {
                         System.out.println("iteration");
-                        if (source.getMinSelectionIndex() == event.getIndex()) {
+                        if (source.getSelectedIndex() == event.getIndex()) {
                             System.out.println("DATA Listener");
-                            setData(source.getSelectedValue());
+                            setData(event.getSourceList().get(event.getIndex()));
                             return;
                         }
                     }
@@ -87,7 +87,9 @@ public class FormulaTable implements ActiveResults {
         this.ec = ec;
         selectionModel.setValueIsAdjusting(true);
         resultList.getReadWriteLock().writeLock().lock();
+
         if (this.ec != null && this.ec.getResults() != null && !this.ec.getResults().isEmpty()) {
+            System.out.println("ther are results");
             if (!this.ec.getResults().equals(resultList)) {
                 System.out.println("SetDataREALLY");
                 selectionModel.clearSelection();
@@ -95,18 +97,17 @@ public class FormulaTable implements ActiveResults {
                 resultList.addAll(this.ec.getResults());
             }
         } else {
-            if (!resultList.isEmpty()) {
-                selectionModel.setValueIsAdjusting(true);
-                selectionModel.clearSelection();
-                resultList.clear();
-                selectionModel.setValueIsAdjusting(false);
-            }
+            selectionModel.clearSelection();
+            resultList.clear();
         }
+
+        //set selection
         SiriusResultElement sre = null;
         if (!resultList.isEmpty()) {
-            selectionModel.setSelectionInterval(0, 0);
+            selectionModel.setSelectionInterval(this.ec.getBestHitIndex(), this.ec.getBestHitIndex());
             sre = resultList.get(selectionModel.getMinSelectionIndex());
         }
+
         resultList.getReadWriteLock().writeLock().unlock();
         selectionModel.setValueIsAdjusting(false);
         notifyListeners(this.ec, sre, resultList, selectionModel);
@@ -120,12 +121,12 @@ public class FormulaTable implements ActiveResults {
         return selectionModel;
     }
 
-    public List<SiriusResultElement> getSelecteValues(){
+    public List<SiriusResultElement> getSelecteValues() {
         List<SiriusResultElement> selected = new ArrayList<>();
         for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
-             if (selectionModel.isSelectedIndex(i)){
-                 selected.add(resultList.get(i));
-             }
+            if (selectionModel.isSelectedIndex(i)) {
+                selected.add(resultList.get(i));
+            }
         }
         return selected;
     }

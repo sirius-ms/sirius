@@ -435,7 +435,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 //	            	System.err.println("progDiag erfolgreich");
 				this.success = true;
 				this.ec.setRawResults(progDiag.getResults());
-                this.ec.setComputeState(progDiag.getResults()==null || progDiag.getResults().size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
+//                this.ec.setComputeState(progDiag.getResults()==null || progDiag.getResults().size()==0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
                 PrecursorIonType ion = SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization());
                 if (ion==null) ion = PrecursorIonType.getPrecursorIonType("[M+H]+");
 				this.ec.setIonization(ion);
@@ -448,7 +448,7 @@ public class ComputeDialog extends JDialog implements ActionListener {
 				}
 			} else {
                 ec.setRawResults(Collections.<IdentificationResult>emptyList());
-                ec.setComputeState(ComputingStatus.FAILED);
+//                ec.setComputeState(ComputingStatus.FAILED);
 				//owner.refreshCompound(ec); //todo proof
                 if (progDiag.getException()!=null){
 					if (progDiag.getException().getCause() instanceof UnknownHostException){

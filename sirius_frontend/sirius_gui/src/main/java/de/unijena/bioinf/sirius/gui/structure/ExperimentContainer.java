@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
+import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -28,6 +29,7 @@ public class ExperimentContainer extends AbstractBean {
     private volatile List<SiriusResultElement> results;
     private volatile List<IdentificationResult> originalResults;
     private volatile SiriusResultElement bestHit;
+    private volatile int bestHitIndex =0;
 
 
     public ExperimentContainer() {
@@ -46,6 +48,10 @@ public class ExperimentContainer extends AbstractBean {
 
     public SiriusResultElement getBestHit() {
         return bestHit;
+    }
+
+    public int getBestHitIndex() {
+        return bestHitIndex;
     }
 
     public String getName() {
@@ -137,15 +143,16 @@ public class ExperimentContainer extends AbstractBean {
 
 
     public void setRawResults(List<IdentificationResult> results) {
-        this.originalResults = results;
-        this.results = SiriusResultElementConverter.convertResults(originalResults);
+        setRawResults(results,SiriusResultElementConverter.convertResults(results));
         if (this.computeState == ComputingStatus.COMPUTING)
             setComputeState(results.size() == 0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
     }
 
     public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
-        this.originalResults = results;
+        List<SiriusResultElement> old = this.results;
         this.results = myxoresults;
+        this.originalResults = results;
+        firePropertyChange("results_upadated",old,this.results);
         if (this.computeState == ComputingStatus.COMPUTING)
             setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
     }
@@ -173,6 +180,7 @@ public class ExperimentContainer extends AbstractBean {
                 this.bestHit.setBestHit(false);
             this.bestHit = bestHit;
             this.bestHit.setBestHit(true);
+            bestHitIndex = getResults().indexOf(bestHit);
         }
         //todo do we need change event her. I think not becaus the element fires one
     }

@@ -129,9 +129,9 @@ public class ResultTreeListTextCellRenderer extends JLabel implements ListCellRe
         g2.setFont(valueFont);
         g2.drawString(numberFormat.format(sre.getScore()), 15 + scoreLength, 35);
 //
-        if (sre != null && sre.fingerIdComputeState != null) {
+        if (sre != null && sre.getFingerIdComputeState() != null) {
             g.setFont(statusFont);
-            SwingUtils.drawListStatusElement(sre.fingerIdComputeState, g2, this);
+            SwingUtils.drawListStatusElement(sre.getFingerIdComputeState(), g2, this);
         }
     }
 

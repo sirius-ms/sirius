@@ -10,28 +10,36 @@ import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
 import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
+import javax.swing.event.SwingPropertyChangeSupport;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class SiriusResultElement extends AbstractBean implements Comparable<SiriusResultElement> {
-	
-	private boolean bestHit = false;
-	private TreeNode tree; //zur Anzeige
-	private IdentificationResult resultElement;
 
-	protected volatile FingerIdData fingerIdData;
-	public volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
+    private boolean bestHit = false;
+    private TreeNode tree; //zur Anzeige
+    private IdentificationResult resultElement;
 
-	public SiriusResultElement(IdentificationResult result) {
-		this.tree = null;
-		this.resultElement = result;
-		this.fingerIdData = null;
-	}
+    protected volatile FingerIdData fingerIdData;
+    private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
-	public IdentificationResult getResult() {
+    private final  PropertyChangeSupport pcd = new SwingPropertyChangeSupport(this);
+
+    public SiriusResultElement(IdentificationResult result) {
+        this.tree = null;
+        this.resultElement = result;
+        this.fingerIdData = null;
+    }
+
+    public IdentificationResult getResult() {
         return resultElement;
     }
 
-	public void buildTreeVisualization(Function<FTree, TreeNode> builder) {
+    public void buildTreeVisualization(Function<FTree, TreeNode> builder) {
         this.tree = builder.apply(resultElement.getResolvedTree());
     }
 
@@ -41,59 +49,76 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
 
     public void setFingerIdData(FingerIdData fingerIdData) {
         //todo maybe property change needed. but i hope that can be done via computation state
-		this.fingerIdData = fingerIdData;
+        this.fingerIdData = fingerIdData;
     }
 
     public int getRank() {
-		return resultElement.getRank();
-	}
+        return resultElement.getRank();
+    }
 
-	public double getScore() {
-		return resultElement.getScore();
-	}
+    public double getScore() {
+        return resultElement.getScore();
+    }
 
-	public MolecularFormula getMolecularFormula() {
-		return resultElement.getMolecularFormula();
-	}
+    public MolecularFormula getMolecularFormula() {
+        return resultElement.getMolecularFormula();
+    }
 
-	private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
-	public String getFormulaAndIonText() {
-		final PrecursorIonType ionType = resultElement.getRawTree().getAnnotationOrThrow(PrecursorIonType.class);
-		final MolecularFormula mf = resultElement.getMolecularFormula();
-		String niceName = ionType.toString();
-		niceName = pat.matcher(niceName).replaceAll("");
-		if (ionType.isIonizationUnknown()) {
-			return mf.toString();
-		} else {
-			return mf.toString() + " " + niceName;
-		}
-	}
+    private final static Pattern pat = Pattern.compile("^\\s*\\[\\s*M\\s*|\\s*\\]\\s*\\d*\\s*[\\+\\-]\\s*$");
 
-	public int getCharge() {
-		return resultElement.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class).getCharge();
-	}
+    public String getFormulaAndIonText() {
+        final PrecursorIonType ionType = resultElement.getRawTree().getAnnotationOrThrow(PrecursorIonType.class);
+        final MolecularFormula mf = resultElement.getMolecularFormula();
+        String niceName = ionType.toString();
+        niceName = pat.matcher(niceName).replaceAll("");
+        if (ionType.isIonizationUnknown()) {
+            return mf.toString();
+        } else {
+            return mf.toString() + " " + niceName;
+        }
+    }
+
+    public int getCharge() {
+        return resultElement.getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class).getCharge();
+    }
 
     public TreeNode getTreeVisualization() {
         return tree;
     }
 
-	public boolean isBestHit() {
-		return bestHit;
-	}
+    public boolean isBestHit() {
+        return bestHit;
+    }
 
-	public void setBestHit(final boolean bestHit) {
-		final boolean old = this.bestHit;
-		this.bestHit = bestHit;
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				firePropertyChange("best_hit",old, bestHit);
-			}
-		});
-	}
+    public void setBestHit(final boolean bestHit) {
+        final boolean old = this.bestHit;
+        this.bestHit = bestHit;
+        fireEDTPropertyChange("best_hit", old, bestHit);
+    }
 
-	@Override
-	public int compareTo(SiriusResultElement o) {
-		return Integer.compare(getRank(),o.getRank());
-	}
+    @Override
+    public int compareTo(SiriusResultElement o) {
+        return Integer.compare(getRank(), o.getRank());
+    }
+
+    public ComputingStatus getFingerIdComputeState() {
+        return fingerIdComputeState;
+    }
+
+    public void setFingerIdComputeState(final ComputingStatus fingerIdComputeState) {
+        final ComputingStatus old = this.fingerIdComputeState;
+        this.fingerIdComputeState = fingerIdComputeState;
+        fireEDTPropertyChange("finger_compute_state", old, this.fingerIdComputeState);
+        System.out.println(this.fingerIdComputeState);
+    }
+
+
+    public void fireEDTPropertyChange(final String name, final Object old, final Object nu){
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                firePropertyChange(name, old, nu);
+            }
+        });
+    }
 }

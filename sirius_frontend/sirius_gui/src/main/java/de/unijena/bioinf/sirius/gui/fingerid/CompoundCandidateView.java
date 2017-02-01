@@ -46,23 +46,23 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
-    protected Runnable enableCsiFingerId;
+//    protected Runnable enableCsiFingerId;
 
     public CompoundCandidateView(){
         this.storage = MF.getCsiFingerId(); //todo not nice find a beter solution
-        this.enableCsiFingerId = new Runnable() {
+        /*this.enableCsiFingerId = new Runnable() {
             @Override
             public void run() {
                 searchCSIButton.setEnabled(storage.isEnabled());//todo is that in conflict with the action??
             }
         };
-        storage.getEnabledListeners().add(enableCsiFingerId);
+        storage.getEnabledListeners().add(enableCsiFingerId);*/
         refresh();
     }
 
     public void dispose() {
         list.dispose();
-        storage.getEnabledListeners().remove(enableCsiFingerId);
+//        storage.getEnabledListeners().remove(enableCsiFingerId);
     }
 
     private void refresh() {
@@ -85,13 +85,13 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
     }
 
 
-    public boolean computationEnabled() {
+   /* public boolean computationEnabled() {
         return searchCSIButton.isEnabled(); // this is ugly but good enough ;-)
-    }
+    }*/
 
-    public void addActionListener(ActionListener l) {
-        searchCSIButton.addActionListener(l);
-    }
+//    public void addActionListener(ActionListener l) {
+//        searchCSIButton.addActionListener(l);
+//    }
 
     @Override
     public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre, List<SiriusResultElement> sres, ListSelectionModel selection) {
@@ -103,7 +103,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
         if (resultElement == null)
             layout.show(this, "null");
         else {
-            switch (resultElement.fingerIdComputeState) {
+            switch (resultElement.getFingerIdComputeState()) {
                 case COMPUTING:
                     System.out.println("loader");
                     layout.show(this, "loader");

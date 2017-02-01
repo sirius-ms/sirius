@@ -28,7 +28,7 @@ public class ConfidenceList extends JList<ExperimentContainer> {
     protected static class ConfidenceMatcher implements Matcher<ExperimentContainer>{
         @Override
         public boolean matches(ExperimentContainer ec) {
-            return ec.getBestHit()!=null && ec.getBestHit().getFingerIdData()!=null && ec.getBestHit().fingerIdComputeState == ComputingStatus.COMPUTED && !Double.isNaN(ec.getBestHit().getFingerIdData().getConfidence());
+            return ec.getBestHit()!=null && ec.getBestHit().getFingerIdData()!=null && ec.getBestHit().getFingerIdComputeState() == ComputingStatus.COMPUTED && !Double.isNaN(ec.getBestHit().getFingerIdData().getConfidence());
         }
     }
 

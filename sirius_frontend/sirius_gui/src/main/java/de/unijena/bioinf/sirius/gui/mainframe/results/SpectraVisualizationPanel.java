@@ -200,6 +200,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	}
 
 	public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre, List<SiriusResultElement> sres, ListSelectionModel selection) {
+		System.out.println("Before update Spec");
 		if (this.ec != ec || this.sre != sre) {
 			System.out.println("update Spec");
 			this.ec = ec;

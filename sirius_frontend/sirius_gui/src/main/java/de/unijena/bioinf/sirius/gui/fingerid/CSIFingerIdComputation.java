@@ -490,10 +490,10 @@ public class CSIFingerIdComputation {
     // this is really the conputation mehtod everything should use in die end
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
-            final ComputingStatus status = task.result.fingerIdComputeState;
+            final ComputingStatus status = task.result.getFingerIdComputeState();
             boolean recompute = (task.result.getFingerIdData()!=null && task.result.getFingerIdData().bio != task.bio);
             if (recompute || status == ComputingStatus.UNCOMPUTED || status == ComputingStatus.FAILED) {
-                task.result.fingerIdComputeState = ComputingStatus.COMPUTING;
+                task.result.setFingerIdComputeState(ComputingStatus.COMPUTING);
                 if (task.result.getFingerIdData()!=null && task.result.getFingerIdData().platts!=null) {
                     task.prediction = task.result.getFingerIdData().platts;
                     formulaQueue.add(task);
@@ -788,7 +788,7 @@ public class CSIFingerIdComputation {
                     final ExperimentContainer experiment = container.experiment;
                     final SiriusResultElement resultElement = container.result;
                     resultElement.setFingerIdData(data);
-                    resultElement.fingerIdComputeState = ComputingStatus.COMPUTED;
+                    resultElement.setFingerIdComputeState(ComputingStatus.COMPUTED);
                     refreshConfidence(experiment);
                     callback.computationFinished(experiment, resultElement);
                     container.job.done();
