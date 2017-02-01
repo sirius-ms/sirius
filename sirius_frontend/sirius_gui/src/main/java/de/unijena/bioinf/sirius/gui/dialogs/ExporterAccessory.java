@@ -35,6 +35,7 @@ public class ExporterAccessory extends JPanel implements ActionListener {
     private JFileChooser fileChooser;
 
     private boolean fingeridWasSelected;
+    private boolean siriusWasSelected;
 
     private AbstractButton singleFile, exportingSirius, exportingFingerId, multiFile;
 
@@ -119,13 +120,18 @@ public class ExporterAccessory extends JPanel implements ActionListener {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setFileFilter(new SupportedExportCSVFormatsFilter());
             fingeridWasSelected = isExportingFingerId();
+            siriusWasSelected = isExportingSirius();
             exportingFingerId.setEnabled(false);
             exportingFingerId.setSelected(false);
+            exportingSirius.setEnabled(false);
+            exportingSirius.setSelected(true);
         } else {
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooser.setFileFilter(null);
             exportingFingerId.setEnabled(true);
             exportingFingerId.setSelected(fingeridWasSelected);
+            exportingSirius.setEnabled(true);
+            exportingSirius.setSelected(siriusWasSelected);
         }
     }
 }
