@@ -144,14 +144,12 @@ public class ExperimentContainer extends AbstractBean {
 
     public void setRawResults(List<IdentificationResult> results) {
         setRawResults(results,SiriusResultElementConverter.convertResults(results));
-        if (this.computeState == ComputingStatus.COMPUTING)
-            setComputeState(results.size() == 0 ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
     }
 
     public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
         List<SiriusResultElement> old = this.results;
         this.results = myxoresults;
-        this.originalResults = results;
+        this.originalResults = results == null?Collections.<IdentificationResult>emptyList():results;
         firePropertyChange("results_upadated",old,this.results);
         if (this.computeState == ComputingStatus.COMPUTING)
             setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
