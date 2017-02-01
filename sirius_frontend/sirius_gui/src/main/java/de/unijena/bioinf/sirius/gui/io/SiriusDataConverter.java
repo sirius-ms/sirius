@@ -127,7 +127,12 @@ public class SiriusDataConverter {
             final FTree tree = results.get(0).getRawTree();
             final FragmentAnnotation<AnnotatedPeak> pa = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
             if (tree!=null) {
-                final double parentmass = pa.get(tree.getRoot()).getMass(); //tree.getAnnotationOrNull(Precursor.class);
+                double parentmass;
+                if (pa.get(tree.getRoot())!=null) parentmass = pa.get(tree.getRoot()).getMass();
+                else if (tree.getAnnotationOrNull(PrecursorIonType.class)!=null) {
+                    parentmass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
+                } else parentmass = -1d;
+
                 c.setSelectedFocusedMass(parentmass);
             }
         }
