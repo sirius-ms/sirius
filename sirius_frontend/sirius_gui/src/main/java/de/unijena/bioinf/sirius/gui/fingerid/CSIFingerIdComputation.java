@@ -162,7 +162,6 @@ public class CSIFingerIdComputation {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        SiriusActions.COMPUTE_CSI.getInstance().setEnabled(enabled);
         for (Runnable r : enabledListeners) r.run();
     }
 

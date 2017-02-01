@@ -178,7 +178,7 @@ public class BackgroundComputation extends AbstractBean {
                     currentComputation = c.exp;
                     c.job.run();
                 }
-                c.exp.fireUpdateEvent(); // owner.refreshCompound(c.exp); //todo i think we aleady listen to that
+//                c.exp.fireUpdateEvent(); // owner.refreshCompound(c.exp); //todo i think we aleady listen to that
             }
         }
 

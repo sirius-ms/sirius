@@ -143,6 +143,7 @@ public class ExperimentListPanel extends TwoCloumnPanel {
 
     private void notifyListenerDataChange(ListEvent<ExperimentContainer> event) {
         for (ExperimentListChangeListener l : listeners) {
+            event.reset();//this is hell important to reset the iterator
             l.listChanged(event,compoundListView);
         }
     }
