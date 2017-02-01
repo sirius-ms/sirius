@@ -18,14 +18,14 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
-import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
-import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
+import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -64,6 +64,20 @@ public class Sirius {
     protected boolean autoIonMode;
 
     public static void main(String[] args) {
+        final Sirius s;
+        try {
+            final MolecularFormula f = MolecularFormula.parse("C6H12O6S2Cl3");
+            s = new Sirius("qtof");
+            final SimpleSpectrum spec = new SimpleSpectrum(s.simulateIsotopePattern(f, PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization()));
+            final Ms2Experiment mut = s.getMs2Experiment(f, PrecursorIonType.getPrecursorIonType("[M+H]+"), spec);
+            final double score = s.getMs1Analyzer().scoreFormulas(spec, Arrays.asList(f), mut, s.getMs1Analyzer().getDefaultProfile()).get(0).getScore();
+            System.out.println(score);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /*
         final File F = new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms");
         try {
             Sirius s = new Sirius("exp2");
@@ -102,6 +116,7 @@ public class Sirius {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        */
     }
 
     public static void mainElem(String[] args)  {
