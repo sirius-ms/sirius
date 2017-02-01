@@ -427,7 +427,7 @@ public class CSIFingerIdComputation {
         final SiriusResultElement top = container.getResults().get(0);
         if (top.getResult().getResolvedTree().numberOfEdges()>0)
             elements.add(top);
-        final double threshold = Math.max(top.getScore(),0) -  Math.max(5, top.getScore()*0.25);
+        final double threshold = calculateThreshold(top.getScore());
         for (int k=1; k < container.getResults().size(); ++k) {
             SiriusResultElement e = container.getResults().get(k);
             if (e.getScore() < threshold) break;
@@ -435,6 +435,10 @@ public class CSIFingerIdComputation {
                 elements.add(e);
         }
         return elements;
+    }
+
+    public static double calculateThreshold(double topScore){
+        return Math.max(topScore, 0) -  Math.max(5, topScore * 0.25);
     }
 
     //compute for a single experiment

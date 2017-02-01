@@ -42,7 +42,7 @@ public class FormulaListDetailView extends FormulaListView {
 
         for (int i = 0; i < BAR_COLS.length; i++) {
             TableColumn col = table.getColumnModel().getColumn(BAR_COLS[i]);
-            col.setCellRenderer(new BarTableCellRenderer());
+            col.setCellRenderer(new BarTableCellRenderer(col.getHeaderValue().equals("Score")));
         }
 
         table.addMouseListener(new MouseListener() {
