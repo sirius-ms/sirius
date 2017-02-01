@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe;/**
+package de.unijena.bioinf.sirius.gui.mainframe.experiments;/**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
  * 26.01.17.

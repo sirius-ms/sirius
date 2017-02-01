@@ -12,8 +12,8 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListPanel;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResults;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultTreeListTextCellRenderer;
@@ -33,15 +33,15 @@ public class FormulaTable implements ActiveResults {
     java.util.List<ActiveResultChangedListener> listeners = new ArrayList<>();
     ObservableElementList<SiriusResultElement> resultList;
     ResultTreeListTextCellRenderer cellRenderer;
-    ListSelectionModel selectionModel;
+    DefaultEventSelectionModel<SiriusResultElement> selectionModel;
     ExperimentContainer ec = null;
 
-    public FormulaTable(final ExperimentListPanel compundList) {
+    public FormulaTable(final ExperimentList compundList) {
         super();
 
         resultList = new ObservableElementList<>(new BasicEventList<SiriusResultElement>(), GlazedLists.beanConnector(SiriusResultElement.class));
         cellRenderer = new ResultTreeListTextCellRenderer();
-        selectionModel = new DefaultListSelectionModel();
+        selectionModel = new DefaultEventSelectionModel<>(resultList);
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         EventList<ExperimentContainer> l = compundList.getCompoundListSelectionModel().getSelected();

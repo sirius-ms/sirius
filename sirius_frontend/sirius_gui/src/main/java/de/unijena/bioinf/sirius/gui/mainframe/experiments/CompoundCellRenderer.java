@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe;
+package de.unijena.bioinf.sirius.gui.mainframe.experiments;
 
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Colors;

@@ -25,7 +25,7 @@ public class ResultsOverviewPanel extends JPanel {
 
 
 // setResizeWeight(.5d);
-//        JPanel north = new SiriusResultTablePanel(MF.getCompountListPanel());
+//        JPanel north = new SiriusResultTablePanel(MF.getExperimentList());
 //        north.setMinimumSize(new Dimension(400,north.getMinimumSize().height));
 
 

@@ -8,7 +8,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
@@ -30,7 +30,7 @@ public class ComputeCSIAction extends AbstractAction {
 
         proofCSI();
 
-        MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
+        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
                 if (MF.getCsiFingerId().isEnabled()) {

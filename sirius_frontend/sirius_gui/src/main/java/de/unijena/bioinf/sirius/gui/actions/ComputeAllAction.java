@@ -9,13 +9,12 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
@@ -32,7 +31,7 @@ public class ComputeAllAction extends AbstractAction {
         setEnabled(false);
 
         //filtered Workspace Listener
-        MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
+        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
                 setEnabled(event.getSourceList().size() > 0);

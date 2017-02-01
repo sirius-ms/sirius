@@ -9,7 +9,7 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.sirius.gui.dialogs.CloseDialogReturnValue;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
@@ -32,7 +32,7 @@ public class DeleteExperimentAction extends AbstractAction {
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 
-        MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
+        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {}
 
@@ -50,7 +50,7 @@ public class DeleteExperimentAction extends AbstractAction {
             if (val == CloseDialogReturnValue.abort) return;
         }
 
-        List<ExperimentContainer> toRemove = MF.getCompountListPanel().getCompoundListSelectionModel().getSelected();
+        List<ExperimentContainer> toRemove = MF.getExperimentList().getCompoundListSelectionModel().getSelected();
         MF.getCompoundListSelectionModel().clearSelection();
         for (ExperimentContainer cont : toRemove) {
             MF.getBackgroundComputation().cancel(cont);

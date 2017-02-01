@@ -8,7 +8,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
-import de.unijena.bioinf.sirius.gui.mainframe.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -32,7 +32,7 @@ public class EditExperimentAction extends AbstractAction {
 
         setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
 
-        MF.getCompountListPanel().addChangeListener(new ExperimentListChangeListener() {
+        MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {}
 

@@ -4,14 +4,19 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.db.DatabaseDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
-import de.unijena.bioinf.sirius.gui.fingerid.*;
+import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.sirius.gui.fingerid.ConfidenceList;
+import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.FilterableExperimentListPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.ResultPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaTable;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -35,27 +40,44 @@ public class MainFrame extends JFrame implements DropTargetListener {
     static {
         decoradeMainFrameInstance(MF);
     }
+
     //left side panel
-    private ExperimentListPanel compountListPanel;
-    public ExperimentListPanel getCompountListPanel() {return compountListPanel;}
+    private ExperimentList experimentList;
+
+    public ExperimentList getExperimentList() {
+        return experimentList;
+    }
 
     private CSIFingerIdComputation csiFingerId;
-    public CSIFingerIdComputation getCsiFingerId() {return csiFingerId;}
+
+    public CSIFingerIdComputation getCsiFingerId() {
+        return csiFingerId;
+    }
 
     private JobDialog jobDialog;
-    public JobDialog getJobDialog() {return jobDialog;}
+
+    public JobDialog getJobDialog() {
+        return jobDialog;
+    }
 
     private SiriusToolbar toolbar;
+
     public SiriusToolbar getToolbar() {
         return toolbar;
     }
 
 
     private FormulaTable formulaList;
-    public FormulaTable getFormulaList() {return formulaList;}
+
+    public FormulaTable getFormulaList() {
+        return formulaList;
+    }
 
     private ResultPanel resultsPanel;
-    public ResultPanel getResultsPanel() {return resultsPanel;}
+
+    public ResultPanel getResultsPanel() {
+        return resultsPanel;
+    }
 
 
     private JPanel resultsContainerPanel;
@@ -106,13 +128,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         /////////////////////////////// LEFT Panel (Compunt list) //////////////////////////////
-        mf.compountListPanel = new ExperimentListPanel();
-        mf.compountListPanel.compoundListView.setMinimumSize(new Dimension(200, 0));
-        mf.compountListPanel.setExpPopMenu(new SiriusExperimentPopUpMenu());
-
+        mf.experimentList = new ExperimentList();
         /////////////////////////////// LEFT Panel (Compunt list) DONE //////////////////////////////
 
-        mf.formulaList = new FormulaTable(mf.compountListPanel);
+        mf.formulaList = new FormulaTable(mf.experimentList);
 
         mf.jobDialog = new JobDialog(mf);
 
@@ -144,13 +163,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         });*/
 
-        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-        tabbedPane.addTab("Experiments", mf.compountListPanel);
-        tabbedPane.addTab("Identifications", new JPanel());
-        tabbedPane.setEnabledAt(1, false);
-        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
-        mainPanel.add(tabbedPane, BorderLayout.WEST);
-
 
         // results PAnel
         mf.resultsPanelCL = new CardLayout();
@@ -159,24 +171,31 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mf.resultsContainerPanel.add(dummyPanel, DUMMY_CARD);
 
         mf.resultsPanel = new ResultPanel(mf.formulaList);
-        mainPanel.add(mf.resultsPanel, BorderLayout.CENTER);
+
         // resluts done
 
         mf.toolbar = new SiriusToolbar();
-        mf.add(mf.toolbar, BorderLayout.NORTH);
+
 
         mf.dropTarget = new DropTarget(mf, DnDConstants.ACTION_COPY_OR_MOVE, mf);
 
 
+        SiriusActionManager.initRootManager();
+
+
+        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(mf.experimentList));
+
+        //BUILD the MainFrame (GUI)
+        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+        tabbedPane.addTab("Experiments", experimentListPanel);
+        tabbedPane.addTab("Identifications", new JPanel());
+        tabbedPane.setEnabledAt(1, false);
+        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
+        mainPanel.add(tabbedPane, BorderLayout.WEST);
+        mainPanel.add(mf.resultsPanel, BorderLayout.CENTER);
+        mf.add(mf.toolbar, BorderLayout.NORTH);
         mf.setSize(new Dimension(1368, 1024));
 
-//        addKeyListener(this); //todo maybe we need this??
-
-        SiriusActionManager.initRootManager();
-        SiriusActionManager.ROOT_MANAGER.keys();
-        //todo this is a workaround, improve Action manager model for better solution
-        mf.compountListPanel.compoundListView.getActionMap().put(SiriusActions.DELETE_EXP.name(),SiriusActions.DELETE_EXP.getInstance());
-        mf.compountListPanel.compoundListView.getActionMap().put(SiriusActions.COMPUTE.name(),SiriusActions.COMPUTE.getInstance());
 
         final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
 
@@ -239,15 +258,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public BackgroundComputation getBackgroundComputation() {
         return backgroundComputation;
     }
+
     public List<ExperimentContainer> getCompounds() {
-        return compountListPanel.compoundList;
+        return experimentList.getCompoundList();
     }
+
     public DefaultEventSelectionModel<ExperimentContainer> getCompoundListSelectionModel() {
-        return getCompountListPanel().getCompoundListSelectionModel();
+        return experimentList.getCompoundListSelectionModel();
     }
 
     /*public List<ExperimentContainer> getSelectedCompounds() {
-        return compountListPanel.compoundListView.getSelectedValuesList();
+        return experimentList.compoundListView.getSelectedValuesList();
     }*/
 
 //    public EventList<ExperimentContainer> getCompoundsList() {
@@ -311,8 +332,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     }*/
-
-
 
 
     //todo i think we nee a listener for this
