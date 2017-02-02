@@ -7,9 +7,9 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
  */
 public interface Predictor extends Parameterized{
 
-    public boolean predict(double[] features);
+    boolean predict(double[] features);
 
-    public double score(double[] features);
+    double score(double[] features);
 
-    public double estimateProbability(double[] kernel);
+    double estimateProbability(double[] kernel);
 }

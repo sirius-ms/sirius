@@ -4,11 +4,9 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ConfidenceScore.confidenceScore.*;
 import de.unijena.bioinf.ConfidenceScore.svm.LibLinearImpl;
 import de.unijena.bioinf.ConfidenceScore.svm.LibSVMImpl;
-import de.unijena.bioinf.ConfidenceScore.svm.LinearSVMPredictor;
 import de.unijena.bioinf.ConfidenceScore.svm.SVMInterface;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.DatabaseException;
@@ -19,13 +17,10 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by Marcus Ludwig on 08.03.16.
@@ -479,13 +474,11 @@ public class TrainConfidenceScore {
     public static TrainConfidenceScore DefaultFeatures(boolean useLinearSVM){
         TrainConfidenceScore trainConfidenceScore = new TrainConfidenceScore(useLinearSVM);
 
-        FeatureCreator featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                new ScoreFeatures(),
+        FeatureCreator featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                 new ScoreDifferenceFeatures(1,4),
                 new LogarithmScorer(new ScoreFeatures()),
                 new LogarithmScorer(new ScoreDifferenceFeatures(1,4)),//needs At least 5 Candidates per Compound!
-                new PlattFeatures()
-        });
+                new PlattFeatures());
 
         trainConfidenceScore.setFeatureCreators(new FeatureCreator[]{featureCreator});
         trainConfidenceScore.setPriority(new int[]{1});
@@ -506,38 +499,30 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
-                            new PlattFeatures()
-                    });
+                            new PlattFeatures());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
-                            new PlattFeatures()
-                    });
+                            new PlattFeatures());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
-                            new PlattFeatures()
-                    });
+                            new PlattFeatures());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
-                            new PlattFeatures()
-                    });
+                            new PlattFeatures());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -560,42 +545,34 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -618,38 +595,30 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new CSIScoreFeature(),
+                    featureCreator = new CombinedFeatureCreator(new CSIScoreFeature(),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new CSIScoreFeature(),
+                    featureCreator = new CombinedFeatureCreator(new CSIScoreFeature(),
                             new CSIScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new CSIScoreFeature(),
+                    featureCreator = new CombinedFeatureCreator(new CSIScoreFeature(),
                             new CSIScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new CSIScoreFeature(),
+                    featureCreator = new CombinedFeatureCreator(new CSIScoreFeature(),
                             new CSIScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -672,38 +641,30 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new RobustPlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new RobustPlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new RobustPlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new RobustPlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -727,38 +688,30 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -781,34 +734,26 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
-                            new RobustPlattFeatures(),
-                    });
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
+                            new RobustPlattFeatures());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
-                            new RobustPlattFeatures(),
-                    });
+                            new RobustPlattFeatures());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
-                            new RobustPlattFeatures(),
-                    });
+                            new RobustPlattFeatures());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
-                            new RobustPlattFeatures(),
-                    });
+                            new RobustPlattFeatures());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -831,34 +776,26 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
-                            new PlattFeatures(),
-                    });
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
+                            new PlattFeatures());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
-                            new PlattFeatures(),
-                    });
+                            new PlattFeatures());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
-                            new PlattFeatures(),
-                    });
+                            new PlattFeatures());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
-                            new PlattFeatures(),
-                    });
+                            new PlattFeatures());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -881,35 +818,27 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -932,39 +861,31 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new PlattFeatures(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new PlattFeatures(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new PlattFeatures(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new PlattFeatures(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -987,54 +908,44 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 3:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 4:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
                             new NumOfCandidatesCounter(),
-                            new LogarithmScorer(new NumOfCandidatesCounter())
-                    });
+                            new LogarithmScorer(new NumOfCandidatesCounter()));
                     break;
                 default:
                     return null;
@@ -1060,18 +971,15 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new LogarithmScorer(new MolecularFormulaFeature())
-                    });
+                            new LogarithmScorer(new MolecularFormulaFeature()));
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
@@ -1079,32 +987,27 @@ public class TrainConfidenceScore {
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new LogarithmScorer(new MolecularFormulaFeature())
-                    });
+                            new LogarithmScorer(new MolecularFormulaFeature()));
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new LogarithmScorer(new MolecularFormulaFeature())
-                    });
+                            new LogarithmScorer(new MolecularFormulaFeature()));
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
                             new LogarithmScorer(new PlattFeatures()),
-                            new LogarithmScorer(new MolecularFormulaFeature())
-                    });
+                            new LogarithmScorer(new MolecularFormulaFeature()));
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -1129,73 +1032,59 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (size){
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 3:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 4:
                 case 5:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i-1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i-1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 10:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 20:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9,19),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9,19)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 50:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9,19,49),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9,19,49)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
                     throw new RuntimeException("unexpected size");
@@ -1221,53 +1110,43 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (size){
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 3:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 4:
                 case 5:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i-1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i-1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 10:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,4,9)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
                     throw new RuntimeException("unexpected size");
@@ -1292,43 +1171,35 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 default:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new ScoreFeatures(),
+                    featureCreator = new CombinedFeatureCreator(new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
                             new LogarithmScorer(new ScoreFeatures()),
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,i)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new MedianMeanScoresFeature()
-                    });
+                            new MedianMeanScoresFeature());
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -1351,18 +1222,15 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (i){
                 case 0:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
@@ -1370,12 +1238,10 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new TanimotoSimilarity(1)
-                    });
+                            new TanimotoSimilarity(1));
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
@@ -1383,14 +1249,12 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new TanimotoSimilarity(1,2)
-                    });
+                            new TanimotoSimilarity(1,2));
                     break;
                 default:
                     int[] positions = new int[i];
                     for (int j = 0; j < i; j++) positions[j] = j+1;
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,i),
@@ -1404,8 +1268,7 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarityAvg(positions),
                             new TanimotoSimilarityAvgToPerc(10,20,50),
 //                            new NormalizedToMedianMeanScores(1,i),
-                            new DifferentiatingMolecularPropertiesCounter(0.8, -1)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.8, -1));
                     break;
             }
             featureCreators[i] = featureCreator;
@@ -1431,18 +1294,15 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (size){
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
@@ -1450,12 +1310,10 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new TanimotoSimilarity(1)
-                    });
+                            new TanimotoSimilarity(1));
                     break;
                 case 3:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
@@ -1463,15 +1321,13 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new TanimotoSimilarity(1,2)
-                    });
+                            new TanimotoSimilarity(1,2));
                     break;
                 case 4:
                 case 5:
                     int[] positions = new int[size-1];
                     for (int j = 0; j < size-1; j++) positions[j] = j+1;
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,size-1),
@@ -1485,12 +1341,10 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarityAvg(positions),
                             new TanimotoSimilarityAvgToPerc(10,20,50),
 //                            new NormalizedToMedianMeanScores(1,size-1),
-                            new DifferentiatingMolecularPropertiesCounter(0.8, -1)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.8, -1));
                     break;
                 case 10:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9),
@@ -1508,8 +1362,7 @@ public class TrainConfidenceScore {
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 9),
                             new DifferentiatingMolecularPropertiesCounter(0.9, 4),
-                            new DifferentiatingMolecularPropertiesCounter(0.9, 9)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 9));
                     break;
                 default:
                     throw new RuntimeException("unexpected size");
@@ -1535,18 +1388,15 @@ public class TrainConfidenceScore {
             final FeatureCreator featureCreator;
             switch (size){
                 case 1:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new LogarithmScorer(new ScoreFeatures()),
                             new PlattFeatures(),
-                            new MolecularFormulaFeature()
-                    });
+                            new MolecularFormulaFeature());
                     break;
                 case 2:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1),
@@ -1554,12 +1404,10 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new TanimotoSimilarity(1)
-                    });
+                            new TanimotoSimilarity(1));
                     break;
                 case 3:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,2),
@@ -1567,15 +1415,13 @@ public class TrainConfidenceScore {
                             new LogarithmScorer(new ScoreDifferenceFeatures(1,2)),//needs At least 5 Candidates per Compound!
                             new PlattFeatures(),
                             new MolecularFormulaFeature(),
-                            new TanimotoSimilarity(1,2)
-                    });
+                            new TanimotoSimilarity(1,2));
                     break;
                 case 4:
                 case 5:
                     int[] positions = new int[size-1];
                     for (int j = 0; j < size-1; j++) positions[j] = j+1;
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,size-1),
@@ -1589,12 +1435,10 @@ public class TrainConfidenceScore {
                             new TanimotoSimilarityAvg(positions),
                             new TanimotoSimilarityAvgToPerc(10,20,50),
 //                            new NormalizedToMedianMeanScores(1,size-1),
-                            new DifferentiatingMolecularPropertiesCounter(0.8, -1)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.8, -1));
                     break;
                 case 10:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9),
@@ -1612,12 +1456,10 @@ public class TrainConfidenceScore {
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 9),
                             new DifferentiatingMolecularPropertiesCounter(0.9, 4),
-                            new DifferentiatingMolecularPropertiesCounter(0.9, 9)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 9));
                     break;
                 case 20:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9),
@@ -1637,12 +1479,10 @@ public class TrainConfidenceScore {
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 9),
                             new DifferentiatingMolecularPropertiesCounter(0.9, 4),
-                            new DifferentiatingMolecularPropertiesCounter(0.9, 9)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 9));
                     break;
                 case 50:
-                    featureCreator = new CombinedFeatureCreator( new FeatureCreator[]{
-                            new NumOfCandidatesCounter(),
+                    featureCreator = new CombinedFeatureCreator(new NumOfCandidatesCounter(),
                             new LogarithmScorer(new NumOfCandidatesCounter()),
                             new ScoreFeatures(),
                             new ScoreDifferenceFeatures(1,4,9),
@@ -1662,8 +1502,7 @@ public class TrainConfidenceScore {
                             new DifferentiatingMolecularPropertiesCounter(0.8, 4),
                             new DifferentiatingMolecularPropertiesCounter(0.8, 9),
                             new DifferentiatingMolecularPropertiesCounter(0.9, 4),
-                            new DifferentiatingMolecularPropertiesCounter(0.9, 9)
-                    });
+                            new DifferentiatingMolecularPropertiesCounter(0.9, 9));
                     break;
                 default:
                     throw new RuntimeException("unexpected size");

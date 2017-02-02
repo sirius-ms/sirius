@@ -1,11 +1,6 @@
 package de.unijena.bioinf.ConfidenceScore;
 
-import de.unijena.bioinf.ChemistryBase.data.DoubleDataMatrix;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by Marcus Ludwig on 11.03.16.
@@ -92,7 +87,7 @@ public class Stats {
         int n0 = classCount[0];
         int n1 = classCount[1];
 
-        final double auc = ((double)(S0 - n0*(n0+1)/2))/(n0*n1);
+        final double auc = (S0 - n0*(n0+1)/2) /(n0*n1);
         return auc;
     }
 

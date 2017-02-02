@@ -13,7 +13,7 @@ import java.util.Arrays;
 abstract public class Scaler implements Parameterized{
     public Scaler(double[][] matrix){
         if (matrix!=null) compute(matrix);
-    };
+    }
 
     protected abstract void compute(double[][] matrix);
 
@@ -103,8 +103,9 @@ abstract public class Scaler implements Parameterized{
             return divergingFeatures(matrix).length>0;
         }
 
-        public double[] getSD(){return sd.clone();};
-        public double[] getMean(){return mean.clone();};
+        public double[] getSD(){return sd.clone();}
+
+        public double[] getMean(){return mean.clone();}
 
         @Override
         public String toString() {
@@ -284,8 +285,9 @@ abstract public class Scaler implements Parameterized{
             return divergingFeatures(matrix).length>0;
         }
 
-        public double[] getMins(){return data_min.clone();};
-        public double[] getMaxs(){return data_max.clone();};
+        public double[] getMins(){return data_min.clone();}
+
+        public double[] getMaxs(){return data_max.clone();}
 
         @Override
         public String toString() {

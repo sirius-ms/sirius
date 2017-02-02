@@ -12,18 +12,18 @@ import java.util.List;
 public interface SVMInterface<node extends SVMInterface.svm_node, problem extends SVMInterface.svm_problem<node>,  M> {
 //    model extends SVMInterface.svm_model,
 
-    public node createSVM_Node(int index, double value);
+    node createSVM_Node(int index, double value);
 
-    public problem createSVM_Problem();
+    problem createSVM_Problem();
 
-    public SVMInterface.svm_model<M> svm_train(problem problem, svm_parameter parameter);
+    SVMInterface.svm_model<M> svm_train(problem problem, svm_parameter parameter);
 
-    public double svm_predict(SVMInterface.svm_model<M> model, List<node> nodes);
+    double svm_predict(SVMInterface.svm_model<M> model, List<node> nodes);
 //
-    public Predictor getPredictor(SVMInterface.svm_model<M> model, double probA, double probB);
+Predictor getPredictor(SVMInterface.svm_model<M> model, double probA, double probB);
 
 
-    public abstract class svm_node{
+    abstract class svm_node{
         protected int index;
         protected double value;
 
@@ -38,7 +38,7 @@ public interface SVMInterface<node extends SVMInterface.svm_node, problem extend
         public abstract double getValue();
     }
 
-    public abstract class svm_problem<node>{
+    abstract class svm_problem<node>{
         public abstract void setL(int l);
         public abstract int getL();
 
@@ -51,11 +51,11 @@ public interface SVMInterface<node extends SVMInterface.svm_node, problem extend
 
 
 
-    public abstract class svm_model<M>{
+    abstract class svm_model<M>{
         public abstract M getModel();
     }
 
-    public class svm_parameter{
+    class svm_parameter{
         public static final int C_SVC = 0;
 //        public static final int NU_SVC = 1;
 //        public static final int ONE_CLASS = 2;

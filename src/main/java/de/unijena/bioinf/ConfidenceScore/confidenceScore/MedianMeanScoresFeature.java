@@ -37,7 +37,7 @@ public class MedianMeanScoresFeature implements FeatureCreator {
         double[] scores = new double[rankedCandidates.length];
         for (int i = 0; i < rankedCandidates.length; i++) {
             scores[i] = scorer.score(query.getFingerprint(), rankedCandidates[i].getFingerprint());
-        };
+        }
         return new double[]{mean(scores), median(scores)};
     }
 
