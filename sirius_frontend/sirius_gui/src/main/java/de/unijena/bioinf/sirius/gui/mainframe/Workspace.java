@@ -144,9 +144,9 @@ public abstract class Workspace {
             {
                 String origName = escapeFileName(container.getName());
                 String aname = origName;
-                int i = 0;
+                int i = 1;
                 while (names.contains(aname)) {
-                    aname = origName + (++i);
+                    aname = origName + "(" + (++i) + ")";
                 }
                 name = aname;
                 names.add(name);
