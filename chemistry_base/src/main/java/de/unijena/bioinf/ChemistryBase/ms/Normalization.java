@@ -77,9 +77,7 @@ public class Normalization {
         Normalization that = (Normalization) o;
 
         if (Double.compare(that.norm, norm) != 0) return false;
-        if (mode != that.mode) return false;
-
-        return true;
+        return mode == that.mode;
     }
 
     @Override

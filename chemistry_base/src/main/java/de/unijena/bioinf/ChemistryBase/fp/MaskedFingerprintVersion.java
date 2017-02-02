@@ -78,7 +78,7 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
 
     @Override
     public int getRelativeIndexOf(int absoluteIndex) {
-        return (short)mapping.get((short)absoluteIndex);
+        return mapping.get((short)absoluteIndex);
     }
     public int getAbsoluteIndexOf(int relativeIndex) {
         return allowedIndizes[relativeIndex];

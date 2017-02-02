@@ -173,9 +173,7 @@ public class ChemicalAlphabet implements Iterable<Element> {
 
         ChemicalAlphabet that = (ChemicalAlphabet) o;
         if (!selection.equals(that.selection)) return false;
-        if (!Arrays.equals(allowedElements, that.allowedElements)) return false;
-
-        return true;
+        return Arrays.equals(allowedElements, that.allowedElements);
     }
 
     @Override

@@ -17,12 +17,12 @@ public interface Descriptor<AnnotationType> {
      *
      * @return a list of keywords.
      */
-    public String[] getKeywords();
+    String[] getKeywords();
 
-    public Class<AnnotationType> getAnnotationClass();
+    Class<AnnotationType> getAnnotationClass();
 
-    public <G, D, L> AnnotationType read(DataDocument<G, D, L> document, D dictionary);
+    <G, D, L> AnnotationType read(DataDocument<G, D, L> document, D dictionary);
 
-    public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, AnnotationType annotation);
+    <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, AnnotationType annotation);
 
 }

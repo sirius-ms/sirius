@@ -365,7 +365,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     public <T> void addAnnotation(Class<T> klass, T annotation) {
         if (annotations.containsKey(klass))
             throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
-        annotations.put((Class<Object>) klass, (Object) annotation);
+        annotations.put((Class<Object>) klass, annotation);
     }
 
     public <S, T extends S> void addAliasForAnnotation(Class<T> previous, Class<S> newOne) {
@@ -400,7 +400,7 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
         if (annotations.containsKey(klass)) return (T) annotations.get(klass);
         try {
             final T obj = klass.newInstance();
-            annotations.put((Class<Object>) klass, (Object) obj);
+            annotations.put((Class<Object>) klass, obj);
             return obj;
         } catch (InstantiationException e) {
             throw new RuntimeException(e.getMessage());

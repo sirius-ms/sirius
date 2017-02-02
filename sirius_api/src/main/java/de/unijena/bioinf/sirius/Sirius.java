@@ -816,7 +816,7 @@ public class Sirius {
     }
 
     public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
-        return identifyPrecursorAndIonization(uexperiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints)null);
+        return identifyPrecursorAndIonization(uexperiment, numberOfCandidates, recalibrating, deisotope, null);
     }
 
     /**

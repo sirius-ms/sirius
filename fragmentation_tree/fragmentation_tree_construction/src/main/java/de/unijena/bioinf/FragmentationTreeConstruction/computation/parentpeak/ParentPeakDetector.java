@@ -30,6 +30,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  */
 public interface ParentPeakDetector {
 
-    public ProcessedPeak detectParentPeak(Ms2Experiment experiment, MeasurementProfile profile);
+    ProcessedPeak detectParentPeak(Ms2Experiment experiment, MeasurementProfile profile);
 
 }
