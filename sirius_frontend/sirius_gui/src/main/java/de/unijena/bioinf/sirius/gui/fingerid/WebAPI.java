@@ -67,10 +67,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -264,7 +261,7 @@ public class WebAPI implements Closeable {
                     Thread.sleep(3000 + 30 * k);
                     if (updateJobStatus(job)) {
                         return job.prediction;
-                    } else if (job.state == "CRASHED") {
+                    } else if (Objects.equals(job.state, "CRASHED")) {
                         throw new RuntimeException("Job crashed");
                     }
                 }
