@@ -43,9 +43,8 @@ public class ComputeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<ExperimentContainer> ecs = MF.getCompoundListSelectionModel().getSelected();
-        if (ecs != null && !ecs.isEmpty()) {
-            new BatchComputeDialog(MF, ecs); //todo no check button should not be active
+        if (!MF.getCompoundListSelectionModel().isSelectionEmpty()) {
+            new BatchComputeDialog(MF, MF.getCompoundListSelectionModel().getSelected());
         }
     }
 }
