@@ -334,8 +334,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
         }
 
         public boolean sameMonoIsotopic(Pattern pattern){
-            if (peaks.equals(pattern.getPeaks().get(0))) return true;
-            return false;
+            return peaks.equals(pattern.getPeaks().get(0));
         }
 
         public double getScore() {
@@ -518,7 +517,7 @@ public class IsotopeScorer implements DecompositionScorer<boolean[]>{
             //final double tolerance = model.get(GRB.DoubleAttr.IntVio);
             for (int i=0; i < assignments.length; ++i) {
                 assert usedPatterns[i] > -0.5 : "LP_LOWERBOUND violation for var " + i + " with value " + usedPatterns[i];
-                assert usedPatterns[i] < 1.5 : "LP_LOWERBOUND violation for var " + i + " with value " + usedPatterns[i];;
+                assert usedPatterns[i] < 1.5 : "LP_LOWERBOUND violation for var " + i + " with value " + usedPatterns[i];
                 assignments[i] = (Math.round(usedPatterns[i]) == 1);
             }
             return assignments;

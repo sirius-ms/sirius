@@ -311,7 +311,6 @@ class DP {
                         improvementEdges.add(improvementEdge);
                     }
                 }
-                ;
                 for (Loss vw : improvementEdges) {
                     assert tree.getLoss(u, vw.getTarget().getFormula()) != null;
                     Fragment improvementChild = null;

@@ -23,6 +23,6 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 
 public interface Preprocessor extends Parameterized {
 
-    public MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile);
+    MutableMs2Experiment process(MutableMs2Experiment experiment, MeasurementProfile profile);
 
 }

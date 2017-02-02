@@ -21,7 +21,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ImmutableParameterized;
 
 public interface IntensityDependency extends ImmutableParameterized<IntensityDependency> {
 
-    public double getValueAt(double intensity);
+    double getValueAt(double intensity);
 
 }
 

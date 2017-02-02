@@ -27,6 +27,6 @@ public interface ValencyAlphabet<T> extends Alphabet<T> {
      * @param i index of the character
      * @return valence of the character
      */
-    public int valenceOf(int i);
+    int valenceOf(int i);
 
 }

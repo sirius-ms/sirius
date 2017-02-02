@@ -633,7 +633,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             return aus;
 
         }
-        ;
         return false;
     }
 

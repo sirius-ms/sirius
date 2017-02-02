@@ -22,9 +22,9 @@ import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
 
 public interface Inspectable {
 
-    public <G, D, L> void inspect(DataDocument<G, D, L> document, D dictionary);
+    <G, D, L> void inspect(DataDocument<G, D, L> document, D dictionary);
 
-    public static class Utils {
+    class Utils {
         private static JDKDocument javaobj = new JDKDocument();
         public static <G, D, L> void keyValues(DataDocument<G, D, L> document, D dictionary, Object... pairs) {
             String key = null;

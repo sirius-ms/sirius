@@ -27,8 +27,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  */
 public interface DecompositionScorer<S> extends Parameterized {
 
-    public S prepare(ProcessedInput input);
+    S prepare(ProcessedInput input);
 
-    public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, S precomputed);
+    double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, S precomputed);
 
 }

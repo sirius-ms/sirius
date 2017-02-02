@@ -38,6 +38,6 @@ public interface Parser<T> {
      * @return data element from the input stream
      * @throws IOException
      */
-    public <S extends T> S parse(BufferedReader reader, URL source) throws IOException;
+    <S extends T> S parse(BufferedReader reader, URL source) throws IOException;
 
 }

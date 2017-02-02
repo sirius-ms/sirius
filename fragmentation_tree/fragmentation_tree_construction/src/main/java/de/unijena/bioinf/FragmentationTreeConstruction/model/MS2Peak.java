@@ -59,9 +59,7 @@ public class MS2Peak extends Peak {
         MS2Peak peak = (MS2Peak) o;
 
         if (Double.compare(peak.intensity, intensity) != 0) return false;
-        if (Double.compare(peak.mass, mass) != 0) return false;
-
-        return true;
+        return Double.compare(peak.mass, mass) == 0;
     }
 
     @Override

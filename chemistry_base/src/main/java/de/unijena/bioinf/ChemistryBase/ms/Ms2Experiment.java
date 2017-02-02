@@ -32,14 +32,14 @@ import java.util.Map;
 public interface Ms2Experiment extends Cloneable {
 
 
-    public URL getSource();
+    URL getSource();
 
-    public String getName();
+    String getName();
 
     /**
      * @return the ionization type of the ion or null if this type is unknown
      */
-    public PrecursorIonType getPrecursorIonType();
+    PrecursorIonType getPrecursorIonType();
 
 
     /**
@@ -48,7 +48,7 @@ public interface Ms2Experiment extends Cloneable {
      * ion in each ms1 spectrum. Further peaks are not allowed!
      * @return a list of MS1 spectra with the isotope pattern of this compound
      */
-    public <T extends Spectrum<Peak>> List<T> getMs1Spectra();
+    <T extends Spectrum<Peak>> List<T> getMs1Spectra();
 
     /**
      * In practice it seems more accurate to merge all MS1 spectra into a single one and only use this for further
@@ -56,17 +56,17 @@ public interface Ms2Experiment extends Cloneable {
      * should not be done in SIRIUS itself.
      * @return merge all ms1 spectra to single one
      */
-    public <T extends Spectrum<Peak>> T getMergedMs1Spectrum();
+    <T extends Spectrum<Peak>> T getMergedMs1Spectrum();
 
     /**
      * @return a list of MS2 spectra belonging to this compound
      */
-    public <T extends Ms2Spectrum<Peak>> List<T> getMs2Spectra();
+    <T extends Ms2Spectrum<Peak>> List<T> getMs2Spectra();
 
     /**
      * @return the mass-to-charge ratio of the ion to analyze
      */
-    public double getIonMass();
+    double getIonMass();
 
     /***
      * The further methods provide information which is OPTIONAL. The algorithm should be able to handle cases in
@@ -79,12 +79,12 @@ public interface Ms2Experiment extends Cloneable {
      * about the absence of an ionization.
      * @return the *exact* (idealized) mass of the molecule or 0 if the mass is unknown
      */
-    public double getMoleculeNeutralMass();
+    double getMoleculeNeutralMass();
 
     /**
      * @return molecular formula of the neutral molecule
      */
-    public MolecularFormula getMolecularFormula();
+    MolecularFormula getMolecularFormula();
 
     /*
         Annotations are additional information, that might be present in the data or not. They are usually
@@ -103,39 +103,39 @@ public interface Ms2Experiment extends Cloneable {
     /**
      * @return an iterator over all annotations
      */
-    public Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation();
+    Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation();
 
     /**
      * @throws NullPointerException if there is no entry for this key
      * @return annotation value for the given class/key
      */
-    public <T> T getAnnotationOrThrow(Class<T> klass);
+    <T> T getAnnotationOrThrow(Class<T> klass);
 
     /**
      * @return annotation value for the given class/key or null
      */
-    public <T> T getAnnotation(Class<T> klass);
+    <T> T getAnnotation(Class<T> klass);
 
     /**
      * @return annotation value for the given class/key or the given default value
      */
-    public <T> T getAnnotation(Class<T> klass, T defaultValue);
+    <T> T getAnnotation(Class<T> klass, T defaultValue);
 
     /**
      * @return true if the given annotation is present
      */
-    public <T> boolean hasAnnotation(Class<T> klass);
+    <T> boolean hasAnnotation(Class<T> klass);
 
     /**
      * Set the annotation with the given key
      * @return true if there was no previous value for this annotation
      */
-    public <T> boolean setAnnotation(Class<T> klass, T value);
+    <T> boolean setAnnotation(Class<T> klass, T value);
 
     /**
      * Allow cloning/copying of Ms2Experiments
      * The implementation might choose if the cloning is deep or shallow
      */
-    public Ms2Experiment clone();
+    Ms2Experiment clone();
 
 }

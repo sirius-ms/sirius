@@ -15,12 +15,12 @@ class TrainedElementDetectionNetwork {
         return npeaks;
     }
 
-    protected static enum ActivationFunction {
-        LINEAR, RELU, TANH;
+    protected enum ActivationFunction {
+        LINEAR, RELU, TANH
     }
 
     protected interface Layer {
-        public double[] activate(double[] vector);
+        double[] activate(double[] vector);
     }
 
     protected static class PreprocessingLayer implements Layer {

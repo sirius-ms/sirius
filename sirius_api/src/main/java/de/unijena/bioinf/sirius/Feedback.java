@@ -23,11 +23,11 @@ public interface Feedback {
     /**
      * cancel computation, throw away all intermediate results
      */
-    public void cancelComputation();
+    void cancelComputation();
 
     /**
      * stop the computation but keep the results you computed so far
      */
-    public void stopComputationKeepResults();
+    void stopComputationKeepResults();
 
 }
