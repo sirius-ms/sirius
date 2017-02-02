@@ -4,7 +4,6 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActionManager;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -119,10 +118,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //Init actions
-        SiriusActionManager.initRootManager();
+//        SiriusActionManager.initRootManager();
 
         final JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setActionMap(SiriusActionManager.ROOT_MANAGER);
 
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
         mf.add(mainPanel, BorderLayout.CENTER);
