@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -45,7 +46,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return experimentList;
     }
 
-    public List<ExperimentContainer> getCompounds() {
+    public EventList<ExperimentContainer> getCompounds() {
         return experimentList.getCompoundList();
     }
 
