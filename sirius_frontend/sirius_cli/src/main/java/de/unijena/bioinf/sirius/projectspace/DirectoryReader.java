@@ -20,19 +20,19 @@ public class DirectoryReader implements ProjectReader {
 
     public interface ReadingEnvironment {
 
-        public abstract List<String> list();
+        List<String> list();
 
-        public abstract void enterDirectory(String name) throws IOException;
+        void enterDirectory(String name) throws IOException;
 
-        public abstract InputStream openFile(String name) throws IOException;
+        InputStream openFile(String name) throws IOException;
 
-        public abstract URL absolutePath(String name) throws IOException;
+        URL absolutePath(String name) throws IOException;
 
-        public abstract void closeFile() throws IOException;
+        void closeFile() throws IOException;
 
-        public abstract void leaveDirectory() throws IOException;
+        void leaveDirectory() throws IOException;
 
-        public abstract void close() throws IOException;
+        void close() throws IOException;
     }
 
     protected static class Instance {
@@ -162,7 +162,7 @@ public class DirectoryReader implements ProjectReader {
 
 
     protected interface Do<T> {
-        public T run(Reader r) throws IOException;
+        T run(Reader r) throws IOException;
     }
 
     protected <T> T read(String name, DirectoryReader.Do<T> f)throws IOException  {

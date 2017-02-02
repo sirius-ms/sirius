@@ -292,10 +292,7 @@ public abstract class Workspace {
         public boolean accept(File f) {
             if (f.isDirectory()) return true;
             String name = f.getName();
-            if (name.endsWith(".sirius")) {
-                return true;
-            }
-            return false;
+            return name.endsWith(".sirius");
         }
 
         @Override

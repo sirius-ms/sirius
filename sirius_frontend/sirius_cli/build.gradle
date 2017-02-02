@@ -10,8 +10,8 @@ processResources.doFirst{
     propertiesFile.withReader ("UTF8",{
         properties.load(it)
     })
-    properties.setProperty("de.unijena.bioinf.sirius.version", "$version");
-    properties.setProperty("de.unijena.bioinf.utils.errorReport.softwareName", "${project.appName}".capitalize());
+    properties.setProperty("de.unijena.bioinf.sirius.version", "$version")
+    properties.setProperty("de.unijena.bioinf.utils.errorReport.softwareName", "${project.appName}".capitalize())
     propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
     propertiesFile.withWriter("UTF8",{
         properties.store(it,"")

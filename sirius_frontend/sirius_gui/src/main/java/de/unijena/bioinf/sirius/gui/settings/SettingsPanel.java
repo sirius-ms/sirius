@@ -9,7 +9,7 @@ package de.unijena.bioinf.sirius.gui.settings;/**
  */
 public interface SettingsPanel {
 //    public Properties getProperties();
-    public void refreshValues ();
-    public void saveProperties();
-    public String name();
+void refreshValues();
+    void saveProperties();
+    String name();
 }

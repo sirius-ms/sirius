@@ -25,7 +25,7 @@ public class FingerIdResultWriter extends DirectoryWriter {
     @Override
     protected void startWritingIdentificationResults(ExperimentResult er, List<IdentificationResult> results) throws IOException {
         super.startWritingIdentificationResults(er, results);
-        if (isAllowed(FingerIdResult.CANDIDATE_LISTS)) {
+        if (isAllowed(FingerIdResult.CANDIDATE_LISTS) && hasFingerId(results)) {
             // now write CSI:FingerId results
             W.enterDirectory("csi_fingerid");
             final List<FingerIdResult> frs = new ArrayList<>();
@@ -42,6 +42,13 @@ public class FingerIdResultWriter extends DirectoryWriter {
         }
     }
 
+    private boolean hasFingerId(List<IdentificationResult> results) {
+        for (IdentificationResult r : results) {
+            if (r.getAnnotationOrNull(FingerIdResult.class)!=null) return true;
+        }
+        return false;
+    }
+
 
     @Override
     protected void endWriting() {
@@ -54,7 +61,7 @@ public class FingerIdResultWriter extends DirectoryWriter {
     }
 
     private void writeSummary() throws IOException {
-        if (isAllowed(FingerIdResult.CANDIDATE_LISTS)) {
+        if (isAllowed(FingerIdResult.CANDIDATE_LISTS) && topHits.size()>0) {
             write("summary_csi_fingerid.csv", new Do() {
                 @Override
                 public void run(Writer w) throws IOException {

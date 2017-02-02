@@ -136,7 +136,7 @@ public class CSVExporter {
             }
         }
 
-        Collections.sort(candidates, Scored.<Compound>desc());;
+        Collections.sort(candidates, Scored.<Compound>desc());
 
         if (data==null) return;
         for (int i=0; i < candidates.size(); ++i) {

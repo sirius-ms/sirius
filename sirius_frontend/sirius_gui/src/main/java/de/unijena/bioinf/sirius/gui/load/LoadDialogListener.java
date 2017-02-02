@@ -8,23 +8,23 @@ import java.util.List;
 
 public interface LoadDialogListener {
 
-	public void addSpectra();
+	void addSpectra();
 	
-	public void addSpectra(List<File> files);
+	void addSpectra(List<File> files);
 	
-	public void removeSpectrum(CompactSpectrum sp);
+	void removeSpectrum(CompactSpectrum sp);
 	
-	public void abortProcess();
+	void abortProcess();
 	
-	public void completeProcess();
+	void completeProcess();
 	
-	public void changeCollisionEnergy(CompactSpectrum sp);
+	void changeCollisionEnergy(CompactSpectrum sp);
 
-	public void setIonization(PrecursorIonType ionization);
+	void setIonization(PrecursorIonType ionization);
 	
-	public void changeMSLevel(CompactSpectrum sp, int msLevel);
+	void changeMSLevel(CompactSpectrum sp, int msLevel);
 	
-	public void experimentNameChanged(String name);
+	void experimentNameChanged(String name);
 
 	void setParentmass(double mz);
 }

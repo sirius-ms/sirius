@@ -32,13 +32,11 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import org.openscience.cdk.exception.CDKException;
@@ -50,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.stream.JsonParser;
-import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -85,7 +82,7 @@ public class CSIFingerIdComputation {
     }
 
     public interface Callback {
-        public void computationFinished(ExperimentContainer container, SiriusResultElement element);
+        void computationFinished(ExperimentContainer container, SiriusResultElement element);
     }
 
     protected int[] fingerprintIndizes;
@@ -496,8 +493,8 @@ public class CSIFingerIdComputation {
                 }
             }
         }
-        synchronized (formulaWorker) {formulaWorker.notifyAll();};
-        synchronized (jobWorker) {jobWorker.notifyAll();};
+        synchronized (formulaWorker) {formulaWorker.notifyAll();}
+        synchronized (jobWorker) {jobWorker.notifyAll();}
     }
 
     public void shutdown() {
@@ -721,7 +718,7 @@ public class CSIFingerIdComputation {
 
                 if (nothingToDo) {
                     try {
-                        synchronized (this) {wait(3000);};
+                        synchronized (this) {wait(3000);}
                     } catch (InterruptedException e) {
                         LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                     }

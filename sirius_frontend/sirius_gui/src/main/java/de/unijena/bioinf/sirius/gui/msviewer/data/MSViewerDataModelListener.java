@@ -2,10 +2,10 @@ package de.unijena.bioinf.sirius.gui.msviewer.data;
 
 public interface MSViewerDataModelListener {
 	
-	public void signalNoiseInformationChanged();
+	void signalNoiseInformationChanged();
 	
-	public void markedInformationChanged();
+	void markedInformationChanged();
 	
-	public void spectrumChanged();
+	void spectrumChanged();
 
 }

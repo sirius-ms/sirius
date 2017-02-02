@@ -36,7 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundCandidate {
 
-    public static final boolean ECFP_ENABLED = false;
+    public static final boolean ECFP_ENABLED = true;
 
     private final static double THRESHOLD_FP = 0.4;
 

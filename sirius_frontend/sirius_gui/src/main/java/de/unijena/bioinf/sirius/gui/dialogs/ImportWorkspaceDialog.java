@@ -41,7 +41,7 @@ public class ImportWorkspaceDialog extends JDialog implements ActionListener {
         return decision;
     }
 
-    public static enum Decision {REPLACE, MERGE,ABORT, NONE};
+    public enum Decision {REPLACE, MERGE,ABORT, NONE}
 
     public ImportWorkspaceDialog(MainFrame owner) {
         super(owner, "Import workspace", true);

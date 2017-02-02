@@ -15,7 +15,7 @@ public enum Ionization {
 		return null;
 	}
 
-	private Ionization(String name) {
+	Ionization(String name) {
 		this.name = name;
 	}
 

@@ -5,21 +5,21 @@ import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 
 public interface LoadDialog {
 	
-	public void newCollisionEnergy(CompactSpectrum sp);
+	void newCollisionEnergy(CompactSpectrum sp);
 
-	public void ionizationChanged(PrecursorIonType ionization);
+	void ionizationChanged(PrecursorIonType ionization);
 	
-	public void spectraAdded(CompactSpectrum sp);
+	void spectraAdded(CompactSpectrum sp);
 	
-	public void spectraRemoved(CompactSpectrum sp);
+	void spectraRemoved(CompactSpectrum sp);
 	
-	public void msLevelChanged(CompactSpectrum sp);
+	void msLevelChanged(CompactSpectrum sp);
 	
-	public void addLoadDialogListener(LoadDialogListener ldl);
+	void addLoadDialogListener(LoadDialogListener ldl);
 	
-	public void showDialog();
+	void showDialog();
 	
-	public void experimentNameChanged(String name);
+	void experimentNameChanged(String name);
 
-	public void parentMassChanged(double newMz);
+	void parentMassChanged(double newMz);
 }

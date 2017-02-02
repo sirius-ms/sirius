@@ -37,6 +37,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.projectspace.*;
@@ -44,6 +45,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -85,12 +88,12 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     public void compute() {
         try {
-            sirius.setProgress(progress);
+            sirius.setProgress(shellOutputSurpressed ? new Progress.Quiet() : progress);
             final Iterator<Instance> instances = handleInput(options);
             while (instances.hasNext()) {
                 try {
                     final Instance i = instances.next();
-                    progress.info("Compute '" + i.file.getName() + "'");
+                    sirius.getProgress().info("Compute '" + i.file.getName() + "'");
                     final boolean doIdentify;
                     final List<IdentificationResult> results;
 
@@ -210,6 +213,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     protected void handleOutputOptions(Options options) {
         if (options.isQuiet() || "-".equals(options.getSirius())) {
             this.shellOutputSurpressed = true;
+            disableShellLogging();
         }
         if ("-".equals(options.getOutput())) {
             logger.error("Cannot write output files and folders into standard output stream. Please use --sirius t get a zip file of SIRIUS output into the standard output stream");
@@ -270,6 +274,19 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     // dummy stub
                 }
             };
+        }
+    }
+
+    private void disableShellLogging() {
+        Handler ch = null;
+        for (Handler h : Logger.getGlobal().getHandlers()) {
+            if (h instanceof ConsoleHandler) {
+                ch = h;
+                break;
+            }
+        }
+        if (ch != null) {
+            Logger.getGlobal().removeHandler(ch);
         }
     }
 

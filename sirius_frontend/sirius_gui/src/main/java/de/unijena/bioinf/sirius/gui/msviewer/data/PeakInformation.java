@@ -5,16 +5,16 @@ import java.util.List;
 
 public interface PeakInformation {
 	
-	public double getMass();
+	double getMass();
 	
-	public double getRelativeIntensity();
+	double getRelativeIntensity();
 	
-	public double getAbsoluteIntensity();
+	double getAbsoluteIntensity();
 	
-	public double getSignalToNoise();
+	double getSignalToNoise();
 	
-	public boolean isIsotope();
+	boolean isIsotope();
 	
-	public List<MolecularFormulaInformation> getDecompositions();
+	List<MolecularFormulaInformation> getDecompositions();
 
 }

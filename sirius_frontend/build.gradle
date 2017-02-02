@@ -28,8 +28,8 @@ ext {
 
     glpk_lib_version = '4.60'
 
-    siriusVersion = '3.3.1-SNAPSHOT'
-    fingeridVersion = "1.0.7-SNAPSHOT"
+    siriusVersion = '3.4.0'
+    fingeridVersion = "1.0.8"
 
     jewelcli_version = '0.8.+'
 
@@ -91,7 +91,7 @@ task downloadGLPK(type: Copy) {
         dir.resolve('glpk').toFile().deleteDir()
         Files.createDirectories(dir)
 
-        def glpkZipFile = Paths.get('glpk.zip');
+        def glpkZipFile = Paths.get('glpk.zip')
         def file = dir.resolve(glpkZipFile).newOutputStream()
         file << glpkURL.openStream()
         file.close()
@@ -154,7 +154,7 @@ task buildDoku(type: Exec) {
 
 buildDoku.doFirst {
     def f = file("${project.manualPath}/source/index.rst").readLines()
-    out.toPath().getParent().toFile().mkdirs();
+    out.toPath().getParent().toFile().mkdirs()
     out.createNewFile()
 
     //todo do we want the index file here?
@@ -211,7 +211,7 @@ subprojects {
         doLast {
 //            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
             def siriusLibPath = '$GUROBI_HOME/lib:$APP_HOME/lib'
-            def lines =  unixScript.text.split(System.lineSeparator());
+            def lines =  unixScript.text.split(System.lineSeparator())
             int insertIndex = -1
             for (int i = 0; i < lines.length; i++) {
                 if (lines[i].startsWith('CLASSPATH=')){
@@ -223,7 +223,7 @@ subprojects {
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
                 }
             }
-            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"\nexport DYLD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"");
+            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"\nexport DYLD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
             unixScript.text = lines.join(System.lineSeparator())
         }
     }

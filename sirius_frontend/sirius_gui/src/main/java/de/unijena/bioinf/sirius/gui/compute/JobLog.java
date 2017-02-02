@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class JobLog {
 
@@ -21,25 +20,25 @@ public class JobLog {
     }
 
     public interface JobListener {
-        public void jobIsSubmitted(Job job);
-        public void jobIsRunning(Job job);
-        public void jobIsDone(Job job);
-        public void jobIsFailed(Job job);
-        public void jobDescriptionChanged(Job job);
+        void jobIsSubmitted(Job job);
+        void jobIsRunning(Job job);
+        void jobIsDone(Job job);
+        void jobIsFailed(Job job);
+        void jobDescriptionChanged(Job job);
     }
 
     public interface Job {
-        public String name();
-        public String description();
-        public void done();
-        public void error(String msg, Throwable exc);
+        String name();
+        String description();
+        void done();
+        void error(String msg, Throwable exc);
 
-        public void changeDescription(String newDescription);
-        public boolean isError();
-        public boolean isDone();
-        public boolean isRunning();
+        void changeDescription(String newDescription);
+        boolean isError();
+        boolean isDone();
+        boolean isRunning();
 
-        public void run();
+        void run();
     }
 
     protected final List<Job> runningJobs, doneJobs;

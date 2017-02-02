@@ -5,13 +5,13 @@ import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeType;
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.*;
-import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -299,10 +299,7 @@ abstract class FTreeFilter extends FileFilter {
     public boolean accept(File f) {
         if (f.isDirectory()) return true;
         String name = f.getName();
-        if (name.endsWith(fileSuffix)) {
-            return true;
-        }
-        return false;
+        return name.endsWith(fileSuffix);
     }
 
     @Override

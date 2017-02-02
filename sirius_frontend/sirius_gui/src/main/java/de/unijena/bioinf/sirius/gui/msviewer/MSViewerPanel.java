@@ -87,8 +87,8 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 	private void initPeakPositionParameter(){
 
-		double intDiff = this.maxScaleInt - this.minScaleInt;;
-		this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
+		double intDiff = this.maxScaleInt - this.minScaleInt;
+        this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
 
 		intDiff = this.maxScaleMass - this.minScaleMass;
 		this.xAxisPixelPerMassVal = ((double) xPixelNumber) / intDiff;
@@ -110,7 +110,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 	private double getMassOfXPosition(int xPos){
 
-		return (((double)(xPos - xAxisHorizontalStartPos)) / (double) xAxisPixelPerMassVal)+this.minScaleMass;
+		return (((double)(xPos - xAxisHorizontalStartPos)) / xAxisPixelPerMassVal)+this.minScaleMass;
 	}
 
 	///////////////////////////////////// Ende ////////////////////////////////////////////////////////////////////

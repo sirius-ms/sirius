@@ -9,11 +9,8 @@ public class SupportedDataFormatsFilter extends FileFilter{
 	public boolean accept(File f) {
 		if(f.isDirectory()) return true;
 		String name = f.getName();name = name.toLowerCase();
-		if(name.endsWith(".ms")||name.endsWith(".csv")||name.endsWith(".txt")||name.endsWith(".mgf")){
-			return true;
-		}
-		return false;
-	}
+        return name.endsWith(".ms") || name.endsWith(".csv") || name.endsWith(".txt") || name.endsWith(".mgf");
+    }
 
 	@Override
 	public String getDescription() {

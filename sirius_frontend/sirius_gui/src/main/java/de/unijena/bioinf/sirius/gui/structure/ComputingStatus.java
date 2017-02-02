@@ -20,6 +20,6 @@ package de.unijena.bioinf.sirius.gui.structure;
 
 public enum ComputingStatus {
 
-    UNCOMPUTED, COMPUTING, COMPUTED, QUEUED, FAILED;
+    UNCOMPUTED, COMPUTING, COMPUTED, QUEUED, FAILED
 
 }

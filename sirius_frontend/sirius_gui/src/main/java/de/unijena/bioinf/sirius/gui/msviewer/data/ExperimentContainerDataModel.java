@@ -18,7 +18,7 @@ import java.util.TreeSet;
 public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     public enum DisplayMode {
-        MS, MSMS, MERGED, DUMMY;
+        MS, MSMS, MERGED, DUMMY
     }
 
     protected ExperimentContainer ec;

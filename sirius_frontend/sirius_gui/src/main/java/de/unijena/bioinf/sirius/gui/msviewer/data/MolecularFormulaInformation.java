@@ -3,14 +3,14 @@ package de.unijena.bioinf.sirius.gui.msviewer.data;
 
 public interface MolecularFormulaInformation {
 	
-	public String getMolecularFormula();
+	String getMolecularFormula();
 	
-	public double getMass();
+	double getMass();
 	
-	public void useFormula(boolean use);
+	void useFormula(boolean use);
 	
-	public boolean formulaUsed();
+	boolean formulaUsed();
 	
-	public PeakInformation getPeak();
+	PeakInformation getPeak();
 
 }

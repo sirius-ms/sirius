@@ -197,7 +197,8 @@ public class Compound {
                             flags = expectInt(parser); break;
                         case "links":
                             parseLinks(compound, parser); break;
-                    }; break;
+                    }
+                    break;
                 case END_OBJECT:
                     compound.inchi = new InChI(inchikey, inchi);
                     // add databases without links

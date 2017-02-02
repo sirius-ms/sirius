@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface ExperimentIO {
 
-	public void save(List<ExperimentContainer> ec, File file);
+	void save(List<ExperimentContainer> ec, File file);
 	
-	public List<ExperimentContainer> load(File file);
+	List<ExperimentContainer> load(File file);
 
 }

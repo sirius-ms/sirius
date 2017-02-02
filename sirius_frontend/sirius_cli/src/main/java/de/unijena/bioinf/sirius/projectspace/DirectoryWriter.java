@@ -132,15 +132,15 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     public interface WritingEnvironment {
-        public abstract void enterDirectory(String name) throws IOException;
+        void enterDirectory(String name) throws IOException;
 
-        public abstract OutputStream openFile(String name) throws IOException;
+        OutputStream openFile(String name) throws IOException;
 
-        public abstract void closeFile() throws IOException;
+        void closeFile() throws IOException;
 
-        public abstract void leaveDirectory() throws IOException;
+        void leaveDirectory() throws IOException;
 
-        public abstract void close() throws IOException;
+        void close() throws IOException;
     }
 
     protected void write(String name, Do f)throws IOException  {
@@ -298,7 +298,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     protected interface Do {
-        public void run(Writer w) throws IOException;
+        void run(Writer w) throws IOException;
     }
 
 }

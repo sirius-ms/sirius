@@ -3,38 +3,38 @@ package de.unijena.bioinf.sirius.gui.msviewer.data;
 
 public interface MSViewerDataModel {
 	
-	public int getSize();
+	int getSize();
 	
-	public double getMass(int index);
+	double getMass(int index);
 	
-	public double getRelativeIntensity(int index);
+	double getRelativeIntensity(int index);
 	
-	public double getSignalNoise(int index);
+	double getSignalNoise(int index);
 	
-	public double getAbsoluteIntensity(int index);
+	double getAbsoluteIntensity(int index);
 	
-	public String getMolecularFormula(int index);
+	String getMolecularFormula(int index);
 	
-	public PeakInformation getInformations(int index);
+	PeakInformation getInformations(int index);
 	
-	public boolean isMarked(int index);
+	boolean isMarked(int index);
 	
-	public boolean isImportantPeak(int index);
+	boolean isImportantPeak(int index);
 	
-	public boolean isUnimportantPeak(int index);
+	boolean isUnimportantPeak(int index);
 	
 //	public boolean isNoise(int index);
 	
-	public boolean isPlusZeroPeak(int index);
+	boolean isPlusZeroPeak(int index);
 	
-	public boolean isIsotope(int index);
+	boolean isIsotope(int index);
 	
-	public int[] getIsotopePeaks(int index);
+	int[] getIsotopePeaks(int index);
 	
-	public String getLabel();
+	String getLabel();
 	
-	public int getIndexWithMass(double mass);
+	int getIndexWithMass(double mass);
 	
-	public int findIndexOfPeak(double mass, double tolerance);
+	int findIndexOfPeak(double mass, double tolerance);
 
 }

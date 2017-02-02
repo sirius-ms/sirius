@@ -323,8 +323,8 @@ class ImportExperimentsThread implements Runnable{
 					}
 				}
 			} catch (IOException e) {
-				errors.add(f.getName()+": Invalid file format.");;
-			}
+				errors.add(f.getName()+": Invalid file format.");
+            }
 			counter++;
 		}
 		SwingUtilities.invokeLater(new Runnable() {

@@ -1,7 +1,10 @@
 package de.unijena.bioinf.sirius.cli;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -79,7 +82,7 @@ public class Test {
                         if (spec==null) {
                             System.err.println("Don't find spectrum in " + f);
                             System.err.println(exp.getIonMass());
-                            System.err.println(exp.<Spectrum<Peak>>getMs1Spectra().get(0));
+                            System.err.println(exp.getMs1Spectra().get(0));
                         }
                         final MolecularFormula neutral = exp.getPrecursorIonType().getInSourceFragmentation()==null ? exp.getMolecularFormula() : exp.getMolecularFormula().subtract(exp.getPrecursorIonType().getInSourceFragmentation());
 

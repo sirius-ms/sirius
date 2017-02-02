@@ -32,11 +32,7 @@ class MGFCompatibilityValidator{
 			while((temp = reader.readLine()) != null){
 				temp = temp.trim();
 				if(temp.isEmpty()) continue;
-				if(temp.toUpperCase().equals("BEGIN IONS")){
-					return true;
-				}else{
-					return false;
-				}
+                return temp.toUpperCase().equals("BEGIN IONS");
 			}
 		}catch(IOException e){
 			return false;

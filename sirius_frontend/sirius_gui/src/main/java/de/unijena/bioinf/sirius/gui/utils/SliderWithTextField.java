@@ -130,7 +130,7 @@ public class SliderWithTextField extends JPanel {
     public int getUpperValue(){
         if (isRangeSlider){
             final int minValue = ((RangeSlider)slider).getLowerValue();
-            final int maxValue = minValue+((RangeSlider)slider).getExtent();
+            final int maxValue = minValue+ slider.getExtent();
             return maxValue;
         } else {
             return slider.getValue();
@@ -173,7 +173,7 @@ public class SliderWithTextField extends JPanel {
     public void refreshText(){
         if (isRangeSlider){
             int minValue = ((RangeSlider)slider).getLowerValue();
-            int maxValue = minValue+((RangeSlider)slider).getExtent();// ((RangeSlider)slider).getUpperValue();
+            int maxValue = minValue+ slider.getExtent();// ((RangeSlider)slider).getUpperValue();
             if (minValue==max){
                 text1.setText("inf");
             } else {

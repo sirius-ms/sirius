@@ -124,11 +124,11 @@ class RangeSliderUI extends BasicSliderUI {
         if (lowerIndicatorImage != null) {
             lowerIndicatorImage.flush();
         }
-        lowerIndicatorImage = createIndicatorImage(getThumbSize().width, getThumbSize().height, INDICATOR_COLOR, true, ((RangeSlider) slider).getOrientation() == RangeSlider.HORIZONTAL);
+        lowerIndicatorImage = createIndicatorImage(getThumbSize().width, getThumbSize().height, INDICATOR_COLOR, true, slider.getOrientation() == RangeSlider.HORIZONTAL);
         if (upperIndicatorImage != null) {
             upperIndicatorImage.flush();
         }
-        upperIndicatorImage = createIndicatorImage(getThumbSize().width, getThumbSize().height, INDICATOR_COLOR, false, ((RangeSlider) slider).getOrientation() == RangeSlider.HORIZONTAL);
+        upperIndicatorImage = createIndicatorImage(getThumbSize().width, getThumbSize().height, INDICATOR_COLOR, false, slider.getOrientation() == RangeSlider.HORIZONTAL);
     }
 
     @Override

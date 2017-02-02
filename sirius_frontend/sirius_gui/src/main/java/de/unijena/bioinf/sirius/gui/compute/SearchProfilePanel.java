@@ -16,7 +16,7 @@ import java.util.Vector;
  */
 public class SearchProfilePanel extends JPanel {
 
-    public static enum Instruments {
+    public enum Instruments {
         QTOF("Q-TOF", "qtof", 10),
         ORBI("Orbitrap", "orbitrap", 5),
         FTICR("FT-ICR", "fticr", 2)

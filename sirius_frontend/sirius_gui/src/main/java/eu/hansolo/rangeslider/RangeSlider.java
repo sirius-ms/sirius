@@ -16,11 +16,11 @@ public class RangeSlider extends JSlider {
     private int upperValue;
     private boolean rangeVisible;
     private boolean rangeSelectionEnabled;
-    public static enum ThumbShape { ROUND, SQUARE, RECTANGULAR, DROP, NONE }
+    public enum ThumbShape { ROUND, SQUARE, RECTANGULAR, DROP, NONE }
     private ThumbShape thumbShape = ThumbShape.ROUND;
-    public static enum ThumbDesign { BRIGHT, DARK, STAINLESS, DARK_STAINLESS }
+    public enum ThumbDesign { BRIGHT, DARK, STAINLESS, DARK_STAINLESS }
     private ThumbDesign thumbDesign = ThumbDesign.DARK;
-    public static enum TrackWidth { THIN, MEDIUM, THICK}
+    public enum TrackWidth { THIN, MEDIUM, THICK}
     private TrackWidth trackWidth = TrackWidth.THIN;
     private boolean darkTrack;
     private Color rangeColor;

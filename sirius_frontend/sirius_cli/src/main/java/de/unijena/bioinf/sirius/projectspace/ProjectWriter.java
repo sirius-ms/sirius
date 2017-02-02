@@ -5,6 +5,6 @@ import java.io.IOException;
 
 public interface ProjectWriter extends AutoCloseable, Closeable {
 
-    public void writeExperiment(ExperimentResult result) throws IOException;
+    void writeExperiment(ExperimentResult result) throws IOException;
 
 }

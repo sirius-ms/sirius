@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface ActiveResultChangedListener {
 
-    public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections);
+    void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections);
 
 }
