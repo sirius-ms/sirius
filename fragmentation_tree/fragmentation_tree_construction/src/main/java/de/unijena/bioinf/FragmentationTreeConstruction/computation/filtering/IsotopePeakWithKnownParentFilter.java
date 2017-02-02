@@ -140,7 +140,7 @@ public class IsotopePeakWithKnownParentFilter implements Preprocessor {
                             // if isotope peak is missing and its intensity is above 10%, this pattern is not matching
                             if (pattern.getIntensityAt(pki) > 0.1) continue eachFormula;
                             else break;
-                        };
+                        }
                     }
                     if (pki>1 && (pki >= pattern.size() || pattern.getIntensityAt(pki) <= 0.1 ||
                             ((pattern.getIntensityAt(pki)/pattern.getIntensityAt(0))*sms.getIntensityAt(index)) <= 300)) {

@@ -50,7 +50,7 @@ public class MsExperimentParser {
     }
 
     private void addKnownEndings() {
-        knownEndings.put(".ms", (Class<? extends Parser<Ms2Experiment>>)JenaMsParser.class);
+        knownEndings.put(".ms", JenaMsParser.class);
         knownEndings.put(".mgf", MgfParser.class);
     }
 }

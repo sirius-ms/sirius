@@ -78,8 +78,7 @@ public abstract class Ionization implements Comparable<Ionization> {
         Ionization ion = (Ionization) o;
 
         if (getCharge() != ion.getCharge()) return false;
-        if (Double.compare(ion.getMass(), getMass()) != 0) return false;
-        return true;
+        return Double.compare(ion.getMass(), getMass()) == 0;
     }
 
     @Override

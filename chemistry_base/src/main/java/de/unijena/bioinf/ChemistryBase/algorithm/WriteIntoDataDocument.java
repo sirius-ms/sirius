@@ -24,6 +24,6 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
  */
 public interface WriteIntoDataDocument {
 
-    public <G,D,L> void writeIntoDataDocument(DataDocument<G,D,L> document, D dictionary);
+    <G,D,L> void writeIntoDataDocument(DataDocument<G, D, L> document, D dictionary);
 
 }

@@ -21,6 +21,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
 public interface InputValidator {
 
-    public Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException;
+    Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException;
 
 }

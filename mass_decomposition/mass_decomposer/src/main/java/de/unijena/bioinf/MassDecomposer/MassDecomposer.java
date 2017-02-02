@@ -315,8 +315,7 @@ public class MassDecomposer<T> {
             for (int j=0; j < buffer.length; ++j) {
                 exactMass += buffer[j]*weights.get(j).getMass();
             }
-            if (exactMass >= minDoubleMass && exactMass <= maxDoubleMass) return true;
-            else return false;
+            return exactMass >= minDoubleMass && exactMass <= maxDoubleMass;
         }
 
         private void afterFindingADecomposition() {

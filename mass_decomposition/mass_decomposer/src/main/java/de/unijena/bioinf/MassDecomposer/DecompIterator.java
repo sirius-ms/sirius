@@ -6,7 +6,7 @@ public interface DecompIterator<T> {
      * moves the iterator one step.
      * @return true, if a new decomposition is found. false, if the iterator reached the end.
      */
-    public boolean next();
+    boolean next();
 
     /**
      * Give access to the current compomere. Please note that this array is only valid during the current iteration step
@@ -15,12 +15,12 @@ public interface DecompIterator<T> {
      *
      * @return the compomere (a tuple (a_1,...,a_n) with a_i is the amount of the i-th character in the ordered alphabet
      */
-    public int[] getCurrentCompomere();
+    int[] getCurrentCompomere();
 
     /**
      * @return the underlying (possibly unordered) alphabet
      */
-    public Alphabet<T> getAlphabet();
+    Alphabet<T> getAlphabet();
 
     /**
      * The order of characters in the compomere might be different to the order of characters in the alphabet (i.e.
@@ -28,13 +28,13 @@ public interface DecompIterator<T> {
      * to it's appropiate index in the alphabet
      * @return mapping of positions in compomere to character indizes in alphabet
      */
-    public int[] getAlphabetOrder();
+    int[] getAlphabetOrder();
 
     /**
      * Returns the character on the given position in the compomere
      * @param index index in compomere
      * @return corresponding character in alphabet
      */
-    public T getCharacterAt(int index);
+    T getCharacterAt(int index);
 
 }

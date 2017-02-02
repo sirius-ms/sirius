@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public interface CompoundQuery {
 
-    public Set<MolecularFormula> findMolecularFormulasByMass(double mass, double absoluteDeviation);
-    public Set<MolecularFormula> findMolecularFormulasByMass(double mass, Deviation allowedDeviation);
+    Set<MolecularFormula> findMolecularFormulasByMass(double mass, double absoluteDeviation);
+    Set<MolecularFormula> findMolecularFormulasByMass(double mass, Deviation allowedDeviation);
 
 }

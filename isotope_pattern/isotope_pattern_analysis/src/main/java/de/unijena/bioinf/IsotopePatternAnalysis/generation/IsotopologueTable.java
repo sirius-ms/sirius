@@ -107,7 +107,6 @@ class IsotopologueTable implements Isotopologues {
     */
 
     private static int generateIsotopologues(final int N, Isotopologue[] list, int c, short[] vector, int maximalAmount, double[] isoMasses, double[] isoProbabilities, double currentProb, double currentMass, int k) {
-        ;
         final int nextK = k + 1;
         while (maximalAmount > 0) {
             if (nextK < isoMasses.length && maximalAmount > 0) {

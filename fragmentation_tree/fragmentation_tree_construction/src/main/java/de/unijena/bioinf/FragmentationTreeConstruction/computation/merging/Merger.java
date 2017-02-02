@@ -33,6 +33,6 @@ public interface Merger {
      * @param index the index of the main peak which intensity is passed to the merged peak
      * @return the merged peak
      */
-    public ProcessedPeak merge(List<ProcessedPeak> peaks, int index, double newMz);
+    ProcessedPeak merge(List<ProcessedPeak> peaks, int index, double newMz);
 
 }

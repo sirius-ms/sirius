@@ -19,6 +19,6 @@ package de.unijena.bioinf.MassDecomposer;
 
 public enum FilterLevel {
 
-    STRICT, COMMON, PERMISSIVE, RDBE, NONE;
+    STRICT, COMMON, PERMISSIVE, RDBE, NONE
 
 }

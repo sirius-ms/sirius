@@ -530,11 +530,11 @@ public class Spectrums {
     }
 
 
-    public static interface Transformation<P1 extends Peak, P2 extends Peak> {
-        public P2 transform(P1 input);
+    public interface Transformation<P1 extends Peak, P2 extends Peak> {
+        P2 transform(P1 input);
     }
-    public static interface PeakPredicate {
-        public boolean apply(double mz, double intensity);
+    public interface PeakPredicate {
+        boolean apply(double mz, double intensity);
     }
 
     public static SimpleSpectrum from(Collection<Peak> peaks) {
@@ -1005,7 +1005,7 @@ public class Spectrums {
 	 * 
 	 * ******************************************************************************************* */
 
-    private static interface PeakComparator<P extends Peak, S extends Spectrum<P>> {
+    private interface PeakComparator<P extends Peak, S extends Spectrum<P>> {
         int compare(S left, S right, int i, int j);
     }
 

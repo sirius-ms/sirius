@@ -32,6 +32,6 @@ import static java.lang.annotation.ElementType.*;
 @Target({FIELD, METHOD, TYPE})
 public @interface Called {
 
-    public String value();
+    String value();
 
 }

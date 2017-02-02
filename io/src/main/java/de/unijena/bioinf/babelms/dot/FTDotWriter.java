@@ -71,11 +71,7 @@ public class FTDotWriter {
         final FragmentAnnotation<Score> fscore = tree.getFragmentAnnotationOrNull(Score.class);
         final LossAnnotation<Score> lscore = tree.getLossAnnotationOrNull(Score.class);
         final TreeScoring scoring = tree.getAnnotationOrNull(TreeScoring.class);
-        if (fscore==null || lscore == null || scoring==null) {
-            hasScores=false;
-        } else {
-            hasScores = true;
-        }
+        hasScores = !(fscore == null || lscore == null || scoring == null);
 
         final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
         Ionization ion = tree.getAnnotationOrNull(Ionization.class);

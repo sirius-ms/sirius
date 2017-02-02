@@ -220,7 +220,7 @@ public class CommonLossEdgeScorer implements LossScorer {
      * A recombinator extends the list of common losses by combination of losses
      */
     public interface Recombinator extends ImmutableParameterized<Recombinator> {
-        public TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula> source, double normalizationConstant);
+        TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula> source, double normalizationConstant);
     }
 
     public static class LegacyOldSiriusRecombinator implements Recombinator {

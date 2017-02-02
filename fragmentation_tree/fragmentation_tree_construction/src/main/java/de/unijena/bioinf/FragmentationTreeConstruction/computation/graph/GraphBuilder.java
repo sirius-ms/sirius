@@ -26,9 +26,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
  * @author Kai Dührkop
  */
 public interface GraphBuilder {
-    public FGraph initializeEmptyGraph(ProcessedInput input);
+    FGraph initializeEmptyGraph(ProcessedInput input);
 
-    public FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula>> pmds);
+    FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula>> pmds);
 
-    public FGraph fillGraph(FGraph graph);
+    FGraph fillGraph(FGraph graph);
 }

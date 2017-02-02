@@ -19,7 +19,7 @@ package de.unijena.bioinf.sirius;
 
 public interface Progress {
 
-    public static class Quiet implements Progress {
+    class Quiet implements Progress {
 
         @Override
         public void init(double maxProgress) {
@@ -40,14 +40,14 @@ public interface Progress {
         public void info(String message) {
 
         }
-    };
+    }
 
-    public void init(double maxProgress);
+    void init(double maxProgress);
 
-    public void update(double currentProgress, double maxProgress, String value, Feedback feedback);
+    void update(double currentProgress, double maxProgress, String value, Feedback feedback);
 
-    public void finished();
+    void finished();
 
-    public void info(String message);
+    void info(String message);
 
 }

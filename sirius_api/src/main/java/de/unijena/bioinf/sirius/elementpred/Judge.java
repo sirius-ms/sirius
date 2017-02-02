@@ -30,6 +30,6 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  */
 public interface Judge {
 
-    public void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile);
+    void vote(TObjectIntHashMap<Element> votes, Ms2Experiment experiment, MeasurementProfile profile);
 
 }

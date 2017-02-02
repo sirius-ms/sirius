@@ -130,12 +130,12 @@ public class JDKDocument extends DataDocument<Object, Map<String, Object>, List<
 
     @Override
     public Object wrapDictionary(Map<String, Object> dict) {
-        return (Map<String, Object>)dict;
+        return dict;
     }
 
     @Override
     public Object wrapList(List<Object> dict) {
-        return (List<Object>)dict;
+        return dict;
     }
 
     @Override

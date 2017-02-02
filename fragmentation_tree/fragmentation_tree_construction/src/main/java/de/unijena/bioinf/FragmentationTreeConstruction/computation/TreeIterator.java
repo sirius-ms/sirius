@@ -31,10 +31,10 @@ import java.util.Iterator;
  */
 public interface TreeIterator extends Iterator<FTree> {
 
-    public double getLowerbound();
+    double getLowerbound();
 
-    public void setLowerbound(double lowerbound);
+    void setLowerbound(double lowerbound);
 
-    public FGraph lastGraph();
+    FGraph lastGraph();
 
 }

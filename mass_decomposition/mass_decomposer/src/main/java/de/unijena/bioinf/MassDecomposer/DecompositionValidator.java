@@ -27,6 +27,6 @@ public interface DecompositionValidator<T> {
      * @param characterIds an immutable(!!!) array with indizes of the used characters in the same order as in the compomere
      * @return true, if the decomposition should be contained in the decomposition output
      */
-    public boolean validate(int[] compomere, int[] characterIds, Alphabet<T> alphabet);
+    boolean validate(int[] compomere, int[] characterIds, Alphabet<T> alphabet);
 
 }
