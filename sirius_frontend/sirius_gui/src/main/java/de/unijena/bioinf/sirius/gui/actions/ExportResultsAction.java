@@ -5,10 +5,13 @@ package de.unijena.bioinf.sirius.gui.actions;
  * 29.01.17.
  */
 
+import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
@@ -16,7 +19,6 @@ import de.unijena.bioinf.sirius.gui.utils.Icons;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -26,26 +28,32 @@ public class ExportResultsAction extends AbstractAction {
         super("Export Results");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
         putValue(Action.SHORT_DESCRIPTION, "Export results to data file");
-        setEnabled(!COMPOUNT_LIST.isEmpty());
+        setEnabled(checkEnabled());
 
         //Workspace Listener
-        COMPOUNT_LIST.addListEventListener(new ListEventListener<ExperimentContainer>() {
+        MainFrame.MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> listChanges) {
-                EventList<ExperimentContainer> sl = listChanges.getSourceList();
-                if (!sl.isEmpty()) {
-                    for (ExperimentContainer e : sl) {
-                        if (e.getComputeState() == ComputingStatus.COMPUTED) {
-                            setEnabled(true);
-                            return;
-                        }
-                    }
-                }
-                setEnabled(false);
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
+                setEnabled(checkEnabled());
+            }
+
+            @Override
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
 
             }
         });
+    }
 
+    private boolean checkEnabled(){
+        BasicEventList<ExperimentContainer> sl = Workspace.COMPOUNT_LIST;
+        if (!sl.isEmpty()) {
+            for (ExperimentContainer e : sl) {
+                if (e.getComputeState() == ComputingStatus.COMPUTED) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
