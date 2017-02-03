@@ -50,8 +50,15 @@ public class DoubleEndWeightedQueue implements Iterable<FTree> {
             if (backingQueue.put(score, tree)) {
                 ++size;
                 while (size > capacity) {
-                    backingQueue.asMap().pollFirstEntry();
-                    --size;
+
+                    Map.Entry<Double, Collection<FTree>> entry = backingQueue.asMap().firstEntry();
+                    final int entrySize = entry.getValue().size();
+                    if ((size - entrySize) >= capacity ) {
+                        backingQueue.asMap().pollFirstEntry();
+                        size -= entrySize;
+                    } else {
+                        break;
+                    }
                 }
                 if (size >= capacity) {
                     lowerbound = backingQueue.asMap().firstKey();
