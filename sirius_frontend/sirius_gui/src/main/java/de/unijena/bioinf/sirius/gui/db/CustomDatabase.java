@@ -13,9 +13,16 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Fingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.FixedMACCSFingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.OpenBabelFingerprinter;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
+import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.fingerprint.KlekotaRothFingerprinter;
+import org.openscience.cdk.fingerprint.PubchemFingerprinter;
+import org.openscience.cdk.fingerprint.SubstructureFingerprinter;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -134,7 +141,10 @@ public class CustomDatabase {
             try {
                 inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
                 smilesGen = SmilesGenerator.generic().aromatic();
-                fingerprinter = new Fingerprinter();
+                fingerprinter =
+                        // TODO: find a better solution
+                        new Fingerprinter(Arrays.asList(new OpenBabelFingerprinter(), new SubstructureFingerprinter(), new FixedMACCSFingerprinter(), new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance()), new KlekotaRothFingerprinter(), new ECFPFingerprinter()));
+                        //new Fingerprinter();
                 smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
                 smilesParser.kekulise(true);
             } catch (CDKException e) {
