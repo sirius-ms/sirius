@@ -31,14 +31,12 @@ import de.unijena.bioinf.sirius.*;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.beans.AbstractBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -280,14 +278,16 @@ public class BackgroundComputation extends AbstractBean {
                         } else {
                             allowedIons = new PrecursorIonType[]{ionType};
                         }
+                        System.out.println(Arrays.toString(allowedIons));
                         final HashSet<MolecularFormula> formulas = new HashSet<>();
                         for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
-                            for (FormulaCandidate f : fc)
+                            for (FormulaCandidate f : fc) {
                                 if (formulaSource == FormulaSource.PUBCHEM_ORGANIC) {
                                     if (f.getFormula().isCHNOPSBBrClFI()) formulas.add(f.getFormula());
                                 } else {
                                     formulas.add(f.getFormula());
                                 }
+                            }
                         }
                         results = hasMS2 ? sirius.identify(experiment,
                                 container.numberOfCandidates, true, IsotopePatternHandling.score, formulas) :
