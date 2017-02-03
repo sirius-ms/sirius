@@ -237,6 +237,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
         private void flushCompound() {
+            newSpectrum();
             experiment = null;
             if (compoundName==null) return;
             final MutableMs2Experiment exp = new MutableMs2Experiment();

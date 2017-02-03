@@ -65,7 +65,7 @@ public class Sirius {
 
     public static void main(String[] args) {
 
-        final File F = new File("/home/kaidu/Documents/temp/q/CCMSLIB00000845014.mgf");
+        final File F = new File("/home/kaidu/Documents/temp/532.0707@8.27.ms");
         try {
             Sirius s = new Sirius("qtof");
             final Ms2Experiment exp = s.parseExperiment(F).next();
