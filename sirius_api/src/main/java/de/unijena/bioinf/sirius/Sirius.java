@@ -64,59 +64,26 @@ public class Sirius {
     protected boolean autoIonMode;
 
     public static void main(String[] args) {
-        final Sirius s;
+
+        final File F = new File("/home/kaidu/Documents/temp/q/CCMSLIB00000845014.mgf");
         try {
-            final MolecularFormula f = MolecularFormula.parse("C6H12O6S2Cl3");
-            s = new Sirius("qtof");
-            final SimpleSpectrum spec = new SimpleSpectrum(s.simulateIsotopePattern(f, PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization()));
-            final Ms2Experiment mut = s.getMs2Experiment(f, PrecursorIonType.getPrecursorIonType("[M+H]+"), spec);
-            final double score = s.getMs1Analyzer().scoreFormulas(spec, Arrays.asList(f), mut, s.getMs1Analyzer().getDefaultProfile()).get(0).getScore();
-            System.out.println(score);
+            Sirius s = new Sirius("qtof");
+            final Ms2Experiment exp = s.parseExperiment(F).next();
 
+            final HashSet<MolecularFormula> formulas = new HashSet<>();
+            formulas.add(MolecularFormula.parse("C19H22O5"));
+            formulas.add(MolecularFormula.parse("C13H15N5O3"));
+            formulas.add(MolecularFormula.parse("C15H20N6O4"));
+            formulas.add(MolecularFormula.parse("C12H10N6O2"));
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        /*
-        final File F = new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms");
-        try {
-            Sirius s = new Sirius("exp2");
-
-
-
-
-            if (false){
-
-                final double[] is = new double[]{0.0025, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
-                final ExponentialDistribution a = ExponentialDistribution.getMedianEstimator().extimateByMedian(0.02);
-                System.out.println(a.getLambda());
-                final ParetoDistribution b = ParetoDistribution.getMedianEstimator(0.002).extimateByMedian(0.015);
-                for (double i : is) {
-                    System.out.printf("%.4f: exp = %.4f, pareto = %.4f\n", i, -a.getInverseLogCumulativeProbability(i-0.002), -b.getInverseLogCumulativeProbability(i));
-                }
-
+            final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit, formulas);
+            for (IdentificationResult r : results) {
+                System.out.println(r.formula + "\t" + r.getStandardTree().getAnnotationOrThrow(PrecursorIonType.class));
             }
 
-
-
-
-
-
-
-
-            final Ms2Experiment exp = s.parseExperiment(F).next();
-            final ProcessedInput pin = s.getMs2Analyzer().preprocessing(exp);
-            final FGraph graph = s.getMs2Analyzer().buildGraph(pin, new Scored<MolecularFormula>(MolecularFormula.parse("C20H17NO6"), 0d));
-            final FTree tree = s.getMs2Analyzer().computeTree(graph);
-            final IdentificationResult r = s.compute(exp, MolecularFormula.parse("C20H17NO6"), true);
-            r.writeTreeToFile(new File("/home/kaidu/Documents/test.json"));
-            r.writeTreeToFile(new File("/home/kaidu/Documents/test.dot"));
-            System.out.println("Done");
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-        */
     }
 
     public static void mainElem(String[] args)  {
