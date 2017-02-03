@@ -5,6 +5,8 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  * 31.01.17.
  */
 
+import ca.odell.glazedlists.SortedList;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.BarTableCellRenderer;
 import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.SiriusResultMatcherEditor;
@@ -14,6 +16,8 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.utils.ActionTable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -28,15 +32,68 @@ public class FormulaListDetailView extends FormulaListView {
     private final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
 
-    public FormulaListDetailView(FormulaList source) {
+    public FormulaListDetailView(final FormulaList source) {
         super(source);
         setLayout(new BorderLayout());
         searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
-        this.table = new ActionTable<>(source.resultList,
+        final SortedList<SiriusResultElement>  sorted  = new SortedList<SiriusResultElement>(source.resultList);
+        final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sorted);
+
+        this.table = new ActionTable<>(source.resultList,sorted,
                 new SiriusResultTableFormat(),
                 new SiriusResultMatcherEditor(searchField),
                 SiriusResultElement.class);
-        table.setSelectionModel(source.selectionModel);
+        table.setSelectionModel(model);
+
+        //todo this is ugly -> make nice
+        source.selectionModel.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (model.isSelectionEmpty() && source.selectionModel.isSelectionEmpty())
+                    return;
+                else if (!model.isSelectionEmpty() && !source.selectionModel.isSelectionEmpty() && source.selectionModel.getSelected().get(0) == model.getSelected().get(0)) {
+                    return;
+                }else{
+                    model.setValueIsAdjusting(true);
+                    source.selectionModel.setValueIsAdjusting(true);
+                    if (source.selectionModel.isSelectionEmpty()) {
+                        model.clearSelection();
+                    }else{
+                        SiriusResultElement element = source.selectionModel.getSelected().get(0);
+                        int i = sorted.indexOf(element);
+                        model.setSelectionInterval(i,i);
+                    }
+                    model.setValueIsAdjusting(false);
+                    source.selectionModel.setValueIsAdjusting(false);
+                }
+            }
+        });
+
+        model.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (model.isSelectionEmpty() && source.selectionModel.isSelectionEmpty())
+                    return;
+                else if (!model.isSelectionEmpty() && !source.selectionModel.isSelectionEmpty() && source.selectionModel.getSelected().get(0) == model.getSelected().get(0)) {
+                    return;
+                }else{
+                    model.setValueIsAdjusting(true);
+                    source.selectionModel.setValueIsAdjusting(true);
+                    if (model.isSelectionEmpty()) {
+                        source.selectionModel.clearSelection();
+                    }else{
+                        SiriusResultElement element = model.getSelected().get(0);
+                        int i = source.resultList.indexOf(element);
+                        source.selectionModel.setSelectionInterval(i,i);
+                    }
+                    model.setValueIsAdjusting(false);
+                    source.selectionModel.setValueIsAdjusting(false);
+                }
+            }
+        });
+
+
+
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
 
@@ -89,6 +146,8 @@ public class FormulaListDetailView extends FormulaListView {
         );
 
         this.add(createNorth(), BorderLayout.NORTH);
+
+
     }
 
     ///////////////// Internal //////////////////////////
