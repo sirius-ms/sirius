@@ -19,6 +19,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
@@ -26,7 +27,6 @@ import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.openscience.cdk.exception.CDKException;
@@ -68,8 +68,10 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 public class CandidateJList extends JPanel implements MouseListener, ActionListener {
 
-    private final static int CELL_SIZE = 20;
+    private final static int CELL_SIZE = 15;
     private static final int MIN_CELL_SIZE = 5;
+
+    private static Color LOW = Color.RED, MED = Color.WHITE, HIGH = new Color(100, 149, 237);
 
     protected CSIFingerIdComputation computation;
     protected FingerIdData data;
@@ -638,8 +640,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             }
         }
     }
-
-    private static Color LOW = Color.RED, MED = Color.WHITE, HIGH = Color.GREEN;
 
     public class FingerprintView extends JPanel {
 
