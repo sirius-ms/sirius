@@ -39,7 +39,7 @@ public class VersionsInfo {
     }
 
     public boolean outdated() {
-        return (siriusGuiDate.compareTo(WebAPI.DATE) > 0 && !siriusGuiVersion.equalsIgnoreCase(WebAPI.VERSION));
+        return (siriusGuiDate.compareTo(WebAPI.DATE) > 0 || !siriusGuiVersion.equalsIgnoreCase(WebAPI.VERSION));
     }
 
     public boolean hasNews(){
