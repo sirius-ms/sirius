@@ -13,16 +13,9 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Fingerprinter;
-import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
-import de.unijena.bioinf.fingerid.fingerprints.FixedMACCSFingerprinter;
-import de.unijena.bioinf.fingerid.fingerprints.OpenBabelFingerprinter;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
-import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
-import org.openscience.cdk.fingerprint.KlekotaRothFingerprinter;
-import org.openscience.cdk.fingerprint.PubchemFingerprinter;
-import org.openscience.cdk.fingerprint.SubstructureFingerprinter;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -50,6 +43,7 @@ public class CustomDatabase {
     protected File path;
 
     protected boolean deriveFromPubchem, deriveFromBioDb;
+    protected CdkFingerprintVersion version = CdkFingerprintVersion.getDefault();
 
     public CustomDatabase(String name, File path) {
         this.name = name;
@@ -109,16 +103,36 @@ public class CustomDatabase {
                         }
                     }
                 }
+                JsonArray fpAry = o.getJsonArray("fingerprintVersion");
+                if (fpAry == null) {
+                    this.version = CdkFingerprintVersion.getDefault();
+                } else {
+                    final List<CdkFingerprintVersion.USED_FINGERPRINTS> usedFingerprints = new ArrayList<>();
+                    for (JsonValue v : fpAry) {
+                        if (v instanceof JsonString) {
+                            try {
+                                usedFingerprints.add(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(((JsonString) v).getString().toUpperCase()));
+                            } catch (IllegalArgumentException e) {
+                                throw new RuntimeException("Unknown fingerprint type '" + ((JsonString) v).getString() + "'");
+                            }
+                        }
+                    }
+                    this.version = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
+                }
             }
         }
     }
 
     public Importer getImporter() {
-        return new Importer(this);
+        return new Importer(this, version);
     }
 
     protected File settingsFile() {
         return new File(path, "settings.json");
+    }
+
+    public void setFingerprintVersion(CdkFingerprintVersion version) {
+        this.version = version;
     }
 
     public static class Importer {
@@ -132,19 +146,23 @@ public class CustomDatabase {
         protected InChIGeneratorFactory inChIGeneratorFactory;
         protected SmilesGenerator smilesGen;
         protected SmilesParser smilesParser;
+        protected CdkFingerprintVersion fingerprintVersion;
 
-        protected Importer(CustomDatabase database) {
+        protected Importer(CustomDatabase database, CdkFingerprintVersion version) {
             this.database = database;
+            fingerprintVersion = version;
             this.buffer = new ArrayList<>();
             currentPath = database.path;
             if (currentPath==null) throw new NullPointerException();
             try {
                 inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
                 smilesGen = SmilesGenerator.generic().aromatic();
-                fingerprinter =
+                fingerprinter = Fingerprinter.getFor(version);
+                        /*
                         // TODO: find a better solution
                         new Fingerprinter(Arrays.asList(new OpenBabelFingerprinter(), new SubstructureFingerprinter(), new FixedMACCSFingerprinter(), new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance()), new KlekotaRothFingerprinter(), new ECFPFingerprinter()));
                         //new Fingerprinter();
+                */
                 smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
                 smilesParser.kekulise(true);
             } catch (CDKException e) {
@@ -328,7 +346,7 @@ public class CustomDatabase {
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             molecule = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
             final boolean[] fps = fingerprinter.fingerprintsToBooleans(fingerprinter.computeFingerprints(molecule));
-            final Fingerprint fp = new BooleanFingerprint(CdkFingerprintVersion.getDefault(), fps).asArray();
+            final Fingerprint fp = new BooleanFingerprint(fingerprintVersion, fps).asArray();
             final String smiles = smilesGen.create(molecule);
 
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fp);
@@ -367,7 +385,7 @@ public class CustomDatabase {
             try {
             List<FingerprintCandidate> candidates = new ArrayList<>();
             candidates.addAll(value);
-            Compound.merge(candidates, file);
+            Compound.merge(fingerprintVersion, candidates, file);
             } catch (IOException | JsonException e) {
                 throw new IOException("Error while merging into " + file, e);
             }
@@ -381,6 +399,12 @@ public class CustomDatabase {
                 writer.beginArray();
                 if (database.deriveFromBioDb) writer.value(DatasourceService.Sources.BIO.name);
                 if (database.deriveFromPubchem) writer.value(DatasourceService.Sources.PUBCHEM.name);
+                writer.endArray();
+                writer.name("fingerprintVersion");
+                writer.beginArray();
+                for (int t=0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
+                    writer.value(fingerprintVersion.getFingerprintTypeAt(t).name());
+                }
                 writer.endArray();
                 writer.endObject();
             }

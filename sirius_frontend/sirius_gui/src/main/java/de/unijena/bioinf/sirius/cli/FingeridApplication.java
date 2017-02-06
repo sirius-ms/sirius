@@ -12,8 +12,10 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
+import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
@@ -26,6 +28,13 @@ import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.projectspace.ProjectReader;
 import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TShortArrayList;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -86,7 +95,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     }
 
     private void generateCustomDatabase(FingerIdOptions options) {
-        new DatabaseImporter().importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
+        DatabaseImporter.importDatabase((CdkFingerprintVersion)new WebAPI().getFingerprintVersion(), options.getGeneratingCompoundDatabase(), options.getInput());
     }
 
     @Override
@@ -247,9 +256,13 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private AbstractChemicalDatabase getDatabase(String name) {
         final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
         if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
-            return new FileDatabase(new File(name));
+            try {
+                return new FileDatabase(new File(name));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } else {
-            return new RESTDatabase(getBioFilter());
+            return new ECFPWrapper(getBioFilter()); // TODO: Schöner machen!
         }
     }
 
@@ -276,7 +289,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
             this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
-            MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault());
+            MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(webAPI.getFingerprintVersion());
             b.disableAll();
             for (int index : indizes.toArray()) {
                 b.enable(index);
@@ -354,4 +367,63 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         }
         return aliasMap;
     }
+
+    ////////////////////////
+    // WORKAROUND !!!!
+    ////////////////////////
+    protected static class ECFPWrapper extends RESTDatabase {
+
+        protected ECFPFingerprinter ecfp = new ECFPFingerprinter();
+        protected CdkFingerprintVersion withEcfp = CdkFingerprintVersion.withECFP();
+        protected Fingerprinter fingerprinter;
+
+        public ECFPWrapper(BioFilter bioFilter) {
+            super(bioFilter);
+        }
+        public ECFPWrapper(File cacheDir, BioFilter bioFilter, String host) {
+            super(cacheDir, bioFilter, host);
+
+        }
+
+        public ECFPWrapper(File cacheDir, BioFilter bioFilter) {
+            super(cacheDir, bioFilter);
+        }
+
+        @Override
+        protected FingerprintCandidate wrap(FingerprintCandidate c) {
+            final TShortArrayList indizes = new TShortArrayList(c.getFingerprint().toIndizesArray());
+            try {
+                final BitSet bits = ecfp.getBitFingerprint(readMol(c)).asBitSet();
+                int set = 0;
+                int offset = withEcfp.getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.ECFP);
+                while ((set = bits.nextSetBit(set)) >= 0) {
+                    indizes.add((short)(offset + set));
+                    ++set;
+                }
+                return new FingerprintCandidate(c, new ArrayFingerprint(withEcfp, indizes.toArray()));
+            } catch (CDKException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+        private IAtomContainer readMol(FingerprintCandidate c) {
+            if (c.getSmiles()!=null) {
+                try {
+                    return new SmilesParser(DefaultChemObjectBuilder.getInstance()).parseSmiles(c.getSmiles());
+                } catch (InvalidSmilesException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                try {
+                    return InChIGeneratorFactory.getInstance().getInChIToStructure(c.getInchi().in2D, DefaultChemObjectBuilder.getInstance()).getAtomContainer();
+                } catch (CDKException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+
+    }
+
 }
