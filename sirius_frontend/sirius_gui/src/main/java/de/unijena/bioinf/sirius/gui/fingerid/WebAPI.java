@@ -22,9 +22,7 @@ import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
@@ -91,8 +89,8 @@ public class WebAPI implements Closeable {
     }
 
 
-    public static final String VERSION = "3.4"; //todo get from properties file
-    public static final String DATE = "2017-02-02";
+    public static final String VERSION = "3.4.1"; //todo get from properties file
+    public static final String DATE = "2017-02-06";
 
     public VersionsInfo needsUpdate() {
         final HttpGet get;
@@ -268,6 +266,11 @@ public class WebAPI implements Closeable {
                 throw new TimeoutException("Reached timeout");
             }
         });
+    }
+
+    public FingerprintVersion getFingerprintVersion() {
+        // TODO: implement as web request
+        return CdkFingerprintVersion.withECFP();
     }
 
 

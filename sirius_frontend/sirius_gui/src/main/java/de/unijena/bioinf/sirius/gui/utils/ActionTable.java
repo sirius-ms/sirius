@@ -50,13 +50,15 @@ public class ActionTable<T extends AbstractBean> extends JTable {
         comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
     }*/
 
-    public ActionTable(ObservableElementList<T> elements, TableFormat<T> format, MatcherEditor<T> matcher, Class<T> elementType) {
-        SortedList<T> sorted = new SortedList<>(elements);
+    public ActionTable(ObservableElementList<T> elements, SortedList<T> sorted,  TableFormat<T> format, MatcherEditor<T> matcher, Class<T> elementType) {
         this.elements = new FilterList<T>(sorted, matcher);
         setModel(new DefaultEventTableModel(this.elements, format));
         comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
     }
 
+    public ActionTable(ObservableElementList<T> elements, TableFormat<T> format, MatcherEditor<T> matcher, Class<T> elementType) {
+        this(elements,new SortedList<>(elements),format,matcher,elementType);
+    }
 
     public static void main(String[] args) {
 

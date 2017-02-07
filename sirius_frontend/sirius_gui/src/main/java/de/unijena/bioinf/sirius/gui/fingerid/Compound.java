@@ -329,12 +329,26 @@ public class Compound {
     }
 
     public static void merge(List<FingerprintCandidate> candidates, File file) throws IOException {
+        MaskedFingerprintVersion mv = null;
+        if (candidates.size()>0) {
+            FingerprintVersion v = candidates.get(0).getFingerprint().getFingerprintVersion();
+            if (v instanceof MaskedFingerprintVersion) mv = (MaskedFingerprintVersion)v;
+            else {
+                mv = MaskedFingerprintVersion.buildMaskFor(v).enableAll().toMask();
+            }
+        }
+        merge(mv, candidates, file);
+    }
+
+    public static void merge(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
+        final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion)version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
+
         final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
         for (FingerprintCandidate fc : candidates) compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
         if (file.exists()) {
             final List<Compound> compounds = new ArrayList<>();
             try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(file)))) {
-                parseCompounds(null, compounds, parser);
+                parseCompounds(mv, compounds, parser);
             }
             for (Compound c : compounds) {
                 compoundPerInchiKey.put(c.inchi.key2D(), c.asFingerprintCandidate());

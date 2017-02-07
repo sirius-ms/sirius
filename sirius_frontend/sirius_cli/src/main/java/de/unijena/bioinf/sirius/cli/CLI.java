@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.sirius.cli;
 
+import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
@@ -44,6 +45,7 @@ import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -226,10 +228,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             final ProjectWriter pw;
             if (new File(options.getOutput()).exists()) {
                 try {
+                    checkForValidProjectDirecotry(options.getOutput());
                     pw = new ProjectSpaceMerger(this, options.getOutput(), false);
                 } catch (IOException e) {
 
-                    logger.error("Cannot merge project " + options.getOutput() + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace", e);
+                    logger.error("Cannot merge project " + options.getOutput() + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.\n" + e.getMessage(), e);
                     System.exit(1);
                     return;
                 }
@@ -275,6 +278,24 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 }
             };
         }
+    }
+
+    private void checkForValidProjectDirecotry(String output) throws IOException {
+        final File f = new File(output);
+        if (!f.exists()) return;
+        if (!f.isDirectory()) throw new IOException("Expect a directory name. But " + output + " is an existing file.");
+        final Pattern pat = Pattern.compile("Sirius", Pattern.CASE_INSENSITIVE);
+        boolean empty = true;
+        for (File g : f.listFiles()) {
+            empty = false;
+            if (g.getName().equalsIgnoreCase("version.txt")) {
+                for (String line : Files.readLines(g, Charset.forName("UTF-8"))) {
+                    if (pat.matcher(line).find()) return;
+                }
+            }
+        }
+        if (!empty)
+            throw new IOException("Given directory is not a valid SIRIUS workspace. Please specify an empty directory or existing SIRIUS workspace!");
     }
 
     private void disableShellLogging() {

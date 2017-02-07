@@ -174,7 +174,7 @@ public class CSIFingerIdComputation {
         this.pubchemConfidenceScorePredictor = webAPI.getConfidenceScore(false);
         this.bioConfidenceScorePredictor = webAPI.getConfidenceScore(true);
 
-        final CdkFingerprintVersion version = de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate.ECFP_ENABLED ? CdkFingerprintVersion.withECFP() : CdkFingerprintVersion.getDefault();
+        final CdkFingerprintVersion version = (CdkFingerprintVersion) webAPI.getFingerprintVersion();
 
         final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(version);
         v.disableAll();
