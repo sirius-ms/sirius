@@ -85,7 +85,7 @@ task downloadGLPK(type: Copy) {
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
     java.nio.file.Path dir = project.glpkPath.toPath().getParent()
-    
+
     copy {
         println(dir.toString())
         dir.resolve('glpk').toFile().deleteDir()

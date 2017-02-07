@@ -13,7 +13,6 @@ import javax.swing.*;
  */
 public enum SiriusActions {
 
-
     COMPUTE(ComputeAction.class),
     CANCEL_COMPUTE(CancelComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
@@ -37,7 +36,7 @@ public enum SiriusActions {
     SHOW_JOBS(ShowJobsDialogAction.class),
     SHOW_DB(ShowDBDialogAction.class);
 
-
+    public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;
 
     public Action getInstance(final boolean createIfNull, final ActionMap map) {
@@ -47,7 +46,7 @@ public enum SiriusActions {
                 a = actionClass.newInstance();
                 map.put(name(), a);
             } catch (InstantiationException | IllegalAccessException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Could not instantiate  Sirius Action: " + name(), e);
+                LoggerFactory.getLogger(this.getClass()).error("Could not load following Sirius Action: " + name(), e);
             }
         }
         return a;
@@ -58,11 +57,24 @@ public enum SiriusActions {
     }
 
     public Action getInstance(boolean createIfNull) {
-        return getInstance(createIfNull, SiriusActionManager.ROOT_MANAGER);
+        return getInstance(createIfNull, ROOT_MANAGER);
     }
 
     public Action getInstance() {
-        return getInstance(true, SiriusActionManager.ROOT_MANAGER);
+        return getInstance(true, ROOT_MANAGER);
+    }
+
+    public static void initRootManager() {
+        for (SiriusActions action : values()) {
+            try {
+                if (ROOT_MANAGER.get(action.name()) == null) {
+                    Action actionInstance = action.actionClass.newInstance();
+                    ROOT_MANAGER.put(action.name(), actionInstance);
+                }
+            } catch (InstantiationException | IllegalAccessException e) {
+                LoggerFactory.getLogger(SiriusActions.class).error("Could not load following Sirius Action: " + action.name(), e);
+            }
+        }
     }
 
 

@@ -23,13 +23,6 @@ public class NewsDialog extends JDialog implements ActionListener {
         this.setLocationRelativeTo(owner);
         this.newsList = newsList;
 
-        for (News news : newsList) {
-            System.out.println("next news");
-            System.out.println("id "+news.getId());
-            System.out.println("date "+news.getDateString());
-            System.out.println("message "+news.getMessage());
-        }
-
         this.setLocationRelativeTo(owner);
         setLayout(new BorderLayout());
         final JPanel newsPanel = new JPanel();
