@@ -256,11 +256,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private AbstractChemicalDatabase getDatabase(String name) {
         final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
         if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
-            try {
-                return new FileDatabase(new File(name));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            return new FileDatabase(new File(name));
         } else {
             return new ECFPWrapper(getBioFilter()); // TODO: Schöner machen!
         }
@@ -389,7 +385,6 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             super(cacheDir, bioFilter);
         }
 
-        @Override
         protected FingerprintCandidate wrap(FingerprintCandidate c) {
             final TShortArrayList indizes = new TShortArrayList(c.getFingerprint().toIndizesArray());
             try {
