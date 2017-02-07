@@ -178,7 +178,6 @@ public class BackgroundComputation extends AbstractBean {
                     currentComputation = c.exp;
                     c.job.run();
                 }
-//                c.exp.fireUpdateEvent(); // owner.refreshCompound(c.exp); //todo i think we aleady listen to that
             }
         }
 
@@ -190,11 +189,6 @@ public class BackgroundComputation extends AbstractBean {
                 throw new RuntimeException(e);
             }
         }
-
-       /* @Override
-        protected void done() {
-            owner.computationComplete();//todo DAMN
-        }*/
 
         @Override
         protected List<ExperimentContainer> doInBackground() throws Exception {
