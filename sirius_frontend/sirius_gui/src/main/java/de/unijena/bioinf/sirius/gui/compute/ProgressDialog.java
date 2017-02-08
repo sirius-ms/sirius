@@ -222,18 +222,20 @@ class RunThread implements Runnable{
 					allowedIons = new PrecursorIonType[]{ionType};
 				}
 				final HashSet<MolecularFormula> whitelist = new HashSet<>();
-				for (List<FormulaCandidate> candidates : WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL).lookupMolecularFormulas(exp.getIonMass(), sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation(), allowedIons)) {
-                    for (FormulaCandidate f : candidates) {
+				try (final WebAPI webAPI = new WebAPI()) {
+					for (List<FormulaCandidate> candidates : webAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL).lookupMolecularFormulas(exp.getIonMass(), sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation(), allowedIons)) {
+						for (FormulaCandidate f : candidates) {
 
-						if (formulaSource == FormulaSource.PUBCHEM_ORGANIC) {
-							if (f.getFormula().isCHNOPSBBrClFI()) {
+							if (formulaSource == FormulaSource.PUBCHEM_ORGANIC) {
+								if (f.getFormula().isCHNOPSBBrClFI()) {
+									whitelist.add(f.getFormula());
+								}
+							} else {
 								whitelist.add(f.getFormula());
 							}
-						} else {
-							whitelist.add(f.getFormula());
 						}
 					}
-                }
+				}
                 results = hasMS2 ? sirius.identify(exp, candidates, true, IsotopePatternHandling.score, whitelist) : sirius.identifyByIsotopePattern(exp, candidates, whitelist);
 			} else if (exp.getPrecursorIonType().isIonizationUnknown()) {
 				results = hasMS2 ? sirius.identifyPrecursorAndIonization(exp, candidates, true, IsotopePatternHandling.score) : sirius.identifyByIsotopePattern(exp, candidates);

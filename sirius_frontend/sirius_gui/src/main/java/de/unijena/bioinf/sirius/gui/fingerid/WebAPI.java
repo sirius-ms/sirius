@@ -84,8 +84,8 @@ public class WebAPI implements Closeable {
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
 
-    public static RESTDatabase getRESTDb(BioFilter bioFilter) {
-        return new RESTDatabase(null, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null);
+    public RESTDatabase getRESTDb(BioFilter bioFilter) {
+        return new RESTDatabase(null, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null, client);
     }
 
 

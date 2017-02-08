@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -299,11 +300,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //Test connection
     public boolean csiConnectionAvailable() {
-        if (!WebAPI.getRESTDb(BioFilter.ALL).testConnection()) {
-            new NoConnectionDialog(this);
+        try (final WebAPI webAPI = new WebAPI()) {
+            if (!webAPI.getRESTDb(BioFilter.ALL).testConnection()) {
+                new NoConnectionDialog(this);
+                return false;
+            }
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
             return false;
         }
-        return true;
     }
 }
 

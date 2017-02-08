@@ -264,7 +264,7 @@ public class BackgroundComputation extends AbstractBean {
                     }
 
                 } else {
-                    try (final RESTDatabase db = WebAPI.getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL)) {
+                    try (final RESTDatabase db = new WebAPI().getRESTDb(formulaSource==FormulaSource.BIODB ? BioFilter.ONLY_BIO : BioFilter.ALL)) {
                         PrecursorIonType ionType = experiment.getPrecursorIonType();
                         PrecursorIonType[] allowedIons;
                         if (ionType.isIonizationUnknown()) {

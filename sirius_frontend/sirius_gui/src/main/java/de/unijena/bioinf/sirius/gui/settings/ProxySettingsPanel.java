@@ -111,8 +111,8 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
     public void saveProperties() {
         props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.credentials", String.valueOf(useCredentials.isSelected()));
-        props.setProperty("de.unijena.bioinf.sirius.proxy.hostname", proxyHost.getText());
-        props.setProperty("de.unijena.bioinf.sirius.proxy.port", String.valueOf(proxyPort.getValue()));
+        props.setProperty("de.unijena.bioinf.sirius.proxy.hostname", String.valueOf(proxyHost.getText()).trim());
+        props.setProperty("de.unijena.bioinf.sirius.proxy.port", String.valueOf(proxyPort.getValue()).trim());
         props.setProperty("de.unijena.bioinf.sirius.proxy.scheme", (String) proxyScheme.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.proxy.user", proxyUser.getText());
 
