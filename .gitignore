@@ -1,9 +1,0 @@
-**/*.iml
-**/.idea/**
-**/.svn/**
-**/*.class
-**/*.classpath
-**/gradle
-**/gradlew
-**/gradlew.bat
-sirius_frontend/sirius_cli/src/main/resources/siriusBuild.properties
