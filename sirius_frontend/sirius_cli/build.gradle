@@ -7,14 +7,14 @@ processResources.doFirst {
     logger.lifecycle('writing properties file...')
     Properties properties = new Properties()
     File propertiesFileIn = new File("$projectDir/src/main/resources/siriusBuildSource.properties")
-    File propertiesFileOut = new File("$projectDir/src/main/resources/siriusBuild.properties")
     propertiesFileIn.withReader("UTF8", {
         properties.load(it)
     })
     properties.setProperty("de.unijena.bioinf.sirius.version", "$version")
     properties.setProperty("de.unijena.bioinf.utils.errorReport.softwareName", "${project.appName}".capitalize())
-    propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
-    propertiesFileOut.withWriter("UTF8", {
+
+    File propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
+    propertiesFile.withWriter("UTF8", {
         properties.store(it, "")
     })
 }
