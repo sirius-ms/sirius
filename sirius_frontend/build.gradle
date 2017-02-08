@@ -28,13 +28,8 @@ ext {
 
     glpk_lib_version = '4.60'
 
-<<<<<<< Temporary merge branch 1
-    siriusVersion = '3.4.1'
-    fingeridVersion = "1.0.8"
-=======
-    siriusVersion = '3.4.1-SNAPSHOT'
+    siriusVersion = '3.4.2-SNAPSHOT'
     fingeridVersion = "1.0.9-SNAPSHOT"
->>>>>>> Temporary merge branch 2
 
     jewelcli_version = '0.8.+'
 
@@ -45,15 +40,15 @@ ext {
 
 //    commons_email_version = '1.4'
 //    oshi_version = '3.2'
-    error_reporter_version = "0.9-SNAPSHOT"
+    error_reporter_version = "0.9"
 
 
 }
 
 allprojects {
-//    apply plugin: "com.jfrog.artifactory"
+    apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
-//    apply plugin: 'maven-publish'
+    apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.7
     targetCompatibility = 1.7
@@ -90,7 +85,7 @@ task downloadGLPK(type: Copy) {
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
     java.nio.file.Path dir = project.glpkPath.toPath().getParent()
-    
+
     copy {
         println(dir.toString())
         dir.resolve('glpk').toFile().deleteDir()
@@ -216,15 +211,15 @@ subprojects {
         doLast {
 //            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
             def siriusLibPath = '$GUROBI_HOME/lib:$APP_HOME/lib'
-            def lines =  unixScript.text.split(System.lineSeparator())
+            def lines = unixScript.text.split(System.lineSeparator())
             int insertIndex = -1
             for (int i = 0; i < lines.length; i++) {
-                if (lines[i].startsWith('CLASSPATH=')){
+                if (lines[i].startsWith('CLASSPATH=')) {
                     lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
                 }
-                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')){
+                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
 //                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', 'export LD_LIBRARY_PATH="' + siriusLibPath + ':\\"$LD_LIBRARY_PATH\\""' + "${System.lineSeparator()}" + 'DEFAULT_JVM_OPTS="-Djava.library.path=' + siriusLibPath + '"')
-                    insertIndex = i-1
+                    insertIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
                 }
             }
@@ -232,8 +227,29 @@ subprojects {
             unixScript.text = lines.join(System.lineSeparator())
         }
     }
+}
 
-    /*################### Build distributions ################### */
-    task distribute { group = 'distribution' }
-    distribute.dependsOn buildDoku
+// publication artifactory
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'dist-snapshot-local'
+            else
+                repoKey = 'dist-release-local'
+            Properties properties = new Properties()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            propertiesFile.withInputStream {
+                properties.load(it)
+            }
+
+            username = properties['username']
+            password = properties['password']
+        }
+        defaults {
+            //Publish every distribution to Artifactory
+            publications("sirius")
+        }
+    }
 }
