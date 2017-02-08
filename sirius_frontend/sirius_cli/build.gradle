@@ -3,18 +3,18 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
-processResources.doFirst{
+processResources.doFirst {
     logger.lifecycle('writing properties file...')
     Properties properties = new Properties()
     File propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
-    propertiesFile.withReader ("UTF8",{
+    propertiesFile.withReader("UTF8", {
         properties.load(it)
     })
     properties.setProperty("de.unijena.bioinf.sirius.version", "$version")
     properties.setProperty("de.unijena.bioinf.utils.errorReport.softwareName", "${project.appName}".capitalize())
     propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
-    propertiesFile.withWriter("UTF8",{
-        properties.store(it,"")
+    propertiesFile.withWriter("UTF8", {
+        properties.store(it, "")
     })
 }
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
@@ -36,8 +36,10 @@ launch4j {
     jar = "lib/${project.tasks.jar.archiveName}"
 }
 
-
 /*################### Build distributions ################### */
+task distribute { group = 'distribution' }
+distribute.dependsOn ':buildDoku'
+
 distributions {
     project.arch.split(',').each { ar ->
         def n = "${project.linSuffix}${ar}"
@@ -45,7 +47,7 @@ distributions {
             baseName = "${project.appName}-$n-headless"
             contents {
                 into('lib') {
-                    from("build/install/${project.name}/lib"){
+                    from("build/install/${project.name}/lib") {
                         exclude("$gurobiExclude")
                     }
                     from("${project.glpkPath}/l${ar}/")
@@ -72,7 +74,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-        getTasksByName("${n}DistTar",false).each {it.setEnabled(false)}
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
     //crete win32And64 zip tasks
@@ -83,7 +85,7 @@ distributions {
             baseName = "${project.appName}-$n-headless"
             contents {
                 into('lib') {
-                    from('build/launch4j/lib'){
+                    from('build/launch4j/lib') {
                         exclude("$gurobiExclude")
                     }
                 }
@@ -107,7 +109,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-        getTasksByName("${n}DistTar",false).each { it.setEnabled(false)}
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
     //create osx zip
@@ -116,7 +118,7 @@ distributions {
         baseName = "${project.appName}-$n-headless"
         contents {
             into('lib') {
-                from("build/install/${project.name}/lib"){
+                from("build/install/${project.name}/lib") {
                     exclude("$gurobiExclude")
                 }
                 from("${project.glpkPath}/osx/")
@@ -144,10 +146,8 @@ distributions {
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 
-
-
-    project.getTasksByName("distTar",false).each {it.setEnabled(false)}
-    project.getTasksByName("distZip",false).each {it.setEnabled(false)}
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
 
 
     linux32DistZip.dependsOn 'installDist'
@@ -166,6 +166,24 @@ distributions {
     win64DistTar.dependsOn 'createExe'
     installWin64Dist.dependsOn 'createExe'
 
+// what should be published
+    publishing {
+        publications {
+            sirius(MavenPublication) {
+                artifactId "$name"
+                groupId "$group"
+
+                pom.withXml {}
+                artifact source: win64DistZip, classifier: 'win64-headless', extension: 'zip'
+                artifact source: win32DistZip, classifier: 'win32-headless', extension: 'zip'
+                artifact source: linux32DistZip, classifier: 'linux32-headless', extension: 'zip'
+                artifact source: linux64DistZip, classifier: 'linux64-headless', extension: 'zip'
+                artifact source: osx64DistZip, classifier: 'osx64-headless', extension: 'zip'
+            }
+
+        }
+    }
+    artifactoryPublish.dependsOn 'distribute'
 
     task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
         File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/sirius3').toFile()

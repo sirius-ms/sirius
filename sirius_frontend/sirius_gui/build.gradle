@@ -1,3 +1,5 @@
+import java.nio.file.Paths
+
 dependencies {
 //project
     compile project(':sirius_cli')
@@ -62,6 +64,9 @@ launch4j {
 }
 
 /*################### Build distributions ################### */
+task distribute { group = 'distribution' }
+distribute.dependsOn ':buildDoku'
+
 distributions {
     project.arch.split(',').each { ar ->
         def n = "${project.linSuffix}${ar}"
@@ -69,7 +74,7 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from("build/install/${project.name}/lib"){
+                    from("build/install/${project.name}/lib") {
                         exclude("$gurobiExclude")
                     }
                     from("${project.glpkPath}/l${ar}/")
@@ -106,7 +111,7 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from('build/launch4j/lib'){
+                    from('build/launch4j/lib') {
                         exclude("$gurobiExclude")
                     }
                     exclude('*.zip')
@@ -140,7 +145,7 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('lib') {
-                from("build/install/${project.name}/lib"){
+                from("build/install/${project.name}/lib") {
                     exclude("$gurobiExclude")
                 }
                 from("${project.glpkPath}/osx/")
@@ -189,6 +194,26 @@ distributions {
     win64DistTar.dependsOn 'createExe'
     installWin64Dist.dependsOn 'createExe'
 }
+
+// what should be published
+publishing {
+    publications {
+        sirius(MavenPublication) {
+            artifactId "$name"
+            groupId "$group"
+
+            artifact source: win64DistZip, classifier: 'win64', extension: 'zip'
+            artifact source: win32DistZip, classifier: 'win32', extension: 'zip'
+            artifact source: linux32DistZip, classifier: 'linux32', extension: 'zip'
+            artifact source: linux64DistZip, classifier: 'linux64', extension: 'zip'
+            artifact source: osx64DistZip, classifier: 'osx64', extension: 'zip'
+
+        }
+
+    }
+}
+
+artifactoryPublish.dependsOn 'distribute'
 
 task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
     File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/sirius3-gui').toFile()

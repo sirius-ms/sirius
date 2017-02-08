@@ -14,9 +14,9 @@ buildscript {
 
 }
 
-/*plugins {
+plugins {
     id "com.jfrog.artifactory" version "4.3.0"
-}*/
+}
 
 //Global Properties
 ext {
@@ -28,8 +28,13 @@ ext {
 
     glpk_lib_version = '4.60'
 
-    siriusVersion = '3.4.2-SNAPSHOT'
-    fingeridVersion = "1.0.8-SNAPSHOT"
+<<<<<<< Temporary merge branch 1
+    siriusVersion = '3.4.1'
+    fingeridVersion = "1.0.8"
+=======
+    siriusVersion = '3.4.1-SNAPSHOT'
+    fingeridVersion = "1.0.9-SNAPSHOT"
+>>>>>>> Temporary merge branch 2
 
     jewelcli_version = '0.8.+'
 
@@ -85,7 +90,7 @@ task downloadGLPK(type: Copy) {
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
     java.nio.file.Path dir = project.glpkPath.toPath().getParent()
-
+    
     copy {
         println(dir.toString())
         dir.resolve('glpk').toFile().deleteDir()
