@@ -43,9 +43,9 @@ public class FormulaList implements ActiveResults {
         selectionModel = new DefaultEventSelectionModel<>(resultList);
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        EventList<ExperimentContainer> l = compundList.getCompoundListSelectionModel().getSelected();
-        if (l != null && !l.isEmpty()) {
-            setData(l.get(0));
+        DefaultEventSelectionModel<ExperimentContainer> m = compundList.getCompoundListSelectionModel();
+        if (! m.isSelectionEmpty()) {
+            setData(m.getSelected().get(0));
         } else {
             setData(null);
         }
