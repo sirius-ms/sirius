@@ -7,9 +7,9 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
@@ -47,21 +47,25 @@ public class ComputeCSIAction extends AbstractAction {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {}
+            public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
+            }
         });
 
         MF.getCsiFingerId().getEnabledListeners().add(new Runnable() {
             @Override
             public void run() {
-                proofCSI();
+                setEnabled(proofCSI());
             }
         });
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!MainFrame.MF.csiConnectionAvailable())
+        if (!MF.getCsiFingerId().isConnected()) {
+            new NoConnectionDialog(MF);
             return;
+        }
+
 
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, false);
         final int returnState = dialog.run();
@@ -73,14 +77,21 @@ public class ComputeCSIAction extends AbstractAction {
         }
     }
 
-    protected void proofCSI() {
+
+    protected boolean proofCSI() {
         setEnabled(false);
-        if (MF.getCsiFingerId().isEnabled() && MF.csiConnectionAvailable() && MF.getCompounds().size() > 0) {
-            for (ExperimentContainer container : MF.getCompounds()) {
-                if (container.isComputed())
-                    setEnabled(true);
-                break;
+        if (MF.getCsiFingerId().isEnabled() && MF.getCompounds().size() > 0) {
+            if (MF.getCsiFingerId().isConnected()) {
+                for (ExperimentContainer container : MF.getCompounds()) {
+                    if (container.isComputed())
+                        return true;
+                        setEnabled(true);
+                    break;
+                }
+            } else {
+                new NoConnectionDialog(MF);
             }
         }
+        return false;
     }
 }

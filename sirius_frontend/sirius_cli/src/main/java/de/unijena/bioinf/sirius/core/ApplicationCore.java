@@ -110,7 +110,10 @@ public abstract class ApplicationCore {
         DEFAULT_LOGGER.info("Sirius Workspace Successfull initialized at: " + WORKSPACE.toAbsolutePath().toString());
 
         final String version = System.getProperty("de.unijena.bioinf.sirius.version");
-        VERSION_STRING = version != null ? "Sirius " + version : "Sirius";
+        final String build = System.getProperty("de.unijena.bioinf.sirius.build");
+
+        VERSION_STRING = (version != null && build != null) ? "Sirius " + version + " (build " + build +")" : "Sirius";
+        DEFAULT_LOGGER.debug(VERSION_STRING);
 
         String prop = System.getProperty("de.unijena.bioinf.sirius.cite");
         CITATION = prop != null ? prop : "";

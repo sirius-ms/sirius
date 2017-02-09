@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.EventList;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
@@ -32,8 +33,10 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!MainFrame.MF.csiConnectionAvailable())
+        if (!MainFrame.MF.getCsiFingerId().isConnected()){
+            new NoConnectionDialog(MF);
             return;
+        }
         //calculate csi
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, true);
         final int returnState = dialog.run();

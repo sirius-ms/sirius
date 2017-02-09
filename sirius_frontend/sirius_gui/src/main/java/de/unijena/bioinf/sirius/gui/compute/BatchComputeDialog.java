@@ -131,7 +131,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         csiOptions = new FingerIDComputationPanel(searchProfilePanel.getFormulaSource() == FormulaSource.BIODB);
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
-        runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Enable/Disable CSI:FingerID search");
+        //todo ugly workaround better listen to fingerID
+        if (MainFrame.MF.getCsiFingerId().isEnabled() && MainFrame.MF.getCsiFingerId().isConnected()) {
+            runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Enable/Disable CSI:FingerID search");
+            runCSIFingerId.setEnabled(true);
+        } else {
+            runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Can't connect to CSI:FingerID server!");
+            runCSIFingerId.setEnabled(false);
+        }
+
         runCSIFingerId.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -146,6 +154,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 //        otherPanel.add(Box.createHorizontalGlue());
         runCSIFingerId.setSelected(false);
         csiOptions.setEnabled(false);
+
+
+
 
         stack.add(otherPanel, BorderLayout.CENTER);
         mainPanel.add(stack);
@@ -300,13 +311,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         FormulaSource formulaSource = searchProfilePanel.getFormulaSource();
 
-        if (formulaSource != FormulaSource.ALL_POSSIBLE) {
+        //todo is that useful here?
+        /*if (formulaSource != FormulaSource.ALL_POSSIBLE) {
             //Test connection, if needed
-            if (!MainFrame.MF.csiConnectionAvailable()) {
+            if (!MainFrame.MF.getCsiFingerId().isConnected()) {
+                new NoConnectionDialog(MainFrame.MF);
                 dispose();
                 return;
             }
-        }
+        }*/
 
         FormulaConstraints constraints = elementPanel.getElementConstraints();
         List<Element> elementsToAutoDetect = Collections.EMPTY_LIST;
@@ -319,9 +332,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final int candidates = searchProfilePanel.getNumberOfCandidates();
 
         // CHECK ILP SOLVER
-
         TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
-
         if (builder == null) {
             String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
             LoggerFactory.getLogger(this.getClass()).error(noILPSolver);

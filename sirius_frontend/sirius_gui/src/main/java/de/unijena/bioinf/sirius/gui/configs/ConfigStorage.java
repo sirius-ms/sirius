@@ -7,7 +7,7 @@ import java.io.File;
 import java.nio.file.Paths;
 
 public class ConfigStorage {
-	
+	//todo move to PropertyManager
 	private File defaultLoadDialogPath, defaultTreeExportPath, defaultSaveFilePath, csvExportPath, defaultCompoundsExportPath;
 	private FileFormat treeFileFormat;
 

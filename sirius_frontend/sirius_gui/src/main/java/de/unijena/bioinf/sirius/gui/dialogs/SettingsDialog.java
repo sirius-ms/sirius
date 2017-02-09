@@ -31,6 +31,10 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
+        this(owner, -1);
+    }
+
+    public SettingsDialog(Frame owner, int activeTab) {
         super(owner, true);
         setTitle("Settings");
         setLayout(new BorderLayout());
@@ -52,6 +56,9 @@ public class SettingsDialog extends JDialog implements ActionListener {
         errorSettings = new ErrorReportSettingsPanel(nuProps);
         errorSettings.addVerticalGlue();
         settingsPane.add(errorSettings.name(), errorSettings);
+
+        if (activeTab >= 0 && activeTab < settingsPane.getTabCount())
+            settingsPane.setSelectedIndex(activeTab);
 
         add(settingsPane, BorderLayout.CENTER);
 

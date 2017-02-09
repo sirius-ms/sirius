@@ -25,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -142,20 +141,22 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //finger id observer
+        //todo this has to be refreshed after every check for connection --> same task as PropertyManager.
         final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
-
             @Override
-            protected VersionsInfo doInBackground() throws Exception {
-                try {
-                    final VersionsInfo result = new WebAPI().needsUpdate();
-                    publish(result);
-                    return result;
+            protected VersionsInfo doInBackground() {
+                VersionsInfo result = null;
+                try (WebAPI api = new WebAPI()) {
+                    if (api.getRESTDb(BioFilter.ALL, null).testConnection()) {
+                        result = api.needsUpdate();
+                        LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (result != null ? String.valueOf(result.toString()) : "NULL"));
+                    }
                 } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                    final VersionsInfo resultAlternative = new VersionsInfo("unknown", "unknown", "unknown");
-                    publish(resultAlternative);
-                    return resultAlternative;
                 }
+
+                publish(result);
+                return result;
             }
 
             @Override
@@ -182,16 +183,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 super.done();
             }
         };
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                w.execute();
-            }
-        });
+
+        w.execute();
+        //this is just to not lost the exceptions
+        try {
+            w.get();
+        } catch (Exception e) {
+            LoggerFactory.getLogger(mf.getClass()).error("Error during connection test", e);
+        }
 
         mf.setVisible(true);
     }
-
 
     @Override
     public void dispose() {
@@ -298,19 +300,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
     }
 
-    //Test connection
-    public boolean csiConnectionAvailable() {
-        try (final WebAPI webAPI = new WebAPI()) {
-            if (!webAPI.getRESTDb(BioFilter.ALL).testConnection()) {
-                new NoConnectionDialog(this);
-                return false;
-            }
-            return true;
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error(e.getMessage(), e);
-            return false;
-        }
-    }
+
 }
 
 

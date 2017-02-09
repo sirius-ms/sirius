@@ -33,7 +33,11 @@ import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
+import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -48,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.stream.JsonParser;
+import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -81,10 +86,6 @@ public class CSIFingerIdComputation {
         return versionNumber;
     }
 
-    public interface Callback {
-        void computationFinished(ExperimentContainer container, SiriusResultElement element);
-    }
-
     protected int[] fingerprintIndizes;
     protected double[] fscores;
     protected PredictionPerformance[] performances;
@@ -95,7 +96,7 @@ public class CSIFingerIdComputation {
     protected boolean configured = false;
     private File directory;
     private boolean enabled;
-    protected List<Runnable> enabledListeners=new ArrayList<>();
+    protected List<Runnable> enabledListeners = new ArrayList<>();
 
     protected QueryPredictor pubchemConfidenceScorePredictor, bioConfidenceScorePredictor;
 
@@ -120,17 +121,17 @@ public class CSIFingerIdComputation {
         this.compoundsPerFormulaBio = new HashMap<>(128);
         this.compoundsPerFormulaNonBio = new HashMap<>(128);
         setDirectory(getDefaultDirectory());
-        this.restDatabase = WebAPI.DEBUG ? new RESTDatabase(directory, BioFilter.ALL, "http://localhost:8080/frontend") :  new RESTDatabase(directory, BioFilter.ALL);
+        this.restDatabase = new WebAPI().getRESTDb(BioFilter.ALL, directory);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
         this.blastQueue = new ConcurrentLinkedQueue<>();
         this.jobQueue = new ConcurrentLinkedQueue<>();
 
-        final int numberOfBlastThreads = Runtime.getRuntime().availableProcessors()-1;
+        final int numberOfBlastThreads = Runtime.getRuntime().availableProcessors() - 1;
 
         this.blastWorker = new BackgroundThreadBlast();
         this.blastThreads = new Thread[numberOfBlastThreads];
-        for (int k=0; k < numberOfBlastThreads; ++k) {
+        for (int k = 0; k < numberOfBlastThreads; ++k) {
             blastThreads[k] = new Thread(blastWorker);
             blastThreads[k].start();
 
@@ -154,6 +155,14 @@ public class CSIFingerIdComputation {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public boolean isConnected() {
+        return restDatabase.testConnection();
+    }
+
+    /*public boolean isUpToDate() {
+        return //todo implement later
+    }*/
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
@@ -188,7 +197,7 @@ public class CSIFingerIdComputation {
         this.fingerprintVersion = v.toMask();
 
         fscores = new double[fingerprintIndizes.length];
-        for (int k=0; k < performances.length; ++k)
+        for (int k = 0; k < performances.length; ++k)
             fscores[k] = performances[k].getF();
     }
 
@@ -200,15 +209,15 @@ public class CSIFingerIdComputation {
             List<Scored<FingerprintCandidate>> candidates = blaster.search(formula, plattScores);
             final double[] scores = new double[candidates.size()];
             final Compound[] comps = new Compound[candidates.size()];
-            int k=0;
+            int k = 0;
             final HashMap<String, Compound> compounds;
-            synchronized(this.compounds) {
+            synchronized (this.compounds) {
                 compounds = this.compounds;
             }
             for (Scored<FingerprintCandidate> candidate : candidates) {
                 scores[k] = candidate.getScore();
                 comps[k] = compounds.get(candidate.getCandidate().getInchiKey2D());
-                if (comps[k]==null) {
+                if (comps[k] == null) {
                     comps[k] = new Compound(candidate.getCandidate());
                 }
                 ++k;
@@ -266,9 +275,9 @@ public class CSIFingerIdComputation {
         if (f.exists()) {
             try {
                 final List<String> content = Files.readAllLines(f.toPath(), Charset.forName("UTF-8"));
-                if (content.size()>0 && !versionNumber.databaseOutdated(content.get(0)) ) return false;
+                if (content.size() > 0 && !versionNumber.databaseOutdated(content.get(0))) return false;
             } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
         return true;
@@ -279,7 +288,7 @@ public class CSIFingerIdComputation {
         try {
             destroyCache();
         } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             // might happen, especially under Windows. But I don't wanna make a proper error dialogue for that
         }
     }
@@ -328,7 +337,7 @@ public class CSIFingerIdComputation {
         final File dir = new File(directory, bio ? "bio" : "not-bio");
         if (!dir.exists()) dir.mkdirs();
         final File mfile = new File(dir, formula.toString() + ".json.gz");
-        List<Compound> compounds=null;
+        List<Compound> compounds = null;
         if (mfile.exists()) {
             try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(mfile)))) {
                 compounds = new ArrayList<>();
@@ -337,8 +346,8 @@ public class CSIFingerIdComputation {
                 logger.error("Error while reading cached formula file for \"" + formula.toString() + "\". Reload file via webservice.", e);
             }
         }
-        if (compounds==null) {
-            if (webAPI==null) {
+        if (compounds == null) {
+            if (webAPI == null) {
                 try (final WebAPI webAPI2 = new WebAPI()) {
                     compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
                 }
@@ -350,7 +359,7 @@ public class CSIFingerIdComputation {
         for (Compound c : compounds) {
             c.calculateXlogP();
             if (de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate.ECFP_ENABLED) {
-                if (fingerprinter==null) {
+                if (fingerprinter == null) {
                     fingerprinter = new ECFPFingerprinter();
                 }
                 // add ECFP fingerprint to compound
@@ -382,16 +391,16 @@ public class CSIFingerIdComputation {
             try {
                 IBitFingerprint bits = ecfp.getBitFingerprint(molecule);
                 final TShortArrayList fps = new TShortArrayList(defaultCdkFingerprint.toIndizesArray());
-                final int offset = ((CdkFingerprintVersion)version.getMaskedFingerprintVersion()).getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.ECFP);
+                final int offset = ((CdkFingerprintVersion) version.getMaskedFingerprintVersion()).getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.ECFP);
 
                 final int[] indizes = version.allowedIndizes();
                 int start = Arrays.binarySearch(indizes, offset);
-                if (start<0) {
-                    start = -(start+1);
+                if (start < 0) {
+                    start = -(start + 1);
                 }
                 for (; start < indizes.length; ++start) {
-                    if (bits.get(indizes[start]-offset)) {
-                        fps.add((short)indizes[start]);
+                    if (bits.get(indizes[start] - offset)) {
+                        fps.add((short) indizes[start]);
                     }
                 }
                 return new ArrayFingerprint(version, fps.toArray());
@@ -406,7 +415,7 @@ public class CSIFingerIdComputation {
 
     public void setDirectory(File directory) {
         this.directory = directory;
-        synchronized (this.compounds){
+        synchronized (this.compounds) {
             this.compounds.clear();
         }
         synchronized (this.compoundsPerFormulaNonBio) {
@@ -420,29 +429,29 @@ public class CSIFingerIdComputation {
 
     protected static List<SiriusResultElement> getTopSiriusCandidates(ExperimentContainer container) {
         final ArrayList<SiriusResultElement> elements = new ArrayList<>();
-        if (container==null || !container.isComputed() || container.getResults()==null) return elements;
+        if (container == null || !container.isComputed() || container.getResults() == null) return elements;
         final SiriusResultElement top = container.getResults().get(0);
-        if (top.getResult().getResolvedTree().numberOfEdges()>0)
+        if (top.getResult().getResolvedTree().numberOfEdges() > 0)
             elements.add(top);
         final double threshold = calculateThreshold(top.getScore());
-        for (int k=1; k < container.getResults().size(); ++k) {
+        for (int k = 1; k < container.getResults().size(); ++k) {
             SiriusResultElement e = container.getResults().get(k);
             if (e.getScore() < threshold) break;
-            if (e.getResult().getResolvedTree().numberOfEdges()>0)
+            if (e.getResult().getResolvedTree().numberOfEdges() > 0)
                 elements.add(e);
         }
         return elements;
     }
 
-    public static double calculateThreshold(double topScore){
-        return Math.max(topScore, 0) -  Math.max(5, topScore * 0.25);
+    public static double calculateThreshold(double topScore) {
+        return Math.max(topScore, 0) - Math.max(5, topScore * 0.25);
     }
 
     //compute for a single experiment
     public void compute(ExperimentContainer c, boolean bioDb) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-            if (e.getCharge()>0) {
+            if (e.getCharge() > 0) {
                 tasks.add(new FingerIdTask(bioDb, c, e));
             }
         }
@@ -455,7 +464,7 @@ public class CSIFingerIdComputation {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (ExperimentContainer c : compounds) {
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
-                if (e.getCharge()>0) {
+                if (e.getCharge() > 0) {
                     tasks.add(new FingerIdTask(isEnforceBio(), c, e));
                 }
             }
@@ -480,10 +489,10 @@ public class CSIFingerIdComputation {
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
             final ComputingStatus status = task.result.getFingerIdComputeState();
-            boolean recompute = (task.result.getFingerIdData()!=null && task.result.getFingerIdData().bio != task.bio);
+            boolean recompute = (task.result.getFingerIdData() != null && task.result.getFingerIdData().bio != task.bio);
             if (recompute || status == ComputingStatus.UNCOMPUTED || status == ComputingStatus.FAILED) {
                 task.result.setFingerIdComputeState(ComputingStatus.COMPUTING);
-                if (task.result.getFingerIdData()!=null && task.result.getFingerIdData().platts!=null) {
+                if (task.result.getFingerIdData() != null && task.result.getFingerIdData().platts != null) {
                     task.prediction = task.result.getFingerIdData().platts;
                     formulaQueue.add(task);
                     blastQueue.add(task);
@@ -493,15 +502,21 @@ public class CSIFingerIdComputation {
                 }
             }
         }
-        synchronized (formulaWorker) {formulaWorker.notifyAll();}
-        synchronized (jobWorker) {jobWorker.notifyAll();}
+        synchronized (formulaWorker) {
+            formulaWorker.notifyAll();
+        }
+        synchronized (jobWorker) {
+            jobWorker.notifyAll();
+        }
     }
 
     public void shutdown() {
-        formulaWorker.shutdown=true;
-        blastWorker.shutdown=true;
-        jobWorker.shutdown=true;
-        formulaQueue.clear(); blastQueue.clear(); jobQueue.clear();
+        formulaWorker.shutdown = true;
+        blastWorker.shutdown = true;
+        jobWorker.shutdown = true;
+        formulaQueue.clear();
+        blastQueue.clear();
+        jobQueue.clear();
         synchronized (formulaWorker) {
             formulaWorker.notifyAll();
         }
@@ -522,18 +537,18 @@ public class CSIFingerIdComputation {
     }
 
     protected void refreshConfidence(final ExperimentContainer exp) {
-        if (exp.getResults()==null || exp.getResults().isEmpty()) return;
+        if (exp.getResults() == null || exp.getResults().isEmpty()) return;
         SiriusResultElement best = null;
         for (SiriusResultElement elem : exp.getResults()) {
-            if (elem!= null && elem.getFingerIdData()!=null) {
-                if (best==null) best = elem;
-                else if (elem.getFingerIdData().scores.length>0 && elem.getFingerIdData().getTopScore() > best.getFingerIdData().getTopScore()) {
+            if (elem != null && elem.getFingerIdData() != null) {
+                if (best == null) best = elem;
+                else if (elem.getFingerIdData().scores.length > 0 && elem.getFingerIdData().getTopScore() > best.getFingerIdData().getTopScore()) {
                     best = elem;
                 }
             }
         }
 
-        if (best!=null) {
+        if (best != null) {
             if (Double.isNaN(best.getFingerIdData().getConfidence())) recomputeConfidence(best);
         }
         exp.setBestHit(best);
@@ -542,26 +557,26 @@ public class CSIFingerIdComputation {
     private void recomputeConfidence(SiriusResultElement best) {
         try {
             globalLock.lock();
-            if (performances==null) {
+            if (performances == null) {
                 final WebAPI webAPI = new WebAPI();
                 loadStatistics(webAPI);
                 webAPI.close();
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             return;
         } finally {
             globalLock.unlock();
         }
 
-        if (bioConfidenceScorePredictor!=null) {
+        if (bioConfidenceScorePredictor != null) {
             final FingerIdData data = best.getFingerIdData();
-            if (data.compounds.length==0) return;
+            if (data.compounds.length == 0) return;
 
             // bio or pubchem?
             boolean bio = true;
             for (Compound c : data.compounds) {
-                if (c.bitset>0) {
+                if (c.bitset > 0) {
                     bio = false;
                     break;
                 }
@@ -570,14 +585,14 @@ public class CSIFingerIdComputation {
 
             CompoundWithAbstractFP<ProbabilityFingerprint> query = data.compounds[0].asQuery(data.platts);
             CompoundWithAbstractFP<Fingerprint>[] candidates = new CompoundWithAbstractFP[data.compounds.length];
-            for (int k=0; k < candidates.length; ++k) {
+            for (int k = 0; k < candidates.length; ++k) {
                 candidates[k] = data.compounds[k].asCandidate();
             }
             try {
                 data.setConfidence(queryPredictor.estimateProbability(query, candidates));
             } catch (PredictionException e) {
                 data.setConfidence(Double.NaN);
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
 
@@ -587,7 +602,7 @@ public class CSIFingerIdComputation {
 
         protected volatile boolean shutdown;
 
-        protected volatile boolean failedWhenLoadingStatistics=false;
+        protected volatile boolean failedWhenLoadingStatistics = false;
 
         @Override
         public void run() {
@@ -595,17 +610,17 @@ public class CSIFingerIdComputation {
                 try {
                     wait();
                 } catch (InterruptedException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
             }
             final WebAPI webAPI = new WebAPI();
             // first read statistics
             globalLock.lock();
             try {
-                if (performances==null) loadStatistics(webAPI);
+                if (performances == null) loadStatistics(webAPI);
                 globalCondition.signalAll();
             } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 this.failedWhenLoadingStatistics = true;
                 return;
             } finally {
@@ -614,7 +629,7 @@ public class CSIFingerIdComputation {
             while ((!shutdown)) {
                 try {
                     final FingerIdTask container = formulaQueue.poll();
-                    if (container==null) {
+                    if (container == null) {
                         try {
                             synchronized (this) {
                                 // add timeout to prevent deadlocks. Even if something really strange
@@ -622,7 +637,7 @@ public class CSIFingerIdComputation {
                                 this.wait(3000);
                             }
                         } catch (InterruptedException e) {
-                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                         }
                     } else {
                         // download molecular formulas
@@ -630,16 +645,18 @@ public class CSIFingerIdComputation {
                         final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
                         try {
                             loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.bio);
-                            synchronized (blastWorker) {blastWorker.notifyAll();}
+                            synchronized (blastWorker) {
+                                blastWorker.notifyAll();
+                            }
 
                             job.done();
                         } catch (Throwable e) {
-                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                             job.error(e.getMessage(), e);
                         }
                     }
                 } catch (RuntimeException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                     Thread.yield();
                 }
             }
@@ -663,17 +680,17 @@ public class CSIFingerIdComputation {
             try {
                 globalCondition.await();
             } catch (InterruptedException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             } finally {
                 globalLock.unlock();
             }
             WebAPI webAPI = new WebAPI();
             while ((!shutdown)) {
                 boolean nothingToDo = true;
-                for(int c=0; c < 20; ++c) {
+                for (int c = 0; c < 20; ++c) {
                     final FingerIdTask container = jobQueue.poll();
-                    if (container!=null) {
-                        nothingToDo=false;
+                    if (container != null) {
+                        nothingToDo = false;
                         container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Predict fingerprint");
                         try {
                             final FingerIdJob job = webAPI.submitJob(SiriusDataConverter.experimentContainerToSiriusExperiment(container.experiment), container.result.getResult().getResolvedTree(), fingerprintVersion);
@@ -682,19 +699,19 @@ public class CSIFingerIdComputation {
                             jobQueue.add(container);
                             container.job.error(e.getMessage(), e);
                         } catch (URISyntaxException e) {
-                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                             container.job.error(e.getMessage(), e);
                         }
                     }
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                     }
                 }
                 final Iterator<Map.Entry<FingerIdTask, FingerIdJob>> iter = jobs.entrySet().iterator();
                 while (iter.hasNext()) {
-                    nothingToDo=false;
+                    nothingToDo = false;
                     final Map.Entry<FingerIdTask, FingerIdJob> entry = iter.next();
                     try {
                         if (webAPI.updateJobStatus(entry.getValue())) {
@@ -705,22 +722,24 @@ public class CSIFingerIdComputation {
                             synchronized (blastWorker) {
                                 blastWorker.notifyAll();
                             }
-                        } else if (entry.getValue().state=="CRASHED"){
+                        } else if (entry.getValue().state == "CRASHED") {
                             iter.remove();
                             entry.getKey().job.error("Error on server side", null);
                         }
                     } catch (URISyntaxException e) {
                         iter.remove();
                     } catch (IOException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                     }
                 }
 
                 if (nothingToDo) {
                     try {
-                        synchronized (this) {wait(3000);}
+                        synchronized (this) {
+                            wait(3000);
+                        }
                     } catch (InterruptedException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                     }
                 }
 
@@ -739,25 +758,29 @@ public class CSIFingerIdComputation {
             try {
                 globalCondition.await();
             } catch (InterruptedException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             } finally {
                 globalLock.unlock();
             }
             while ((!shutdown)) {
                 final FingerIdTask container = blastQueue.poll();
                 try {
-                    if (container==null) {
-                        synchronized (this) {this.wait(3000);}
+                    if (container == null) {
+                        synchronized (this) {
+                            this.wait(3000);
+                        }
                         continue;
                     } else {
-                        boolean canRun=true;
+                        boolean canRun = true;
                         if (!container.bio) {
                             synchronized (compoundsPerFormulaNonBio) {
-                                if (!compoundsPerFormulaNonBio.containsKey(container.result.getMolecularFormula())) canRun = false;
+                                if (!compoundsPerFormulaNonBio.containsKey(container.result.getMolecularFormula()))
+                                    canRun = false;
                             }
                         }
                         synchronized (compoundsPerFormulaBio) {
-                            if (!compoundsPerFormulaBio.containsKey(container.result.getMolecularFormula())) canRun = false;
+                            if (!compoundsPerFormulaBio.containsKey(container.result.getMolecularFormula()))
+                                canRun = false;
                         }
                         if (!canRun) {
                             final boolean queueIsEmpty = blastQueue.isEmpty();
@@ -773,18 +796,18 @@ public class CSIFingerIdComputation {
                     // blast this compound
                     container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Search in structure database");
                     try {
-                    final FingerIdData data = blast(container.result, container.prediction, container.bio);
-                    final ExperimentContainer experiment = container.experiment;
-                    final SiriusResultElement resultElement = container.result;
-                    resultElement.setFingerIdData(data);
-                    resultElement.setFingerIdComputeState(ComputingStatus.COMPUTED);
-                    refreshConfidence(experiment);
-                    container.job.done();
+                        final FingerIdData data = blast(container.result, container.prediction, container.bio);
+                        final ExperimentContainer experiment = container.experiment;
+                        final SiriusResultElement resultElement = container.result;
+                        resultElement.setFingerIdData(data);
+                        resultElement.setFingerIdComputeState(ComputingStatus.COMPUTED);
+                        refreshConfidence(experiment);
+                        container.job.done();
                     } catch (RuntimeException e) {
                         container.job.error(e.getMessage(), e);
                     }
                 } catch (InterruptedException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
 
 
@@ -853,7 +876,7 @@ public class CSIFingerIdComputation {
             restDatabase.annotateCompounds(list);
         }
 
-//        @Override
+        @Override
         public List<InChI> findInchiByNames(List<String> list) throws DatabaseException {
             return null;
         }

@@ -11,7 +11,7 @@ public class VersionsInfo {
     protected List<News> newsList;
 
     public VersionsInfo(String siriusGuiVersion, String siriusGuiDate, String databaseDate) {
-        this(siriusGuiVersion, siriusGuiDate, databaseDate, null);
+        this(siriusGuiVersion, siriusGuiDate, databaseDate, Collections.<News>emptyList());
     }
 
     public VersionsInfo(String siriusGuiVersion, String siriusGuiDate, String databaseDate, List<News> newsList) {
@@ -52,5 +52,10 @@ public class VersionsInfo {
 
     public boolean databaseOutdated(String s) {
         return databaseDate.compareTo(s) > 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Sirius-gui-version: " + siriusGuiVersion + ", Sirius-gui-date: " + siriusGuiDate + ", Database-date: " + databaseDate;
     }
 }

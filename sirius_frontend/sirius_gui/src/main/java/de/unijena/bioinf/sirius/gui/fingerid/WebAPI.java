@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
+import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -84,10 +85,9 @@ public class WebAPI implements Closeable {
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
 
-    public RESTDatabase getRESTDb(BioFilter bioFilter) {
-        return new RESTDatabase(null, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null, client);
+    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
+        return new RESTDatabase(cacheDir, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null, client);
     }
-
 
     public static final String VERSION = "3.4.1"; //todo get from properties file
     public static final String DATE = "2017-02-06";
@@ -98,7 +98,6 @@ public class WebAPI implements Closeable {
             get = new HttpGet(getFingerIdURI("/webapi/version.json").build());
             try (CloseableHttpResponse response = client.execute(get)) {
                 try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
-
                     JsonObject o = r.readObject();
                     JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
@@ -111,11 +110,8 @@ public class WebAPI implements Closeable {
                         final String newsJson = o.getJsonArray("news").toString();
                         newsList = News.parseJsonNews(newsJson);
                     }
-
                     return new VersionsInfo(id, date, database, newsList);
                 }
-            } catch (ClientProtocolException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             } catch (IOException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
@@ -147,21 +143,7 @@ public class WebAPI implements Closeable {
         client = clientBuilder.build();
     }
 
-   /* public static void SHUT_UP_STUPID_LOGGING() {
-        java.util.logging.Logger.getLogger("org.apache.http.wire").setLevel(java.util.logging.Level.FINEST);
-        java.util.logging.Logger.getLogger("org.apache.http.headers").setLevel(java.util.logging.Level.FINEST);
-        System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-        System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
-        System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire", "ERROR");
-        System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http", "ERROR");
-        System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.headers", "ERROR");
-    }
-
-    static {
-        SHUT_UP_STUPID_LOGGING();
-    }*/
-
-    protected static URIBuilder getFingerIdURI(String path) {
+     protected static URIBuilder getFingerIdURI(String path) {
         URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : "www.csi-fingerid.org");
         if (DEBUG) b = b.setPort(8080).setPath("/frontend" + path);
         else b.setPath(path);
@@ -243,7 +225,9 @@ public class WebAPI implements Closeable {
                     return new FingerIdJob(jobId, securityToken, version);
                 }
             } else {
-                throw new RuntimeException(response.getStatusLine().getReasonPhrase());
+                RuntimeException re = new RuntimeException(response.getStatusLine().getReasonPhrase());
+                logger.debug("Submitting Job failed",re);
+                throw re;
             }
         }
     }
