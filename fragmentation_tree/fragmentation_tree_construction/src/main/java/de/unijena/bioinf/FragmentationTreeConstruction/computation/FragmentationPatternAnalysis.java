@@ -615,7 +615,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
-        setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+        //setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
 
         getDefaultProfile().setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.4d).getMedian());
     }
@@ -679,7 +679,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
-        analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+        //analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
 
@@ -744,8 +744,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
 
-        final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
-        analysis.setTreeBuilder(solver);
+        //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
+        //analysis.setTreeBuilder(solver);
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
         profile.setAllowedMassDeviation(new Deviation(10));
@@ -790,7 +790,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (Object o : this.postProcessors) {
             initialize(o);
         }
-        initialize(treeBuilder);
+        //initialize(treeBuilder);
         initialize(recalibrationMethod);
         initialize(reduction);
         initialize(isoInMs2Scorer);
@@ -879,8 +879,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         this.reduction = new SimpleReduction();
 
-        final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
-        setTreeBuilder(solver);
+        //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
+        //setTreeBuilder(solver);
 
     }
 
@@ -904,7 +904,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration) {
-        FTree tree = treeBuilder.buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
+        FTree tree = getTreeBuilder().buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
         if (tree == null) return null;
         addTreeAnnotations(graph, tree);
         if (recalibration) tree = recalibrate(tree);
@@ -1495,6 +1495,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public TreeBuilder getTreeBuilder() {
+        if (treeBuilder==null) {
+            setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+        }
         return treeBuilder;
     }
 
