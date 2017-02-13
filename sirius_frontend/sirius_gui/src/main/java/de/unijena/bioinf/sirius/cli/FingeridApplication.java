@@ -337,8 +337,9 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final HashSet<MolecularFormula> allowedSet = new HashSet<>();
                 for (List<FormulaCandidate> fc : candidates) {
                     for (FormulaCandidate f : fc) {
-                        final int bitset = f.getBitset();
-                        if (flag == 0 || (bitset & flag) != 0)
+                        // TODO: not supported yet
+                        //final int bitset = f.getBitset();
+                        //if (flag == 0 || (bitset & flag) != 0)
                             if (allowedAlphabet.isSatisfied(f.getFormula()))
                                 allowedSet.add(f.getFormula());
                     }
@@ -362,7 +363,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
         aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
         aliasMap.put("all", 0);
-        if (!aliasMap.containsKey(options.getDatabase()) && !new File(options.getDatabase()).exists()) {
+        if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists()) {
             LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(aliasMap.keySet()));
         }
         return aliasMap;
