@@ -337,9 +337,8 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final HashSet<MolecularFormula> allowedSet = new HashSet<>();
                 for (List<FormulaCandidate> fc : candidates) {
                     for (FormulaCandidate f : fc) {
-                        // TODO: not supported yet
-                        //final int bitset = f.getBitset();
-                        //if (flag == 0 || (bitset & flag) != 0)
+                        final int bitset = f.getBitset();
+                        if (flag == 0 || (bitset & flag) != 0)
                             if (allowedAlphabet.isSatisfied(f.getFormula()))
                                 allowedSet.add(f.getFormula());
                     }

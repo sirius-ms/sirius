@@ -583,7 +583,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                                 }
                             } else return null;
                         } else {
-                            instances.push(new Instance(experimentIterator.next(), currentFile));
+                            instances.add(new Instance(experimentIterator.next(), currentFile));
                             return experimentIterator;
                         }
                     }
