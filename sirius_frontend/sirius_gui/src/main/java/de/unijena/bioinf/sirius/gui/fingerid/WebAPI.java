@@ -31,7 +31,6 @@ import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
-import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -75,7 +74,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
 
-    protected final static boolean DEBUG = false;
+    protected final static boolean DEBUG = true;
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
 
 
