@@ -65,6 +65,8 @@ public class Sirius {
 
     public static void main(String[] args) {
 
+        System.out.println(String.valueOf((char)32768));
+        System.exit(1);
         final File F = new File("/home/kaidu/Documents/temp/532.0707@8.27.ms");
         try {
             Sirius s = new Sirius("qtof");
