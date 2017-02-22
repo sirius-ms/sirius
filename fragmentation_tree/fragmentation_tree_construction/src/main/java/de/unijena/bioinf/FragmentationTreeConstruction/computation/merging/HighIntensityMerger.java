@@ -69,7 +69,7 @@ public class HighIntensityMerger implements PeakMerger {
         Arrays.sort(parray, Collections.reverseOrder(new ProcessedPeak.RelativeIntensityComparator()));
         for (int i=0; i < parray.length; ++i) {
             final ProcessedPeak p = parray[i];
-            final int index = Arrays.<ProcessedPeak>binarySearch(mzArray, 0, n, p, massComparator);
+            final int index = Arrays.binarySearch(mzArray, 0, n, p, massComparator);
             if (index < 0) continue;
             final double error = mergeWindow.absoluteFor(p.getMz());
             final double min = p.getMz() - error;

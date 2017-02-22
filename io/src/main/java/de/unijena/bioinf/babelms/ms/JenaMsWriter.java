@@ -105,6 +105,6 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             writer.write(' ');
             writer.write(o.toString());
             writer.newLine();
-        };
+        }
     }
 }

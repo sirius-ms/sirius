@@ -25,6 +25,6 @@ import java.util.List;
 
 public interface PeakScorer extends Parameterized {
 
-    public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores);
+    void score(List<ProcessedPeak> peaks, ProcessedInput input, double[] scores);
 
 }

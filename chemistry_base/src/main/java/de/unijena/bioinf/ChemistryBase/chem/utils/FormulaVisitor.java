@@ -28,6 +28,6 @@ public interface FormulaVisitor<T> {
 	 * @param amount number of atoms with this element
 	 * @return
 	 */
-	public T visit(Element element, int amount);
+    T visit(Element element, int amount);
 
 }

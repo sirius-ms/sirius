@@ -18,7 +18,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.merging;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -36,5 +35,5 @@ import java.util.List;
  * Returns the list of merged peaks
  */
 public interface MergeStrategy extends Parameterized {
-    public List<ProcessedPeak> mergePeaks(Ms2Experiment experiment, ProcessedPeak parentPeak, List<List<ProcessedPeak>> peaks);
+    List<ProcessedPeak> mergePeaks(Ms2Experiment experiment, ProcessedPeak parentPeak, List<List<ProcessedPeak>> peaks);
 }

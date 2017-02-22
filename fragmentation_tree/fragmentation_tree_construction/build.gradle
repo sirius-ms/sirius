@@ -5,8 +5,8 @@ processResources.doFirst{
     propertiesFile.withReader ("UTF8",{
         properties.load(it)
     })
-    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version", "$gurobi_version");
-    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version", "$glpk_version");
+    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version", "$gurobi_version")
+    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version", "$glpk_version")
     propertiesFile.withWriter("UTF8",{
         properties.store(it,"")
     })

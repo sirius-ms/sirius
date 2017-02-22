@@ -7,6 +7,6 @@ public interface Initializable {
      * is called after parsing all scorer and preprocessor such that each of them can access each other
      * and do some special initialization stuff.
      */
-    public void initialize(FragmentationPatternAnalysis analysis);
+    void initialize(FragmentationPatternAnalysis analysis);
 
 }

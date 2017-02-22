@@ -204,9 +204,7 @@ public class ParameterizedByAnnotation<T> {
 
             Property property = (Property) o;
 
-            if (!name.equals(property.name)) return false;
-
-            return true;
+            return name.equals(property.name);
         }
 
         @Override

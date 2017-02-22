@@ -28,15 +28,15 @@ public interface PostProcessor extends Parameterized  {
     /**
      *
      */
-    public enum Stage {
+    enum Stage {
 
         AFTER_NORMALIZING, AFTER_MERGING, AFTER_DECOMPOSING
 
     }
 
 
-    public ProcessedInput process(ProcessedInput input);
+    ProcessedInput process(ProcessedInput input);
 
-    public Stage getStage();
+    Stage getStage();
 
 }

@@ -155,7 +155,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             final String optionName = options[0].toLowerCase();
             final String value = options.length==2 ? options[1] : "";
             if (optionName.equals("compound")) {
-                System.err.println(value + " (BEFORE: " + compoundName + ")");
                 final boolean newCompound = compoundName!=null;
                 if (newCompound) {
                     flushCompound();
@@ -238,6 +237,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
         private void flushCompound() {
+            newSpectrum();
             experiment = null;
             if (compoundName==null) return;
             final MutableMs2Experiment exp = new MutableMs2Experiment();

@@ -15,12 +15,12 @@ class TrainedElementDetectionNetwork {
         return npeaks;
     }
 
-    protected static enum ActivationFunction {
-        LINEAR, RELU, TANH;
+    protected enum ActivationFunction {
+        LINEAR, RELU, TANH
     }
 
     protected interface Layer {
-        public double[] activate(double[] vector);
+        double[] activate(double[] vector);
     }
 
     protected static class PreprocessingLayer implements Layer {
@@ -155,7 +155,6 @@ class TrainedElementDetectionNetwork {
             for (int i=0; i < nfeatures; ++i) normalization[i] = vec[k++];
             layers[0] = new PreprocessingLayer(centering, normalization);
             int in = nfeatures;
-            System.out.println(nfeatures);
             for (int l=0; l < nlayers; ++l) {
                 final double[][] W = new double[neurons[l]][in];
                 final double[] B = new double[neurons[l]];
@@ -209,7 +208,6 @@ class TrainedElementDetectionNetwork {
             for (int i=0; i < nfeatures; ++i) normalization[i] = vec[k++];
             layers[0] = new PreprocessingLayer(centering, normalization);
             int in = nfeatures;
-            System.out.println(nfeatures);
             for (int l=0; l < nlayers; ++l) {
                 final double[][] W = new double[neurons[l]][in];
                 final double[] B = new double[neurons[l]];

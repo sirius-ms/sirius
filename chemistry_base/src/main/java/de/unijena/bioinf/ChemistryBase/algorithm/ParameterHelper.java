@@ -137,8 +137,7 @@ public class ParameterHelper {
     public boolean isConvertableOrWrapable(Object o) {
         if (isConvertable(o)) return true;
         if (o instanceof Parameterized || o instanceof ImmutableParameterized) return true;
-        if (o.getClass().isAnnotationPresent(HasParameters.class)) return true;
-        return false;
+        return o.getClass().isAnnotationPresent(HasParameters.class);
     }
 
     public <G,D,L> Object unwrap(DataDocument<G,D,L> document, G value) {

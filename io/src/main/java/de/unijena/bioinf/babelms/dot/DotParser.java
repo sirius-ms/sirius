@@ -110,7 +110,6 @@ public class DotParser<NodeType, EdgeType> {
                     lastMatch = scanner.end();
                     continue;
                 }
-                ;
             } else if (token.equals("\\")) {
                 if (TOKENIZE.matcher(source.subSequence(scanner.end(), scanner.end() + 1)).find()) scanner.find();
                 else error("Unexpected '\\'");
@@ -251,7 +250,7 @@ public class DotParser<NodeType, EdgeType> {
         return scanner.group();
     }
 
-    private static enum MODE {
-        INITIAL, INGRAPH, INEDGE, INVERTEX, INVERTEXPROPERTY, INEDGEPROPERTY;
+    private enum MODE {
+        INITIAL, INGRAPH, INEDGE, INVERTEX, INVERTEXPROPERTY, INEDGEPROPERTY
     }
 }

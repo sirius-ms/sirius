@@ -22,6 +22,6 @@ package de.unijena.bioinf.ChemistryBase.chem;
  */
 public interface FormulaFilter {
 
-    public boolean isValid(MolecularFormula formula);
+    boolean isValid(MolecularFormula formula);
 
 }
