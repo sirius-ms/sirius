@@ -34,6 +34,6 @@ import java.util.List;
  */
 public interface PeakMerger extends Parameterized {
 
-    public void mergePeaks(List<ProcessedPeak> peaks, Ms2Experiment experiment, Deviation mergeWindow,  Merger merger);
+    void mergePeaks(List<ProcessedPeak> peaks, Ms2Experiment experiment, Deviation mergeWindow, Merger merger);
 
 }

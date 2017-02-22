@@ -25,6 +25,6 @@ import java.io.IOException;
  */
 public interface DataWriter<T> {
 
-    public void write(BufferedWriter writer, T data) throws IOException;
+    void write(BufferedWriter writer, T data) throws IOException;
 
 }

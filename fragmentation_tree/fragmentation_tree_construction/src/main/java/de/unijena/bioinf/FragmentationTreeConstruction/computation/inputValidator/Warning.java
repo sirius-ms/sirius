@@ -22,7 +22,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidat
  */
 public interface Warning {
 
-    public static class Noop implements Warning{
+    class Noop implements Warning{
 
         @Override
         public void warn(String message) {
@@ -30,6 +30,6 @@ public interface Warning {
         }
     }
 
-    public void warn(String message);
+    void warn(String message);
 
 }

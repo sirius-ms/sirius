@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.babelms.chemdb;
 
-import de.unijena.bioinf.babelms.chemdb.CompoundQuery;
 import de.unijena.bioinf.babelms.pubchem.Pubchem;
 
 /**
@@ -29,7 +28,7 @@ public enum Databases {
 
     private final CompoundQuery query;
 
-    private Databases(CompoundQuery query) {
+    Databases(CompoundQuery query) {
         this.query = query;
     }
 

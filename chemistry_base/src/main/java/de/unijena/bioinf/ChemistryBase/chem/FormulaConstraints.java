@@ -387,9 +387,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
         if (chemicalAlphabet != null ? !chemicalAlphabet.equals(that.chemicalAlphabet) : that.chemicalAlphabet != null)
             return false;
         if (filters != null ? !filters.equals(that.filters) : that.filters != null) return false;
-        if (!Arrays.equals(upperbounds, that.upperbounds)) return false;
-
-        return true;
+        return Arrays.equals(upperbounds, that.upperbounds);
     }
 
     @Override

@@ -30,7 +30,6 @@ public class SmallestLossScorer2 implements PeakPairScorer{
 
     @Override
     public void score(List<ProcessedPeak> peaks, ProcessedInput input, double[][] scores) {
-        System.err.println(Math.log(distribution.getDensity(100d)) - normalization);
         for (int fragment=0; fragment < peaks.size(); ++fragment) {
             final double fragmentMass = peaks.get(fragment).getMass();
             double smallestPenalty = Double.NEGATIVE_INFINITY;

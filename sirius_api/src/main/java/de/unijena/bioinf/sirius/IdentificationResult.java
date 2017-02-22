@@ -214,7 +214,7 @@ public class IdentificationResult implements Cloneable {
 
 
     public <T> boolean setAnnotation(Class<T> klass, T annotation) {
-        return annotations.put((Class<Object>) klass, annotation) == annotation;
+        return annotations.put(klass, annotation) == annotation;
     }
 
 

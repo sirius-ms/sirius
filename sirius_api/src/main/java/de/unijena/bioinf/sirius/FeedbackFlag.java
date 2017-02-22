@@ -39,7 +39,7 @@ class FeedbackFlag implements Feedback {
     }
 
     enum Flag {
-        NOTHING, CANCEL, STOP;
+        NOTHING, CANCEL, STOP
     }
 
     private Flag flag;

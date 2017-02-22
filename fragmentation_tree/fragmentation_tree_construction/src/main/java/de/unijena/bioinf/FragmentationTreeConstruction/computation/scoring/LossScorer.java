@@ -26,8 +26,8 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
  */
 public interface LossScorer<T> extends Parameterized {
 
-    public T prepare(ProcessedInput input);
+    T prepare(ProcessedInput input);
 
-    public double score(Loss loss, ProcessedInput input, T precomputed);
+    double score(Loss loss, ProcessedInput input, T precomputed);
 
 }

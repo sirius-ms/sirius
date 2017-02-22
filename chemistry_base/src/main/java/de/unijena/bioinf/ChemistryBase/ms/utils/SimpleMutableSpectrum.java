@@ -23,8 +23,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 public class SimpleMutableSpectrum extends BasicMutableSpectrum<Peak> {
 
     @SuppressWarnings("unchecked")
-    public <S extends Spectrum<? extends Peak>> SimpleMutableSpectrum(S immutable) {
-        super((Spectrum<Peak>) immutable);
+    public <T extends Peak, S extends Spectrum<T>> SimpleMutableSpectrum(S immutable) {
+        super((Spectrum<? extends Peak>)immutable);
     }
 
     public SimpleMutableSpectrum() {

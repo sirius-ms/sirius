@@ -7,18 +7,18 @@ import java.util.Iterator;
  */
 public interface FPIter2 extends Iterable<FPIter2>, Iterator<FPIter2> {
 
-    public FPIter2 clone();
+    FPIter2 clone();
 
-    public double getLeftProbability();
+    double getLeftProbability();
 
-    public double getRightProbability();
+    double getRightProbability();
 
-    public boolean isLeftSet();
+    boolean isLeftSet();
 
-    public boolean isRightSet();
+    boolean isRightSet();
 
-    public int getIndex();
+    int getIndex();
 
-    public MolecularProperty getMolecularProperty();
+    MolecularProperty getMolecularProperty();
 
 }

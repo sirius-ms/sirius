@@ -27,6 +27,6 @@ import org.apache.commons.math3.analysis.UnivariateFunction;
  */
 public interface RecalibrationStrategy {
 
-    public UnivariateFunction recalibrate(MutableSpectrum<Peak> spectrum, Spectrum<Peak> referenceSpectrum);
+    UnivariateFunction recalibrate(MutableSpectrum<Peak> spectrum, Spectrum<Peak> referenceSpectrum);
 
 }

@@ -28,19 +28,19 @@ public interface Alphabet<T> {
     /**
      * @return size of the alphabet. Indizes of characters are 0..{@literal <} size
      */
-    public int size();
+    int size();
 
     /**
      * @param i index of the character
      * @return weight of character c_i
      */
-    public double weightOf(int i);
+    double weightOf(int i);
 
     /**
      * @param i index of the character
      * @return character c_i
      */
-    public T get(int i);
+    T get(int i);
 
     /**
      * Maps the character to its index. This operation should be fast, because internally a modified ordered
@@ -48,7 +48,7 @@ public interface Alphabet<T> {
      * @param character
      * @return the index of the character
      */
-    public int indexOf(T character);
+    int indexOf(T character);
 
     /**
      * Creates an empty Map which have to be able to map a character of the alphabet to an arbitrary value.
@@ -57,6 +57,6 @@ public interface Alphabet<T> {
      * @param <S>
      * @return
      */
-    public <S> Map<T, S> toMap();
+    <S> Map<T, S> toMap();
 
 }

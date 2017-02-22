@@ -28,15 +28,15 @@ import java.util.List;
  */
 public interface TreeBuilder {
 
-    public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound);
+    Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound);
 
-    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
+    FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
 
-    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound);
+    FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound);
 
-    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
+    List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation);
 
-    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound);
+    List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound);
 
-    public String getDescription();
+    String getDescription();
 }

@@ -106,11 +106,10 @@ public class JSONDocumentType extends DataDocument<JsonElement, JsonObject, Json
         if (!document.isJsonPrimitive()) return false;
         final JsonPrimitive primitive = (JsonPrimitive)document;
         if (!primitive.isNumber()) return false;
-        final BigDecimal dec = ((JsonPrimitive)document).getAsBigDecimal();
+        final BigDecimal dec = document.getAsBigDecimal();
         if (dec.scale() > 0) return false;
         final BigInteger i = dec.toBigInteger();
-        if (i.bitLength() <= 31) return true;
-        else return false;
+        return i.bitLength() <= 31;
     }
 
     @Override

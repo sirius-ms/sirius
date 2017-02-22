@@ -34,5 +34,5 @@ public interface GraphReduction {
      * @param lowerbound
      * @return
      */
-    public FGraph reduce(FGraph graph, double lowerbound);
+    FGraph reduce(FGraph graph, double lowerbound);
 }

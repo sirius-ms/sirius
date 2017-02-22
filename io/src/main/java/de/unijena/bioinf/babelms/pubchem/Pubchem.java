@@ -120,7 +120,7 @@ public class Pubchem implements CompoundQuery {
 
     private static String sendPostRequestCSV(String uri, String body) {
         HttpURLConnection connection = null;
-        try {;
+        try {
             connection = (HttpURLConnection) URI.create(uri).toURL().openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);

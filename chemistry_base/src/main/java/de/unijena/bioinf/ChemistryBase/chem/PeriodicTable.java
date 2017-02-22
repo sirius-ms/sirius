@@ -202,7 +202,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     public Iterable<PrecursorIonType> getKnownLikelyPrecursorIonizations(int charge) {
         if (Math.abs(charge)!=1) throw new IllegalArgumentException("Do not support multiple charges yet");
-        final HashSet<PrecursorIonType> ions = new HashSet<PrecursorIonType>(knownIonTypes.values());
+        final HashSet<PrecursorIonType> ions = new HashSet<PrecursorIonType>();
+        for (PrecursorIonType ionType : knownIonTypes.values()) {
+            if (ionType.getCharge()==charge) ions.add(ionType);
+        }
         final ArrayList<PrecursorIonType> likely = new ArrayList<PrecursorIonType>();
 
         if (charge > 0) {

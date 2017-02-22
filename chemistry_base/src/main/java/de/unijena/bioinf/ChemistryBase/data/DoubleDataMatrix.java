@@ -41,7 +41,7 @@ public class DoubleDataMatrix {
     private final String[] rowHeader, colHeader, layerHeader;
 
     public interface NameNormalizer {
-        public String normalize(String name);
+        String normalize(String name);
     }
     public static DoubleDataMatrix merge() {
         throw new RuntimeException("Not implemented yet");

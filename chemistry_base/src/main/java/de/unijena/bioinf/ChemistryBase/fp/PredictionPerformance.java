@@ -223,8 +223,7 @@ public final class PredictionPerformance {
     }
 
     public boolean getSmallerClass() {
-        if (tp +fn > tn+fp) return false;
-        else return true;
+        return !(tp + fn > tn + fp);
     }
 
     public double getSmallerClassSize() {
