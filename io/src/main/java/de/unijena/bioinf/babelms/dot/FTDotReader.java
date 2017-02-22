@@ -52,7 +52,7 @@ public class FTDotReader implements Parser<FTree> {
         peakAno.set(tree.getRoot(), rootSet.peak);
         cesAno.set(tree.getRoot(), rootSet.collisionEnergies);
         ceAno.set(tree.getRoot(), CollisionEnergy.mergeAll(rootSet.collisionEnergies));
-        new PreOrderTraversal<Vertex>(g.getRoot(), g.getTreeAdapter()).<Fragment>call(new PreOrderTraversal.Call<Vertex, Fragment>() {
+        new PreOrderTraversal<Vertex>(g.getRoot(), g.getTreeAdapter()).call(new PreOrderTraversal.Call<Vertex, Fragment>() {
             @Override
             public Fragment call(Fragment parentResult, Vertex node) {
                 if (parentResult == null) return tree.getRoot();

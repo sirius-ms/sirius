@@ -230,7 +230,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
      * A recombinator extends the list of common losses by combination of losses
      */
     public interface Recombinator extends ImmutableParameterized<Recombinator> {
-        public TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula>  source, double normalizationConstant);
+        TObjectDoubleHashMap<MolecularFormula> recombinate(TObjectDoubleHashMap<MolecularFormula> source, double normalizationConstant);
     }
 
     public static class LossCombinator implements Recombinator {

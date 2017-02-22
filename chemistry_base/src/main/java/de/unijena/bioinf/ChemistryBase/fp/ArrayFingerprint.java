@@ -431,14 +431,12 @@ public class ArrayFingerprint extends Fingerprint {
 
         @Override
         public boolean isLeftSet() {
-            if (l > 0 && a==left.indizes[l-1]) return true;
-            else return false;
+            return l > 0 && a == left.indizes[l - 1];
         }
 
         @Override
         public boolean isRightSet() {
-            if (r > 0 && a==right.indizes[r-1]) return true;
-            else return false;
+            return r > 0 && a == right.indizes[r - 1];
         }
 
         @Override

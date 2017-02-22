@@ -24,6 +24,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
  */
 public interface MolecularFormulaScorer {
 
-    public double score(MolecularFormula formula);
+    double score(MolecularFormula formula);
 
 }

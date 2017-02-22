@@ -10,10 +10,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
  */
 public interface ElementPredictor {
 
-    public FormulaConstraints predictConstraints(SimpleSpectrum pickedPattern);
+    FormulaConstraints predictConstraints(SimpleSpectrum pickedPattern);
 
-    public ChemicalAlphabet getChemicalAlphabet();
+    ChemicalAlphabet getChemicalAlphabet();
 
-    public boolean isPredictable(Element element);
+    boolean isPredictable(Element element);
 
 }

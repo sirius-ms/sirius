@@ -104,7 +104,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH};
 
-    public static enum USED_FINGERPRINTS {
+    public enum USED_FINGERPRINTS {
         OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, ExtendedConnectivityProperty.getFingerprintLength());
 
         public final int defaultPosition, length;
