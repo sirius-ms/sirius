@@ -21,6 +21,7 @@ public class SearchProfilePanel extends JPanel {
         ORBI("Orbitrap", "orbitrap", 5),
         FTICR("FT-ICR", "fticr", 2)
 
+        ,QTOF_FIXED("Q-TOF (fixed)", "qtof_fixed", 10)
         //,EXP1("Exp1", "exp", 10),
         //EXP2("Exp2", "exp2", 10)
         ;
