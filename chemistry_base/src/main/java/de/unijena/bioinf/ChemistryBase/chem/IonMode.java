@@ -22,7 +22,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  * molecule ([M-ion]) or the molecule itself is an ion ([M]).
  *
  */
-class IonMode extends Ionization {
+public class IonMode extends Ionization {
 	private final double mass;
 	private final int charge;
 	private final String name;
