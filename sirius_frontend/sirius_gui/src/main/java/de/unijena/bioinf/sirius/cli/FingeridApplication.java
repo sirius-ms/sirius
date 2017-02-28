@@ -152,7 +152,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     predictedFingerprints.put(filteredResults.get(k).getMolecularFormula(), fp);
                     filteredResults.get(k).setAnnotation(FingerIdResult.class, new FingerIdResult(cds, 0d, fp));
                 }
-                Collections.sort(allCandidates, Scored.<FingerprintCandidate>desc());
+                Collections.sort(allCandidates, Scored.desc());
                 if (allCandidates.size() == 0) {
                     progress.info("No candidate structures found for given mass and computed trees.");
                     return;
@@ -286,7 +286,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             final BioFilter bioFilter = getBioFilter();
             final PredictionPerformance[] performances = webAPI.getStatistics(indizes);
             this.fingerblast = new Fingerblast(getFingerIdDatabase());
-            this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
+//            this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
             this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
             MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(webAPI.getFingerprintVersion());
@@ -295,6 +295,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 b.enable(index);
             }
             this.fingerprintVersion = b.toMask();
+            this.fingerblast.setScoring(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()).getScoring());
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de", e);
             System.exit(1);

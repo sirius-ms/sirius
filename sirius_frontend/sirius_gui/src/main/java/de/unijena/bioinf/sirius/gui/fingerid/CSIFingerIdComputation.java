@@ -30,7 +30,9 @@ import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
+import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
@@ -90,6 +92,7 @@ public class CSIFingerIdComputation {
     protected double[] fscores;
     protected PredictionPerformance[] performances;
     protected MaskedFingerprintVersion fingerprintVersion;
+    protected FingerblastScoringMethod scoringMethod;
     protected final HashMap<String, Compound> compounds;
     protected final HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
     protected RESTDatabase restDatabase;
@@ -199,12 +202,14 @@ public class CSIFingerIdComputation {
         fscores = new double[fingerprintIndizes.length];
         for (int k = 0; k < performances.length; ++k)
             fscores[k] = performances[k].getF();
+
+        this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d/performances[0].withPseudoCount(0.25).numberOfSamples());
     }
 
     private FingerIdData blast(SiriusResultElement elem, ProbabilityFingerprint plattScores, boolean bio) {
         final MolecularFormula formula = elem.getMolecularFormula();
         final Fingerblast blaster = new Fingerblast(new InMemoryCacheDatabase(bio));
-        blaster.setScoring(new CSIFingerIdScoring(performances));
+        blaster.setScoring(scoringMethod.getScoring(performances));
         try {
             List<Scored<FingerprintCandidate>> candidates = blaster.search(formula, plattScores);
             final double[] scores = new double[candidates.size()];

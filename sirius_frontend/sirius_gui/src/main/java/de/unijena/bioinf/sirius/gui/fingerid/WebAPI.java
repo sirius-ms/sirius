@@ -30,6 +30,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -294,6 +295,22 @@ public class WebAPI implements Closeable {
             }
         }
         return performances.toArray(new PredictionPerformance[performances.size()]);
+    }
+
+    public CovarianceScoring getCovarianceScoring(FingerprintVersion fpVersion, double alpha) throws IOException {
+        final HttpGet get;
+        try {
+            get = new HttpGet(getFingerIdURI("/webapi/covariancetree.csv").build());
+        } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        CovarianceScoring covarianceScoring;
+        try (CloseableHttpResponse response = client.execute(get)) {
+            HttpEntity e = response.getEntity();
+            covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
+        }
+        return covarianceScoring;
     }
 
     public List<Compound> getCompoundsFor(MolecularFormula formula, File output, MaskedFingerprintVersion version, boolean bio) throws IOException {
