@@ -1017,7 +1017,13 @@ public class Sirius {
         if (result.getBeautifulTree()!=null) return true;
         final MolecularFormula formula = result.getMolecularFormula();
         final FTree tree = result.getStandardTree();
-        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment, FormulaConstraints.allSubsetsOf(formula));
+
+        final MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+        mutableMs2Experiment.setMolecularFormula(formula);
+        mutableMs2Experiment.setMoleculeNeutralMass(0d);
+        mutableMs2Experiment.setPrecursorIonType(tree.getAnnotationOrNull(PrecursorIonType.class));
+
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         if (treeSizeScorer==null) return false;
         final double originalTreeSize = treeSizeScorer.getTreeSizeScore();
@@ -1058,10 +1064,10 @@ public class Sirius {
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
                     // TODO!!!! find a smarter way to do this -_-
-                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
                 }
 
-                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
+                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).withBackbones(beautifulTree).optimalTree();
             }
 
         } catch (Exception e){
