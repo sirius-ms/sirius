@@ -244,7 +244,9 @@ class DefaultDescriptors {
 
             for (String key : document.keySetOfDictionary(score)) {
                 if (key.equals("total") || key.equals("root") || key.equals("recalibrationBonus") || key.equals("beautificationPenalty") || key.equals("tree")) continue;
-                scoring.addAdditionalScore(key, document.getDoubleFromDictionary(score, key));
+                final double addScore = document.getDoubleFromDictionary(score, key);
+                scoring.addAdditionalScore(key, addScore);
+                scoring.setOverallScore(scoring.getOverallScore()-addScore);
             }
 
             if (document.hasKeyInDictionary(dictionary, "ratioOfExplainedPeaks")) {
