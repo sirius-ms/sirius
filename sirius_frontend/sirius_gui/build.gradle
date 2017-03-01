@@ -5,7 +5,6 @@ dependencies {
     compile project(':sirius_cli')
 
 //internal
-    //todo fingerID dependencies into artifactory
     compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"

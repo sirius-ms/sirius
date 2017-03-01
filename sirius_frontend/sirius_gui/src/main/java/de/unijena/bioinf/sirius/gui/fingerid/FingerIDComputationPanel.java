@@ -15,7 +15,7 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FingerIDComputationPanel extends JPanel {
-    //todo her cann we show more option if we select databases
+    //todo her can we show more option if we select databases
     public JRadioButton pubchem, biodb;
     protected final static String BIO = "bio database", ALL = "PubChem";
     private Border b = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));

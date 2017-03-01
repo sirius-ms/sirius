@@ -32,15 +32,13 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
+import de.unijena.bioinf.sirius.net.Proxies;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -48,11 +46,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,22 +120,14 @@ public class WebAPI implements Closeable {
     private final CloseableHttpClient client;
 
     public WebAPI() {
-        HttpClientBuilder clientBuilder = HttpClients.custom();
-        BasicCredentialsProvider clientCredentials = new BasicCredentialsProvider();
-        clientBuilder.setDefaultCredentialsProvider(clientCredentials);
+        HttpClientBuilder clientBuilder;
 
         if (Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy"))) {
-            HttpHost proxy = new HttpHost(
-                    System.getProperty("de.unijena.bioinf.sirius.proxy.hostname"),
-                    Integer.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy.port")),
-                    System.getProperty("de.unijena.bioinf.sirius.proxy.scheme"));
-            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
-            clientBuilder.setRoutePlanner(routePlanner);
-
-            if (Boolean.getBoolean(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
-                clientCredentials.setCredentials(new AuthScope(proxy), new UsernamePasswordCredentials(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"), System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw")));
-            }
+            clientBuilder = Proxies.getSiriusProxyClientBuilder();
+        } else{
+            clientBuilder = HttpClients.custom();
         }
+
         client = clientBuilder.build();
     }
 
@@ -162,6 +150,10 @@ public class WebAPI implements Closeable {
         return null;
     }
     */
+
+    public void checkInternetConnection(){
+
+    }
 
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
         final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
@@ -295,22 +287,6 @@ public class WebAPI implements Closeable {
             }
         }
         return performances.toArray(new PredictionPerformance[performances.size()]);
-    }
-
-    public CovarianceScoring getCovarianceScoring(FingerprintVersion fpVersion, double alpha) throws IOException {
-        final HttpGet get;
-        try {
-            get = new HttpGet(getFingerIdURI("/webapi/covariancetree.csv").build());
-        } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-        CovarianceScoring covarianceScoring;
-        try (CloseableHttpResponse response = client.execute(get)) {
-            HttpEntity e = response.getEntity();
-            covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
-        }
-        return covarianceScoring;
     }
 
     public List<Compound> getCompoundsFor(MolecularFormula formula, File output, MaskedFingerprintVersion version, boolean bio) throws IOException {

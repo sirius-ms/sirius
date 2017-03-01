@@ -105,7 +105,6 @@ public class FingerIdBackgroundComputation {
     }
 
     private class Worker extends SwingWorker<List<ExperimentContainer>, Task> {
-
         @Override
         protected void process(List<Task> chunks) {
             super.process(chunks);
