@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
@@ -64,21 +65,13 @@ public class Sirius {
     protected boolean autoIonMode;
 
     public static void main(String[] args) {
+        System.out.println(new ParetoDistribution.EstimateByMedian(0.0025).extimateByMedian(0.005));System.exit(0);
 
-        System.out.println(String.valueOf((char)32768));
-        System.exit(1);
-        final File F = new File("/home/kaidu/Documents/temp/532.0707@8.27.ms");
+        final File F = new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms");
         try {
-            Sirius s = new Sirius("qtof");
-            final Ms2Experiment exp = s.parseExperiment(F).next();
-
-            final HashSet<MolecularFormula> formulas = new HashSet<>();
-            formulas.add(MolecularFormula.parse("C19H22O5"));
-            formulas.add(MolecularFormula.parse("C13H15N5O3"));
-            formulas.add(MolecularFormula.parse("C15H20N6O4"));
-            formulas.add(MolecularFormula.parse("C12H10N6O2"));
-
-            final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit, formulas);
+            Sirius s = new Sirius("qtof_fixed");
+            Ms2Experiment exp = s.parseExperiment(F).next();
+            final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit);
             for (IdentificationResult r : results) {
                 System.out.println(r.formula + "\t" + r.getStandardTree().getAnnotationOrThrow(PrecursorIonType.class));
             }
@@ -1024,7 +1017,13 @@ public class Sirius {
         if (result.getBeautifulTree()!=null) return true;
         final MolecularFormula formula = result.getMolecularFormula();
         final FTree tree = result.getStandardTree();
-        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment, FormulaConstraints.allSubsetsOf(formula));
+
+        final MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+        mutableMs2Experiment.setMolecularFormula(formula);
+        mutableMs2Experiment.setMoleculeNeutralMass(0d);
+        mutableMs2Experiment.setPrecursorIonType(tree.getAnnotationOrNull(PrecursorIonType.class));
+
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
         if (treeSizeScorer==null) return false;
         final double originalTreeSize = treeSizeScorer.getTreeSizeScore();
@@ -1065,10 +1064,10 @@ public class Sirius {
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
                     // TODO!!!! find a smarter way to do this -_-
-                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
                 }
 
-                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
+                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).withBackbones(beautifulTree).optimalTree();
             }
 
         } catch (Exception e){
