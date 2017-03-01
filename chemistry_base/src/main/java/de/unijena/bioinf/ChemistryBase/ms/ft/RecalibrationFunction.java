@@ -58,18 +58,19 @@ public class RecalibrationFunction {
         return Joiner.on(" + ").join(terms);
     }
 
-    private static Pattern FMATCH = Pattern.compile("(\\d+\\.\\d+)(x(?:^(\\d+))?)?");
+    private static String DOUBLE_REG = "[-+]?[0-9]+\\.?[0-9]+([eE][-+]?[0-9]+)?";
+    private static Pattern FMATCH = Pattern.compile("("+DOUBLE_REG+")(x(?:^(\\d+))?)?");
     public static RecalibrationFunction fromString(String s) {
         final Matcher m = FMATCH.matcher(s);
         final TDoubleArrayList list = new TDoubleArrayList();
         while (m.find()) {
             final double constTerm = Double.parseDouble(m.group(1));
             final int degree;
-            final String x = m.group(2);
+            final String x = m.group(3);
             if (x==null || x.isEmpty()) {
                 degree=0;
             } else {
-                final String y = m.group(3);
+                final String y = m.group(4);
                 if (y==null || y.isEmpty()) {
                     degree=1;
                 } else degree = Integer.parseInt(y);
