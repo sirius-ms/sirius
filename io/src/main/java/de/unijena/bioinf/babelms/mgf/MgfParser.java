@@ -290,7 +290,9 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 if (spec.featureId!=null && !spec.featureId.equals(nextOne.featureId)) break;
                 if (spec.name != null && spec.featureId==null && !spec.name.equals(nextOne.name)) break;
                 if (exp.getPrecursorIonType()!=null && !exp.getPrecursorIonType().equals(spec.ionType)) break;
-                if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.002) break;
+                if (spec.featureId!=null || spec.name!=null) {
+                    if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.002) break;
+                } else if (nextOne.spectrum.getPrecursorMz()!=exp.getIonMass()) break;
             } else break;
         }
 
