@@ -38,6 +38,7 @@ import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -307,6 +308,7 @@ public class WebAPI implements Closeable {
         }
         CovarianceScoring covarianceScoring;
         try (CloseableHttpResponse response = client.execute(get)) {
+            if (!isSuccessful(response)) throw new IOException("Cannot get covariance scoring tree information.");
             HttpEntity e = response.getEntity();
             covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
         }
@@ -386,6 +388,10 @@ public class WebAPI implements Closeable {
                 throw e;
             }
         }
+    }
+
+    private boolean isSuccessful(HttpResponse response) {
+        return response.getStatusLine().getStatusCode() < 400;
     }
 
     private static class MultiplexerFileAndIO extends InputStream implements Closeable {
