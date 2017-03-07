@@ -382,7 +382,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
 
                 owner.getCsiFingerId().setEnforceBio(csiOptions.biodb.isSelected());
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, runCSIFingerId.isSelected());
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, searchProfilePanel.hasIsotopesEnabled(), runCSIFingerId.isSelected());
                 tasks.add(task);
                 compoundList.add(ec);
             }
