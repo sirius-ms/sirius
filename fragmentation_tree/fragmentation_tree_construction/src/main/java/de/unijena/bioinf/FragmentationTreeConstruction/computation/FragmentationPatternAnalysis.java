@@ -1531,6 +1531,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         fillList(fragmentPeakScorers, helper, document, dictionary, "peakScorers");
         fillList(peakPairScorers, helper, document, dictionary, "peakPairScorers");
         fillList(lossScorers, helper, document, dictionary, "lossScorers");
+        if (document.hasKeyInDictionary(dictionary, "isotopesInMs2")) {
+            this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
+        } else {
+            this.isoInMs2Scorer = null;
+        }
         peakMerger = (PeakMerger) helper.unwrap(document, document.getFromDictionary(dictionary, "merge"));
         if (document.hasKeyInDictionary(dictionary, "recalibrationMethod")) {
             recalibrationMethod = (RecalibrationMethod) helper.unwrap(document, document.getFromDictionary(dictionary, "recalibrationMethod"));
@@ -1578,6 +1583,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         list = document.newList();
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
+        document.addToDictionary(dictionary, "isotopesInMs2", helper.wrap(document, isoInMs2Scorer));
         if (recalibrationMethod != null)
             document.addToDictionary(dictionary, "recalibrationMethod", helper.wrap(document, recalibrationMethod));
         document.addToDictionary(dictionary, "merge", helper.wrap(document, peakMerger));
