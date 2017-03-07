@@ -192,26 +192,28 @@ public class FasterMultithreadedTreeComputation {
         public void run(){
             int processors = Runtime.getRuntime().availableProcessors();
             ExecutorService service = Executors.newFixedThreadPool(processors);
+            int thresh = (sortedHeuScores.length/2);
+//            int thresh = ((sortedHeuScores.length / 5)*4);
+//            int thresh = 0;
+            int j =multimap.size();
+            for (int i = sortedHeuScores.length-1; i >= thresh; i--) {
 
-            int thresh = (sortedHeuScores.length / 2);
-            int j =-1;
-            for (int i = 0; i < sortedHeuScores.length; i++) {
                 final int index = i;
                 final Collection<MolecularFormula> formulas_for_exact_method = multimap.get(sortedHeuScores[i]);
                 for (final MolecularFormula formula : formulas_for_exact_method) {
-                    j++;
+                    j--;
                     final int finalJ = j;
                     futures.add(service.submit(new Callable<Response>() {
                         @Override
-                    public Response call() throws Exception {
+                        public Response call() throws Exception {
 
-                        final Response out = new Response();
+                            final Response out = new Response();
 
-                        out.index = finalJ;
-                        out.result = getScore(computeTreeExactly(computeGraph(formula)));
-                        out.prediction = sortedHeuScores[index];
-                        return out;
-                    }
+                            out.index = finalJ;
+                            out.result = getScore(computeTreeExactly(computeGraph(formula)));
+                            out.prediction = sortedHeuScores[index];
+                            return out;
+                        }
 
                     }));
                 }
@@ -221,13 +223,13 @@ public class FasterMultithreadedTreeComputation {
 
         }
     }
-    private class test implements Runnable{
-        public void run(){
-            for(MolecularFormula formula: formulasToConsider.keySet()){
-                getScore(computeTreeHeuristically(computeGraph(formula)));
-            }
-        }
-    }
+//    private class test implements Runnable{
+//        public void run(){
+//            for(MolecularFormula formula: formulasToConsider.keySet()){
+//                getScore(computeTreeHeuristically(computeGraph(formula)));
+//            }
+//        }
+//    }
 
     public Output startComputation() throws InterruptedException, ExecutionException {
 
@@ -280,8 +282,9 @@ public class FasterMultithreadedTreeComputation {
 //        for (int i = 0; i<8; i++){
 //            new Thread(new test()).start();
 //        }
-//        int thresh = (sortedHeuScores.length / 2);
-        int thresh = 0;
+        int thresh = (sortedHeuScores.length / 2);
+//        int thresh = ((sortedHeuScores.length /5)*4);
+//        int thresh = 0;
         (new Thread(new ConsumeGraphExact(sortedHeuScores))).start();
 //        List<Future<Response>> futures = new ArrayList<Future<Response>>();
 
@@ -332,7 +335,7 @@ public class FasterMultithreadedTreeComputation {
 //            Thread.sleep(5);
 //        }
 
-        while (futures.size() != (presortedExScores.length-thresh)) {
+        while (futures.size() <1 ) {
             Thread.sleep(5);
         }
 //        Thread.sleep(500);
@@ -347,15 +350,20 @@ public class FasterMultithreadedTreeComputation {
 //        service.shutdownNow();
 //        System.out.println("end exact");
 //        System.out.println("start");
-        for (int j = 0; j < presortedExScores.length; j++) {
+        for (int j = presortedExScores.length-1; j >=0 ; j--) {
 //            System.out.println(presortedExScores);
-            if (presortedExScores[j] > maxValue) {
-                maxValue = presortedExScores[j];
-                maxPosition = j;
+            if(presortedExScores[j]!=null){
+                if (presortedExScores[j] > maxValue) {
+                    maxValue = presortedExScores[j];
+                    maxPosition = j;
+                }
+            }
+            else {
+                break;
             }
         }
         int position = presortedExScores.length - 1 - maxPosition;
-        float cut = ((float) maxPosition / (presortedExScores.length - 1));
+        float cut = ((float) (maxPosition+1) / (presortedExScores.length));
         Output output = new Output();
         output.cut = cut;
         output.result = maxValue;
