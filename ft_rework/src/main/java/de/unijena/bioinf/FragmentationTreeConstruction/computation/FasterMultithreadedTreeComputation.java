@@ -52,12 +52,11 @@ public class FasterMultithreadedTreeComputation {
     private MolecularFormula poison_pill = MolecularFormula.emptyFormula();
     private FGraph poison_pill_FGraph = new FGraph();
     private FTree poison_pill_FTree = new FTree(poison_pill);
-    private Queue<Future<Response>> futures = new ConcurrentLinkedQueue();
-//    private final MolecularFormula POISON_PILL = new MolecularFormula();
+    private Queue<Future<Response>> futureRes = new ConcurrentLinkedQueue(); //TODO ueberlegen ob nicht blocking queue sinvoller
 
     public FasterMultithreadedTreeComputation(FragmentationPatternAnalysis analyzer) {
         this.graphsToCompute = new ArrayBlockingQueue<>(100);
-        this.treesToCompute = new ArrayBlockingQueue<>(20); // TODO change back to 10
+        this.treesToCompute = new ArrayBlockingQueue<>(10);
         this.map = new TreeMap<>();
         this.analyzer = analyzer;
 
@@ -96,11 +95,12 @@ public class FasterMultithreadedTreeComputation {
 
     }
 
-    //Consumer Class in Java
+    //Consumes Trees and builds multimaps.
+    //in first test seemed single thread fully enough
     private class ConsumerTrees implements Runnable {
+
         @Override
         public void run() {
-//            Thread.currentThread().setName("consumerTrees");
             while (true) {
                 try {
                     final Future<FTree> heuTree = treesToCompute.take(); //waits until element available
@@ -108,15 +108,10 @@ public class FasterMultithreadedTreeComputation {
                     if (heuTree.get() == poison_pill_FTree) {
                         //damit scoreMap vollständig, vielleicht nicht mehr nötig
                         while (formulasToConsider.keySet().size() != multimap.size()) {
-//                            System.out.println("sleep");
                             Thread.sleep(5);
-                            Thread.currentThread().join();
                         }
-
                         break;
                     } else {
-//                        System.out.println("h");
-//                        computeTreeHeuristically(computeGraph(test.getRoot().getFormula()));
                         multimap.put(getScore(test), test.getRoot().getFormula());
                     }
                 } catch (InterruptedException e) {
@@ -139,13 +134,12 @@ public class FasterMultithreadedTreeComputation {
     }
 
     public class Output extends Response {
-
+        public double maxPrediction;
         public float cut;
     }
 
-    private class ConsumeGraphs implements Runnable{
-        public void run(){
-//            System.out.println("start heu Tree");
+    private class ConsumeGraphs implements Runnable {
+        public void run() {
             int processors = Runtime.getRuntime().availableProcessors();
             ExecutorService service = Executors.newFixedThreadPool(processors);
             while (true) {
@@ -162,13 +156,11 @@ public class FasterMultithreadedTreeComputation {
                             }
                         }));
                         service.shutdown();
-//                        service.shutdownNow();
                         break;
                     } else {
                         treesToCompute.put(service.submit(new Callable<FTree>() {
                             @Override
                             public FTree call() throws Exception {
-//                                Thread.currentThread().setName("CompHeu");
                                 return computeTreeHeuristically(graph.get());
                             }
                         }));
@@ -183,27 +175,29 @@ public class FasterMultithreadedTreeComputation {
         }
 
     }
-    private class ConsumeGraphExact implements Runnable{
-        private Double[] sortedHeuScores;
 
-        ConsumeGraphExact(Double[] sortedHeuScores){
+    private class ConsumeGraphExact implements Runnable {
+        private Double[] sortedHeuScores;
+        private int thresh;
+
+        ConsumeGraphExact(Double[] sortedHeuScores, int thresh) {
             this.sortedHeuScores = sortedHeuScores;
+            this.thresh = thresh;
         }
-        public void run(){
+
+        public void run() {
             int processors = Runtime.getRuntime().availableProcessors();
             ExecutorService service = Executors.newFixedThreadPool(processors);
-            int thresh = (sortedHeuScores.length/2);
-//            int thresh = ((sortedHeuScores.length / 5)*4);
-//            int thresh = 0;
-            int j =multimap.size();
-            for (int i = sortedHeuScores.length-1; i >= thresh; i--) {
+
+            int j = multimap.size();
+            for (int i = sortedHeuScores.length - 1; i >= thresh; i--) {
 
                 final int index = i;
                 final Collection<MolecularFormula> formulas_for_exact_method = multimap.get(sortedHeuScores[i]);
                 for (final MolecularFormula formula : formulas_for_exact_method) {
                     j--;
                     final int finalJ = j;
-                    futures.add(service.submit(new Callable<Response>() {
+                    futureRes.add(service.submit(new Callable<Response>() {
                         @Override
                         public Response call() throws Exception {
 
@@ -223,157 +217,90 @@ public class FasterMultithreadedTreeComputation {
 
         }
     }
-//    private class test implements Runnable{
-//        public void run(){
-//            for(MolecularFormula formula: formulasToConsider.keySet()){
-//                getScore(computeTreeHeuristically(computeGraph(formula)));
-//            }
-//        }
-//    }
 
     public Output startComputation() throws InterruptedException, ExecutionException {
 
         int processors = Runtime.getRuntime().availableProcessors();
         ExecutorService service = Executors.newFixedThreadPool(processors);
-        ExecutorService service2 = Executors.newFixedThreadPool(1);
 
-        for (int i = 0; i < 1; i++) {
-            service2.submit(new ConsumerTrees());
-        }
+// oposite starting order to actual running order
 
+//  Start consume trees and build multimap , single thread
+        (new Thread(new ConsumerTrees())).start();
+
+//  Start consume Graph and build heuristic Trees
         (new Thread(new ConsumeGraphs())).start();
-//        boolean isRunning = true;
-//        System.out.println("start graph compute");
-//        int i = 0;
+
+//  Build graphs
         for (final MolecularFormula formula : formulasToConsider.keySet()) {
             //hier vieleicht anonyme Klasse anlegen siehe unten
-//            System.out.println(i);
             graphsToCompute.put(service.submit(new CallToRemoteServiceFormula(formula)));
-//            i++;
         }
         graphsToCompute.put(service.submit(new CallToRemoteServiceFormula(poison_pill)));
 
 
-
+//  wait until all trees consumed
         int x = formulasToConsider.keySet().size();
         while (multimap.size() != x) {
             Thread.sleep(5);
         }
-//        service2.awaitTermination();
         service.shutdownNow();
-        service2.shutdown();
 
-
-//        System.out.println("end Heu tree");
         Set<Double> heuScoreSet = multimap.keySet();
         Double[] sortedHeuScores = heuScoreSet.toArray(new Double[multimap.keySet().size()]);
         Arrays.sort(sortedHeuScores);
-//        service2.shutdownNow();
-        return endComputation(sortedHeuScores);
-//        return new Output();
-    }
-
-    public Output endComputation(final Double[] sortedHeuScores) throws ExecutionException, InterruptedException {
-//        int processors = Runtime.getRuntime().availableProcessors();
-//        ExecutorService service = Executors.newFixedThreadPool(processors);
-        // build list with response objects
 
 
-//        for (int i = 0; i<8; i++){
-//            new Thread(new test()).start();
-//        }
-        int thresh = (sortedHeuScores.length / 2);
-//        int thresh = ((sortedHeuScores.length /5)*4);
-//        int thresh = 0;
-        (new Thread(new ConsumeGraphExact(sortedHeuScores))).start();
-//        List<Future<Response>> futures = new ArrayList<Future<Response>>();
+        //        TODO change to top 50 +x
+        int thresh = (sortedHeuScores.length / 2); //if 0 than no speedup
+//  calc best predited trees exactly
 
-//        System.out.println("start exact");
-//        int thresh = (sortedHeuScores.length / 2);
-//        for (int i = thresh; i < sortedHeuScores.length; i++) {
-//            final int index = i;
-//            final Collection<MolecularFormula> formulas_for_exact_method = multimap.get(sortedHeuScores[i]);
-//            for (final MolecularFormula formula : formulas_for_exact_method) {
-////            for (final MolecularFormula formula : formulasToConsider.keySet()) {
-//                futures.add(service.submit(new Callable<FTree>() {
-//                    @Override
-////                    public Response call() throws Exception {
-////                        final Response out = new Response();
-////                        out.index = index;
-////                        out.result = getScore(computeTreeExactly(computeGraph(formula)));
-////                        return out;
-////                    }
-//                    public FTree call() throws Exception {
-////                        final Response out = new Response();
-////                        out.index = index;
-//                        FTree result = computeTreeExactly(computeGraph(formula));
-//                        return result;
-//                    }
-//                }));
-//            }
-//        }
-//        service.shutdown();
+        (new Thread(new ConsumeGraphExact(sortedHeuScores, thresh))).start();
 
         int maxPosition = -1;
         double maxValue = -Double.MAX_VALUE;
 
-        // initialize output
+//  initialize output
         Double[] presortedExScores = new Double[multimap.size()];
         Double[] predictedScores = new Double[multimap.size()];
-//        for (Future<Response> future :futures){
-//                while (future.isDone() == false){  //Dont need this
-//                    System.out.println("wait");
-//                    Thread.sleep(100);
-//                }
-//                presortedExScores[future.get().index]=future.get().result;
-//        }
 
-// if queues are prefered
-//        System.out.println("JETZT");
-//        Thread.sleep(10000);
-//        while (futures.size()==0){
-//            Thread.sleep(5);
-//        }
 
-        while (futures.size() <1 ) {
+        while (futureRes.size() < 1) {
             Thread.sleep(5);
         }
-//        Thread.sleep(500);
-        while (futures.size() >0 ) {
-            Future<Response> future = futures.poll();
-            Response response= future.get();
+
+        while (futureRes.size() > 0) {
+            Future<Response> future = futureRes.poll();
+            Response response = future.get();
             presortedExScores[response.index] = response.result;
             predictedScores[response.index] = response.prediction;
 
         }
-//        service.shutdown();
-//        service.shutdownNow();
-//        System.out.println("end exact");
-//        System.out.println("start");
-        for (int j = presortedExScores.length-1; j >=0 ; j--) {
-//            System.out.println(presortedExScores);
-            if(presortedExScores[j]!=null){
+
+        for (int j = presortedExScores.length - 1; j >= 0; j--) {
+
+            if (presortedExScores[j] != null) {
                 if (presortedExScores[j] > maxValue) {
                     maxValue = presortedExScores[j];
                     maxPosition = j;
                 }
-            }
-            else {
+            } else {
                 break;
             }
         }
+
         int position = presortedExScores.length - 1 - maxPosition;
-        float cut = ((float) (maxPosition+1) / (presortedExScores.length));
+        float cut = ((float) (maxPosition + 1) / (presortedExScores.length));
         Output output = new Output();
         output.cut = cut;
         output.result = maxValue;
         output.prediction = predictedScores[maxPosition];
-//        output.prediction =
         output.index = position;
-//        System.out.println("stop");
+        output.maxPrediction = predictedScores[predictedScores.length - 1];
         return output;
-
     }
+
+
 
 
 
@@ -382,16 +309,11 @@ public class FasterMultithreadedTreeComputation {
      */
 
     private double getScore(FTree tree) {
-//        System.out.println("2");
         return tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
     }
 
     private FTree computeTreeExactly(FGraph graph) {
-//        System.out.println("3");
-//        long starttime = System.nanoTime();
         FTree test = analyzer.computeTree(graph);
-//        long endtime = System.nanoTime();
-//        System.out.println(endtime-starttime);
         return test;
     }
 
@@ -400,12 +322,8 @@ public class FasterMultithreadedTreeComputation {
     }
 
     private FTree computeTreeHeuristically(FGraph graph) {
-//        System.out.println("1");
-//        long starttime = System.nanoTime();
         FTree tree = new CriticalPathSolver(graph).solve();
         analyzer.addTreeAnnotations(graph, tree);
-//        long endtime = System.nanoTime();
-//        System.out.println(endtime-starttime);
         return tree;
     }
 

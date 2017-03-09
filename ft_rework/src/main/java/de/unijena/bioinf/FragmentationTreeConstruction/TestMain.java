@@ -19,7 +19,7 @@ public class TestMain {
         final Sirius sirius;
 
 
-        File folder = new File("/home/florian/Uni/projektmodul/gnps/");
+        File folder = new File("/home/florian/Uni/projektmodul/small_masses/");
         File[] listOfFiles = folder.listFiles();
 
         try {
@@ -28,8 +28,10 @@ public class TestMain {
             System.out.println(sirius.getMs2Analyzer().getTreeBuilder().getClass().getSimpleName());
             StringBuilder stringBuilderCut = new StringBuilder();
             StringBuilder stringBuilderPrediction = new StringBuilder();
+            StringBuilder stringBuilderMaxPrediction = new StringBuilder();
             StringBuilder stringBuilderResult = new StringBuilder();
             StringBuilder stringBuilderPosition = new StringBuilder();
+            StringBuilder stringBuilderName = new StringBuilder();
 
             for (File file : listOfFiles) {
                 long starttime = System.currentTimeMillis();
@@ -58,13 +60,17 @@ public class TestMain {
 
                     stringBuilderCut.append(out.cut+",");
                     stringBuilderPrediction.append(out.prediction+",");
+                    stringBuilderPrediction.append(out.maxPrediction+",");
                     stringBuilderResult.append(out.result+",");
                     stringBuilderPosition.append(out.index+",");
+                    stringBuilderName.append(file.getName());
 
                     writer.write(stringBuilderCut.toString()+"\n");
                     writer.write(stringBuilderPrediction.toString()+"\n");
+                    writer.write(stringBuilderMaxPrediction.toString()+"\n");
                     writer.write(stringBuilderResult.toString()+"\n");
-                    writer.write(stringBuilderPosition.toString());
+                    writer.write(stringBuilderPosition.toString()+"\n");
+                    writer.write(stringBuilderName.toString());
                     writer.close();
                 }
             }
