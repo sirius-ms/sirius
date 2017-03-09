@@ -252,10 +252,22 @@ public class FasterMultithreadedTreeComputation {
 
 
         //        TODO change to top 50 +x
-        int thresh = (sortedHeuScores.length / 2); //if 0 than no speedup
+//        new thresh method
+        if (sortedHeuScores.length >50){
+            int thresh = sortedHeuScores.length - 50;
+            (new Thread(new ConsumeGraphExact(sortedHeuScores, thresh))).start();
+
+        }
+        else {
+            int thresh = 0;
+            (new Thread(new ConsumeGraphExact(sortedHeuScores, thresh))).start();
+        }
+
+//////        OLD //////////
+/////        int thresh = (sortedHeuScores.length / 2); //if 0 than no speedup
 //  calc best predited trees exactly
 
-        (new Thread(new ConsumeGraphExact(sortedHeuScores, thresh))).start();
+//////        (new Thread(new ConsumeGraphExact(sortedHeuScores, thresh))).start();
 
         int maxPosition = -1;
         double maxValue = -Double.MAX_VALUE;
@@ -269,13 +281,71 @@ public class FasterMultithreadedTreeComputation {
             Thread.sleep(5);
         }
 
+        List<Double> differenceList= new ArrayList<Double>();
+        List<Double> resultList= new ArrayList<Double>();
+
+
         while (futureRes.size() > 0) {
             Future<Response> future = futureRes.poll();
             Response response = future.get();
             presortedExScores[response.index] = response.result;
             predictedScores[response.index] = response.prediction;
-
+            differenceList.add(response.result-response.prediction);
+            resultList.add(response.result);
         }
+
+//  bestimme den median
+        if(resultList.size()>=50){
+            Double[] sortedTop50Results = resultList.toArray(new Double[resultList.size()]);
+            Double[] sortedDifferences = differenceList.toArray(new Double[differenceList.size()]);
+            Arrays.sort(sortedTop50Results);
+            Arrays.sort(sortedDifferences);
+
+            double medianResult;
+            double medianDifference;
+            int middle = sortedTop50Results.length/2;
+            if (sortedTop50Results.length%2 == 1) {
+                medianResult = sortedTop50Results[middle];
+                medianDifference = sortedDifferences[middle];
+            } else {
+                medianResult =  (sortedTop50Results[middle-1] + sortedTop50Results[middle]) / 2.0;
+                medianDifference =  (sortedDifferences[middle-1] + sortedDifferences[middle]) / 2.0;
+            }
+            int start =0;
+
+            // suche nach dem index des  ersten wert der zu klein ist.
+            for(int i = sortedHeuScores.length-51 ; i >=0 ;i--){
+//                median 50 exact scores <= heuscore(g) + median abweichung
+//                if(medianResult <= sortedHeuScores[i]+medianDifference){
+//                    start++;
+//                }
+//          seems to be too agressiv so now more conservativ
+                if (medianResult<=sortedHeuScores[i]+sortedDifferences[sortedDifferences.length-1]){
+                    start++;
+                }
+                else {
+                    break;
+                }
+            }
+            if(start!=0){
+//            start again with extra values
+                System.out.println("start: " + Integer.toString(start));
+                int thresh = sortedHeuScores.length - 50-start;
+                (new Thread(new ConsumeGraphExact(Arrays.copyOfRange(sortedHeuScores,0,sortedHeuScores.length-50), thresh))).start();
+
+                while (futureRes.size() < 1) {
+                    Thread.sleep(5);
+                }
+                while (futureRes.size() > 0) {
+                    Future<Response> future = futureRes.poll();
+                    Response response = future.get();
+                    presortedExScores[response.index] = response.result;
+                    predictedScores[response.index] = response.prediction;
+                }
+
+            }
+        }
+
 
         for (int j = presortedExScores.length - 1; j >= 0; j--) {
 
