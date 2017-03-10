@@ -1,4 +1,96 @@
 import java.nio.file.Files
+import java.nio.file.Files
+import java.nio.file.Paths
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+apply plugin: "application"
+apply plugin: 'com.github.johnrengelman.shadow'
+
+mainClassName ="de.unijena.bioinf.FragmentationTreeConstruction.TestMain"
+shadowJar {
+    configurations = [project.configurations.compile]
+    classifier = 'fat'
+    /*manifest {
+        inheritFrom project.tasks.jar
+        //attributes 'Class-Path': "$runtimeClasspath"//todo add glpk and gurobi to manifest
+    }*/
+}
+
+//Global Properties
+ext{
+    //version for external libraries
+    slf4j_version = '1.7.13'
+    json_version = '1.0'
+    json_impl_version = "1.0.4"
+    jewelcli_version = '0.8.+'
+    gurobi_version = '6.5.1'
+    gson_version = '2.6.2'
+
+    //glpk and gurobi stuff
+    glpk_lib_version = '4.60'
+    //locations of runtime libraries
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
+
+    liblinear_version = "1.95"
+    libsvm_version = "3.20"
+    psql_version = "9.3-1104-jdbc41"
+    cdk_version = "1.5.14"
+    batik_version = "1.8"
+
+    graphUtils_version = '1.1'
+    ftalign_version = "2.1"
+    math3_version = '3.+'
+    fingerid_version = '1.0.9-SNAPSHOT'
+}
+
+
+startScripts {
+    applicationName = "fttest"
+    doLast {
+        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""' + "${System.lineSeparator()}" + 'export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$APP_HOME/lib:$LD_LIBRARY_PATH')
+    }
+}
+
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: "application"
+
+    mainClassName = "de.unijena.bioinf.FragmentationTreeConstruction.TestMain"
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+
+        maven {
+            url "http://bio.informatik.uni-jena.de/repository/local"
+        }
+        maven {
+            url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+        }
+        maven {
+            url "https://www.xypron.de/repository" //glpk repo
+            //only usede by fragmentation_tree_construction but has to be global
+        }
+        maven {
+            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
+            // only used by fingerid_cli for spectral hashs
+        }
+
+        maven {
+            url "http://streamreasoning.org/maven"
+        }
+    }
+
+    configurations {
+        all*.exclude group: 'org.bytedeco', module: 'javacpp-presets'
+    }
+
 
 dependencies {
 //project
@@ -17,4 +109,58 @@ dependencies {
     compile group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
 //test
     testCompile project(':io')
+}
+
+
+task downloadGLPK (type: Copy){
+    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
+    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
+
+    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
+
+    copy {
+        if (Files.notExists(dir))
+            Files.createDirectories(dir)
+
+        def glpkZipFile = Paths.get('glpk.zip');
+        def file = dir.resolve(glpkZipFile).newOutputStream()
+        file << glpkURL.openStream()
+        file.close()
+
+        from zipTree(dir.resolve(glpkZipFile).toFile())
+        into dir.toFile()
+    }
+
+}
+
+distributions {
+    linux64 {
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib")
+                from("${project.glpkPath}/l64/")
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+
+            }
+        }
+
+    }
+    linux64DistZip.dependsOn ':downloadGLPK'
+
+    getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
+    getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}
+}
+
+linux64DistZip.dependsOn 'installDist'
+linux64DistTar.dependsOn 'installDist'
+installLinux64Dist.dependsOn 'installDist'
+
+task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/fingerID').toFile()
+    commandLine([command.absolutePath])
 }

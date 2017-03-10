@@ -20,11 +20,11 @@ public class TestMain {
 
 
         File folder = new File("/home/florian/Uni/projektmodul/small_masses/");
+//        File folder = new File("/home/go96bix/small_masses/");
         File[] listOfFiles = folder.listFiles();
 
         try {
             sirius = new Sirius("qtof");
-            new GurobiSolver();
             System.out.println(sirius.getMs2Analyzer().getTreeBuilder().getClass().getSimpleName());
             StringBuilder stringBuilderCut = new StringBuilder();
             StringBuilder stringBuilderPrediction = new StringBuilder();
@@ -60,10 +60,10 @@ public class TestMain {
 
                     stringBuilderCut.append(out.cut+",");
                     stringBuilderPrediction.append(out.prediction+",");
-                    stringBuilderPrediction.append(out.maxPrediction+",");
+                    stringBuilderMaxPrediction.append(out.maxPrediction+",");
                     stringBuilderResult.append(out.result+",");
                     stringBuilderPosition.append(out.index+",");
-                    stringBuilderName.append(file.getName());
+                    stringBuilderName.append(file.getName()+",");
 
                     writer.write(stringBuilderCut.toString()+"\n");
                     writer.write(stringBuilderPrediction.toString()+"\n");

@@ -366,7 +366,7 @@ public class FasterMultithreadedTreeComputation {
         output.result = maxValue;
         output.prediction = predictedScores[maxPosition];
         output.index = position;
-        output.maxPrediction = predictedScores[predictedScores.length - 1];
+        output.maxPrediction = sortedHeuScores[sortedHeuScores.length - 1];
         return output;
     }
 
@@ -382,7 +382,7 @@ public class FasterMultithreadedTreeComputation {
         return tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
     }
 
-    private FTree computeTreeExactly(FGraph graph) {
+    private FTree computeTreeExactly(FGraph graph) { //TODO hier synchronized einfuegen
         FTree test = analyzer.computeTree(graph);
         return test;
     }
