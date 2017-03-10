@@ -136,6 +136,9 @@ public class FasterMultithreadedTreeComputation {
     public class Output extends Response {
         public double maxPrediction;
         public float cut;
+        public int subsearch1;
+        public int subsearch2;
+        public int subsearch3;
     }
 
     private class ConsumeGraphs implements Runnable {
@@ -189,14 +192,14 @@ public class FasterMultithreadedTreeComputation {
             int processors = Runtime.getRuntime().availableProcessors();
             ExecutorService service = Executors.newFixedThreadPool(processors);
 
-            int j = multimap.size();
+            int j = multimap.size();        //irgendwas wie mul.size -50
             for (int i = sortedHeuScores.length - 1; i >= thresh; i--) {
 
                 final int index = i;
                 final Collection<MolecularFormula> formulas_for_exact_method = multimap.get(sortedHeuScores[i]);
                 for (final MolecularFormula formula : formulas_for_exact_method) {
-                    j--;
-                    final int finalJ = j;
+                    j--;                    //muss geändert werden
+                    final int finalJ = j;  //
                     futureRes.add(service.submit(new Callable<Response>() {
                         @Override
                         public Response call() throws Exception {
@@ -251,7 +254,7 @@ public class FasterMultithreadedTreeComputation {
         Arrays.sort(sortedHeuScores);
 
 
-        //        TODO change to top 50 +x
+
 //        new thresh method
         if (sortedHeuScores.length >50){
             int thresh = sortedHeuScores.length - 50;
@@ -294,6 +297,11 @@ public class FasterMultithreadedTreeComputation {
             resultList.add(response.result);
         }
 
+        Output output = new Output();
+        output.subsearch1=multimap.keySet().size();
+        output.subsearch2=multimap.keySet().size();
+        output.subsearch3=multimap.keySet().size();
+
 //  bestimme den median
         if(resultList.size()>=50){
             Double[] sortedTop50Results = resultList.toArray(new Double[resultList.size()]);
@@ -311,26 +319,35 @@ public class FasterMultithreadedTreeComputation {
                 medianResult =  (sortedTop50Results[middle-1] + sortedTop50Results[middle]) / 2.0;
                 medianDifference =  (sortedDifferences[middle-1] + sortedDifferences[middle]) / 2.0;
             }
-            int start =0;
+            int start1 =0;
+            int start2 =0;
+            int start3 =0;
 
             // suche nach dem index des  ersten wert der zu klein ist.
             for(int i = sortedHeuScores.length-51 ; i >=0 ;i--){
 //                median 50 exact scores <= heuscore(g) + median abweichung
-//                if(medianResult <= sortedHeuScores[i]+medianDifference){
-//                    start++;
-//                }
+                if(medianResult <= sortedHeuScores[i]+medianDifference){
+                    start1++;
+                }
 //          seems to be too agressiv so now more conservativ
                 if (medianResult<=sortedHeuScores[i]+sortedDifferences[sortedDifferences.length-1]){
-                    start++;
+                    start2++;
                 }
-                else {
+                if(sortedTop50Results[0]<=sortedHeuScores[i]+sortedDifferences[sortedDifferences.length-1]){
+                    start3++;
+                }
+                else {          // nicht sicher ob dieses else erst dann erreicht wird wenn keine if mehr passt.
                     break;
                 }
+
             }
-            if(start!=0){
+            output.subsearch1=resultList.size()+start1-1;
+            output.subsearch2=resultList.size()+start2-1;
+            output.subsearch3=resultList.size()+start3-1;
+            if(sortedHeuScores.length>50){
 //            start again with extra values
-                System.out.println("start: " + Integer.toString(start));
-                int thresh = sortedHeuScores.length - 50-start;
+                System.out.println("start2: " + Integer.toString(start2));
+                int thresh = 0;
                 (new Thread(new ConsumeGraphExact(Arrays.copyOfRange(sortedHeuScores,0,sortedHeuScores.length-50), thresh))).start();
 
                 while (futureRes.size() < 1) {
@@ -339,8 +356,8 @@ public class FasterMultithreadedTreeComputation {
                 while (futureRes.size() > 0) {
                     Future<Response> future = futureRes.poll();
                     Response response = future.get();
-                    presortedExScores[response.index] = response.result;
-                    predictedScores[response.index] = response.prediction;
+                    presortedExScores[response.index-resultList.size()] = response.result;
+                    predictedScores[response.index-resultList.size()] = response.prediction; //überschreibt die alten werte --> index fehler
                 }
 
             }
@@ -361,7 +378,7 @@ public class FasterMultithreadedTreeComputation {
 
         int position = presortedExScores.length - 1 - maxPosition;
         float cut = ((float) (maxPosition + 1) / (presortedExScores.length));
-        Output output = new Output();
+
         output.cut = cut;
         output.result = maxValue;
         output.prediction = predictedScores[maxPosition];
@@ -382,7 +399,7 @@ public class FasterMultithreadedTreeComputation {
         return tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
     }
 
-    private FTree computeTreeExactly(FGraph graph) { //TODO hier synchronized einfuegen
+    private synchronized FTree computeTreeExactly(FGraph graph) { //TODO hier synchronized einfuegen
         FTree test = analyzer.computeTree(graph);
         return test;
     }

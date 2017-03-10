@@ -31,6 +31,10 @@ public class TestMain {
             StringBuilder stringBuilderMaxPrediction = new StringBuilder();
             StringBuilder stringBuilderResult = new StringBuilder();
             StringBuilder stringBuilderPosition = new StringBuilder();
+            StringBuilder stringBuilderSubsearch1 = new StringBuilder();
+            StringBuilder stringBuilderSubsearch2 = new StringBuilder();
+            StringBuilder stringBuilderSubsearch3 = new StringBuilder();
+
             StringBuilder stringBuilderName = new StringBuilder();
 
             for (File file : listOfFiles) {
@@ -63,6 +67,9 @@ public class TestMain {
                     stringBuilderMaxPrediction.append(out.maxPrediction+",");
                     stringBuilderResult.append(out.result+",");
                     stringBuilderPosition.append(out.index+",");
+                    stringBuilderSubsearch1.append(out.subsearch1+",");
+                    stringBuilderSubsearch2.append(out.subsearch2+",");
+                    stringBuilderSubsearch3.append(out.subsearch3+",");
                     stringBuilderName.append(file.getName()+",");
 
                     writer.write(stringBuilderCut.toString()+"\n");
@@ -70,6 +77,9 @@ public class TestMain {
                     writer.write(stringBuilderMaxPrediction.toString()+"\n");
                     writer.write(stringBuilderResult.toString()+"\n");
                     writer.write(stringBuilderPosition.toString()+"\n");
+                    writer.write(stringBuilderSubsearch1.toString()+"\n");
+                    writer.write(stringBuilderSubsearch2.toString()+"\n");
+                    writer.write(stringBuilderSubsearch3.toString()+"\n");
                     writer.write(stringBuilderName.toString());
                     writer.close();
                 }
