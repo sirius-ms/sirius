@@ -23,10 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -1015,8 +1012,24 @@ public class Sirius {
      */
     public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment, boolean recalibrating){
         if (result.getBeautifulTree()!=null) return true;
-        final MolecularFormula formula = result.getMolecularFormula();
-        final FTree tree = result.getStandardTree();
+        FTree beautifulTree = beautifyTree(result.getStandardTree(), experiment, recalibrating);
+        if (beautifulTree!=null){
+            result.setBeautifulTree(beautifulTree);
+            return true;
+        }
+        return false;
+    }
+
+    public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating){
+        final MolecularFormula formula;
+        final IonTreeUtils.Type type =tree.getAnnotationOrNull(IonTreeUtils.Type.class);
+        if (type == IonTreeUtils.Type.RESOLVED) {
+            formula = tree.getRoot().getFormula();
+        } else if (type == IonTreeUtils.Type.IONIZED) {
+            formula = tree.getAnnotationOrThrow(PrecursorIonType.class).precursorIonToNeutralMolecule(tree.getRoot().getFormula());
+        } else {
+            formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+        }
 
         final MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
         mutableMs2Experiment.setMolecularFormula(formula);
@@ -1025,7 +1038,7 @@ public class Sirius {
 
         ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
-        if (treeSizeScorer==null) return false;
+        if (treeSizeScorer==null) return null;
         final double originalTreeSize = treeSizeScorer.getTreeSizeScore();
 
         double modifiedTreeSizeScore = originalTreeSize;
@@ -1045,21 +1058,22 @@ public class Sirius {
         final int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
 
         FTree beautifulTree = new FTree(tree);
+        int iteration = 0;
         try {
             while (true) {
-                final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
+                final double intensity = (beautifulTree==null ? 0 : beautifulTree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensityOfExplainablePeaks());
+                System.out.println(experiment.getName()+": "+formula+" "+String.valueOf(intensity));
+//                final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
                 if (modifiedTreeSizeScore >= MAX_TREESIZE_SCORE){
                     if (beautifulTree!=null){
-                        profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
-                        result.setBeautifulTree(beautifulTree);
-                        return true;
+                        if (iteration>0) profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
+                        return beautifulTree;
                     } else {
-                        return false;
+                        return null;
                     }
                 }else if (beautifulTree!=null && (beautifulTree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY)) {
-                    profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
-                    result.setBeautifulTree(beautifulTree);
-                    return true;
+                    if (iteration>0) profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
+                    return beautifulTree;
                 } else {
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
@@ -1068,11 +1082,12 @@ public class Sirius {
                 }
 
                 beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).withBackbones(beautifulTree).optimalTree();
+                ++iteration;
             }
 
         } catch (Exception e){
             e.printStackTrace();
-            return false;
+            return null;
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
