@@ -237,6 +237,9 @@ class DefaultDescriptors {
             }
 
             scoring.setRecalibrationBonus(document.getDoubleFromDictionary(score, "recalibrationBonus"));
+            if (document.hasKeyInDictionary(score, "recalibrationPenalty")) {
+                scoring.setRecalibrationPenalty(document.getDoubleFromDictionary(score, "recalibrationPenalty"));
+            }
             if (document.hasKeyInDictionary(score, "beautificationPenalty")){
                 scoring.setBeautificationPenalty(document.getDoubleFromDictionary(score, "beautificationPenalty"));
             } else scoring.setBeautificationPenalty(0);
@@ -268,6 +271,7 @@ class DefaultDescriptors {
             final D score = document.newDictionary();
             document.addToDictionary(score, "total", annotation.getOverallScore());
             document.addToDictionary(score, "recalibrationBonus", annotation.getRecalibrationBonus());
+            document.addToDictionary(score, "recalibrationPenalty", annotation.getRecalibrationPenalty());
             document.addToDictionary(score, "beautificationPenalty", annotation.getBeautificationPenalty());
             document.addToDictionary(score, "root", annotation.getRootScore());
             double sum = 0d;

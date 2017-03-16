@@ -27,7 +27,7 @@ import java.util.Map;
 public class TreeScoring {
 
     private double rootScore;
-    private double recalibrationBonus;
+    private double recalibrationBonus, recalibrationPenalty;
     private double beautificationPenalty;
     private double overallScore;
     private TObjectDoubleHashMap<String> additionalScores;
@@ -119,6 +119,14 @@ public class TreeScoring {
 
     public double getRecalibrationBonus() {
         return recalibrationBonus;
+    }
+
+    public double getRecalibrationPenalty() {
+        return recalibrationPenalty;
+    }
+
+    public void setRecalibrationPenalty(double recalibrationPenalty) {
+        this.recalibrationPenalty = recalibrationPenalty;
     }
 
     public void setRecalibrationBonus(double recalibrationBonus) {
