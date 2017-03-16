@@ -390,12 +390,14 @@ public class Sirius {
             }
             feedback.clear();
             // recalibrate trees
+            double maximalPossibleScoreByRecalibration=0d;
             if (recalibrating) {
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
                     if (deisotope.isScoring()) addIsoScore(isoScores, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
@@ -419,6 +421,19 @@ public class Sirius {
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
+    }
+
+    private double addRecalibrationPenalty(FTree result, int rank, double maximalPossibleScoreByRecalibration) {
+        if (rank == 10) {
+            maximalPossibleScoreByRecalibration = result.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        } else if (rank > 10) {
+            TreeScoring scoring = result.getAnnotationOrThrow(TreeScoring.class);
+            if (scoring.getOverallScore() > maximalPossibleScoreByRecalibration) {
+                scoring.setRecalibrationPenalty(maximalPossibleScoreByRecalibration-scoring.getOverallScore());
+                scoring.setOverallScore(maximalPossibleScoreByRecalibration);
+            }
+        }
+        return maximalPossibleScoreByRecalibration;
     }
 
     private List<IonWhitelist> splitWhitelistByIonizationAndAlphabet(Ms2Experiment exp, Set<MolecularFormula> whiteList){
@@ -744,11 +759,13 @@ public class Sirius {
             }
             feedback.clear();
             if (recalibrating) {
+                double maximalPossibleScoreByRecalibration = 0d;
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
                     if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
@@ -883,11 +900,13 @@ public class Sirius {
             }
             feedback.clear();
             if (recalibrating) {
+                double maximalPossibleScoreByRecalibration=0d;
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
                     if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
