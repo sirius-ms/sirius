@@ -25,8 +25,10 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.generators.HighlightGenerator;
+import org.openscience.cdk.renderer.generators.standard.StandardGenerator;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
@@ -93,6 +95,8 @@ public class CompoundCandidate {
         if (!prepared) parseAndPrepare();
         final FingerprintVersion version = compound.fingerprint.getFingerprintVersion();
         final IAtomContainer molecule = compound.getMolecule();
+        for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
+        for (IBond bond: molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         if (!hasFingerprintIndex(absoluteIndex)) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
@@ -113,9 +117,19 @@ public class CompoundCandidate {
                     final List<List<Integer>> mappings = tool.getUniqueMatchingAtoms();
                     for (List<Integer> mapping : mappings) {
                         --minCount;
+                        final HashSet<IAtom> atoms = new HashSet<>(mapping.size());
+                        for (int i : mapping) atoms.add(molecule.getAtom(i));
                         for (Integer i : mapping) {
                             if (!colorMap.containsKey(molecule.getAtom(i)))
                                 colorMap.put(molecule.getAtom(i), minCount>=0 ? 0 : 1);
+                            if (molecule.getAtom(i).getProperty(StandardGenerator.HIGHLIGHT_COLOR)==null)
+                                molecule.getAtom(i).setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount>=0 ? CandidateJList.PRIMARY_HIGHLIGHTED_COLOR : CandidateJList.SECONDARY_HIGHLIGHTED_COLOR);
+                            for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(i))) {
+                                if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
+                                    if (b.getProperty(StandardGenerator.HIGHLIGHT_COLOR)==null)
+                                        b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount>=0 ? CandidateJList.PRIMARY_HIGHLIGHTED_COLOR : CandidateJList.SECONDARY_HIGHLIGHTED_COLOR);
+                                }
+                            }
 
                         }
                     }
@@ -129,8 +143,16 @@ public class CompoundCandidate {
             final HashMap<IAtom, Integer> colorMap = new HashMap<>();
             final int index = Arrays.binarySearch(ecfpHashs, ((ExtendedConnectivityProperty) property).getHash());
             if (index >= 0) {
+                final HashSet<IAtom> atoms = new HashSet<>(relevantFps[index].atoms.length);
+                for (int i : relevantFps[index].atoms) atoms.add(molecule.getAtom(i));
                 for (int atom : relevantFps[index].atoms) {
                     colorMap.put(compound.molecule.getAtom(atom), 0);
+                    molecule.getAtom(atom).setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateJList.PRIMARY_HIGHLIGHTED_COLOR);
+                    for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(atom))) {
+                        if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
+                            b.setProperty(StandardGenerator.HIGHLIGHT_COLOR,CandidateJList.PRIMARY_HIGHLIGHTED_COLOR);
+                        }
+                    }
                 }
             }
             molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);

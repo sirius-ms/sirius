@@ -33,8 +33,11 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
+import org.openscience.cdk.renderer.color.CDK2DAtomColors;
 import org.openscience.cdk.renderer.font.AWTFontManager;
-import org.openscience.cdk.renderer.generators.*;
+import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
+import org.openscience.cdk.renderer.generators.IGenerator;
+import org.openscience.cdk.renderer.generators.standard.StandardGenerator;
 import org.openscience.cdk.renderer.visitor.AWTDrawVisitor;
 import org.slf4j.LoggerFactory;
 
@@ -563,6 +566,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
+    public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
+    public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
+
     private class CompoundImage extends JPanel {
 
         protected CompoundCandidate molecule;
@@ -575,15 +581,20 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             // make generators
             java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
             generators.add(new BasicSceneGenerator());
+            generators.add(new StandardGenerator(nameFont));
+            /*
             generators.add(new BasicBondGenerator());
             generators.add(new RingGenerator());
             generators.add(new BasicAtomGenerator());
             generators.add(new HighlightGenerator());
-
+            */
             // setup the renderer
             this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
-            renderer.getRenderer2DModel().set(HighlightGenerator.HighlightPalette.class,
-                    HighlightGenerator.createPalette(new Color(0, 100, 255, 128), new Color(100, 100, 255, 64).brighter()));
+
+            renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
+                    StandardGenerator.HighlightStyle.OuterGlow);
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
+                    new CDK2DAtomColors());
             setVisible(true);
         }
 
