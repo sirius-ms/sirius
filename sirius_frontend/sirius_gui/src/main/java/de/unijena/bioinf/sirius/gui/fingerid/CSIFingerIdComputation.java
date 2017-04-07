@@ -29,17 +29,11 @@ import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -54,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.stream.JsonParser;
-import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -203,7 +196,7 @@ public class CSIFingerIdComputation {
         for (int k = 0; k < performances.length; ++k)
             fscores[k] = performances[k].getF();
 
-        this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d/performances[0].withPseudoCount(0.25).numberOfSamples());
+        this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d / performances[0].withPseudoCount(0.25).numberOfSamples());
     }
 
     private FingerIdData blast(SiriusResultElement elem, ProbabilityFingerprint plattScores, boolean bio) {

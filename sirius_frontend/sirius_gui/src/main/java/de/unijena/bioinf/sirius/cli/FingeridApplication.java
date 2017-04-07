@@ -152,7 +152,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     predictedFingerprints.put(filteredResults.get(k).getMolecularFormula(), fp);
                     filteredResults.get(k).setAnnotation(FingerIdResult.class, new FingerIdResult(cds, 0d, fp));
                 }
-                Collections.sort(allCandidates, Scored.desc());
+                Collections.sort(allCandidates, Scored.<FingerprintCandidate>desc());
                 if (allCandidates.size() == 0) {
                     progress.info("No candidate structures found for given mass and computed trees.");
                     return;

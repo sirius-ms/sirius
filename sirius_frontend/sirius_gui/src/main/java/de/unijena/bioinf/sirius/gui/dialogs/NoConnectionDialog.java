@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import org.jdesktop.swingx.VerticalLayout;
 
@@ -72,7 +73,7 @@ public class NoConnectionDialog extends JDialog implements ActionListener {
             @Override
             public void mouseClicked(MouseEvent e) {
                 try {
-                    Desktop.getDesktop().browse(new URI("http://www.csi-fingerid.org"));
+                    Desktop.getDesktop().browse(new URI(WebAPI.FINGERID_WEBSITE));
                 } catch (URISyntaxException | IOException ex) {
                     ex.printStackTrace();
                 }

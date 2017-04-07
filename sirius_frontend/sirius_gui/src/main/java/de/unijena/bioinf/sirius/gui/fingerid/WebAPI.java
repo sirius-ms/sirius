@@ -73,6 +73,8 @@ public class WebAPI implements Closeable {
 
     protected final static boolean DEBUG = false;
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
+    public static final String FINGERID_WEB_API = "bio.informatik.uni-jena.de/csi-fingerid";
+    public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
 
 
     protected static Logger logger = LoggerFactory.getLogger(WebAPI.class);
@@ -132,7 +134,7 @@ public class WebAPI implements Closeable {
     }
 
      protected static URIBuilder getFingerIdURI(String path) {
-        URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : "www.csi-fingerid.org");
+        URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : FINGERID_WEB_API);
         if (DEBUG) b = b.setPort(8080).setPath("/frontend" + path);
         else b.setPath(path);
         return b;
@@ -287,6 +289,22 @@ public class WebAPI implements Closeable {
             }
         }
         return performances.toArray(new PredictionPerformance[performances.size()]);
+    }
+
+    public CovarianceScoring getCovarianceScoring(FingerprintVersion fpVersion, double alpha) throws IOException {
+        final HttpGet get;
+        try {
+            get = new HttpGet(getFingerIdURI("/webapi/covariancetree.csv").build());
+        } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        CovarianceScoring covarianceScoring;
+        try (CloseableHttpResponse response = client.execute(get)) {
+            HttpEntity e = response.getEntity();
+            covarianceScoring = CovarianceScoring.readScoring(e.getContent(), ContentType.getOrDefault(e).getCharset(), fpVersion, alpha);
+        }
+        return covarianceScoring;
     }
 
     public List<Compound> getCompoundsFor(MolecularFormula formula, File output, MaskedFingerprintVersion version, boolean bio) throws IOException {
