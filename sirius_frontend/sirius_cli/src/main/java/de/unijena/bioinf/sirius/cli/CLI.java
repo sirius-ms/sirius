@@ -230,6 +230,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 try {
                     checkForValidProjectDirecotry(options.getOutput());
                     pw = new ProjectSpaceMerger(this, options.getOutput(), false);
+                    writers.add(pw);
                 } catch (IOException e) {
 
                     logger.error("Cannot merge project " + options.getOutput() + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.\n" + e.getMessage(), e);
