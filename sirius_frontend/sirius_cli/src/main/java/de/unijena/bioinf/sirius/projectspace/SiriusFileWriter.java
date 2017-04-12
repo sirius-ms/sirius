@@ -5,10 +5,12 @@ import java.io.*;
 public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
 
     protected File root;
+    protected BufferedWriter progressOutput = null;
     protected OutputStream currentStream = null;
 
-    public SiriusFileWriter(File root) {
+    public SiriusFileWriter(File root) throws IOException {
         this.root = root;
+        this.progressOutput = new BufferedWriter(new FileWriter(new File(root, ".progress")));
     }
 
     @Override
@@ -45,5 +47,12 @@ public class SiriusFileWriter implements DirectoryWriter.WritingEnvironment {
     @Override
     public void close() throws IOException {
         if (currentStream!=null) throw new IOException("Last file was not properly closed");
+        progressOutput.close();
+    }
+
+    @Override
+    public void updateProgress(String s) throws IOException {
+        progressOutput.write(s);
+        progressOutput.flush(); // always flush progressOutput
     }
 }

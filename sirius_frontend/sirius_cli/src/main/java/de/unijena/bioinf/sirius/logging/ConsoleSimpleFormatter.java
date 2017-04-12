@@ -15,7 +15,7 @@ import java.util.logging.LogRecord;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ConsoleSimpleFormatter extends Formatter {
-    // format string for printing the log record
+    // format string for printing the updateProgress record
     private static final String format = "%4$-6s%1$tH:%1$tM:%1$tS - %5$s%6$s%n";
     private final Date dat = new Date();
 
