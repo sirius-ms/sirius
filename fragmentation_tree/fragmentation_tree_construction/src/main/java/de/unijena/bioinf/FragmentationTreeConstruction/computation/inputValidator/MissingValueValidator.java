@@ -212,7 +212,7 @@ public class MissingValueValidator implements InputValidator {
                 if (found) {
                     input.setIonMass(mz);
                 } else {
-                    if (ms1 == null) {
+                    if (ms1 == null || ms1.size()==0) {
                         // use the highest mass you find in the MS2 spectra with lowest collision energy as parent mass.
                         // (only if its intensity is higher than 10% and higher than peaks in its neighbourhood)
                         Ms2Spectrum spec = input.getMs2Spectra().get(0);
