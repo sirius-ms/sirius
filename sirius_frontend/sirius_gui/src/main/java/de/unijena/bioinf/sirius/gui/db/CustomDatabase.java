@@ -14,6 +14,7 @@ import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -37,10 +38,25 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class CustomDatabase {
+public class CustomDatabase implements SearchableDatabase {
 
     protected String name;
     protected File path;
+
+    public static List<CustomDatabase> customDatabases() {
+        final List<CustomDatabase> databases = new ArrayList<>();
+        final File root = Workspace.CONFIG_STORAGE.getDatabaseDirectory();
+        final File custom = new File(root, "custom");
+        if (!custom.exists()) {
+            return databases;
+        }
+        for (File subDir : custom.listFiles()) {
+            if (subDir.isDirectory()) {
+                databases.add(new CustomDatabase(subDir.getName(), subDir));
+            }
+        }
+        return databases;
+    }
 
     protected boolean deriveFromPubchem, deriveFromBioDb;
     protected CdkFingerprintVersion version = CdkFingerprintVersion.getDefault();
@@ -133,6 +149,31 @@ public class CustomDatabase {
 
     public void setFingerprintVersion(CdkFingerprintVersion version) {
         this.version = version;
+    }
+
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public boolean searchInPubchem() {
+        return deriveFromPubchem;
+    }
+
+    @Override
+    public boolean searchInBio() {
+        return deriveFromBioDb || deriveFromPubchem;
+    }
+
+    @Override
+    public boolean isCustomDb() {
+        return true;
+    }
+
+    @Override
+    public File getDatabasePath() {
+        return getDatabasePath();
     }
 
     public static class Importer {
@@ -416,6 +457,11 @@ public class CustomDatabase {
             }
             currentPath.delete();
         }
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
 }

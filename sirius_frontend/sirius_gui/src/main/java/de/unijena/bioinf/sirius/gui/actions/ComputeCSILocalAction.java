@@ -49,13 +49,13 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             }
 
             if (returnState == FingerIdDialog.COMPUTE_ALL) {
-                MF.getCsiFingerId().compute(ec, dialog.isBio());
+                MF.getCsiFingerId().compute(ec, dialog.getSearchDb());
             } else {
                 java.util.List<SiriusResultElement> selected = MF.getFormulaList().getSelecteValues();
                 java.util.List<FingerIdTask> tasks = new ArrayList<>(selected.size());
                 for (SiriusResultElement element : selected) {
                     if (element.getCharge() > 0 || element.getResult().getResolvedTree().numberOfEdges() > 0)
-                        tasks.add(new FingerIdTask(dialog.isBio(), ec, element));
+                        tasks.add(new FingerIdTask(dialog.getSearchDb(), ec, element));
                 }
                 MF.getCsiFingerId().computeAll(tasks);
             }

@@ -404,4 +404,8 @@ public class Compound {
             databases = ArrayListMultimap.create(databases);
         }
     }
+
+    public void addDatabase(String name, String id) {
+        databases.put(name, id);
+    }
 }

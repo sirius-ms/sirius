@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -35,7 +37,8 @@ public class FingerIdDialog extends JDialog {
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerId", true);
         this.storage = storage;
-        this.dbForm = new FingerIDComputationPanel(this.storage.enforceBio);
+        dbForm = new FingerIDComputationPanel(storage.getAvailableDatabases());
+        if (this.storage.enforceBio) dbForm.setIsBioDB(true);
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)
@@ -67,9 +70,11 @@ public class FingerIdDialog extends JDialog {
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    /*
                     storage.setEnforceBio(dbForm.biodb.isSelected());
                     storage.configured = true;
                     returnState = COMPUTE_ALL;
+                    */ // TODO!!!!
                     dispose();
                 }
             });
@@ -81,7 +86,8 @@ public class FingerIdDialog extends JDialog {
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                storage.setEnforceBio(dbForm.biodb.isSelected());
+                //storage.setEnforceBio(dbForm.biodb.isSelected());
+                // TODO!!!!
                 storage.configured = true;
                 returnState = COMPUTE;
                 dispose();
@@ -101,7 +107,7 @@ public class FingerIdDialog extends JDialog {
         setVisible(true);
     }
 
-    public boolean isBio() {
-        return dbForm.biodb.isSelected();
+    public SearchableDatabase getSearchDb() {
+        return dbForm.getDb();
     }
 }

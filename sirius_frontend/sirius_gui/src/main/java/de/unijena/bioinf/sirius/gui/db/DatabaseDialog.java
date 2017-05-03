@@ -1,17 +1,20 @@
 package de.unijena.bioinf.sirius.gui.db;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.ext.ConfirmDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
-import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.dnd.DropTarget;
@@ -145,6 +148,7 @@ public class DatabaseDialog extends JDialog {
 
         setMinimumSize(new Dimension(320, 240));
         pack();
+        setVisible(true);
     }
 
     protected static class DatabaseView extends JPanel  {
@@ -298,6 +302,7 @@ public class DatabaseDialog extends JDialog {
                     dispose();
                 }
             });
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         }
 
         @Override
@@ -340,6 +345,7 @@ public class DatabaseDialog extends JDialog {
                         if (status.inchi!=null) {
                             if (listener!=null)
                                 listener.compoundImported(status.inchi);
+                            //details.append(status.inchi.toString() + "\n");
                         }
                         progressBar.setValue(status.current);
                         progressBar.setMaximum(status.max);
@@ -358,6 +364,7 @@ public class DatabaseDialog extends JDialog {
                     final List<InChI> inchis = new ArrayList<>(stringsOrFiles.size());
                     int k=0;
                     for (Object s : stringsOrFiles) {
+                        if (isCancelled()) return Collections.emptyList();
                         final ImportStatus status = new ImportStatus();
                         status.max = stringsOrFiles.size();
                         status.current = k++;
@@ -376,12 +383,14 @@ public class DatabaseDialog extends JDialog {
                                 if (mols.size()>0) {
                                     status.max = mols.size();
                                     status.topMessage = "Predict fingerprints for  " + mols.size() + " compounds";
-                                    status.current=0;
+                                    int C = 0;
+                                    status.current=C;
                                     publish(status);
                                     for (IAtomContainer mol : mols) {
+                                        if (isCancelled()) return Collections.emptyList();
                                         final ImportStatus status2 = status.clone();
                                         try {
-                                        status2.current++;
+                                        status2.current = ++C;
                                         InChI inchi = importer.importCompound(mol,null);
                                         inchis.add(inchi);
                                             status2.inchi = inchi;} catch (Throwable t) {
