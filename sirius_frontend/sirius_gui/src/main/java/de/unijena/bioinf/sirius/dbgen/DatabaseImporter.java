@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.dbgen;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.sirius.gui.db.CompoundImportedListener;
 import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import org.openscience.cdk.exception.CDKException;
 
@@ -26,9 +25,9 @@ public class DatabaseImporter {
         final List<File> inchiorsmiles = new ArrayList<>();
         for (String f : files) inchiorsmiles.add(new File(f));
         try {
-            db.buildDatabase(inchiorsmiles, new CompoundImportedListener() {
+            db.buildDatabase(inchiorsmiles, new CustomDatabase.AbstractImporterListener() {
                 @Override
-                public void compoundImported(InChI inchi) {
+                public void newInChI(InChI inchi) {
                     System.out.println(inchi.in2D + " imported");
                 }
             });

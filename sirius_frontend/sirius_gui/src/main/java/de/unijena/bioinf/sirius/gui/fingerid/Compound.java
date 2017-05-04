@@ -42,6 +42,7 @@ import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
 import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -59,6 +60,8 @@ import java.util.zip.GZIPOutputStream;
 public class Compound {
 
     private static Compound PrototypeCompound;
+
+    private static Logger logger = LoggerFactory.getLogger(Compound.class);
 
     protected static Compound getPrototypeCompound() {
         if (PrototypeCompound!=null) return PrototypeCompound;
@@ -286,9 +289,10 @@ public class Compound {
         try {
             final InChIGeneratorFactory f = InChIGeneratorFactory.getInstance();
             final InChIToStructure s = f.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance());
-            if (s.getReturnStatus() != INCHI_RET.OKAY && s.getReturnStatus() != INCHI_RET.WARNING) {
+            if (s.getReturnStatus() == INCHI_RET.OKAY && (s.getReturnStatus() == INCHI_RET.OKAY || s.getReturnStatus() == INCHI_RET.WARNING)) {
                 return s.getAtomContainer();
             } else {
+                logger.warn("Cannot parse InChI: " + String.valueOf(inchi.in2D) + " due to the following error: " + String.valueOf(s.getMessage() + " Return code: " + s.getReturnStatus() + ", Return status: " + s.getReturnStatus().toString()));
                 // try to parse smiles instead
                 return parseMoleculeFromSmiles();
             }

@@ -266,11 +266,13 @@ public class DatabaseDialog extends JDialog {
     protected static class ImportCompoundsDialog extends JDialog {
         protected JLabel statusText;
         protected JProgressBar progressBar;
-        protected CompoundImportedListener listener;
         protected JTextArea details;
         protected CustomDatabase.Importer importer;
         protected JButton close;
         protected volatile boolean doNotCancel=false;
+
+        protected volatile int molBufferSize, fpBufferSize;
+
         protected SwingWorker<List<InChI>, ImportStatus> worker;
         public ImportCompoundsDialog(Frame owner, CustomDatabase.Importer importer) {
             super(owner, "Import compounds", true);
@@ -343,9 +345,6 @@ public class DatabaseDialog extends JDialog {
                     for (ImportStatus status : chunks) {
                         if (status.topMessage!=null) statusText.setText(status.topMessage);
                         if (status.inchi!=null) {
-                            if (listener!=null)
-                                listener.compoundImported(status.inchi);
-                            //details.append(status.inchi.toString() + "\n");
                         }
                         progressBar.setValue(status.current);
                         progressBar.setMaximum(status.max);
@@ -362,48 +361,23 @@ public class DatabaseDialog extends JDialog {
                 @Override
                 protected List<InChI> doInBackground() throws Exception {
                     final List<InChI> inchis = new ArrayList<>(stringsOrFiles.size());
+                    final List<IAtomContainer> buffer = new ArrayList<>();
                     int k=0;
                     for (Object s : stringsOrFiles) {
                         if (isCancelled()) return Collections.emptyList();
                         final ImportStatus status = new ImportStatus();
-                        status.max = stringsOrFiles.size();
+                        status.max = stringsOrFiles.size() + molBufferSize + fpBufferSize;
                         status.current = k++;
 
                         if (s instanceof String) {
                             try {
-                                InChI inchi = importer.importCompound((String)s);
-                                inchis.add(inchi);
-                                status.inchi = inchi;
+                                importer.importFromString((String)s);
                             } catch (Throwable e) {
                                 status.errorMessage = e.getMessage();
                             }
                         } else if (s instanceof File) {
                             try {
-                                final List<IAtomContainer> mols = importer.importFrom((File)s);
-                                if (mols.size()>0) {
-                                    status.max = mols.size();
-                                    status.topMessage = "Predict fingerprints for  " + mols.size() + " compounds";
-                                    int C = 0;
-                                    status.current=C;
-                                    publish(status);
-                                    for (IAtomContainer mol : mols) {
-                                        if (isCancelled()) return Collections.emptyList();
-                                        final ImportStatus status2 = status.clone();
-                                        try {
-                                        status2.current = ++C;
-                                        InChI inchi = importer.importCompound(mol,null);
-                                        inchis.add(inchi);
-                                            status2.inchi = inchi;} catch (Throwable t) {
-                                            status2.errorMessage = t.getMessage();
-                                        }
-                                        publish(status2);
-                                    }
-                                    status.max = stringsOrFiles.size();
-                                    status.current = k;
-                                    status.topMessage = "Parse " + stringsOrFiles.size() + " files";
-                                    publish(status);
-
-                                }
+                                importer.importFrom((File)s);
                             } catch (Throwable e) {
                                 status.errorMessage = e.getMessage();
                             }
@@ -444,7 +418,7 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    protected class ImportDatabaseDialog extends JDialog implements CompoundImportedListener{
+    protected class ImportDatabaseDialog extends JDialog implements CustomDatabase.ImporterListener{
 
         protected ImportList ilist;
         protected JButton importButton;
@@ -461,7 +435,8 @@ public class DatabaseDialog extends JDialog {
             database = new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name));
             importer = database.getImporter();
             importer.init();
-            collector = new Collector(importer, this);
+            importer.addListener(this);
+            collector = new Collector(importer);
             collector.execute();
             setPreferredSize(new Dimension(640, 480));
             setLayout(new BorderLayout());
@@ -518,7 +493,6 @@ public class DatabaseDialog extends JDialog {
             add(box2, BorderLayout.SOUTH);
 
             importDialog = new ImportCompoundsDialog(owner, importer);
-            importDialog.listener = this;
 
             importButton.addActionListener(new ActionListener() {
                 @Override
@@ -557,28 +531,45 @@ public class DatabaseDialog extends JDialog {
         }
 
         @Override
-        public void compoundImported(InChI inchi) {
+        public void newFingerprintBufferSize(int size) {
+
+        }
+
+        @Override
+        public void newMoleculeBufferSize(int size) {
+
+        }
+
+        @Override
+        public void newInChI(InChI inchi) {
             ilist.addCompound(inchi);
         }
     }
 
-    private static class Collector extends SwingWorker<InChI, InChI> implements CompoundImportedListener {
+    private static class Collector extends SwingWorker<InChI, InChI> implements CustomDatabase.ImporterListener {
         private CustomDatabase.Importer importer;
-        private CompoundImportedListener listener;
-        public Collector(CustomDatabase.Importer importer, CompoundImportedListener listener) {
+        public Collector(CustomDatabase.Importer importer) {
             this.importer = importer;
-            this.listener = listener;
         }
 
         @Override
         protected void process(List<InChI> chunks) {
             for (InChI inchi : chunks) {
-                listener.compoundImported(inchi);
             }
         }
 
         @Override
-        public void compoundImported(InChI inchi) {
+        public void newFingerprintBufferSize(int size) {
+
+        }
+
+        @Override
+        public void newMoleculeBufferSize(int size) {
+
+        }
+
+        @Override
+        public void newInChI(InChI inchi) {
             publish(inchi);
         }
 
