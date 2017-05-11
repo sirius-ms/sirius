@@ -1,0 +1,65 @@
+package de.unijena.bioinf.GibbsSampling.model;
+
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.GibbsSampling.model.LibraryHit;
+import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
+import de.unijena.bioinf.GibbsSampling.model.NodeScorer;
+import java.util.Set;
+
+public class LibraryHitScorer implements NodeScorer {
+    private final double topScore;
+    private final double lowestCosine;
+    private final double lowestScore = 0.5D;
+    private final double expLowestCosine;
+    private final double normalization;
+    private final Set<MolecularFormula> expectedMFDifferences;
+    private final MolecularFormula EmptyMF = MolecularFormula.emptyFormula();
+
+    public LibraryHitScorer(double topScore, double lowestCosine, Set<MolecularFormula> expectedMFDifferences) {
+        this.topScore = topScore;
+        this.lowestCosine = lowestCosine;
+        this.expLowestCosine = Math.exp(-1.0D);
+        this.normalization = topScore / (Math.exp(0.0D) - this.expLowestCosine);
+        this.expectedMFDifferences = expectedMFDifferences;
+    }
+
+    public void score(MFCandidate[][] candidates) {
+        for(int i = 0; i < candidates.length; ++i) {
+            MFCandidate[] mfCandidates = candidates[i];
+
+            for(int j = 0; j < mfCandidates.length; ++j) {
+                MFCandidate candidate = mfCandidates[j];
+                if(candidate.inEvaluationSet) {
+                    System.out.println("in Evaluation set: " + candidate.experiment.getName() + "\t" + candidate.getFormula());
+                    candidate.addNodeProbabilityScore(this.score(0.0D));
+                } else if(candidate.hasLibraryHit()) {
+                    LibraryHit libraryHit = candidate.getLibraryHit();
+                    double cosine = libraryHit.getCosine();
+                    MolecularFormula diff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
+                    if(diff.equals(this.EmptyMF)) {
+                        candidate.addNodeProbabilityScore(this.score(cosine));
+                        System.out.println("library match " + candidate.experiment.getName() + "\t" + candidate.getFormula() + " vs " + libraryHit.getMolecularFormula());
+                    } else {
+                        if(diff.getMass() < 0.0D) {
+                            diff = diff.negate();
+                        }
+
+                        if(this.expectedMFDifferences.contains(diff)) {
+                            System.out.println("library diff " + candidate.experiment.getName() + "\t" + candidate.getFormula() + " vs " + libraryHit.getMolecularFormula());
+                            candidate.addNodeProbabilityScore(this.score(cosine - 0.05D));
+                        } else {
+                            candidate.addNodeProbabilityScore(this.score(0.0D));
+                        }
+                    }
+                } else {
+                    candidate.addNodeProbabilityScore(this.score(0.0D));
+                }
+            }
+        }
+
+    }
+
+    private double score(double cosine) {
+        return Math.max(0.0D, this.normalization * (Math.exp(Math.max(cosine, 0.1D) - 1.0D) - this.expLowestCosine));
+    }
+}
