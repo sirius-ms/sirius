@@ -183,7 +183,10 @@ public class IsotopePatternAnalysis implements Parameterized {
 
     public SimpleSpectrum extractPattern(Ms2Experiment experiment, MeasurementProfile profile, double targetMz) {
         final Spectrum<Peak> s = experiment.getMergedMs1Spectrum();
-        return extractPattern(s!=null ? s : experiment.getMs1Spectra().get(0), profile, targetMz);
+        if (s!=null) return extractPattern(s, profile, targetMz);
+        else if (experiment.getMs1Spectra()!=null && !experiment.getMs1Spectra().isEmpty()) {
+            return extractPattern(experiment.getMs1Spectra().get(0), profile, targetMz);
+        } else return null;
     }
 
     public SimpleSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {

@@ -273,8 +273,21 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return sum;
     }
 
+    /**
+     * absolute number of atoms in this formula. e.g. C5H-2 counts 7, not 3
+     */
+    public int absAtomCount() {
+        int sum = 0;
+        final short[] amounts = buffer();
+        for (int i = 0; i < amounts.length; ++i) {
+            sum += Math.abs(amounts[i]);
+        }
+        return sum;
+    }
+
+
     public boolean isEmpty() {
-        return atomCount()==0;
+        return absAtomCount()==0;
     }
 
     public boolean isCHNO() {
