@@ -67,10 +67,6 @@ class FormulaFeatureVector {
         this.f = formula;
     }
 
-    public double[] getFeatures() {
-        return new double[]{rdbe(), rdbeDistribution(), rdbeIsZero(), mass(), rdbeDividedByMass(), rdbeDividedByMassDistribution(), rdbeDividedByMassDistribution2(), hetero2carbon(), hetero2carbonDistribution(), hetero2carbonWithoutOxygen(), hetero2carbonWithoutOxygenDist1(), hetero2carbonWithoutOxygenDist2(), no2carbon(), no2carbonDist(), halo2carbon(), halo2carbonDist(), hydrogen2Carbon(), hydrogen2CarbonDist(), hydrogen2CarbonDist2(), phosphor2oxygensulfur(), numberOfBenzolSubformulasPerRDBEDist()};
-    }
-
     public double[] getLogFeatures() {
         double[] dists = distributions();
         return new double[]{

@@ -165,6 +165,10 @@
         }
       }
     ],
+    "isotopesInMs2": {
+      "$name": "IsotopePatternInMs2Scorer",
+      "baselineAbsoluteIntensity": 300
+    },
     "recalibrationMethod": {
       "$name": "HypothesenDrivenRecalibration",
       "method": {
@@ -290,6 +294,10 @@
       {
         "$name": "TreeSizeScorer",
         "score": -0.5
+      },
+      {
+        "$name": "NoIsotopePatternPenalty",
+        "lambda": 2
       },
       {
         "$name": "FragmentSizeScorer",
