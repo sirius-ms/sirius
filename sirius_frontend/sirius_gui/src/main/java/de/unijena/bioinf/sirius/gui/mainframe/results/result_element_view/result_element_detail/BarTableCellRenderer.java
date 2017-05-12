@@ -7,6 +7,8 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.resul
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaScoreListStats;
+import de.unijena.bioinf.sirius.gui.utils.list_stats.ListStats;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,34 +20,40 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
     private Color[] colors = {Colors.ICON_RED, Colors.ICON_YELLOW, Colors.ICON_GREEN};
     private float[] fractions = {.1f, .5f, 1f};
     private float toFill;
+    private String percentageValue;
     private boolean selected;
     private String max;
     private float thresh;
     private final boolean drawThresh;
+    private final boolean percentage;
 
-    public BarTableCellRenderer(boolean drawThresh) {
+    private final ListStats stats;
+
+    public BarTableCellRenderer(ListStats stats) {
+        this(false, stats);
+    }
+
+    public BarTableCellRenderer(boolean drawThresh, ListStats stats) {
+        this(drawThresh, false, stats);
+    }
+
+    public BarTableCellRenderer(boolean drawThresh, boolean percentage, ListStats stats) {
         this.drawThresh = drawThresh;
+        this.percentage = percentage;
+        this.stats = stats;
     }
 
-    public BarTableCellRenderer() {
-        this(false);
-    }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        double max = 0d; //todo cache the max?
-        double min = Double.MAX_VALUE; //todo cache the min?
-        for (int i = 0; i < table.getRowCount(); i++) {
-            double val = ((Double) table.getValueAt(i, column)).doubleValue();
-            max = Math.max(max, val);
-            min = Math.min(min, val);
 
-        }
+        double max = stats.getMax();
+        double min = stats.getMin() - Math.abs(0.1 * max);
+        double normSum = stats instanceof FormulaScoreListStats ? ((FormulaScoreListStats) stats).getExpScoreSum() : stats.getSum();
 
-        min = min - Math.abs(0.1 * max);
-
-        double current = ((Double) value).doubleValue();
+        double current = (Double) value;
+        percentageValue = String.format("%.2f", Math.exp(current) / normSum * 100d) + "%";
         this.max = NF.format(max);
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
@@ -86,8 +94,11 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
             g2d.setPaint(Color.BLACK);
         }
 
-        g2d.drawString(value, (getWidth() / 2) + (maxWord / 2) - (g2d.getFontMetrics().stringWidth(value)), (getHeight() - 4));
+        String v = value;
+        if (percentage)
+            v = percentageValue;
 
+        g2d.drawString(v, (getWidth() / 2) + (maxWord / 2) - (g2d.getFontMetrics().stringWidth(v)), (getHeight() - 4));
     }
 }
 

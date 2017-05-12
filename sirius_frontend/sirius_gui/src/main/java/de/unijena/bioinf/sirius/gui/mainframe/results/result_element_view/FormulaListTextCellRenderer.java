@@ -22,13 +22,16 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
     private SiriusResultElement sre;
 
-    private DecimalFormat numberFormat;
+//    private DecimalFormat numberFormat;
 
-    public FormulaListTextCellRenderer() {
+    private final FormulaScoreListStats stats;
+
+    public FormulaListTextCellRenderer(FormulaScoreListStats stats) {
         this.setPreferredSize(new Dimension(200, 45));
         initColorsAndFonts();
         sre = null;
-        this.numberFormat = new DecimalFormat("#0.000000");
+//        this.numberFormat = new DecimalFormat("#0.000000");
+        this.stats = stats;
     }
 
     public void initColorsAndFonts() {
@@ -126,7 +129,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.setFont(propertyFont);
         g2.drawString("Score:", 10, 35);
         g2.setFont(valueFont);
-        g2.drawString(numberFormat.format(sre.getScore()), 15 + scoreLength, 35);
+        g2.drawString(String.format("%.2f",(Math.exp(sre.getScore()) / stats.getExpScoreSum()*100d)) + "%", 15 + scoreLength, 35);
 //
         if (sre != null && sre.getFingerIdComputeState() != null) {
             g.setFont(statusFont);

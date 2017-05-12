@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  */
 
 import ca.odell.glazedlists.BasicEventList;
-import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.event.ListEvent;
@@ -18,6 +17,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListene
 import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResults;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.utils.list_stats.DoubleListStats;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -36,6 +36,9 @@ public class FormulaList implements ActiveResults {
     DefaultEventSelectionModel<SiriusResultElement> selectionModel;
 
     private ExperimentContainer ec = null;
+    public final FormulaScoreListStats scoreStats = new FormulaScoreListStats();
+    public final DoubleListStats isotopeScoreStats = new DoubleListStats();
+    public final DoubleListStats treeScoreStats = new DoubleListStats();
 
     public FormulaList(final ExperimentList compundList) {
         super();
@@ -44,7 +47,7 @@ public class FormulaList implements ActiveResults {
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         DefaultEventSelectionModel<ExperimentContainer> m = compundList.getCompoundListSelectionModel();
-        if (! m.isSelectionEmpty()) {
+        if (!m.isSelectionEmpty()) {
             setData(m.getSelected().get(0));
         } else {
             setData(null);
@@ -104,18 +107,20 @@ public class FormulaList implements ActiveResults {
 
     private void setData(final ExperimentContainer ec) {
         this.ec = ec;
-        selectionModel.setValueIsAdjusting(true);
         resultList.getReadWriteLock().writeLock().lock();
-
         if (this.ec != null && this.ec.getResults() != null && !this.ec.getResults().isEmpty()) {
             if (!this.ec.getResults().equals(resultList)) {
                 selectionModel.clearSelection();
                 resultList.clear();
-                resultList.addAll(this.ec.getResults());
+//                resultList.addAll(this.ec.getResults());
+                intiResultList();
             }
         } else {
             selectionModel.clearSelection();
             resultList.clear();
+            scoreStats.update(new double[0]);
+            isotopeScoreStats.update(new double[0]);
+            treeScoreStats.update(new double[0]);
         }
 
         //set selection
@@ -128,6 +133,24 @@ public class FormulaList implements ActiveResults {
         resultList.getReadWriteLock().writeLock().unlock();
         selectionModel.setValueIsAdjusting(false);
         notifyListeners(this.ec, sre, resultList, selectionModel);
+    }
+
+    private void intiResultList() {
+        List<SiriusResultElement> r = ec.getResults();
+        double[] scores = new double[r.size()];
+        double[] iScores = new double[r.size()];
+        double[] tScores = new double[r.size()];
+        int i = 0;
+        for (SiriusResultElement element : r) {
+            resultList.add(element);
+            scores[i] = element.getScore();
+            iScores[i] = element.getResult().getIsotopeScore();
+            tScores[i++] = element.getResult().getTreeScore();
+        }
+
+        this.scoreStats.update(scores);
+        this.isotopeScoreStats.update(iScores);
+        this.treeScoreStats.update(tScores);
     }
 
     public ObservableElementList<SiriusResultElement> getResultList() {

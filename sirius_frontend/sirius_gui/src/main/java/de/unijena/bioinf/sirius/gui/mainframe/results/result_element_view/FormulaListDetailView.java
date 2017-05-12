@@ -6,7 +6,6 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
  */
 
 import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.ListSelection;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
@@ -32,7 +31,7 @@ import java.util.Map;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FormulaListDetailView extends FormulaListView {
-    private static final int[] BAR_COLS = {2, 3, 4};
+    //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
     private final ConnectedSelection<SiriusResultElement> selectionConnection;
@@ -55,10 +54,9 @@ public class FormulaListDetailView extends FormulaListView {
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
 
-        for (int i = 0; i < BAR_COLS.length; i++) {
-            TableColumn col = table.getColumnModel().getColumn(BAR_COLS[i]);
-            col.setCellRenderer(new BarTableCellRenderer(col.getHeaderValue().equals("Score")));
-        }
+        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(true, true, source.scoreStats));
+        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(false, false, source.isotopeScoreStats));
+        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(false, false, source.treeScoreStats));
 
         table.addMouseListener(new MouseListener() {
             @Override
