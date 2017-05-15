@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.ConfidenceScore.confidenceScore.ScoredCandidate;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
@@ -83,7 +84,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected Thread structureSearcherThread;
     protected ExperimentContainer correspondingExperimentContainer;
 
-    protected Font nameFont, propertyFont, rankFont, scoreSuperscriptFont;
+    protected Font nameFont, propertyFont, rankFont,  matchFont;
 
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
     protected JPopupMenu popupMenu;
@@ -104,11 +105,8 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
             nameFont = tempFont.deriveFont(13f);
             propertyFont = tempFont.deriveFont(16f);
+            matchFont = tempFont.deriveFont(18f);
             rankFont = tempFont.deriveFont(32f);
-            final HashMap<AttributedCharacterIterator.Attribute, Object> attrs = new HashMap<>();
-            attrs.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
-            attrs.put(TextAttribute.SIZE, 15f);
-            scoreSuperscriptFont = nameFont.deriveFont(attrs);
         } catch (FontFormatException | IOException e) {
             nameFont = propertyFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
@@ -190,7 +188,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer());
         candidateList.setFixedCellHeight(-1);
-        candidateList.setPrototypeCellValue(new CompoundCandidate(Compound.getPrototypeCompound(), 0d, 1, 0));
+        candidateList.setPrototypeCellValue(new CompoundCandidate(Compound.getPrototypeCompound(), 0d, 0d, 1, 0));
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -507,7 +505,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                     if (toFlag < 0 || (toFlag & data.compounds[i].bitset) != 0) {
                         double logp = data.compounds[i].xlogP;
                         if (!Double.isNaN(logp) && logp >= minValue && logp <= maxValue) {
-                            candidates.add(new CompoundCandidate(data.compounds[i], data.scores[i], i + 1, i));
+                            candidates.add(new CompoundCandidate(data.compounds[i], data.scores[i], data.tanimotoScores[i], i + 1, i));
                         }
                     }
                 }
@@ -628,10 +626,20 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                     final int h = (int) (y + bound.getHeight());
                     gg.drawString(rankString, x, h - 2);
                 }
-                gg.setFont(nameFont);
-                final String scoreText1 = "score: e", scoreText2 = String.format(Locale.US, "%d", (long) Math.round(molecule.score));
-                double w = gg.getFontMetrics(nameFont).getStringBounds(scoreText1, gg).getWidth(),
-                        w2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getWidth();
+//                gg.setFont(nameFont);
+//                final String scoreText1 = "(score: e";
+//                final String scoreText2 = String.format(Locale.US, "%d", (long) Math.round(molecule.score));
+//                final String scoreText3 = ")";
+//
+//                double w = gg.getFontMetrics(nameFont).getStringBounds(scoreText1, gg).getWidth();
+//                double w2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getWidth();
+//                double w3 = gg.getFontMetrics(nameFont).getStringBounds(scoreText3, gg).getWidth();
+//                double h2 = gg.getFontMetrics(scoreSuperscriptFont).getStringBounds(scoreText2, gg).getHeight();
+
+                final String tanimotoText = String.format(Locale.US, "%.2f", molecule.tanimotoScore * 100d) + "%";
+                double tw = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getWidth();
+//                double th = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getHeight();
+
                 /*{
                     Color from = new Color(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue(),0);
                     Color to = new Color(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue(),255);
@@ -645,9 +653,18 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
                     gg.fillRect(xx, yy, getWidth()-xx, getHeight()-yy);
                     gg.setPaint(oldPaint);
                 }*/
-                gg.drawString(scoreText1, (int) (getWidth() - (w + w2 + 4)), getHeight() - 4);
-                gg.setFont(scoreSuperscriptFont);
-                gg.drawString(scoreText2, (int) (getWidth() - (w2 + 4)), getHeight() - 4);
+
+//                gg.setFont(nameFont);
+//                gg.drawString(scoreText1, (int) (getWidth() - (tw + w + w2 + w3 + 8)), getHeight() - 4);
+//                gg.setFont(scoreSuperscriptFont);
+//                gg.drawString(scoreText2, (int) (getWidth() - (tw + w2 + w3 + 8)), (int) (getHeight() - 4));
+//                gg.setFont(nameFont);
+//                gg.drawString(scoreText3, (int) (getWidth() - (tw + w3 + 8)), (int) (getHeight() - 4));
+
+                gg.setFont(matchFont);
+                gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), (int) (getHeight() - 4));
+
+
             }
         }
     }
@@ -879,10 +896,44 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         }
     }
 
+    public class ScoreLabel extends JPanel {
+
+        private double score;
+        private final DecimalFormat format = new DecimalFormat("#0.000");
+        private Font scoreSuperscriptFont;
+
+        public ScoreLabel() {
+            this.score = Double.NaN;
+            setPreferredSize(new Dimension(128, 20));
+            final HashMap<AttributedCharacterIterator.Attribute, Object> attrs = new HashMap<>();
+            attrs.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
+            attrs.put(TextAttribute.SIZE, 15f);
+            scoreSuperscriptFont = nameFont.deriveFont(attrs);
+        }
+
+        @Override
+        public void paint(Graphics g) {
+            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            if (Double.isNaN(score)) return;
+            g.setFont(nameFont);
+            final String t1 = "Score: e";
+            int widthB = g.getFontMetrics().stringWidth(t1);
+            g.drawString(t1, 0, 14);
+            g.setFont(scoreSuperscriptFont);
+            g.drawString(format.format(score), widthB, 14);
+        }
+
+        public void setScore(double score) {
+            this.score = score;
+            repaint();
+        }
+    }
+
     public class DescriptionPanel extends JPanel {
 
         protected JLabel inchi, agreements;
         protected XLogPLabel xlogP;
+        protected ScoreLabel scoreL;
         protected FingerprintView ag;
         protected JPanel agpanel;
         protected DatabasePanel databasePanel;
@@ -891,42 +942,47 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             setOpaque(false);
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setBorder(new EmptyBorder(5, 2, 2, 2));
+
             final JPanel namePanel = new JPanel(new BorderLayout());
             inchi = new JLabel("", SwingConstants.LEFT);
             inchi.setFont(nameFont);
-            agpanel = new JPanel();
-            agpanel.setOpaque(false);
-            agpanel.setLayout(new BoxLayout(agpanel, BoxLayout.Y_AXIS));
-            agpanel.setBorder(new EmptyBorder(5, 0, 0, 2));
-            agreements = new JLabel("Substructures:", SwingConstants.LEFT);
-            Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
-            map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
-            map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-            agreements.setFont(nameFont.deriveFont(map));
             xlogP = new XLogPLabel();
             namePanel.setOpaque(false);
             namePanel.add(inchi, BorderLayout.WEST);
             namePanel.add(xlogP, BorderLayout.EAST);
             add(namePanel);
-            ag = new FingerprintView(120);
-            agpanel.add(agreements);
-            agpanel.add(ag);
+
+
+            Map<TextAttribute, Object> map = new HashMap<TextAttribute, Object>();
+            map.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+            map.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
+
+            agpanel = new JPanel(new BorderLayout());
+            agpanel.setOpaque(false);
+            agreements = new JLabel("Substructures:", SwingConstants.LEFT);
+            agreements.setFont(nameFont.deriveFont(map));
+            agpanel.add(agreements, BorderLayout.WEST);
             add(agpanel);
-            Box db = Box.createVerticalBox();
-            db.setOpaque(false);
-            final Box b1 = Box.createHorizontalBox();
+
+            ag = new FingerprintView(120);
+            add(ag);
+
+
+            final JPanel b1 = new JPanel(new BorderLayout());
+
             final JLabel dbl = new JLabel("Databases");
             dbl.setFont(nameFont.deriveFont(map));
-            b1.add(Box.createHorizontalStrut(18));
-            b1.add(dbl);
-            b1.add(Box.createHorizontalGlue());
-            db.add(b1);
+            scoreL = new ScoreLabel();
+            b1.setOpaque(false);
+            b1.add(dbl, BorderLayout.WEST);
+            b1.add(scoreL, BorderLayout.EAST);
+            add(b1);
 
             final Box b2 = Box.createHorizontalBox();
             databasePanel = new DatabasePanel();
             b2.add(databasePanel);
-            db.add(b2);
-            add(db);
+            add(b2);
+
             setVisible(true);
         }
 
@@ -935,6 +991,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             inchi.setText(value.compound.inchi.key2D());
             databasePanel.setCompound(value);
             xlogP.setLogP(value.compound.xlogP);
+            scoreL.setScore(value.score);
             if (data == null) {
                 ag.agreement = null;
             } else {

@@ -29,16 +29,18 @@ public class FingerIdData extends AbstractBean {
     protected final ProbabilityFingerprint platts;
     protected final Compound[] compounds;
     protected final double[] scores;
+    protected final double[] tanimotoScores;
     private double confidence;
     private double topScore;
     public final boolean bio;
     protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
     public EnumSet<DatasourceService.Sources> dbSelection;
 
-    public FingerIdData(boolean bio, Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
+    public FingerIdData(boolean bio, Compound[] compounds, double[] scores, double[] tanimotoScores, ProbabilityFingerprint platts) {
         this.bio = bio;
         this.compounds = compounds;
         this.scores = scores;
+        this.tanimotoScores = tanimotoScores;
         this.platts = platts;
         this.topScore = scores.length == 0 ? Double.NEGATIVE_INFINITY : scores[0];
         this.confidence = Double.NaN;

@@ -43,6 +43,7 @@ public class CompoundCandidate {
     private final static double THRESHOLD_FP = 0.4;
 
     protected Compound compound;
+    protected double tanimotoScore;
     protected double score;
     protected int rank,index;
     protected boolean prepared=false;
@@ -55,9 +56,10 @@ public class CompoundCandidate {
     protected boolean atomCoordinatesAreComputed=false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    public CompoundCandidate(Compound compound, double score, int rank, int index) {
+    public CompoundCandidate(Compound compound, double score, double tanimotoScore, int rank, int index) {
         this.compound = compound;
         this.score = score;
+        this.tanimotoScore = tanimotoScore;
         this.rank = rank;
         this.index = index;
         this.relevantFps = null;

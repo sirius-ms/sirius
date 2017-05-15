@@ -211,24 +211,29 @@ public class CSIFingerIdComputation {
         final MolecularFormula formula = elem.getMolecularFormula();
         final Fingerblast blaster = new Fingerblast(new InMemoryCacheDatabase(bio));
         blaster.setScoring(scoringMethod.getScoring(performances));
+
+        final Fingerprint detPlatts = plattScores.asDeterministic();
         try {
             List<Scored<FingerprintCandidate>> candidates = blaster.search(formula, plattScores);
             final double[] scores = new double[candidates.size()];
+            final double[] tanimotos = new double[candidates.size()];
             final Compound[] comps = new Compound[candidates.size()];
             int k = 0;
             final HashMap<String, Compound> compounds;
             synchronized (this.compounds) {
                 compounds = this.compounds;
             }
+
             for (Scored<FingerprintCandidate> candidate : candidates) {
                 scores[k] = candidate.getScore();
+                tanimotos[k] = candidate.getCandidate().getFingerprint().tanimoto(detPlatts);
                 comps[k] = compounds.get(candidate.getCandidate().getInchiKey2D());
                 if (comps[k] == null) {
                     comps[k] = new Compound(candidate.getCandidate());
                 }
                 ++k;
             }
-            return new FingerIdData(bio, comps, scores, plattScores);
+            return new FingerIdData(bio, comps, scores, tanimotos,plattScores);
         } catch (DatabaseException e) {
             throw new RuntimeException(e); // TODO: handle
         }

@@ -45,7 +45,7 @@ public class StructureSearcher implements Runnable {
     }
 
     public void reloadList(CandidateJList.ListModel candidateList) {
-        queue.add(new CompoundCandidate(null, 0, 0, 0)); // TODO: bad hack
+        queue.add(new CompoundCandidate(null, 0, 0, 0, 0)); // TODO: bad hack
         synchronized (this) {
             this.currentModel = candidateList;
             updater.model = currentModel;
@@ -57,7 +57,7 @@ public class StructureSearcher implements Runnable {
     }
 
     public void reloadList(CandidateJList.ListModel candidateList, int highlight, int activeCandidate) {
-        queue.add(new CompoundCandidate(null, 0, 0, 0)); // TODO: bad hack
+        queue.add(new CompoundCandidate(null, 0, 0,0, 0)); // TODO: bad hack
         synchronized (this) {
             this.currentModel = candidateList;
             updater.model = currentModel;

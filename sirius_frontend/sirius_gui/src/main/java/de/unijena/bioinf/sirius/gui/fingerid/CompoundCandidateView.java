@@ -43,7 +43,7 @@ public class CompoundCandidateView extends JPanel implements ActiveResultChanged
     protected CardLayout layout;
 
     public CompoundCandidateView() {
-        this.storage = MF.getCsiFingerId(); //todo not nice find a beter solution
+        this.storage = MF.getCsiFingerId(); //todo not nice find a better solution
         refresh();
     }
 
