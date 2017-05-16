@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -8,6 +8,7 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.table.ActionListView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,14 +19,14 @@ import java.awt.event.MouseListener;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListCompactView extends FormulaListView {
+public class FormulaListCompactView extends ActionListView<FormulaList> {
     public FormulaListCompactView(FormulaList source) {
         super(source);
 
         final JList<SiriusResultElement> resultListView;
-        resultListView = new JList<>(new DefaultEventListModel<>(source.resultList));
+        resultListView = new JList<>(new DefaultEventListModel<>(source.getElementList()));
         resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.scoreStats));
-        resultListView.setSelectionModel(source.selectionModel);
+        resultListView.setSelectionModel(source.getResultListSelectionModel());
         resultListView.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         resultListView.setVisibleRowCount(1);
         resultListView.setPrototypeCellValue(FormulaListTextCellRenderer.PROTOTYPE);

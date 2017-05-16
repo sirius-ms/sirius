@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail;
+package de.unijena.bioinf.sirius.gui.table;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -7,8 +7,8 @@ package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.resul
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.FormulaScoreListStats;
-import de.unijena.bioinf.sirius.gui.utils.list_stats.ListStats;
+import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaScoreListStats;
+import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,6 +50,7 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
 
         double max = stats.getMax();
         double min = stats.getMin() - Math.abs(0.1 * max);
+        //todo this is dirty
         double normSum = stats instanceof FormulaScoreListStats ? ((FormulaScoreListStats) stats).getExpScoreSum() : stats.getSum();
 
         double current = (Double) value;

@@ -1,4 +1,5 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail;
+package de.unijena.bioinf.sirius.gui.table;
+
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -27,7 +28,7 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        final boolean best = ((Boolean) table.getModel().getValueAt(row,5)).booleanValue();
+        final boolean best = ((Boolean) table.getModel().getValueAt(row,0)).booleanValue();
         if (isSelected) {
             if (best) {
                 backColor = Colors.LIST_SELECTED_GREEN;

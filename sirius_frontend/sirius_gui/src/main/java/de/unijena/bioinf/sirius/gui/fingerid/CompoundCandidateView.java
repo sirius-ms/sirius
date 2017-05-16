@@ -19,12 +19,12 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
-import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
-public class CompoundCandidateView extends JPanel implements ActiveResultChangedListener {
+public class CompoundCandidateView extends JPanel implements ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
 
     private ExperimentContainer experimentContainer;
     private SiriusResultElement resultElement;

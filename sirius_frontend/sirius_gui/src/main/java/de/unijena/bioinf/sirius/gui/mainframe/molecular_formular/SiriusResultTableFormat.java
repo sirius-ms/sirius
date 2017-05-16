@@ -1,20 +1,25 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
  * 25.01.17.
  */
 
-import ca.odell.glazedlists.gui.TableFormat;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.table.SiriusTableFormat;
 
 /**
  * Display issues in a tabular form.
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusResultTableFormat implements TableFormat<SiriusResultElement> {
-    public static final int COL_COUNT = 5;
+public class SiriusResultTableFormat implements SiriusTableFormat<SiriusResultElement> {
+    private static final int COL_COUNT = 5;
+
+    @Override
+    public int primaryColumn() {
+        return 5;
+    }
 
     public int getColumnCount() {
         return COL_COUNT;
@@ -33,7 +38,6 @@ public class SiriusResultTableFormat implements TableFormat<SiriusResultElement>
     }
 
     public Object getColumnValue(SiriusResultElement result, int column) {
-
         return getValue(result,column);
     }
 

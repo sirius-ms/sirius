@@ -1,6 +1,7 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 
-import de.unijena.bioinf.sirius.gui.utils.list_stats.DoubleListStats;
+
+import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 /**
  * Created by fleisch on 12.05.17.

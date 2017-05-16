@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results;
+package de.unijena.bioinf.sirius.gui.mainframe;
 
 
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
@@ -8,6 +8,7 @@ import de.unijena.bioinf.sirius.gui.msviewer.data.ExperimentContainerDataModel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
+import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.utils.Icons;
 
 import javax.swing.*;
@@ -20,7 +21,7 @@ import java.text.DecimalFormat;
 import java.util.HashSet;
 import java.util.List;
 
-public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, ActiveResultChangedListener {
+public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
 
 	private JComboBox<String> spectraSelection;
 	private MSViewerPanel msviewer;

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
@@ -9,17 +9,12 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.BarTableCellRenderer;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.SiriusResultMatcherEditor;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.SiriusResultTableCellRenderer;
-import de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view.result_element_detail.SiriusResultTableFormat;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.utils.ActionTable;
+import de.unijena.bioinf.sirius.gui.table.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -30,7 +25,7 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListDetailView extends FormulaListView {
+public class FormulaListDetailView extends ActionListView<FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
     private final JTextField searchField = new JTextField();
@@ -40,17 +35,17 @@ public class FormulaListDetailView extends FormulaListView {
         super(source);
         setLayout(new BorderLayout());
         searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
-        final SortedList<SiriusResultElement> sorted = new SortedList<SiriusResultElement>(source.resultList);
+        final SortedList<SiriusResultElement> sorted = new SortedList<SiriusResultElement>(source.getElementList());
         final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sorted);
 
-        this.table = new ActionTable<>(source.resultList, sorted,
-                new SiriusResultTableFormat(),
-                new SiriusResultMatcherEditor(searchField),
-                SiriusResultElement.class);
+        final SiriusResultTableFormat tf = new SiriusResultTableFormat();
+        this.table = new ActionTable<>(sorted,
+                tf,
+                new StringMatcherEditor(tf, searchField));
         table.setSelectionModel(model);
 
-
-        selectionConnection = new ConnectedSelection<>(source.selectionModel, model, source.resultList, sorted);
+        //todo maibe generify and make public availlable
+        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sorted);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
 

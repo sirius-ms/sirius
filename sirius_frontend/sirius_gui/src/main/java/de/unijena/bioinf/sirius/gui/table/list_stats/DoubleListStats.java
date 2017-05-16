@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.utils.list_stats;
+package de.unijena.bioinf.sirius.gui.table.list_stats;
 
 /**
  * Created by fleisch on 12.05.17.

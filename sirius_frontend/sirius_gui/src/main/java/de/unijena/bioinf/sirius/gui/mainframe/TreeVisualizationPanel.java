@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results;
+package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColor;
@@ -10,8 +10,8 @@ import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.*;
+import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
-public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveResultChangedListener {
+public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
 
     private JScrollPane pane;
 

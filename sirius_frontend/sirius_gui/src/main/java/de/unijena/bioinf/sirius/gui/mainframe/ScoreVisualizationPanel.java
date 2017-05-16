@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results;
+package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.myxo.gui.tree.render.NodeColorManager;
 import org.slf4j.LoggerFactory;

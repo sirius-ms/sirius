@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 
 import de.unijena.bioinf.myxo.gui.tree.render.TreeRenderPanel;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;

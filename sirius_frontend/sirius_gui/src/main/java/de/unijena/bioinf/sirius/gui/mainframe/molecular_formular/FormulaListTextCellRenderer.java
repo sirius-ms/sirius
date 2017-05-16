@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.io.InputStream;
-import java.text.DecimalFormat;
 
 public class FormulaListTextCellRenderer extends JLabel implements ListCellRenderer<SiriusResultElement> {
     public static final DummySiriusResult PROTOTYPE = new DummySiriusResult();

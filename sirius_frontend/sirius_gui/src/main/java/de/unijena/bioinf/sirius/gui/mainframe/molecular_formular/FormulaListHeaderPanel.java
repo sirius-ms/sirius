@@ -1,11 +1,11 @@
-package de.unijena.bioinf.sirius.gui.mainframe.results.result_element_view;
+package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius_frontend
  * 31.01.17.
  */
 
-import de.unijena.bioinf.sirius.gui.mainframe.results.ActiveResultChangedListener;
+import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +26,7 @@ public class FormulaListHeaderPanel extends JPanel {
             add(new FormulaListCompactView(table),BorderLayout.NORTH);
         }
         add(center,BorderLayout.CENTER);
-        if (center instanceof ActiveResultChangedListener)
-            table.addActiveResultChangedListener((ActiveResultChangedListener) center);
+        if (center instanceof ActiveElementChangedListener)
+            table.addActiveResultChangedListener((ActiveElementChangedListener) center);
     }
 }

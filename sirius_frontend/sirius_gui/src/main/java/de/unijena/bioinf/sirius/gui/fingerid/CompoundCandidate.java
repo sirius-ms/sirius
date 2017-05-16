@@ -20,6 +20,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
+import org.jdesktop.beans.AbstractBean;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
@@ -36,22 +37,24 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class CompoundCandidate {
+public class CompoundCandidate extends AbstractBean {
 
     public static final boolean ECFP_ENABLED = true;
 
-    private final static double THRESHOLD_FP = 0.4;
+    private static final double THRESHOLD_FP = 0.4;
 
-    protected Compound compound;
-    protected double tanimotoScore;
-    protected double score;
-    protected int rank,index;
-    protected boolean prepared=false;
+    protected final Compound compound;
+    protected final double tanimotoScore;
+    protected final double score;
+    protected final int rank,index;
 
-    protected CircularFingerprinter.FP[] relevantFps; protected int[] ecfpHashs;
 
-    protected FingerprintAgreement substructures;
-    protected DatabaseLabel[] labels;
+    protected boolean prepared = false;//todo fire property change???
+
+    protected CircularFingerprinter.FP[] relevantFps; protected int[] ecfpHashs;//todo fire property change???
+
+    protected FingerprintAgreement substructures; //todo fire property change???
+    protected final DatabaseLabel[] labels;
     protected int highlightedIndex=-1;
     protected boolean atomCoordinatesAreComputed=false;
     protected ReentrantLock compoundLock = new ReentrantLock();
@@ -188,5 +191,9 @@ public class CompoundCandidate {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
         }
 
+    }
+
+    public String getMolecularFormulaString(){
+        return compound.inchi.extractFormula().toString(); // is that time intensive
     }
 }
