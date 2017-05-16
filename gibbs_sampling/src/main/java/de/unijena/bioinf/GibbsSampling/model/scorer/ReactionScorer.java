@@ -1,8 +1,8 @@
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
 import de.unijena.bioinf.GibbsSampling.model.Reaction;
 import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer;
 import java.util.ArrayList;
@@ -35,46 +35,47 @@ public class ReactionScorer implements EdgeScorer {
 
     }
 
-    public void prepare(MFCandidate[][] candidates) {
+    public void prepare(Candidate[][] candidates) {
     }
 
-    public double score(MFCandidate candidate1, MFCandidate candidate2) {
-        MolecularFormula formula1 = candidate1.getFormula();
-        MolecularFormula formula2 = candidate2.getFormula();
-        List reactions = (List)this.reactionNetChangeMap.get(formula1.subtract(formula2));
-        double maxScore = 0.0D;
-        Iterator var8;
-        Reaction reaction;
-        if(reactions != null) {
-            var8 = reactions.iterator();
-
-            while(var8.hasNext()) {
-                reaction = (Reaction)var8.next();
-                if(reaction.hasReactionAnyDirection(formula1, formula2)) {
-                    maxScore = Math.max(this.scorer.multiplier(reaction.stepSize()), maxScore);
-                }
-            }
-        }
-
-        reactions = (List)this.reactionNetChangeMap.get(formula2.subtract(formula1));
-        if(reactions != null) {
-            var8 = reactions.iterator();
-
-            while(var8.hasNext()) {
-                reaction = (Reaction)var8.next();
-                if(reaction.hasReactionAnyDirection(formula2, formula1)) {
-                    maxScore = Math.max(this.scorer.multiplier(reaction.stepSize()), maxScore);
-                }
-            }
-        }
-
-        return maxScore;
+    public double score(Candidate candidate1, Candidate candidate2) {
+        throw new NoSuchMethodError("has to be debugged");
+//        MolecularFormula formula1 = candidate1.getAnnotation(MolecularFormula.class);
+//        MolecularFormula formula2 = candidate2.getAnnotation(MolecularFormula.class);
+//        List reactions = (List)this.reactionNetChangeMap.get(formula1.subtract(formula2));
+//        double maxScore = 0.0D;
+//        Iterator var8;
+//        Reaction reaction;
+//        if(reactions != null) {
+//            var8 = reactions.iterator();
+//
+//            while(var8.hasNext()) {
+//                reaction = (Reaction)var8.next();
+//                if(reaction.hasReactionAnyDirection(formula1, formula2)) {
+//                    maxScore = Math.max(this.scorer.multiplier(reaction.stepSize()), maxScore);
+//                }
+//            }
+//        }
+//
+//        reactions = (List)this.reactionNetChangeMap.get(formula2.subtract(formula1));
+//        if(reactions != null) {
+//            var8 = reactions.iterator();
+//
+//            while(var8.hasNext()) {
+//                reaction = (Reaction)var8.next();
+//                if(reaction.hasReactionAnyDirection(formula2, formula1)) {
+//                    maxScore = Math.max(this.scorer.multiplier(reaction.stepSize()), maxScore);
+//                }
+//            }
+//        }
+//
+//        return maxScore;
     }
 
     public void clean() {
     }
 
-    public double[] normalization(MFCandidate[][] candidates) {
+    public double[] normalization(Candidate[][] candidates) {
         return null;
     }
 }
