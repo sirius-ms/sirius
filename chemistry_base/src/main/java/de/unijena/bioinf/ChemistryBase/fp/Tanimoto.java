@@ -1,0 +1,221 @@
+package de.unijena.bioinf.ChemistryBase.fp;
+
+public class Tanimoto {
+
+    public interface ProbabilisticTanimoto {
+        public double expectationValue();
+        public double variance();
+    }
+
+    public static ProbabilisticTanimoto probabilisticTanimoto(AbstractFingerprint left, AbstractFingerprint right) {
+        if (left instanceof ProbabilityFingerprint) {
+            if (right instanceof ProbabilityFingerprint) {
+                return new ExactDP2((ProbabilityFingerprint) left, (ProbabilityFingerprint)right);
+            } else {
+                return new ExactDP((ProbabilityFingerprint) left, (Fingerprint)right);
+            }
+        } else {
+            if (right instanceof ProbabilityFingerprint) {
+                return new ExactDP((ProbabilityFingerprint) right, (Fingerprint)left);
+            } else {
+                final double tanimoto = deterministicJaccard((Fingerprint) left, (Fingerprint) right);
+                return new ProbabilisticTanimoto() {
+                    @Override
+                    public double expectationValue() {
+                        return tanimoto;
+                    }
+
+                    @Override
+                    public double variance() {
+                        return 0;
+                    }
+                };
+            }
+        }
+    }
+
+    public static double tanimoto(AbstractFingerprint left, AbstractFingerprint right) {
+        if (left instanceof ProbabilityFingerprint) {
+            if (right instanceof ProbabilityFingerprint) {
+                return probabilisticJaccard2((ProbabilityFingerprint) left, (ProbabilityFingerprint)right);
+            } else {
+                return probabilisticJaccard1((Fingerprint)right, (ProbabilityFingerprint) left);
+            }
+        } else {
+            if (right instanceof ProbabilityFingerprint) {
+                return probabilisticJaccard1((Fingerprint)left, (ProbabilityFingerprint) right);
+            } else {
+                return deterministicJaccard((Fingerprint) left, (Fingerprint) right);
+            }
+        }
+    }
+
+    private static double deterministicJaccard(Fingerprint left, Fingerprint right) {
+        left.enforceCompatibility(right);
+        short union=0, intersection=0;
+        for (FPIter2 pairwise : left.foreachPair(right)) {
+            final boolean a = pairwise.isLeftSet();
+            final boolean b = pairwise.isRightSet();
+
+            if (a || b) ++union;
+            if (a && b) ++intersection;
+        }
+        return ((double)intersection)/union;
+    }
+
+    private static double probabilisticJaccard1(Fingerprint left, ProbabilityFingerprint right) {
+        left.enforceCompatibility(right);
+        double Q  = 0d, R = 0d;
+        FPIter probFp = right.iterator();
+        for (FPIter eachFp : left) {
+            probFp = probFp.next();
+            if (eachFp.isSet()) {
+                Q += probFp.getProbability();
+                R += 1d;
+            } else R += probFp.getProbability();
+        }
+        return Q / R;
+    }
+
+    private static double probabilisticJaccard2(ProbabilityFingerprint left, ProbabilityFingerprint right) {
+        return new ExactDP2(left,right).expectationValue();
+    }
+
+    protected static class ExactDP implements ProbabilisticTanimoto {
+
+        protected double exp, var;
+
+        public ExactDP(ProbabilityFingerprint left, Fingerprint right) {
+            final int N = right.getFingerprintVersion().size();
+            final int NPOS = right.cardinality();
+            final int NNEG = right.getFingerprintVersion().size() - NPOS;
+
+            final double[] m = new double[NNEG+1];
+            final double[] p = new double[NPOS+1];
+            m[0] = 1d; p[0] = 1d;
+            FPIter l = left.iterator(), r = right.iterator();
+
+            int psize=1, msize=1;
+
+            while (l.hasNext()) {
+                l = l.next();
+                r = r.next();
+                final double isset = l.getProbability(), isnotset = 1d-l.getProbability();
+                if (r.isSet()) {
+                    // change all other entries
+                    for (int k=psize; k > 0; --k) {
+                        p[k] = p[k-1] * isset + p[k] * isnotset;
+                    }
+                    // change 0 entry
+                    p[0] *= isnotset;
+                    ++psize;
+                } else {
+                    // change all other entries
+                    for (int k=msize; k > 0; --k) {
+                        m[k] = m[k-1]*isset + m[k]*isnotset;
+                    }
+                    // change 0 entry
+                    m[0] *= isnotset;
+                    ++msize;
+                }
+            }
+
+            // calculate expectation value
+
+            exp = 0;
+            for (int Q=1; Q <= NPOS; ++Q) {
+                for (int R=NPOS; R <= N; ++R) {
+                    exp += (m[R-NPOS] * p[Q] * ((double)Q)/R);
+                }
+            }
+
+            var = 0d;
+            for (int Q=1; Q <= NPOS; ++Q) {
+                for (int R=NPOS; R <= N; ++R) {
+                    var += (m[R-NPOS] * p[Q] * ((double)Q*Q)/((double)R*R));
+                }
+            }
+            var -= exp*exp;
+        }
+
+        @Override
+        public double expectationValue() {
+            return exp;
+        }
+
+        @Override
+        public double variance() {
+            return var;
+        }
+
+        @Override
+        public String toString() {
+            return "tanimoto = " + exp + " (σ² = " + var + ")";
+        }
+    }
+
+    protected static class ExactDP2 implements ProbabilisticTanimoto {
+
+        protected double exp, var;
+
+        public ExactDP2(ProbabilityFingerprint left, ProbabilityFingerprint right) {
+            final int N = left.getFingerprintVersion().size();
+            double[][] D = new double[N+1][N+1], F = new double[N+1][N+1];
+            F[0][0] = 1d;
+            int M = 1;
+
+            for (final FPIter2 iter : left.foreachPair(right)) {
+                final double A = iter.getLeftProbability(), B = iter.getRightProbability();
+                for (int Q = 0; Q <= M; ++Q) {
+                    for (int R = 0; R <= M; ++R) {
+
+                        D[Q][R] = (Q < 1 || R < 1) ? 0 : F[Q-1][R-1] * A * B;
+                        D[Q][R] +=(R < 1) ? 0 : F[ Q ][R-1] * (((1d-A) * B) + (A * (1d-B)));
+                        D[Q][R] +=  F[ Q ][ R ] * (1d-A) * (1d - B);
+
+                    }
+                }
+                double[][] swap = F;
+                F = D;
+                D = swap;
+                ++M;
+            }
+
+            D=F;
+            // calculate expectation value and variance
+            this.exp = 0d;
+            for (int Q=1; Q <= N; ++Q) {
+                for (int R=1; R <= N; ++R) {
+                    exp += D[Q][R] * (((double)Q)/R);
+                }
+            }
+
+            this.var = 0d;
+            for (int Q=1; Q <= N; ++Q) {
+                for (int R=1; R <= N; ++R) {
+                    var += D[Q][R] * (((double)Q*Q)/R*R);
+                }
+            }
+            var -= exp*exp;
+
+
+        }
+
+        @Override
+        public double expectationValue() {
+            return exp;
+        }
+
+        @Override
+        public double variance() {
+            return var;
+        }
+
+        @Override
+        public String toString() {
+            return "tanimoto = " + exp + " (σ² = " + var + ")";
+        }
+    }
+
+
+}
