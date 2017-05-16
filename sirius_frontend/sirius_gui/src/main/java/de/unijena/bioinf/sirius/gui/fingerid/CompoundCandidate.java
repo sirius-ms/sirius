@@ -20,6 +20,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
+import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import org.jdesktop.beans.AbstractBean;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -37,7 +38,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class CompoundCandidate extends AbstractBean {
+public class CompoundCandidate extends AbstractBean implements Comparable<CompoundCandidate> {
 
     public static final boolean ECFP_ENABLED = true;
 
@@ -195,5 +196,11 @@ public class CompoundCandidate extends AbstractBean {
 
     public String getMolecularFormulaString(){
         return compound.inchi.extractFormula().toString(); // is that time intensive
+    }
+
+
+    @Override
+    public int compareTo(CompoundCandidate o) {
+        return Double.compare(score, o.score);
     }
 }

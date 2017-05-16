@@ -28,7 +28,7 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        final boolean best = ((Boolean) table.getModel().getValueAt(row,0)).booleanValue();
+        final boolean best = ((Boolean) table.getModel().getValueAt(row,5)).booleanValue();
         if (isSelected) {
             if (best) {
                 backColor = Colors.LIST_SELECTED_GREEN;
