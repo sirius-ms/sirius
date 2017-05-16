@@ -1,7 +1,5 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
-
-public interface NodeScorer {
-    void score(MFCandidate[][] var1);
+public interface NodeScorer<C extends Candidate<?>> {
+    void score(C[][] var1);
 }

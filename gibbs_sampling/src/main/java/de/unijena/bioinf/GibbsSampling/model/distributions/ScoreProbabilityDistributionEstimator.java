@@ -1,20 +1,19 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
+import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 
-public class ScoreProbabilityDistributionEstimator implements EdgeScorer {
-    private final EdgeScorer edgeScorer;
+public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> implements EdgeScorer<C> {
+    private final EdgeScorer<C> edgeScorer;
     private ScoreProbabilityDistribution scoreProbabilityDistribution;
 
-    public ScoreProbabilityDistributionEstimator(EdgeScorer edgeScorer, ScoreProbabilityDistribution distribution) {
+    public ScoreProbabilityDistributionEstimator(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution) {
         this.edgeScorer = edgeScorer;
         this.scoreProbabilityDistribution = distribution;
     }
 
-    public void prepare(MFCandidate[][] candidates) {
+    public void prepare(C[][] candidates) {
         this.edgeScorer.prepare(candidates);
         char numberOfSamples = '썐';
         HighQualityRandom random = new HighQualityRandom();
@@ -35,7 +34,7 @@ public class ScoreProbabilityDistributionEstimator implements EdgeScorer {
         this.scoreProbabilityDistribution.estimateDistribution(sampledScores);
     }
 
-    public double score(MFCandidate candidate1, MFCandidate candidate2) {
+    public double score(C candidate1, C candidate2) {
         double score = this.edgeScorer.score(candidate1, candidate2);
         double prob = this.scoreProbabilityDistribution.toPvalue(score);
         return prob;
@@ -49,7 +48,7 @@ public class ScoreProbabilityDistributionEstimator implements EdgeScorer {
         this.edgeScorer.clean();
     }
 
-    public double[] normalization(MFCandidate[][] candidates) {
+    public double[] normalization(C[][] candidates) {
         return new double[0];
     }
 }

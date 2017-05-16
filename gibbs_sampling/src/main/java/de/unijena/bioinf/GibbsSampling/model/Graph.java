@@ -7,16 +7,15 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+
+import java.lang.reflect.Array;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class Graph {
+public class Graph<C extends Candidate<?>> {
     final TIntIntHashMap[] indexMap;
     final TDoubleArrayList[] weights;
     double[] edgeThresholds;
@@ -25,12 +24,12 @@ public class Graph {
     private int[] formulaIdxToPeakIdx;
     protected final int size;
     final String[] ids;
-    final Scored<MFCandidate>[][] possibleFormulas;
-    final Scored<MFCandidate>[] possibleFormulas1D;
-    private EdgeScorer[] edgeScorers;
+    final Scored<C>[][] possibleFormulas;
+    final Scored<C>[] possibleFormulas1D;
+    private EdgeScorer<C>[] edgeScorers;
     private EdgeFilter edgeFilter;
 
-    public Graph(String[] ids, Scored<MFCandidate>[][] possibleFormulas) {
+    public Graph(String[] ids, Scored<C>[][] possibleFormulas) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.possibleFormulas1D = this.setUp(possibleFormulas);
@@ -106,19 +105,19 @@ public class Graph {
         return this.connections[index];
     }
 
-    public Scored<MFCandidate>[][] getPossibleFormulas() {
+    public Scored<C>[][] getPossibleFormulas() {
         return this.possibleFormulas;
     }
 
-    public Scored<MFCandidate>[] getPossibleFormulas(int index) {
+    public Scored<C>[] getPossibleFormulas(int index) {
         return this.possibleFormulas[index];
     }
 
-    public Scored<MFCandidate>[] getPossibleFormulas1D() {
+    public Scored<C>[] getPossibleFormulas1D() {
         return this.possibleFormulas1D;
     }
 
-    public Scored<MFCandidate> getPossibleFormulas1D(int index) {
+    public Scored<C> getPossibleFormulas1D(int index) {
         return this.possibleFormulas1D[index];
     }
 
@@ -176,7 +175,7 @@ public class Graph {
         return weighList.toArray();
     }
 
-    public void init(EdgeScorer[] edgeScorers, EdgeFilter edgeFilter, int threads) {
+    public void init(EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
         this.calculateWeight(threads);
@@ -187,7 +186,7 @@ public class Graph {
         return this.edgeScorers;
     }
 
-    private Scored<MFCandidate>[] setUp(Scored<MFCandidate>[][] possibleFormulas) {
+    private Scored<C>[] setUp(Scored<C>[][] possibleFormulas) {
         System.out.println("initialize");
         int length = 0;
 
@@ -223,6 +222,17 @@ public class Graph {
     }
 
     private void setConnections() {
+        System.out.println("weight sizes ");
+        int s = 0;
+        for (int i = 0; i < this.size; i++) {
+            if (indexMap[i].size()!=weights[i].size()){
+                throw new RuntimeException("sizes differ ");
+            }
+            s += indexMap[i].size();
+        }
+        System.out.println("weights count "+s);
+
+
         this.connections = this.edgeFilter.postprocessCompleteGraph(this);
         TDoubleArrayList someScores = new TDoubleArrayList();
         HighQualityRandom random = new HighQualityRandom();
@@ -296,23 +306,42 @@ public class Graph {
         this.connections = var10;
     }
 
+    private Class<C> getCandidateClass(){
+        for (Scored<C>[] s : getPossibleFormulas()) {
+            for (Scored<C> scored : s) {
+                return (Class<C>)scored.getCandidate().getClass();
+            }
+        }
+        throw new NoSuchElementException("no instances at all");
+    }
+
     private void calculateWeight(int threads) {
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         ArrayList futures = new ArrayList();
-        MFCandidate[][] allCandidates = new MFCandidate[this.getPossibleFormulas().length][];
+//        C[][] allCandidates = (C[][])new Candidate[this.getPossibleFormulas().length][];
+
+        Class<C> cClass = getCandidateClass();
+
+
+        C[][] allCandidates = (C[][]) Array.newInstance(cClass, this.getPossibleFormulas().length, 1);
 
         for(int minValue = 0; minValue < allCandidates.length; ++minValue) {
-            Scored[] scored = this.getPossibleFormulas(minValue);
-            allCandidates[minValue] = new MFCandidate[scored.length];
+            Scored<C>[] scored = this.getPossibleFormulas(minValue);
+//            allCandidates[minValue] = (C[])new Candidate[scored.length];
+            allCandidates[minValue] = (C[])Array.newInstance(cClass, scored.length);
 
             for(int final_this = 0; final_this < scored.length; ++final_this) {
-                allCandidates[minValue][final_this] = (MFCandidate)scored[final_this].getCandidate();
+                allCandidates[minValue][final_this] = scored[final_this].getCandidate();
             }
         }
 
         double minV = 1.0D;
 
-        for (EdgeScorer edgeScorer : edgeScorers) {
+        for (EdgeScorer<C> edgeScorer : edgeScorers) {
+            System.out.println("Test");
+            System.out.println(allCandidates.getClass().getSimpleName());
+            System.out.println(allCandidates[0][0].getClass().getSimpleName());
+            System.out.println(allCandidates[0][0].getCandidate());
             edgeScorer.prepare(allCandidates);
             minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getThreshold();
             System.out.println("minV " + minV);            
@@ -329,7 +358,7 @@ public class Graph {
             }
             
             final int final_i = i;
-            final MFCandidate var16 = (MFCandidate)this.getPossibleFormulas1D(i).getCandidate();
+            final C var16 = this.getPossibleFormulas1D(i).getCandidate();
             futures.add(executorService.submit(new Runnable() {
                 public void run() {
                     TDoubleArrayList scores = new TDoubleArrayList(Graph.this.getSize());
@@ -338,7 +367,7 @@ public class Graph {
                         if(Graph.this.getPeakIdx(final_i) == Graph.this.getPeakIdx(j)) {
                             scores.add(0.0D);
                         } else {
-                            MFCandidate candidate2 = (MFCandidate)Graph.this.getPossibleFormulas1D(j).getCandidate();
+                            C candidate2 = Graph.this.getPossibleFormulas1D(j).getCandidate();
                             double score = 0.0D;
                             EdgeScorer[] var6 = Graph.this.edgeScorers;
                             int var7 = var6.length;

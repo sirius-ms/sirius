@@ -11,20 +11,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class GibbsParallel {
+public class GibbsParallel<C extends Candidate<?>> {
     private String[] ids;
-    private MFCandidate[][] possibleFormulas;
-    private NodeScorer[] nodeScorers;
-    private EdgeScorer[] edgeScorers;
+    private C[][] possibleFormulas;
+    private NodeScorer<C>[] nodeScorers;
+    private EdgeScorer<C>[] edgeScorers;
     private EdgeFilter edgeFilter;
     private int workersCount;
     private final List<GibbsMFCorrectionNetwork> gibbsNetworks;
-    private Scored<MFCandidate>[][] maxPosterior;
-    private Scored<MFCandidate>[][] addedUpPosterior;
-    private Scored<MFCandidate>[][] sampling;
+    private Scored<C>[][] maxPosterior;
+    private Scored<C>[][] addedUpPosterior;
+    private Scored<C>[][] sampling;
     private Graph graph;
 
-    public GibbsParallel(String[] ids, MFCandidate[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer[] edgeScorers, EdgeFilter edgeFilter, int workersCount) {
+    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.nodeScorers = nodeScorers;
@@ -35,8 +35,8 @@ public class GibbsParallel {
         this.graph = this.init();
     }
 
-    private Graph init() {
-        Graph graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.workersCount);
+    private Graph<C> init() {
+        Graph<C> graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.workersCount);
         int i = 0;
 
         while(i++ < this.workersCount) {
@@ -51,11 +51,9 @@ public class GibbsParallel {
         TObjectDoubleHashMap[] addedUpPosteriorCombined = this.createMap(this.possibleFormulas.length);
         TObjectDoubleHashMap[] samplingCombined = this.createMap(this.possibleFormulas.length);
         Iterator var4 = this.gibbsNetworks.iterator();
-
-        while(var4.hasNext()) {
-            GibbsMFCorrectionNetwork gibbsNetwork = (GibbsMFCorrectionNetwork)var4.next();
+        for (GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
             Scored[][] maxPosterior = gibbsNetwork.getChosenFormulasByMaxPosterior();
-            this.add(maxPosteriorCombined, maxPosterior, true, 0.0D / 0.0);
+            this.add(maxPosteriorCombined, maxPosterior, true, Double.NaN);
             Scored[][] addedUpPosterior = gibbsNetwork.getChosenFormulasByAddedUpPosterior();
             this.add(addedUpPosteriorCombined, addedUpPosterior, false, 1.0D / (double)this.gibbsNetworks.size());
             Scored[][] sampling = gibbsNetwork.getChosenFormulasBySampling();
@@ -67,17 +65,15 @@ public class GibbsParallel {
         this.sampling = this.toArray(samplingCombined);
     }
 
-    private void add(TObjectDoubleHashMap<MFCandidate>[] combined, Scored<MFCandidate>[][] instance, boolean takeMax, double normalization) {
+    private void add(TObjectDoubleHashMap<Candidate>[] combined, Scored<Candidate>[][] instance, boolean takeMax, double normalization) {
         for(int i = 0; i < instance.length; ++i) {
             Scored[] scoredCandidates = instance[i];
             TObjectDoubleHashMap scoresMap = combined[i];
-            Scored[] var9 = scoredCandidates;
-            int var10 = scoredCandidates.length;
 
-            for(int var11 = 0; var11 < var10; ++var11) {
-                Scored scoredCandidate = var9[var11];
+            for(int j = 0; j < scoredCandidates.length; ++j) {
+                Scored scoredCandidate = scoredCandidates[j];
                 double score = scoredCandidate.getScore();
-                MFCandidate candidate = (MFCandidate)scoredCandidate.getCandidate();
+                Candidate candidate = (Candidate)scoredCandidate.getCandidate();
                 if(takeMax) {
                     double currentScore = scoresMap.get(candidate);
                     if(score > currentScore) {
@@ -91,28 +87,28 @@ public class GibbsParallel {
 
     }
 
-    private Scored<MFCandidate>[][] toArray(TObjectDoubleHashMap<MFCandidate>[] maps) {
-        Scored<MFCandidate>[][] array = new Scored[maps.length][];
+    private Scored<C>[][] toArray(TObjectDoubleHashMap<C>[] maps) {
+        Scored<C>[][] array = new Scored[maps.length][];
 
         for(int i = 0; i < maps.length; ++i) {
-            TObjectDoubleHashMap map = maps[i];
-            Scored<MFCandidate>[] scoredCandidates = new Scored[map.size()];
+            TObjectDoubleHashMap<C> map = maps[i];
+            Scored<C>[] scoredCandidates = new Scored[map.size()];
             int j = 0;
 
-            Scored scored;
-            for(Iterator var7 = map.keySet().iterator(); var7.hasNext(); scoredCandidates[j++] = scored) {
-                MFCandidate candidate = (MFCandidate)var7.next();
-                scored = new Scored(candidate, map.get(candidate));
+            for (C candidate : map.keySet()) {
+                scoredCandidates[j++] =  new Scored(candidate, map.get(candidate));
             }
 
-            Arrays.sort(scoredCandidates, Scored.<MFCandidate>desc());
+
+
+            Arrays.sort(scoredCandidates, Scored.<C>desc());
             array[i] = scoredCandidates;
         }
 
         return array;
     }
 
-    private TObjectDoubleHashMap<MFCandidate>[] createMap(int length) {
+    private TObjectDoubleHashMap<Candidate>[] createMap(int length) {
         TObjectDoubleHashMap[] map = new TObjectDoubleHashMap[length];
 
         for(int i = 0; i < map.length; ++i) {
@@ -157,15 +153,15 @@ public class GibbsParallel {
         }
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulasByMaxPosterior() {
+    public Scored<C>[][] getChosenFormulasByMaxPosterior() {
         return this.maxPosterior;
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulasByAddedUpPosterior() {
+    public Scored<C>[][] getChosenFormulasByAddedUpPosterior() {
         return this.addedUpPosterior;
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulasBySampling() {
+    public Scored<C>[][] getChosenFormulasBySampling() {
         return this.sampling;
     }
 

@@ -1,8 +1,5 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
-import de.unijena.bioinf.GibbsSampling.model.NodeScorer;
-
 public class StandardNodeScorer implements NodeScorer {
     private final boolean normalize;
     private final double gamma;
@@ -16,18 +13,17 @@ public class StandardNodeScorer implements NodeScorer {
         this.gamma = gamma;
     }
 
-    public void score(MFCandidate[][] candidates) {
+    public void score(Candidate[][] candidates) {
         for(int i = 0; i < candidates.length; ++i) {
-            MFCandidate[] mfCandidates = candidates[i];
+            Candidate[] currentCandidates = candidates[i];
             double max = -1.0D / 0.0;
-            MFCandidate[] sum = mfCandidates;
-            int var7 = mfCandidates.length;
+            int length = currentCandidates.length;
 
             int expScore;
-            MFCandidate candidate;
+            Candidate candidate;
             double score;
-            for(expScore = 0; expScore < var7; ++expScore) {
-                candidate = sum[expScore];
+            for(expScore = 0; expScore < length; ++expScore) {
+                candidate = currentCandidates[expScore];
                 score = candidate.getScore();
                 if(score > max) {
                     max = score;
@@ -35,23 +31,20 @@ public class StandardNodeScorer implements NodeScorer {
             }
 
             if(!this.normalize) {
-                sum = mfCandidates;
-                var7 = mfCandidates.length;
-
-                for(expScore = 0; expScore < var7; ++expScore) {
-                    candidate = sum[expScore];
+                for(expScore = 0; expScore < length; ++expScore) {
+                    candidate = currentCandidates[expScore];
                     score = candidate.getScore();
                     candidate.addNodeProbabilityScore(Math.exp(this.gamma * (score - max)));
                 }
             } else {
                 double var16 = 0.0D;
-                double[] var17 = new double[mfCandidates.length];
+                double[] var17 = new double[currentCandidates.length];
                 int var18 = 0;
-                MFCandidate[] var19 = mfCandidates;
-                int var11 = mfCandidates.length;
+                Candidate[] var19 = currentCandidates;
+                int var11 = currentCandidates.length;
 
                 int var12;
-                MFCandidate candidate1;
+                Candidate candidate1;
                 for(var12 = 0; var12 < var11; ++var12) {
                     candidate1 = var19[var12];
                     double expS = Math.exp(this.gamma * (candidate1.getScore() - max));
@@ -60,8 +53,8 @@ public class StandardNodeScorer implements NodeScorer {
                 }
 
                 var18 = 0;
-                var19 = mfCandidates;
-                var11 = mfCandidates.length;
+                var19 = currentCandidates;
+                var11 = currentCandidates.length;
 
                 for(var12 = 0; var12 < var11; ++var12) {
                     candidate1 = var19[var12];

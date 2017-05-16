@@ -1,12 +1,10 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.GibbsSampling.model.LibraryHit;
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
-import de.unijena.bioinf.GibbsSampling.model.NodeScorer;
+
 import java.util.Set;
 
-public class LibraryHitScorer implements NodeScorer {
+public class LibraryHitScorer implements NodeScorer<FragmentsCandidate> {
     private final double topScore;
     private final double lowestCosine;
     private final double lowestScore = 0.5D;
@@ -23,12 +21,12 @@ public class LibraryHitScorer implements NodeScorer {
         this.expectedMFDifferences = expectedMFDifferences;
     }
 
-    public void score(MFCandidate[][] candidates) {
+    public void score(FragmentsCandidate[][] candidates) {
         for(int i = 0; i < candidates.length; ++i) {
-            MFCandidate[] mfCandidates = candidates[i];
+            FragmentsCandidate[] mfCandidates = candidates[i];
 
             for(int j = 0; j < mfCandidates.length; ++j) {
-                MFCandidate candidate = mfCandidates[j];
+                FragmentsCandidate candidate = mfCandidates[j];
                 if(candidate.inEvaluationSet) {
                     System.out.println("in Evaluation set: " + candidate.experiment.getName() + "\t" + candidate.getFormula());
                     candidate.addNodeProbabilityScore(this.score(0.0D));

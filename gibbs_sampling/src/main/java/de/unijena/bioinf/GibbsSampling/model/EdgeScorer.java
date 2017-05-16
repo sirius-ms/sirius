@@ -5,14 +5,12 @@
 
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
+public interface EdgeScorer<C extends Candidate<?>> {
+    void prepare(C[][] var1);
 
-public interface EdgeScorer {
-    void prepare(MFCandidate[][] var1);
-
-    double score(MFCandidate var1, MFCandidate var2);
+    double score(C var1, C var2);
 
     void clean();
 
-    double[] normalization(MFCandidate[][] var1);
+    double[] normalization(C[][] var1);
 }
