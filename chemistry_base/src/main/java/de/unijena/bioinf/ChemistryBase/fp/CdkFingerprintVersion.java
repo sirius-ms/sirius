@@ -60,6 +60,18 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
     }
 
+    public MaskedFingerprintVersion getMaskFor(USED_FINGERPRINTS... fingerprints) {
+        Arrays.sort(fingerprints);
+        final MaskedFingerprintVersion.Builder b = de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion.buildMaskFor(this);
+        b.disableAll();
+        for (USED_FINGERPRINTS f : fingerprints) {
+            final int i = getOffsetFor(f);
+            final int j = i + f.length;
+            b.enable(i,j);
+        }
+        return b.toMask();
+    }
+
     public int getOffsetFor(USED_FINGERPRINTS fingerprint) {
         int offset=0;
         for (USED_FINGERPRINTS f : usedFingerprints) {

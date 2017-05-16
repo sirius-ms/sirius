@@ -76,6 +76,19 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         } else throw new RuntimeException("Cannot mask " + fingerprint.getClass());
     }
 
+    public MaskedFingerprintVersion getIntersection(MaskedFingerprintVersion other) {
+        if (!innerVersion.compatible(other.innerVersion)) throw new RuntimeException("Fingerprint is not compatible to mask. Given fingerprint is version " + other.innerVersion.toString() + ", mask is version " + innerVersion.toString());
+        final BitSet intersection = (BitSet) mask.clone();
+        intersection.and(other.mask);
+        return new MaskedFingerprintVersion(innerVersion, intersection);
+    }
+    public MaskedFingerprintVersion getUnion(MaskedFingerprintVersion other) {
+        if (!innerVersion.compatible(other.innerVersion)) throw new RuntimeException("Fingerprint is not compatible to mask. Given fingerprint is version " + other.innerVersion.toString() + ", mask is version " + innerVersion.toString());
+        final BitSet intersection = (BitSet) mask.clone();
+        intersection.or(other.mask);
+        return new MaskedFingerprintVersion(innerVersion, intersection);
+    }
+
     @Override
     public int getRelativeIndexOf(int absoluteIndex) {
         return mapping.get((short)absoluteIndex);
