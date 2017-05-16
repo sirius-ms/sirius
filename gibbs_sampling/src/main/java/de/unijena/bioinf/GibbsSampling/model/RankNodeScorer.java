@@ -1,7 +1,5 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
-import de.unijena.bioinf.GibbsSampling.model.NodeScorer;
 import java.util.Arrays;
 
 public class RankNodeScorer implements NodeScorer {
@@ -23,29 +21,28 @@ public class RankNodeScorer implements NodeScorer {
         this(topScore, 0.1D, false);
     }
 
-    public void score(MFCandidate[][] candidates) {
+    public void score(Candidate[][] candidates) {
         for(int i = 0; i < candidates.length; ++i) {
-            MFCandidate[] mfCandidates = (MFCandidate[])candidates[i].clone();
-            Arrays.sort(mfCandidates);
+            Candidate[] currentCandidates = (Candidate[])candidates[i].clone();
+            Arrays.sort(currentCandidates);
             if(!this.normalize) {
-                for(int var11 = 0; var11 < mfCandidates.length; ++var11) {
-                    MFCandidate candidate = mfCandidates[var11];
-                    candidate.addNodeProbabilityScore(this.score(var11));
+                for(int j = 0; j < currentCandidates.length; ++j) {
+                    Candidate candidate = currentCandidates[j];
+                    candidate.addNodeProbabilityScore(this.score(j));
                 }
             } else {
-                double j = 0.0D;
-                double[] scores = new double[mfCandidates.length];
+                double sum = 0.0D;
+                double[] scores = new double[currentCandidates.length];
 
-                int j1;
-                for(j1 = 0; j1 < mfCandidates.length; ++j1) {
-                    MFCandidate var10000 = mfCandidates[j1];
-                    double s = this.score(j1);
-                    scores[j1] = s;
-                    j += s;
+                int j;
+                for(j = 0; j < currentCandidates.length; ++j) {
+                    double s = this.score(j);
+                    scores[j] = s;
+                    sum += s;
                 }
 
-                for(j1 = 0; j1 < mfCandidates.length; ++j1) {
-                    mfCandidates[j1].addNodeProbabilityScore(scores[j1] / j);
+                for(j = 0; j < currentCandidates.length; ++j) {
+                    currentCandidates[j].addNodeProbabilityScore(scores[j] / sum);
                 }
             }
         }

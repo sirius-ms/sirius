@@ -12,8 +12,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.Transformation;
+import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
-import de.unijena.bioinf.GibbsSampling.model.MFCandidate;
+import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -26,11 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class CommonFragmentScorer implements EdgeScorer {
+public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
     protected static final int MIN_COMMON = 0;
     protected final double alpha;
     protected final boolean normalizePerInstance;
-    protected Map<MFCandidate, MolecularFormula[]> fragmentsMap;
+    protected Map<FragmentsCandidate, MolecularFormula[]> fragmentsMap;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
     protected TObjectIntHashMap<Ms2Experiment> idxMap;
@@ -50,125 +51,126 @@ public class CommonFragmentScorer implements EdgeScorer {
         this(alpha, false, 0.0D);
     }
 
-    public void prepare(MFCandidate[][] candidates) {
-        this.fragmentsMap = new HashMap(candidates.length, 0.75F);
-        this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
-        MFCandidate[][] norm = candidates;
-        int ms2Spectra = candidates.length;
-
-        int i;
-        int i1;
-        for(int minTreeSizes = 0; minTreeSizes < ms2Spectra; ++minTreeSizes) {
-            MFCandidate[] ionType = norm[minTreeSizes];
-            MFCandidate[] ionTransformation = ionType;
-            i = ionType.length;
-
-            for(int ions1 = 0; ions1 < i; ++ions1) {
-                MFCandidate j = ionTransformation[ions1];
-                List ions2 = j.getTree().getFragments();
-                MolecularFormula[] scores = new MolecularFormula[ions2.size()];
-                i1 = 0;
-
-                Fragment sp1;
-                for(Iterator ion1 = ions2.iterator(); ion1.hasNext(); scores[i1++] = sp1.getFormula()) {
-                    sp1 = (Fragment)ion1.next();
-                }
-
-                Arrays.sort(scores);
-                this.fragmentsMap.put(j, scores);
-            }
-        }
-
-        double[] var21 = this.normalization(candidates);
-
-        for(ms2Spectra = 0; ms2Spectra < candidates.length; ++ms2Spectra) {
-            Ms2Experiment var23 = candidates[ms2Spectra][0].getExperiment();
-            this.normalizationMap.put(var23, var21[ms2Spectra]);
-        }
-
-        this.idxMap = new TObjectIntHashMap(candidates.length);
-        this.maybeSimilar = new BitSet[candidates.length];
-        double[][] var22 = new double[candidates.length][];
-        int[] var24 = new int[candidates.length];
-
-        for(int var25 = 0; var25 < candidates.length; ++var25) {
-            Ms2Experiment var27 = candidates[var25][0].getExperiment();
-            i = 2147483647;
-            double var28 = 0.0D / 0.0;
-            MFCandidate[] var31 = candidates[var25];
-            int var34 = var31.length;
-
-            for(i1 = 0; i1 < var34; ++i1) {
-                MFCandidate var36 = var31[i1];
-                FTree var39 = var36.getTree();
-                i = Math.min(i, var39.numberOfVertices());
-                FragmentAnnotation annotation = var39.getFragmentAnnotationOrThrow(Peak.class);
-                var28 = ((Peak)annotation.get(var39.getRoot())).getMass();
-            }
-
-            double[] var32 = new double[((Ms2Spectrum)var27.getMs2Spectra().get(0)).size()];
-
-            for(var34 = 0; var34 < var32.length; ++var34) {
-                var32[var34] = ((Ms2Spectrum)var27.getMs2Spectra().get(0)).getMzAt(var34);
-            }
-
-            Arrays.sort(var32);
-            System.out.println("spec size " + var32.length);
-            System.out.println("min tree size " + i);
-            var22[var25] = var32;
-            var24[var25] = i;
-            this.idxMap.put(var27, var25);
-            this.maybeSimilar[var25] = new BitSet();
-        }
-
-        final PrecursorIonType[] var26 = new PrecursorIonType[1];
-        Transformation var10000 = new Transformation() {
-            public Peak transform(Peak input) {
-                return new Peak(var26[0].precursorMassToNeutralMass(input.getMass()), input.getIntensity());
-            }
-        };
-
-        for(i = 0; i < var22.length; ++i) {
-            Set var29 = this.collectIons(candidates[i]);
-            System.out.println("ion size: " + var29.size());
-
-            for(int var30 = i + 1; var30 < var22.length; ++var30) {
-                Set var33 = this.collectIons(candidates[i]);
-                TDoubleArrayList var35 = new TDoubleArrayList();
-                Iterator var37 = var29.iterator();
-
-                label60:
-                while(var37.hasNext()) {
-                    PrecursorIonType var38 = (PrecursorIonType)var37.next();
-                    var26[0] = var38;
-                    double[] var40 = this.mapSpec(var22[i], var38);
-                    Iterator var41 = var33.iterator();
-
-                    while(var41.hasNext()) {
-                        PrecursorIonType ion2 = (PrecursorIonType)var41.next();
-                        var26[0] = ion2;
-                        double[] sp2 = this.mapSpec(var22[var30], ion2);
-                        int commonF = this.countCommons(var40, sp2);
-                        double score = (double)commonF / (double)var24[i] + (double)commonF / (double)var24[var30];
-                        var35.add(score);
-                        if(commonF >= 1 && score >= this.threshold) {
-                            this.maybeSimilar[i].set(var30);
-                            break label60;
-                        }
-                    }
-                }
-
-                if(Math.random() > 0.99D) {
-                    System.out.println("scores: " + Arrays.toString(var35.toArray()));
-                }
-            }
-        }
-
-        int sum = 0;
-        for (BitSet bitSet : this.maybeSimilar) {
-            sum += bitSet.cardinality();
-        }
-        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum);
+    public void prepare(FragmentsCandidate[][] candidates) {
+        throw new NoSuchMethodError("implement new version");
+//        this.fragmentsMap = new HashMap(candidates.length, 0.75F);
+//        this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
+//        FragmentsCandidate[][] norm = candidates;
+//        int ms2Spectra = candidates.length;
+//
+//        int i;
+//        int i1;
+//        for(int minTreeSizes = 0; minTreeSizes < ms2Spectra; ++minTreeSizes) {
+//            FragmentsCandidate[] ionType = norm[minTreeSizes];
+//            FragmentsCandidate[] ionTransformation = ionType;
+//            i = ionType.length;
+//
+//            for(int ions1 = 0; ions1 < i; ++ions1) {
+//                FragmentsCandidate j = ionTransformation[ions1];
+//                List ions2 = j.getTree().getFragments();
+//                MolecularFormula[] scores = new MolecularFormula[ions2.size()];
+//                i1 = 0;
+//
+//                Fragment sp1;
+//                for(Iterator ion1 = ions2.iterator(); ion1.hasNext(); scores[i1++] = sp1.getFormula()) {
+//                    sp1 = (Fragment)ion1.next();
+//                }
+//
+//                Arrays.sort(scores);
+//                this.fragmentsMap.put(j, scores);
+//            }
+//        }
+//
+//        double[] var21 = this.normalization(candidates);
+//
+//        for(ms2Spectra = 0; ms2Spectra < candidates.length; ++ms2Spectra) {
+//            Ms2Experiment var23 = candidates[ms2Spectra][0].getExperiment();
+//            this.normalizationMap.put(var23, var21[ms2Spectra]);
+//        }
+//
+//        this.idxMap = new TObjectIntHashMap(candidates.length);
+//        this.maybeSimilar = new BitSet[candidates.length];
+//        double[][] var22 = new double[candidates.length][];
+//        int[] var24 = new int[candidates.length];
+//
+//        for(int var25 = 0; var25 < candidates.length; ++var25) {
+//            Ms2Experiment var27 = candidates[var25][0].getExperiment();
+//            i = 2147483647;
+//            double var28 = 0.0D / 0.0;
+//            FragmentsCandidate[] var31 = candidates[var25];
+//            int var34 = var31.length;
+//
+//            for(i1 = 0; i1 < var34; ++i1) {
+//                FragmentsCandidate var36 = var31[i1];
+//                FTree var39 = var36.getTree();
+//                i = Math.min(i, var39.numberOfVertices());
+//                FragmentAnnotation annotation = var39.getFragmentAnnotationOrThrow(Peak.class);
+//                var28 = ((Peak)annotation.get(var39.getRoot())).getMass();
+//            }
+//
+//            double[] var32 = new double[((Ms2Spectrum)var27.getMs2Spectra().get(0)).size()];
+//
+//            for(var34 = 0; var34 < var32.length; ++var34) {
+//                var32[var34] = ((Ms2Spectrum)var27.getMs2Spectra().get(0)).getMzAt(var34);
+//            }
+//
+//            Arrays.sort(var32);
+//            System.out.println("spec size " + var32.length);
+//            System.out.println("min tree size " + i);
+//            var22[var25] = var32;
+//            var24[var25] = i;
+//            this.idxMap.put(var27, var25);
+//            this.maybeSimilar[var25] = new BitSet();
+//        }
+//
+//        final PrecursorIonType[] var26 = new PrecursorIonType[1];
+//        Transformation var10000 = new Transformation() {
+//            public Peak transform(Peak input) {
+//                return new Peak(var26[0].precursorMassToNeutralMass(input.getMass()), input.getIntensity());
+//            }
+//        };
+//
+//        for(i = 0; i < var22.length; ++i) {
+//            Set var29 = this.collectIons(candidates[i]);
+//            System.out.println("ion size: " + var29.size());
+//
+//            for(int var30 = i + 1; var30 < var22.length; ++var30) {
+//                Set var33 = this.collectIons(candidates[i]);
+//                TDoubleArrayList var35 = new TDoubleArrayList();
+//                Iterator var37 = var29.iterator();
+//
+//                label60:
+//                while(var37.hasNext()) {
+//                    PrecursorIonType var38 = (PrecursorIonType)var37.next();
+//                    var26[0] = var38;
+//                    double[] var40 = this.mapSpec(var22[i], var38);
+//                    Iterator var41 = var33.iterator();
+//
+//                    while(var41.hasNext()) {
+//                        PrecursorIonType ion2 = (PrecursorIonType)var41.next();
+//                        var26[0] = ion2;
+//                        double[] sp2 = this.mapSpec(var22[var30], ion2);
+//                        int commonF = this.countCommons(var40, sp2);
+//                        double score = (double)commonF / (double)var24[i] + (double)commonF / (double)var24[var30];
+//                        var35.add(score);
+//                        if(commonF >= 1 && score >= this.threshold) {
+//                            this.maybeSimilar[i].set(var30);
+//                            break label60;
+//                        }
+//                    }
+//                }
+//
+//                if(Math.random() > 0.99D) {
+//                    System.out.println("scores: " + Arrays.toString(var35.toArray()));
+//                }
+//            }
+//        }
+//
+//        int sum = 0;
+//        for (BitSet bitSet : this.maybeSimilar) {
+//            sum += bitSet.cardinality();
+//        }
+//        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum);
     }
 
     protected double[] mapSpec(double[] spec, PrecursorIonType ionType) {
@@ -181,20 +183,20 @@ public class CommonFragmentScorer implements EdgeScorer {
         return s;
     }
 
-    protected Set<PrecursorIonType> collectIons(MFCandidate[] candidates) {
+    protected Set<PrecursorIonType> collectIons(FragmentsCandidate[] candidates) {
         HashSet ions = new HashSet();
-        MFCandidate[] var3 = candidates;
+        FragmentsCandidate[] var3 = candidates;
         int var4 = candidates.length;
 
         for(int var5 = 0; var5 < var4; ++var5) {
-            MFCandidate candidate = var3[var5];
+            FragmentsCandidate candidate = var3[var5];
             ions.add(candidate.getIonType());
         }
 
         return ions;
     }
 
-    public double score(MFCandidate candidate1, MFCandidate candidate2) {
+    public double score(FragmentsCandidate candidate1, FragmentsCandidate candidate2) {
         int i = this.idxMap.get(candidate1.getExperiment());
         int j = this.idxMap.get(candidate2.getExperiment());
         if(i < j) {
@@ -211,7 +213,7 @@ public class CommonFragmentScorer implements EdgeScorer {
         return commonCounter < 0?0.0D:(this.normalizePerInstance?this.alpha * (1.0D * (double)commonCounter / (double)fragments1.length + 1.0D * (double)commonCounter / (double)fragments2.length):this.alpha * (double)commonCounter / this.normalizationMap.get(candidate2.getExperiment()));
     }
 
-    public int getNumberOfCommon(MFCandidate candidate1, MFCandidate candidate2) {
+    public int getNumberOfCommon(FragmentsCandidate candidate1, FragmentsCandidate candidate2) {
         MolecularFormula[] fragments1 = (MolecularFormula[])this.fragmentsMap.get(candidate1);
         MolecularFormula[] fragments2 = (MolecularFormula[])this.fragmentsMap.get(candidate2);
         int commonCounter = 0;
@@ -234,7 +236,7 @@ public class CommonFragmentScorer implements EdgeScorer {
         return commonCounter;
     }
 
-    public double[] normalization(MFCandidate[][] candidates) {
+    public double[] normalization(FragmentsCandidate[][] candidates) {
         int[][] maxMatches = this.getMaximumMatchablePeaks(candidates);
         double[] norm = new double[candidates.length];
 
@@ -258,7 +260,7 @@ public class CommonFragmentScorer implements EdgeScorer {
         return s;
     }
 
-    protected int[][] getMaximumMatchablePeaks(MFCandidate[][] candidates) {
+    protected int[][] getMaximumMatchablePeaks(FragmentsCandidate[][] candidates) {
         Deviation deviation = new Deviation(10.0D);
         int[][] maxMatches = new int[candidates.length][candidates.length];
         MutableMs2Spectrum[] spectra = this.parseSpectra(candidates);
@@ -303,7 +305,7 @@ public class CommonFragmentScorer implements EdgeScorer {
         return maxMatches;
     }
 
-    protected MutableMs2Spectrum[] parseSpectra(MFCandidate[][] candidates) {
+    protected MutableMs2Spectrum[] parseSpectra(FragmentsCandidate[][] candidates) {
         MutableMs2Spectrum[] spectra = new MutableMs2Spectrum[candidates.length];
 
         for(int i = 0; i < candidates.length; ++i) {

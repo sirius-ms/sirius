@@ -4,19 +4,16 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer.ConstantReactionStepSizeScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
 import gnu.trove.list.array.TIntArrayList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Iterator;
-import java.util.Random;
+
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class GibbsMFCorrectionNetwork {
+public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     private static final double DEFAULT_CORRELATION_STEPSIZE = 100.0D;
-    protected Graph graph;
+    protected Graph<C> graph;
     private static final boolean iniAssignMostLikely = false;
     private int burnInRounds;
     private int currentRound;
@@ -35,11 +32,11 @@ public class GibbsMFCorrectionNetwork {
     private final double pseudo;
     private final double logPseudo;
 
-    public GibbsMFCorrectionNetwork(String[] ids, MFCandidate[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer[] edgeScorers, EdgeFilter edgeFilter, int threads) {
+    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
         this.pseudo = 0.01D;
         this.logPseudo = Math.log(0.01D);
 
-        for (MFCandidate[] pF : possibleFormulas) {
+        for (Candidate[] pF : possibleFormulas) {
             if (pF==null || pF.length==0) throw new RuntimeException("some peaks don\'t have any explanation");
         }
 
@@ -51,7 +48,7 @@ public class GibbsMFCorrectionNetwork {
 
     }
 
-    public GibbsMFCorrectionNetwork(String[] ids, MFCandidate[][] possibleFormulas, Reaction[] reactions) {
+    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, Reaction[] reactions) {
         this(ids, possibleFormulas, new NodeScorer[]{new StandardNodeScorer()}, new EdgeScorer[]{new ReactionScorer(reactions, new ConstantReactionStepSizeScorer())}, new EdgeThresholdFilter(1.0D), 1);
     }
 
@@ -69,59 +66,47 @@ public class GibbsMFCorrectionNetwork {
         this.executorService.shutdown();
     }
 
-    private void futuresGet(Iterable<Future> futures) {
-        Iterator var2 = futures.iterator();
-
-        while(var2.hasNext()) {
-            Future future = (Future)var2.next();
-
+    private void futuresGet(Iterable<Future> futures){
+        for (Future future : futures) {
             try {
                 future.get();
-            } catch (InterruptedException var5) {
-                throw new RuntimeException(var5);
-            } catch (ExecutionException var6) {
-                throw new RuntimeException(var6);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
             }
         }
-
     }
 
-    public static Graph buildGraph(String[] ids, MFCandidate[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer[] edgeScorers, EdgeFilter edgeFilter, int numOfThreads) {
-        NodeScorer[] newIds = nodeScorers;
-        int newFormulas = nodeScorers.length;
-
-        int filteredIds;
-        for(filteredIds = 0; filteredIds < newFormulas; ++filteredIds) {
-            NodeScorer scoredPossibleFormulas = newIds[filteredIds];
-            scoredPossibleFormulas.score(possibleFormulas);
+    public static <C extends Candidate<?>> Graph<C> buildGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int numOfThreads) {
+        for (NodeScorer<C> nodeScorer : nodeScorers) {
+            nodeScorer.score(possibleFormulas);
         }
 
-        ArrayList var16 = new ArrayList();
-        ArrayList var17 = new ArrayList();
+        List<String> newIds = new ArrayList();
+        List<Scored<C>[]> newFormulas = new ArrayList();
 
-        for(filteredIds = 0; filteredIds < possibleFormulas.length; ++filteredIds) {
-            MFCandidate[] var19 = possibleFormulas[filteredIds];
-            String graph = ids[filteredIds];
-            ArrayList scoredCandidates = new ArrayList();
-            MFCandidate[] var12 = var19;
-            int var13 = var19.length;
+        for(int i = 0; i < possibleFormulas.length; ++i) {
+            C[] candidates = possibleFormulas[i];
+            String id = ids[i];
+            ArrayList<Scored<Candidate>> scoredCandidates = new ArrayList();
 
-            for(int var14 = 0; var14 < var13; ++var14) {
-                MFCandidate candidate = var12[var14];
+            for (C candidate : candidates) {
                 scoredCandidates.add(new Scored(candidate, candidate.getNodeLogProb()));
             }
 
             if(scoredCandidates.size() > 0) {
-                var16.add(graph);
-                var17.add(scoredCandidates.toArray(new Scored[0]));
+                newIds.add(id);
+                newFormulas.add(scoredCandidates.toArray(new Scored[0]));
             }
         }
 
-        String[] var18 = (String[])var16.toArray(new String[0]);
-        Scored[][] var20 = (Scored[][])var17.toArray(new Scored[0][]);
-        Graph var21 = new Graph(var18, var20);
-        var21.init(edgeScorers, edgeFilter, numOfThreads);
-        return var21;
+        String[] filteredIds = newIds.toArray(new String[0]);
+        Scored<C>[][] scoredPossibleFormulas = newFormulas.toArray(new Scored[0][]);
+        System.out.println("the class is "+possibleFormulas[0][0].getClass().getSimpleName());
+        Graph<C> graph = new Graph<C>(filteredIds, scoredPossibleFormulas);
+        graph.init(edgeScorers, edgeFilter, numOfThreads);
+        return graph;
     }
 
     private void setActive() {
@@ -132,43 +117,54 @@ public class GibbsMFCorrectionNetwork {
         this.active = new boolean[this.graph.getSize()];
         int z = 0;
 
-        int i;
-        int j;
-        for(i = 0; i < this.graph.numberOfCompounds(); ++i) {
-            Scored[] conn = this.graph.getPossibleFormulas(i);
-            j = -2147483648;
-            double[] scores = new double[conn.length];
-            double sum = 0.0D;
-
-            for(int j1 = 0; j1 < conn.length; ++j1) {
-                double score = Math.exp(conn[j1].getScore());
-                scores[j1] = score;
-                sum += score;
+        for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
+            Scored[] possibleFormulasArray = this.graph.getPossibleFormulas(i);
+            int idx = Integer.MIN_VALUE;
+            //set best explanation active
+            if (iniAssignMostLikely){
+                double maxScore = Double.NEGATIVE_INFINITY;
+                for (int j = 0; j < possibleFormulasArray.length; j++) {
+                    double score = possibleFormulasArray[j].getScore();
+                    if (score>maxScore){
+                        maxScore = score;
+                        idx = j;
+                    }
+                }
+            } else {
+                //sample
+                double[] scores = new double[possibleFormulasArray.length];
+                double sum = 0;
+                for (int j = 0; j < possibleFormulasArray.length; j++) {
+                    double score = possibleFormulasArray[j].getScore();
+                    scores[j] = score;
+                    sum += score;
+                }
+                idx = getRandomIdx(0, scores.length-1, sum, scores);
             }
 
-            j = this.getRandomIdx(0, scores.length - 1, sum, scores);
-            this.activeIdx[i] = j;
-            this.active[j + z] = true;
-            z += conn.length;
+            activeIdx[i] = idx;
+            active[idx+z] = true;
+            z+=possibleFormulasArray.length;
         }
 
-        for(i = 0; i < this.priorProb.length; ++i) {
-            int[] var11 = this.graph.getConnections(i);
+        ///set priorProb and maxPriorProb
+        for(int i = 0; i < this.priorProb.length; ++i) {
+            int[] conn = this.graph.getConnections(i);
 
-            for(j = 0; j < var11.length; ++j) {
-                if(this.active[var11[j]]) {
-                    this.addActiveEdge(var11[j], i);
+            for(int j = 0; j < conn.length; ++j) {
+                if(this.active[conn[j]]) {
+                    this.addActiveEdge(conn[j], i);
                     ++this.activeEdgeCounter[i];
                 }
             }
 
-            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - this.activeEdgeCounter[i] - 1) * Math.log(0.01D);
+            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - this.activeEdgeCounter[i] - 1) * this.logPseudo;
         }
 
         this.posteriorProbs = new double[this.graph.getSize()];
         this.posteriorProbSums = new double[this.graph.numberOfCompounds()];
-
-        for(i = 0; i < this.graph.numberOfCompounds(); ++i) {
+        //set posteriorProbs
+        for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
             this.updatePeak(i);
         }
 
@@ -186,6 +182,16 @@ public class GibbsMFCorrectionNetwork {
     }
 
     public void iteration(int maxSteps, int burnIn) {
+        int sum = 0;
+        int[][] var8 = graph.getConnections();
+        for(int var6 = 0; var6 < var8.length; ++var6) {
+            int[] connection = var8[var6];
+            sum += connection.length;
+        }
+        System.out.println("number of connections2 " + sum / 2);
+
+        printConnectionCounts();
+
         this.burnInRounds = burnIn;
         int iterationStepLength = this.graph.numberOfCompounds();
         long startTime = System.nanoTime();
@@ -214,11 +220,11 @@ public class GibbsMFCorrectionNetwork {
         return this.graph.getIds();
     }
 
-    public Scored<MFCandidate>[][] getAllPossibleMolecularFormulas() {
+    public Scored<C>[][] getAllPossibleMolecularFormulas() {
         return this.graph.getPossibleFormulas();
     }
 
-    public Scored<MFCandidate>[][] getAllEdges() {
+    public Scored<C>[][] getAllEdges() {
         ArrayList edgeList = new ArrayList();
 
         for(int i = 0; i < this.graph.getSize(); ++i) {
@@ -241,14 +247,14 @@ public class GibbsMFCorrectionNetwork {
         return this.graph.getAllEdgesIndices();
     }
 
-    private Scored<MFCandidate>[][] getFormulasSortedByScoring(double[] scoring) {
-        Scored<MFCandidate>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
+    private Scored<C>[][] getFormulasSortedByScoring(double[] scoring) {
+        Scored<C>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
 
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
             int[] b = this.graph.getPeakBoundaries(i);
             int min = b[0];
             int max = b[1];
-            Scored<MFCandidate>[] candidates = new Scored[max - min + 1];
+            Scored<C>[] candidates = new Scored[max - min + 1];
             double sum = 0.0D;
 
             int j;
@@ -263,21 +269,21 @@ public class GibbsMFCorrectionNetwork {
                 candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), freq / sum);
             }
 
-            Arrays.sort(candidates, Scored.<MFCandidate>desc());
+            Arrays.sort(candidates, Scored.<C>desc());
             candidatesByCompound[i] = candidates;
         }
 
         return candidatesByCompound;
     }
 
-    private Scored<MFCandidate>[][] getFormulasSortedByScoring(int[] scoring) {
-        Scored<MFCandidate>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
+    private Scored<C>[][] getFormulasSortedByScoring(int[] scoring) {
+        Scored<C>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
 
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
             int[] b = this.graph.getPeakBoundaries(i);
             int min = b[0];
             int max = b[1];
-            Scored<MFCandidate>[] candidates = new Scored[max - min + 1];
+            Scored<C>[] candidates = new Scored[max - min + 1];
             int sum = 0;
 
             int j;
@@ -292,7 +298,7 @@ public class GibbsMFCorrectionNetwork {
                 candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), 1.0D * (double)freq / (double)sum);
             }
 
-            Arrays.sort(candidates, Scored.<MFCandidate>desc());
+            Arrays.sort(candidates, Scored.<C>desc());
             candidatesByCompound[i] = candidates;
         }
 
@@ -307,19 +313,19 @@ public class GibbsMFCorrectionNetwork {
         return this.graph;
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulasByMaxPosterior() {
+    public Scored<C>[][] getChosenFormulasByMaxPosterior() {
         return this.getFormulasSortedByScoring(this.maxPosteriorProbs);
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulasBySampling() {
+    public Scored<C>[][] getChosenFormulasBySampling() {
         return this.getFormulasSortedByScoring(this.overallAssignmentFreq);
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulasByAddedUpPosterior() {
+    public Scored<C>[][] getChosenFormulasByAddedUpPosterior() {
         return this.getFormulasSortedByScoring(this.assignmentFreqByPosterior);
     }
 
-    public Scored<MFCandidate>[][] getChosenFormulas() {
+    public Scored<C>[][] getChosenFormulas() {
         return this.getFormulasSortedByScoring(this.overallAssignmentFreq);
     }
 
@@ -329,67 +335,64 @@ public class GibbsMFCorrectionNetwork {
         int max = b[1];
         double probSum = this.posteriorProbSums[peakIdx];
         int absIdx = this.getRandomIdx(min, max, probSum, this.posteriorProbs);
-        int relCurrentActive;
         if(this.currentRound > this.burnInRounds) {
             double absCurrentActive;
-            if((double)(this.currentRound - this.burnInRounds) % 100.0D == 0.0D) {
+            if((double)(this.currentRound - this.burnInRounds) % DEFAULT_CORRELATION_STEPSIZE == 0.0D) {
+                startTime();
+
                 ++this.overallAssignmentFreq[absIdx];
 
-                for(relCurrentActive = min; relCurrentActive <= max; ++relCurrentActive) {
-                    absCurrentActive = this.posteriorProbs[relCurrentActive];
-                    this.assignmentFreqByPosterior[relCurrentActive] += absCurrentActive;
+                for(int i = min; i <= max; ++i) {
+                    absCurrentActive = this.posteriorProbs[i];
+                    this.assignmentFreqByPosterior[i] += absCurrentActive;
+                }
+                stopTime("overallAssignmentFreq");
+            }
+            startTime();
+            for(int i = min; i <= max; ++i) {
+                absCurrentActive = this.posteriorProbs[i];
+                if(this.maxPosteriorProbs[i] < absCurrentActive) {
+                    this.maxPosteriorProbs[i] = absCurrentActive;
                 }
             }
-
-            for(relCurrentActive = min; relCurrentActive <= max; ++relCurrentActive) {
-                absCurrentActive = this.posteriorProbs[relCurrentActive];
-                if(this.maxPosteriorProbs[relCurrentActive] < absCurrentActive) {
-                    this.maxPosteriorProbs[relCurrentActive] = absCurrentActive;
-                }
-            }
+            stopTime("maxPosterior");
         }
 
-        relCurrentActive = this.activeIdx[peakIdx];
-        int var18 = relCurrentActive + min;
+        startTime();
+        int relCurrentActive = this.activeIdx[peakIdx];
+        int absCurrentActive = relCurrentActive + min;
         int relIndex = absIdx - min;
         if(relCurrentActive == relIndex) {
             return false;
         } else {
             BitSet toUpdate = new BitSet();
-            int[] c = this.graph.getConnections(var18);
-            int[] i = c;
-            int var14 = c.length;
-
-            int var15;
-            int conjugate;
-            int corrspondingPeakIdx;
-            for(var15 = 0; var15 < var14; ++var15) {
-                conjugate = i[var15];
-                this.removeActiveEdge(var18, conjugate);
-                corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
+            int[] c = this.graph.getConnections(absCurrentActive);
+            for (int conjugate : c) {
+                this.removeActiveEdge(absCurrentActive, conjugate);
+                final int corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
                 toUpdate.set(corrspondingPeakIdx);
             }
 
             c = this.graph.getConnections(absIdx);
-            i = c;
-            var14 = c.length;
-
-            for(var15 = 0; var15 < var14; ++var15) {
-                conjugate = i[var15];
+            for (int conjugate : c) {
                 this.addActiveEdge(absIdx, conjugate);
-                corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
+                final int corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
                 toUpdate.set(corrspondingPeakIdx);
             }
 
-            for(int var19 = toUpdate.nextSetBit(0); var19 >= 0; var19 = toUpdate.nextSetBit(var19 + 1)) {
-                this.updatePeak(var19);
-                if(var19 == 2147483647) {
-                    break;
+            stopTime("before update");
+//            System.out.println("update "+toUpdate.cardinality());
+            startTime();
+            for (int i = toUpdate.nextSetBit(0); i >= 0; i = toUpdate.nextSetBit(i+1)) {
+                updatePeak(i);
+                if (i == Integer.MAX_VALUE) {
+                    break; // or (i+1) would overflow
                 }
             }
+            stopTime("after update");
 
             this.activeIdx[peakIdx] = relIndex;
-            this.active[var18] = false;
+            this.active[absCurrentActive] = false;
             this.active[absIdx] = true;
             return true;
         }
@@ -405,74 +408,108 @@ public class GibbsMFCorrectionNetwork {
         this.priorProb[incoming] -= this.logPseudo;
     }
 
-    private int getRandomIdx(int minIdx, int maxIdx, double probSum, double[] probs) {
-        double r = this.random.nextDouble() * probSum;
-        int absIdx = minIdx - 1;
-        double sum = 0.0D;
+    /**
+     *
+     * @param minIdx
+     * @param maxIdx
+     * @param probSum
+     * @param probs
+     * @return absolute index
+     */
+    private int getRandomIdx(int minIdx, int maxIdx, double probSum, double[] probs){
+        double r = random.nextDouble()*probSum;
+        int absIdx = minIdx-1;
+        double sum = 0;
 
         try {
             do {
-                ++absIdx;
+                absIdx++;
                 sum += probs[absIdx];
-            } while(sum < r);
-        } catch (Exception var12) {
-            var12.printStackTrace();
-            System.err.println("sum " + sum);
-            System.err.println("min " + maxIdx + " max " + maxIdx + " absIdx " + absIdx + " " + Arrays.toString(Arrays.copyOfRange(probs, minIdx, maxIdx + 1)));
-            System.err.println("probsum " + probSum + " sum " + sum + " r " + r);
+            } while (sum<r);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("sum "+sum);
+            System.err.println("min "+maxIdx+" max "+maxIdx+" absIdx "+absIdx+" "+Arrays.toString(Arrays.copyOfRange(probs, minIdx, maxIdx+1)));
+            System.err.println("probsum "+probSum+" sum "+sum+" r "+r);
         }
 
-        if(absIdx > maxIdx) {
-            throw new RuntimeException("sampling by probabilities produced error");
-        } else {
-            return absIdx;
-        }
+        if (absIdx>maxIdx) throw new RuntimeException("sampling by probability produced error");
+
+        return absIdx;
     }
 
     private void updatePeak(int peakIdx) {
         int[] b = this.graph.getPeakBoundaries(peakIdx);
         int min = b[0];
         int max = b[1];
-        double maxLog = -1.0D / 0.0;
+        double maxLog = Double.NEGATIVE_INFINITY;
 
-        for(int sum = min; sum <= max; ++sum) {
-            this.posteriorProbs[sum] = this.getPosteriorScore(this.priorProb[sum], this.graph.getCandidateScore(sum));
-            if(this.posteriorProbs[sum] > maxLog) {
-                maxLog = this.posteriorProbs[sum];
+        for(int i = min; i <= max; ++i) {
+            this.posteriorProbs[i] = this.getPosteriorScore(this.priorProb[i], this.graph.getCandidateScore(i));
+            if(this.posteriorProbs[i] > maxLog) {
+                maxLog = this.posteriorProbs[i];
             }
         }
 
-        double var10 = 0.0D;
+        double sum = 0.0D;
 
         for(int i = min; i <= max; ++i) {
             this.posteriorProbs[i] = Math.exp(this.posteriorProbs[i] - maxLog);
-            var10 += this.posteriorProbs[i];
+            sum += this.posteriorProbs[i];
         }
 
-        assert var10 > 0.0D;
+        assert sum > 0.0D;
 
-        this.posteriorProbSums[peakIdx] = var10;
+        this.posteriorProbSums[peakIdx] = sum;
     }
 
-    public static int[] getRandomOrdering(int max) {
+    /**
+     *
+     * @param max 0..max , max exclusive
+     * @return
+     */
+    public static int[] getRandomOrdering(int max){
         return getRandomOrdering(0, max);
     }
 
+    /**
+     * min ... max, max exclusive
+     * @param min
+     * @param max
+     * @return
+     */
     public static int[] getRandomOrdering(int min, int max) {
         TIntArrayList numbers = new TIntArrayList(max - min);
         TIntArrayList ordering = new TIntArrayList(max - min);
         Random random = new Random();
 
-        int pos;
-        for(pos = min; pos < max; ++pos) {
-            numbers.add(pos);
+        for(int i = min; i < max; ++i) {
+            numbers.add(i);
         }
 
         while(numbers.size() > 0) {
-            pos = random.nextInt(numbers.size());
+            final int pos = random.nextInt(numbers.size());
             ordering.add(numbers.removeAt(pos));
         }
 
         return ordering.toArray();
+    }
+
+
+    private long time;
+
+    private void startTime(){
+//        time = System.currentTimeMillis();
+    }
+
+    private void stopTime(String text){
+//        System.out.println(text+" in "+(System.currentTimeMillis()-time));
+    }
+
+    private void printConnectionCounts(){
+//        int[][] connections = graph.getConnections();
+//        for (int[] connection : connections) {
+//            System.out.println("connCount "+connection.length);
+//        }
     }
 }
