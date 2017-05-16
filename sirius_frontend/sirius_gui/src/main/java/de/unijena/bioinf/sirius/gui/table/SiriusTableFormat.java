@@ -7,6 +7,5 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
  * Created by fleisch on 15.05.17.
  */
 public interface SiriusTableFormat<E> extends TableFormat<E> {
-    int primaryColumn();
-    int getColumnCount();
+    int highlightColumn();
 }

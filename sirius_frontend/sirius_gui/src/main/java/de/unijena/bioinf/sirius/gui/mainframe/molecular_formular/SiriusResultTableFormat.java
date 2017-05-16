@@ -16,11 +16,13 @@ import de.unijena.bioinf.sirius.gui.table.SiriusTableFormat;
 public class SiriusResultTableFormat implements SiriusTableFormat<SiriusResultElement> {
     private static final int COL_COUNT = 5;
 
+
     @Override
-    public int primaryColumn() {
+    public int highlightColumn() {
         return 5;
     }
 
+    @Override
     public int getColumnCount() {
         return COL_COUNT;
     }
@@ -51,5 +53,7 @@ public class SiriusResultTableFormat implements SiriusTableFormat<SiriusResultEl
 
         throw new IllegalStateException();
     }
+
+
 }
 

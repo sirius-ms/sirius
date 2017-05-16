@@ -9,6 +9,7 @@ import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaScoreListStats;
 import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
+import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,10 +35,11 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
     }
 
     public BarTableCellRenderer(boolean drawThresh, ListStats stats) {
-        this(drawThresh, false, stats);
+        this(-1, drawThresh, false, stats);
     }
 
-    public BarTableCellRenderer(boolean drawThresh, boolean percentage, ListStats stats) {
+    public BarTableCellRenderer(int highlightColumn, boolean drawThresh, boolean percentage, ListStats stats) {
+        super(highlightColumn);
         this.drawThresh = drawThresh;
         this.percentage = percentage;
         this.stats = stats;
@@ -46,8 +48,6 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
         double max = stats.getMax();
         double min = stats.getMin() - Math.abs(0.1 * max);
         //todo this is dirty
@@ -59,7 +59,7 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
         thresh = (float) normalize(min, max, Math.abs(CSIFingerIdComputation.calculateThreshold(max)));
-        return this;
+        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     }
 
     private double normalize(double min, double max, double value) {

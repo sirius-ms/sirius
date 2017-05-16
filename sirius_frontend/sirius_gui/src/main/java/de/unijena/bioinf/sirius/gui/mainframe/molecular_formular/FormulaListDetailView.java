@@ -47,11 +47,11 @@ public class FormulaListDetailView extends ActionListView<FormulaList> {
         //todo maibe generify and make public availlable
         selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sorted);
 
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
+        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));
 
-        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(true, true, source.scoreStats));
-        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(false, false, source.isotopeScoreStats));
-        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(false, false, source.treeScoreStats));
+        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tf.highlightColumn(),true, true, source.scoreStats));
+        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tf.highlightColumn(),false, false, source.isotopeScoreStats));
+        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tf.highlightColumn(),false, false, source.treeScoreStats));
 
         table.addMouseListener(new MouseListener() {
             @Override
@@ -103,8 +103,8 @@ public class FormulaListDetailView extends ActionListView<FormulaList> {
 
     ///////////////// Internal //////////////////////////
     protected JPanel createNorth() {
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        JPanel sp = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        JPanel sp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
         sp.add(new JLabel("Filter"));
         sp.add(searchField);
         top.add(sp);

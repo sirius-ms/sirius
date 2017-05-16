@@ -25,13 +25,13 @@ public class ResultPanel extends JTabbedPane {
         svp = new SpectraVisualizationPanel();
         ccv = new CompoundCandidateView();
 //        CandidateList list = new CandidateList(suriusResultElements);
-//        cov =  new CandidateOverviewPanel(new CandidateList(suriusResultElements));
+        cov =  new CandidateOverviewPanel(new CandidateList(suriusResultElements));
 
         addTab("Overview", rvp);
         addTab("Spectra view", new FormulaListHeaderPanel(suriusResultElements, svp));
         addTab("Tree view", new FormulaListHeaderPanel(suriusResultElements, tvp));
         addTab("CSI:FingerId", new FormulaListHeaderPanel(suriusResultElements, ccv));
-//        addTab("Candidate Overview", new FormulaListHeaderPanel(suriusResultElements, cov));
+        addTab("Candidate Overview", new FormulaListHeaderPanel(suriusResultElements, cov));
     }
 
     public void dispose() {

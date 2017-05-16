@@ -201,6 +201,6 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
 
     @Override
     public int compareTo(CompoundCandidate o) {
-        return Double.compare(score, o.score);
+        return Double.compare(o.score,score); //ATTENTION inverse
     }
 }

@@ -2,16 +2,12 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.List;
 
 /**
@@ -24,6 +20,10 @@ public class CandidateListDetailView extends ActionListView<CandidateList> imple
 
     public CandidateListDetailView(final CandidateList list) {
         super(list);
+
+        setLayout(new BorderLayout());
+        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
+
         final SortedList<CompoundCandidate> sorted = new SortedList<CompoundCandidate>(source.getElementList());
         final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sorted);
 
@@ -33,7 +33,7 @@ public class CandidateListDetailView extends ActionListView<CandidateList> imple
                 new StringMatcherEditor(tf, searchField));
         table.setSelectionModel(model);
 
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer());
+        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));
 
 //        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(true, true, source.scoreStats));
 //        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(false, false, source.isotopeScoreStats));
@@ -85,8 +85,8 @@ public class CandidateListDetailView extends ActionListView<CandidateList> imple
 
     ///////////////// Internal //////////////////////////
     protected JPanel createNorth() {
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        JPanel sp = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        JPanel sp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
         sp.add(new JLabel("Filter"));
         sp.add(searchField);
         top.add(sp);

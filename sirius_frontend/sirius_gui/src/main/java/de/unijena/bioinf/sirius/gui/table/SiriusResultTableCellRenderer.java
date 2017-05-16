@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.table;
  */
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
+import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -17,18 +18,29 @@ import java.text.NumberFormat;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
+public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends SiriusTableFormat<E>> extends DefaultTableCellRenderer {
     public final static NumberFormat NF = new DecimalFormat("#0.00");
 
 
     protected Color foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
     protected Color backColor = Colors.LIST_EVEN_BACKGROUND;
     protected String value;
+    private final int highlightColumn;
+
+    public SiriusResultTableCellRenderer(int highlightColumn) {
+        this.highlightColumn = highlightColumn;
+    }
+
+    public SiriusResultTableCellRenderer() {
+        this.highlightColumn = -1;
+    }
+
 
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        final boolean best = ((Boolean) table.getModel().getValueAt(row,5)).booleanValue();
+        final boolean best = highlightColumn >= 0?((Boolean) table.getModel().getValueAt(row, highlightColumn)).booleanValue():false;
+
         if (isSelected) {
             if (best) {
                 backColor = Colors.LIST_SELECTED_GREEN;
@@ -50,7 +62,7 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
         setBackground(backColor);
         setForeground(foreColor);
 
-
+        if (value == null) System.out.println("col=" + column+ " row=" + row);
         this.value = value.toString();
         setHorizontalAlignment(SwingConstants.LEFT);
 
@@ -64,7 +76,6 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             table.getColumnModel().getColumn(column).setMaxWidth(50);
             setHorizontalAlignment(SwingConstants.CENTER);
         }
-
 
         return super.getTableCellRendererComponent(table, this.value, isSelected, hasFocus, row, column);
     }

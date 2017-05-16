@@ -19,13 +19,13 @@ public class CandidateList extends ActionList<CompoundCandidate,ExperimentContai
         super(CompoundCandidate.class);
 
         source.addActiveResultChangedListener(this);
-//        resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
+        resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
 
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selectionModel) {
-        System.out.println("Lock");
+//        System.out.println("Lock");
         elementList.getReadWriteLock().writeLock().lock();
 //        elementList.getReadWriteLock().readLock().lock();
 
@@ -42,10 +42,8 @@ public class CandidateList extends ActionList<CompoundCandidate,ExperimentContai
             }
         }
 
-//        selectionModel.clearSelection();
-
 //        elementList.getReadWriteLock().readLock().unlock();
         elementList.getReadWriteLock().writeLock().unlock();
-        System.out.println("unlocked");
+//        System.out.println("unlocked");
     }
 }
