@@ -21,8 +21,9 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.table.ActionListView;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 
@@ -30,28 +31,27 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+public class CompoundCandidateView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
 
-public class CompoundCandidateView extends JPanel implements ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
-
-    private ExperimentContainer experimentContainer;
-    private SiriusResultElement resultElement;
-    protected CSIFingerIdComputation storage;
+//    private ExperimentContainer experimentContainer;
+//    private SiriusResultElement resultElement;
+    protected final CSIFingerIdComputation storage;
     protected CandidateJList list;
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
 
-    public CompoundCandidateView() {
-        this.storage = MF.getCsiFingerId(); //todo not nice find a better solution
-        refresh();
+    public CompoundCandidateView(CSIFingerIdComputation storage, CandidateList sourceList) {
+        super(sourceList);
+        this.storage = storage;
+        init();
     }
 
     public void dispose() {
         list.dispose();
     }
 
-    private void refresh() {
+    private void init() {
         this.layout = new CardLayout();
         setLayout(layout);
         add(new JPanel(), "null");
@@ -64,16 +64,14 @@ public class CompoundCandidateView extends JPanel implements ActiveElementChange
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateJList(storage, experimentContainer, resultElement == null ? null : resultElement.getFingerIdData());
+        list = new CandidateJList(storage, source);
         add(list, "list");
         setVisible(true);
         resultsChanged(null, null, null, null);
     }
 
     @Override
-    public void resultsChanged(ExperimentContainer ec, SiriusResultElement sre, List<SiriusResultElement> sres, ListSelectionModel selection) {
-        this.experimentContainer = ec;
-        this.resultElement = sre;
+    public void resultsChanged(ExperimentContainer ec, SiriusResultElement resultElement, List<SiriusResultElement> sres, ListSelectionModel selection) {
         list.refresh(ec, resultElement == null ? null : resultElement.getFingerIdData());
 
         if (resultElement == null)
@@ -120,7 +118,7 @@ public class CompoundCandidateView extends JPanel implements ActiveElementChange
             searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);
 
-            searchCSIButton.setEnabled((resultElement != null && storage.isEnabled()));
+            searchCSIButton.setEnabled((!(source.getElementList().isEmpty() || source.getResultListSelectionModel().isSelectionEmpty()) && storage.isEnabled()));
             setVisible(true);
         }
     }

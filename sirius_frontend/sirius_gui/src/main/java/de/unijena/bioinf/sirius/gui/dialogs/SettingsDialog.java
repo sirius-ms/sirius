@@ -10,7 +10,7 @@ import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.sirius.gui.settings.GerneralSettingsPanel;
 import de.unijena.bioinf.sirius.gui.settings.ProxySettingsPanel;
 import de.unijena.bioinf.sirius.gui.settings.SettingsPanel;
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

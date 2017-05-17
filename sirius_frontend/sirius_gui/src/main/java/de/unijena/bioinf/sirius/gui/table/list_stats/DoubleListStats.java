@@ -35,12 +35,15 @@ public class DoubleListStats implements ListStats {
         reset();
         if (values != null) {
             for (double score : values) {
-                scoreSum += score;
-
-                minScoreValue = Math.min(minScoreValue, score);
-                maxScoreValue = Math.max(maxScoreValue, score);
+                addValue(score);
             }
         }
+    }
+
+    public void addValue(double score) {
+        scoreSum += score;
+        minScoreValue = Math.min(minScoreValue, score);
+        maxScoreValue = Math.max(maxScoreValue, score);
     }
 
     public void reset() {

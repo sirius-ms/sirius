@@ -45,9 +45,9 @@ public class CandidateTableFormat implements SiriusTableFormat<CompoundCandidate
         int col = 0;
         if (column == col++) return result.rank;
         if (column == col++) return result.getMolecularFormulaString();
-        if (column == col++) return result.tanimotoScore;
+        if (column == col++) return result.getTanimotoScore();
         if (column == col++) return result.compound.name!= null ? result.compound.name  : "";
-        if (column == col++) return result.score;
+        if (column == col++) return result.getScore();
         if (column == col++) return result.compound.xlogP;
         if (column == col++) return result.compound.inchi.key;
 

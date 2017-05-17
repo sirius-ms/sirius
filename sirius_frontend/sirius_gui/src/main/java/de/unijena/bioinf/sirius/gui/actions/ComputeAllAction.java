@@ -11,7 +11,7 @@ import de.unijena.bioinf.sirius.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

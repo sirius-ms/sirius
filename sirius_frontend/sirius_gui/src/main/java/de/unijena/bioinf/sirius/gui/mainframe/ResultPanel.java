@@ -23,7 +23,7 @@ public class ResultPanel extends JTabbedPane {
         rvp = new FormulaOverviewPanel(suriusResultElements);
         tvp = new TreeVisualizationPanel();
         svp = new SpectraVisualizationPanel();
-        ccv = new CompoundCandidateView();
+        ccv = new CompoundCandidateView(MainFrame.MF.getCsiFingerId(), new CandidateList(suriusResultElements,true));
 //        CandidateList list = new CandidateList(suriusResultElements);
         cov =  new CandidateOverviewPanel(new CandidateList(suriusResultElements));
 

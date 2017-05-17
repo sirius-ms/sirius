@@ -9,7 +9,7 @@ import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 
 import javax.swing.*;
 
-import static de.unijena.bioinf.sirius.gui.utils.Icons.*;
+import static de.unijena.bioinf.sirius.gui.configs.Icons.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

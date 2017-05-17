@@ -9,7 +9,7 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;

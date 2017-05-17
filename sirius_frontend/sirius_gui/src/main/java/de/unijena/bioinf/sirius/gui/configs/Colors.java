@@ -21,7 +21,7 @@ public abstract class Colors {
 
     public final static Color LIST_SELECTED_BACKGROUND = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
     public final static Color LIST_SELECTED_FOREGROUND = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-    public final static Color LIST_EVEN_BACKGROUND = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
+    public final static Color LIST_EVEN_BACKGROUND = Color.WHITE;
     public final static Color LIST_DISABLED_BACKGROUND = UIManager.getColor("ComboBox.background");
     public final static Color LIST_UNEVEN_BACKGROUND = new Color(213, 227, 238);
     public final static Color LIST_ACTIVATED_FOREGROUND = UIManager.getColor("List.foreground");

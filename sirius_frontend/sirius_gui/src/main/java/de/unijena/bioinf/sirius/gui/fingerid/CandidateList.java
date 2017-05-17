@@ -6,18 +6,28 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.ActionList;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateList extends ActionList<CompoundCandidate,ExperimentContainer> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+public class CandidateList extends ActionList<CompoundCandidate, ExperimentContainer> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+
+    public final DoubleListStats scoreStats;
+    public final boolean singleFormulaList;
 
     public CandidateList(final FormulaList source) {
-        super(CompoundCandidate.class);
+        this(source, false);
+    }
 
+    public CandidateList(final FormulaList source, boolean singleFormulaList) {
+        super(CompoundCandidate.class);
+        this.singleFormulaList = singleFormulaList;
+        scoreStats = new DoubleListStats();
         source.addActiveResultChangedListener(this);
         resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
@@ -30,19 +40,32 @@ public class CandidateList extends ActionList<CompoundCandidate,ExperimentContai
 //        elementList.getReadWriteLock().readLock().lock();
 
         elementList.clear();
-        for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
-            if (selectionModel.isSelectedIndex(i)) {
-                final SiriusResultElement e = resultElements.get(i);
-                if (e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
-                    for (int j = 0; j < e.getFingerIdData().compounds.length; j++) {
-                        CompoundCandidate c = new CompoundCandidate(e.getFingerIdData().compounds[j], e.getFingerIdData().scores[j], e.getFingerIdData().tanimotoScores[j], j + 1, j);
-                        elementList.add(c);
-                    }
+        scoreStats.reset();
+
+        List<SiriusResultElement> formulasToShow = new LinkedList<>();
+
+
+        if (singleFormulaList) {
+            formulasToShow.add(sre);
+        } else {
+            for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
+                if (selectionModel.isSelectedIndex(i)) {
+                    formulasToShow.add(resultElements.get(i));
                 }
             }
         }
 
-//        elementList.getReadWriteLock().readLock().unlock();
+        for (SiriusResultElement e : formulasToShow) {
+            if (e != null && e.getFingerIdComputeState().equals(ComputingStatus.COMPUTED)) {
+                for (int j = 0; j < e.getFingerIdData().compounds.length; j++) {
+                    CompoundCandidate c = new CompoundCandidate(j + 1, j, e.getFingerIdData());
+                    elementList.add(c);
+                    scoreStats.addValue(c.getScore());
+                }
+            }
+        }
+
+//        elementList.getReadWriteLock().readLock().unlock(); //todo maybe reanable
         elementList.getReadWriteLock().writeLock().unlock();
 //        System.out.println("unlocked");
     }

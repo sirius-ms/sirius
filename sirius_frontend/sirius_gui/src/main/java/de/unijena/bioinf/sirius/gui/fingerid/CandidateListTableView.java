@@ -13,12 +13,12 @@ import java.util.List;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateListDetailView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+public class CandidateListTableView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
 
     private final ActionTable<CompoundCandidate> table;
     private final JTextField searchField = new JTextField();
 
-    public CandidateListDetailView(final CandidateList list) {
+    public CandidateListTableView(final CandidateList list) {
         super(list);
 
         setLayout(new BorderLayout());

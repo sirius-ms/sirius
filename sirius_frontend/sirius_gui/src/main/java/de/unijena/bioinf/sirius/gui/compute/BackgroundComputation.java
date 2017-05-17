@@ -31,6 +31,7 @@ import de.unijena.bioinf.sirius.*;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.beans.AbstractBean;

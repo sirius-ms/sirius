@@ -39,15 +39,32 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundCandidate extends AbstractBean implements Comparable<CompoundCandidate> {
+    public static final CompoundCandidate PROTOTYPE = new PrototypeCompoundCandidate(Compound.getPrototypeCompound());
+    public static final CompoundCandidate BAD_HACK = new PrototypeCompoundCandidate(null);
 
     public static final boolean ECFP_ENABLED = true;
 
     private static final double THRESHOLD_FP = 0.4;
 
+    protected final FingerIdData data;
     protected final Compound compound;
-    protected final double tanimotoScore;
-    protected final double score;
     protected final int rank,index;
+
+
+    public double getTanimotoScore(){
+        return  data.tanimotoScores[index];
+    }
+    public double getScore(){
+        return  data.scores[index];
+    }
+    public ProbabilityFingerprint getPlatts(){
+        return  data.platts;
+    }
+
+
+
+
+
 
 
     protected boolean prepared = false;//todo fire property change???
@@ -60,19 +77,23 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
     protected boolean atomCoordinatesAreComputed=false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    public CompoundCandidate(Compound compound, double score, double tanimotoScore, int rank, int index) {
-        this.compound = compound;
-        this.score = score;
-        this.tanimotoScore = tanimotoScore;
+    public CompoundCandidate(int rank, int index, FingerIdData data){
+        this(rank,index,data,data.compounds[index]);
+    }
+
+    private CompoundCandidate(int rank, int index, FingerIdData data, Compound compound) {
         this.rank = rank;
         this.index = index;
+        this.data = data;
+        this.compound = compound;
         this.relevantFps = null;
-        if (compound==null || compound.databases==null) {
+
+        if (this.compound ==null || this.compound.databases==null) {
             this.labels = new DatabaseLabel[0];
         } else {
             List<DatabaseLabel> labels = new ArrayList<>();
-            for (String key : compound.databases.keySet()) {
-                final Collection<String> values = compound.databases.get(key);
+            for (String key : this.compound.databases.keySet()) {
+                final Collection<String> values = this.compound.databases.get(key);
                 labels.add(new DatabaseLabel(key, values.toArray(new String[values.size()]), new Rectangle(0,0,0,0)));
             }
             this.labels = labels.toArray(new DatabaseLabel[labels.size()]);
@@ -201,6 +222,32 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
 
     @Override
     public int compareTo(CompoundCandidate o) {
-        return Double.compare(o.score,score); //ATTENTION inverse
+        return Double.compare(o.getScore(),getScore()); //ATTENTION inverse
+    }
+
+    private static class PrototypeCompoundCandidate extends CompoundCandidate{
+
+        /*public PrototypeCompoundCandidate() {
+            super(0, 0, null,Compound.getPrototypeCompound());
+        }*/
+
+        public PrototypeCompoundCandidate(Compound c) {
+            super(0, 0, null,c);
+        }
+
+        @Override
+        public double getTanimotoScore() {
+            return 0d;
+        }
+
+        @Override
+        public double getScore() {
+            return 0d;
+        }
+
+        @Override
+        public ProbabilityFingerprint getPlatts() {
+            return null;
+        }
     }
 }

@@ -25,7 +25,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class StructureSearcher implements Runnable {
 
-    private CandidateJList.ListModel currentModel;
+    private CandidateListModel currentModel;
     private CSIFingerIdComputation computation;
     private Update updater;
     private ArrayBlockingQueue<CompoundCandidate> queue;
@@ -44,8 +44,8 @@ public class StructureSearcher implements Runnable {
         this.shutdown = true;
     }
 
-    public void reloadList(CandidateJList.ListModel candidateList) {
-        queue.add(new CompoundCandidate(null, 0, 0, 0, 0)); // TODO: bad hack
+    public void reloadList(CandidateListModel candidateList) {
+        queue.add(CompoundCandidate.BAD_HACK); // TODO: bad hack
         synchronized (this) {
             this.currentModel = candidateList;
             updater.model = currentModel;
@@ -56,8 +56,8 @@ public class StructureSearcher implements Runnable {
         }
     }
 
-    public void reloadList(CandidateJList.ListModel candidateList, int highlight, int activeCandidate) {
-        queue.add(new CompoundCandidate(null, 0, 0,0, 0)); // TODO: bad hack
+    public void reloadList(CandidateListModel candidateList, int highlight, int activeCandidate) {
+        queue.add(CompoundCandidate.BAD_HACK); // TODO: bad hack
         synchronized (this) {
             this.currentModel = candidateList;
             updater.model = currentModel;
@@ -108,7 +108,7 @@ public class StructureSearcher implements Runnable {
 
     private static class Update implements Runnable, Cloneable {
         private int id;
-        private CandidateJList.ListModel model;
+        private CandidateListModel model;
 
         @Override
         public void run() {
