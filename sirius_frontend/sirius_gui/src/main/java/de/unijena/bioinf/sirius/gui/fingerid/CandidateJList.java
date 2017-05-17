@@ -143,6 +143,7 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             }
         });
         northPanel.add(exportToCSV);
+        northPanel.add(new SearchKeyWordBox());
 
 
         candidateList = new CandidateInnerList(new CandidateListModel(sourceList));
@@ -391,4 +392,51 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
 
 
 
+    private class SearchKeyWordBox extends JPanel implements ActionListener {
+
+        protected JTextField textField;
+
+        public SearchKeyWordBox() {
+            super();
+            System.out.println("SEARCH KEYWORD BOX INITIALIZED!");
+            setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+            this.textField = new JTextField(32);
+            add(textField);
+            textField.addActionListener(this);
+        }
+
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final String label = textField.getText();
+            int I=candidateList.getSelectedIndex();
+            if (I<0) I = 0;
+            for (int i=I, n=candidateList.getModel().getSize(); i < n; ++i) {
+                final CompoundCandidate c = candidateList.getModel().getElementAt(i);
+                if (match(label, c)) {
+                    candidateList.ensureIndexIsVisible(i);
+                    return;
+                }
+            }
+            for (int j = 0; j < I; ++j) {
+                final CompoundCandidate c = candidateList.getModel().getElementAt(j);
+                if (match(label, c)) {
+                    candidateList.ensureIndexIsVisible(j);
+                    return;
+                }
+            }
+        }
+
+        private boolean match(String label, CompoundCandidate c) {
+            if (c.compound.getName()!=null && matchString(label, c.compound.getName())) return true;
+            if (c.compound.getInchi().key.startsWith(label)) return true;
+            if (matchString(label, c.compound.getInchi().in3D)) return true;
+            if (c.compound.smiles!=null && matchString(label, c.compound.smiles.smiles)) return true;
+            return false;
+        }
+
+        private boolean matchString(String label, String name) {
+            return name.contains(label);
+        }
+    }
 }

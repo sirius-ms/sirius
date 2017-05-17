@@ -28,6 +28,7 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
@@ -137,6 +138,7 @@ public class BackgroundComputation extends AbstractBean {
         private final String profile;
         private final JobLog.Job job;
         private final boolean csiFingerIdSearch;
+        private final SearchableDatabase csiFingerIdDb;
         private final boolean enableIsotopesInMs2;
 
         private final FormulaSource formulaSource;
@@ -144,7 +146,7 @@ public class BackgroundComputation extends AbstractBean {
         private volatile List<IdentificationResult> results;
         private volatile ComputingStatus state;
 
-        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource, boolean enableIsotopesInMs2, boolean csiFingerIdSearch) {
+        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource, boolean enableIsotopesInMs2, boolean csiFingerIdSearch, SearchableDatabase csiFingerIdDb) {
             this.profile = profile;
             this.exp = exp;
             this.constraints = constraints;
@@ -156,6 +158,7 @@ public class BackgroundComputation extends AbstractBean {
             this.job = JobLog.getInstance().submit(exp.getGUIName(), "compute trees");
             this.csiFingerIdSearch = csiFingerIdSearch;
             this.enableIsotopesInMs2 = enableIsotopesInMs2;
+            this.csiFingerIdDb = csiFingerIdDb;
         }
     }
 
@@ -173,7 +176,7 @@ public class BackgroundComputation extends AbstractBean {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
-                        csiFingerID.compute(c.exp, csiFingerID.isEnforceBio());
+                        csiFingerID.compute(c.exp, c.csiFingerIdDb);
                     }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
@@ -280,6 +283,7 @@ public class BackgroundComputation extends AbstractBean {
                         final HashSet<MolecularFormula> formulas = new HashSet<>();
                         for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
                             for (FormulaCandidate f : fc) {
+                                System.out.println(f.getFormula() + " " + f.getPrecursorIonType());
                                 if (formulaSource == FormulaSource.PUBCHEM_ORGANIC) {
                                     if (f.getFormula().isCHNOPSBBrClFI()) formulas.add(f.getFormula());
                                 } else {

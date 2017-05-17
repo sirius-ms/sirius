@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
@@ -69,11 +70,11 @@ public class ComputeCSIAction extends AbstractAction {
 
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, false);
         final int returnState = dialog.run();
-
+        final SearchableDatabase db = dialog.getSearchDb();
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
-            MF.getCsiFingerId().computeAll(MF.getCompounds());
+            MF.getCsiFingerId().computeAll(MF.getCompounds(), db);
         } else if (returnState == FingerIdDialog.COMPUTE) {
-            MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected());
+            MF.getCsiFingerId().computeAll(MF.getCompoundListSelectionModel().getSelected(), db);
         }
     }
 

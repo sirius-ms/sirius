@@ -187,7 +187,7 @@ SIRIUS recognizes the following options:
 
   Specify the used ionization. See :ref:`ions`. By default, ``[M+H]+`` is used.
 
-.. option:: -z <mz>, --parentmass <mz>
+.. option:: -z <exactMass>, --parentmass <exactMass>
 
   Specify the parentmass of the input spectra. You have to give the exact measured value, not the selected ion mass.
 
