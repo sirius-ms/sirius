@@ -284,10 +284,15 @@ public class CustomDatabase implements SearchableDatabase {
         }
 
         public void importFromString(String str) throws IOException {
+            importFromString(str, null);
+        }
+
+        public void importFromString(String str, String id) throws IOException {
             if (str.startsWith("InChI")) {
                 // try InChI parser
                 try {
                     final IAtomContainer molecule = inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer();
+                    if (id!=null) molecule.setID(id);
                     addMolecule(molecule);
                 } catch (CDKException e) {
                     throw new IOException(e);
@@ -296,6 +301,7 @@ public class CustomDatabase implements SearchableDatabase {
                 // try SMILES parser
                 try {
                     final IAtomContainer molecule = smilesParser.parseSmiles(str);
+                    if (id!=null) molecule.setID(id);
                     addMolecule(molecule);
                 } catch (CDKException e) {
                     throw new IOException(e);
@@ -390,17 +396,18 @@ public class CustomDatabase implements SearchableDatabase {
             try {
                 final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
                 for (IAtomContainer c : moleculeBuffer) {
+                    System.err.println(SmilesGenerator.unique().create(c));
                     final String key;
                     try {
                         key = icf.getInChIGenerator(c).getInchiKey().substring(0, 14);
                         Comp comp = new Comp(key);
                         comp.molecule = c;
                         dict.put(key, comp);
-                    } catch (CDKException e) {
+                    } catch (CDKException | IllegalArgumentException e) {
                         logger.error(e.getMessage(), e);
                     }
                 }
-            } catch (CDKException e) {
+            } catch (CDKException | IllegalArgumentException e) {
                 logger.error(e.getMessage(), e);
             }
             logger.info("Try downloading compounds");
@@ -421,7 +428,7 @@ public class CustomDatabase implements SearchableDatabase {
             for (Comp c : dict.values()) {
                 try {
                     addToBuffer(computeCompound(c.molecule, c.molecule.getID(), c.candidate));
-                } catch (CDKException e) {
+                } catch (CDKException | IllegalArgumentException e) {
                     logger.error(e.getMessage(),e);
                 }
             }
@@ -457,7 +464,7 @@ public class CustomDatabase implements SearchableDatabase {
             return fc;
         }
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName) throws CDKException {
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName) throws CDKException, IllegalArgumentException {
             InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule);
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             molecule = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();

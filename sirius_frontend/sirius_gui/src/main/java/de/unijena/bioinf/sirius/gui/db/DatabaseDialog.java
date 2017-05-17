@@ -1,13 +1,20 @@
 package de.unijena.bioinf.sirius.gui.db;
 
+import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.ext.ConfirmDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
+import de.unijena.bioinf.sirius.gui.load.CsvFields;
+import de.unijena.bioinf.sirius.gui.load.csv.GeneralCSVDialog;
+import de.unijena.bioinf.sirius.gui.load.csv.SimpleCsvParser;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
+import de.unijena.bioinf.sirius.gui.utils.PlaceholderTextField;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.io.ReaderFactory;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -21,19 +28,17 @@ import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
 public class DatabaseDialog extends JDialog {
 
-    //todo we should saperade the Dialog from the Database Managing part.
+    //todo we should separate the Dialog from the Database Managing part.
     protected JList<String> dbList;
     protected JButton addCustomDb;
     protected DatabaseView dbView;
-    protected JTextField nameField;
+    protected PlaceholderTextField nameField;
     protected final Frame owner;
 
     public DatabaseDialog(final Frame owner) {
@@ -45,9 +50,11 @@ public class DatabaseDialog extends JDialog {
         this.dbList = new DatabaseList(databases);
 
         final Box box = Box.createVerticalBox();
+
         JScrollPane pane = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         box.add(pane);
-        this.nameField = new JTextField(16);
+        this.nameField = new PlaceholderTextField(16);
+        nameField.setPlaceholder("Enter name of custom database");
         nameField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -273,6 +280,8 @@ public class DatabaseDialog extends JDialog {
 
         protected volatile int molBufferSize, fpBufferSize;
 
+        protected static Logger logger = LoggerFactory.getLogger(ImportCompoundsDialog.class);
+
         protected SwingWorker<List<InChI>, ImportStatus> worker;
         public ImportCompoundsDialog(Frame owner, CustomDatabase.Importer importer) {
             super(owner, "Import compounds", true);
@@ -331,6 +340,32 @@ public class DatabaseDialog extends JDialog {
             } else {
                 statusText.setText("Predict fingerprints for " + stringsOrFiles.size() + " compounds");
             }
+
+            GeneralCSVDialog parser = null;
+            final GeneralCSVDialog.Field inchi = new CsvFields.InChIField(0, 1), smiles = new CsvFields.SMILESField(0, 1), id = new CsvFields.IDField(0, 1);
+
+            outer:
+            for (Object o : stringsOrFiles) {
+                if (o instanceof File) {
+                    final File f = (File) o;
+                    if (f.exists()) {
+                        final List<String> preview = getPreviewIfIsCsv(f);
+                        if (preview != null) {
+
+                            parser = GeneralCSVDialog.makeCsvImporterDialog(getOwner(), preview, new Predicate<GeneralCSVDialog>() {
+                                @Override
+                                public boolean apply(GeneralCSVDialog input) {
+                                    return input.getFirstColumnFor(inchi)>= 0 || input.getFirstColumnFor(smiles)>=0;
+                                }
+                            }, inchi,smiles,id);
+                            break outer;
+                        }
+                    }
+                }
+            }
+            final GeneralCSVDialog csvDialog = parser;
+            final SimpleCsvParser csvParser = csvDialog!=null ? csvDialog.getParser() : null;
+            final int inchiColumn = csvDialog!=null ? csvDialog.getFirstColumnFor(inchi) : 0, smilesColumn = csvDialog!=null ? csvDialog.getFirstColumnFor(smiles) : 0, idColumn = csvDialog!=null ? csvDialog.getFirstColumnFor(id) : 0;
             worker = new SwingWorker<List<InChI>, ImportStatus>(){
 
                 @Override
@@ -362,6 +397,7 @@ public class DatabaseDialog extends JDialog {
                 protected List<InChI> doInBackground() throws Exception {
                     final List<InChI> inchis = new ArrayList<>(stringsOrFiles.size());
                     final List<IAtomContainer> buffer = new ArrayList<>();
+                    final ReaderFactory rf = new ReaderFactory();
                     int k=0;
                     for (Object s : stringsOrFiles) {
                         if (isCancelled()) return Collections.emptyList();
@@ -377,9 +413,64 @@ public class DatabaseDialog extends JDialog {
                             }
                         } else if (s instanceof File) {
                             try {
-                                importer.importFrom((File)s);
+                                boolean isCsv=csvParser!=null;
+                                if (isCsv) {
+                                    try (final InputStream sr = new FileInputStream((File)s)) {
+                                        if (rf.createReader(sr) != null) {
+                                            isCsv = false;
+                                        }
+                                    }
+                                }
+                                if (isCsv) {
+                                    try (final BufferedReader br = new BufferedReader(new FileReader((File)s))) {
+                                        final List<String> inchiOrSmiles = new ArrayList<>();
+                                        final List<String> ids = new ArrayList<>();
+                                        String line;
+                                        while ((line=br.readLine())!=null) {
+                                            String[] tabs = csvParser.parseLine(line);
+
+                                            String id = null;
+                                            if (idColumn>=0) id = tabs[idColumn];
+                                            if (inchiColumn>=0 && tabs[inchiColumn].startsWith("InChI=")) {
+                                                inchiOrSmiles.add(tabs[inchiColumn]);
+                                                ids.add(id);
+                                            } else if (smilesColumn>=0) {
+                                                inchiOrSmiles.add(tabs[smilesColumn]);
+                                                ids.add(id);
+                                            }
+                                        }
+                                        int oldCurrent = status.current;
+                                        status.current = 0;
+                                        status.max = inchiOrSmiles.size();
+                                        String oldMessage = status.topMessage;
+                                        status.topMessage = "Download/Compute " + inchiOrSmiles.size() + " structures";
+                                        int batchSize = Math.min(5, inchiOrSmiles.size()/100);
+                                        publish(status);
+                                        for (int i=0; i < inchiOrSmiles.size(); ++i) {
+                                            try {
+                                                importer.importFromString(inchiOrSmiles.get(i), ids.get(i));
+                                            } catch (Exception e) {
+                                                final ImportStatus sc = status.clone();
+                                                sc.current = i;
+                                                sc.errorMessage = inchiOrSmiles.get(i) + ": " + e.getMessage();
+                                                publish(sc);
+                                                e.printStackTrace();
+                                            }
+                                            if (i % batchSize==0) {
+                                                final ImportStatus sc = status.clone();
+                                                sc.current = i;
+                                                publish(sc);
+                                            }
+                                        }
+                                        status.current = oldCurrent;
+                                        status.topMessage = oldMessage;
+                                    }
+                                } else {
+                                    importer.importFrom((File)s);
+                                }
                             } catch (Throwable e) {
                                 status.errorMessage = e.getMessage();
+                                e.printStackTrace();
                             }
                         }
 
@@ -399,6 +490,34 @@ public class DatabaseDialog extends JDialog {
             worker.execute();
             pack();
             setVisible(true);
+        }
+
+        private List<String> getPreviewIfIsCsv(File f) {
+            try {
+
+                try (FileInputStream br = new FileInputStream(f)) {
+                    ReaderFactory rf = new ReaderFactory();
+                    if (rf.createReader(br)!=null) return null;
+                }
+
+                try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+                    final ArrayList<String> lines = new ArrayList<>();
+                    // parse 10 lines
+                    String line;
+                    while ((line=br.readLine())!=null) {
+                        lines.add(line);
+                        if (lines.size()>10) break;
+                    }
+                    if (lines.isEmpty()) return null;
+
+                    if (SimpleCsvParser.guessSeparator(lines).parseLine(lines.get(0)).length>1) {
+                        return lines;
+                    } else return null;
+                }
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+                return null;
+            }
         }
 
     }
