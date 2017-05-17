@@ -222,17 +222,6 @@ public class Graph<C extends Candidate<?>> {
     }
 
     private void setConnections() {
-        System.out.println("weight sizes ");
-        int s = 0;
-        for (int i = 0; i < this.size; i++) {
-            if (indexMap[i].size()!=weights[i].size()){
-                throw new RuntimeException("sizes differ ");
-            }
-            s += indexMap[i].size();
-        }
-        System.out.println("weights count "+s);
-
-
         this.connections = this.edgeFilter.postprocessCompleteGraph(this);
         TDoubleArrayList someScores = new TDoubleArrayList();
         HighQualityRandom random = new HighQualityRandom();
@@ -338,10 +327,6 @@ public class Graph<C extends Candidate<?>> {
         double minV = 1.0D;
 
         for (EdgeScorer<C> edgeScorer : edgeScorers) {
-            System.out.println("Test");
-            System.out.println(allCandidates.getClass().getSimpleName());
-            System.out.println(allCandidates[0][0].getClass().getSimpleName());
-            System.out.println(allCandidates[0][0].getCandidate());
             edgeScorer.prepare(allCandidates);
             minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getThreshold();
             System.out.println("minV " + minV);            
