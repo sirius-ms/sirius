@@ -84,7 +84,6 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         for(int i = 0; i < graph.numberOfCompounds(); ++i) {
             int left = graph.getPeakLeftBoundary(i);
             int right = graph.getPeakRightBoundary(i);
-            System.out.println("boundaries " + left + " " + right);
             double[] thresholds = new double[right - left + 1];
 
             int w2;
@@ -102,16 +101,16 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             for(int j = left; j <= right; ++j) {
                 double current_t = graph.getEdgeThreshold(j);
                 if(left == j) {
-                    System.out.println("before " + current_t + " " + t);
+//                    System.out.println("before " + current_t + " " + t);
                 }
 
                 if(current_t != t) {
                     double diff = t - current_t;
                     int[] connections1 = graph.getLogWeightConnections(j);
-                    System.out.println("connection size " + connections1.length);
-                    if(connections1.length < 10) {
-                        System.out.println(((StandardCandidate)graph.getPossibleFormulas1D(j).getCandidate()).getFormula().formatByHill() + " is connected to " + Arrays.toString(connections1));
-                    }
+//                    System.out.println("connection size " + connections1.length);
+//                    if(connections1.length < 10) {
+//                        System.out.println(((StandardCandidate)graph.getPossibleFormulas1D(j).getCandidate()).getFormula().formatByHill() + " is connected to " + Arrays.toString(connections1));
+//                    }
 
 
                     for(int k = 0; k < connections1.length; ++k) {
@@ -149,9 +148,9 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 
         for(int i = 0; i < graph.getSize(); ++i) {
             connections[i] = connectionsList[i].toArray();
-            if(connections[i].length == 0) {
-                System.out.println("no connections at all for " + ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getFormula().formatByHill());
-            }
+//            if(connections[i].length == 0) {
+//                System.out.println("no connections at all for "+ ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getExperiment().getName() +" with " + ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getFormula().formatByHill());
+//            }
         }
 
         return connections;

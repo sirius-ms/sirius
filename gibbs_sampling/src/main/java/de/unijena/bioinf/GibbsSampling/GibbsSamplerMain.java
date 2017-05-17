@@ -154,6 +154,7 @@ public class GibbsSamplerMain {
                     probabilityDistribution1 = new LogNormalDistribution(opts.getThresholdFilter(), opts.isMedian());
                 }
 
+                //todo changed !!!?!?!??!?!?!
                 double minimumOverlap = 0.1D;
                 ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(0.1D), (ScoreProbabilityDistribution)probabilityDistribution1);
                 edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
@@ -968,20 +969,8 @@ public class GibbsSamplerMain {
                             tree = new IonTreeUtils().treeToNeutralTree(tree);
 
 
-//                            System.out.println("no SpectralPreprocessor");
                             //// TODO: changed no spectral tree processor
-//                            try{
-//                                preprocessor.preprocessTrees(tree);
-//                            } catch (RuntimeException e){
-//                                System.out.println("error:"+e.getMessage()+", vertices "+tree.numberOfVertices()+" for "+treePath.getFileName().toString());
-//                                continue;
-//                            }
 
-
-                            //todo ionization in experiment and overall
-//            final SimpleSpectrum spectrum = preprocessor.preprocess(experiment, tree);
-//            final double precursor = preprocessor.getPrecursorMass(tree);
-//            PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
                             PriorityBlockingQueue<FragmentsCandidate> candidates = explanationsMap.get(id);
                             if (candidates==null){
                                 synchronized (experimentMap) {

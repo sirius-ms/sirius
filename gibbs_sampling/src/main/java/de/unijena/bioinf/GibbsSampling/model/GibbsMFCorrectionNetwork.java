@@ -182,16 +182,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     }
 
     public void iteration(int maxSteps, int burnIn) {
-        int sum = 0;
-        int[][] var8 = graph.getConnections();
-        for(int var6 = 0; var6 < var8.length; ++var6) {
-            int[] connection = var8[var6];
-            sum += connection.length;
-        }
-        System.out.println("number of connections2 " + sum / 2);
-
-        printConnectionCounts();
-
         this.burnInRounds = burnIn;
         int iterationStepLength = this.graph.numberOfCompounds();
         long startTime = System.nanoTime();
@@ -338,27 +328,20 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         if(this.currentRound > this.burnInRounds) {
             double absCurrentActive;
             if((double)(this.currentRound - this.burnInRounds) % DEFAULT_CORRELATION_STEPSIZE == 0.0D) {
-                startTime();
-
                 ++this.overallAssignmentFreq[absIdx];
-
                 for(int i = min; i <= max; ++i) {
                     absCurrentActive = this.posteriorProbs[i];
                     this.assignmentFreqByPosterior[i] += absCurrentActive;
                 }
-                stopTime("overallAssignmentFreq");
             }
-            startTime();
             for(int i = min; i <= max; ++i) {
                 absCurrentActive = this.posteriorProbs[i];
                 if(this.maxPosteriorProbs[i] < absCurrentActive) {
                     this.maxPosteriorProbs[i] = absCurrentActive;
                 }
             }
-            stopTime("maxPosterior");
         }
 
-        startTime();
         int relCurrentActive = this.activeIdx[peakIdx];
         int absCurrentActive = relCurrentActive + min;
         int relIndex = absIdx - min;
@@ -380,16 +363,13 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 toUpdate.set(corrspondingPeakIdx);
             }
 
-            stopTime("before update");
-//            System.out.println("update "+toUpdate.cardinality());
-            startTime();
+
             for (int i = toUpdate.nextSetBit(0); i >= 0; i = toUpdate.nextSetBit(i+1)) {
                 updatePeak(i);
                 if (i == Integer.MAX_VALUE) {
                     break; // or (i+1) would overflow
                 }
             }
-            stopTime("after update");
 
             this.activeIdx[peakIdx] = relIndex;
             this.active[absCurrentActive] = false;
@@ -495,21 +475,4 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         return ordering.toArray();
     }
 
-
-    private long time;
-
-    private void startTime(){
-//        time = System.currentTimeMillis();
-    }
-
-    private void stopTime(String text){
-//        System.out.println(text+" in "+(System.currentTimeMillis()-time));
-    }
-
-    private void printConnectionCounts(){
-//        int[][] connections = graph.getConnections();
-//        for (int[] connection : connections) {
-//            System.out.println("connCount "+connection.length);
-//        }
-    }
 }
