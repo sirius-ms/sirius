@@ -7,9 +7,14 @@ public class FragmentsAndLosses {
     private String[] fragments;
     private String[] losses;
 
-    public FragmentsAndLosses(String[] fragments, String[] losses) {
+    private short[] fragIndices;
+    private short[] lossIndices;
+
+    public FragmentsAndLosses(String[] fragments, short[] fragIndices, String[] losses, short[] lossIndices) {
         this.fragments = fragments;
         this.losses = losses;
+        this.fragIndices = fragIndices;
+        this.lossIndices = lossIndices;
     }
 
     public String[] getFragments() {
@@ -18,5 +23,13 @@ public class FragmentsAndLosses {
 
     public String[] getLosses() {
         return losses;
+    }
+
+    public short[] getFragIndices() {
+        return fragIndices;
+    }
+
+    public short[] getLossIndices() {
+        return lossIndices;
     }
 }
