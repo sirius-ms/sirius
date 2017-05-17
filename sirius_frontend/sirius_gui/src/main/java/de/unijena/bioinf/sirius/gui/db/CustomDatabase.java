@@ -8,12 +8,11 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -25,22 +24,37 @@ import org.openscience.cdk.io.ReaderFactory;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.*;
-import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonParser;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-public class CustomDatabase {
+public class CustomDatabase implements SearchableDatabase {
+
+    protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
 
     protected String name;
     protected File path;
+
+    public static List<CustomDatabase> customDatabases() {
+        final List<CustomDatabase> databases = new ArrayList<>();
+        final File root = Workspace.CONFIG_STORAGE.getDatabaseDirectory();
+        final File custom = new File(root, "custom");
+        if (!custom.exists()) {
+            return databases;
+        }
+        for (File subDir : custom.listFiles()) {
+            if (subDir.isDirectory()) {
+                databases.add(new CustomDatabase(subDir.getName(), subDir));
+            }
+        }
+        return databases;
+    }
 
     protected boolean deriveFromPubchem, deriveFromBioDb;
     protected CdkFingerprintVersion version = CdkFingerprintVersion.getDefault();
@@ -50,23 +64,30 @@ public class CustomDatabase {
         this.path = path;
     }
 
-    public void buildDatabase(List<File> files, CompoundImportedListener listener) throws IOException, CDKException {
+    public void buildDatabase(List<File> files, ImporterListener listener) throws IOException, CDKException {
         final Importer importer = getImporter();
+        final HashMap<String, Comp> dict = new HashMap<>(100);
+        final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
         importer.init();
+        importer.addListener(listener);
         for (File f : files) {
-            final List<IAtomContainer> molecules = importer.importFrom(f);
-            for (IAtomContainer mol : molecules) {
-                listener.compoundImported(importer.importCompound(mol, mol.getID()));
-            }
-            if (molecules.size()>1000) {
-                importer.flushBuffer();
-            }
+            importer.importFrom(f);
         }
         importer.flushBuffer();
     }
 
+    private static class Comp {
+        private String inchikey;
+        private IAtomContainer molecule;
+        private FingerprintCandidate candidate;
+
+        public Comp(String inchikey) {
+            this.inchikey = inchikey;
+        }
+    }
+
     public void inheritMetadata(File otherDb) throws IOException {
-        getImporter().inheritMetadata(otherDb);
+        // should be done automatically
     }
 
     public boolean isDeriveFromPubchem() {
@@ -135,12 +156,66 @@ public class CustomDatabase {
         this.version = version;
     }
 
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public boolean searchInPubchem() {
+        return deriveFromPubchem;
+    }
+
+    @Override
+    public boolean searchInBio() {
+        return deriveFromBioDb || deriveFromPubchem;
+    }
+
+    @Override
+    public boolean isCustomDb() {
+        return true;
+    }
+
+    @Override
+    public File getDatabasePath() {
+        return path;
+    }
+
+    public interface ImporterListener {
+        // informs about fingerprints that have to be computed
+        public void newFingerprintBufferSize(int size);
+        // informs about molecules that have to be parsed
+        public void newMoleculeBufferSize(int size);
+        // informs about imported molecule
+        public void newInChI(InChI inchi);
+    }
+
+    public static abstract class AbstractImporterListener implements ImporterListener {
+        // informs about fingerprints that have to be computed
+        public void newFingerprintBufferSize(int size) {
+
+        }
+        // informs about molecules that have to be parsed
+        public void newMoleculeBufferSize(int size) {
+
+        }
+        // informs about imported molecule
+        public void newInChI(InChI inchi) {
+
+        }
+    }
+
     public static class Importer {
 
         CustomDatabase database;
         File currentPath;
+        List<ImporterListener> listeners = new ArrayList<>();
 
+        // fingerprint buffer
         private List<FingerprintCandidate> buffer;
+
+        // molecule buffer
+        private List<IAtomContainer> moleculeBuffer;
 
         protected Fingerprinter fingerprinter;
         protected InChIGeneratorFactory inChIGeneratorFactory;
@@ -152,6 +227,7 @@ public class CustomDatabase {
             this.database = database;
             fingerprintVersion = version;
             this.buffer = new ArrayList<>();
+            this.moleculeBuffer = new ArrayList<>();
             currentPath = database.path;
             if (currentPath==null) throw new NullPointerException();
             try {
@@ -170,7 +246,15 @@ public class CustomDatabase {
             }
         }
 
-        public void collect(CompoundImportedListener listener) {
+        public void addListener(ImporterListener listener) {
+            listeners.add(listener);
+        }
+        public void removeListener(ImporterListener listener) {
+            listeners.remove(listener);
+        }
+
+        @Deprecated
+        public void collect(ImporterListener listener) {
             for (File f : currentPath.listFiles()) {
                 if (!f.getName().endsWith("json.gz")) continue;
                 synchronized(this) {
@@ -178,7 +262,7 @@ public class CustomDatabase {
                         try (final JsonReader parser = Json.createReader(new GZIPInputStream(new FileInputStream(f)))) {
                             final JsonArray ary = parser.readObject().getJsonArray("compounds");
                             for (int k=0; k < ary.size(); ++k) {
-                                listener.compoundImported(CompoundCandidate.fromJSON(ary.getJsonObject(k)).getInchi());
+                                listener.newInChI(CompoundCandidate.fromJSON(ary.getJsonObject(k)).getInchi());
                             }
                         }
                     } catch (IOException e) {
@@ -199,8 +283,33 @@ public class CustomDatabase {
             }
         }
 
-        protected List<IAtomContainer> importFrom(File file) throws IOException {
-            System.out.println("Read from " +file.toString());
+        public void importFromString(String str) throws IOException {
+            importFromString(str, null);
+        }
+
+        public void importFromString(String str, String id) throws IOException {
+            if (str.startsWith("InChI")) {
+                // try InChI parser
+                try {
+                    final IAtomContainer molecule = inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer();
+                    if (id!=null) molecule.setID(id);
+                    addMolecule(molecule);
+                } catch (CDKException e) {
+                    throw new IOException(e);
+                }
+            } else {
+                // try SMILES parser
+                try {
+                    final IAtomContainer molecule = smilesParser.parseSmiles(str);
+                    if (id!=null) molecule.setID(id);
+                    addMolecule(molecule);
+                } catch (CDKException e) {
+                    throw new IOException(e);
+                }
+            }
+        }
+
+        protected void importFrom(File file) throws IOException {
             ReaderFactory factory = new ReaderFactory();
             ISimpleChemObjectReader reader = null;
             try (InputStream stream = new FileInputStream(file)) {
@@ -212,11 +321,9 @@ public class CustomDatabase {
                         reader.setReader(stream);
                         IChemModel model = SilentChemObjectBuilder.getInstance().newInstance(IChemModel.class);
                         model = reader.read(model);
-                        final ArrayList<IAtomContainer> mols = new ArrayList<>();
                         for (IAtomContainer molecule : model.getMoleculeSet().atomContainers()) {
-                            mols.add(molecule);
+                            addMolecule(molecule);
                         }
-                        return mols;
                     } catch (CDKException e) {
                         throw new IOException(e);
                     }
@@ -243,9 +350,9 @@ public class CustomDatabase {
                         try {
                             final IAtomContainer mol = (inChIGeneratorFactory.getInChIToStructure(aline, SilentChemObjectBuilder.getInstance()).getAtomContainer());
                             if (id!=null) mol.setID(id);
-                            mols.add(mol);
+                            addMolecule(mol);
                         } catch (CDKException e) {
-
+                            logger.error(e.getMessage(),e);
                         }
 
 
@@ -264,88 +371,105 @@ public class CustomDatabase {
                             }
                             try {final IAtomContainer mol = smilesParser.parseSmiles(aline);
                                 if (id!=null) mol.setID(id);
-                                mols.add(mol);} catch (CDKException e) {
-
+                                addMolecule(mol);} catch (CDKException e) {
+                                logger.error(e.getMessage(),e);
                             }
                         }
                     } catch (InvalidSmilesException e) {
                         throw new IOException("Unknown file format: " + file.getName());
                     }
                 }
-                return mols;
             }
         }
 
-        public InChI importCompound(String str) throws IOException {
-            if (str.startsWith("InChI")) {
-                // try InChI parser
-                try {
-                    final IAtomContainer molecule = inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer();
-                    return importCompound(molecule, null);
-                } catch (CDKException e) {
-                    throw new IOException(e);
+        protected void addMolecule(IAtomContainer mol) throws IOException {
+            moleculeBuffer.add(mol);
+            for (ImporterListener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
+            if (moleculeBuffer.size()> 1000) {
+                flushMoleculeBuffer();
+            }
+        }
+
+        private void flushMoleculeBuffer() throws IOException {
+            // start downloading
+            final HashMap<String, Comp> dict = new HashMap<>(moleculeBuffer.size());
+            try {
+                final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
+                for (IAtomContainer c : moleculeBuffer) {
+                    System.err.println(SmilesGenerator.unique().create(c));
+                    final String key;
+                    try {
+                        key = icf.getInChIGenerator(c).getInchiKey().substring(0, 14);
+                        Comp comp = new Comp(key);
+                        comp.molecule = c;
+                        dict.put(key, comp);
+                    } catch (CDKException | IllegalArgumentException e) {
+                        logger.error(e.getMessage(), e);
+                    }
                 }
+            } catch (CDKException | IllegalArgumentException e) {
+                logger.error(e.getMessage(), e);
+            }
+            logger.info("Try downloading compounds");
+            try (final WebAPI webAPI = new WebAPI()){
+                try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ALL, new File("."))) {
+                    try {
+                        for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
+                            logger.info(fc.getInchiKey2D() + " downloaded");
+                            dict.get(fc.getInchiKey2D()).candidate = fc;
+                        }
+                    } catch (DatabaseException e) {
+                        logger.error(e.getMessage(), e);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            for (Comp c : dict.values()) {
+                try {
+                    addToBuffer(computeCompound(c.molecule, c.molecule.getID(), c.candidate));
+                } catch (CDKException | IllegalArgumentException e) {
+                    logger.error(e.getMessage(),e);
+                }
+            }
+            moleculeBuffer.clear();
+            for (ImporterListener l : listeners) l.newMoleculeBufferSize(0);
+        }
+
+        private void addToBuffer(FingerprintCandidate fingerprintCandidate) throws IOException {
+            buffer.add(fingerprintCandidate);
+            for (ImporterListener l : listeners) l.newFingerprintBufferSize(buffer.size());
+            if (buffer.size() > 10000)
+                flushBuffer();
+        }
+
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName, FingerprintCandidate fc) throws CDKException {
+            if (fc==null) return computeCompound(molecule,optionalName);
+            logger.info("download fingerprint " + fc.getInchiKey2D());
+            if (fc.getLinks()==null) fc.setLinks(new DBLink[0]);
+            if (optionalName!=null) {
+                fc.setName(optionalName);
+                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length+1);
+                ls[ls.length-1] = new DBLink(database.name, optionalName);
+                fc.setLinks(ls);
             } else {
-                // try SMILES parser
-                try {
-                    final IAtomContainer molecule = smilesParser.parseSmiles(str);
-                    return importCompound(molecule, null);
-                } catch (CDKException e) {
-                    throw new IOException(e);
-                }
+                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length+1);
+                ls[ls.length-1] = new DBLink(database.name, "");
+                fc.setLinks(ls);
             }
+            fc.setBitset(fc.getBitset() | DatasourceService.Sources.CUSTOM.flag);
+            synchronized (buffer){
+                buffer.add(fc);
+            }
+            return fc;
         }
 
-        protected void inheritMetadata(File otherDb) throws IOException {
-            for (File formulaFile : currentPath.listFiles()) {
-                if (formulaFile.getName().endsWith(".json.gz")) {
-
-                    final File otherFormulaFile = new File(otherDb, formulaFile.getName());
-                    if (!otherFormulaFile.exists()) continue;
-
-                    final HashMap<String, Compound> compoundPerInchiKey = new HashMap<>();
-                    final List<Compound> compounds = new ArrayList<>();
-                    try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(formulaFile)))) {
-                        Compound.parseCompounds(null, compounds, parser);
-                    }
-                    for (Compound c : compounds) {
-                        compoundPerInchiKey.put(c.getInchi().key2D(), c);
-                    }
-
-                    compounds.clear();
-                    try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(otherFormulaFile)))) {
-                        Compound.parseCompounds(null, compounds, parser);
-                    }
-                    boolean dirty=false;
-                    for (Compound meta : compounds) {
-                        final Compound c = compoundPerInchiKey.get(meta.getInchi().key2D());
-                        if (c!=null) {
-                            c.mergeMetaData(meta);
-                            dirty=true;
-                        }
-                    }
-
-                    if (!dirty) continue;
-                    try (final JsonGenerator writer = Json.createGenerator(new GZIPOutputStream(new FileOutputStream(formulaFile)))) {
-                        writer.writeStartObject();
-                        writer.writeStartArray("compounds");
-                        for (Compound fc : compoundPerInchiKey.values()) {
-                            fc.asFingerprintCandidate().writeToJSON(writer, true);
-                        }
-                        writer.writeEnd();
-                        writer.writeEnd();
-                    }
-
-
-                }
-            }
-        }
-
-        protected InChI importCompound(IAtomContainer molecule, String optionalName) throws CDKException {
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName) throws CDKException, IllegalArgumentException {
             InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule);
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             molecule = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
             final boolean[] fps = fingerprinter.fingerprintsToBooleans(fingerprinter.computeFingerprints(molecule));
+            logger.info("compute fingerprint " + inchi.key2D());
             final Fingerprint fp = new BooleanFingerprint(fingerprintVersion, fps).asArray();
             final String smiles = smilesGen.create(molecule);
 
@@ -361,7 +485,7 @@ public class CustomDatabase {
             synchronized (buffer){
                 buffer.add(fc);
             }
-            return fc.getInchi();
+            return fc;
         }
 
         protected synchronized void flushBuffer() throws IOException {
@@ -377,6 +501,7 @@ public class CustomDatabase {
             for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
                 mergeCompounds(entry.getKey(), entry.getValue());
             }
+            for (ImporterListener l : listeners) l.newFingerprintBufferSize(buffer.size());
 
         }
 
@@ -416,6 +541,11 @@ public class CustomDatabase {
             }
             currentPath.delete();
         }
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
 }

@@ -129,7 +129,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         JPanel otherPanel = new JPanel();
         otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        csiOptions = new FingerIDComputationPanel(searchProfilePanel.getFormulaSource() == FormulaSource.BIODB);
+        csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases());
+        if (searchProfilePanel.getFormulaSource() == FormulaSource.BIODB) csiOptions.setIsBioDB(true);
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
         //todo ugly workaround better listen to fingerID
         if (MainFrame.MF.getCsiFingerId().isEnabled() && MainFrame.MF.getCsiFingerId().isConnected()) {
@@ -267,15 +268,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
     }
 
-    private double getSelectedIonMass() {
+    private Double getSelectedIonMass() {
         Object selected = box.getSelectedItem();
         double pm = 0;
         if (selected instanceof CompactPeak) {
             CompactPeak cp = (CompactPeak) selected;
             pm = cp.getMass();
-        } else {
+        } else if (selected != null && !selected.toString().isEmpty()) {
             pm = Double.parseDouble(selected.toString());
-        }
+        } else return null;
         return pm;
     }
 
@@ -381,8 +382,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                owner.getCsiFingerId().setEnforceBio(csiOptions.biodb.isSelected());
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, searchProfilePanel.hasIsotopesEnabled(), runCSIFingerId.isSelected());
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, searchProfilePanel.hasIsotopesEnabled(), runCSIFingerId.isSelected(), csiOptions.getDb());
                 tasks.add(task);
                 compoundList.add(ec);
             }
@@ -402,7 +402,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     public void initSingleExperiment(Box mainPanel, List<Element> detectableElements) {
-        ExperimentContainer ec = compoundsToProcess.get(0);
+        final ExperimentContainer ec = compoundsToProcess.get(0);
         JPanel focMassPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         Vector<CompactPeak> masses = new Vector<>();
         double maxInt = -1;
@@ -449,6 +449,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         box.setEditable(true);
         MyListCellRenderer renderer = new MyListCellRenderer(masses);
         box.setRenderer(renderer);
+        box.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.err.println("TRIGGERED!");
+                final Double value = getSelectedIonMass();
+                if (value != null) ec.setSelectedFocusedMass(value);
+            }
+        });
 
         AutoCompleteDecorator.decorate(box, new ObjectToStringConverter() {
             @Override

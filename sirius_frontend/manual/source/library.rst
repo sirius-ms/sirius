@@ -48,11 +48,11 @@ Create Datastructures
 
 Sirius provides the following functions to create the basic data structures:
 
-.. java:method:: public Spectrum<Peak> wrapSpectrum(double[] mz, double[] intensities)
+.. java:method:: public Spectrum<Peak> wrapSpectrum(double[] exactMass, double[] intensities)
 
   Wraps an array of m/z values and and array of intensity values into a spectrum object that can be used by the SIRIUS library. The resulting spectrum is a lightweight view on the array, so changes in the array are reflected in the spectrum. The spectrum object itself is immutable.
 
-  :param mz: mass to charge ratios
+  :param exactMass: mass to charge ratios
   :param intensities: intensity values. Can be normalized or absolute values - SIRIUS will normalize them itself if necessary
   :return: view on the arrays implementing the Spectrum interface
 
