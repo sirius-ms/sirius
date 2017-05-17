@@ -18,7 +18,6 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.ConfidenceScore.confidenceScore.ScoredCandidate;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Colors;

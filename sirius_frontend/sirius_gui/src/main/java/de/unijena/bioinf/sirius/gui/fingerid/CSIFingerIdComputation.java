@@ -216,8 +216,6 @@ public class CSIFingerIdComputation {
         for (Compound c : compoundList) fcs.add(c.asFingerprintCandidate());
         final Fingerblast blaster = new Fingerblast(null);
         blaster.setScoring(scoringMethod.getScoring(performances));
-
-        final Fingerprint detPlatts = plattScores.asDeterministic();
         try {
             List<Scored<FingerprintCandidate>> candidates = blaster.score(fcs, plattScores);
             final double[] scores = new double[candidates.size()];
@@ -231,7 +229,7 @@ public class CSIFingerIdComputation {
 
             for (Scored<FingerprintCandidate> candidate : candidates) {
                 scores[k] = candidate.getScore();
-                tanimotos[k] = candidate.getCandidate().getFingerprint().tanimoto(detPlatts);
+                tanimotos[k] = Tanimoto.tanimoto(candidate.getCandidate().getFingerprint(), plattScores);
                 comps[k] = compounds.get(candidate.getCandidate().getInchiKey2D());
                 if (comps[k] == null) {
                     comps[k] = new Compound(candidate.getCandidate());
