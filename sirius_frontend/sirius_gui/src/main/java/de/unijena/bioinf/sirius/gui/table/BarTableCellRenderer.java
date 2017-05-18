@@ -49,12 +49,12 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         double max = stats.getMax();
-        double min = stats.getMin() - Math.abs(0.1 * max);
+        double min = stats.getMin() /*- Math.abs(*//*0.1 * *//*max)*/;
         //todo this is dirty
         double normSum = stats instanceof FormulaScoreListStats ? ((FormulaScoreListStats) stats).getExpScoreSum() : stats.getSum();
 
         double current = (Double) value;
-        percentageValue = String.format("%.2f", Math.exp(current) / normSum * 100d) + "%";
+        percentageValue = String.format("%.2f",current);// String.format("%.2f", Math.exp(current) / normSum * 100d) + "%";
         this.max = NF.format(max);
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
