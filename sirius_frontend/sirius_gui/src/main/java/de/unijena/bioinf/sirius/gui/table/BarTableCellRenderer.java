@@ -54,7 +54,7 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
         double normSum = stats instanceof FormulaScoreListStats ? ((FormulaScoreListStats) stats).getExpScoreSum() : stats.getSum();
 
         double current = (Double) value;
-        percentageValue = String.format("%.2f",current);// String.format("%.2f", Math.exp(current) / normSum * 100d) + "%";
+        percentageValue =  String.format("%.2f", Math.exp(current) / normSum * 100d) + "%"; //String.format("%.2f",current);
         this.max = NF.format(max);
         toFill = (float) normalize(min, max, current);
         selected = isSelected;
