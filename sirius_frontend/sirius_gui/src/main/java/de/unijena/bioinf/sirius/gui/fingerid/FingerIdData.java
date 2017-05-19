@@ -34,7 +34,7 @@ public class FingerIdData extends AbstractBean {
     private double confidence;
     private double topScore;
     public final SearchableDatabase db;
-    protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
+//    protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
     public EnumSet<DatasourceService.Sources> dbSelection;
 
     public FingerIdData(SearchableDatabase db, Compound[] compounds, double[] scores, double[] tanimotoScores, ProbabilityFingerprint platts) {
@@ -68,7 +68,7 @@ public class FingerIdData extends AbstractBean {
         firePropertyChange("topScore",old,this.topScore);
     }
 
-    public double getMinLogPFilter() {
+    /*public double getMinLogPFilter() {
         return minLogPFilter;
     }
 
@@ -86,5 +86,5 @@ public class FingerIdData extends AbstractBean {
         double old = this.maxLogPFilter;
         this.maxLogPFilter = maxLogPFilter;
         firePropertyChange("maxLogPFilter",old,this.maxLogPFilter);
-    }
+    }*/
 }

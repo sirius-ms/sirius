@@ -20,7 +20,6 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import org.jdesktop.beans.AbstractBean;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -39,8 +38,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundCandidate extends AbstractBean implements Comparable<CompoundCandidate> {
-    public static final CompoundCandidate PROTOTYPE = new PrototypeCompoundCandidate(Compound.getPrototypeCompound());
-    public static final CompoundCandidate BAD_HACK = new PrototypeCompoundCandidate(null);
+    public static final CompoundCandidate PROTOTYPE = new PrototypeCompoundCandidate();
 
     public static final boolean ECFP_ENABLED = true;
 
@@ -48,53 +46,77 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
 
     protected final FingerIdData data;
     protected final Compound compound;
-    protected final int rank,index;
+    protected final int rank, index;
+    protected final String molecularFormulaString;
 
 
-    public double getTanimotoScore(){
-        return  data.tanimotoScores[index];
-    }
-    public double getScore(){
-        return  data.scores[index];
-    }
-    public ProbabilityFingerprint getPlatts(){
-        return  data.platts;
+    public double getTanimotoScore() {
+        return data.tanimotoScores[index];
     }
 
+    public double getScore() {
+        return data.scores[index];
+    }
 
+    public ProbabilityFingerprint getPlatts() {
+        return data.platts;
+    }
 
+    public FingerIdData getData() {
+        return data;
+    }
 
+    public String getName() {
+        return compound.getName();
+    }
 
+    public String getInChiKey() {
+        return compound.getInchi().key;
+    }
+
+    public Compound getCompound() {
+        return compound;
+    }
+
+    public String getMolecularFormula() {
+        return molecularFormulaString; // is that time intensive
+    }
 
 
     protected boolean prepared = false;//todo fire property change???
 
-    protected CircularFingerprinter.FP[] relevantFps; protected int[] ecfpHashs;//todo fire property change???
+    protected CircularFingerprinter.FP[] relevantFps;
+    protected int[] ecfpHashs;//todo fire property change???
 
     protected FingerprintAgreement substructures; //todo fire property change???
     protected final DatabaseLabel[] labels;
-    protected int highlightedIndex=-1;
-    protected boolean atomCoordinatesAreComputed=false;
+
+    protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    public CompoundCandidate(int rank, int index, FingerIdData data){
-        this(rank,index,data,data.compounds[index]);
+    public CompoundCandidate(int rank, int index, FingerIdData data) {
+        this(rank, index, data, data.compounds[index], data.compounds[index].getInchi().extractFormula().toString());
     }
 
-    private CompoundCandidate(int rank, int index, FingerIdData data, Compound compound) {
+    public CompoundCandidate(int rank, int index, FingerIdData data, String formula) {
+        this(rank, index, data, data.compounds[index], formula);
+    }
+
+    private CompoundCandidate(int rank, int index, FingerIdData data, Compound compound, String formula) {
         this.rank = rank;
         this.index = index;
         this.data = data;
         this.compound = compound;
+        this.molecularFormulaString = formula;
         this.relevantFps = null;
 
-        if (this.compound ==null || this.compound.databases==null) {
+        if (this.compound == null || this.compound.databases == null) {
             this.labels = new DatabaseLabel[0];
         } else {
             List<DatabaseLabel> labels = new ArrayList<>();
             for (String key : this.compound.databases.keySet()) {
                 final Collection<String> values = this.compound.databases.get(key);
-                labels.add(new DatabaseLabel(key, values.toArray(new String[values.size()]), new Rectangle(0,0,0,0)));
+                labels.add(new DatabaseLabel(key, values.toArray(new String[values.size()]), new Rectangle(0, 0, 0, 0)));
             }
             this.labels = labels.toArray(new DatabaseLabel[labels.size()]);
         }
@@ -107,7 +129,7 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
             sdg.setMolecule(compound.getMolecule(), false);
             sdg.generateCoordinates();
         } catch (CDKException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             return false;
         }
         atomCoordinatesAreComputed = true;
@@ -118,23 +140,24 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
         return compound.fingerprint.isSet(index);
     }
 
-    public boolean highlightFingerprint(CSIFingerIdComputation computation, int absoluteIndex) {
+    public boolean highlightFingerprint(int absoluteIndex) {
         if (!prepared) parseAndPrepare();
         final FingerprintVersion version = compound.fingerprint.getFingerprintVersion();
         final IAtomContainer molecule = compound.getMolecule();
         for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
-        for (IBond bond: molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
+        for (IBond bond : molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         if (!hasFingerprintIndex(absoluteIndex)) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
         }
         final MolecularProperty property = version.getMolecularProperty(absoluteIndex);
         if (property instanceof SubstructureProperty) {
-            final String smarts = ((SubstructureProperty)property).getSmarts();
+            final String smarts = ((SubstructureProperty) property).getSmarts();
             final HashMap<IAtom, Integer> colorMap = new HashMap<>();
 
             int minCount;
-            if (property instanceof SubstructureCountProperty) minCount = ((SubstructureCountProperty)property).getMinimalCount();
+            if (property instanceof SubstructureCountProperty)
+                minCount = ((SubstructureCountProperty) property).getMinimalCount();
             else minCount = 1;
 
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
@@ -148,13 +171,13 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
                         for (int i : mapping) atoms.add(molecule.getAtom(i));
                         for (Integer i : mapping) {
                             if (!colorMap.containsKey(molecule.getAtom(i)))
-                                colorMap.put(molecule.getAtom(i), minCount>=0 ? 0 : 1);
-                            if (molecule.getAtom(i).getProperty(StandardGenerator.HIGHLIGHT_COLOR)==null)
-                                molecule.getAtom(i).setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount>=0 ? CandidateJList.PRIMARY_HIGHLIGHTED_COLOR : CandidateJList.SECONDARY_HIGHLIGHTED_COLOR);
+                                colorMap.put(molecule.getAtom(i), minCount >= 0 ? 0 : 1);
+                            if (molecule.getAtom(i).getProperty(StandardGenerator.HIGHLIGHT_COLOR) == null)
+                                molecule.getAtom(i).setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount >= 0 ? CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR : CandidateListDetailView.SECONDARY_HIGHLIGHTED_COLOR);
                             for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(i))) {
                                 if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
-                                    if (b.getProperty(StandardGenerator.HIGHLIGHT_COLOR)==null)
-                                        b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount>=0 ? CandidateJList.PRIMARY_HIGHLIGHTED_COLOR : CandidateJList.SECONDARY_HIGHLIGHTED_COLOR);
+                                    if (b.getProperty(StandardGenerator.HIGHLIGHT_COLOR) == null)
+                                        b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount >= 0 ? CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR : CandidateListDetailView.SECONDARY_HIGHLIGHTED_COLOR);
                                 }
                             }
 
@@ -162,7 +185,7 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
                     }
                 }
             } catch (CDKException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
             molecule.setProperty(HighlightGenerator.ID_MAP, colorMap);
             return true;
@@ -174,10 +197,10 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
                 for (int i : relevantFps[index].atoms) atoms.add(molecule.getAtom(i));
                 for (int atom : relevantFps[index].atoms) {
                     colorMap.put(compound.molecule.getAtom(atom), 0);
-                    molecule.getAtom(atom).setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateJList.PRIMARY_HIGHLIGHTED_COLOR);
+                    molecule.getAtom(atom).setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
                     for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(atom))) {
                         if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
-                            b.setProperty(StandardGenerator.HIGHLIGHT_COLOR,CandidateJList.PRIMARY_HIGHLIGHTED_COLOR);
+                            b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
                         }
                     }
                 }
@@ -190,7 +213,8 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
     }
 
     public FingerprintAgreement getSubstructures(CSIFingerIdComputation computations, ProbabilityFingerprint prediction) {
-        if (substructures ==null) substructures = FingerprintAgreement.getSubstructures(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.performances, 0.25);
+        if (substructures == null)
+            substructures = FingerprintAgreement.getSubstructures(prediction.getFingerprintVersion(), prediction.toProbabilityArray(), compound.fingerprint.toBooleanArray(), computations.performances, 0.25);
         return substructures;
     }
 
@@ -206,33 +230,27 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
                 ecfpFingerprinter.getBitFingerprint(compound.getMolecule());
                 this.relevantFps = ecfpFingerprinter.getRelevantFingerprintDetails();
                 this.ecfpHashs = new int[relevantFps.length];
-                for (int k=0; k < relevantFps.length; ++k) ecfpHashs[k] = relevantFps[k].hashCode;
+                for (int k = 0; k < relevantFps.length; ++k) ecfpHashs[k] = relevantFps[k].hashCode;
             }
-            prepared=true;
+            prepared = true;
         } catch (CDKException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
 
     }
 
-    public String getMolecularFormulaString(){
-        return compound.inchi.extractFormula().toString(); // is that time intensive
-    }
-
-
     @Override
     public int compareTo(CompoundCandidate o) {
-        return Double.compare(o.getScore(),getScore()); //ATTENTION inverse
+        return Double.compare(o.getScore(), getScore()); //ATTENTION inverse
     }
 
-    private static class PrototypeCompoundCandidate extends CompoundCandidate{
+    public double getXLogP() {
+        return getCompound().xlogP;
+    }
 
-        /*public PrototypeCompoundCandidate() {
-            super(0, 0, null,Compound.getPrototypeCompound());
-        }*/
-
-        public PrototypeCompoundCandidate(Compound c) {
-            super(0, 0, null,c);
+    private static class PrototypeCompoundCandidate extends CompoundCandidate {
+        private PrototypeCompoundCandidate() {
+            super(0, 0, null, Compound.getPrototypeCompound(),"PROTO");
         }
 
         @Override

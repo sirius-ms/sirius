@@ -25,56 +25,49 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class StructureSearcher implements Runnable {
 
-    private CandidateListModel currentModel;
-    private CSIFingerIdComputation computation;
-    private Update updater;
+    private final Update updater;
     private ArrayBlockingQueue<CompoundCandidate> queue;
 
     private int highlight;
 
     private boolean shutdown = false;
 
-    public StructureSearcher(CSIFingerIdComputation computation, int ncandidates) {
-        this.queue = new ArrayBlockingQueue<CompoundCandidate>(10 + ncandidates);
+    public StructureSearcher(int ncandidates) {
+        this.queue = new ArrayBlockingQueue<>(10 + ncandidates);
         this.updater = new Update();
-        this.computation = computation;
     }
 
     public void stop() {
         this.shutdown = true;
     }
 
-    public void reloadList(CandidateListModel candidateList) {
-        queue.add(CompoundCandidate.BAD_HACK); // TODO: bad hack
+    public void reloadList(CandidateList candidateList) {
+        queue.clear();
         synchronized (this) {
-            this.currentModel = candidateList;
-            updater.model = currentModel;
-            this.queue.clear();
-            queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize() + 10);
-            queue.addAll(candidateList.candidates);
+            updater.sourceList = candidateList;
+            queue = new ArrayBlockingQueue<>(candidateList.getElementList().size() + 10);
+            queue.addAll(candidateList.getElementList());
             notifyAll();
         }
     }
 
-    public void reloadList(CandidateListModel candidateList, int highlight, int activeCandidate) {
-        queue.add(CompoundCandidate.BAD_HACK); // TODO: bad hack
+    public void reloadList(CandidateList candidateList, int highlight, int activeCandidate) {
+        queue.clear();
         synchronized (this) {
-            this.currentModel = candidateList;
-            updater.model = currentModel;
+            updater.sourceList = candidateList;
             this.highlight = highlight;
             if (highlight < 0 || activeCandidate < 0) {
                 this.queue.clear();
             } else {
-                this.queue.clear();
-                queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getSize() + 10);
+                queue = new ArrayBlockingQueue<CompoundCandidate>(candidateList.getElementList().size() + 10);
 
-                int i = activeCandidate+1, j = activeCandidate, n = candidateList.getSize();
+                int i = activeCandidate + 1, j = activeCandidate, n = candidateList.getElementList().size();
                 while ((j >= 0 && j < n) || (i >= 0 && i < n)) {
                     if (j >= 0) {
-                        queue.add(candidateList.getElementAt(j--));
+                        queue.add(candidateList.getElementList().get(j--));
                     }
                     if (i < n) {
-                        queue.add(candidateList.getElementAt(i++));
+                        queue.add(candidateList.getElementList().get(i++));
                     }
                 }
             }
@@ -88,31 +81,35 @@ public class StructureSearcher implements Runnable {
             try {
                 final CompoundCandidate c;
                 synchronized (this) {
-                    c = queue.take();
-                    if (c.compound == null) wait();
+                    if (queue.isEmpty()) {
+                        wait();
+                        continue;
+                    }
                 }
+                c = queue.take();
+
                 if (c.compound == null) continue;
                 c.compoundLock.lock();
                 try {
-                    if (highlight >= 0) c.highlightFingerprint(computation, highlight);
+                    if (highlight >= 0) c.highlightFingerprint(highlight);
                 } finally {
                     c.compoundLock.unlock();
                 }
-                updater.id = c.index;
+                updater.c = c;
                 SwingUtilities.invokeLater(updater.clone());
             } catch (InterruptedException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
     }
 
     private static class Update implements Runnable, Cloneable {
-        private int id;
-        private CandidateListModel model;
+        private CompoundCandidate c;
+        private CandidateList sourceList;
 
         @Override
         public void run() {
-            model.change(id);
+            sourceList.getElementList().elementChanged(c);
         }
 
         public Update clone() {

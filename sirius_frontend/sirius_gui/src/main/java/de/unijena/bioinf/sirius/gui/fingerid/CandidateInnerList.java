@@ -12,11 +12,9 @@ import java.text.NumberFormat;
 public class CandidateInnerList extends JList<CompoundCandidate> {
     private final static NumberFormat prob = new DecimalFormat("%");
 
-
-    public CandidateInnerList(CandidateListModel dataModel) {
+    public CandidateInnerList(ListModel<CompoundCandidate> dataModel) {
         super(dataModel);
     }
-
     @Override
     public String getToolTipText(MouseEvent e) {
         final Point point = e.getPoint();

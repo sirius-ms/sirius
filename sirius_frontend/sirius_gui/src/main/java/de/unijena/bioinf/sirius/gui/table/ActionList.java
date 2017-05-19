@@ -18,14 +18,22 @@ import java.util.List;
  * Created by fleisch on 15.05.17.
  */
 public abstract class ActionList<E extends AbstractBean, D> implements ActiveElements<E, D> {
+    public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
+
     private final List<ActiveElementChangedListener> listeners = new LinkedList<>();
 
     protected ObservableElementList<E> elementList;
     protected DefaultEventSelectionModel<E> selectionModel;
 
     protected D data = null;
+    public final DataSelectionStrategy selectionType;
 
     public ActionList(Class<E> cls) {
+        this(cls,DataSelectionStrategy.FIRST_SELECTED);
+    }
+
+    public ActionList(Class<E> cls, DataSelectionStrategy strategy) {
+        selectionType = strategy;
         elementList = new ObservableElementList<E>(new BasicEventList<E>(), GlazedLists.beanConnector(cls));
         selectionModel = new DefaultEventSelectionModel<>(elementList);
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

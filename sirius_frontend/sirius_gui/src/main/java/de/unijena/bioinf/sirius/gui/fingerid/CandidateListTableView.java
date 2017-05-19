@@ -5,6 +5,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
+import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ import java.util.List;
 public class CandidateListTableView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
 
     private final ActionTable<CompoundCandidate> table;
-    private final JTextField searchField = new JTextField();
+    private final SearchTextField searchField = new SearchTextField();
 
     public CandidateListTableView(final CandidateList list) {
         super(list);
@@ -30,7 +31,7 @@ public class CandidateListTableView extends ActionListView<CandidateList> implem
         final CandidateTableFormat tf = new CandidateTableFormat();
         this.table = new ActionTable<>(sorted,
                 tf,
-                new StringMatcherEditor(tf, searchField));
+                new StringMatcherEditor(tf, searchField.textField));
         table.setSelectionModel(model);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));
@@ -86,10 +87,7 @@ public class CandidateListTableView extends ActionListView<CandidateList> implem
     ///////////////// Internal //////////////////////////
     protected JPanel createNorth() {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        JPanel sp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
-        sp.add(new JLabel("Filter"));
-        sp.add(searchField);
-        top.add(sp);
+        top.add(searchField);
         return top;
     }
 

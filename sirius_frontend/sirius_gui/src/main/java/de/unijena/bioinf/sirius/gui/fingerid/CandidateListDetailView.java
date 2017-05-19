@@ -18,16 +18,15 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -49,14 +48,13 @@ import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
-public class CandidateJList extends JPanel implements MouseListener, ActionListener {
+public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<CompoundCandidate, ExperimentContainer>, MouseListener, ActionListener {
 
-    private final CandidateList sourceList;
-    //    protected FingerIdData data;
+
+
     protected JList<CompoundCandidate> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
-//    protected ExperimentContainer correspondingExperimentContainer;
 
 
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
@@ -65,100 +63,39 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     protected int highlightAgree = -1;
     protected int highlightedCandidate = -1;
     protected int selectedCompoundId;
-    protected HashSet<String> logPCalculated = new HashSet<>();
 
-    protected FilterPanel filterPanel;
+    protected DBFilterPanel dbFilterPanel;
 
-    protected LogPSlider logPSlider;
-
-
-
-    public CandidateJList(final CSIFingerIdComputation computation, CandidateList sourceList) {
-        super();
-        this.sourceList = sourceList;
-        //        this.correspondingExperimentContainer = correspondingExperimentContainer;
-//        updateTopScore();
-        setLayout(new BorderLayout());
-//        this.data = data;
+    public CandidateListDetailView(final CSIFingerIdComputation computation, CandidateList sourceList) {
+        super(sourceList);
 
         JPanel northPanels = new JPanel(new BorderLayout());
         add(northPanels, BorderLayout.NORTH);
 
-        JToolBar northPanel = new JToolBar();
-        northPanel.setFloatable(false);
-        northPanels.add(northPanel, BorderLayout.NORTH);
 
-        filterPanel = new FilterPanel();
-        filterPanel.toggle();
-        filterPanel.whenFilterChanges(new Runnable() {
-            @Override
-            public void run() {
-                updateFilter();
-            }
-        });
-        northPanels.add(filterPanel, BorderLayout.SOUTH);
-
-        logPSlider = new LogPSlider();
-//        northPanel.add(Box.createHorizontalGlue());
-        JLabel l = new JLabel("XLogP filter: ");
-        l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
-        northPanel.add(l);
-        northPanel.add(logPSlider);
-        logPSlider.setCallback(new Runnable() {
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateFilter();
-                    }
-                });
-            }
-        });
-
-        northPanel.addSeparator(new Dimension(10, 10));
+        dbFilterPanel = new DBFilterPanel(sourceList);
+        dbFilterPanel.toggle();
+        northPanels.add(dbFilterPanel, BorderLayout.SOUTH);
 
 
-        final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "show filter");
-        filter.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (filterPanel.toggle()) {
-                    filter.setIcon(Icons.FILTER_UP_24);
-                    filter.setToolTipText("hide filter");
-                } else {
-                    filter.setIcon(Icons.FILTER_DOWN_24);
-                    filter.setToolTipText("show filter");
-                }
-            }
-        });
-        northPanel.add(filter);
+        if (toolBar != null) {
+            candidateList = new CandidateInnerList(new DefaultEventListModel<CompoundCandidate>(toolBar.filteredSourceList));
+        }else{
+            candidateList = new CandidateInnerList(new DefaultEventListModel<CompoundCandidate>(sourceList.getElementList()));
+        }
 
-
-        final JButton exportToCSV = Buttons.getExportButton24("export candidate list");
-        exportToCSV.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                doExport();
-            }
-        });
-        northPanel.add(exportToCSV);
-        northPanel.add(new SearchKeyWordBox());
-
-
-        candidateList = new CandidateInnerList(new CandidateListModel(sourceList));
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(computation, sourceList.scoreStats,this));
+        candidateList.setCellRenderer(new CandidateCellRenderer(computation, sourceList.scoreStats, this));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(CompoundCandidate.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
 
         candidateList.addMouseListener(this);
-        this.structureSearcher = new StructureSearcher(computation, sourceList.getElementList().size()); //todo does this work
+        this.structureSearcher = new StructureSearcher(sourceList.getElementList().size()); //todo does this work
         this.structureSearcherThread = new Thread(structureSearcher);
         structureSearcherThread.start();
-        this.structureSearcher.reloadList((CandidateListModel) candidateList.getModel());
+        this.structureSearcher.reloadList(sourceList);
 
         ///// add popup menu
         popupMenu = new JPopupMenu();
@@ -177,12 +114,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         setVisible(true);
 
     }
-
-    public void updateFilter() {
-        final CandidateListModel model = (CandidateListModel) candidateList.getModel();
-        model.change();
-    }
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -267,16 +198,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
         structureSearcher.stop();
     }
 
-    public void refresh(ExperimentContainer ec, FingerIdData data) {
-//        this.data = data;
-//        this.correspondingExperimentContainer = ec;
-//        updateTopScore();
-        this.filterPanel.setActiveExperiment(data);
-        ((CandidateListModel) candidateList.getModel()).change();
-        this.structureSearcher.reloadList((CandidateListModel) candidateList.getModel());
-        this.logPSlider.refresh(data);
-    }
-
     @Override
     public void mouseClicked(MouseEvent e) {
         if (e.isPopupTrigger()) return;
@@ -305,11 +226,11 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             final int row = ry / CandidateCellRenderer.CELL_SIZE;
             final int col = rx / CandidateCellRenderer.CELL_SIZE;
             highlightAgree = candidate.substructures.indexAt(row, col);
-            structureSearcher.reloadList((CandidateListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
+            structureSearcher.reloadList(sourceList, highlightAgree, highlightedCandidate);
         } else {
             if (highlightAgree >= 0) {
                 highlightAgree = -1;
-                structureSearcher.reloadList((CandidateListModel) candidateList.getModel(), highlightAgree, highlightedCandidate);
+                structureSearcher.reloadList(sourceList, highlightAgree, highlightedCandidate);
             }
 
             double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
@@ -338,9 +259,6 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
             LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
         }
     }
-
-
-
 
 
     private void popup(MouseEvent e, CompoundCandidate candidate) {
@@ -390,53 +308,9 @@ public class CandidateJList extends JPanel implements MouseListener, ActionListe
     public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
     public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
 
-
-
-    private class SearchKeyWordBox extends JPanel implements ActionListener {
-
-        protected JTextField textField;
-
-        public SearchKeyWordBox() {
-            super();
-            System.out.println("SEARCH KEYWORD BOX INITIALIZED!");
-            setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-            this.textField = new JTextField(32);
-            add(textField);
-            textField.addActionListener(this);
-        }
-
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            final String label = textField.getText();
-            int I=candidateList.getSelectedIndex();
-            if (I<0) I = 0;
-            for (int i=I, n=candidateList.getModel().getSize(); i < n; ++i) {
-                final CompoundCandidate c = candidateList.getModel().getElementAt(i);
-                if (match(label, c)) {
-                    candidateList.ensureIndexIsVisible(i);
-                    return;
-                }
-            }
-            for (int j = 0; j < I; ++j) {
-                final CompoundCandidate c = candidateList.getModel().getElementAt(j);
-                if (match(label, c)) {
-                    candidateList.ensureIndexIsVisible(j);
-                    return;
-                }
-            }
-        }
-
-        private boolean match(String label, CompoundCandidate c) {
-            if (c.compound.getName()!=null && matchString(label, c.compound.getName())) return true;
-            if (c.compound.getInchi().key.startsWith(label)) return true;
-            if (matchString(label, c.compound.getInchi().in3D)) return true;
-            if (c.compound.smiles!=null && matchString(label, c.compound.smiles.smiles)) return true;
-            return false;
-        }
-
-        private boolean matchString(String label, String name) {
-            return name.contains(label);
-        }
+    @Override
+    public void resultsChanged(ExperimentContainer experiment, CompoundCandidate sre, List<CompoundCandidate> resultElements, ListSelectionModel selections) {
+        if (sre != null)
+            this.structureSearcher.reloadList(sourceList);
     }
 }

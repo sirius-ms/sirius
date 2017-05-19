@@ -11,6 +11,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
+import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -28,7 +29,7 @@ import java.util.Map;
 public class FormulaListDetailView extends ActionListView<FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
-    private final JTextField searchField = new JTextField();
+    private final SearchTextField searchField = new SearchTextField();
     private final ConnectedSelection<SiriusResultElement> selectionConnection;
 
     public FormulaListDetailView(final FormulaList source) {
@@ -41,7 +42,7 @@ public class FormulaListDetailView extends ActionListView<FormulaList> {
         final SiriusResultTableFormat tf = new SiriusResultTableFormat();
         this.table = new ActionTable<>(sorted,
                 tf,
-                new StringMatcherEditor(tf, searchField));
+                new StringMatcherEditor(tf, searchField.textField));
         table.setSelectionModel(model);
 
         //todo maibe generify and make public availlable
@@ -104,10 +105,8 @@ public class FormulaListDetailView extends ActionListView<FormulaList> {
     ///////////////// Internal //////////////////////////
     protected JPanel createNorth() {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        JPanel sp = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
-        sp.add(new JLabel("Filter"));
-        sp.add(searchField);
-        top.add(sp);
+
+        top.add(searchField);
         return top;
     }
 

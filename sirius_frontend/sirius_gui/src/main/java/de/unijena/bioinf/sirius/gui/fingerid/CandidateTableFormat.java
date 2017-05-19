@@ -1,7 +1,5 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.SiriusTableFormat;
 
 /**
@@ -44,7 +42,7 @@ public class CandidateTableFormat implements SiriusTableFormat<CompoundCandidate
     public static Object getValue(CompoundCandidate result, int column) {
         int col = 0;
         if (column == col++) return result.rank;
-        if (column == col++) return result.getMolecularFormulaString();
+        if (column == col++) return result.getMolecularFormula();
         if (column == col++) return result.getTanimotoScore();
         if (column == col++) return result.compound.name!= null ? result.compound.name  : "";
         if (column == col++) return result.getScore();

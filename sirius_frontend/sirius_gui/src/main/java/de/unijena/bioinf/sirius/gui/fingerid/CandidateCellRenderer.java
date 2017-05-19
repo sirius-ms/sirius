@@ -25,6 +25,7 @@ import java.awt.geom.Rectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by fleisch on 16.05.17.
@@ -39,7 +40,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
 
     protected final Font nameFont, propertyFont, rankFont,  matchFont;
 
-//    private CandidateJList candidateJList;
     private CompoundImage image;
     private DescriptionPanel descriptionPanel;
     private CompoundCandidate currentCandidate;
@@ -47,8 +47,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
     private final CSIFingerIdComputation computation;
     private final DoubleListStats stats;
 
-    protected final CandidateJList candidateJList; //todo remove me to make conversion complete
-    public CandidateCellRenderer(CSIFingerIdComputation computation, DoubleListStats stats, CandidateJList candidateJList) {
+    protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
+    public CandidateCellRenderer(CSIFingerIdComputation computation, DoubleListStats stats, CandidateListDetailView candidateJList) {
         this.candidateJList = candidateJList;
         this.computation = computation;
         this.stats = stats;
@@ -100,23 +100,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
 
         currentCandidate.substructures.setBounds(ra.x, ra.y, ra.width, ra.height);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private class CompoundImage extends JPanel {
 
@@ -318,7 +301,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
     private static final int DB_LABEL_PADDING = 4;
 
     public class DatabasePanel extends JPanel {
-        private CompoundCandidate candidate;
         private Font ownFont;
         private Color bgColor = new Color(155, 166, 219);
 
@@ -332,12 +314,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
         public void setCompound(CompoundCandidate candidate) {
             removeAll();
             if (candidate == null || candidate.compound == null || candidate.compound.databases == null) return;
-            final ArrayList<String> dbNames = new ArrayList<>(candidate.compound.databases.keySet());
-            Collections.sort(dbNames);
-            final FontMetrics m = getFontMetrics(ownFont);
-            java.util.List<de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel> labels = new ArrayList<>();
+//            final ArrayList<String> dbNames = new ArrayList<>(candidate.compound.databases.keySet());
+//            Collections.sort(dbNames);
+//            final FontMetrics m = getFontMetrics(ownFont);
+//            List<de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel> labels = new ArrayList<>();
 
-            final Rectangle2D boundary = getBounds();
+//            final Rectangle2D boundary = getBounds();
 
             for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label : candidate.labels) {
                 final TextLayout tlayout = new TextLayout(label.name, ownFont, new FontRenderContext(null, false, false));
@@ -547,7 +529,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
             if (value.data == null) {
                 ag.agreement = null;
             } else {
-                ag.setAgreement(value.getSubstructures(computation, value.getPlatts()));//todo should that be here??? protected :CSIFingerIdComputation computation;
+                ag.setAgreement(value.getSubstructures(computation, value.getPlatts()));
             }
         }
     }

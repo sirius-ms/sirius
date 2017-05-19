@@ -33,10 +33,8 @@ import java.util.List;
 
 public class CompoundCandidateView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
 
-//    private ExperimentContainer experimentContainer;
-//    private SiriusResultElement resultElement;
     protected final CSIFingerIdComputation storage;
-    protected CandidateJList list;
+    protected CandidateListDetailView list;
     protected JButton searchCSIButton;
 
     protected CardLayout layout;
@@ -49,7 +47,7 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
 
     public void dispose() {
         list.dispose();
-    }
+    } //todo isn't that done by adding the list to the panel???
 
     private void init() {
         this.layout = new CardLayout();
@@ -64,7 +62,7 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateJList(storage, source);
+        list = new CandidateListDetailView(storage, source);
         add(list, "list");
         setVisible(true);
         resultsChanged(null, null, null, null);
@@ -72,8 +70,6 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
 
     @Override
     public void resultsChanged(ExperimentContainer ec, SiriusResultElement resultElement, List<SiriusResultElement> sres, ListSelectionModel selection) {
-        list.refresh(ec, resultElement == null ? null : resultElement.getFingerIdData());
-
         if (resultElement == null)
             layout.show(this, "null");
         else {
@@ -82,7 +78,7 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
                     layout.show(this, "loader");
                     break;
                 case COMPUTED:
-                    if (list == null || list.candidateList.getModel().getSize() <= 0) {
+                    if (source.getElementList().isEmpty()) {
                         layout.show(this, "empty");
                     } else {
                         layout.show(this, "list");

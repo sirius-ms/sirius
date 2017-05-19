@@ -14,6 +14,7 @@ import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
+import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -28,21 +29,19 @@ import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
  */
 public class ExperimentList {
 
-
-
-    final JTextField searchField;
+    final SearchTextField searchField;
     final FilterList<ExperimentContainer> compoundList;
     final DefaultEventSelectionModel<ExperimentContainer> compountListSelectionModel;
 
     private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
 
     public ExperimentList() {
-        searchField = new JTextField();
+        searchField = new SearchTextField();
 
 
 
         compoundList = new FilterList<>(new ObservableElementList<>(COMPOUNT_LIST, GlazedLists.beanConnector(ExperimentContainer.class)),
-                new TextComponentMatcherEditor<>(searchField, new TextFilterator<ExperimentContainer>() {
+                new TextComponentMatcherEditor<>(searchField.textField, new TextFilterator<ExperimentContainer>() {
                     @Override
                     public void getFilterStrings(List<String> baseList, ExperimentContainer element) {
                         baseList.add(element.getGUIName());

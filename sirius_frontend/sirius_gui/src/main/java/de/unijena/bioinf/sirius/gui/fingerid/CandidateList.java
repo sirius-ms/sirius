@@ -9,25 +9,31 @@ import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateList extends ActionList<CompoundCandidate, ExperimentContainer> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdData>> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+
 
     public final DoubleListStats scoreStats;
-    public final boolean singleFormulaList;
+    public final DoubleListStats logPStats;
+    public final DoubleListStats tanimotoStats;
 
     public CandidateList(final FormulaList source) {
-        this(source, false);
+        this(source, DataSelectionStrategy.FIRST_SELECTED);
     }
 
-    public CandidateList(final FormulaList source, boolean singleFormulaList) {
-        super(CompoundCandidate.class);
-        this.singleFormulaList = singleFormulaList;
+    public CandidateList(final FormulaList source,  DataSelectionStrategy strategy) {
+        super(CompoundCandidate.class,strategy);
+
         scoreStats = new DoubleListStats();
+        logPStats = new DoubleListStats();
+        tanimotoStats = new DoubleListStats();
         source.addActiveResultChangedListener(this);
         resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
@@ -41,18 +47,26 @@ public class CandidateList extends ActionList<CompoundCandidate, ExperimentConta
 
         elementList.clear();
         scoreStats.reset();
-
+        logPStats.reset();
+        tanimotoStats.reset();
+        data = new HashSet<>();
         List<SiriusResultElement> formulasToShow = new LinkedList<>();
 
 
-        if (singleFormulaList) {
-            formulasToShow.add(sre);
-        } else {
-            for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
-                if (selectionModel.isSelectedIndex(i)) {
-                    formulasToShow.add(resultElements.get(i));
+        switch(selectionType){
+            case ALL:
+                formulasToShow.addAll(resultElements);
+                break;
+            case FIRST_SELECTED:
+                formulasToShow.add(sre);
+                break;
+            case ALL_SELECTED:
+                for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
+                    if (selectionModel.isSelectedIndex(i)) {
+                        formulasToShow.add(resultElements.get(i));
+                    }
                 }
-            }
+                break;
         }
 
         for (SiriusResultElement e : formulasToShow) {
@@ -61,6 +75,9 @@ public class CandidateList extends ActionList<CompoundCandidate, ExperimentConta
                     CompoundCandidate c = new CompoundCandidate(j + 1, j, e.getFingerIdData());
                     elementList.add(c);
                     scoreStats.addValue(c.getScore());
+                    logPStats.addValue(c.compound.getXlogP());
+                    tanimotoStats.addValue(c.getTanimotoScore());
+                    data.add(c.data);
                 }
             }
         }
@@ -68,5 +85,6 @@ public class CandidateList extends ActionList<CompoundCandidate, ExperimentConta
 //        elementList.getReadWriteLock().readLock().unlock(); //todo maybe reanable
         elementList.getReadWriteLock().writeLock().unlock();
 //        System.out.println("unlocked");
+        notifyListeners(data,null,getElementList(),getResultListSelectionModel());
     }
 }
