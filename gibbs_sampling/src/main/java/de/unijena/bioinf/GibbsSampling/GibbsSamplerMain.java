@@ -916,10 +916,123 @@ public class GibbsSamplerMain {
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
         return parseMFCandidates(trees, allExperiments, maxCandidates, workercount);
     }
+//
+//    public Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] trees, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
+////        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
+//        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
+//        final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+//        for (Ms2Experiment experiment : experiments) {
+//            String name = cleanString(experiment.getName());
+//            if (experimentMap.containsKey(name)) throw new RuntimeException("experiment name duplicate");
+//            experimentMap.put(name, experiment);
+//        }
+//
+//
+//
+//        System.out.println("no SpectralPreprocessor");
+//        System.out.println("no SpectralPreprocessor");
+//        System.out.println("no SpectralPreprocessor");
+//
+//        ExecutorService service = Executors.newFixedThreadPool(workercount);
+//        List<Future> futures = new ArrayList<>();
+//
+//        int[] pos = new int[]{0};
+//        final ConcurrentLinkedQueue<Path> pathQueue = new ConcurrentLinkedQueue<>(Arrays.asList(trees));
+//        for (int i = 0; i < workercount; i++) {
+//            futures.add(service.submit(new Runnable() {
+//                @Override
+//                public void run() {
+//                    while (!pathQueue.isEmpty()) {
+//                        Path treePath = pathQueue.poll();
+//                        if (treePath==null) continue;
+//
+//                        if (++pos[0]%1000==0) System.out.println("tree "+pos[0]);
+//
+//                        final String name = treePath.getFileName().toString();
+//                        final String id = name.split("_")[0];
+//                        assert id.length()>0;
+//
+//                        Ms2Experiment experiment = experimentMap.get(id);
+//                        if (experiment==null) throw new RuntimeException("cannot find experiment");
+//
+//                        FTree tree = null;
+//                        try {
+//                            tree = new GenericParser<FTree>(new FTJsonReader()).parseFromFile(treePath.toFile()).get(0);
+//                        } catch (RuntimeException e) {
+//                            System.out.println("cannot read tree "+treePath.getFileName().toString());
+//                            continue;
+//                        } catch (IOException e){
+//                            throw new RuntimeException(e);
+//                        }
+//
+//                        if(tree.numberOfVertices() >= 3) {
+//                            tree = new IonTreeUtils().treeToNeutralTree(tree);
+//
+//
+//                            //// TODO: changed no spectral tree processor
+//
+//                            PriorityBlockingQueue<FragmentsCandidate> candidates = explanationsMap.get(id);
+//                            if (candidates==null){
+//                                synchronized (experimentMap) {
+//                                    candidates = explanationsMap.get(id);
+//                                    if (candidates==null){
+//                                        candidates = new PriorityBlockingQueue<>(maxCandidates, Collections.reverseOrder());
+//                                        explanationsMap.put(id, candidates);
+//                                    }
+//                                }
+//                            }
+//
+//                            FragmentsCandidate candidate = FragmentsCandidate.newInstance(tree, experiment);
+//                            //todo changed
+//                            candidate.addAnnotation(FTree.class, tree);
+//                            candidates.add(candidate);
+//                            if (candidates.size()>maxCandidates){
+//                                synchronized (candidates) {
+//                                    while (candidates.size()>maxCandidates){
+//                                        candidates.poll();
+//                                    }
+//                                }
+//                            }
+//                        }
+//
+//
+//                    }
+//                }
+//            }));
+//
+//
+//        }
+//
+//        for (Future future : futures) {
+//            try {
+//                future.get();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//                throw new RuntimeException(e);
+//            } catch (ExecutionException e) {
+//                e.printStackTrace();
+//                throw new RuntimeException(e);
+//            }
+//        }
+//
+//        service.shutdown();
+//
+//        final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
+//        Set<String> keys = explanationsMap.keySet();
+//        for (String key : keys) {
+//            PriorityBlockingQueue<FragmentsCandidate> queue = explanationsMap.get(key);
+//            List<FragmentsCandidate> candidates = new ArrayList<>(queue);
+//            Collections.sort(candidates);
+//            if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
+//            listMap.put(key, candidates);
+//        }
+//        return listMap;
+//    }
 
-    public Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] trees, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
+
+    public Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
 //        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
-        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
+//        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
         for (Ms2Experiment experiment : experiments) {
             String name = cleanString(experiment.getName());
@@ -936,8 +1049,11 @@ public class GibbsSamplerMain {
         ExecutorService service = Executors.newFixedThreadPool(workercount);
         List<Future> futures = new ArrayList<>();
 
+
+        Map<String, List<FTree>> idToTrees = new HashMap<>();
+
         int[] pos = new int[]{0};
-        final ConcurrentLinkedQueue<Path> pathQueue = new ConcurrentLinkedQueue<>(Arrays.asList(trees));
+        final ConcurrentLinkedQueue<Path> pathQueue = new ConcurrentLinkedQueue<>(Arrays.asList(treesPaths));
         for (int i = 0; i < workercount; i++) {
             futures.add(service.submit(new Runnable() {
                 @Override
@@ -952,8 +1068,8 @@ public class GibbsSamplerMain {
                         final String id = name.split("_")[0];
                         assert id.length()>0;
 
-                        Ms2Experiment experiment = experimentMap.get(id);
-                        if (experiment==null) throw new RuntimeException("cannot find experiment");
+//                        Ms2Experiment experiment = experimentMap.get(id);
+//                        if (experiment==null) throw new RuntimeException("cannot find experiment");
 
                         FTree tree = null;
                         try {
@@ -969,29 +1085,43 @@ public class GibbsSamplerMain {
                             tree = new IonTreeUtils().treeToNeutralTree(tree);
 
 
-                            //// TODO: changed no spectral tree processor
+//                            //// TODO: changed no spectral tree processor
+//
+//                            PriorityBlockingQueue<FragmentsCandidate> candidates = explanationsMap.get(id);
+//                            if (candidates==null){
+//                                synchronized (experimentMap) {
+//                                    candidates = explanationsMap.get(id);
+//                                    if (candidates==null){
+//                                        candidates = new PriorityBlockingQueue<>(maxCandidates, Collections.reverseOrder());
+//                                        explanationsMap.put(id, candidates);
+//                                    }
+//                                }
+//                            }
 
-                            PriorityBlockingQueue<FragmentsCandidate> candidates = explanationsMap.get(id);
-                            if (candidates==null){
-                                synchronized (experimentMap) {
-                                    candidates = explanationsMap.get(id);
-                                    if (candidates==null){
-                                        candidates = new PriorityBlockingQueue<>(maxCandidates, Collections.reverseOrder());
-                                        explanationsMap.put(id, candidates);
+                            List<FTree> trees = idToTrees.get(id);
+                            if (trees==null){
+                                synchronized (idToTrees){
+                                    trees = idToTrees.get(id);
+                                    if (trees==null){
+                                        trees = new ArrayList<FTree>();
+                                        idToTrees.put(id, trees);
                                     }
                                 }
                             }
 
-                            FragmentsCandidate candidate = FragmentsCandidate.newInstance(tree, experiment);
-                            candidate.addAnnotation(FTree.class, tree);
-                            candidates.add(candidate);
-                            if (candidates.size()>maxCandidates){
-                                synchronized (candidates) {
-                                    while (candidates.size()>maxCandidates){
-                                        candidates.poll();
-                                    }
-                                }
-                            }
+                            trees.add(tree);
+
+//                            FragmentsCandidate candidate = FragmentsCandidate.newInstance(tree, experiment);
+//                            //todo changed
+//                            candidate.addAnnotation(FTree.class, tree);
+//                            candidates.add(candidate);
+//                            if (candidates.size()>maxCandidates){
+//                                synchronized (candidates) {
+//                                    while (candidates.size()>maxCandidates){
+//                                        candidates.poll();
+//                                    }
+//                                }
+//                            }
                         }
 
 
@@ -1016,15 +1146,33 @@ public class GibbsSamplerMain {
 
         service.shutdown();
 
+
         final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
-        Set<String> keys = explanationsMap.keySet();
+        Set<String> keys = idToTrees.keySet();
         for (String key : keys) {
-            PriorityBlockingQueue<FragmentsCandidate> queue = explanationsMap.get(key);
-            List<FragmentsCandidate> candidates = new ArrayList<>(queue);
+            List<FTree> trees  = idToTrees.get(key);
+
+            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
             Collections.sort(candidates);
             if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
+            System.out.println("trees "+trees.size()+" candidates "+candidates.size());
+            System.out.println(Arrays.toString(candidates.get(0).getFragments()));
+            System.out.println(Arrays.toString(candidates.get(0).getLosses()));
+            System.out.println(Arrays.toString(candidates.get(0).getCandidate().getFragIndices()));
+            System.out.println(Arrays.toString(candidates.get(0).getCandidate().getLossIndices()));
             listMap.put(key, candidates);
         }
+
+
+//        final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
+//        Set<String> keys = explanationsMap.keySet();
+//        for (String key : keys) {
+//            PriorityBlockingQueue<FragmentsCandidate> queue = explanationsMap.get(key);
+//            List<FragmentsCandidate> candidates = new ArrayList<>(queue);
+//            Collections.sort(candidates);
+//            if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
+//            listMap.put(key, candidates);
+//        }
         return listMap;
     }
 

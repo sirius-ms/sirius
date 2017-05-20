@@ -25,7 +25,6 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
-    private final Deviation hugeDeviation = new Deviation(100.0D, 0.02D);
     private final int MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 5;
 
     public CommonFragmentAndLossScorer(double threshold) {
@@ -50,11 +49,10 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             Ms2Experiment experiment = candidates[i][0].getExperiment();
             FragmentsCandidate[] currentCandidates = candidates[i];
 
-            PeakWithExplanation[] fragmentPeaks = getPeaksWithExplanations(experiment.getMs2Spectra().get(0), currentCandidates, true, experiment);
+            PeakWithExplanation[] fragmentPeaks = getPeaksWithExplanations(currentCandidates, true);
             allFragmentPeaks[i] = fragmentPeaks;
 
-            Spectrum inverseSpec = Spectrums.getInversedSpectrum(experiment.getMs2Spectra().get(0), experiment.getIonMass());
-            PeakWithExplanation[] lossPeaks = getPeaksWithExplanations(inverseSpec, currentCandidates, false, experiment);
+            PeakWithExplanation[] lossPeaks = getPeaksWithExplanations(currentCandidates, false);
             allLossPeaks[i] = lossPeaks;
 
             this.idxMap.put(experiment, i);
@@ -88,29 +86,12 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
     /**
      *
-     * @param spectrum
      * @param currentCandidates
      * @param useFragments true: normal spectrum and fragments, false: inverted spectrum and losses
      * @return
      */
-    private PeakWithExplanation[] getPeaksWithExplanations(Spectrum spectrum, FragmentsCandidate[] currentCandidates, final boolean useFragments, Ms2Experiment experiment){
+    private PeakWithExplanation[] getPeaksWithExplanations(FragmentsCandidate[] currentCandidates, final boolean useFragments){
         Set<PrecursorIonType> ions = collectIons(currentCandidates);
-        //todo, give somehow
-
-        SimpleMutableSpectrum sortedSpec = new SimpleMutableSpectrum(spectrum); //todo already sorted
-
-        //adding root mass if necessary
-        double precursorIon = experiment.getIonMass();
-        boolean hasPrecursor = false;
-        for (Peak peak : sortedSpec) {
-            if (hugeDeviation.inErrorWindow(precursorIon, peak.getMass())){
-                hasPrecursor = true;
-                break;
-            }
-        }
-        if (!hasPrecursor) sortedSpec.addPeak(precursorIon, -1);
-
-        Spectrums.sortSpectrumByMass(sortedSpec);
 
         int maxIdx = -1;
         for (FragmentsCandidate currentCandidate : currentCandidates) {
@@ -125,20 +106,15 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             ionToIdx.put(ion, pos++);
         }
 
-        // idx to number of peask
+        // idx to number of peaks
         maxIdx += 1;
 
-        System.out.println("maxIdx"+maxIdx);
-        System.out.println(Arrays.toString(currentCandidates[0].getCandidate().getFragIndices()));
 
         Set<String>[] matchedFragments;
-        double[] matchedMasses;
         if (useFragments){
             matchedFragments = new Set[maxIdx*ions.size()];
-            matchedMasses = new double[maxIdx*ions.size()];
         }  else {
             matchedFragments = new Set[maxIdx];
-            matchedMasses = new double[maxIdx];
         }
         for(int j = 0; j < currentCandidates.length; ++j) {
             FragmentsCandidate c = currentCandidates[j];
@@ -154,7 +130,6 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
                     final int idx = indices[i]+maxIdx*ionToIdx.get(currentIon);
                     if (matchedFragments[idx]==null){
                         matchedFragments[idx] = new HashSet<>();
-                        matchedMasses[idx] = currentIon.precursorMassToNeutralMass(sortedSpec.getMzAt(indices[i]));
                     }
                     matchedFragments[idx].add(formula);
                 }
@@ -168,7 +143,6 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
                     final short idx = indices[i];
                     if (matchedFragments[idx]==null){
                         matchedFragments[idx] = new HashSet<>();
-                        matchedMasses[idx] = experiment.getIonMass()-sortedSpec.getMzAt(idx);
                     }
                     matchedFragments[idx].add(formula);
                 }
@@ -195,8 +169,6 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         }
 
         Arrays.sort(peaksWithExplanations);
-
-        System.out.println("peaksWithExplanations "+peaksWithExplanations.length);
 
         return peaksWithExplanations;
     }
