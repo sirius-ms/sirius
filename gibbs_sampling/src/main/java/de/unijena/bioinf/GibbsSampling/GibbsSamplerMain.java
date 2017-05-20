@@ -1155,24 +1155,9 @@ public class GibbsSamplerMain {
             List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
             Collections.sort(candidates);
             if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
-            System.out.println("trees "+trees.size()+" candidates "+candidates.size());
-            System.out.println(Arrays.toString(candidates.get(0).getFragments()));
-            System.out.println(Arrays.toString(candidates.get(0).getLosses()));
-            System.out.println(Arrays.toString(candidates.get(0).getCandidate().getFragIndices()));
-            System.out.println(Arrays.toString(candidates.get(0).getCandidate().getLossIndices()));
             listMap.put(key, candidates);
         }
 
-
-//        final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
-//        Set<String> keys = explanationsMap.keySet();
-//        for (String key : keys) {
-//            PriorityBlockingQueue<FragmentsCandidate> queue = explanationsMap.get(key);
-//            List<FragmentsCandidate> candidates = new ArrayList<>(queue);
-//            Collections.sort(candidates);
-//            if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
-//            listMap.put(key, candidates);
-//        }
         return listMap;
     }
 
