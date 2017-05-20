@@ -46,38 +46,10 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
         for (FTree tree : trees) {
             final List<Fragment> fragments = tree.getFragments();
-//            final FragmentAnnotation<Peak> annotation = tree.getFragmentAnnotationOrThrow(Peak.class);
+
             final FragmentAnnotation<AnnotatedPeak> annotation = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
             for (Fragment fragment : fragments) {
-//                Peak peak = annotation.get(fragment);
-//                List<Fragment> fragmentsOfPeak;
-//                if (peakToFragments.containsKey(peak)){
-//                    fragmentsOfPeak = peakToFragments.get(peak);
-//                } else {
-//                    fragmentsOfPeak = new ArrayList<>();
-//                    peakToFragments.put(peak, fragmentsOfPeak);
-//                }
-//
-//                fragmentsOfPeak.add(fragment);
-
-
                 Peak peak = getPeak(annotation.get(fragment));
-//                AnnotatedPeak annotatedPeak = annotation.get(fragment);
-//                Peak peak;
-//                if (annotatedPeak.getOriginalPeaks().length>0){
-//                    double meanMass = 0d;
-//                    double meanIntensity = 0d;
-//                    for (Peak p : annotatedPeak.getOriginalPeaks()) {
-//                        meanMass += p.getMass();
-//                        meanIntensity += p.getIntensity();
-//                    }
-//                    meanMass /= annotatedPeak.getOriginalPeaks().length;
-//                    meanIntensity /= annotatedPeak.getOriginalPeaks().length;
-//
-//                    peak = new Peak(meanMass, meanIntensity);
-//                } else {
-//                    peak = new Peak(annotatedPeak.getMass(), annotatedPeak.getSumedIntensity());
-//                }
 
                 List<Fragment> fragmentsOfPeak;
                 if (peakToFragments.containsKey(peak)){
@@ -93,8 +65,6 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         }
 
 
-
-
         List<Peak> peaks = new ArrayList<>(peakToFragments.keySet());
         Collections.sort(peaks);
         TObjectIntMap<Peak> peakToIdx = new TObjectIntHashMap<>(peaks.size(), 0.75f, -1);
@@ -103,16 +73,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             peakToIdx.put(peak, i++);
         }
 
+        assert peakToFragments.size()<=experiment.getMs2Spectra().get(0).size();
 
-        System.out.println("annotatedPeaks "+peakToFragments.size()+" vs spectrum "+experiment.getMs2Spectra().get(0).size());
-        if (peakToFragments.size()>experiment.getMs2Spectra().get(0).size())
-        {
-            throw new RuntimeException("too many annotated peaks");
-        }
-
-//        FragmentsCandidate[] candidates = new FragmentsCandidate[trees.size()];
         List<FragmentsCandidate> candidates = new ArrayList<>();
-//        i = 0;
         for (FTree tree : trees) {
             FragmentsAndLosses fragmentsAndLosses = getFragments(tree, peakToIdx);
             double score = (tree.getAnnotationOrThrow(TreeScoring.class)).getOverallScore();
@@ -126,7 +89,6 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             candidate.addAnnotation(MolecularFormula.class, formula);
             candidate.addAnnotation(PrecursorIonType.class, ionType);
 
-//            candidates[i++] = candidate;
             candidates.add(candidate);
         }
 
@@ -164,11 +126,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         int i = 0;
         for (Fragment f : fragments) {
             if(!f.getFormula().equals(root)) {
-//                final Peak peak = annotation.get(f);
                 final Peak peak = getPeak(annotation.get(f));
                 final int idx = peakToIdx.get(peak);
                 if (idx<0){
-//                    System.out.println(Arrays.toString(Spectrums.copyMasses(sortedSpec)));
                     System.out.println("formula "+f.getFormula()+" "+f.getFormula().getMass());
                     throw new RuntimeException("index < 0");
                 }
@@ -180,12 +140,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
         i = 0;
         for (Fragment f : fragments) {
-//            final Peak peak = annotation.get(f);
             final Peak peak = getPeak(annotation.get(f));
             final int idx = peakToIdx.get(peak);
             if (idx<0){
-//                System.out.println(Arrays.toString(Spectrums.copyMasses(sortedSpec)));
-
                 System.out.println("formula "+f.getFormula()+" "+f.getFormula().getMass());
                 throw new RuntimeException("index < 0");
             }
@@ -227,8 +184,6 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         List<Fragment> fragments = tree.getFragments();
         FragmentWithIndex[] lossWithIdx = new FragmentWithIndex[fragments.size() - 1];
         FragmentWithIndex[] fragWithIdx = new FragmentWithIndex[fragments.size()];
-//        short[] fIdx = new short[fragments.size()];
-//        short[] lIdx = new short[fragments.size()-1];
 
         FragmentAnnotation<AnnotatedPeak> annotation = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         FragmentAnnotation<Peak> annoPeak = tree.getFragmentAnnotationOrThrow(Peak.class);
@@ -269,8 +224,6 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 } else {
                     mass = annotatedPeak.getOriginalPeaks()[0].getMass();
                 }
-//                final Peak peak = annoPeak.get(f);
-//                final int idx = (Spectrums.binarySearch(sortedSpec, peak.getMass(), deviation));
                 final int idx = (Spectrums.binarySearch(sortedSpec, mass, deviation));
                 //todo why so large deviations???
                 if (idx<0){
@@ -284,8 +237,6 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
                 lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx);
 
-//                lStrings[i] = root.subtract(f.getFormula()).formatByHill();
-//                lIdx[i] = (short)f.getColor();
             }
         }
 
@@ -338,40 +289,6 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
         return new FragmentsAndLosses(fStrings, fIdx, lStrings, lIdx);
     }
-
-
-//    private static FragmentsAndLosses getFragments(FTree tree) {
-//        MolecularFormula root = tree.getRoot().getFormula();
-//        List<Fragment> fragments = tree.getFragments();
-//        String[] lStrings = new String[fragments.size() - 1];
-//        String[] fStrings = new String[fragments.size()];
-//        short[] fIdx = new short[fragments.size()];
-//        short[] lIdx = new short[fragments.size()-1];
-//        int i = 0;
-//        for (Fragment f : fragments) {
-//            if(!f.getFormula().equals(root)) {
-//                lStrings[i] = root.subtract(f.getFormula()).formatByHill();
-//                lIdx[i] = (short)f.getColor();
-//            }
-//        }
-//
-//        i = 0;
-//        for (Fragment f : fragments) {
-//            fStrings[i++] = f.getFormula().formatByHill();
-//            fIdx[i] = (short)f.getColor();
-//        }
-//
-//        Arrays.sort(lStrings);
-//        Arrays.sort(fStrings);
-//
-//        return new FragmentsAndLosses(fStrings, lStrings);
-//    }
-
-//    private void setInfo(FTree tree){
-//        this.formula = tree.getRoot().getFormula();
-//        this.ionType = tree.getAnnotationOrThrow(PrecursorIonType.class);
-////        this.score = ((TreeScoring)tree.getAnnotationOrThrow(TreeScoring.class)).getOverallScore();
-//    }
 
 
     public String[] getFragments(){
