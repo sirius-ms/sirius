@@ -12,7 +12,7 @@ import javax.swing.event.ChangeListener;
 public class MinMaxMatcherEditor<E> extends RangeMatcherEditor<Double,E> {
 
 
-    public MinMaxMatcherEditor(FilterRangeSlider slider, Filterator<Double, E> filterator) {
+    public MinMaxMatcherEditor(final FilterRangeSlider slider, final Filterator<Double, E> filterator) {
         super(filterator);
         slider.addChangeListener(new ChangeListener() {
             @Override
