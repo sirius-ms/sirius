@@ -6,12 +6,15 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
  */
 
 import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
+import javafx.collections.transformation.FilteredList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -26,7 +29,7 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListDetailView extends ActionListView<FormulaList> {
+public class FormulaListDetailView extends ActionListView<FormulaList> { //todo change to detailview
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
     private final SearchTextField searchField = new SearchTextField();
@@ -36,16 +39,16 @@ public class FormulaListDetailView extends ActionListView<FormulaList> {
         super(source);
         setLayout(new BorderLayout());
         searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
-        final SortedList<SiriusResultElement> sorted = new SortedList<SiriusResultElement>(source.getElementList());
-        final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sorted);
 
         final SiriusResultTableFormat tf = new SiriusResultTableFormat();
-        this.table = new ActionTable<>(sorted,
-                tf,
-                new StringMatcherEditor(tf, searchField.textField));
+        final SortedList<SiriusResultElement> sorted = new SortedList<>(source.getElementList());
+        final FilterList<SiriusResultElement> filtered = new FilterList<>(sorted, new StringMatcherEditor<>(tf, searchField.textField));
+        final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sorted);
+
+
+        this.table = new ActionTable<>(filtered,sorted, tf);
         table.setSelectionModel(model);
 
-        //todo maibe generify and make public availlable
         selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sorted);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));

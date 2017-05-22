@@ -79,14 +79,13 @@ public class StructureSearcher implements Runnable {
     public void run() {
         while (!shutdown) {
             try {
-                final CompoundCandidate c;
+                final CompoundCandidate  c = queue.poll();
                 synchronized (this) {
-                    if (queue.isEmpty()) {
+                    if (c == null) {
                         wait();
                         continue;
                     }
                 }
-                c = queue.take();
 
                 if (c.compound == null) continue;
                 c.compoundLock.lock();

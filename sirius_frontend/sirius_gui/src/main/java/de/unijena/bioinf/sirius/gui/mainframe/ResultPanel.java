@@ -1,7 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.fingerid.CandidateList;
-import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidateView;
+import de.unijena.bioinf.sirius.gui.fingerid.CandidateListDetailViewPanel;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.sirius.gui.table.ActionList;
@@ -14,7 +14,7 @@ public class ResultPanel extends JTabbedPane {
     private FormulaOverviewPanel rvp;
     private TreeVisualizationPanel tvp;
     private SpectraVisualizationPanel svp;
-    private CompoundCandidateView ccv;
+    private CandidateListDetailViewPanel ccv;
     private CandidateOverviewPanel cov;
 
     public ResultPanel(final FormulaList suriusResultElements) {
@@ -25,7 +25,7 @@ public class ResultPanel extends JTabbedPane {
         tvp = new TreeVisualizationPanel();
         svp = new SpectraVisualizationPanel();
         cov = new CandidateOverviewPanel(new CandidateList(suriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        ccv = new CompoundCandidateView(MainFrame.MF.getCsiFingerId(), new CandidateList(suriusResultElements));
+        ccv = new CandidateListDetailViewPanel(MainFrame.MF.getCsiFingerId(), new CandidateList(suriusResultElements));
 //        CandidateList list = new CandidateList(suriusResultElements);
 
 

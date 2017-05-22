@@ -1,7 +1,11 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
+import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.TableComparatorChooser;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
@@ -9,31 +13,30 @@ import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
 import java.util.List;
 
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateListTableView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
 
     private final ActionTable<CompoundCandidate> table;
-    private final SearchTextField searchField = new SearchTextField();
+    private SortedList<CompoundCandidate> sortedSource;
 
     public CandidateListTableView(final CandidateList list) {
         super(list);
 
-        setLayout(new BorderLayout());
-        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
+//        setLayout(new BorderLayout());
+//        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
 
-        final SortedList<CompoundCandidate> sorted = new SortedList<CompoundCandidate>(source.getElementList());
-        final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sorted);
+        final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sortedSource);
 
         final CandidateTableFormat tf = new CandidateTableFormat();
-        this.table = new ActionTable<>(sorted,
-                tf,
-                new StringMatcherEditor(tf, searchField.textField));
-        table.setSelectionModel(model);
+        this.table = new ActionTable<>(filteredSource, sortedSource, tf);
+        TableComparatorChooser.install(table, sortedSource, AbstractTableComparatorChooser.SINGLE_COLUMN);
 
+        table.setSelectionModel(model);
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));
 
 //        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(true, true, source.scoreStats));
@@ -79,16 +82,13 @@ public class CandidateListTableView extends ActionListView<CandidateList> implem
                 BorderLayout.CENTER
         );
 
-        this.add(createNorth(), BorderLayout.NORTH);
-
 
     }
 
-    ///////////////// Internal //////////////////////////
-    protected JPanel createNorth() {
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        top.add(searchField);
-        return top;
+    @Override
+    protected FilterList<CompoundCandidate> configureFiltering(EventList<CompoundCandidate> source) {
+        sortedSource = new SortedList<>(source);
+        return super.configureFiltering(sortedSource);
     }
 
     @Override

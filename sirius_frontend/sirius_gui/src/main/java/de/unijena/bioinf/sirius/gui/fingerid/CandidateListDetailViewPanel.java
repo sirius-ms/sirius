@@ -21,7 +21,6 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.table.ActionListView;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
@@ -31,7 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class CompoundCandidateView extends ActionListView<CandidateList> implements ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
+public class CandidateListDetailViewPanel extends JPanel implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
 
     protected final CSIFingerIdComputation storage;
     protected CandidateListDetailView list;
@@ -39,9 +38,11 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
 
     protected CardLayout layout;
 
-    public CompoundCandidateView(CSIFingerIdComputation storage, CandidateList sourceList) {
-        super(sourceList);
+
+    public CandidateListDetailViewPanel(CSIFingerIdComputation storage, CandidateList sourceList) {
+        super();
         this.storage = storage;
+        list = new CandidateListDetailView(storage, sourceList);
         init();
     }
 
@@ -52,17 +53,17 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
     private void init() {
         this.layout = new CardLayout();
         setLayout(layout);
+
         add(new JPanel(), "null");
         add(new ComputeElement(), "computeButton");
         add(new JLabel(Icons.FP_LOADER), "loader");
-
 
         TwoCloumnPanel nothing = new TwoCloumnPanel();
         nothing.add(new JLabel(Icons.NO_MATCH_128));
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
 
-        list = new CandidateListDetailView(storage, source);
+
         add(list, "list");
         setVisible(true);
         resultsChanged(null, null, null, null);
@@ -78,7 +79,7 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
                     layout.show(this, "loader");
                     break;
                 case COMPUTED:
-                    if (source.getElementList().isEmpty()) {
+                    if (list.getSource().getElementList().isEmpty()) {
                         layout.show(this, "empty");
                     } else {
                         layout.show(this, "list");
@@ -114,7 +115,7 @@ public class CompoundCandidateView extends ActionListView<CandidateList> impleme
             searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);
 
-            searchCSIButton.setEnabled((!(source.getElementList().isEmpty() || source.getResultListSelectionModel().isSelectionEmpty()) && storage.isEnabled()));
+            searchCSIButton.setEnabled((!(list.getSource().getElementList().isEmpty() || list.getSource().getResultListSelectionModel().isSelectionEmpty()) && storage.isEnabled()));
             setVisible(true);
         }
     }

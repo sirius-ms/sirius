@@ -1,32 +1,19 @@
 package de.unijena.bioinf.sirius.gui.table;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 31.01.17.
- */
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * Created by fleisch on 22.05.17.
  */
 public abstract class ActionListView<T extends ActionList> extends JPanel {
-    protected JToolBar toolBar;
     protected final T source;
 
-    public ActionListView(T source, JToolBar toolbar) {
+    public ActionListView(T source) {
         super();
         this.source = source;
-        this.toolBar = toolbar;
-        setLayout(new BorderLayout());
-        if (toolbar != null)
-            add(buildNorth(), BorderLayout.NORTH);
     }
 
-    protected JComponent buildNorth(){
-        return toolBar;
+    public T getSource() {
+        return source;
     }
 }
-
-

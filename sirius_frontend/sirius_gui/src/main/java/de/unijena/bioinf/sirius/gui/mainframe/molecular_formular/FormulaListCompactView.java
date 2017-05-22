@@ -5,9 +5,13 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
  * 31.01.17.
  */
 
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.table.ActionListDetailView;
 import de.unijena.bioinf.sirius.gui.table.ActionListView;
 
 import javax.swing.*;

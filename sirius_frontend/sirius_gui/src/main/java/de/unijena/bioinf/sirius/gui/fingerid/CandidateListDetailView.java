@@ -64,25 +64,10 @@ public class CandidateListDetailView extends CandidateListView implements Active
     protected int highlightedCandidate = -1;
     protected int selectedCompoundId;
 
-    protected DBFilterPanel dbFilterPanel;
 
     public CandidateListDetailView(final CSIFingerIdComputation computation, CandidateList sourceList) {
         super(sourceList);
-
-        JPanel northPanels = new JPanel(new BorderLayout());
-        add(northPanels, BorderLayout.NORTH);
-
-
-        dbFilterPanel = new DBFilterPanel(sourceList);
-        dbFilterPanel.toggle();
-        northPanels.add(dbFilterPanel, BorderLayout.SOUTH);
-
-
-        if (toolBar != null) {
-            candidateList = new CandidateInnerList(new DefaultEventListModel<CompoundCandidate>(toolBar.filteredSourceList));
-        }else{
-            candidateList = new CandidateInnerList(new DefaultEventListModel<CompoundCandidate>(sourceList.getElementList()));
-        }
+        candidateList = new CandidateInnerList(new DefaultEventListModel<CompoundCandidate>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(computation, sourceList.scoreStats, this));
@@ -148,51 +133,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         }
     }
 
-    private void doExport() {
-        JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(Workspace.CONFIG_STORAGE.getDefaultTreeExportPath());
-        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        jfc.setAcceptAllFileFilterUsed(false);
-        FileFilter csvFileFilter = new SupportedExportCSVFormatsFilter();
-        jfc.addChoosableFileFilter(csvFileFilter);
-        File selectedFile = null;
-        while (selectedFile == null) {
-            int returnval = jfc.showSaveDialog(this);
-            if (returnval == JFileChooser.APPROVE_OPTION) {
-                File selFile = jfc.getSelectedFile();
 
-                Workspace.CONFIG_STORAGE.setDefaultCompoundsExportPath(selFile.getParentFile());
-
-                if (selFile.exists()) {
-                    FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
-                    ReturnValue rv = fpd.getReturnValue();
-                    if (rv == ReturnValue.Success) {
-                        selectedFile = selFile;
-                    }
-                } else {
-                    selectedFile = selFile;
-                    if (!selectedFile.getName().endsWith(".csv"))
-                        selectedFile = new File(selectedFile.getAbsolutePath() + ".csv");
-                }
-            } else {
-                break;
-            }
-        }
-
-        if (selectedFile != null) {
-            Set<FingerIdData> datas = new HashSet<>();
-            for (CompoundCandidate candidate : sourceList.getElementList()) {
-                datas.add(candidate.data);
-            }
-
-            try {
-                new CSVExporter().exportToFile(selectedFile, new ArrayList<>(datas));
-            } catch (Exception e2) {
-                ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());
-                LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
-            }
-        }
-    }
 
     public void dispose() {
         structureSearcher.stop();
@@ -226,11 +167,11 @@ public class CandidateListDetailView extends CandidateListView implements Active
             final int row = ry / CandidateCellRenderer.CELL_SIZE;
             final int col = rx / CandidateCellRenderer.CELL_SIZE;
             highlightAgree = candidate.substructures.indexAt(row, col);
-            structureSearcher.reloadList(sourceList, highlightAgree, highlightedCandidate);
+            structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
         } else {
             if (highlightAgree >= 0) {
                 highlightAgree = -1;
-                structureSearcher.reloadList(sourceList, highlightAgree, highlightedCandidate);
+                structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
             }
 
             double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
@@ -311,6 +252,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
     @Override
     public void resultsChanged(ExperimentContainer experiment, CompoundCandidate sre, List<CompoundCandidate> resultElements, ListSelectionModel selections) {
         if (sre != null)
-            this.structureSearcher.reloadList(sourceList);
+            this.structureSearcher.reloadList(source);
     }
 }

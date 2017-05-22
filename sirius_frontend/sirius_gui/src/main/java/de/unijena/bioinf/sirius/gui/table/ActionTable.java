@@ -5,13 +5,11 @@ package de.unijena.bioinf.sirius.gui.table;
  * 24.01.17.
  */
 
-import ca.odell.glazedlists.FilterList;
-import ca.odell.glazedlists.GlazedLists;
-import ca.odell.glazedlists.ObservableElementList;
-import ca.odell.glazedlists.SortedList;
+import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.gui.TableFormat;
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
+import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventTableModel;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
@@ -28,35 +26,19 @@ public class ActionTable<T extends AbstractBean> extends JTable {
     public final FilterList<T> elements;
     public final TableComparatorChooser comparatorChooser;
 
-    /*public ActionTable(TableFormat<T> format, MatcherEditor<T> matcher, Class<T> elementType) {
-        this(new ArrayList<T>(), format, matcher, elementType);
-    }*/
 
-//    public ActionTable(TableFormat<T> format, Class<T> elementType) {
-//        this(new ArrayList<T>(), format, elementType);
-//    }
-
-    public ActionTable(ObservableElementList<T> elements, TableFormat<T> format) {
-        this(elements, format, new AbstractMatcherEditor<T>() {
-        });
+    public ActionTable(SortedList<T> sorted, TableFormat<T> format, EventList<MatcherEditor<T>> matcher) {
+        this(new FilterList<T>(sorted, new CompositeMatcherEditor<>(matcher)), format);
     }
 
-    //todo replace with other constructor
-    /*public ActionTable(List<T> elements, TableFormat<T> format, MatcherEditor<T> matcher, Class<T> elementType) {
-        SortedList<T> sorted = new SortedList<>(GlazedLists.eventList(elements));
-        this.elements = new FilterList<T>(new ObservableElementList<>(sorted, GlazedLists.beanConnector(elementType)), matcher);
-        setModel(new DefaultEventTableModel(this.elements, format));
-        comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
-    }*/
-
-    public ActionTable(SortedList<T> sorted, TableFormat<T> format, MatcherEditor<T> matcher) {
-        this.elements = new FilterList<T>(sorted, matcher);
-        setModel(new DefaultEventTableModel(this.elements, format));
-        comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
+    public ActionTable(FilterList<T> filtered, TableFormat<T> format) {
+        this(filtered, new SortedList<>(filtered), format);
     }
 
-    public ActionTable(ObservableElementList<T> elements, TableFormat<T> format, MatcherEditor<T> matcher) {
-        this(new SortedList<>(elements), format, matcher);
+    public ActionTable(FilterList<T> filtered, SortedList<T> sorted, TableFormat<T> format) {
+        this.elements = filtered;
+        setModel(new DefaultEventTableModel(this.elements, format));
+        comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
     }
 
     /*public static void main(String[] args) {

@@ -25,7 +25,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
     public final DoubleListStats tanimotoStats;
 
     public CandidateList(final FormulaList source) {
-        this(source, DataSelectionStrategy.FIRST_SELECTED);
+        this(source, DataSelectionStrategy.ALL_SELECTED);
     }
 
     public CandidateList(final FormulaList source,  DataSelectionStrategy strategy) {
