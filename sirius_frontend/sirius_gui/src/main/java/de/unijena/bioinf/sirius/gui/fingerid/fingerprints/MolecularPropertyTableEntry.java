@@ -1,7 +1,6 @@
 package de.unijena.bioinf.sirius.gui.fingerid.fingerprints;
 
-import de.unijena.bioinf.ChemistryBase.fp.MolecularProperty;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import org.jdesktop.beans.AbstractBean;
 
 /**
@@ -23,6 +22,27 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
 
     public MolecularProperty getMolecularProperty() {
         return underlyingFingerprint.getFingerprintVersion().getMolecularProperty(absoluteIndex);
+    }
+
+    public CdkFingerprintVersion.USED_FINGERPRINTS getFingerprintType() {
+        final CdkFingerprintVersion v;
+        FingerprintVersion vv = underlyingFingerprint.getFingerprintVersion();
+        if (vv instanceof MaskedFingerprintVersion) vv = ((MaskedFingerprintVersion) vv).getMaskedFingerprintVersion();
+        if (vv instanceof CdkFingerprintVersion) v = (CdkFingerprintVersion)vv;
+        else throw new RuntimeException("Can only deal with CDK fingerprints");
+        return v.getFingerprintTypeFor(absoluteIndex);
+    }
+
+    public String getFingerprintTypeName() {
+        switch (getFingerprintType()) {
+            case ECFP: return "ECFP";
+            case KLEKOTA_ROTH: return "Klekota Roth";
+            case MACCS: return "MACCS";
+            case OPENBABEL: return "Open Babel FP4";
+            case PUBCHEM: return "PubChem";
+            case SUBSTRUCTURE: return "CDK Substructure";
+            default:return null;
+        }
     }
 
 

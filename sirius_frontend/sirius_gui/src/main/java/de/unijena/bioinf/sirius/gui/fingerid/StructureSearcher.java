@@ -81,8 +81,10 @@ public class StructureSearcher implements Runnable {
             try {
                 final CompoundCandidate  c = queue.poll();
                 if (c == null) {
-                    wait();
-                    continue;
+                    synchronized (this) {
+                        wait();
+                        continue;
+                    }
                 }
 
                 if (c.compound == null) continue;
