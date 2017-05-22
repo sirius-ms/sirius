@@ -12,9 +12,9 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
-import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -29,12 +29,12 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentContainer, FormulaList> { //todo change to detailview
+public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentContainer, FormulaList> {
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
     private final ConnectedSelection<SiriusResultElement> selectionConnection;
 
-    private final SiriusResultTableFormat tableFormat = new SiriusResultTableFormat();
+    private final SiriusResultTableFormat tableFormat = new SiriusResultTableFormat(source.scoreStats);
     private SortedList<SiriusResultElement> sortedSource;
 
     public FormulaListDetailView(final FormulaList source) {
@@ -43,15 +43,15 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
 
         final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sortedSource);
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
-        table.setSelectionModel(model);
 
+        table.setSelectionModel(model);
         selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sortedSource);
 
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumn()));
+        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
 
-        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumn(), true, true, source.scoreStats));
-        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumn(), false, false, source.isotopeScoreStats));
-        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumn(), false, false, source.treeScoreStats));
+        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), true, true, source.scoreStats));
+        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), false, false, source.isotopeScoreStats));
+        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), false, false, source.treeScoreStats));
 
         table.addMouseListener(new MouseListener() {
             @Override

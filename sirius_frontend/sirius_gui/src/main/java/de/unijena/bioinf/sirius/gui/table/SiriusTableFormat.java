@@ -1,11 +1,18 @@
 package de.unijena.bioinf.sirius.gui.table;
 
 import ca.odell.glazedlists.gui.TableFormat;
-import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
+import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 
 /**
  * Created by fleisch on 15.05.17.
  */
-public interface SiriusTableFormat<E> extends TableFormat<E> {
-    int highlightColumn();
+public abstract class SiriusTableFormat<E> implements TableFormat<E> {
+    protected final ListStats stats;
+
+    protected SiriusTableFormat(ListStats stats) {
+        this.stats = stats;
+    }
+
+    protected abstract int highlightColumnIndex();
+    protected abstract boolean isBest(E element);
 }

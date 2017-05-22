@@ -48,7 +48,7 @@ public class DoubleListStats implements ListStats {
 
     public void reset() {
         scoreSum = 0;
-        minScoreValue = Double.MAX_VALUE;
-        maxScoreValue = Double.MIN_VALUE;
+        minScoreValue = Double.POSITIVE_INFINITY;
+        maxScoreValue = Double.NEGATIVE_INFINITY;
     }
 }

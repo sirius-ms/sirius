@@ -27,8 +27,9 @@ public class BarTableCellRenderer extends SiriusResultTableCellRenderer {
     private float thresh;
     private final boolean drawThresh;
     private final boolean percentage;
-
     private final ListStats stats;
+
+
 
     public BarTableCellRenderer(ListStats stats) {
         this(false, stats);

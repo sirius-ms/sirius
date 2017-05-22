@@ -23,7 +23,6 @@ import java.util.ArrayList;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ActionTable<T extends AbstractBean> extends JTable {
-    public final FilterList<T> elements;
     public final TableComparatorChooser comparatorChooser;
 
 
@@ -36,8 +35,7 @@ public class ActionTable<T extends AbstractBean> extends JTable {
     }
 
     public ActionTable(FilterList<T> filtered, SortedList<T> sorted, TableFormat<T> format) {
-        this.elements = filtered;
-        setModel(new DefaultEventTableModel(this.elements, format));
+        setModel(new DefaultEventTableModel(filtered, format));
         comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
     }
 

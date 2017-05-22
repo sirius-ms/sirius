@@ -3,17 +3,13 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
-import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import ca.odell.glazedlists.swing.TableComparatorChooser;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
-import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
 /**
@@ -29,12 +25,11 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
 
         final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sortedSource);
 
-        final CandidateTableFormat tf = new CandidateTableFormat();
+        final CandidateTableFormat tf = new CandidateTableFormat(source.scoreStats);
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
-        TableComparatorChooser.install(table, sortedSource, AbstractTableComparatorChooser.SINGLE_COLUMN);
 
         table.setSelectionModel(model);
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));
+        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumnIndex()));
 
 //        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(true, true, source.scoreStats));
 //        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(false, false, source.isotopeScoreStats));

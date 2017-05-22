@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.table;
  */
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
+import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
@@ -27,42 +28,43 @@ public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends Sir
     protected String value;
     private final int highlightColumn;
 
+
     public SiriusResultTableCellRenderer(int highlightColumn) {
         this.highlightColumn = highlightColumn;
     }
 
-    public SiriusResultTableCellRenderer() {
-        this.highlightColumn = -1;
-    }
-
+    /*public SiriusResultTableCellRenderer(ListStats stats) {
+        this(-1,stats);
+    }*/
 
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        final boolean best = highlightColumn >= 0?((Boolean) table.getModel().getValueAt(row, highlightColumn)).booleanValue():false;
 
-        if (isSelected) {
-            if (best) {
-                backColor = Colors.LIST_SELECTED_GREEN;
+        final boolean best = highlightColumn >= 0 && ((boolean) table.getModel().getValueAt(row, highlightColumn));
+
+            if (isSelected) {
+                if (best) {
+                    backColor = Colors.LIST_SELECTED_GREEN;
+                } else {
+                    backColor = Colors.LIST_SELECTED_BACKGROUND;
+                }
+                foreColor = Colors.LIST_SELECTED_FOREGROUND;
             } else {
-                backColor = Colors.LIST_SELECTED_BACKGROUND;
-            }
-            foreColor = Colors.LIST_SELECTED_FOREGROUND;
-        } else {
-            if (best) {
-                this.backColor = Colors.LIST_LIGHT_GREEN;
-            }else{
-                if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
-                else backColor = Colors.LIST_UNEVEN_BACKGROUND;
-            }
-            foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
+                if (best) {
+                    backColor = Colors.LIST_LIGHT_GREEN;
+                } else {
+                    if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
+                    else backColor = Colors.LIST_UNEVEN_BACKGROUND;
+                }
+                foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
 
-        }
+            }
 
         setBackground(backColor);
         setForeground(foreColor);
 
-        if (value == null) System.out.println("col=" + column+ " row=" + row);
+        if (value == null) System.out.println("col=" + column + " row=" + row);
         this.value = value.toString();
         setHorizontalAlignment(SwingConstants.LEFT);
 
