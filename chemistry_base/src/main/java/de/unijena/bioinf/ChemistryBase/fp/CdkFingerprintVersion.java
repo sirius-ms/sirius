@@ -131,8 +131,19 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return usedFingerprints.length;
     }
 
+    @Deprecated
     public USED_FINGERPRINTS getFingerprintTypeAt(int index) {
         return usedFingerprints[index];
+    }
+
+    public USED_FINGERPRINTS getFingerprintTypeFor(int fingerprintIndex) {
+        for (int i=0; i < usedFingerprints.length; ++i) {
+
+            if (fingerprintIndex < usedFingerprints[i].length)
+                return usedFingerprints[i];
+            fingerprintIndex -= usedFingerprints[i].length;
+        }
+        throw new IndexOutOfBoundsException(fingerprintIndex + " is not the index of a molecular property for " + this);
     }
 
     private static Pattern COUNT_PATTERN = Pattern.compile(" at least (\\d+) times");
