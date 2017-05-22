@@ -10,11 +10,9 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
-import javafx.collections.transformation.FilteredList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

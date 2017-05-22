@@ -80,11 +80,9 @@ public class StructureSearcher implements Runnable {
         while (!shutdown) {
             try {
                 final CompoundCandidate  c = queue.poll();
-                synchronized (this) {
-                    if (c == null) {
-                        wait();
-                        continue;
-                    }
+                if (c == null) {
+                    wait();
+                    continue;
                 }
 
                 if (c.compound == null) continue;
@@ -94,8 +92,9 @@ public class StructureSearcher implements Runnable {
                 } finally {
                     c.compoundLock.unlock();
                 }
-                updater.c = c;
-                SwingUtilities.invokeLater(updater.clone());
+                final Update u = updater.clone();
+                u.c = c;
+                SwingUtilities.invokeLater(u);
             } catch (InterruptedException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
