@@ -48,6 +48,10 @@ public class FingerIdData extends AbstractBean {
         this.dbSelection = EnumSet.of(DatasourceService.Sources.PUBCHEM);
     }
 
+    public ProbabilityFingerprint getPlatts() {
+        return platts;
+    }
+
     public double getConfidence() {
         return confidence;
     }
