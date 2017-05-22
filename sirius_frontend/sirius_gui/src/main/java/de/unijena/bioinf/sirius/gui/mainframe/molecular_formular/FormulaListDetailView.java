@@ -7,14 +7,15 @@ package de.unijena.bioinf.sirius.gui.mainframe.molecular_formular;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
+import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
+import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.*;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
-import javafx.collections.transformation.FilteredList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -29,33 +30,29 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaListDetailView extends ActionListView<FormulaList> { //todo change to detailview
+public class FormulaListDetailView extends ActionListDetailView<SiriusResultElement, ExperimentContainer, FormulaList> { //todo change to detailview
     //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<SiriusResultElement> table;
-    private final SearchTextField searchField = new SearchTextField();
     private final ConnectedSelection<SiriusResultElement> selectionConnection;
+
+    private final SiriusResultTableFormat tableFormat = new SiriusResultTableFormat();
+    private SortedList<SiriusResultElement> sortedSource;
 
     public FormulaListDetailView(final FormulaList source) {
         super(source);
-        setLayout(new BorderLayout());
-        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
-
-        final SiriusResultTableFormat tf = new SiriusResultTableFormat();
-        final SortedList<SiriusResultElement> sorted = new SortedList<>(source.getElementList());
-        final FilterList<SiriusResultElement> filtered = new FilterList<>(sorted, new StringMatcherEditor<>(tf, searchField.textField));
-        final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sorted);
 
 
-        this.table = new ActionTable<>(filtered,sorted, tf);
+        final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sortedSource);
+        table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
         table.setSelectionModel(model);
 
-        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sorted);
+        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sortedSource);
 
-        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumn()));
+        table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumn()));
 
-        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tf.highlightColumn(),true, true, source.scoreStats));
-        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tf.highlightColumn(),false, false, source.isotopeScoreStats));
-        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tf.highlightColumn(),false, false, source.treeScoreStats));
+        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumn(), true, true, source.scoreStats));
+        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumn(), false, false, source.isotopeScoreStats));
+        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumn(), false, false, source.treeScoreStats));
 
         table.addMouseListener(new MouseListener() {
             @Override
@@ -99,20 +96,25 @@ public class FormulaListDetailView extends ActionListView<FormulaList> { //todo 
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
                 BorderLayout.CENTER
         );
-
-        this.add(createNorth(), BorderLayout.NORTH);
-
-
     }
 
-    ///////////////// Internal //////////////////////////
-    protected JPanel createNorth() {
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-
-        top.add(searchField);
-        return top;
+    @Override
+    protected JToolBar getToolBar() {
+        return null;
     }
 
+    @Override
+    protected EventList<MatcherEditor<SiriusResultElement>> getSearchFieldMatchers() {
+        return GlazedLists.eventListOf(
+                (MatcherEditor<SiriusResultElement>) new StringMatcherEditor<>(tableFormat, searchField.textField)
+        );
+    }
+
+    @Override
+    protected FilterList<SiriusResultElement> configureFiltering(EventList<SiriusResultElement> source) {
+        sortedSource = new SortedList<>(source);
+        return super.configureFiltering(sortedSource);
+    }
 
     private class ConnectedSelection<T> {
         final DefaultEventSelectionModel<T> model1;

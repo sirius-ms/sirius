@@ -27,9 +27,6 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     public CandidateListTableView(final CandidateList list) {
         super(list);
 
-//        setLayout(new BorderLayout());
-//        searchField.setPreferredSize(new Dimension(100, searchField.getPreferredSize().height));
-
         final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sortedSource);
 
         final CandidateTableFormat tf = new CandidateTableFormat();
@@ -93,6 +90,6 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
-
+        //todo do something
     }
 }
