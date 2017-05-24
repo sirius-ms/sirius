@@ -49,9 +49,9 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
 
-        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), true, true, source.scoreStats));
-        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), false, false, source.isotopeScoreStats));
-        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), false, false, source.treeScoreStats));
+        table.getColumnModel().getColumn(2).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.scoreStats,true));
+        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.isotopeScoreStats,false));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats,false));
 
         table.addMouseListener(new MouseListener() {
             @Override

@@ -49,6 +49,7 @@ public class CandidateList extends ActionList<CompoundCandidate, Set<FingerIdDat
         scoreStats.reset();
         logPStats.reset();
         tanimotoStats.reset();
+
         data = new HashSet<>();
         List<SiriusResultElement> formulasToShow = new LinkedList<>();
 

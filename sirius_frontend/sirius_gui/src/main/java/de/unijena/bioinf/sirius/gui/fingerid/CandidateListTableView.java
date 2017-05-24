@@ -31,9 +31,9 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
         table.setSelectionModel(model);
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumnIndex()));
 
-//        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(true, true, source.scoreStats));
-//        table.getColumnModel().getColumn(3).setCellRenderer(new BarTableCellRenderer(false, false, source.isotopeScoreStats));
-//        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(false, false, source.treeScoreStats));
+        table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f,1f,true));
+//        table.getColumnModel().getColumn(3).setCellRenderer(new AbstractBarTableCellRenderer(false, false, source.isotopeScoreStats));
+//        table.getColumnModel().getColumn(4).setCellRenderer(new AbstractBarTableCellRenderer(false, false, source.treeScoreStats));
 
         /*table.addMouseListener(new MouseListener() {
             @Override
