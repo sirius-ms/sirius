@@ -9,6 +9,8 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 import org.jdesktop.beans.AbstractBean;
 
@@ -21,6 +23,7 @@ import java.awt.*;
 public abstract class ActionListDetailView<E extends AbstractBean, D, T extends ActionList<E, D>> extends ActionListView<T> {
     protected final SearchTextField searchField;
     protected final FilterList<E> filteredSource;
+    protected final DefaultEventSelectionModel<E> filteredSelectionModel;
     protected final JToolBar toolBar;
 //    protected final T source;
 
@@ -31,6 +34,7 @@ public abstract class ActionListDetailView<E extends AbstractBean, D, T extends 
         searchField = new SearchTextField();
         this.toolBar = getToolBar();
         filteredSource = configureFiltering(source.elementList);
+        filteredSelectionModel = new DefaultEventSelectionModel<E>(filteredSource);
         add(getNorth(), BorderLayout.NORTH);
 
     }
@@ -39,6 +43,13 @@ public abstract class ActionListDetailView<E extends AbstractBean, D, T extends 
 
     protected abstract EventList<MatcherEditor<E>> getSearchFieldMatchers();
 
+    public FilterList<E> getFilteredSource() {
+        return filteredSource;
+    }
+
+    public DefaultEventSelectionModel<E> getFilteredSelectionModel() {
+        return filteredSelectionModel;
+    }
 
     protected FilterList<E> configureFiltering(EventList<E> source) {
         FilterList<E> fl = new FilterList<E>(source,

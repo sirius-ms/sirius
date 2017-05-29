@@ -27,8 +27,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
         this.actionTable = new ActionTable<MolecularPropertyTableEntry>(filteredSource, sortedSource, format);
 
         TableComparatorChooser.install(actionTable, sortedSource, AbstractTableComparatorChooser.SINGLE_COLUMN);
-        final DefaultEventSelectionModel<MolecularPropertyTableEntry> model = new DefaultEventSelectionModel<>(sortedSource);
-        actionTable.setSelectionModel(model);
+        actionTable.setSelectionModel(filteredSelectionModel);
 
         this.add(
                 new JScrollPane(actionTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),

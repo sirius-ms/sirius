@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.fingerid.CandidateList;
+import de.unijena.bioinf.sirius.gui.fingerid.CandidateListStructureView;
 import de.unijena.bioinf.sirius.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.sirius.gui.fingerid.CandidateListDetailViewPanel;
 
@@ -15,11 +16,10 @@ public class CandidateOverviewPanel extends JPanel {
         super(new BorderLayout());
 
         final CandidateListTableView north = new CandidateListTableView(sourceList);
-        final CandidateListDetailViewPanel south = null;
+        final CandidateListStructureView south = new CandidateListStructureView(north.getFilteredSelectionModel());
 
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, south);
-        major.setDividerLocation(250);
-        add(major, BorderLayout.CENTER);
+        add(north, BorderLayout.CENTER);
+        add(south, BorderLayout.SOUTH);
     }
 
 }

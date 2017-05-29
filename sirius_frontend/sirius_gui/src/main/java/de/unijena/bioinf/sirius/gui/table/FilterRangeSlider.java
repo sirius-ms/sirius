@@ -99,9 +99,6 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
     }
 
     private void refreshText() {
-//        left.setText(Strings.padStart(format.format(getMinSelected() * viewMultiplier),numberLength,' '));
-//        right.setText(Strings.padStart(format.format(getMaxSelected() * viewMultiplier),numberLength,' '));
-//
         left.setText(format.format(getMinSelected() * viewMultiplier));
         right.setText(format.format(getMaxSelected() * viewMultiplier));
     }
@@ -113,9 +110,6 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
             try {
                 int pmin = ((int) Math.floor(stats.getMin())) * (int) valueMultiplier;
                 int pmax = ((int) Math.ceil(stats.getMax())) * (int) valueMultiplier;
-
-                rangeSlider.setUpperValue(pmax);
-                rangeSlider.setLowerValue(pmin);
 
                 rangeSlider.setMinimum(pmin);
                 rangeSlider.setMaximum(pmax);

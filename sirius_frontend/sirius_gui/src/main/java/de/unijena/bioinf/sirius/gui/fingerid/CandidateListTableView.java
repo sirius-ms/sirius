@@ -20,15 +20,16 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     private final ActionTable<CompoundCandidate> table;
     private SortedList<CompoundCandidate> sortedSource;
 
+
     public CandidateListTableView(final CandidateList list) {
         super(list);
 
-        final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sortedSource);
+//        final DefaultEventSelectionModel<CompoundCandidate> model = new DefaultEventSelectionModel<>(sortedSource);
 
         final CandidateTableFormat tf = new CandidateTableFormat(source.scoreStats);
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
 
-        table.setSelectionModel(model);
+        table.setSelectionModel(filteredSelectionModel);
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tf.highlightColumnIndex()));
 
         table.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f,1f,true));

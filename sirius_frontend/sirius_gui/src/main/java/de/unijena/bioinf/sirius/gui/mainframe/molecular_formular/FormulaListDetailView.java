@@ -41,11 +41,11 @@ public class FormulaListDetailView extends ActionListDetailView<SiriusResultElem
         super(source);
 
 
-        final DefaultEventSelectionModel<SiriusResultElement> model = new DefaultEventSelectionModel<>(sortedSource);
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 
-        table.setSelectionModel(model);
-        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), model, source.getElementList(), sortedSource);
+        table.setSelectionModel(filteredSelectionModel);
+        filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
 
