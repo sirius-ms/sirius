@@ -38,7 +38,6 @@ public class CandidateListStructureView extends JPanel {
         selections.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                System.out.println("select");
                 list.clear();
                 if (!selections.isSelectionEmpty()) {
                     list.addAll(selections.getSelected());
