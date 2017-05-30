@@ -20,6 +20,8 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
+import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
+import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -1301,6 +1303,28 @@ public class Sirius {
      */
     public List<MolecularFormula> decompose(double mass, Ionization ion, FormulaConstraints constr, Deviation dev) {
         return getMs2Analyzer().getDecomposerFor(constr.getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(mass), dev, constr);
+    }
+
+    /**
+     * Applies a given biotransformation on a given Molecular formular and return the transformed formula(s)
+     *
+     * @param source   source formula for transformation
+     * @param transformation to that will be applied to given Formula    ionization mode (might be a Charge, in which case the decomposer will enumerate the ion formulas instead of the neutral formulas)
+     * @return transformed MolecularFormulas
+     */
+    public List<MolecularFormula> bioTransform(MolecularFormula source, BioTransformation transformation) {
+        return BioTransformer.transform(source,transformation);
+    }
+
+
+    /**
+     * Applies all known biotransformation on a given Molecular formular and returns the transformed formula(s)
+     *
+     * @param source   source formula for transformation
+     * @return transformed MolecularFormulas
+     */
+    public List<MolecularFormula> bioTransform(MolecularFormula source) {
+        return BioTransformer.getAllTransformations(source);
     }
 
     /**
