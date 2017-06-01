@@ -45,7 +45,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'featureID'
 
 # General information about the project.
 project = u'SIRIUS'
@@ -92,7 +92,7 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-# A list of ignored prefixes for module index sorting.
+# A list of ignored prefixes for module featureID sorting.
 #modindex_common_prefix = []
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
@@ -156,13 +156,13 @@ html_static_path = ['_static']
 # template names.
 #html_additional_pages = {}
 
-# If false, no module index is generated.
+# If false, no module featureID is generated.
 #html_domain_indices = True
 
-# If false, no index is generated.
+# If false, no featureID is generated.
 #html_use_index = True
 
-# If true, the index is split into individual pages for each letter.
+# If true, the featureID is split into individual pages for each letter.
 #html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
@@ -205,7 +205,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'SIRIUS.tex', u'SIRIUS Documentation',
+  ('featureID', 'SIRIUS.tex', u'SIRIUS Documentation',
    u'Kai Dührkop', 'manual'),
 ]
 
@@ -226,7 +226,7 @@ latex_use_parts = False
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
 
-# If false, no module index is generated.
+# If false, no module featureID is generated.
 #latex_domain_indices = True
 
 
@@ -235,7 +235,7 @@ latex_use_parts = False
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'sirius', u'SIRIUS Documentation',
+    ('featureID', 'sirius', u'SIRIUS Documentation',
      [u'Kai Dührkop'], 1)
 ]
 
@@ -249,7 +249,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'SIRIUS', u'SIRIUS Documentation',
+  ('featureID', 'SIRIUS', u'SIRIUS Documentation',
    u'Kai Dührkop', 'SIRIUS', 'One line description of project.',
    'Miscellaneous'),
 ]
@@ -257,7 +257,7 @@ texinfo_documents = [
 # Documents to append as an appendix to all manuals.
 #texinfo_appendices = []
 
-# If false, no module index is generated.
+# If false, no module featureID is generated.
 #texinfo_domain_indices = True
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
@@ -333,5 +333,5 @@ epub_exclude_files = ['search.html']
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #epub_show_urls = 'inline'
 
-# If false, no index is generated.
+# If false, no featureID is generated.
 #epub_use_index = True
