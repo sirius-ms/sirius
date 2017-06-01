@@ -42,7 +42,12 @@ public interface SiriusOptions {
     String getSirius();
 
     /////////////////////////////////////////////////
+    // run Zodiac
 
+    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.")
+    boolean isZodiac();
+
+    /////////////////////////////////////////////////
 
     @Option
     boolean isVersion();
@@ -111,7 +116,10 @@ public interface SiriusOptions {
     @Option(shortName = "e", longName = "elements", description = "The allowed elements. Write CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upperbound.", defaultToNull = true)
     FormulaConstraints getElements();
 
+    @Option(longName = "beautifytrees", description = "will produce bigger trees and explain more peaks, if possible")
+    boolean isBeautifyTrees();
 
-
+    @Option(shortName = "f", longName = {"guession"}, description = "specifies a list of possible ionizations/adducts, e.g. '[M]+,[M+H]+,[M+Na]+,[M+K]+'. Sirius tries to guess possible ionizations by mass differences in the MS1. Using only '[M]+,[M+H]+' will have no effect because of isotope peaks.", defaultToNull = true)
+    List<String> getPossibleIonizations();
 
 }
