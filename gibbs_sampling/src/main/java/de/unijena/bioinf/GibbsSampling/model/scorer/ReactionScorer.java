@@ -72,6 +72,11 @@ public class ReactionScorer implements EdgeScorer {
 //        return maxScore;
     }
 
+    @Override
+    public void setThreshold(double threshold) {
+        throw new NoSuchMethodError("has to be debugged");
+    }
+
     public void clean() {
     }
 

@@ -19,11 +19,10 @@ public class StandardNodeScorer implements NodeScorer {
             double max = -1.0D / 0.0;
             int length = currentCandidates.length;
 
-            int expScore;
             Candidate candidate;
             double score;
-            for(expScore = 0; expScore < length; ++expScore) {
-                candidate = currentCandidates[expScore];
+            for(int j = 0; j < length; ++j) {
+                candidate = currentCandidates[j];
                 score = candidate.getScore();
                 if(score > max) {
                     max = score;
@@ -31,34 +30,26 @@ public class StandardNodeScorer implements NodeScorer {
             }
 
             if(!this.normalize) {
-                for(expScore = 0; expScore < length; ++expScore) {
-                    candidate = currentCandidates[expScore];
+                for(int j = 0; j < length; ++j) {
+                    candidate = currentCandidates[j];
                     score = candidate.getScore();
                     candidate.addNodeProbabilityScore(Math.exp(this.gamma * (score - max)));
                 }
             } else {
-                double var16 = 0.0D;
-                double[] var17 = new double[currentCandidates.length];
-                int var18 = 0;
-                Candidate[] var19 = currentCandidates;
-                int var11 = currentCandidates.length;
+                double sum = 0.0D;
+                double[] scores = new double[currentCandidates.length];
 
-                int var12;
                 Candidate candidate1;
-                for(var12 = 0; var12 < var11; ++var12) {
-                    candidate1 = var19[var12];
+                for(int j = 0; j < currentCandidates.length; ++j) {
+                    candidate1 = currentCandidates[j];
                     double expS = Math.exp(this.gamma * (candidate1.getScore() - max));
-                    var16 += expS;
-                    var17[var18++] = expS;
+                    sum += expS;
+                    scores[j] = expS;
                 }
 
-                var18 = 0;
-                var19 = currentCandidates;
-                var11 = currentCandidates.length;
-
-                for(var12 = 0; var12 < var11; ++var12) {
-                    candidate1 = var19[var12];
-                    candidate1.addNodeProbabilityScore(var17[var18++] / var16);
+                for(int j = 0; j < currentCandidates.length; ++j) {
+                    candidate1 = currentCandidates[j];
+                    candidate1.addNodeProbabilityScore(scores[j] / sum);
                 }
             }
         }

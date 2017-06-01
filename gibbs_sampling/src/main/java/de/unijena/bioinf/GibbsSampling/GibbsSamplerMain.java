@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -31,10 +32,17 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 //import de.unijena.bioinf.fingerid.SpectralPreprocessor;
 import de.unijena.bioinf.sirius.Sirius;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.procedure.TIntIntProcedure;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
+import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -330,15 +338,17 @@ public class GibbsSamplerMain {
 
         NodeScorer[] nodeScorers;
         if (useLibraryHits){
-            nodeScorers = new NodeScorer[]{new RankNodeScorer(), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
+//            nodeScorers = new NodeScorer[]{new RankNodeScorer(), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
             System.out.println("use LibraryHitScorer");
         } else {
-            nodeScorers = new NodeScorer[]{new RankNodeScorer()};
+//            nodeScorers = new NodeScorer[]{new RankNodeScorer()};
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1)};
             System.out.println("ignore Library Hits");
         }
 
 
-        GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount);
+        GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
 
 
         if (graphOutputDir!=null) writeMFNetworkToDir(graphOutputDir, gibbsParallel.getGraph());
@@ -437,7 +447,7 @@ public class GibbsSamplerMain {
 
 
 
-            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount);
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
 
 
             System.out.println("start");
@@ -714,6 +724,117 @@ public class GibbsSamplerMain {
         }
     }
 
+    public static  <C extends Candidate & HasLibraryHit> void parseLibraryHits(Path libraryHitsPath, Path mgfFile, Map<String, List<C>> candidatesMap) throws IOException {
+        try {
+            //todo test missing values !!!!
+//            final MsExperimentParser parser = new MsExperimentParser();
+//            List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
+
+//            //assumption "#Scan#" is the number of the ms2 scan starting with 1
+//            String[] featureIDs = new String[allExperiments.size()];
+//            int j = 0;
+//            for (Ms2Experiment experiment : allExperiments) {
+//                featureIDs[j++] = experiment.getName();
+//            }
+
+            List<String> featureIDs = new ArrayList<>();
+            try(BufferedReader reader = Files.newBufferedReader(mgfFile)){
+                String line;
+                String lastID = null;
+                while ((line=reader.readLine())!=null){
+                    if (line.toLowerCase().startsWith("feature_id=")){
+                        String id = line.split("=")[1];
+                        if (!id.equals(lastID)){
+                            featureIDs.add(id);
+                            lastID = id;
+                        }
+                    }
+                }
+            }
+
+            //todo change nasty hack
+
+
+            List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
+            String[] header = lines.remove(0).split("\t");
+//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
+            String[] ofInterest = new String[]{"#Scan#", "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
+            int[] indices = new int[ofInterest.length];
+            for (int i = 0; i < ofInterest.length; i++) {
+                int idx = arrayFind(header, ofInterest[i]);
+                if (idx<0){
+                    int[] more = arrayFindSimilar(header, ofInterest[i]);
+                    if (more.length!=1) throw new RuntimeException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
+                    else idx = more[0];
+                }
+                indices[i] = idx;
+            }
+            for (String line : lines) {
+                String[] cols = line.split("\t");
+                final int scanNumber = Integer.parseInt(cols[indices[0]]);
+                final String featureId = featureIDs.get(scanNumber-1); //starting with 1!
+
+                List<C> candidatesList = candidatesMap.get(featureId);
+                if (candidatesList == null) {
+                    //todo check:q
+//                    System.err.println("no corresponding compound (FEATURE_ID: " +featureId+ ", #SCAN# "+scanNumber+") to library hit found");
+                    continue;
+                }
+
+                final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
+                final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]], cols[indices[2]]);
+
+                if (formula==null){
+                    System.err.println("cannot compute molecular formula of library hit #SCAN# "+scanNumber);
+                    continue;
+                }
+
+                final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
+                final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+                final double cosine = Double.parseDouble(cols[indices[4]]);
+                final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
+                final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                for (C candidate : candidatesList) {
+                    candidate.setLibraryHit(libraryHit);
+                }
+            }
+        } catch (Exception e){
+            throw new IOException("cannot parse library hits. Reason "+e.getMessage());
+        }
+
+    }
+
+
+    private static MolecularFormula getFormulaFromStructure(String inchi, String smiles){
+
+        MolecularFormula formula = null;
+        if (inchi!=null && isInchi(inchi)){
+            formula = new InChI(null, inchi).extractFormula();
+        }
+
+        if (formula==null){
+            try {
+                final SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+                final IAtomContainer c = parser.parseSmiles(smiles);
+                String formulaString = MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(c));
+                formula = MolecularFormula.parse(formulaString);
+            } catch (CDKException e) {
+                return null;
+            }
+        }
+        return formula;
+    }
+
+    private static boolean isInchi(String inchi) {
+        if (!inchi.toLowerCase().startsWith("inchi=")) return false;
+        int idx1 = inchi.indexOf("/");
+        int idx2 = inchi.indexOf("/", idx1);
+        if (idx1>0 && idx2>0 && (idx2-idx1)>1) return true;
+        return false;
+    }
+
+
 //    public Map<String, List<Scored<Candidate>>> getScoredCandidatesByTreeScore(Map<String, List<Candidate>> candidatesMap) {
 //        //convert and remove negative scores
 ////        System.out.println("just CHO");
@@ -885,7 +1006,7 @@ public class GibbsSamplerMain {
         return this.arrayFind(array, object) >= 0;
     }
 
-    private <T> int arrayFind(T[] array, T object) {
+    private static <T> int arrayFind(T[] array, T object) {
         for(int i = 0; i < array.length; ++i) {
             Object t = array[i];
             if(t.equals(object)) {
@@ -894,6 +1015,18 @@ public class GibbsSamplerMain {
         }
 
         return -1;
+    }
+
+    private static int[] arrayFindSimilar(String[] array, String object) {
+        TIntArrayList positions = new TIntArrayList();
+        for(int i = 0; i < array.length; ++i) {
+            String t = array[i];
+            if(t.toLowerCase().contains(object.toLowerCase())) {
+                positions.add(i);
+            }
+        }
+
+        return positions.toArray();
     }
 
     private static Reaction parseReactionString(String string) {
@@ -907,7 +1040,7 @@ public class GibbsSamplerMain {
         }
     }
 
-    public Map<String, List<FragmentsCandidate>> parseMFCandidates(Path treeDir, Path mgfFile, int maxCandidates, int workercount) throws IOException {
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path treeDir, Path mgfFile, int maxCandidates, int workercount) throws IOException {
         System.out.println(treeDir.toString());
         Path[] trees = Files.find(treeDir, 2, (path, basicFileAttributes) -> path.toString().endsWith(".json")).toArray(s -> new Path[s]);
         System.out.println("number "+trees.length);
@@ -1030,7 +1163,7 @@ public class GibbsSamplerMain {
 //    }
 
 
-    public Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
 //        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
 //        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
@@ -1176,12 +1309,6 @@ public class GibbsSamplerMain {
             reactionsSet.add(parseReactionString(reactionStringsRogers[i]));
         }
 
-        System.out.println("reactions");
-        for (Reaction reaction : reactionsSet) {
-            System.out.println(reaction);
-        }
-        System.out.println(".............");
-
         if (stepsize>1){
 
             //convert to combined reaction for equal testing
@@ -1246,8 +1373,8 @@ public class GibbsSamplerMain {
         for (Reaction reaction : reactions) {
             formulas.add(reaction.netChange());
         }
-        System.out.println("formulas: "+formulas.size());
-        System.out.println("reactions: "+reactions.length);
+//        System.out.println("formulas: "+formulas.size());
+//        System.out.println("reactions: "+reactions.length);
         return reactions;
 
     }
@@ -1674,7 +1801,7 @@ public class GibbsSamplerMain {
 
 
     private static TCharSet forbidden = new TCharHashSet(new char[]{' ',':','\\','/','[',']', '_'});
-    private String cleanString(String s){
+    private static String cleanString(String s){
         final StringBuilder builder = new StringBuilder(s.length());
         final char[] chars = s.toCharArray();
         for (char c : chars) {

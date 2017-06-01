@@ -32,6 +32,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
     public void prepare(FragmentsCandidate[][] candidates) {
+        long time = System.currentTimeMillis();
         double[] norm = this.normalization(candidates);
         this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
 
@@ -79,8 +80,12 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for (BitSet bitSet : this.maybeSimilar) {
             sum += bitSet.cardinality();
         }
-        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum);
+        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
     }
+
+//    private void prepareData(){
+//
+//    }
 
 
 
@@ -208,7 +213,6 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             }
         }
 
-
         final int commonF = this.countCommons(candidate1.getFragments(), candidate2.getFragments());
         final int commonL = this.countCommons(candidate1.getLosses(), candidate2.getLosses());
         final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
@@ -217,6 +221,12 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
         return score;
     }
+
+    @Override
+    public void setThreshold(double threshold) {
+        this.threshold = threshold;
+    }
+
 
     public void clean() {
         this.idxMap.clear();

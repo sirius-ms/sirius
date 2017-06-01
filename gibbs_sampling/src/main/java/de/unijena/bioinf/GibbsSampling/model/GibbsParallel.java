@@ -18,19 +18,21 @@ public class GibbsParallel<C extends Candidate<?>> {
     private EdgeScorer<C>[] edgeScorers;
     private EdgeFilter edgeFilter;
     private int workersCount;
+    private int repetitions;
     private final List<GibbsMFCorrectionNetwork> gibbsNetworks;
     private Scored<C>[][] maxPosterior;
     private Scored<C>[][] addedUpPosterior;
     private Scored<C>[][] sampling;
     private Graph graph;
 
-    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount) {
+    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.nodeScorers = nodeScorers;
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
         this.workersCount = workersCount;
+        this.repetitions = repetitions;
         this.gibbsNetworks = new ArrayList();
         this.graph = this.init();
     }
@@ -39,7 +41,7 @@ public class GibbsParallel<C extends Candidate<?>> {
         Graph<C> graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.workersCount);
         int i = 0;
 
-        while(i++ < this.workersCount) {
+        while(i++ < this.repetitions) {
             this.gibbsNetworks.add(new GibbsMFCorrectionNetwork(graph, 1));
         }
 
@@ -119,7 +121,7 @@ public class GibbsParallel<C extends Candidate<?>> {
     }
 
     public void iteration(int maxSteps, final int burnIn) {
-        final int maxStepProportioned = maxSteps / this.workersCount;
+        final int maxStepProportioned = maxSteps / this.repetitions;
         ExecutorService executorService = Executors.newFixedThreadPool(this.workersCount);
         ArrayList<Future> futures = new ArrayList();
         
