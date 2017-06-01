@@ -55,8 +55,13 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
         return this.cdf(score);
     }
 
-    public double getThreshold() {
+    public double getMinProbability() {
         return 0.0D;
+    }
+
+    @Override
+    public double getThreshold() {
+        return threshold;
     }
 
     public double cdf(double value) {

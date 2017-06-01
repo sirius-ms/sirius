@@ -37,11 +37,11 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
         }
 
         this.lambda = (double)l / sum;
-        System.out.println("lambda estimate " + this.lambda);
+//        System.out.println("lambda estimate " + this.lambda);
         values.sort();
         double var11 = values.get(values.size() / 2);
-        System.out.println("mean: " + values.sum() / (double)l + " | estimate: " + this.lambda);
-        System.out.println("median: " + var11 + " | estimate: " + Math.log(2.0D) / var11);
+//        System.out.println("mean: " + values.sum() / (double)l + " | estimate: " + this.lambda);
+//        System.out.println("median: " + var11 + " | estimate: " + Math.log(2.0D) / var11);
         if(this.estimateByMedian) {
             double var12 = Math.log(2.0D) / var11;
             if(var12 < this.estimationThreshold) {
@@ -53,15 +53,20 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
 
         this.scoringThreshold = -Math.log(1.0D - this.scoringThreshold) / this.lambda;
         this.normalizationForThreshold = 1.0D - Math.exp(-this.lambda * this.scoringThreshold);
-        System.out.println("scoringThreshold " + this.scoringThreshold + " normalizationForThreshold " + this.normalizationForThreshold);
+//        System.out.println("scoringThreshold " + this.scoringThreshold + " normalizationForThreshold " + this.normalizationForThreshold);
     }
 
     public double toPvalue(double score) {
         return this.cdf(score);
     }
 
-    public double getThreshold() {
+    public double getMinProbability() {
         return this.normalizationForThreshold;
+    }
+
+    @Override
+    public double getThreshold() {
+        return scoringThreshold;
     }
 
     public double cdf(double value) {

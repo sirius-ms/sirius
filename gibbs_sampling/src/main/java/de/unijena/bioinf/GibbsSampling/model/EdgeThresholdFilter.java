@@ -10,7 +10,6 @@ public class EdgeThresholdFilter extends AbstractEdgeFilter {
     public EdgeThresholdFilter(double probabilityThreshold) {
         this.threshold = probabilityThreshold;
         this.logThres = Math.log(this.threshold);
-        System.out.println("edgefilter " + this.logThres);
     }
 
     public void filterEdgesAndSetThreshold(Graph graph, int candidateIdx, double[] logEdgeScores) {

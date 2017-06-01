@@ -103,14 +103,13 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
         String[] filteredIds = newIds.toArray(new String[0]);
         Scored<C>[][] scoredPossibleFormulas = newFormulas.toArray(new Scored[0][]);
-        System.out.println("the class is "+possibleFormulas[0][0].getClass().getSimpleName());
         Graph<C> graph = new Graph<C>(filteredIds, scoredPossibleFormulas);
         graph.init(edgeScorers, edgeFilter, numOfThreads);
         return graph;
     }
 
     private void setActive() {
-        System.out.println("setActive");
+//        System.out.println("setActive");
         this.priorProb = new double[this.graph.getSize()];
         this.activeEdgeCounter = new int[this.graph.getSize()];
         this.activeIdx = new int[this.graph.numberOfCompounds()];
@@ -132,13 +131,31 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 }
             } else {
                 //sample
+//                double[] scores = new double[possibleFormulasArray.length];
+//                double sum = 0;
+//                for (int j = 0; j < possibleFormulasArray.length; j++) {
+//                    double score = possibleFormulasArray[j].getScore();
+//                    scores[j] = score;
+//                    sum += score;
+//                }
+//                idx = getRandomIdx(0, scores.length-1, sum, scores);
+//
+
                 double[] scores = new double[possibleFormulasArray.length];
                 double sum = 0;
+                double maxLog = Double.NEGATIVE_INFINITY;
                 for (int j = 0; j < possibleFormulasArray.length; j++) {
                     double score = possibleFormulasArray[j].getScore();
+                    if (score>maxLog) maxLog = score;
+                }
+
+                for (int j = 0; j < possibleFormulasArray.length; j++) {
+                    final double score = Math.exp(possibleFormulasArray[j].getScore()-maxLog);
                     scores[j] = score;
                     sum += score;
                 }
+                assert sum > 0.0D;
+
                 idx = getRandomIdx(0, scores.length-1, sum, scores);
             }
 
@@ -186,6 +203,8 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         int iterationStepLength = this.graph.numberOfCompounds();
         long startTime = System.nanoTime();
 
+        int step = (burnIn + maxSteps)/10;
+
         for(int i = 0; i < burnIn + maxSteps; ++i) {
             this.currentRound = i;
             boolean changed = false;
@@ -197,13 +216,13 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 }
             }
 
-            if(i % 5000 == 0) {
+            if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
                 long var11 = System.nanoTime() - startTime;
-                System.out.println("runtime in ms: " + var11 / 1000000L);
+//                System.out.println("runtime in ms: " + var11 / 1000000L);
+                System.out.println("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
             }
         }
 
-        System.out.println("rounds: " + maxSteps);
     }
 
     public String[] getIds() {
