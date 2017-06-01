@@ -5,6 +5,8 @@ public interface ScoreProbabilityDistribution extends Cloneable {
 
     double toPvalue(double var1);
 
+    double getMinProbability();
+
     double getThreshold();
 
     ScoreProbabilityDistribution clone();

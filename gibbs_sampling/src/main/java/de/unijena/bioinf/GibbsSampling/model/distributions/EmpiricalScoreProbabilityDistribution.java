@@ -29,8 +29,13 @@ public class EmpiricalScoreProbabilityDistribution implements ScoreProbabilityDi
         return ((score - this.scores[insertIdx]) * this.probabilities[insertIdx] + (this.scores[insertIdx + 1] - score) * this.probabilities[insertIdx + 1]) / (this.scores[insertIdx + 1] - this.scores[insertIdx]);
     }
 
-    public double getThreshold() {
+    public double getMinProbability() {
         return 0.0D;
+    }
+
+    @Override
+    public double getThreshold() {
+        return 0;
     }
 
     public ScoreProbabilityDistribution clone() {

@@ -13,8 +13,13 @@ public class DummyScoreProbabilityDistribution implements ScoreProbabilityDistri
         return score;
     }
 
-    public double getThreshold() {
+    public double getMinProbability() {
         return 0.0D;
+    }
+
+    @Override
+    public double getThreshold() {
+        return 0;
     }
 
     public ScoreProbabilityDistribution clone() {

@@ -75,8 +75,13 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         return this.cdf(score);
     }
 
-    public double getThreshold() {
+    public double getMinProbability() {
         return this.normalizationForThreshold;
+    }
+
+    @Override
+    public double getThreshold() {
+        return threshold;
     }
 
     public double cdf(double value) {

@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
+import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -236,12 +237,13 @@ public class Graph<C extends Candidate<?>> {
             }
         }
 
-        System.out.println("some scores1: " + Arrays.toString(someScores.toArray()));
+//        System.out.println("some scores1: " + Arrays.toString(someScores.toArray()));
 
         assert this.isSymmetricSparse(this.connections);
 
         if(!this.arePeaksConnected(this.connections)) {
-            System.out.println("warning: graph is not well connected. consider using less stringent EdgeFilters");
+            //todo
+//            System.out.println("warning: graph is not well connected. consider using less stringent EdgeFilters");
         }
 
         sum = 0;
@@ -326,20 +328,42 @@ public class Graph<C extends Candidate<?>> {
 
         double minV = 1.0D;
 
+//        for (EdgeScorer<C> edgeScorer : edgeScorers) {
+//            edgeScorer.prepare(allCandidates);
+//            minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
+//            System.out.println("minV " + minV);
+//        }
+
+        //todo this is a big hack!!!!
         for (EdgeScorer<C> edgeScorer : edgeScorers) {
-            edgeScorer.prepare(allCandidates);
-            minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getThreshold();
-            System.out.println("minV " + minV);            
+            if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
+                if (edgeFilter instanceof EdgeThresholdFilter){
+                    ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
+                } else {
+                    edgeScorer.prepare(allCandidates);
+                }
+                minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
+//                System.out.println("minV " + minV);
+            } else {
+                edgeScorer.prepare(allCandidates);
+            }
+
         }
+
+
         
         minV = Math.log(minV);
         this.edgeFilter.setThreshold(minV);
-        System.out.println("min value " + minV);
-        final Graph var14 = this;
+//        System.out.println("min value " + minV);
+        final Graph final_graph = this;
+        long time = System.currentTimeMillis();
+
+        System.out.println("start computing edges");
+        int step = this.getSize()/20;
 
         for(int i = 0; i < this.getSize(); ++i) {
-            if(i % 100 == 0) {
-                System.out.println(i);
+            if(i % step == 0 || i==(this.getSize()-1)) {
+                System.out.println((100*(i+1)/this.getSize())+"%");
             }
             
             final int final_i = i;
@@ -366,17 +390,19 @@ public class Graph<C extends Candidate<?>> {
                         }
                     }
 
-                    if(final_i == 0) {
-                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
-                    }
+//                    if(final_i == 0) {
+//                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
+//                    }
 
-                    Graph.this.edgeFilter.filterEdgesAndSetThreshold(var14, final_i, scores.toArray());
+                    Graph.this.edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
                 }
             }));
         }
 
         this.futuresGet(futures);
         executorService.shutdown();
+
+        System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
 
         for (EdgeScorer edgeScorer : edgeScorers) {
             edgeScorer.clean();
@@ -449,6 +475,45 @@ public class Graph<C extends Candidate<?>> {
         }
 
         return true;
+    }
+
+    private void connectionStatistics(int[][] connections) {
+        TIntIntHashMap maxCompoundConnectionsStats = new TIntIntHashMap();
+
+        final int numberOfPeaks = numberOfCompounds();
+        for (int i = 0; i < numberOfPeaks; i++) {
+            int left = getPeakLeftBoundary(i);
+            int right = getPeakRightBoundary(i);
+
+            int maxConnections = -1;
+            for (int j = left; j <= right; j++) {
+                TIntHashSet connectedCompounds = new TIntHashSet();
+                int[] conns = getConnections(j);
+                for (int c : conns) {
+                    connectedCompounds.add(getPeakIdx(c));
+                }
+                maxConnections = Math.max(maxConnections, connectedCompounds.size());
+            }
+
+            maxCompoundConnectionsStats.adjustOrPutValue(maxConnections, 1, 1);
+        }
+
+        int[] connectionCounts = maxCompoundConnectionsStats.keys();
+        Arrays.sort(connectionCounts);
+
+        final int minConnections = 5;
+        final double percentOfBadConnectedCompounds = 0.1; //10%
+        final int maxAllowedBadlyConnected = (int)(percentOfBadConnectedCompounds*numberOfPeaks);
+        int numberOfBadlyConnected = 0;
+        for (int connectionCount : connectionCounts) {
+            if (connectionCount>minConnections) break;
+            numberOfBadlyConnected += maxCompoundConnectionsStats.get(connectionCount);
+        }
+
+        if (numberOfBadlyConnected>maxAllowedBadlyConnected){
+            //todo do something
+        }
+
     }
 
     private boolean arePeaksConnected(int[][] connections){
