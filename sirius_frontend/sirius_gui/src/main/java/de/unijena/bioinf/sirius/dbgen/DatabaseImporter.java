@@ -20,7 +20,7 @@ public class DatabaseImporter {
     }
 
     public static void importDatabase(CdkFingerprintVersion version, String dbPath, List<String> files) {
-        final CustomDatabase db = new CustomDatabase(new File(dbPath).getName(), new File(dbPath));
+        final CustomDatabase db = CustomDatabase.createNewdatabase(new File(dbPath).getName(), new File(dbPath));
         db.setFingerprintVersion(version);
         final List<File> inchiorsmiles = new ArrayList<>();
         for (String f : files) inchiorsmiles.add(new File(f));

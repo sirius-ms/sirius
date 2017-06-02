@@ -900,7 +900,7 @@ public class CSIFingerIdComputation {
         final List<SearchableDatabase> db = new ArrayList<>();
         db.add(pubchem);
         db.add(bio);
-        db.addAll(CustomDatabase.customDatabases());
+        db.addAll(CustomDatabase.customDatabases(true));
         return db;
     }
     public SearchableDatabase getBioDb() {

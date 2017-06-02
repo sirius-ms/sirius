@@ -7,6 +7,11 @@ import java.util.*;
 
 public class VersionsInfo {
 
+    /**
+     * this version number increments if custom databases change and are not longer valid. This is for example the case when the fingerprint computation changes.
+     */
+    public static final int CUSTOM_DATABASE_SCHEMA = 1;
+
     public String siriusGuiVersion, siriusGuiDate, databaseDate;
     protected List<News> newsList;
 

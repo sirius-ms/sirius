@@ -2,15 +2,20 @@ package de.unijena.bioinf.sirius.gui.fingerid.fingerprints;
 
 import ca.odell.glazedlists.gui.TableFormat;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 /**
  * Created by kaidu on 22.05.17.
  */
-public class FingerprintTableFormat implements TableFormat {
+public class FingerprintTableFormat implements TableFormat<MolecularPropertyTableEntry> {
 
+
+    protected NumberFormat decimalFormat = DecimalFormat.getPercentInstance(Locale.US);
     protected FingerprintTable table;
-
     protected static String[] columns = new String[]{
-            "index", "type", "description", "probability"
+            "index", "type", "description", "#atoms", "f1 score", "probability"
     };
 
     public FingerprintTableFormat(FingerprintTable table) {
@@ -28,13 +33,14 @@ public class FingerprintTableFormat implements TableFormat {
     }
 
     @Override
-    public Object getColumnValue(Object baseObject, int column) {
-        MolecularPropertyTableEntry m = ((MolecularPropertyTableEntry)baseObject);
+    public Object getColumnValue(MolecularPropertyTableEntry m, int column) {
         switch (column) {
             case 0: return m.absoluteIndex;
             case 1: return m.getFingerprintTypeName();
             case 2: return m.getMolecularProperty().getDescription();
-            case 3: return m.getProbability();
+            case 3: return m.getMatchSizeDescription();
+            case 4: return m.getFScore();
+            case 5: return m.getProbability();
             default:return null;
         }
     }

@@ -10,10 +10,14 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
 
     protected final ProbabilityFingerprint underlyingFingerprint;
     protected final int absoluteIndex;
+    protected final FingerprintVisualization visualization;
+    protected final double fscore;
 
-    public MolecularPropertyTableEntry(ProbabilityFingerprint underlyingFingerprint, int absoluteIndex) {
+    public MolecularPropertyTableEntry(ProbabilityFingerprint underlyingFingerprint, FingerprintVisualization viz, double fscore, int absoluteIndex) {
+        this.visualization = viz;
         this.underlyingFingerprint = underlyingFingerprint;
         this.absoluteIndex = absoluteIndex;
+        this.fscore = fscore;
     }
 
     public double getProbability() {
@@ -22,6 +26,20 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
 
     public MolecularProperty getMolecularProperty() {
         return underlyingFingerprint.getFingerprintVersion().getMolecularProperty(absoluteIndex);
+    }
+
+    public double getFScore() {
+        return fscore;
+    }
+
+    public int getMatchSize() {
+        if (visualization==null) return -1;
+        return visualization.numberOfMatchesAtoms;
+    }
+
+    public String getMatchSizeDescription() {
+        if (getMatchSize() < 0) return "undefined";
+        else return String.valueOf(getMatchSize());
     }
 
     public CdkFingerprintVersion.USED_FINGERPRINTS getFingerprintType() {
@@ -49,5 +67,10 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
     @Override
     public int compareTo(MolecularPropertyTableEntry o) {
         return absoluteIndex-o.absoluteIndex;
+    }
+
+    @Override
+    public String toString() {
+        return  absoluteIndex + ": " + getMolecularProperty().toString();
     }
 }

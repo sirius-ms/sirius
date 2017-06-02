@@ -344,9 +344,13 @@ public class Compound {
         merge(mv, candidates, file);
     }
 
-    public static void merge(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
+    /**
+     * merges a given list of fingerprint candidates into the given file. Ignore duplicates
+     * @return number of newly added candidates
+     */
+    public static int merge(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
+        int sizeDiff=candidates.size();
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion)version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
-
         final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
         for (FingerprintCandidate fc : candidates) compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
         if (file.exists()) {
@@ -355,7 +359,10 @@ public class Compound {
                 parseCompounds(mv, compounds, parser);
             }
             for (Compound c : compounds) {
-                compoundPerInchiKey.put(c.inchi.key2D(), c.asFingerprintCandidate());
+                if (compoundPerInchiKey.containsKey(c.inchi.key2D()))
+                    --sizeDiff;
+                else
+                    compoundPerInchiKey.put(c.inchi.key2D(), c.asFingerprintCandidate());
             }
         }
         try (final JsonGenerator writer = Json.createGenerator(new GZIPOutputStream(new FileOutputStream(file)))) {
@@ -367,6 +374,7 @@ public class Compound {
             writer.writeEnd();
             writer.writeEnd();
         }
+        return sizeDiff;
     }
 
     public InChI getInchi() {

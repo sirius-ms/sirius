@@ -7,11 +7,15 @@ import de.unijena.bioinf.sirius.gui.fingerid.fingerprints.FingerprintTable;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.sirius.gui.table.ActionList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.io.IOException;
 
 public class ResultPanel extends JTabbedPane {
 
+    protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
     private FormulaOverviewPanel rvp;
     private TreeVisualizationPanel tvp;
@@ -29,7 +33,12 @@ public class ResultPanel extends JTabbedPane {
         svp = new SpectraVisualizationPanel();
         cov = new CandidateOverviewPanel(new CandidateList(suriusResultElements, ActionList.DataSelectionStrategy.ALL));
         ccv = new CandidateListDetailViewPanel(MainFrame.MF.getCsiFingerId(), new CandidateList(suriusResultElements));
-        fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements));
+        try {
+            fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements));
+        } catch (IOException e) {
+            logger.error(e.getMessage(),e);
+            fpt = null;
+        }
 //        CandidateList list = new CandidateList(suriusResultElements);
 
 
@@ -38,7 +47,7 @@ public class ResultPanel extends JTabbedPane {
         addTab("Spectra", new FormulaListHeaderPanel(suriusResultElements, svp));
         addTab("Trees", new FormulaListHeaderPanel(suriusResultElements, tvp));
         addTab("CSI:FingerId", new FormulaListHeaderPanel(suriusResultElements, ccv));
-        addTab("Fingerprint", new FormulaListHeaderPanel(suriusResultElements, fpt));
+        if (fpt!=null) addTab("Fingerprint", new FormulaListHeaderPanel(suriusResultElements, fpt));
     }
 
     public void dispose() {

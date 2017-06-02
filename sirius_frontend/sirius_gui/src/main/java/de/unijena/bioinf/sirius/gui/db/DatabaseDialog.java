@@ -36,6 +36,7 @@ public class DatabaseDialog extends JDialog {
 
     //todo we should separate the Dialog from the Database Managing part.
     protected JList<String> dbList;
+    protected HashMap<String, CustomDatabase> customDatabases;
     protected JButton addCustomDb;
     protected DatabaseView dbView;
     protected PlaceholderTextField nameField;
@@ -48,6 +49,7 @@ public class DatabaseDialog extends JDialog {
 
         final List<String> databases = collectDatabases();
         this.dbList = new DatabaseList(databases);
+        this.customDatabases = new HashMap<>();
 
         final Box box = Box.createVerticalBox();
 
@@ -97,8 +99,13 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 final int i = dbList.getSelectedIndex();
-                if (i >= 0)
-                    dbView.update(dbList.getModel().getElementAt(i));
+                if (i >= 0) {
+                    final String s = dbList.getModel().getElementAt(i);
+                    if (s.equalsIgnoreCase("pubchem"))
+                        dbView.update(s);
+                    else if (customDatabases.containsKey(s))
+                        dbView.updateContent(customDatabases.get(s));
+                }
             }
         });
 
@@ -109,7 +116,8 @@ public class DatabaseDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 databases.add(nameField.getText());
                 dbList.setListData(databases.toArray(new String[databases.size()]));
-                new ImportDatabaseDialog(nameField.getText());
+                final CustomDatabase newDb = new ImportDatabaseDialog(nameField.getText()).database;
+                whenCustomDbIsAdded(newDb);
             }
         });
 
@@ -118,7 +126,7 @@ public class DatabaseDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 final int k=dbList.getSelectedIndex();
                 if (k > 0 && k < dbList.getModel().getSize()) {
-                    new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+                    whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
                 }
             }
         });
@@ -128,7 +136,7 @@ public class DatabaseDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 final int k=dbList.getSelectedIndex();
                 if (k > 0 && k < dbList.getModel().getSize()) {
-                    new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+                    whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
                 }
             }
         });
@@ -143,6 +151,7 @@ public class DatabaseDialog extends JDialog {
                 if (ConfirmDialog.confirm(owner, "Delete database", msg)) {
                     if (index>0) {
                         new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).getImporter().deleteDatabase();
+                        customDatabases.remove(name);
                         dbList.setListData(collectDatabases().toArray(new String[0]));
                     } else {
                         // TODO: implement
@@ -153,9 +162,38 @@ public class DatabaseDialog extends JDialog {
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+        for (String name : databases) {
+            if (!name.equalsIgnoreCase("pubchem"))
+                whenCustomDbIsAdded(new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)));
+        }
+
         setMinimumSize(new Dimension(320, 240));
         pack();
         setVisible(true);
+    }
+
+    protected void whenCustomDbIsAdded(final CustomDatabase db) {
+        this.customDatabases.put(db.name, db);
+        new SwingWorker<String, String>(){
+
+            @Override
+            protected String doInBackground() throws Exception {
+                db.readSettings();
+                System.out.println("SETTINGS OF " + db.name() + " IS READ");
+                publish(db.name);
+                return db.name();
+            }
+
+            @Override
+            protected void process(List<String> chunks) {
+                for (String c : chunks) {
+                    final CustomDatabase cd = customDatabases.get(c);
+                    if (c != null && cd!=null && c.equals(dbList.getSelectedValue())) {
+                        dbView.updateContent(cd);
+                    }
+                }
+            }
+        }.execute();
     }
 
     protected static class DatabaseView extends JPanel  {
@@ -188,15 +226,20 @@ public class DatabaseDialog extends JDialog {
                 deleteCache.setText("Delete cache");
                 deleteCache.setEnabled(false);
                 edit.setEnabled(false);
-            } else {
-                content.setText("Custom database.");
-                deleteCache.setText("Delete database");
-                deleteCache.setEnabled(true);
-                edit.setEnabled(true);
             }
         }
 
 
+        public void updateContent(CustomDatabase c) {
+            if (c.numberOfCompounds>0) {
+                content.setText("<html>Custom database. Containing " + c.numberOfCompounds + " compounds with " + c.numberOfFormulas + " different molecular formulas. Consumes " + c.megabytes + " mb on the hard drive." + ((c.searchInBio()||c.searchInPubchem()) ? "<br>This database will also include all compounds from " + (c.searchInPubchem() ? "PubChem" : "our bio database") : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") +  "</html>");
+            } else {
+                content.setText("Empty custom database.");
+            }
+            deleteCache.setText("Delete database");
+            deleteCache.setEnabled(true);
+            edit.setEnabled(!c.needsUpgrade());
+        }
     }
 
     private List<String> collectDatabases() {
@@ -473,7 +516,6 @@ public class DatabaseDialog extends JDialog {
                                 e.printStackTrace();
                             }
                         }
-
                         publish(status);
                     }
                     try {
@@ -551,7 +593,7 @@ public class DatabaseDialog extends JDialog {
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", true);
 
-            database = new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name));
+            database = CustomDatabase.createNewdatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name));
             importer = database.getImporter();
             importer.init();
             importer.addListener(this);

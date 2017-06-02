@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
+import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import org.openscience.cdk.exception.CDKException;
@@ -41,7 +42,10 @@ public class CustomDatabase implements SearchableDatabase {
     protected String name;
     protected File path;
 
-    public static List<CustomDatabase> customDatabases() {
+    // statistics
+    protected long numberOfCompounds, numberOfFormulas, megabytes;
+
+    public static List<CustomDatabase> customDatabases(boolean up2date) {
         final List<CustomDatabase> databases = new ArrayList<>();
         final File root = Workspace.CONFIG_STORAGE.getDatabaseDirectory();
         final File custom = new File(root, "custom");
@@ -50,7 +54,15 @@ public class CustomDatabase implements SearchableDatabase {
         }
         for (File subDir : custom.listFiles()) {
             if (subDir.isDirectory()) {
-                databases.add(new CustomDatabase(subDir.getName(), subDir));
+                final CustomDatabase db = new CustomDatabase(subDir.getName(), subDir);
+                try {
+                    db.readSettings();
+                    if (!up2date || !db.needsUpgrade())
+                        databases.add(db);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    logger.error(e.getMessage(),e);
+                }
             }
         }
         return databases;
@@ -58,8 +70,16 @@ public class CustomDatabase implements SearchableDatabase {
 
     protected boolean deriveFromPubchem, deriveFromBioDb;
     protected CdkFingerprintVersion version = CdkFingerprintVersion.getDefault();
+    protected int databaseVersion;
 
-    public CustomDatabase(String name, File path) {
+    public static CustomDatabase createNewdatabase(String name, File path) {
+        CustomDatabase db = new CustomDatabase(name, path);
+        db.databaseVersion = VersionsInfo.CUSTOM_DATABASE_SCHEMA;
+        db.version = CdkFingerprintVersion.getDefault();
+        return db;
+    }
+
+    CustomDatabase(String name, File path) {
         this.name = name;
         this.path = path;
     }
@@ -74,6 +94,10 @@ public class CustomDatabase implements SearchableDatabase {
             importer.importFrom(f);
         }
         importer.flushBuffer();
+    }
+
+    public boolean needsUpgrade() {
+        return databaseVersion != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
     }
 
     private static class Comp {
@@ -106,40 +130,66 @@ public class CustomDatabase implements SearchableDatabase {
         this.deriveFromBioDb = deriveFromBioDb;
     }
 
-    protected void readSettings() throws IOException {
-        if (settingsFile().exists()) {
-            deriveFromPubchem = false;
-            deriveFromBioDb = false;
-            try (FileReader r = new FileReader(settingsFile())) {
-                JsonObject o = Json.createReader(r).readObject();
-                JsonArray ary = o.getJsonArray("inheritance");
-                if (ary != null) {
-                    for (JsonValue v : ary) {
-                        if (v instanceof JsonString) {
-                            final String s = ((JsonString)v).getString();
-                            if (s.equals(DatasourceService.Sources.PUBCHEM.name))
-                                deriveFromPubchem = true;
-                            if (s.equals(DatasourceService.Sources.BIO.name))
-                                deriveFromBioDb = true;
-                        }
-                    }
-                }
-                JsonArray fpAry = o.getJsonArray("fingerprintVersion");
-                if (fpAry == null) {
-                    this.version = CdkFingerprintVersion.getDefault();
-                } else {
-                    final List<CdkFingerprintVersion.USED_FINGERPRINTS> usedFingerprints = new ArrayList<>();
-                    for (JsonValue v : fpAry) {
-                        if (v instanceof JsonString) {
-                            try {
-                                usedFingerprints.add(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(((JsonString) v).getString().toUpperCase()));
-                            } catch (IllegalArgumentException e) {
-                                throw new RuntimeException("Unknown fingerprint type '" + ((JsonString) v).getString() + "'");
+    protected  void readSettings() throws IOException {
+        synchronized (this) {
+            if (settingsFile().exists()) {
+                deriveFromPubchem = false;
+                deriveFromBioDb = false;
+                try (FileReader r = new FileReader(settingsFile())) {
+                    JsonObject o = Json.createReader(r).readObject();
+                    JsonArray ary = o.getJsonArray("inheritance");
+                    if (ary != null) {
+                        for (JsonValue v : ary) {
+                            if (v instanceof JsonString) {
+                                final String s = ((JsonString)v).getString();
+                                if (s.equals(DatasourceService.Sources.PUBCHEM.name))
+                                    deriveFromPubchem = true;
+                                if (s.equals(DatasourceService.Sources.BIO.name))
+                                    deriveFromBioDb = true;
                             }
                         }
                     }
-                    this.version = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
+                    JsonArray fpAry = o.getJsonArray("fingerprintVersion");
+                    if (fpAry == null) {
+                        this.version = CdkFingerprintVersion.getDefault();
+                    } else {
+                        final List<CdkFingerprintVersion.USED_FINGERPRINTS> usedFingerprints = new ArrayList<>();
+                        for (JsonValue v : fpAry) {
+                            if (v instanceof JsonString) {
+                                try {
+                                    usedFingerprints.add(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(((JsonString) v).getString().toUpperCase()));
+                                } catch (IllegalArgumentException e) {
+                                    throw new RuntimeException("Unknown fingerprint type '" + ((JsonString) v).getString() + "'");
+                                }
+                            }
+                        }
+                        this.version = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
+                    }
+                    JsonNumber num = o.getJsonNumber("schemaVersion");
+                    if (num==null) {
+                        this.databaseVersion = 0;
+                    } else {
+                        this.databaseVersion = num.intValue();
+                    }
+                    JsonObject stats = o.getJsonObject("statistics");
+                    if (stats != null) {
+                        JsonNumber nc = stats.getJsonNumber("compounds");
+                        if (nc!=null)
+                            this.numberOfCompounds = nc.intValue();
+                    }
                 }
+                // number of formulas and file size
+                long filesize = 0;
+                int ncompounds = 0;
+                if (getDatabasePath().exists()) {
+                    for (File f : getDatabasePath().listFiles()) {
+                        filesize += Files.size(f.toPath());
+                        ncompounds += 1;
+                    }
+                    --ncompounds;
+                }
+                this.megabytes = Math.round((filesize/1024d)/1024d);
+                this.numberOfFormulas = ncompounds;
             }
         }
     }
@@ -207,12 +257,12 @@ public class CustomDatabase implements SearchableDatabase {
 
     public static class Importer {
 
-        CustomDatabase database;
+        final CustomDatabase database;
         File currentPath;
         List<ImporterListener> listeners = new ArrayList<>();
 
         // fingerprint buffer
-        private List<FingerprintCandidate> buffer;
+        private final List<FingerprintCandidate> buffer;
 
         // molecule buffer
         private List<IAtomContainer> moleculeBuffer;
@@ -277,6 +327,12 @@ public class CustomDatabase implements SearchableDatabase {
                 currentPath.mkdirs();
                 try {
                     writeSettings();
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                }
+            } else {
+                try {
+                    database.readSettings();
                 } catch (IOException e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 }
@@ -488,20 +544,24 @@ public class CustomDatabase implements SearchableDatabase {
             return fc;
         }
 
-        protected synchronized void flushBuffer() throws IOException {
+        protected void flushBuffer() throws IOException {
+            flushMoleculeBuffer();
             final ArrayList<FingerprintCandidate> candidates;
             synchronized (buffer) {
                 candidates = new ArrayList<>(buffer);
                 buffer.clear();
             }
-            final Multimap<MolecularFormula, FingerprintCandidate> candidatePerFormula = ArrayListMultimap.create();
-            for (FingerprintCandidate fc : candidates) {
-                candidatePerFormula.put(fc.getInchi().extractFormula(), fc);
+            synchronized (database) {
+                final Multimap<MolecularFormula, FingerprintCandidate> candidatePerFormula = ArrayListMultimap.create();
+                for (FingerprintCandidate fc : candidates) {
+                    candidatePerFormula.put(fc.getInchi().extractFormula(), fc);
+                }
+                for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
+                    mergeCompounds(entry.getKey(), entry.getValue());
+                }
+                for (ImporterListener l : listeners) l.newFingerprintBufferSize(buffer.size());
+                writeSettings();
             }
-            for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
-                mergeCompounds(entry.getKey(), entry.getValue());
-            }
-            for (ImporterListener l : listeners) l.newFingerprintBufferSize(buffer.size());
 
         }
 
@@ -510,7 +570,9 @@ public class CustomDatabase implements SearchableDatabase {
             try {
             List<FingerprintCandidate> candidates = new ArrayList<>();
             candidates.addAll(value);
-            Compound.merge(fingerprintVersion, candidates, file);
+            synchronized (database) {
+                database.numberOfCompounds += Compound.merge(fingerprintVersion, candidates, file);
+            }
             } catch (IOException | JsonException e) {
                 throw new IOException("Error while merging into " + file, e);
             }
@@ -518,28 +580,41 @@ public class CustomDatabase implements SearchableDatabase {
 
 
         public void writeSettings() throws IOException {
-            try (final JsonWriter writer = new JsonWriter(new FileWriter(database.settingsFile()))) {
-                writer.beginObject();
-                writer.name("inheritance");
-                writer.beginArray();
-                if (database.deriveFromBioDb) writer.value(DatasourceService.Sources.BIO.name);
-                if (database.deriveFromPubchem) writer.value(DatasourceService.Sources.PUBCHEM.name);
-                writer.endArray();
-                writer.name("fingerprintVersion");
-                writer.beginArray();
-                for (int t=0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
-                    writer.value(fingerprintVersion.getFingerprintTypeAt(t).name());
+            synchronized (database) {
+                try (final JsonWriter writer = new JsonWriter(new FileWriter(database.settingsFile()))) {
+                    writer.beginObject();
+                    writer.name("inheritance");
+                    writer.beginArray();
+                    if (database.deriveFromBioDb) writer.value(DatasourceService.Sources.BIO.name);
+                    if (database.deriveFromPubchem) writer.value(DatasourceService.Sources.PUBCHEM.name);
+                    writer.endArray();
+                    writer.name("fingerprintVersion");
+                    writer.beginArray();
+                    for (int t=0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
+                        writer.value(fingerprintVersion.getFingerprintTypeAt(t).name());
+                    }
+                    writer.endArray();
+                    writer.name("schemaVersion");
+                    writer.value(VersionsInfo.CUSTOM_DATABASE_SCHEMA);
+                    writer.name("statistics");
+                    writer.beginObject();
+                    writer.name("compounds");
+                    writer.value(database.numberOfCompounds);
+                    writer.endObject();
+                    writer.endObject();
                 }
-                writer.endArray();
-                writer.endObject();
             }
         }
 
-        public synchronized void deleteDatabase() {
-            for (File f : currentPath.listFiles()) {
-                f.delete();
+        public void deleteDatabase() {
+            synchronized (database) {
+                if (currentPath.exists()) {
+                    for (File f : currentPath.listFiles()) {
+                        f.delete();
+                    }
+                    currentPath.delete();
+                }
             }
-            currentPath.delete();
         }
     }
 
