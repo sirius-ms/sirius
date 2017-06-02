@@ -17,10 +17,7 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
-import de.unijena.bioinf.ChemistryBase.ms.MeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMeasurementProfile;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,6 +76,7 @@ public class ProcessedInput {
         this.originalExperiment = originalExperiment;
         this.mergedPeaks = new ArrayList<ProcessedPeak>();
         this.annotations = new HashMap<Class, Object>();
+        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
         this.measurementProfile = new MutableMeasurementProfile(measurementProfile);    }
 
@@ -89,6 +87,7 @@ public class ProcessedInput {
         this.mergedPeaks = mergedPeaks;
         this.parentPeak = parentPeak;
         this.annotations = new HashMap<Class, Object>();
+        this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
         this.measurementProfile = new MutableMeasurementProfile(measurementProfile);
     }
