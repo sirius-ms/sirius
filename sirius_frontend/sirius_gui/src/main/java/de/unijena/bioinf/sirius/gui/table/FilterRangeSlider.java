@@ -1,9 +1,9 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import com.google.common.base.Strings;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 import eu.hansolo.rangeslider.RangeSlider;
 import org.jdesktop.beans.AbstractBean;
+import oshi.jna.platform.unix.solaris.LibKstat;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -13,6 +13,8 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends AbstractBean, D> extends JPanel implements ActiveElementChangedListener<E, D> {
+    public static final String DEFAUTL_INT_FORMAT = "##0";
+    public static final String DEFAUTL_DOUBLE_FORMAT = "##0.00";
 
     public final boolean percentage;
     protected final RangeSlider rangeSlider;
@@ -27,10 +29,14 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
 
 
     public FilterRangeSlider(L source) {
-        this(source, false);
+        this(source, false, DEFAUTL_DOUBLE_FORMAT);
     }
 
     public FilterRangeSlider(L source, boolean percentage) {
+        this(source, percentage, DEFAUTL_DOUBLE_FORMAT);
+    }
+
+    public FilterRangeSlider(L source, boolean percentage, String decimalFormat) {
         this.percentage = percentage;
         stats = getDoubleListStats(source);
         setLayout(new BorderLayout());
@@ -40,7 +46,6 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
         rangeSlider.setLowerValue(rangeSlider.getMinimum());
         rangeSlider.setUpperValue(rangeSlider.getMaximum());
         rangeSlider.setThumbShape(RangeSlider.ThumbShape.DROP);
-        //rangeSlider.setTrackWidth(RangeSlider.TrackWidth.THICK);
         rangeSlider.getModel().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -49,14 +54,13 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
             }
         });
 
-        final String prototype;
+        String prototype = "0000";
         if (percentage) {
             format = new DecimalFormat("##0");
-            prototype = "000";
+            prototype = "100";
             viewMultiplier = valueMultiplier = 100d;
         } else {
-            format = new DecimalFormat("##0.00");
-            prototype = "00.00";
+            format = new DecimalFormat(decimalFormat);
             viewMultiplier = 1d;
             valueMultiplier = 20d;
         }

@@ -15,7 +15,7 @@ public class FingerprintTableFormat implements TableFormat<MolecularPropertyTabl
     protected NumberFormat decimalFormat = DecimalFormat.getPercentInstance(Locale.US);
     protected FingerprintTable table;
     protected static String[] columns = new String[]{
-            "index", "type", "description", "#atoms", "f1 score", "probability"
+            "Index", "Type", "Description", "#Atoms", "F1-score", "Posterior Probability"
     };
 
     public FingerprintTableFormat(FingerprintTable table) {

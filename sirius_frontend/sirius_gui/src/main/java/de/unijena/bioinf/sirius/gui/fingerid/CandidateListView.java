@@ -80,7 +80,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
 
         tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
         tb.addSeparator();
-        tb.add(new NameFilterRangeSlider("Match:", tanimotoSlider));
+        tb.add(new NameFilterRangeSlider("Similarity:", tanimotoSlider));
         tb.addSeparator();
 
 

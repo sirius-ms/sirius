@@ -71,7 +71,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
             }
         };
         final DoubleListStats stats2 = new DoubleListStats(new double[]{0,Math.max(5,maxAtomSize)});
-        atomSizeSlider = new FilterRangeSlider(source, false) {
+        atomSizeSlider = new FilterRangeSlider(source, false, FilterRangeSlider.DEFAUTL_INT_FORMAT) {
             @Override
             protected DoubleListStats getDoubleListStats(ActionList list) {
                 return stats2;

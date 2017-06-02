@@ -12,6 +12,7 @@ import de.unijena.bioinf.sirius.gui.io.DotIO;
 import de.unijena.bioinf.sirius.gui.io.RasterGraphicsIO;
 import de.unijena.bioinf.sirius.gui.structure.*;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -25,10 +26,13 @@ import java.util.List;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
-public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
+public class TreeVisualizationPanel extends JPanel implements ActionListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer>, PanelDescription {
+    @Override
+    public String getDescription() {
+        return "Visualisation of the Fragmentation tree for the selected molecular formula";
+    }
 
     private JScrollPane pane;
-
     private JComboBox<NodeType> nodeType;
     private JComboBox<NodeColor> colorType;
     private TreeRenderPanel renderPanel;

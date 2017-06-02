@@ -27,7 +27,8 @@ import java.awt.event.ActionListener;
 
 public class FingerIdDialog extends JDialog {
 
-    public static final int COMPUTE =1, CANCELED=0, COMPUTE_ALL=2;
+    public static final int COMPUTE = 1, CANCELED = 0, COMPUTE_ALL = 2;
+
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
     protected FingerIDComputationPanel dbForm;
@@ -61,20 +62,16 @@ public class FingerIdDialog extends JDialog {
         mainPanel.add(dirForm);
         mainPanel.add(dbForm);
 
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-        this.add(southPanel,BorderLayout.SOUTH);
+        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        this.add(southPanel, BorderLayout.SOUTH);
 
         if (showComputeButton) {
             final JButton computeAll = new JButton("Search all");
-            computeAll.setToolTipText("Search ALL "  + buttonSuffix + " with CSI:FingerID");
+            computeAll.setToolTipText("Search ALL " + buttonSuffix + " with CSI:FingerID");
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    /*
-                    storage.setEnforceBio(dbForm.biodb.isSelected());
-                    storage.configured = true;
                     returnState = COMPUTE_ALL;
-                    */ // TODO!!!!
                     dispose();
                 }
             });
@@ -86,9 +83,6 @@ public class FingerIdDialog extends JDialog {
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //storage.setEnforceBio(dbForm.biodb.isSelected());
-                // TODO!!!!
-                storage.configured = true;
                 returnState = COMPUTE;
                 dispose();
             }

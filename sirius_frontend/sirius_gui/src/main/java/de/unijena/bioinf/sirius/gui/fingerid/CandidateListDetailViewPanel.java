@@ -23,6 +23,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarButton;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 
@@ -30,7 +31,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class CandidateListDetailViewPanel extends JPanel implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer> {
+public class CandidateListDetailViewPanel extends JPanel implements ActiveElementChangedListener<SiriusResultElement, ExperimentContainer>, PanelDescription {
+    @Override
+    public String getDescription() {
+        return "<html>"
+                + "CSI:FingerID results for all selected molecular formulas that have been searched."
+                +"<br>"
+                + "For each candidate structure all present molecular properties are represented by squares."
+                +"<br>"
+                + "Click a square to highlight the molecular property in the structure."
+                + "</html>";
+    }
+
 
     protected final CSIFingerIdComputation storage;
     protected CandidateListDetailView list;

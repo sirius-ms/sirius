@@ -23,6 +23,7 @@ public class FingerIDComputationPanel extends JPanel {
     protected final List<SearchableDatabase> databases;
     protected int bioIndex, pubchemIndex;
     private Border b = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
     public FingerIDComputationPanel(final List<SearchableDatabase> databases) {
         super();
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

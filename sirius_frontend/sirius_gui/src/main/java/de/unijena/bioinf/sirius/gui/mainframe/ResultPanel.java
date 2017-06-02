@@ -36,18 +36,17 @@ public class ResultPanel extends JTabbedPane {
         try {
             fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements));
         } catch (IOException e) {
-            logger.error(e.getMessage(),e);
+            logger.error(e.getMessage(), e);
             fpt = null;
         }
-//        CandidateList list = new CandidateList(suriusResultElements);
 
-
-        addTab("Molecular Formulas", rvp);
-        addTab("Compound Candidates", cov);
-        addTab("Spectra", new FormulaListHeaderPanel(suriusResultElements, svp));
-        addTab("Trees", new FormulaListHeaderPanel(suriusResultElements, tvp));
-        addTab("CSI:FingerId", new FormulaListHeaderPanel(suriusResultElements, ccv));
-        if (fpt!=null) addTab("Fingerprint", new FormulaListHeaderPanel(suriusResultElements, fpt));
+        addTab("Sirius Overview", null, rvp, rvp.getDescription());
+        addTab("Spectra", null, new FormulaListHeaderPanel(suriusResultElements, svp), svp.getDescription());
+        addTab("Trees", null, new FormulaListHeaderPanel(suriusResultElements, tvp), tvp.getDescription());
+        addTab("CSI:FingerId Overview", null, cov, cov.getDescription());
+        addTab("CSI:FingerId Details", null, new FormulaListHeaderPanel(suriusResultElements, ccv), ccv.getDescription());
+        if (fpt != null)
+            addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(suriusResultElements, fpt), fpt.getDescription());
     }
 
     public void dispose() {

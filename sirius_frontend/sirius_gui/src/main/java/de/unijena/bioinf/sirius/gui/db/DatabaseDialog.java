@@ -3,7 +3,9 @@ package de.unijena.bioinf.sirius.gui.db;
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
-import de.unijena.bioinf.sirius.gui.ext.ConfirmDialog;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.dialogs.DialogHaeder;
+import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
 import de.unijena.bioinf.sirius.gui.load.CsvFields;
@@ -43,9 +45,16 @@ public class DatabaseDialog extends JDialog {
     protected final Frame owner;
 
     public DatabaseDialog(final Frame owner) {
-        super(owner, "Databases", true);
-        this.owner = owner;
+        super(owner, true);
+        setTitle("Databases");
         setLayout(new BorderLayout());
+
+        this.owner = owner;
+
+//=============NORTH =================
+//        JPanel header = new DialogHaeder(Icons.DB_32); //todo @fleisch  find sources for icon on old laptop
+//        add(header, BorderLayout.NORTH);
+
 
         final List<String> databases = collectDatabases();
         this.dbList = new DatabaseList(databases);
@@ -53,7 +62,7 @@ public class DatabaseDialog extends JDialog {
 
         final Box box = Box.createVerticalBox();
 
-        JScrollPane pane = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane pane = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         box.add(pane);
         this.nameField = new PlaceholderTextField(16);
         nameField.setPlaceholder("Enter name of custom database");
@@ -145,10 +154,13 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int index = dbList.getSelectedIndex();
+                if (index< 0 || index >= dbList.getModel().getSize())
+                    return;
                 final String name = dbList.getModel().getElementAt(index);
                 final String msg = (index>0) ?
                         "Do you really want to delete the custom database '" + name + "'?" : "Do you really want to clear the cache of the PubChem database?";
-                if (ConfirmDialog.confirm(owner, "Delete database", msg)) {
+
+                if (new QuestionDialog(getOwner(),msg).isSuccess()) {
                     if (index>0) {
                         new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).getImporter().deleteDatabase();
                         customDatabases.remove(name);
@@ -157,18 +169,20 @@ public class DatabaseDialog extends JDialog {
                         // TODO: implement
                     }
                 }
+
             }
         });
-
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         for (String name : databases) {
             if (!name.equalsIgnoreCase("pubchem"))
                 whenCustomDbIsAdded(new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)));
         }
 
-        setMinimumSize(new Dimension(320, 240));
+
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setMinimumSize(new Dimension(350, getMinimumSize().height));
         pack();
+        setLocationRelativeTo(getParent());
         setVisible(true);
     }
 
@@ -740,5 +754,7 @@ public class DatabaseDialog extends JDialog {
             return null;
         }
     }
+
+
 
 }

@@ -7,16 +7,25 @@ import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
  * Created by fleisch on 15.05.17.
  */
 public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
-    private static final int COL_COUNT = 7;
-
     protected CandidateTableFormat(ListStats stats) {
         super(stats);
     }
-
+    protected static String[] columns = new String[]{
+            "Rank",
+            "Molecular Formula",
+//            "Formula Score",
+            "Similarity",
+            "Name",
+            "CSI:FingerID Score",
+            "XLogP",
+            "InChIKey",
+            "SMILES",
+            "Best"
+    };
 
     @Override
     public int highlightColumnIndex() {
-        return COL_COUNT;
+        return columns.length-1;
     }
 
     @Override
@@ -25,25 +34,11 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
     }
 
     public int getColumnCount() {
-        return COL_COUNT;
+        return highlightColumnIndex();
     }
 
     public String getColumnName(int column) {
-        int col = 0;
-        if (column == col++) return "Rank";
-        if (column == col++) return "Molecular Formula";
-//      if (column == col++) return "Formula Score";
-        if (column == col++) return "Similarity";
-        if (column == col++) return "Name";
-        if (column == col++) return "FingerID Score";
-        if (column == col++) return "XLogP";
-        if (column == col++) return "InChi";
-        if (column == col++) return "Best";
-
-//        else if (column == col++) return "Best Hit";
-
-
-        throw new IllegalStateException();
+        return columns[column];
     }
 
     public Object getColumnValue(CompoundCandidate result, int column) {
@@ -55,7 +50,8 @@ public class CandidateTableFormat extends SiriusTableFormat<CompoundCandidate> {
         if (column == col++) return result.getScore();
         if (column == col++) return result.compound.xlogP;
         if (column == col++) return result.compound.inchi.key;
-        if (column == col++) return isBest(result);
+        if (column == col++) return result.compound.getSmiles();
+        if (column == col) return isBest(result);
 
         throw new IllegalStateException();
     }

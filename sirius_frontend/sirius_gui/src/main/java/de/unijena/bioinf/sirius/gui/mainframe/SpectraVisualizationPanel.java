@@ -10,6 +10,7 @@ import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +22,11 @@ import java.text.DecimalFormat;
 import java.util.HashSet;
 import java.util.List;
 
-public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> {
+public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, ActiveElementChangedListener<SiriusResultElement,ExperimentContainer> , PanelDescription{
+	@Override
+	public String getDescription() {
+		return "Spectra visualisation. Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in red";
+	}
 
 	private JComboBox<String> spectraSelection;
 	private MSViewerPanel msviewer;

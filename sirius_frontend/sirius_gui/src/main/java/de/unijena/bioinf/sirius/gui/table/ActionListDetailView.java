@@ -25,8 +25,6 @@ public abstract class ActionListDetailView<E extends AbstractBean, D, T extends 
     protected final FilterList<E> filteredSource;
     protected final DefaultEventSelectionModel<E> filteredSelectionModel;
     protected final JToolBar toolBar;
-//    protected final T source;
-
 
     public ActionListDetailView(T source) {
         super(source);

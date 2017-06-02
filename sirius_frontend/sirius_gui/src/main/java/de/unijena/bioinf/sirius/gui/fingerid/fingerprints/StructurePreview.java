@@ -42,6 +42,7 @@ public class StructurePreview extends JPanel implements Runnable {
     protected volatile boolean shutdown = false;
 
     public StructurePreview(FingerprintVisualization[] visualizations) {
+        setBackground(Color.WHITE);
         this.visualizations = visualizations;
         this.entry = null;
         this.backgroundThread = new Thread(this);

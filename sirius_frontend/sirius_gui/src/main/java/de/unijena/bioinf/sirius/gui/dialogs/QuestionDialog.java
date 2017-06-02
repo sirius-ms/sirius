@@ -71,6 +71,14 @@ public class QuestionDialog extends JDialog implements ActionListener{
 		return rv;
 	}
 
+	public boolean isSuccess(){
+		return rv.equals(ReturnValue.Success);
+	}
+
+	public boolean isAbort(){
+		return rv.equals(ReturnValue.Abort);
+	}
+
 
 
 	@Override
@@ -87,5 +95,7 @@ public class QuestionDialog extends JDialog implements ActionListener{
 		}
 		this.dispose();
 	}
+
+
 
 }

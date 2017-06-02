@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaList;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaListDetailView;
+import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +16,11 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 //todo this is beta state
-public class FormulaOverviewPanel extends JPanel {
+public class FormulaOverviewPanel extends JPanel implements PanelDescription {
+    @Override
+    public String getDescription() {
+        return "Overview about your Experiment and Results of the Formula Identification with Sirius";
+    }
 
     public FormulaOverviewPanel(FormulaList suriusResultElements) {
         super(new BorderLayout());
@@ -34,6 +39,4 @@ public class FormulaOverviewPanel extends JPanel {
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
     }
-
-
 }
