@@ -44,6 +44,9 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writeIfAvailable(writer, ">smarts", sm==null ? null : sm.smiles);
         final Splash splash = data.getAnnotation(Splash.class);
         writeIfAvailable(writer, ">splash", splash==null ? null : splash.getSplash());
+        final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown);
+        writer.write(">instrumentation " + instrumentation.description());
+        writer.newLine();
         final Map<String,String> arbitraryKeys = data.getAnnotation(Map.class, new HashMap<String,String>());
         for (Map.Entry<String,String> e : arbitraryKeys.entrySet()) {
             writer.write("#" + e.getKey() + " " + e.getValue());

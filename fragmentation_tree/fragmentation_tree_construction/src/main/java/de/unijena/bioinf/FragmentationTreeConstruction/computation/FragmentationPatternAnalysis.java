@@ -109,6 +109,30 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private RecalibrationMethod recalibrationMethod;
     private GraphReduction reduction;
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
+    private IsotopeInMs2Handling isotopeInMs2Handling;
+
+    public static enum IsotopeInMs2Handling {
+        /**
+         * never look for isotopes in MS2
+         */
+        IGNORE,
+
+        /**
+         * look for isotopes in MS2 if experiment is measured on a Bruker Maxis
+         */
+        BRUKER_ONLY,
+
+        /**
+         * look for isotopes in MS2 if experiment is measured on a Bruker Maxis.
+         * But enable isotope scoring only if enough intensive peaks show an isotope pattern
+         */
+        BRUKER_IF_NECESSARY,
+
+        /**
+         * enforce scoring of isotopes in MS2, even if spectrum is not measured on a Bruker Maxis.
+         */
+        ALWAYS
+    };
 
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
 
@@ -876,7 +900,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
         this.defaultProfile = new MutableMeasurementProfile();
-
+        isoInMs2Scorer = new IsotopePatternInMs2Scorer();;
+        isotopeInMs2Handling = IsotopeInMs2Handling.IGNORE;
         this.reduction = new SimpleReduction();
 
         //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
@@ -1351,12 +1376,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             assert !Double.isInfinite(score);
             loss.setWeight(score);
         }
-
-        ///////////////////
-        if (isoInMs2Scorer!=null) isoInMs2Scorer.score(input, graph);
-        ///////////////////
+        scoreIsotopesInMs2(input, graph);
 
         return graph;
+    }
+
+    private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+        final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown).hasIsotopesInMs2();
+        switch (isotopeInMs2Handling) {
+            case IGNORE: return;
+            case BRUKER_IF_NECESSARY:
+                throw new UnsupportedOperationException("Not supported yet");
+            case BRUKER_ONLY:
+                if (!isBrukerMaxis) return;
+            case ALWAYS:
+                default:
+        }
+        isoInMs2Scorer.score(input, graph);
     }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
@@ -1367,9 +1403,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         processedPeaks.add(syntheticParent);
     }
 
-    public void enableIsotopesInMs2(boolean value) {
-        if (value) isoInMs2Scorer = new IsotopePatternInMs2Scorer();
-        else isoInMs2Scorer=null;
+    public void setIsotopeHandling(IsotopeInMs2Handling handling) {
+        this.isotopeInMs2Handling = handling;
     }
 
     /*
@@ -1533,8 +1568,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         fillList(lossScorers, helper, document, dictionary, "lossScorers");
         if (document.hasKeyInDictionary(dictionary, "isotopesInMs2")) {
             this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
-        } else {
-            this.isoInMs2Scorer = null;
         }
         peakMerger = (PeakMerger) helper.unwrap(document, document.getFromDictionary(dictionary, "merge"));
         if (document.hasKeyInDictionary(dictionary, "recalibrationMethod")) {

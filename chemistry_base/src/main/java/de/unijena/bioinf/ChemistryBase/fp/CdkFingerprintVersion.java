@@ -23,8 +23,18 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     private final MolecularProperty[] properties;
     private final USED_FINGERPRINTS[] usedFingerprints;
 
+    /**
+     * Returns the fingerprint version that is default in our database
+     */
     public static CdkFingerprintVersion getDefault() {
         return DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Returns the fingerprint version that contains all (future) fingerprints
+     */
+    public static CdkFingerprintVersion getComplete() {
+        return withECFP();
     }
 
     public static CdkFingerprintVersion withECFP() {
