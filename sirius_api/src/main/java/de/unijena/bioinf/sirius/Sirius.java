@@ -1083,7 +1083,6 @@ public class Sirius {
         try {
             while (true) {
                 final double intensity = (beautifulTree==null ? 0 : beautifulTree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensityOfExplainablePeaks());
-                System.out.println(experiment.getName()+": "+formula+" "+String.valueOf(intensity));
 //                final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
                 if (modifiedTreeSizeScore >= MAX_TREESIZE_SCORE){
                     if (beautifulTree!=null){
