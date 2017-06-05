@@ -13,7 +13,6 @@ import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.Fingerprinter;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -129,7 +128,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     //tree.setAnnotation(PrecursorIonType.class, tree.getFragmentAnnotationOrNull(PrecursorIonType.class).get(tree.getRoot()));
                     futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion));
                 }
-                final ArrayList<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
+                final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
                 final HashMap<String, Integer> dbMap = getDatabaseAliasMap();
                 Integer flagW = dbMap.get(options.getDatabase());
                 if (flagW == null) flagW = 0;

@@ -28,9 +28,11 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.*;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import org.jdesktop.beans.AbstractBean;
@@ -136,13 +138,15 @@ public class BackgroundComputation extends AbstractBean {
         private final String profile;
         private final JobLog.Job job;
         private final boolean csiFingerIdSearch;
+        private final SearchableDatabase csiFingerIdDb;
+        private final boolean enableIsotopesInMs2;
 
         private final FormulaSource formulaSource;
 
         private volatile List<IdentificationResult> results;
         private volatile ComputingStatus state;
 
-        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource, boolean csiFingerIdSearch) {
+        public Task(String profile, ExperimentContainer exp, FormulaConstraints constraints, double ppm, int numberOfCandidates, FormulaSource formulaSource, boolean enableIsotopesInMs2, boolean csiFingerIdSearch, SearchableDatabase csiFingerIdDb) {
             this.profile = profile;
             this.exp = exp;
             this.constraints = constraints;
@@ -153,6 +157,8 @@ public class BackgroundComputation extends AbstractBean {
             this.results = exp.getRawResults();
             this.job = JobLog.getInstance().submit(exp.getGUIName(), "compute trees");
             this.csiFingerIdSearch = csiFingerIdSearch;
+            this.enableIsotopesInMs2 = enableIsotopesInMs2;
+            this.csiFingerIdDb = csiFingerIdDb;
         }
     }
 
@@ -170,7 +176,7 @@ public class BackgroundComputation extends AbstractBean {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
-                        csiFingerID.compute(c.exp, csiFingerID.isEnforceBio());
+                        csiFingerID.compute(c.exp, c.csiFingerIdDb);
                     }
                 } else if (c.state == ComputingStatus.COMPUTING) {
                     currentComputation = c.exp;
@@ -183,7 +189,8 @@ public class BackgroundComputation extends AbstractBean {
             if (siriusPerProfile.containsKey(t.profile)) return;
             else try {
                 siriusPerProfile.put(t.profile, new Sirius(t.profile));
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                LoggerFactory.getLogger(BackgroundComputation.class).error("Unknown instrument: '" + t.profile + "'", e);
                 throw new RuntimeException(e);
             }
         }
@@ -207,7 +214,7 @@ public class BackgroundComputation extends AbstractBean {
 
         protected void compute(final Task container) {
             checkProfile(container);
-            final Sirius sirius = siriusPerProfile.get(container.profile);
+            final Sirius sirius= siriusPerProfile.get(container.profile);
             final FormulaSource formulaSource = container.formulaSource;
             sirius.setProgress(new Progress() {
                 @Override
@@ -276,6 +283,7 @@ public class BackgroundComputation extends AbstractBean {
                         final HashSet<MolecularFormula> formulas = new HashSet<>();
                         for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
                             for (FormulaCandidate f : fc) {
+                                System.out.println(f.getFormula() + " " + f.getPrecursorIonType());
                                 if (formulaSource == FormulaSource.PUBCHEM_ORGANIC) {
                                     if (f.getFormula().isCHNOPSBBrClFI()) formulas.add(f.getFormula());
                                 } else {

@@ -27,6 +27,7 @@ public class ExperimentListView extends JScrollPane {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.sourceList = sourceList;
 
+        //todo move texfield and filter funktion here
         compoundListView = new JList<>(new DefaultEventListModel<>(sourceList.compoundList));
         compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

@@ -230,6 +230,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 try {
                     checkForValidProjectDirecotry(options.getOutput());
                     pw = new ProjectSpaceMerger(this, options.getOutput(), false);
+                    writers.add(pw);
                 } catch (IOException e) {
 
                     logger.error("Cannot merge project " + options.getOutput() + ". Maybe the specified directory is not a valid SIRIUS workspace. You can still specify a new not existing filename to create a new workspace.\n" + e.getMessage(), e);
@@ -237,9 +238,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     return;
                 }
             } else {
-                pw = getDirectoryOutputWriter(options.getOutput(), getWorkspaceWritingEnvironmentForDirectoryOutput(options.getOutput()));
+                try {
+                    pw = getDirectoryOutputWriter(options.getOutput(), getWorkspaceWritingEnvironmentForDirectoryOutput(options.getOutput()));
+                    writers.add(pw);
+                } catch (IOException e) {
+                    logger.error("Cannot write into " + options.getOutput() + ":\n" + e.getMessage(), e);
+                    System.exit(1);
+                }
             }
-            writers.add(pw);
         }
         if (options.getSirius() != null) {
             final ProjectWriter pw;
@@ -326,7 +332,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         }
     }
 
-    protected DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForDirectoryOutput(String value) {
+    protected DirectoryWriter.WritingEnvironment getWorkspaceWritingEnvironmentForDirectoryOutput(String value) throws IOException {
         final File root = new File(value);
         if (root.exists()) {
             System.err.println("Cannot create directory " + root.getName() + ". File already exist.");

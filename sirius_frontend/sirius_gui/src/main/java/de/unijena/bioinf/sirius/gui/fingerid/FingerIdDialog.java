@@ -18,6 +18,8 @@
 
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,7 +27,8 @@ import java.awt.event.ActionListener;
 
 public class FingerIdDialog extends JDialog {
 
-    public static final int COMPUTE =1, CANCELED=0, COMPUTE_ALL=2;
+    public static final int COMPUTE = 1, CANCELED = 0, COMPUTE_ALL = 2;
+
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
     protected FingerIDComputationPanel dbForm;
@@ -35,7 +38,8 @@ public class FingerIdDialog extends JDialog {
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerId", true);
         this.storage = storage;
-        this.dbForm = new FingerIDComputationPanel(this.storage.enforceBio);
+        dbForm = new FingerIDComputationPanel(storage.getAvailableDatabases());
+        if (this.storage.enforceBio) dbForm.setIsBioDB(true);
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)
@@ -58,17 +62,15 @@ public class FingerIdDialog extends JDialog {
         mainPanel.add(dirForm);
         mainPanel.add(dbForm);
 
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-        this.add(southPanel,BorderLayout.SOUTH);
+        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        this.add(southPanel, BorderLayout.SOUTH);
 
         if (showComputeButton) {
             final JButton computeAll = new JButton("Search all");
-            computeAll.setToolTipText("Search ALL "  + buttonSuffix + " with CSI:FingerID");
+            computeAll.setToolTipText("Search ALL " + buttonSuffix + " with CSI:FingerID");
             computeAll.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    storage.setEnforceBio(dbForm.biodb.isSelected());
-                    storage.configured = true;
                     returnState = COMPUTE_ALL;
                     dispose();
                 }
@@ -81,8 +83,6 @@ public class FingerIdDialog extends JDialog {
         approve.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                storage.setEnforceBio(dbForm.biodb.isSelected());
-                storage.configured = true;
                 returnState = COMPUTE;
                 dispose();
             }
@@ -101,7 +101,7 @@ public class FingerIdDialog extends JDialog {
         setVisible(true);
     }
 
-    public boolean isBio() {
-        return dbForm.biodb.isSelected();
+    public SearchableDatabase getSearchDb() {
+        return dbForm.getDb();
     }
 }

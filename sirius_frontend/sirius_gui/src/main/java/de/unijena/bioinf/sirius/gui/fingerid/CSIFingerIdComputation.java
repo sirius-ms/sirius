@@ -20,19 +20,20 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
+import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
+import de.unijena.bioinf.sirius.fingerid.SearchableDbOnDisc;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
+import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -42,6 +43,7 @@ import gnu.trove.list.array.TShortArrayList;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.IBitFingerprint;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +110,8 @@ public class CSIFingerIdComputation {
     protected final ReentrantLock globalLock;
     protected final Condition globalCondition;
 
+    protected SearchableDatabase bio, pubchem;
+
     private final ConcurrentLinkedQueue<FingerIdTask> formulaQueue, jobQueue, blastQueue;
 
     public CSIFingerIdComputation() {
@@ -117,6 +121,8 @@ public class CSIFingerIdComputation {
         this.compoundsPerFormulaBio = new HashMap<>(128);
         this.compoundsPerFormulaNonBio = new HashMap<>(128);
         setDirectory(getDefaultDirectory());
+        this.bio = new SearchableDbOnDisc("biological database", getBioDirectory(), false,true,false);
+        this.pubchem = new SearchableDbOnDisc("PubChem", getNonBioDirectory(), true,true,false);
         this.restDatabase = new WebAPI().getRESTDb(BioFilter.ALL, directory);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
@@ -196,31 +202,41 @@ public class CSIFingerIdComputation {
         for (int k = 0; k < performances.length; ++k)
             fscores[k] = performances[k].getF();
 
-        this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d / performances[0].withPseudoCount(0.25).numberOfSamples());
+        try {
+            this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d/performances[0].withPseudoCount(0.25).numberOfSamples());
+        } catch (IOException e){
+            //fallback
+            logger.warn("Cannot load covariance scoring. Fallback to CSIFingerIdScoring.");
+            this.scoringMethod = new ScoringMethodFactory().getCSIFingerIdScoringMethod();
+        }
     }
 
-    private FingerIdData blast(SiriusResultElement elem, ProbabilityFingerprint plattScores, boolean bio) {
-        final MolecularFormula formula = elem.getMolecularFormula();
-        final Fingerblast blaster = new Fingerblast(new InMemoryCacheDatabase(bio));
+    private FingerIdData blast(SiriusResultElement elem, List<Compound> compoundList, ProbabilityFingerprint plattScores, SearchableDatabase db) {
+        final List<FingerprintCandidate> fcs = new ArrayList<>(compoundList.size());
+        for (Compound c : compoundList) fcs.add(c.asFingerprintCandidate());
+        final Fingerblast blaster = new Fingerblast(null);
         blaster.setScoring(scoringMethod.getScoring(performances));
         try {
-            List<Scored<FingerprintCandidate>> candidates = blaster.search(formula, plattScores);
+            List<Scored<FingerprintCandidate>> candidates = blaster.score(fcs, plattScores);
             final double[] scores = new double[candidates.size()];
+            final double[] tanimotos = new double[candidates.size()];
             final Compound[] comps = new Compound[candidates.size()];
             int k = 0;
             final HashMap<String, Compound> compounds;
             synchronized (this.compounds) {
                 compounds = this.compounds;
             }
+
             for (Scored<FingerprintCandidate> candidate : candidates) {
                 scores[k] = candidate.getScore();
+                tanimotos[k] = Tanimoto.tanimoto(candidate.getCandidate().getFingerprint(), plattScores);
                 comps[k] = compounds.get(candidate.getCandidate().getInchiKey2D());
                 if (comps[k] == null) {
                     comps[k] = new Compound(candidate.getCandidate());
                 }
                 ++k;
             }
-            return new FingerIdData(bio, comps, scores, plattScores);
+            return new FingerIdData(db, comps, scores,tanimotos, plattScores);
         } catch (DatabaseException e) {
             throw new RuntimeException(e); // TODO: handle
         }
@@ -254,17 +270,59 @@ public class CSIFingerIdComputation {
         return formulas;
     }
 
-    private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bioFlag) throws IOException {
+    private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, SearchableDatabase db) throws IOException {
         final List<Compound> compounds = new ArrayList<>();
         try {
             globalLock.lock();
             destroyCacheIfNecessary();
-            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, true));
-            if (!bioFlag) compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, false));
         } finally {
             globalLock.unlock();
         }
-        return compounds;
+
+        if (db.searchInBio())
+            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, true));
+        if (db.searchInPubchem())
+            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, false));
+        if (db.isCustomDb())
+            compounds.addAll(internalLoadCompoundsFromCustomDb(db, formula));
+        return mergeCompounds(compounds);
+    }
+
+    /**
+     * merge compounds with same InChIKey
+     */
+    private List<Compound> mergeCompounds(List<Compound> compounds) {
+        final HashMap<String, Compound> cs = new HashMap<>();
+        for (Compound c : compounds) cs.put(c.getInchi().key2D(), c);
+        return new ArrayList<>(cs.values());
+    }
+
+    private List<Compound> internalLoadCompoundsFromCustomDb(SearchableDatabase db, MolecularFormula formula) throws IOException {
+        try {
+            logger.info("Search in Custom database: " + db.name() + " in " + db.getDatabasePath());
+            final List<FingerprintCandidate> candidates = new FilebasedDatabase(fingerprintVersion.getMaskedFingerprintVersion(), db.getDatabasePath()).lookupStructuresAndFingerprintsByFormula(formula);
+            final List<Compound> cs = new ArrayList<>();
+            final List<Compound> todo = new ArrayList<>();
+            for (FingerprintCandidate fc : candidates) {
+                logger.info(String.valueOf(fc.getInchi()) + " found (" + String.valueOf(fc.getSmiles()));
+                if (compounds.containsKey(fc.getInchiKey2D())) {
+                    final Compound c;
+                    synchronized (compounds) {
+                        c = compounds.get(fc.getInchiKey2D());
+                    }
+                    c.addDatabase(db.name(), fc.getName());
+                    cs.add(c);
+                } else {
+                    FingerprintCandidate f = new FingerprintCandidate(fc, fingerprintVersion.mask(fc.getFingerprint()));
+                    todo.add(new Compound(f));
+                }
+            }
+            postProcessCompounds(todo);
+            cs.addAll(todo);
+            return cs;
+        } catch (DatabaseException e) {
+            throw new IOException(e);
+        }
     }
 
     private boolean cacheHasToBeDestroyed() {
@@ -291,9 +349,19 @@ public class CSIFingerIdComputation {
         }
     }
 
+    protected File getBioDirectory() {
+        return new File(directory, "bio");
+    }
+    protected File getNonBioDirectory() {
+        return new File(directory, "not-bio");
+    }
+    protected File getCustomDirectory(String name) {
+        return new File(new File(directory, "custom"), name);
+    }
+
     public void destroyCache() throws IOException {
-        final File bio = new File(directory, "bio");
-        final File nonBio = new File(directory, "not-bio");
+        final File bio = getBioDirectory();
+        final File nonBio = getNonBioDirectory();
         if (bio.exists()) {
             for (File f : bio.listFiles()) {
                 Files.deleteIfExists(f.toPath());
@@ -353,8 +421,34 @@ public class CSIFingerIdComputation {
                 compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
             }
         }
+        postProcessCompounds(compounds);
+        if (bio) {
+            synchronized (compoundsPerFormulaBio) {
+                compoundsPerFormulaBio.put(formula, compounds);
+            }
+        } else {
+            synchronized (compoundsPerFormulaNonBio) {
+                compoundsPerFormulaNonBio.put(formula, compounds);
+            }
+        }
+        return compounds;
+    }
+
+    protected void postProcessCompounds(List<Compound> compounds) {
         ECFPFingerprinter fingerprinter = null;
-        for (Compound c : compounds) {
+        for (int index = 0; index < compounds.size(); ++index) {
+            final Compound c = compounds.get(index);
+            if (this.compounds.containsKey(c.getInchi().key2D())) {
+                synchronized (this.compounds){
+                    compounds.set(index, this.compounds.get(c.getInchi().key2D()));
+                }
+                continue;
+            }
+            try {
+                AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(c.getMolecule());
+            } catch (CDKException e) {
+                logger.error(e.getMessage(),e);
+            }
             c.calculateXlogP();
             if (de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate.ECFP_ENABLED) {
                 if (fingerprinter == null) {
@@ -368,16 +462,6 @@ public class CSIFingerIdComputation {
                 this.compounds.put(c.inchi.key2D(), c);
             }
         }
-        if (bio) {
-            synchronized (compoundsPerFormulaBio) {
-                compoundsPerFormulaBio.put(formula, compounds);
-            }
-        } else {
-            synchronized (compoundsPerFormulaNonBio) {
-                compoundsPerFormulaNonBio.put(formula, compounds);
-            }
-        }
-        return compounds;
     }
 
 
@@ -446,24 +530,24 @@ public class CSIFingerIdComputation {
     }
 
     //compute for a single experiment
-    public void compute(ExperimentContainer c, boolean bioDb) {
+    public void compute(ExperimentContainer c, SearchableDatabase db) {
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (SiriusResultElement e : getTopSiriusCandidates(c)) {
             if (e.getCharge() > 0) {
-                tasks.add(new FingerIdTask(bioDb, c, e));
+                tasks.add(new FingerIdTask(db, c, e));
             }
         }
         computeAll(tasks);
     }
 
     //csi fingerid compute all button in main panel
-    public void computeAll(List<ExperimentContainer> compounds) {
+    public void computeAll(List<ExperimentContainer> compounds, SearchableDatabase db) {
         stopRunningTasks();
         final ArrayList<FingerIdTask> tasks = new ArrayList<>();
         for (ExperimentContainer c : compounds) {
             for (SiriusResultElement e : getTopSiriusCandidates(c)) {
                 if (e.getCharge() > 0) {
-                    tasks.add(new FingerIdTask(isEnforceBio(), c, e));
+                    tasks.add(new FingerIdTask(db, c, e));
                 }
             }
         }
@@ -487,11 +571,12 @@ public class CSIFingerIdComputation {
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
             final ComputingStatus status = task.result.getFingerIdComputeState();
-            boolean recompute = (task.result.getFingerIdData() != null && task.result.getFingerIdData().bio != task.bio);
+            boolean recompute = (task.result.getFingerIdData() != null && task.result.getFingerIdData().db.name() != task.db.name());
             if (recompute || status == ComputingStatus.UNCOMPUTED || status == ComputingStatus.FAILED) {
                 task.result.setFingerIdComputeState(ComputingStatus.COMPUTING);
                 if (task.result.getFingerIdData() != null && task.result.getFingerIdData().platts != null) {
                     task.prediction = task.result.getFingerIdData().platts;
+                    task.fingerprintPredicted=true;
                     formulaQueue.add(task);
                     blastQueue.add(task);
                 } else {
@@ -642,7 +727,9 @@ public class CSIFingerIdComputation {
                         final MolecularFormula formula = container.result.getMolecularFormula();
                         final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
                         try {
-                            loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.bio);
+                            final List<Compound> compounds = loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.db);
+                            container.candidateList = compounds;
+                            container.structuresDownloaded = true;
                             synchronized (blastWorker) {
                                 blastWorker.notifyAll();
                             }
@@ -714,6 +801,7 @@ public class CSIFingerIdComputation {
                     try {
                         if (webAPI.updateJobStatus(entry.getValue())) {
                             entry.getKey().prediction = entry.getValue().prediction;
+                            entry.getKey().fingerprintPredicted = true;
                             iter.remove();
                             blastQueue.add(entry.getKey());
                             entry.getKey().job.done();
@@ -760,6 +848,7 @@ public class CSIFingerIdComputation {
             } finally {
                 globalLock.unlock();
             }
+            int cycle = 1;
             while ((!shutdown)) {
                 final FingerIdTask container = blastQueue.poll();
                 try {
@@ -769,23 +858,17 @@ public class CSIFingerIdComputation {
                         }
                         continue;
                     } else {
-                        boolean canRun = true;
-                        if (!container.bio) {
-                            synchronized (compoundsPerFormulaNonBio) {
-                                if (!compoundsPerFormulaNonBio.containsKey(container.result.getMolecularFormula()))
-                                    canRun = false;
-                            }
-                        }
-                        synchronized (compoundsPerFormulaBio) {
-                            if (!compoundsPerFormulaBio.containsKey(container.result.getMolecularFormula()))
-                                canRun = false;
-                        }
-                        if (!canRun) {
-                            final boolean queueIsEmpty = blastQueue.isEmpty();
+                        System.out.println("Blast " + container.experiment.getName());
+
+                        if (!container.structuresDownloaded || !container.fingerprintPredicted) {
+                            System.out.println("Wait for " + (container.structuresDownloaded ? "PREDICTION" : "DOWNLOADING STRUCTURES"));
+                            final boolean lookedAtAll = container.cycle == cycle;
+                            container.cycle = cycle;
                             blastQueue.add(container);
-                            if (queueIsEmpty) {
+                            if (lookedAtAll) {
+                                ++cycle;
                                 synchronized (this) {
-                                    this.wait(3000);
+                                    this.wait(5000);
                                 }
                             }
                             continue;
@@ -794,7 +877,7 @@ public class CSIFingerIdComputation {
                     // blast this compound
                     container.job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Search in structure database");
                     try {
-                        final FingerIdData data = blast(container.result, container.prediction, container.bio);
+                        final FingerIdData data = blast(container.result, container.candidateList, container.prediction, container.db);
                         final ExperimentContainer experiment = container.experiment;
                         final SiriusResultElement resultElement = container.result;
                         resultElement.setFingerIdData(data);
@@ -813,75 +896,17 @@ public class CSIFingerIdComputation {
         }
     }
 
-    /**
-     * Quick'n dirty hack to keep the database in memory
-     */
-    protected class InMemoryCacheDatabase extends AbstractChemicalDatabase {
-
-        protected boolean bio;
-
-        public InMemoryCacheDatabase(boolean bio) {
-            this.bio = bio;
-        }
-
-        @Override
-        public List<FormulaCandidate> lookupMolecularFormulas(double v, Deviation deviation, PrecursorIonType precursorIonType) throws DatabaseException {
-            return restDatabase.lookupMolecularFormulas(v, deviation, precursorIonType);
-        }
-
-        @Override
-        public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula molecularFormula) throws DatabaseException {
-            return restDatabase.lookupStructuresByFormula(molecularFormula);
-        }
-
-        @Override
-        public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
-            if (!bio) {
-                for (Compound c : compoundsPerFormulaNonBio.get(molecularFormula)) {
-                    fingerprintCandidates.add(new FingerprintCandidate(c.inchi, c.fingerprint));
-                }
-            }
-            for (Compound c : compoundsPerFormulaBio.get(molecularFormula)) {
-                fingerprintCandidates.add(new FingerprintCandidate(c.inchi, c.fingerprint));
-            }
-
-
-            return fingerprintCandidates;
-        }
-
-        @Override
-        public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> iterable) throws DatabaseException {
-            return restDatabase.lookupFingerprintsByInchis(iterable);
-        }
-
-        @Override
-        public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> iterable) throws DatabaseException {
-            return restDatabase.lookupManyInchisByInchiKeys(iterable);
-        }
-
-        @Override
-        public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> iterable) throws DatabaseException {
-            return restDatabase.lookupManyFingerprintsByInchis(iterable);
-        }
-
-        @Override
-        public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> iterable) throws DatabaseException {
-            return restDatabase.lookupFingerprintsByInchi(iterable);
-        }
-
-        @Override
-        public void annotateCompounds(List<? extends CompoundCandidate> list) throws DatabaseException {
-            restDatabase.annotateCompounds(list);
-        }
-
-        @Override
-        public List<InChI> findInchiByNames(List<String> list) throws DatabaseException {
-            return null;
-        }
-
-        @Override
-        public void close() throws IOException {
-            restDatabase.close();
-        }
+    public List<SearchableDatabase> getAvailableDatabases() {
+        final List<SearchableDatabase> db = new ArrayList<>();
+        db.add(pubchem);
+        db.add(bio);
+        db.addAll(CustomDatabase.customDatabases(true));
+        return db;
+    }
+    public SearchableDatabase getBioDb() {
+        return bio;
+    }
+    public SearchableDatabase getPubchemDb() {
+        return pubchem;
     }
 }

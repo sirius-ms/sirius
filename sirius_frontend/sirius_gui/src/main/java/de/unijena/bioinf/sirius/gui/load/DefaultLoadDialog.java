@@ -11,7 +11,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

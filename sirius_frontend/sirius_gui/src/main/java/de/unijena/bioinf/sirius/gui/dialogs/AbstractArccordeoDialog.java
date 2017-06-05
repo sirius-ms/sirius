@@ -5,7 +5,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 30.09.16.
  */
 
-import de.unijena.bioinf.sirius.gui.utils.Icons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 
 import javax.swing.*;

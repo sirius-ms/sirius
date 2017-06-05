@@ -5,47 +5,60 @@ package de.unijena.bioinf.sirius.gui.fingerid;
  * 23.01.17.
  */
 
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import org.jdesktop.swingx.JXTitledSeparator;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FingerIDComputationPanel extends JPanel {
-    //todo her can we show more option if we select databases
-    public JRadioButton pubchem, biodb;
-    protected final static String BIO = "bio database", ALL = "PubChem";
+    //todo her cann we show more option if we select databases
+    public JComboBox<SearchableDatabase> db;
+    protected final List<SearchableDatabase> databases;
+    protected int bioIndex, pubchemIndex;
     private Border b = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    public FingerIDComputationPanel(boolean isBio) {
+
+    public FingerIDComputationPanel(final List<SearchableDatabase> databases) {
         super();
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         final JPanel inner2 = new JPanel();
         inner2.setLayout(new FlowLayout());
-        ButtonGroup database = new ButtonGroup();
-        pubchem = new JRadioButton(ALL, !isBio);
-        biodb = new JRadioButton(BIO, isBio);
-
-        database.add(pubchem);
-        database.add(biodb);
-        inner2.add(pubchem);
-        inner2.add(biodb);
+        this.databases = databases;
+        this.db = new JComboBox<SearchableDatabase>(new Vector<>(databases));
+        inner2.add(db);
         setBorder(b);
         add(new JXTitledSeparator("Search in"));
         add(inner2);
+        for (int k=0; k < databases.size(); ++k) {
+            if (!databases.get(k).isCustomDb()) {
+                if (databases.get(k).searchInPubchem()) {
+                    pubchemIndex = k;
+                } else bioIndex = k;
+            }
+        }
     }
 
     public void setIsBioDB(boolean isBio){
-        pubchem.setSelected(!isBio);
-        biodb.setSelected(isBio);
+        if (isBio) {
+            db.setSelectedIndex(bioIndex);
+        } else {
+            db.setSelectedIndex(pubchemIndex);
+        }
     }
 
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        pubchem.setEnabled(enabled);
-        biodb.setEnabled(enabled);
+        db.setEnabled(enabled);
+    }
+
+    public SearchableDatabase getDb() {
+        return (SearchableDatabase) db.getSelectedItem();
     }
 }

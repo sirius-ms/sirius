@@ -88,7 +88,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	private void initPeakPositionParameter(){
 
 		double intDiff = this.maxScaleInt - this.minScaleInt;
-        this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
+		this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
 
 		intDiff = this.maxScaleMass - this.minScaleMass;
 		this.xAxisPixelPerMassVal = ((double) xPixelNumber) / intDiff;
@@ -582,32 +582,36 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	private void paintPeaks(Graphics2D g2){
 		final Stroke before = g2.getStroke();
 		try {
-		    final Stroke largePeak = new BasicStroke(1.5f);
-		    final Stroke tinyPeak = new BasicStroke(1);
-		    final Stroke importantPeakStroke = new BasicStroke(2f);
+			final Stroke largePeak = new BasicStroke(1.5f);
+			final Stroke tinyPeak = new BasicStroke(1);
+			final Stroke importantPeakStroke = new BasicStroke(2f);
 			for(int i=this.firstVisibleIndex;i<=this.lastVisibleIndex;i++){
 
-                double mass = this.dataModel.getMass(i);
-                double intensity = this.dataModel.getRelativeIntensity(i);
-                if (intensity >= 0.05) {
-                    g2.setStroke(largePeak);
-                } else g2.setStroke(tinyPeak);
+				double mass = this.dataModel.getMass(i);
+				double intensity = this.dataModel.getRelativeIntensity(i);
+				if (intensity >= 0.05) {
+					g2.setStroke(largePeak);
+				} else g2.setStroke(tinyPeak);
 
 				if(this.dataModel.isMarked(i)){
 					g2.setColor(markedPeak);
 				}else {
-				    if(this.dataModel.isImportantPeak(i)){
-					g2.setColor(importantPeak);
-					g2.setStroke(importantPeakStroke);
-				}else if(this.dataModel.isPlusZeroPeak(i)){
-					g2.setColor(plusZeroPeak);
-				}else if(this.dataModel.isIsotope(i)){
-					g2.setColor(isotopePeak);
-				}else if(this.dataModel.isUnimportantPeak(i)){
-					g2.setColor(unimportantPeak);
-				}else{
-					g2.setColor(defaultPeak);
-				}}
+					if(this.dataModel.isImportantPeak(i)){
+						if (this.dataModel.isIsotope(i)) {
+							g2.setColor(isotopePeak);
+						} else {
+							g2.setColor(importantPeak);
+						}
+						g2.setStroke(importantPeakStroke);
+					}else if(this.dataModel.isPlusZeroPeak(i)){
+						g2.setColor(plusZeroPeak);
+					}else if(this.dataModel.isIsotope(i)){
+						g2.setColor(isotopePeak);
+					}else if(this.dataModel.isUnimportantPeak(i)){
+						g2.setColor(unimportantPeak);
+					}else{
+						g2.setColor(defaultPeak);
+					}}
 
 				int peakXPos = this.getXPeakPosition(mass);
 				int peakYPos = this.getYPeakPosition(intensity);

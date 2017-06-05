@@ -21,8 +21,6 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
-import org.openscience.cdk.annotations.TestClass;
-import org.openscience.cdk.annotations.TestMethod;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -100,7 +98,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * cdk.bug 1760973
  * cdk.bug 1761027
  */
-@TestClass("org.openscience.cdk.smiles.smarts.SMARTSQueryToolTest")
 public class FasterSmartsQueryTool {
 
     private String smarts;
@@ -274,7 +271,6 @@ public class FasterSmartsQueryTool {
      * @see ElectronDonation
      * @see Cycles
      */
-    @TestMethod("setAromaticity,nullAromaticity")
     public void setAromaticity(Aromaticity aromaticity) {
         this.aromaticity = checkNotNull(aromaticity, "aromaticity was not provided");
     }
@@ -284,7 +280,6 @@ public class FasterSmartsQueryTool {
      *
      * @return The SMARTS pattern
      */
-    @TestMethod("testQueryTool")
     public String getSmarts() {
         return smarts;
     }
@@ -295,7 +290,6 @@ public class FasterSmartsQueryTool {
      * @param smarts The new SMARTS pattern
      * @throws CDKException if there is an error in parsing the pattern
      */
-    @TestMethod("testQueryTool, testQueryToolResetSmart")
     public void setSmarts(String smarts) throws CDKException {
         this.smarts = smarts;
         initializeQuery();
@@ -350,7 +344,6 @@ public class FasterSmartsQueryTool {
      *
      * @return The number of times the pattern was found in the target molecule
      */
-    @TestMethod("testQueryTool")
     public int countMatches() {
         return mappings.size();
     }
@@ -362,7 +355,6 @@ public class FasterSmartsQueryTool {
      *
      * @return A List of List of atom indices in the target molecule
      */
-    @TestMethod("testQueryTool")
     public List<List<Integer>> getMatchingAtoms() {
         List<List<Integer>> matched = new ArrayList<List<Integer>>(mappings.size());
         for (int[] mapping : mappings)
@@ -377,7 +369,6 @@ public class FasterSmartsQueryTool {
      *
      * @return A List of List of atom indices in the target molecule
      */
-    @TestMethod("testUniqueQueries")
     public List<List<Integer>> getUniqueMatchingAtoms() {
         List<List<Integer>> matched = new ArrayList<List<Integer>>(mappings.size());
         Set<BitSet> atomSets = Sets.newHashSetWithExpectedSize(mappings.size());

@@ -20,6 +20,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import org.jdesktop.beans.AbstractBean;
 
 import java.util.EnumSet;
@@ -29,20 +30,26 @@ public class FingerIdData extends AbstractBean {
     protected final ProbabilityFingerprint platts;
     protected final Compound[] compounds;
     protected final double[] scores;
+    protected final double[] tanimotoScores;
     private double confidence;
     private double topScore;
-    public final boolean bio;
-    protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
+    public final SearchableDatabase db;
+//    protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
     public EnumSet<DatasourceService.Sources> dbSelection;
 
-    public FingerIdData(boolean bio, Compound[] compounds, double[] scores, ProbabilityFingerprint platts) {
-        this.bio = bio;
+    public FingerIdData(SearchableDatabase db, Compound[] compounds, double[] scores, double[] tanimotoScores, ProbabilityFingerprint platts) {
+        this.db = db;
         this.compounds = compounds;
         this.scores = scores;
+        this.tanimotoScores = tanimotoScores;
         this.platts = platts;
         this.topScore = scores.length == 0 ? Double.NEGATIVE_INFINITY : scores[0];
         this.confidence = Double.NaN;
         this.dbSelection = EnumSet.of(DatasourceService.Sources.PUBCHEM);
+    }
+
+    public ProbabilityFingerprint getPlatts() {
+        return platts;
     }
 
     public double getConfidence() {
@@ -65,7 +72,7 @@ public class FingerIdData extends AbstractBean {
         firePropertyChange("topScore",old,this.topScore);
     }
 
-    public double getMinLogPFilter() {
+    /*public double getMinLogPFilter() {
         return minLogPFilter;
     }
 
@@ -83,5 +90,5 @@ public class FingerIdData extends AbstractBean {
         double old = this.maxLogPFilter;
         this.maxLogPFilter = maxLogPFilter;
         firePropertyChange("maxLogPFilter",old,this.maxLogPFilter);
-    }
+    }*/
 }

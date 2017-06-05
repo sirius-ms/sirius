@@ -27,6 +27,7 @@ ext {
     json_impl_version = "1.0.4" //todo move to gson
 
     glpk_lib_version = '4.60'
+    cdk_version = "1.5.14"
 
     siriusVersion = '3.4.2-SNAPSHOT'
     fingeridVersion = "1.0.9-SNAPSHOT"

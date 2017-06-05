@@ -9,8 +9,8 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
-import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
+import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 
 import javax.swing.*;
@@ -25,10 +25,10 @@ import java.util.Properties;
  */
 public class ErrorReportDialog extends AbstractArccordeoDialog {
 
-    private static final String messageAppendix = " Consider the console output or the log file for further details";
+    private static final String messageAppendix = " Consider the console output or the updateProgress file for further details";
     private static final String reportText = "Please send your error report and help us improving sirius.";
 
-    private static final String reportDetails = "We will NOT send any personal information or data, just the sirius log and property files.";
+    private static final String reportDetails = "We will NOT send any personal information or data, just the sirius updateProgress and property files.";
 
     private String message = null;
     private String subject = null;

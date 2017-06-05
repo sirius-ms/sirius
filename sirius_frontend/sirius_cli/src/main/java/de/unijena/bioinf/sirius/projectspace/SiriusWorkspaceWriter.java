@@ -66,4 +66,9 @@ public class SiriusWorkspaceWriter implements DirectoryWriter.WritingEnvironment
     public void close() throws IOException {
         zip.close();
     }
+
+    @Override
+    public void updateProgress(String s) throws IOException {
+        // not necessary yet
+    }
 }

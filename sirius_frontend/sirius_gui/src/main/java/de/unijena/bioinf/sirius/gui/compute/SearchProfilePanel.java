@@ -22,6 +22,9 @@ public class SearchProfilePanel extends JPanel {
         FTICR("FT-ICR", "fticr", 2)
 
         ,QTOF_FIXED("Q-TOF (fixed)", "qtof_fixed", 10)
+
+        ////
+        ,BRUKER("Q-TOF (isotopes)", "bruker_tof", 10)
         //,EXP1("Exp1", "exp", 10),
         //EXP2("Exp2", "exp2", 10)
         ;
@@ -160,6 +163,10 @@ public class SearchProfilePanel extends JPanel {
 
     public Instruments getInstrument() {
         return (Instruments) instrumentCB.getSelectedItem();
+    }
+
+    public boolean hasIsotopesEnabled() {
+        return getInstrument() == Instruments.BRUKER;
     }
 
     public String getIonization() {

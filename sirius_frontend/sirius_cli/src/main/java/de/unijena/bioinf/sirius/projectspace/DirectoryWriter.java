@@ -141,6 +141,9 @@ public class DirectoryWriter extends AbstractProjectWriter {
         void leaveDirectory() throws IOException;
 
         void close() throws IOException;
+
+        void updateProgress(String s) throws IOException;
+
     }
 
     protected void write(String name, Do f)throws IOException  {
@@ -286,6 +289,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     @Override
     protected void endWritingExperiment(Ms2Experiment experiment)throws IOException  {
         W.leaveDirectory();
+        W.updateProgress(currentExperimentName + "\tdone.");
     }
 
     public static String makeFileName(IdentificationResult result) {
