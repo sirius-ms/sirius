@@ -6,13 +6,14 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.EventList;
-import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -33,8 +34,9 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!MainFrame.MF.getCsiFingerId().isConnected()){
-            new NoConnectionDialog(MF);
+        final int state = ProxyManager.checkInternetConnection();
+        if (state != ProxyManager.OK_STATE ){
+            new ConnectionDialog(MF,state);
             return;
         }
         //calculate csi

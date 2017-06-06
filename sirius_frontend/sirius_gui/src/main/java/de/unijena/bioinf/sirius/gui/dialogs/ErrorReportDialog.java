@@ -25,10 +25,10 @@ import java.util.Properties;
  */
 public class ErrorReportDialog extends AbstractArccordeoDialog {
 
-    private static final String messageAppendix = " Consider the console output or the updateProgress file for further details";
-    private static final String reportText = "Please send your error report and help us improving sirius.";
+    private static final String messageAppendix = " Consider the console output or the log file for further details";
+    private static final String reportText = "Please send your error report and help us improving Sirius.";
 
-    private static final String reportDetails = "We will NOT send any personal information or data, just the sirius updateProgress and property files.";
+    private static final String reportDetails = "We will NOT send any personal information or data, just the sirius log and property files.";
 
     private String message = null;
     private String subject = null;

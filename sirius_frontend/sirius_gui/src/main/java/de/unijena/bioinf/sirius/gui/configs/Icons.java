@@ -21,6 +21,10 @@ public abstract class Icons {
 
     public static final Icon NO_MATCH_128 = new ImageIcon(MainFrame.class.getResource("/icons/nothing-found.png"));
 
+    public static final Icon NO_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-no-16px.png"));
+
+    public static final Icon YES_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-yes-16px.png"));
+
     public static final Icon FB_LOADER_RUN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.gif"));
     public static final Icon FB_LOADER_STOP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png"));
 
@@ -31,6 +35,7 @@ public abstract class Icons {
     public static final Icon FOLDER_CLOSE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-close@0.5x.png"));
 
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
+    public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));
     public static final Icon GEAR_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png"));

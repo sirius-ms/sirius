@@ -32,16 +32,16 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
-import de.unijena.bioinf.sirius.net.Proxies;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -106,7 +106,7 @@ public class WebAPI implements Closeable {
                     String database = o.getJsonObject("database").getString("version");
 
                     List<News> newsList = Collections.emptyList();
-                    if (o.containsKey("news")){
+                    if (o.containsKey("news")) {
                         final String newsJson = o.getJsonArray("news").toString();
                         newsList = News.parseJsonNews(newsJson);
                     }
@@ -121,22 +121,15 @@ public class WebAPI implements Closeable {
         return null;
     }
 
-    private final CloseableHttpClient client;
+    private CloseableHttpClient client;
 
     public WebAPI() {
-        HttpClientBuilder clientBuilder;
-
-        if (Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy"))) {
-            clientBuilder = Proxies.getSiriusProxyClientBuilder();
-        } else{
-            clientBuilder = HttpClients.custom();
-        }
-
-        client = clientBuilder.build();
+        client = ProxyManager.getSirirusHttpClient();
     }
 
-     protected static URIBuilder getFingerIdURI(String path) {
-        URIBuilder b = new URIBuilder().setScheme("http").setHost(DEBUG ? "localhost" : FINGERID_WEB_API);
+
+    protected static URIBuilder getFingerIdURI(String path) {
+        URIBuilder b = new URIBuilder().setScheme(ProxyManager.HTTPS_SCHEME).setHost(DEBUG ? "localhost" : FINGERID_WEB_API);
         if (DEBUG) b = b.setPort(8080).setPath("/frontend" + path);
         else b.setPath(path);
         return b;
@@ -155,8 +148,22 @@ public class WebAPI implements Closeable {
     }
     */
 
-    public void checkInternetConnection(){
+    public boolean checkActiveInternetConnection() {
+        if (client == null || !ProxyManager.hasInternetConnection(client)) {
+            reconnect();
+            return ProxyManager.hasInternetConnection(client);
+        }
+        return true;
+    }
 
+    public void reconnect() {
+        if (client != null)
+            try {
+                client.close();
+            } catch (IOException e) {
+                LoggerFactory.getLogger(this.getClass()).error("Could not close Existing connection!", e);
+            }
+        client = ProxyManager.getTestedSirirusHttpClient();
     }
 
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
@@ -180,7 +187,7 @@ public class WebAPI implements Closeable {
             }
         } catch (Throwable t) {
             logger.error("Error when updating job #" + job.jobId, t);
-            throw(t);
+            throw (t);
         }
         return false;
     }
@@ -222,7 +229,7 @@ public class WebAPI implements Closeable {
                 }
             } else {
                 RuntimeException re = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                logger.debug("Submitting Job failed",re);
+                logger.debug("Submitting Job failed", re);
                 throw re;
             }
         }

@@ -51,9 +51,9 @@ public class DatabaseDialog extends JDialog {
 
         this.owner = owner;
 
-//=============NORTH =================
-//        JPanel header = new DialogHaeder(Icons.DB_32); //todo @fleisch  find sources for icon on old laptop
-//        add(header, BorderLayout.NORTH);
+        //============= NORTH (Header) =================
+        JPanel header = new DialogHaeder(Icons.DB_64);
+        add(header, BorderLayout.NORTH);
 
 
         final List<String> databases = collectDatabases();

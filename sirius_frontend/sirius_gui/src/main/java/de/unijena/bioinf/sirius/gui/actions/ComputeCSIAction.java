@@ -8,11 +8,12 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.dialogs.NoConnectionDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -62,8 +63,8 @@ public class ComputeCSIAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!MF.getCsiFingerId().isConnected()) {
-            new NoConnectionDialog(MF);
+        if (!ProxyManager.hasInternetConnection()) {
+            new ConnectionDialog(MF);
             return;
         }
 
@@ -82,7 +83,7 @@ public class ComputeCSIAction extends AbstractAction {
     protected boolean proofCSI() {
         setEnabled(false);
         if (MF.getCsiFingerId().isEnabled() && MF.getCompounds().size() > 0) {
-            if (MF.getCsiFingerId().isConnected()) {
+            if (ProxyManager.hasInternetConnection()) {
                 for (ExperimentContainer container : MF.getCompounds()) {
                     if (container.isComputed())
                         return true;
@@ -90,7 +91,7 @@ public class ComputeCSIAction extends AbstractAction {
                     break;
                 }
             } else {
-                new NoConnectionDialog(MF);
+                new ConnectionDialog(MF);
             }
         }
         return false;

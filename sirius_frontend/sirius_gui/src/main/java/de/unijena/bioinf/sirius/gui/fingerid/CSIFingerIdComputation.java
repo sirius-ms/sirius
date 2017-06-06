@@ -90,8 +90,8 @@ public class CSIFingerIdComputation {
     protected FingerblastScoringMethod scoringMethod;
     protected final HashMap<String, Compound> compounds;
     protected final HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
-    protected RESTDatabase restDatabase;
-    protected boolean configured = false;
+//    protected RESTDatabase restDatabase;
+//    protected boolean configured = false;
     private File directory;
     private boolean enabled;
     protected List<Runnable> enabledListeners = new ArrayList<>();
@@ -123,7 +123,7 @@ public class CSIFingerIdComputation {
         setDirectory(getDefaultDirectory());
         this.bio = new SearchableDbOnDisc("biological database", getBioDirectory(), false,true,false);
         this.pubchem = new SearchableDbOnDisc("PubChem", getNonBioDirectory(), true,true,false);
-        this.restDatabase = new WebAPI().getRESTDb(BioFilter.ALL, directory);
+//        this.restDatabase = new WebAPI().getRESTDb(BioFilter.ALL, directory);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
         this.blastQueue = new ConcurrentLinkedQueue<>();
@@ -158,9 +158,11 @@ public class CSIFingerIdComputation {
         return enabled;
     }
 
-    public boolean isConnected() {
-        return restDatabase.testConnection();
-    }
+    /*public int testConnection() {
+        if(!restDatabase.testConnection())
+            restDatabase
+            return restDatabase. ;
+    }*/
 
     /*public boolean isUpToDate() {
         return //todo implement later

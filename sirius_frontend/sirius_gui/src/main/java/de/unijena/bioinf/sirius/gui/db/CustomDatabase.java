@@ -385,7 +385,7 @@ public class CustomDatabase implements SearchableDatabase {
                     }
                 }
             } else {
-                // check for SMILES and InChI formats
+                // checkConnectionToUrl for SMILES and InChI formats
                 final BufferedReader br = new BufferedReader(new FileReader(file));
                 String line = br.readLine();
                 br.close();

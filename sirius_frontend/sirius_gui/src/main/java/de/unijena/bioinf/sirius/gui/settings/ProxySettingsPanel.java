@@ -8,6 +8,7 @@ package de.unijena.bioinf.sirius.gui.settings;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -22,7 +23,8 @@ import java.util.Properties;
  */
 public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener, SettingsPanel {
     private Properties props;
-    private JCheckBox useProxy, useCredentials;
+    private JCheckBox useCredentials;
+    private JComboBox<ProxyManager.ProxyStrategy> useProxy;
     private TwoCloumnPanel cred;
     private JTextField proxyHost, proxyUser;
     private JSpinner proxyPort;
@@ -38,11 +40,12 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
     }
 
     private void buildPanel() {
-        useProxy = new JCheckBox();
+        useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
+        useProxy.setSelectedItem(ProxyManager.ProxyStrategy.valueOf(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
-        useProxy.setText("Use Proxy Server");
-        useProxy.setSelected(Boolean.valueOf(props.getProperty("de.unijena.bioinf.sirius.proxy")));
-        add(useProxy);
+        add(new JLabel("Use Proxy Server"),useProxy);
+
+
 
         proxyHost = new JTextField();
         proxyHost.setText(props.getProperty("de.unijena.bioinf.sirius.proxy.hostname"));
@@ -98,18 +101,19 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
 
     @Override
     public void refreshValues() {
-        proxyHost.setEnabled(useProxy.isSelected());
-        proxyPort.setEnabled(useProxy.isSelected());
-        proxyScheme.setEnabled(useProxy.isSelected());
+        boolean local = useProxy.getSelectedItem().equals(ProxyManager.ProxyStrategy.SIRIUS);
+        proxyHost.setEnabled(local);
+        proxyPort.setEnabled(local);
+        proxyScheme.setEnabled(local);
 
-        useCredentials.setEnabled(useProxy.isSelected());
-        proxyUser.setEnabled(useCredentials.isSelected() && useProxy.isSelected());
-        pw.setEnabled(useCredentials.isSelected() && useProxy.isSelected());
+        useCredentials.setEnabled(local);
+        proxyUser.setEnabled(useCredentials.isSelected() && local);
+        pw.setEnabled(useCredentials.isSelected() && local);
     }
 
     @Override
     public void saveProperties() {
-        props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.isSelected()));
+        props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.getSelectedItem()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.credentials", String.valueOf(useCredentials.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.hostname", String.valueOf(proxyHost.getText()).trim());
         props.setProperty("de.unijena.bioinf.sirius.proxy.port", String.valueOf(proxyPort.getValue()).trim());
@@ -138,7 +142,7 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
                 String s = ApplicationCore.VERSION_STRING;
                 JFrame frame = new JFrame("Testing");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ProxySettingsPanel(new Properties(System.getProperties())));
+                frame.add(new ProxySettingsPanel(ApplicationCore.getUserCopyOfUserProperties()));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);

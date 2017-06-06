@@ -41,6 +41,7 @@ import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.LoggerFactory;
@@ -133,7 +134,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (searchProfilePanel.getFormulaSource() == FormulaSource.BIODB) csiOptions.setIsBioDB(true);
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
         //todo ugly workaround better listen to fingerID
-        if (MainFrame.MF.getCsiFingerId().isEnabled() && MainFrame.MF.getCsiFingerId().isConnected()) {
+        if (MainFrame.MF.getCsiFingerId().isEnabled() && ProxyManager.hasInternetConnection()) {
             runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Enable/Disable CSI:FingerID search");
             runCSIFingerId.setEnabled(true);
         } else {
@@ -171,7 +172,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         recompute.setToolTipText("If checked, all selected experiments will be computed. Already computed ones we be recomputed.");
         lsouthPanel.add(recompute);
 
-        //check by default when just one experiment is selected
+        //checkConnectionToUrl by default when just one experiment is selected
         if (compoundsToProcess.size() == 1) recompute.setSelected(true);
 
         JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
@@ -315,8 +316,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         //todo is that useful here?
         /*if (formulaSource != FormulaSource.ALL_POSSIBLE) {
             //Test connection, if needed
-            if (!MainFrame.MF.getCsiFingerId().isConnected()) {
-                new NoConnectionDialog(MainFrame.MF);
+            if (!MainFrame.MF.getCsiFingerId().testConnection()) {
+                new ConnectionDialog(MainFrame.MF);
                 dispose();
                 return;
             }
