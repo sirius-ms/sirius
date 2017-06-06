@@ -148,8 +148,9 @@ public class WebAPI implements Closeable {
     }
     */
 
-    public boolean checkActiveInternetConnection() {
+    public boolean checkActiveConnection() {
         if (client == null || !ProxyManager.hasInternetConnection(client)) {
+            LoggerFactory.getLogger(this.getClass()).warn("No Connection, try to reconnect");
             reconnect();
             return ProxyManager.hasInternetConnection(client);
         }
