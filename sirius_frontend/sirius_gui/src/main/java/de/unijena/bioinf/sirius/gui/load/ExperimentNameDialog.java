@@ -16,7 +16,7 @@ public class ExperimentNameDialog extends JDialog implements ActionListener{
 	private ReturnValue value;
 	
 	public ExperimentNameDialog(JDialog owner,String name) {
-		super(owner,"Experiment name",true);
+		super(owner,"Compound name",true);
 		value = ReturnValue.Abort;
 		this.setLayout(new BorderLayout());
 		tf = new JTextField(20);

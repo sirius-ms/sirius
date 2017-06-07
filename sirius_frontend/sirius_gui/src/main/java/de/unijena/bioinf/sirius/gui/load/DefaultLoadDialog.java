@@ -119,7 +119,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 		propsPanel.add(msLevelPanel);
 		
 		JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
-		namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"experiment name"));
+		namePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),"compound name"));
 		nameTF = new JTextField(12);
 		nameTF.setEditable(false);
 //		nameTF.setText("unknown");

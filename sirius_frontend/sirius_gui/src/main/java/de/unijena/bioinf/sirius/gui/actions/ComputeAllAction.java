@@ -90,7 +90,7 @@ public class ComputeAllAction extends AbstractAction {
         putValue(Action.NAME, "Compute All");
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SMALL_ICON, Icons.RUN_16);
-        putValue(Action.SHORT_DESCRIPTION, "Compute all Experiments");
+        putValue(Action.SHORT_DESCRIPTION, "Compute all compounds");
     }
 
     private void computationStarted() {

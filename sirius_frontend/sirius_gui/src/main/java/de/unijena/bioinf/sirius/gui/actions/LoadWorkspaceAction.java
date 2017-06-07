@@ -24,7 +24,7 @@ public class LoadWorkspaceAction extends AbstractAction {
     public LoadWorkspaceAction() {
         super("Load Workspace");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN_32);
-        putValue(Action.SHORT_DESCRIPTION,"Load all experiments and computed results from a previously saved workspace.");
+        putValue(Action.SHORT_DESCRIPTION,"Load all compounds and computed results from a previously saved workspace.");
     }
 
     @Override

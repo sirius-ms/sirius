@@ -33,7 +33,7 @@ public class FingerIdDialog extends JDialog {
     protected int returnState = CANCELED;
     protected FingerIDComputationPanel dbForm;
     protected CSIFingerIdComputation storage;
-    private String buttonSuffix = "experiments";
+    private String buttonSuffix = "compounds";
 
     public FingerIdDialog(Frame owner, CSIFingerIdComputation storage, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerId", true);

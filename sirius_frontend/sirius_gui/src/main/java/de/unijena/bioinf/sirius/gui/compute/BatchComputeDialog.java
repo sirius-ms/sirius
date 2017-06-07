@@ -169,7 +169,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         recompute = new JCheckBox("Recompute already computed compounds?", false);
-        recompute.setToolTipText("If checked, all selected experiments will be computed. Already computed ones we be recomputed.");
+        recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed ones we be recomputed.");
         lsouthPanel.add(recompute);
 
         //checkConnectionToUrl by default when just one experiment is selected

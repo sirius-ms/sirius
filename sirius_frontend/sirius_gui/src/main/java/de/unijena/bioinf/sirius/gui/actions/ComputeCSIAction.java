@@ -28,7 +28,7 @@ public class ComputeCSIAction extends AbstractAction {
     public ComputeCSIAction() {
         super("CSI:FingerId");
         putValue(Action.SMALL_ICON, Icons.FINGER_32);
-        putValue(Action.SHORT_DESCRIPTION, "Search computed Experiments with CSI:FingerID");
+        putValue(Action.SHORT_DESCRIPTION, "Search computed compounds with CSI:FingerID");
 
         proofCSI();
 
