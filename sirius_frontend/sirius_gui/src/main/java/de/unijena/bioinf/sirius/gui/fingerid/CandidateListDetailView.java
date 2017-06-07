@@ -20,17 +20,11 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.FilePresentDialog;
-import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -38,18 +32,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.List;
-
-import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
+import java.util.Locale;
+import java.util.Map;
 
 public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<CompoundCandidate, ExperimentContainer>, MouseListener, ActionListener {
-
 
 
     protected JList<CompoundCandidate> candidateList;
@@ -134,7 +127,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
 
-
     public void dispose() {
         structureSearcher.stop();
     }
@@ -150,23 +142,15 @@ public class CandidateListDetailView extends CandidateListView implements Active
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.index;
+
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
-        final boolean in;
-        int rx, ry;
-        {
-            final Rectangle box = candidate.substructures.getBounds();
-            final int absX = box.x + relativeRect.x;
-            final int absY = box.y + relativeRect.y;
-            final int absX2 = box.width + absX;
-            final int absY2 = box.height + absY;
-            in = point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
-            rx = point.x - absX;
-            ry = point.y - absY;
-        }
-        if (in) {
-            final int row = ry / CandidateCellRenderer.CELL_SIZE;
-            final int col = rx / CandidateCellRenderer.CELL_SIZE;
-            highlightAgree = candidate.substructures.indexAt(row, col);
+        final FingerprintAgreement ag = candidate.substructures;
+        int[] rowcol = null;
+        if (ag != null)
+            rowcol = calculateAgreementIndex(ag, relativeRect, point);
+
+        if (rowcol != null) {
+            highlightAgree = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
             structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
         } else {
             if (highlightAgree >= 0) {
@@ -177,7 +161,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
             double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
             for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel l : candidate.labels) {
                 if (l.rect.contains(rpx, rpy)) {
-                    clickOnDBLabel(l);
+                    clickOnDBLabel(l); //todo I think here is still a bugsss
                     break;
                 }
             }
@@ -202,7 +186,8 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
 
-    private void popup(MouseEvent e, CompoundCandidate candidate) {
+    private void popup(MouseEvent e) {
+        popupMenu.setVisible(false);
         popupMenu.show(candidateList, e.getX(), e.getY());
     }
 
@@ -215,25 +200,13 @@ public class CandidateListDetailView extends CandidateListView implements Active
         selectedCompoundId = index;
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.rank;
-        if (e.isPopupTrigger()) {
-            popup(e, candidate);
-        }
+        highlightedCandidate = candidate.index;
+
+        if (e.isPopupTrigger()) popup(e);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        highlightedCandidate = -1;
-        highlightAgree = -1;
-        final Point point = e.getPoint();
-        final int index = candidateList.locationToIndex(point);
-        selectedCompoundId = index;
-        if (index < 0) return;
-        final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
-        highlightedCandidate = candidate.rank;
-        if (e.isPopupTrigger()) {
-            popup(e, candidate);
-        }
     }
 
     @Override
@@ -253,5 +226,54 @@ public class CandidateListDetailView extends CandidateListView implements Active
     public void resultsChanged(ExperimentContainer experiment, CompoundCandidate sre, List<CompoundCandidate> resultElements, ListSelectionModel selections) {
         if (sre != null)
             this.structureSearcher.reloadList(source);
+    }
+
+    private int[] calculateAgreementIndex(FingerprintAgreement ag, Rectangle relativeRect, Point clickPoint) {
+        final Rectangle box = ag.getBounds();
+        final int absX = box.x + relativeRect.x;
+        final int absY = box.y + relativeRect.y;
+        final int absX2 = box.width + absX;
+        final int absY2 = box.height + absY;
+        final boolean in = clickPoint.x >= absX && clickPoint.y >= absY && clickPoint.x < absX2 && clickPoint.y < absY2;
+
+        if (in) {
+            int rx = clickPoint.x - absX;
+            int ry = clickPoint.y - absY;
+
+            return new int[]{
+                    ry / CandidateCellRenderer.CELL_SIZE, //row
+                    rx / CandidateCellRenderer.CELL_SIZE //col
+            };
+        }
+        return null;
+    }
+
+
+    public class CandidateInnerList extends JList<CompoundCandidate> {
+        private final NumberFormat prob = new DecimalFormat("%");
+
+        public CandidateInnerList(ListModel<CompoundCandidate> dataModel) {
+            super(dataModel);
+        }
+
+        @Override
+        public String getToolTipText(MouseEvent e) {
+            final Point point = e.getPoint();
+            final int index = locationToIndex(point);
+            if (index < 0) return null;
+            final CompoundCandidate candidate = getModel().getElementAt(index);
+            final Rectangle relativeRect = getCellBounds(index, index);
+
+
+            final FingerprintAgreement ag = candidate.substructures;
+            if (ag != null) {
+                int[] rowcol = calculateAgreementIndex(ag, relativeRect, point);
+                if (rowcol != null) {
+                    int fpindex = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
+                    return candidate.compound.fingerprint.getFingerprintVersion().getMolecularProperty(fpindex).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(fpindex)) + " %)";
+                }
+            }
+            return null;
+        }
     }
 }

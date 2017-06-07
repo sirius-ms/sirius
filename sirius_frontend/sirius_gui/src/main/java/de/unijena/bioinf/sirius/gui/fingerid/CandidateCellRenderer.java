@@ -83,10 +83,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
         super.paint(g);
         // memoize coordinates of substructures boxes
         final Rectangle ra = descriptionPanel.ag.getBounds();
+
         // add offset of parents
         ra.setLocation(ra.x + descriptionPanel.getX(), ra.y + descriptionPanel.getY());
-        ra.setLocation(ra.x + descriptionPanel.agpanel.getX(), ra.y + descriptionPanel.agpanel.getY());
-
         currentCandidate.substructures.setBounds(ra.x, ra.y, ra.width, ra.height);
     }
 
@@ -106,8 +105,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
             agreement.setNumberOfCols(numberOfCols);
             final int W = numberOfCols * CELL_SIZE;
             final int H = numberOfRows * CELL_SIZE;
-            //setPreferredSize(new Dimension(Integer.MAX_VALUE, H + 8));
-            //revalidate();
+//            setPreferredSize(new Dimension(Integer.MAX_VALUE, H + 8));
+//            revalidate();
         }
 
         @Override
@@ -118,23 +117,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
             final int numberOfCols = Math.min(agreement.indizes.length, (getWidth() - 2) / CELL_SIZE);
             final int numberOfRows = ((agreement.indizes.length + numberOfCols - 1) / numberOfCols);
             agreement.setNumberOfCols(numberOfCols);
-            final int W = numberOfCols * CELL_SIZE;
-            final int H = numberOfRows * CELL_SIZE;
-            final int sizeOfLastRow = agreement.indizes.length % numberOfCols;
-            /*
-            g.setColor(Color.BLACK);
-            if (sizeOfLastRow==0) {
-                g.fillRect(0, 0, W, H);
-            } else {
-                g.fillRect(0, 0, W, H- CELL_SIZE);
-                g.fillRect(0, CELL_SIZE *(numberOfRows-1), CELL_SIZE *sizeOfLastRow, CELL_SIZE);
-            }
-            */
-            final float[] components = new float[3];
-            //Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), components);
 
             // highlight current INDEX
-
             final int useable_cell_size = CELL_SIZE - 1;
             for (int i = 0; i < agreement.indizes.length; ++i) {
                 final float weight = (float) agreement.weights[i];
@@ -165,15 +149,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
                     b = 1;
                     g.setColor(Color.BLACK);
                 }
+
                 g.fillRect((CELL_SIZE * col) + reduction - b, (CELL_SIZE * row) + reduction - b, (CELL_SIZE - reduction - reduction) + b + b, (CELL_SIZE - reduction - reduction) + b + b);
 
                 g.setColor(gradient(primary, secondary, colorWeight));
 
-//                g.setColor(Color.getHSBColor(components[0], components[1], weight));
                 g.fillRect(reduction + CELL_SIZE * col, reduction + CELL_SIZE * row, CELL_SIZE - reduction - reduction, CELL_SIZE - reduction - reduction);
             }
-
-
         }
 
         private Color gradient(Color primary, Color secondary, double colorWeight) {
