@@ -171,7 +171,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
 
     public class DatabasePanel extends JPanel {
         private Font ownFont;
-        private Color bgColor = new Color(155, 166, 219);
+        private Color linkedColor = new Color(155, 166, 219);
+        private Color unlinkedColor = Color.GRAY;
 
         public DatabasePanel() {
             setOpaque(false);
@@ -183,47 +184,18 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
         public void setCompound(CompoundCandidate candidate) {
             removeAll();
             if (candidate == null || candidate.compound == null || candidate.compound.databases == null) return;
-//            final ArrayList<String> dbNames = new ArrayList<>(candidate.compound.databases.keySet());
-//            Collections.sort(dbNames);
-//            final FontMetrics m = getFontMetrics(ownFont);
-//            List<de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel> labels = new ArrayList<>();
-
-//            final Rectangle2D boundary = getBounds();
-
             for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label : candidate.labels) {
                 final TextLayout tlayout = new TextLayout(label.name, ownFont, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
                 final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
                 final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
-                add(new DatabaseLabel(label, X, Y, bgColor, ownFont));
+
+
+
+                add(new DatabaseLabel(label, X, Y, (label.values.length == 0 ? unlinkedColor : linkedColor), ownFont));
 
             }
         }
-/*
-        @Override
-        public void paint(Graphics graphics) {
-            super.paint(graphics);
-            final Graphics2D g = (Graphics2D)graphics;
-            if (candidate!=null) {
-                final ArrayList<String> dbNames = new ArrayList<>(candidate.compound.databases.keySet());
-                Collections.sort(dbNames);
-                g.setFont(ownFont);
-                final FontMetrics fm = g.getFontMetrics();
-                int x=0, y=0;
-                for (String dbname : dbNames) {
-                    final Rectangle2D r = fm.getStringBounds(dbname, g);
-                    final int w = (int)r.getWidth();
-                    final int h = (int)r.getHeight();
-                    g.setColor(new Color(43,94,139));
-                    g.fillRoundRect(x,y, w+4, h+4, w, h);
-                    g.setColor(Color.WHITE);
-                    g.drawString(dbname, x+2, h-2);
-                    x += w + 5;
-
-                }
-            }
-        }
-        */
     }
 
     private static class DatabaseLabel extends JPanel {

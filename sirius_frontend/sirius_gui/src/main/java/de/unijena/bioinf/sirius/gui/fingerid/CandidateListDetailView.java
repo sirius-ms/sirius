@@ -142,8 +142,8 @@ public class CandidateListDetailView extends CandidateListView implements Active
         if (index < 0) return;
         final CompoundCandidate candidate = candidateList.getModel().getElementAt(index);
         highlightedCandidate = candidate.index;
-
         final Rectangle relativeRect = candidateList.getCellBounds(index, index);
+
         final FingerprintAgreement ag = candidate.substructures;
         int[] rowcol = null;
         if (ag != null)
@@ -158,10 +158,9 @@ public class CandidateListDetailView extends CandidateListView implements Active
                 structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
             }
 
-            double rpx = point.x - relativeRect.getX(), rpy = point.y - relativeRect.getY();
             for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel l : candidate.labels) {
-                if (l.rect.contains(rpx, rpy)) {
-                    clickOnDBLabel(l); //todo I think here is still a bugsss
+                if (l.rect.contains(point.x, point.y)) {
+                    clickOnDBLabel(l);
                     break;
                 }
             }
