@@ -90,7 +90,7 @@ public class DatabaseDialog extends JDialog {
                 }
             }
         });
-        this.addCustomDb = Buttons.getAddButton16("add custom db");
+        this.addCustomDb = Buttons.getAddButton16("Add custom DB");
         addCustomDb.setEnabled(false);
         final Box but = Box.createHorizontalBox();
         but.add(nameField);
