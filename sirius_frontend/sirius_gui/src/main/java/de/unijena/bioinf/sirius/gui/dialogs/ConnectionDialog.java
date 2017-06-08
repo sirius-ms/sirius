@@ -68,6 +68,7 @@ public class ConnectionDialog extends JDialog implements ActionListener {
 
 
         setMinimumSize(new Dimension(350, getPreferredSize().height));
+        setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());

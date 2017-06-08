@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.gui.net;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import org.jdesktop.swingx.VerticalLayout;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +16,7 @@ import java.net.URISyntaxException;
 /**
  * Created by fleisch on 06.06.17.
  */
-public class ConnectionCheckPanel extends JPanel {
+public class ConnectionCheckPanel extends TwoCloumnPanel {
     final BooleanJlabel internet = new BooleanJlabel();
     final BooleanJlabel jena = new BooleanJlabel();
     final BooleanJlabel bioinf = new BooleanJlabel();
@@ -24,17 +25,17 @@ public class ConnectionCheckPanel extends JPanel {
     JPanel resultPanel = null;
 
     public ConnectionCheckPanel(int state) {
-        super(new BorderLayout());
+        super(GridBagConstraints.WEST, GridBagConstraints.EAST);
+        setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Internet connection test:"));
+
+        add(new JLabel("Connection to the internet (google.com)"), internet, 15, false);
+        add(new JLabel("Connection to uni-jena.de"), jena, 5, false);
+        add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
+        add(new JLabel("Connection to CSI:FingerID RESTful"), fingerID, 5, false);
 
 
-        TwoCloumnPanel check = new TwoCloumnPanel();
-        check.add(new JLabel("Internet connection check..."));
-        check.add(new JLabel("Connection to the internet (google.com)"), internet);
-        check.add(new JLabel("Connection to uni-jena.de"), jena);
-        check.add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf);
-        check.add(new JLabel("Connection to CSI:FingerID"), fingerID);
+        addVerticalGlue();
 
-        add(check, BorderLayout.CENTER);
 
         refreshPanel(state);
     }
@@ -44,20 +45,22 @@ public class ConnectionCheckPanel extends JPanel {
         jena.setState(state < 3);
         bioinf.setState(state < 2);
         fingerID.setState(state < 1);
-//        this.fingerIDVersion.setState(fingerIDVersion);
 
 
         if (resultPanel != null)
             remove(resultPanel);
         resultPanel = createResultPanel(state);
-        add(resultPanel, BorderLayout.SOUTH);
+
+        add(resultPanel,15,true);
 
         revalidate();
         repaint();
     }
 
     private JPanel createResultPanel(int state) {
-        JPanel resultPanel = new JPanel(new VerticalLayout(5));
+        JPanel resultPanel = new JPanel();
+        resultPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),"Description:"));
+
         final JLabel label;
         switch (state) {
             case 0:

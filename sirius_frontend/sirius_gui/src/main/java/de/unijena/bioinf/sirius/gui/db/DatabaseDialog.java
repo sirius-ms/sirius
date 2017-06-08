@@ -42,14 +42,14 @@ public class DatabaseDialog extends JDialog {
     protected JButton addCustomDb;
     protected DatabaseView dbView;
     protected PlaceholderTextField nameField;
-    protected final Frame owner;
-
+//    protected final Frame owner;
+    private JDialog owner = this;
     public DatabaseDialog(final Frame owner) {
         super(owner, true);
         setTitle("Databases");
         setLayout(new BorderLayout());
 
-        this.owner = owner;
+//        this.owner = owner;
 
         //============= NORTH (Header) =================
         JPanel header = new DialogHaeder(Icons.DB_64);
@@ -97,12 +97,12 @@ public class DatabaseDialog extends JDialog {
         but.add(addCustomDb);
 
         add(but, BorderLayout.SOUTH);
-        add(box, BorderLayout.WEST);
+        add(box, BorderLayout.CENTER);
         but.add(Box.createHorizontalGlue());
 
         this.dbView = new DatabaseView();
 
-        add(dbView, BorderLayout.CENTER);
+        add(dbView, BorderLayout.EAST);
 
         dbList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -193,7 +193,7 @@ public class DatabaseDialog extends JDialog {
             @Override
             protected String doInBackground() throws Exception {
                 db.readSettings();
-                System.out.println("SETTINGS OF " + db.name() + " IS READ");
+                LoggerFactory.getLogger(this.getClass()).debug("SETTINGS OF " + db.name() + " IS READ");
                 publish(db.name);
                 return db.name();
             }
@@ -327,7 +327,7 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    protected static class ImportCompoundsDialog extends JDialog {
+    protected class ImportCompoundsDialog extends JDialog {
         protected JLabel statusText;
         protected JProgressBar progressBar;
         protected JTextArea details;
@@ -337,10 +337,9 @@ public class DatabaseDialog extends JDialog {
 
         protected volatile int molBufferSize, fpBufferSize;
 
-        protected static Logger logger = LoggerFactory.getLogger(ImportCompoundsDialog.class);
-
         protected SwingWorker<List<InChI>, ImportStatus> worker;
-        public ImportCompoundsDialog(Frame owner, CustomDatabase.Importer importer) {
+
+        public ImportCompoundsDialog(CustomDatabase.Importer importer) {
             super(owner, "Import compounds", true);
             this.importer = importer;
             JPanel panel = new JPanel();
@@ -370,7 +369,9 @@ public class DatabaseDialog extends JDialog {
                     dispose();
                 }
             });
+
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setLocationRelativeTo(getParent());
         }
 
         @Override
@@ -571,7 +572,7 @@ public class DatabaseDialog extends JDialog {
                     } else return null;
                 }
             } catch (IOException e) {
-                logger.error(e.getMessage(), e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 return null;
             }
         }
@@ -667,7 +668,7 @@ public class DatabaseDialog extends JDialog {
 
             add(box2, BorderLayout.SOUTH);
 
-            importDialog = new ImportCompoundsDialog(owner, importer);
+            importDialog = new ImportCompoundsDialog(importer);
 
             importButton.addActionListener(new ActionListener() {
                 @Override
@@ -693,7 +694,7 @@ public class DatabaseDialog extends JDialog {
 
             setDropTarget(dropTarget);
             textArea.setDropTarget(dropTarget);
-
+            setLocationRelativeTo(getParent());
             pack();
             setVisible(true);
         }

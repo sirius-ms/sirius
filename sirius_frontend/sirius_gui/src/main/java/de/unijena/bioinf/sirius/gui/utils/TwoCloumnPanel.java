@@ -17,6 +17,9 @@ public class TwoCloumnPanel extends JPanel {
 
 
     public TwoCloumnPanel() {
+        this(GridBagConstraints.EAST,GridBagConstraints.WEST);
+    }
+    public TwoCloumnPanel(final int leftAnchor, final int rightAnchor) {
         super();
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
@@ -24,7 +27,7 @@ public class TwoCloumnPanel extends JPanel {
         left = new GridBagConstraints();
         left.gridx = 0;
         left.fill = GridBagConstraints.NONE;
-        left.anchor = GridBagConstraints.EAST;
+        left.anchor = leftAnchor;
         left.weightx = 0;
         left.weighty = 0;
         left.insets = new Insets(0, 0, 0, 5);
@@ -32,7 +35,7 @@ public class TwoCloumnPanel extends JPanel {
         right = new GridBagConstraints();
         right.gridx = 1;
         right.fill = GridBagConstraints.HORIZONTAL;
-        right.anchor = GridBagConstraints.WEST;
+        right.anchor = rightAnchor;
         right.weightx = 1;
         right.weighty = 0;
 
