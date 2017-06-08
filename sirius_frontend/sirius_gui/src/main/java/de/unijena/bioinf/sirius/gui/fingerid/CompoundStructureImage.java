@@ -24,15 +24,16 @@ import java.util.Locale;
  */
 class CompoundStructureImage extends JPanel {
 
-    protected static final Font nameFont, rankFont,  matchFont;
+    protected static final Font nameFont, rankFont, matchFont;
+
     static {
         //init fonts
         final Font tempFont = Fonts.FONT_BOLD;
-        if (tempFont != null){
+        if (tempFont != null) {
             nameFont = tempFont.deriveFont(13f);
             matchFont = tempFont.deriveFont(18f);
             rankFont = tempFont.deriveFont(32f);
-        }else {
+        } else {
             nameFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
 
         }
@@ -42,9 +43,11 @@ class CompoundStructureImage extends JPanel {
     protected AtomContainerRenderer renderer;
     protected Color backgroundColor;
 
-
-
     public CompoundStructureImage() {
+        this(StandardGenerator.HighlightStyle.OuterGlow);
+    }
+
+    public CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle) {
         setOpaque(false);
         setPreferredSize(new Dimension(374, 215));
         // make generators
@@ -61,7 +64,7 @@ class CompoundStructureImage extends JPanel {
         this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
 
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
-                StandardGenerator.HighlightStyle.OuterGlow);
+                highlightStyle);
         renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
                 new CDK2DAtomColors());
         setVisible(true);

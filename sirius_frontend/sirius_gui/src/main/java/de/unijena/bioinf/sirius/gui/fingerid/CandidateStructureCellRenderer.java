@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.gui.configs.Colors;
+import org.openscience.cdk.renderer.generators.standard.StandardGenerator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +10,7 @@ import java.awt.*;
  * Created by fleisch on 24.05.17.
  */
 public class CandidateStructureCellRenderer implements ListCellRenderer<CompoundCandidate> {
-    private CompoundStructureImage image = new CompoundStructureImage();
+    private CompoundStructureImage image = new CompoundStructureImage(StandardGenerator.HighlightStyle.None);
 
     @Override
     public Component getListCellRendererComponent(JList<? extends CompoundCandidate> list, CompoundCandidate value, int index, boolean isSelected, boolean cellHasFocus) {
