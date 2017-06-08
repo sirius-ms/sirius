@@ -26,7 +26,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
 
 
     public FingerprintTableView(FingerprintTable table) {
-        super(table);
+        super(table,true);
         this.format = new FingerprintTableFormat(table);
         this.maxAtomSize = 10;
 

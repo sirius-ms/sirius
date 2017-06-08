@@ -26,13 +26,18 @@ public abstract class ActionListDetailView<E extends AbstractBean, D, T extends 
     protected final DefaultEventSelectionModel<E> filteredSelectionModel;
     protected final JToolBar toolBar;
 
-    public ActionListDetailView(T source) {
+    public ActionListDetailView(T source){
+        this(source,false);
+    }
+    public ActionListDetailView(T source, final boolean singleSelection) {
         super(source);
         setLayout(new BorderLayout());
         searchField = new SearchTextField();
         this.toolBar = getToolBar();
         filteredSource = configureFiltering(source.elementList);
         filteredSelectionModel = new DefaultEventSelectionModel<E>(filteredSource);
+        if (singleSelection)
+            filteredSelectionModel.setSelectionMode(DefaultEventSelectionModel.SINGLE_SELECTION);
         add(getNorth(), BorderLayout.NORTH);
 
     }
