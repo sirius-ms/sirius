@@ -116,7 +116,6 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
             List<DatabaseLabel> labels = new ArrayList<>();
             for (String key : this.compound.databases.keySet()) {
                 final Collection<String> values = this.compound.databases.get(key);
-
                 final ArrayList<String> cleaned =  new ArrayList<>(values.size());
                 for (String value : values) {
                     if (value != null)
@@ -124,6 +123,7 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
                 }
                 labels.add(new DatabaseLabel(key, cleaned.toArray(new String[cleaned.size()]), new Rectangle(0, 0, 0, 0)));
             }
+            Collections.sort(labels);
             this.labels = labels.toArray(new DatabaseLabel[labels.size()]);
         }
     }
