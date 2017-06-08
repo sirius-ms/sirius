@@ -467,7 +467,7 @@ public class CustomDatabase implements SearchableDatabase {
                 logger.error(e.getMessage(), e);
             }
             logger.info("Try downloading compounds");
-            try (final WebAPI webAPI = new WebAPI()){
+            try (final WebAPI webAPI = WebAPI.newInstance()){
                 try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ALL, new File("."))) {
                     try {
                         for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {

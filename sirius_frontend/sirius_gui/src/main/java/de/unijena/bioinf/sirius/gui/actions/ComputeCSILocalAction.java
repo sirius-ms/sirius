@@ -34,11 +34,10 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        final int state = ProxyManager.checkInternetConnection();
-        if (state != ProxyManager.OK_STATE ){
-            new ConnectionDialog(MF,state);
-            return;
-        }
+        CheckConnectionAction checker = (CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance();
+        checker.actionPerformed(null);
+        if (!checker.isActive.get()) return;
+        
         //calculate csi
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, true);
         final int returnState = dialog.run();

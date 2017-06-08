@@ -7,30 +7,30 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ComputeCSIAction extends AbstractAction {
+public class ComputeCSIAction extends AbstractAction implements PropertyChangeListener {
 
     public ComputeCSIAction() {
         super("CSI:FingerId");
         putValue(Action.SMALL_ICON, Icons.FINGER_32);
         putValue(Action.SHORT_DESCRIPTION, "Search computed compounds with CSI:FingerID");
 
-        proofCSI();
+        proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get());
 
         MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -56,17 +56,18 @@ public class ComputeCSIAction extends AbstractAction {
         MF.getCsiFingerId().getEnabledListeners().add(new Runnable() {
             @Override
             public void run() {
-                setEnabled(proofCSI());
+                setEnabled(proofCSI(((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()));
             }
         });
+
+        SiriusActions.CHECK_CONNECTION.getInstance().addPropertyChangeListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ProxyManager.hasInternetConnection()) {
-            new ConnectionDialog(MF);
-            return;
-        }
+        CheckConnectionAction checker = (CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance();
+        checker.actionPerformed(null);
+        if (!checker.isActive.get()) return;
 
 
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.getCsiFingerId(), true, false);
@@ -80,20 +81,27 @@ public class ComputeCSIAction extends AbstractAction {
     }
 
 
-    protected boolean proofCSI() {
+    protected boolean proofCSI(final boolean network) {
         setEnabled(false);
         if (MF.getCsiFingerId().isEnabled() && MF.getCompounds().size() > 0) {
-            if (ProxyManager.hasInternetConnection()) {
+            if (network) {
                 for (ExperimentContainer container : MF.getCompounds()) {
                     if (container.isComputed())
                         return true;
-                        setEnabled(true);
+                    setEnabled(true);
                     break;
                 }
-            } else {
-                new ConnectionDialog(MF);
             }
         }
         return false;
+    }
+
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals("net")) {
+            boolean value = (boolean) evt.getNewValue();
+            setEnabled(proofCSI(value));
+        }
     }
 }

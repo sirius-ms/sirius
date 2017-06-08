@@ -7,6 +7,7 @@ package de.unijena.bioinf.sirius.gui.settings;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 
@@ -121,6 +122,8 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
         props.setProperty("de.unijena.bioinf.sirius.proxy.user", proxyUser.getText());
 
         PasswordCrypter.setEncryptetProp("de.unijena.bioinf.sirius.proxy.pw", String.valueOf(pw.getPassword()), props);
+
+        WebAPI.reconnectAllInstances();
     }
 
     @Override

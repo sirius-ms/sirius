@@ -30,7 +30,9 @@ public class FinngerIDWebErrorReporter extends ErrorReporter {
 
     @Override
     protected String reportError(ErrorReport report) throws IOException, URISyntaxException {
-        WebAPI csi = new WebAPI();
-        return csi.reportError(report, SOFTWARE_NAME);
+        WebAPI csi = WebAPI.newInstance();
+        String r = csi.reportError(report, SOFTWARE_NAME);
+        csi.close();
+        return r;
     }
 }

@@ -30,6 +30,8 @@ import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
@@ -61,7 +63,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private JButton abort;
 
     private JCheckBox recompute;
-
 
     private ElementsPanel elementPanel;
     private JButton elementAutoDetect = null;
@@ -133,8 +134,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases());
         if (searchProfilePanel.getFormulaSource() == FormulaSource.BIODB) csiOptions.setIsBioDB(true);
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
-        //todo ugly workaround better listen to fingerID
-        if (MainFrame.MF.getCsiFingerId().isEnabled() && ProxyManager.hasInternetConnection()) {
+
+        if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction)SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()) {
             runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Enable/Disable CSI:FingerID search");
             runCSIFingerId.setEnabled(true);
         } else {

@@ -94,7 +94,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     }
 
     private void generateCustomDatabase(FingerIdOptions options) {
-        DatabaseImporter.importDatabase((CdkFingerprintVersion)new WebAPI().getFingerprintVersion(), options.getGeneratingCompoundDatabase(), options.getInput());
+        DatabaseImporter.importDatabase((CdkFingerprintVersion) WebAPI.getFingerprintVersion(), options.getGeneratingCompoundDatabase(), options.getInput());
     }
 
     @Override
@@ -104,7 +104,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         final BioFilter bioFilter = getBioFilter();
         // this service is just use to submit several fingerprint jobs at the same time
         executorService = Executors.newFixedThreadPool(16);
-        try (WebAPI webAPI = new WebAPI()) {
+        try (WebAPI webAPI = WebAPI.newInstance()) {
             // search CSI:FingerId identifications
             if (options.isFingerid()) {
                 // first filter result list by top scoring formulas
@@ -275,7 +275,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     private void initFingerBlast() {
         progress.info("Initialize CSI:FingerId...");
-        try (WebAPI webAPI = new WebAPI()) {
+        try (WebAPI webAPI = WebAPI.newInstance()) {
             final VersionsInfo needsUpdate = webAPI.needsUpdate();
             if (needsUpdate != null && needsUpdate.outdated()) {
                 progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + needsUpdate.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);

@@ -41,7 +41,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -49,10 +48,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -72,25 +68,65 @@ import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
+    private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
+
 
     protected final static boolean DEBUG = false;
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = "bio.informatik.uni-jena.de/csi-fingerid";
     public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
 
-
-    protected static Logger logger = LoggerFactory.getLogger(WebAPI.class);
-
     public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
-
-    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
-        return new RESTDatabase(cacheDir, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null, client);
-    }
-
     public static final String VERSION = "3.4.1"; //todo get from properties file
     public static final String DATE = "2017-02-06";
+
+
+    public static WebAPI newInstance() {
+        WebAPI i = new WebAPI();
+        INSTANCES.add(i);
+        return i;
+    }
+
+    public static void reconnectAllInstances() {
+        for (WebAPI api : INSTANCES) {
+            api.reconnect();
+        }
+    }
+
+    private CloseableHttpClient client;
+
+    private WebAPI() {
+        client = ProxyManager.getSirirusHttpClient();
+    }
+
+    @Override
+    public void close() throws IOException {
+        client.close();
+        INSTANCES.remove(this);
+    }
+
+    public boolean isConnected() {
+        if (client == null || !ProxyManager.hasInternetConnection(client)) {
+            LoggerFactory.getLogger(this.getClass()).warn("No Connection, try to reconnect");
+            reconnect();
+            return ProxyManager.hasInternetConnection(client);
+        }
+        return true;
+    }
+
+    public void reconnect() {
+        if (client != null) {
+            try {
+                client.close();
+            } catch (IOException e) {
+                LoggerFactory.getLogger(this.getClass()).error("Could not close Existing connection!", e);
+            }
+        }
+        client = ProxyManager.getSirirusHttpClient();
+    }
+
 
     public VersionsInfo needsUpdate() {
         final HttpGet get;
@@ -121,13 +157,6 @@ public class WebAPI implements Closeable {
         return null;
     }
 
-    private CloseableHttpClient client;
-
-    public WebAPI() {
-        client = ProxyManager.getSirirusHttpClient();
-    }
-
-
     protected static URIBuilder getFingerIdURI(String path) {
         URIBuilder b = new URIBuilder().setScheme(ProxyManager.HTTPS_SCHEME).setHost(DEBUG ? "localhost" : FINGERID_WEB_API);
         if (DEBUG) b = b.setPort(8080).setPath("/frontend" + path);
@@ -135,6 +164,9 @@ public class WebAPI implements Closeable {
         return b;
     }
 
+    public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
+        return new RESTDatabase(cacheDir, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null, client);
+    }
     /*
     public List<Compound> getCompounds(List<String> inchikeys) {
         final URIBuilder b = getFingerIdURI("/webapi/compounds.json");
@@ -148,24 +180,6 @@ public class WebAPI implements Closeable {
     }
     */
 
-    public boolean checkActiveConnection() {
-        if (client == null || !ProxyManager.hasInternetConnection(client)) {
-            LoggerFactory.getLogger(this.getClass()).warn("No Connection, try to reconnect");
-            reconnect();
-            return ProxyManager.hasInternetConnection(client);
-        }
-        return true;
-    }
-
-    public void reconnect() {
-        if (client != null)
-            try {
-                client.close();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Could not close Existing connection!", e);
-            }
-        client = ProxyManager.getTestedSirirusHttpClient();
-    }
 
     public boolean updateJobStatus(FingerIdJob job) throws URISyntaxException, IOException {
         final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
@@ -187,7 +201,7 @@ public class WebAPI implements Closeable {
                 }
             }
         } catch (Throwable t) {
-            logger.error("Error when updating job #" + job.jobId, t);
+            LoggerFactory.getLogger(this.getClass()).error("Error when updating job #" + job.jobId, t);
             throw (t);
         }
         return false;
@@ -230,7 +244,7 @@ public class WebAPI implements Closeable {
                 }
             } else {
                 RuntimeException re = new RuntimeException(response.getStatusLine().getReasonPhrase());
-                logger.debug("Submitting Job failed", re);
+                LoggerFactory.getLogger(this.getClass()).debug("Submitting Job failed", re);
                 throw re;
             }
         }
@@ -256,7 +270,7 @@ public class WebAPI implements Closeable {
         });
     }
 
-    public FingerprintVersion getFingerprintVersion() {
+    public static FingerprintVersion getFingerprintVersion() {
         // TODO: implement as web request
         return CdkFingerprintVersion.withECFP();
     }
@@ -333,11 +347,6 @@ public class WebAPI implements Closeable {
                 }
             }
         }
-    }
-
-    @Override
-    public void close() throws IOException {
-        client.close();
     }
 
     public QueryPredictor getConfidenceScore(boolean bio) {

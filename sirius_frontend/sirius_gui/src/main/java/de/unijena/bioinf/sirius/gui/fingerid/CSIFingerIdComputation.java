@@ -90,8 +90,6 @@ public class CSIFingerIdComputation {
     protected FingerblastScoringMethod scoringMethod;
     protected final HashMap<String, Compound> compounds;
     protected final HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
-//    protected RESTDatabase restDatabase;
-//    protected boolean configured = false;
     private File directory;
     private boolean enabled;
     protected List<Runnable> enabledListeners = new ArrayList<>();
@@ -123,7 +121,6 @@ public class CSIFingerIdComputation {
         setDirectory(getDefaultDirectory());
         this.bio = new SearchableDbOnDisc("biological database", getBioDirectory(), false,true,false);
         this.pubchem = new SearchableDbOnDisc("PubChem", getNonBioDirectory(), true,true,false);
-//        this.restDatabase = new WebAPI().getRESTDb(BioFilter.ALL, directory);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
         this.blastQueue = new ConcurrentLinkedQueue<>();
@@ -158,17 +155,7 @@ public class CSIFingerIdComputation {
         return enabled;
     }
 
-    /*public int testConnection() {
-        if(!restDatabase.testConnection())
-            restDatabase
-            return restDatabase. ;
-    }*/
-
-    /*public boolean isUpToDate() {
-        return //todo implement later
-    }*/
-
-    public void setEnabled(boolean enabled) {
+       public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         for (Runnable r : enabledListeners) r.run();
     }
@@ -416,7 +403,7 @@ public class CSIFingerIdComputation {
         }
         if (compounds == null) {
             if (webAPI == null) {
-                try (final WebAPI webAPI2 = new WebAPI()) {
+                try (final WebAPI webAPI2 = WebAPI.newInstance()) {
                     compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
                 }
             } else {
@@ -643,7 +630,7 @@ public class CSIFingerIdComputation {
         try {
             globalLock.lock();
             if (performances == null) {
-                final WebAPI webAPI = new WebAPI();
+                final WebAPI webAPI = WebAPI.newInstance();
                 loadStatistics(webAPI);
                 webAPI.close();
             }
@@ -698,7 +685,7 @@ public class CSIFingerIdComputation {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
             }
-            final WebAPI webAPI = new WebAPI();
+            final WebAPI webAPI = WebAPI.newInstance(); //todo is this somewhere closed?
             // first read statistics
             globalLock.lock();
             try {
@@ -711,6 +698,7 @@ public class CSIFingerIdComputation {
             } finally {
                 globalLock.unlock();
             }
+
             while ((!shutdown)) {
                 try {
                     final FingerIdTask container = formulaQueue.poll();
@@ -771,7 +759,7 @@ public class CSIFingerIdComputation {
             } finally {
                 globalLock.unlock();
             }
-            WebAPI webAPI = new WebAPI();
+            WebAPI webAPI = WebAPI.newInstance();
             while ((!shutdown)) {
                 boolean nothingToDo = true;
                 for (int c = 0; c < 20; ++c) {

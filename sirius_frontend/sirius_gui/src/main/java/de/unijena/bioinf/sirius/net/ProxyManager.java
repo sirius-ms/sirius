@@ -12,7 +12,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -22,16 +21,45 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
+import java.util.LinkedHashSet;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
+    private static final LinkedHashSet<CloseableHttpClient> CONNECTIONS = new LinkedHashSet<>();
+
     public static final String HTTPS_SCHEME = "https";
     public static final String HTTP_SCHEME = "http";
     public static final int MAX_STATE = 4;
     public static final int OK_STATE = 0;
     public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
+
+    /*public static void closeConnection(CloseableHttpClient client) {
+        try {
+            client.close();
+            CONNECTIONS.remove(client);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(ProxyManager.class).error("Could not close Existing connection!", e);
+        }
+    }
+
+    public static void shutdown() {
+        Iterator<CloseableHttpClient> it = CONNECTIONS.iterator();
+        while (it.hasNext()) {
+            try {
+                it.next().close();
+                it.remove();
+            } catch (IOException e) {
+                LoggerFactory.getLogger(ProxyManager.class).error("Could not close Existing connection!", e);
+            }
+        }
+    }
+
+    private static void registerClient(CloseableHttpClient client) {
+        CONNECTIONS.add(client);
+    }
+*/
 
     public enum ProxyStrategy {SYSTEM, SIRIUS, NONE}
 
@@ -60,27 +88,32 @@ public class ProxyManager {
         return getProxyStrategy() == ProxyStrategy.NONE;
     }
 
-    private static int errorState;
-
-
     // this method inits the proxy configuration at program start
     public static CloseableHttpClient getSirirusHttpClient() {
         return getSirirusHttpClient(getProxyStrategy());
     }
 
     public static CloseableHttpClient getSirirusHttpClient(ProxyStrategy strategy) {
+        final CloseableHttpClient client;
         switch (strategy) {
             case SYSTEM:
-                return getJavaDefaultProxyClientBuilder();
+                client = getJavaDefaultProxyClient();
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " +  ProxyStrategy.SYSTEM);
+                break;
             case SIRIUS:
-                return getSiriusProxyClientBuilder();
+                client = getSiriusProxyClient();
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " +  ProxyStrategy.SIRIUS);
+                break;
             case NONE:
-                return getNoProxyClientBuilder();
+                client = getNoProxyClient();
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " +  ProxyStrategy.NONE);
+                break;
             default:
-                return getJavaDefaultProxyClientBuilder();
+                client = getJavaDefaultProxyClient();
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " +  ProxyStrategy.SYSTEM);
         }
-        //endregion
-
+//        registerClient(client);
+        return client;
     }
 
     public static CloseableHttpClient getTestedSirirusHttpClient() {
@@ -96,11 +129,16 @@ public class ProxyManager {
             LoggerFactory.getLogger(ProxyManager.class).warn("No connection with selected setting. Searching for Failover Settings!");
             for (ProxyStrategy strategy : ProxyStrategy.values()) {
                 CloseableHttpClient failoverClient = getSirirusHttpClient(strategy);
-                if (hasInternetConnection(client)) return failoverClient;
+                if (hasInternetConnection(client)) {
+                    client = failoverClient;
+                    break;
+                }
             }
         }
+//        registerClient(client);
         return client;
     }
+
 
     //0 everything is fine
     //1 no push to csi fingerid possible
@@ -109,7 +147,10 @@ public class ProxyManager {
     //4 no connection to uni jena
     //5 no connection to internet (google/microft/ubuntu????)
     public static int checkInternetConnection() {
-        return checkInternetConnection(getSirirusHttpClient());
+        CloseableHttpClient client = getSirirusHttpClient();
+        int val = checkInternetConnection(client);
+//        closeConnection(client);
+        return val;
     }
 
     public static boolean hasInternetConnection(final CloseableHttpClient client) {
@@ -121,59 +162,35 @@ public class ProxyManager {
     }
 
     public static int checkInternetConnection(final CloseableHttpClient client) {
-
         if (!checkFingerID(client)) {
             if (!checkBioinf(client)) {
                 if (!checkJena(client)) {
                     if (!checkExternal(client)) {
-                        errorState = 4;
+                        return 4;
                     } else {
-                        errorState = 3;
+                        return 3;
                     }
                 } else {
-                    errorState = 2;
+                    return 2;
                 }
             } else {
-                errorState = 1;
+                return 1;
             }
         } else {
-            errorState = 0;
+            return 0;
         }
-
-        return errorState;
-
     }
 
 
-    //todo finish
-//    public static int getProxyPort(){}
-//    public static String getProxyHost(){}
-//    public static String getProxyScheme{}
-
-    private static CloseableHttpClient getJavaDefaultProxyClientBuilder() {
-        /*final String hostName = System.getProperty("http.proxyHost");
-        final int port = Integer.valueOf(System.getProperty("http.proxyPort"));
-        final String name = System.getProperty("http.proxyUser");
-        final String pw = System.getProperty("http.proxyPassword");
-
-
-        return getClientBuilderWithProxySettings(
-                hostName,
-                port,
-                scheme,
-                name,
-                pw
-        );*/
+    private static CloseableHttpClient getJavaDefaultProxyClient() {
         return HttpClients.createSystem();
-
     }
 
-    private static CloseableHttpClient getNoProxyClientBuilder() {
+    private static CloseableHttpClient getNoProxyClient() {
         return HttpClients.createDefault();
     }
 
-    private static CloseableHttpClient getSiriusProxyClientBuilder() {
-        String versionString = ApplicationCore.VERSION_STRING;
+    private static CloseableHttpClient getSiriusProxyClient() {
         final String hostName = System.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
         final int port = Integer.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy.port"));
         final String scheme = System.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
@@ -193,7 +210,6 @@ public class ProxyManager {
                     scheme
             ).build();
         }
-
     }
 
     private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme) {
@@ -223,6 +239,7 @@ public class ProxyManager {
 
 
     public static void main(String[] args) {
+        String versionString = ApplicationCore.VERSION_STRING;
         System.out.println("System settings");
         System.out.println("use system proxy? " + System.getProperty("java.net.useSystemProxies"));
         String port = System.getProperty("http.proxyPort");

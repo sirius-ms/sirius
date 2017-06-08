@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
@@ -139,13 +140,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //finger id observer
-        //todo this has to be refreshed after every checkConnectionToUrl for connection --> same task as PropertyManager.
         final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
             @Override
             protected VersionsInfo doInBackground() {
                 VersionsInfo result = null;
-                try (WebAPI api = new WebAPI()) {
-                    result = api.needsUpdate();
+                try (WebAPI api = WebAPI.newInstance()) {
+                    if (api.isConnected())
+                        result = api.needsUpdate();
                     LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (result != null ? String.valueOf(result.toString()) : "NULL"));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
@@ -170,7 +171,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                         new NewsDialog(mf, versionsNumber.getNews());
                     }
                 } else {
-                    new ConnectionDialog(mf);
+                    SiriusActions.CHECK_CONNECTION.getInstance().actionPerformed(null);
                 }
             }
 

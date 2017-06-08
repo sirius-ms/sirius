@@ -34,7 +34,9 @@ public enum SiriusActions {
     SHOW_BUGS(ShowBugReportDialogAction.class),
     SHOW_ABOUT(ShowAboutDialogAction.class),
     SHOW_JOBS(ShowJobsDialogAction.class),
-    SHOW_DB(ShowDBDialogAction.class);
+    SHOW_DB(ShowDBDialogAction.class),
+
+    CHECK_CONNECTION(CheckConnectionAction.class);
 
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;

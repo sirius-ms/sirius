@@ -16,7 +16,7 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 class SiriusToolbar extends JToolBar {
-    private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, settings, bug, about;
+    private ToolbarButton newB, loadB, saveB, batchB, computeAllB, exportResultsB, configFingerID, jobs, db, connect, settings, bug, about;
 
     SiriusToolbar() {
 
@@ -60,9 +60,11 @@ class SiriusToolbar extends JToolBar {
         add(Box.createGlue());
         addSeparator(new Dimension(20, 20));
 
-
         settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance());
         add(settings);
+
+        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance());
+        add(connect);
 
         bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance());
         add(bug);
