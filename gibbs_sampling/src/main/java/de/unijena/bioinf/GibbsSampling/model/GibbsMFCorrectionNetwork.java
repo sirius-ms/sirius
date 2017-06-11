@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     private static final double DEFAULT_CORRELATION_STEPSIZE = 100.0D;
     protected Graph<C> graph;
-    private static final boolean iniAssignMostLikely = false;
+    private static final boolean iniAssignMostLikely = true;
     private int burnInRounds;
     private int currentRound;
     double[] priorProb;
