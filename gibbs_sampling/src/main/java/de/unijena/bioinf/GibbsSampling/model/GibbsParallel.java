@@ -39,8 +39,8 @@ public class GibbsParallel<C extends Candidate<?>> {
 
     private Graph<C> init() {
         Graph<C> graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.workersCount);
-        int i = 0;
 
+        int i = 0;
         while(i++ < this.repetitions) {
             this.gibbsNetworks.add(new GibbsMFCorrectionNetwork(graph, 1));
         }

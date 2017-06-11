@@ -1041,13 +1041,17 @@ public class GibbsSamplerMain {
     }
 
     public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path treeDir, Path mgfFile, int maxCandidates, int workercount) throws IOException {
+        return parseMFCandidates(treeDir, mgfFile, maxCandidates, workercount, false);
+    }
+
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path treeDir, Path mgfFile, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
         System.out.println(treeDir.toString());
         Path[] trees = Files.find(treeDir, 2, (path, basicFileAttributes) -> path.toString().endsWith(".json")).toArray(s -> new Path[s]);
         System.out.println("number "+trees.length);
 
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
-        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount);
+        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount, ignoreSilicon);
     }
 //
 //    public Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] trees, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
@@ -1163,7 +1167,7 @@ public class GibbsSamplerMain {
 //    }
 
 
-    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount) throws IOException {
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
 //        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
 //        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
@@ -1216,6 +1220,8 @@ public class GibbsSamplerMain {
 
                         if(tree.numberOfVertices() >= 3) {
                             tree = new IonTreeUtils().treeToNeutralTree(tree);
+
+                            if (ignoreSilicon && tree.getRoot().getFormula().numberOf("Si")>0) continue;
 
 
 //                            //// TODO: changed no spectral tree processor

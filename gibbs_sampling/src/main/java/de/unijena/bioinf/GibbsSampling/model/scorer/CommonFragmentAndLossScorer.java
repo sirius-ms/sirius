@@ -80,7 +80,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for (BitSet bitSet : this.maybeSimilar) {
             sum += bitSet.cardinality();
         }
-        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
+//        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
     }
 
 //    private void prepareData(){
