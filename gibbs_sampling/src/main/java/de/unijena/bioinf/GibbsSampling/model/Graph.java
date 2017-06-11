@@ -183,6 +183,13 @@ public class Graph<C extends Candidate<?>> {
         this.setConnections();
     }
 
+    public GraphValidationMessage validate(){
+        if (isBadlyConnected()){
+            return new GraphValidationMessage("the graph seems to be badly connected. You might want to enforce more connections using local edge thresholds ", false, true);
+        }
+        return new GraphValidationMessage("", false, false);
+    }
+
     public EdgeScorer[] getUsedEdgeScorers() {
         return this.edgeScorers;
     }
@@ -303,7 +310,7 @@ public class Graph<C extends Candidate<?>> {
                 return (Class<C>)scored.getCandidate().getClass();
             }
         }
-        throw new NoSuchElementException("no instances at all");
+        throw new NoSuchElementException("no experiments with any molecular formula candidate given");
     }
 
     private void calculateWeight(int threads) {
@@ -477,7 +484,7 @@ public class Graph<C extends Candidate<?>> {
         return true;
     }
 
-    private void connectionStatistics(int[][] connections) {
+    private boolean isBadlyConnected() {
         TIntIntHashMap maxCompoundConnectionsStats = new TIntIntHashMap();
 
         final int numberOfPeaks = numberOfCompounds();
@@ -502,17 +509,54 @@ public class Graph<C extends Candidate<?>> {
         Arrays.sort(connectionCounts);
 
         final int minConnections = 5;
-        final double percentOfBadConnectedCompounds = 0.1; //10%
+        final double percentOfBadConnectedCompounds = 0.25; //10%
         final int maxAllowedBadlyConnected = (int)(percentOfBadConnectedCompounds*numberOfPeaks);
         int numberOfBadlyConnected = 0;
         for (int connectionCount : connectionCounts) {
-            if (connectionCount>minConnections) break;
+            if (connectionCount>=minConnections) break;
             numberOfBadlyConnected += maxCompoundConnectionsStats.get(connectionCount);
         }
 
+//        System.out.println("numberOfPeaks "+numberOfPeaks);
+//        for (int connectionCount : connectionCounts) {
+//            System.out.println(connectionCount+": "+maxCompoundConnectionsStats.get(connectionCount));
+//        }
+//        System.out.println("numberOfBadlyConnected "+numberOfBadlyConnected);
+//        System.out.println("maxAllowedBadlyConnected "+maxAllowedBadlyConnected);
+
         if (numberOfBadlyConnected>maxAllowedBadlyConnected){
-            //todo do something
+            return true;
         }
+
+        return false;
+
+    }
+
+    /**
+     * for each compound: returns the maximum number of peaks one of it's MF candidates is connected to
+     * @return
+     */
+    public int[] getMaxConnectionCounts() {
+        final int numberOfPeaks = numberOfCompounds();
+        final int[] connectionCounts = new int[numberOfPeaks];
+        for (int i = 0; i < numberOfPeaks; i++) {
+            int left = getPeakLeftBoundary(i);
+            int right = getPeakRightBoundary(i);
+
+            int maxConnections = -1;
+            for (int j = left; j <= right; j++) {
+                TIntHashSet connectedCompounds = new TIntHashSet();
+                int[] conns = getConnections(j);
+                for (int c : conns) {
+                    connectedCompounds.add(getPeakIdx(c));
+                }
+                maxConnections = Math.max(maxConnections, connectedCompounds.size());
+            }
+
+            connectionCounts[i] = maxConnections;
+        }
+
+        return connectionCounts;
 
     }
 
