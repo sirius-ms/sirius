@@ -1,3 +1,4 @@
+import java.awt.List
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
@@ -109,7 +110,7 @@ project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
 project.ext.set("arch", "64,32")
-project.ext.set("appName", "sirius")
+project.ext.set("appName", "sirius3")
 project.ext.set("manualPath", file('manual').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
@@ -153,6 +154,7 @@ task pdfDoku(type: Exec) {
     commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
 
     doFirst {
+        Files.write(Paths.get("${project.manualPath}","/source/version.txt"), Arrays.asList("${project.version}") ,StandardOpenOption.CREATE)
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
 
@@ -226,6 +228,14 @@ publishing {
             artifact file(refreshDownloadLinks.outputs.files.singleFile)
         }
 
+        changelog(MavenPublication) {
+            artifactId = "${project.appName}"
+            version = 'changelog'
+            groupId = project.group
+
+            artifact file(prepareChangelog.outputs.files.singleFile)
+        }
+
         manual(MavenPublication) {
             artifactId = "${project.appName}"
             version = 'manual'
@@ -233,7 +243,13 @@ publishing {
 
             artifact file(buildDoku.outputs.files.singleFile)
         }
+
+
     }
+}
+
+task prepareChangelog {
+    outputs.file("${project.manualPath}/source/changelog.md")
 }
 
 task refreshDownloadLinks {
@@ -263,7 +279,6 @@ task refreshDownloadLinks {
             "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/manual/sirius-manual.pdf)",
             "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
         ] as List
-
         Files.write(outfile.toPath(), lines, StandardOpenOption.CREATE)
     }
 }
@@ -290,6 +305,7 @@ artifactory {
 //            if (repoKey.equals('dist-release-local'))
                 publications("download")
                 publications("manual")
+                publications("changelog")
         }
     }
 }
@@ -298,6 +314,7 @@ artifactory {
 
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
+artifactoryPublish.dependsOn 'prepareChangelog'
 
 
 
