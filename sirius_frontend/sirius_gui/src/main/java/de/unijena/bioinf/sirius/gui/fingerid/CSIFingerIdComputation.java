@@ -439,50 +439,12 @@ public class CSIFingerIdComputation {
                 logger.error(e.getMessage(),e);
             }
             c.calculateXlogP();
-            if (de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate.ECFP_ENABLED) {
-                if (fingerprinter == null) {
-                    fingerprinter = new ECFPFingerprinter();
-                }
-                // add ECFP fingerprint to compound
-                // workaround
-                c.fingerprint = recomputeECFP(fingerprinter, c.getMolecule(), c.fingerprint, fingerprintVersion);
-            }
             synchronized (this.compounds) {
                 this.compounds.put(c.inchi.key2D(), c);
             }
         }
     }
 
-
-    //////////////////////////////////////////////
-    ///////////// WORKAROUND ////////////////////
-
-    public static Fingerprint recomputeECFP(ECFPFingerprinter ecfp, IAtomContainer molecule, Fingerprint defaultCdkFingerprint, MaskedFingerprintVersion version) {
-        {
-            try {
-                IBitFingerprint bits = ecfp.getBitFingerprint(molecule);
-                final TShortArrayList fps = new TShortArrayList(defaultCdkFingerprint.toIndizesArray());
-                final int offset = ((CdkFingerprintVersion) version.getMaskedFingerprintVersion()).getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.ECFP);
-
-                final int[] indizes = version.allowedIndizes();
-                int start = Arrays.binarySearch(indizes, offset);
-                if (start < 0) {
-                    start = -(start + 1);
-                }
-                for (; start < indizes.length; ++start) {
-                    if (bits.get(indizes[start] - offset)) {
-                        fps.add((short) indizes[start]);
-                    }
-                }
-                return new ArrayFingerprint(version, fps.toArray());
-            } catch (CDKException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////
 
     public void setDirectory(File directory) {
         this.directory = directory;
