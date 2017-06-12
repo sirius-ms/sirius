@@ -174,7 +174,7 @@ distributions {
     publishing {
         publications {
             sirius(MavenPublication) {
-                artifactId = "$name"
+                artifactId = "${project.appName}"
                 groupId = "$group"
 
                 pom.withXml {}

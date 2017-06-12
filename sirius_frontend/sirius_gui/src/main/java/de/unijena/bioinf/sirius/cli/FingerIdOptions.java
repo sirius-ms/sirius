@@ -13,7 +13,7 @@ public interface FingerIdOptions extends SiriusGUIOptions {
     @Option(shortName = "F", description = "search structure with CSI:FingerId")
     boolean isFingerid();
 
-    @Option(longName = "generate-custom-db", description = "EXPERIMENTAL FEATURE: generate a custom compound database. Ignore all other options. Import compounds from all given files. Usage: sirius3 --generate-custom-db [DATABASENAME] [INPUTFILE1] [INPUTFILE2] ... ", defaultToNull = true)
+    @Option(longName = "generate-custom-db", description = "EXPERIMENTAL FEATURE: generate a custom compound database. Ignore all other options. Import compounds from all given files. Usage: sirius --generate-custom-db [DATABASENAME] [INPUTFILE1] [INPUTFILE2] ... ", defaultToNull = true)
     String getGeneratingCompoundDatabase();
 
     /*

@@ -119,7 +119,7 @@ distributions {
                 }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.distPath}") {
-                    exclude('sirius3-gui')
+                    exclude('sirius-gui')
                 }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
@@ -193,38 +193,6 @@ distributions {
     win64DistTar.dependsOn 'createExe'
     installWin64Dist.dependsOn 'createExe'
 }
-task webSite(type: Exec) {
-    group = 'other'
-    workingDir = file("${project.webPath}")
-    commandLine(['ls', '-lah'])
-}
-
-webSite.doLast {
-    println 'arti-publish'
-    artifactoryPublish.getOutputs().files.each { f ->
-        println f.getName()
-    }
-
-    println 'publish'
-    publish.getOutputs().files.each { f ->
-        println f.getName()
-    }
-
-    println 'sirius publish'
-    publishSiriusPublicationToMavenLocal.getOutputs().files.each { f ->
-        println f.getName()
-    }
-
-//    println win64DistZip.getOutputs().files.first().getName()
-//    publications('sirius').each{String name ->
-//        println name;
-//    };
-
-}
-//webSite.dependsOn 'distribute'
-webSite.dependsOn 'publish'
-webSite.dependsOn 'publishSiriusPublicationToMavenLocal'
-webSite.dependsOn 'artifactoryPublish'
 
 // what should be published
 publishing {
