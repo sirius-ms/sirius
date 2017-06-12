@@ -26,7 +26,7 @@ public interface ZodiacOptions {
     @Option(
             shortName = {"o"},
             longName = {"output"},
-            description = "output file"
+            description = "output directory"
     )
     String getOutputPath();
 
@@ -90,6 +90,13 @@ public interface ZodiacOptions {
             defaultValue = {"exponential"}
     )
     EdgeScorings getProbabilityDistribution();
+
+    @Option(
+            longName = {"candidates"},
+            description = "maximum number of candidate molecular formulas per compound to use in Zodiac. default: all",
+            defaultValue = {"-1"}
+    )
+    int getMaxNumOfCandidates();
 
 
     @Option(

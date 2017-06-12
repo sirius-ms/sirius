@@ -5,7 +5,12 @@ import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
 import com.lexicalscope.jewel.cli.InvalidOptionSpecificationException;
 import de.unijena.bioinf.sirius.cli.CLI;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
@@ -67,11 +72,24 @@ public class ZodiacCLI extends FingeridApplication {
     @Override
     public void setup() {
         if (!isZodiac()) super.setup();
+        Path output = Paths.get(zodiacOptions.getOutputPath());
+        if (!Files.exists(output)){
+            try {
+                Files.createDirectories(output);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(this.getClass()).error("Cannot create output directory: "+e.getMessage());
+            }
+        }
     }
 
     @Override
     public void validate() {
         if (!isZodiac()) super.validate();
+        Path output = Paths.get(zodiacOptions.getOutputPath());
+        if (!Files.isDirectory(output) && Files.exists(output)){
+            LoggerFactory.getLogger(this.getClass()).error("the output must be a directory or non-existing.");
+            System.exit(1);
+        }
     }
 
     private boolean isZodiac(){

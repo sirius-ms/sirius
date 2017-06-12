@@ -117,23 +117,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
                     //todo hack to include guessing of ionization. If appreciate include in a better way
                     if (options.getPossibleIonizations()!=null) {
-                        final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(i.experiment);
-                        experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(i.experiment.getPrecursorIonType().getCharge()));
-
-                        PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
-                        PrecursorIonType priorIonType = i.experiment.getPrecursorIonType();
-                        PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
-                        if (!priorIonization.isIonizationUnknown()){
-                            if (!arrayContains(specificIontypes, priorIonization)){
-                                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length+1);
-                                specificIontypes[specificIontypes.length-1] = priorIonization;
-                            } else {
-                                specificIontypes = new PrecursorIonType[]{priorIonization};
-                            }
-
-                        }
-                        if (specificIontypes.length==0) specificIontypes = ionTypes;
-
+                        PrecursorIonType[] specificIontypes = guessIonization(i);
 
                         Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
                         FormulaConstraints constraints = sirius.getMs1Analyzer().getDefaultProfile().getFormulaConstraints();
@@ -199,6 +183,46 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 e.printStackTrace();
             }
         }
+    }
+
+    private PrecursorIonType[] guessIonization(Instance instance){
+        final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(instance.experiment);
+        experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(instance.experiment.getPrecursorIonType().getCharge()));
+
+        PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
+        PrecursorIonType priorIonType = instance.experiment.getPrecursorIonType();
+        PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
+        if (!priorIonization.isIonizationUnknown()){
+            if (!arrayContains(specificIontypes, priorIonization)){
+                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length+1);
+                specificIontypes[specificIontypes.length-1] = priorIonization;
+            } else {
+                specificIontypes = new PrecursorIonType[]{priorIonization};
+            }
+
+        }
+        if (specificIontypes.length==0){
+            specificIontypes = ionTypes;
+            //todo: do something better: this is  a don't use M+ and M+H+ hack
+            PrecursorIonType m_plus  = PrecursorIonType.getPrecursorIonType("[M]+");
+            PrecursorIonType m_plus_h = PrecursorIonType.getPrecursorIonType("[M+H]+");
+
+            if (arrayContains(specificIontypes, m_plus) && arrayContains(specificIontypes, m_plus_h)){
+                PrecursorIonType[] copy = new PrecursorIonType[specificIontypes.length-1];
+
+                int i = 0;
+                for (PrecursorIonType specificIontype : specificIontypes) {
+                    if (specificIontype.equals(m_plus)) continue;
+                    copy[i++] = specificIontype;
+                }
+                specificIontypes = copy;
+            }
+        }
+
+
+
+
+        return specificIontypes;
     }
 
     protected void handleResults(Instance i, List<IdentificationResult> results) {

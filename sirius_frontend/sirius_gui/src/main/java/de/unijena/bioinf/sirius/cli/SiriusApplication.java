@@ -38,6 +38,8 @@ public class SiriusApplication extends ApplicationCore {
                 System.exit(0);
             }
 
+            cli.setup();
+            cli.validate();
             Zodiac zodiac = new Zodiac(options);
             zodiac.run();
         } else if (cli.options.isGUI()) {
