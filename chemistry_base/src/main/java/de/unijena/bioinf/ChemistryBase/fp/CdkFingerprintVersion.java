@@ -34,11 +34,11 @@ public class CdkFingerprintVersion extends FingerprintVersion {
      * Returns the fingerprint version that contains all (future) fingerprints
      */
     public static CdkFingerprintVersion getComplete() {
-        return withECFP();
+        return DEFAULT_INSTANCE;
     }
 
     public static CdkFingerprintVersion withECFP() {
-        return new CdkFingerprintVersion(USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP);
+        return DEFAULT_INSTANCE;
     }
 
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
@@ -124,7 +124,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
     }
 
     private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
-            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH};
+            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP};
 
     public enum USED_FINGERPRINTS {
         OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, ExtendedConnectivityProperty.getFingerprintLength());

@@ -37,7 +37,7 @@ public abstract class Fingerprint extends AbstractFingerprint {
     }
 
     public static ArrayFingerprint fromCommaSeparatedString(FingerprintVersion version, String s) {
-        if (s.startsWith("{") || s.startsWith("[") || s.startsWith("(")) s = s.substring(1, s.length()-1);
+        if (s.charAt(0)=='{' || s.charAt(0)=='[' || s.charAt(0)=='(') s = s.substring(1, s.length()-1);
         String[] tbs = s.split(",");
         final short[] indizes = new short[tbs.length];
         for (int i=0; i < tbs.length; ++i) indizes[i] = Short.parseShort(tbs[i]);
