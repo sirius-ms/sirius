@@ -73,8 +73,12 @@ public class ConnectionDialog extends JDialog implements ActionListener {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
-        if (state < ProxyManager.MAX_STATE)
-            new ErrorReportDialog((Dialog) getParent(), "An unknown Network Error occurred!");
+        if (state > ProxyManager.MAX_STATE)
+            if (getParent() instanceof Dialog) {
+                new ErrorReportDialog((Dialog) getParent(), "An unknown Network Error occurred!");
+            }else{
+                new ErrorReportDialog((Frame) getParent(), "An unknown Network Error occurred!");
+            }
     }
 
 

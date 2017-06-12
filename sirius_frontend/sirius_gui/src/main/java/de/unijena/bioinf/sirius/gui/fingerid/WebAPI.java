@@ -71,7 +71,7 @@ public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
 
 
-    protected final static boolean DEBUG = false;
+
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = "bio.informatik.uni-jena.de/csi-fingerid";
     public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
@@ -157,15 +157,22 @@ public class WebAPI implements Closeable {
         return null;
     }
 
-    protected static URIBuilder getFingerIdURI(String path) {
-        URIBuilder b = new URIBuilder().setScheme(ProxyManager.HTTPS_SCHEME).setHost(DEBUG ? "localhost" : FINGERID_WEB_API);
-        if (DEBUG) b = b.setPort(8080).setPath("/frontend" + path);
-        else b.setPath(path);
+    public static URIBuilder getFingerIdURI(String path) {
+        if (path== null)
+            path = "";
+        URIBuilder b;
+        if (ProxyManager.DEBUG) {
+            b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
+            b = b.setPort(8080).setPath("/frontend" + path);
+        } else {
+            b = new URIBuilder().setScheme(ProxyManager.HTTPS_SCHEME).setHost(FINGERID_WEB_API);
+            b.setPath(path);
+        }
         return b;
     }
 
     public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
-        return new RESTDatabase(cacheDir, bioFilter, DEBUG ? "http://localhost:8080/frontend" : null, client);
+        return new RESTDatabase(cacheDir, bioFilter, ProxyManager.DEBUG ? "http://localhost:8080/frontend" : null, client);
     }
     /*
     public List<Compound> getCompounds(List<String> inchikeys) {

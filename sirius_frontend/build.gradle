@@ -113,7 +113,6 @@ project.ext.set("appName", "sirius3")
 project.ext.set("manualPath", file('manual').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
-
 /*################### Building the Documentation ################### */
 
 
@@ -131,7 +130,7 @@ task htmlDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
     outputs.file("${project.manualPath}/build/html")
-    outputs.upToDateWhen {return false}
+    outputs.upToDateWhen { return false }
     commandLine(['latex2html', '-rootdir', '../build/html', '-mkdir', 'SIRIUS'])
 
     doFirst {
@@ -145,15 +144,15 @@ htmlDoku.mustRunAfter cleanDoku
 task pdfDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
-    outputs.upToDateWhen {return false}
+    outputs.upToDateWhen { return false }
     outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
-    commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
-    commandLine(['TEXMFOUTPUT="build:"','bibtex', '../build/SIRIUS'])
-    commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
-    commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
+    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
+    commandLine(['TEXMFOUTPUT="build:"', 'bibtex', '../build/SIRIUS'])
+    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
+    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
 
     doFirst {
-        Files.write(Paths.get("${project.manualPath}","/source/version.txt"), Arrays.asList("${project.version}") ,StandardOpenOption.CREATE)
+        Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
 
@@ -259,36 +258,35 @@ task refreshDownloadLinks {
 
     doLast {
         Files.createDirectories(Paths.get("${project.webPath}"))
-        def repoKey = "${project.version.toString().endsWith('-SNAPSHOT')? 'dist-snapshot-local': 'dist-release-local'}"
+        def repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
 
         List<String> lines = [
-                "#### Sirius+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format( 'yyyy-MM-dd' )})",
+                "#### Sirius+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
-
+                "",
                 "#### Sirius Commandline Version $version",
                 "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
-                "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
-
-            "#### Manual",
-            "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/manual/sirius-manual.pdf)",
-            "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
+                "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)  ",
+                "",
+                "#### Manual",
+                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/manual/sirius-manual.pdf)",
+                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
         ] as List
         Files.write(outfile.toPath(), lines, StandardOpenOption.CREATE)
     }
 }
-
 
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
     publish {
         repository {
-            repoKey = "${project.version.toString().endsWith('-SNAPSHOT')? 'dist-snapshot-local': 'dist-release-local'}"
+            repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
             Properties properties = new Properties()
             File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
             propertiesFile.withInputStream {
@@ -302,9 +300,9 @@ artifactory {
             //Publish every distribution to Artifactory
             publications("sirius")
 //            if (repoKey.equals('dist-release-local'))
-                publications("download")
-                publications("manual")
-                publications("changelog")
+            publications("download")
+            publications("manual")
+            publications("changelog")
         }
     }
 }

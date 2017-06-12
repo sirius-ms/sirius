@@ -8,6 +8,7 @@ package de.unijena.bioinf.sirius.net;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -27,6 +28,7 @@ import java.util.LinkedHashSet;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
+    public final static boolean DEBUG = false;
     private static final LinkedHashSet<CloseableHttpClient> CONNECTIONS = new LinkedHashSet<>();
 
     public static final String HTTPS_SCHEME = "https";
@@ -98,19 +100,19 @@ public class ProxyManager {
         switch (strategy) {
             case SYSTEM:
                 client = getJavaDefaultProxyClient();
-                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " +  ProxyStrategy.SYSTEM);
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SYSTEM);
                 break;
             case SIRIUS:
                 client = getSiriusProxyClient();
-                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " +  ProxyStrategy.SIRIUS);
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SIRIUS);
                 break;
             case NONE:
                 client = getNoProxyClient();
-                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " +  ProxyStrategy.NONE);
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.NONE);
                 break;
             default:
                 client = getJavaDefaultProxyClient();
-                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " +  ProxyStrategy.SYSTEM);
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.SYSTEM);
         }
 //        registerClient(client);
         return client;
@@ -275,7 +277,8 @@ public class ProxyManager {
 
 
     public static boolean checkFingerID(CloseableHttpClient proxy) {
-        return new RESTDatabase(null, BioFilter.ALL, null, proxy).testConnection();
+        return new RESTDatabase(null, BioFilter.ALL, DEBUG ? "http://localhost:8080/frontend" : null, proxy).testConnection();
+        //todo this test should be in the webapi
     }
 
     public static boolean checkConnectionToUrl(final CloseableHttpClient proxy, String url) {

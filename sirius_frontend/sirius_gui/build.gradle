@@ -89,7 +89,7 @@ distributions {
                     from("${project.distPath}")
                 }
                 into('doc') {
-                    from("${project.manualPath}/build/latex") {
+                    from("${project.manualPath}/build") {
                         include('SIRIUS.pdf')
                     }
                     from("${project.manualPath}/build/singleText")
@@ -125,7 +125,7 @@ distributions {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from("${project.manualPath}/build/latex") {
+                    from("${project.manualPath}/build") {
                         include('SIRIUS.pdf')
                     }
                     from("${project.manualPath}/build/singleText")
@@ -160,7 +160,7 @@ distributions {
                 from("${project.distPath}")
             }
             into('doc') {
-                from("${project.manualPath}/build/latex") {
+                from("${project.manualPath}/build") {
                     include('SIRIUS.pdf')
                 }
                 from("${project.manualPath}/build/singleText")
