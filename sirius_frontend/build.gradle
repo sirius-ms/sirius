@@ -147,10 +147,10 @@ task pdfDoku(type: Exec) {
     workingDir = file("${project.manualPath}/source")
     outputs.upToDateWhen {return false}
     outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
-    commandLine(['pdflatex','-output-directory','../build', './SIRIUS'])
+    commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
     commandLine(['TEXMFOUTPUT="build:"','bibtex', '../build/SIRIUS'])
-    commandLine(['pdflatex','-output-directory','../build', './SIRIUS'])
-    commandLine(['pdflatex','-output-directory','../build', './SIRIUS'])
+    commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
+    commandLine(['pdflatex','--shell-escape','-output-directory','../build', './SIRIUS'])
 
     doFirst {
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
