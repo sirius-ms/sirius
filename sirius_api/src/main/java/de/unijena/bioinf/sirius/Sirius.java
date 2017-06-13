@@ -252,7 +252,7 @@ public class Sirius {
             elementPrediction = defaultPredictor;
             */
             DNNRegressionPredictor defaultPredictor = new DNNRegressionPredictor();
-            //defaultPredictor.disableSilicon();
+            defaultPredictor.disableSilicon();
             elementPrediction = defaultPredictor;
         }
         return elementPrediction;
