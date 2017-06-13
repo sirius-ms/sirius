@@ -259,7 +259,7 @@ task prepareChangelog (type: Exec){
 task refreshDownloadLinks {
     project.ext.set("webPath", getBuildDir().toPath().resolve('tmp/webSite/').toFile())
     group = 'publishing'
-    File outfile = file("${project.webPath}/sirius-downloads.md")
+    File outfile = file("${project.webPath}/sirius-download.md")
     outputs.file(outfile)
 
     doLast {
