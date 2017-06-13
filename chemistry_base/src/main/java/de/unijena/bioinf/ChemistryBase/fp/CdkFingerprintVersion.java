@@ -134,8 +134,6 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH
     };
 
-    private static final CdkFingerprintVersion WITHOUT_ECFP = new CdkFingerprintVersion(WITHOUT_ECFP_SETUP);
-
     public enum USED_FINGERPRINTS {
         OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, ExtendedConnectivityProperty.getFingerprintLength());
 
@@ -191,6 +189,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         }
     }
 
+    private static final CdkFingerprintVersion WITHOUT_ECFP = new CdkFingerprintVersion(WITHOUT_ECFP_SETUP);
     private final static CdkFingerprintVersion DEFAULT_INSTANCE = new CdkFingerprintVersion(DEFAULT_SETUP);
 
     private static void loadFingerprintDescriptors() throws IOException {
