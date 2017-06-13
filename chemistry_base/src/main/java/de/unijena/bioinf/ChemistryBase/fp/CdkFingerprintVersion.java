@@ -41,6 +41,10 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return DEFAULT_INSTANCE;
     }
 
+    public static CdkFingerprintVersion getWithoutEcfp() {
+        return WITHOUT_ECFP;
+    }
+
     public CdkFingerprintVersion(USED_FINGERPRINTS... fingerprints) {
         final ArrayList<MolecularProperty> properties = new ArrayList<>();
         long fastCompareFlag = 0L;
@@ -125,6 +129,12 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
     private static final USED_FINGERPRINTS[] DEFAULT_SETUP = new USED_FINGERPRINTS[]{
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH, USED_FINGERPRINTS.ECFP};
+
+    private static final USED_FINGERPRINTS[] WITHOUT_ECFP_SETUP = new USED_FINGERPRINTS[]{
+            USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH
+    };
+
+    private static final CdkFingerprintVersion WITHOUT_ECFP = new CdkFingerprintVersion(WITHOUT_ECFP_SETUP);
 
     public enum USED_FINGERPRINTS {
         OPENBABEL(0, 55), SUBSTRUCTURE(1, 307), MACCS(2, 166), PUBCHEM(3, 881), KLEKOTA_ROTH(4, 4860), ECFP(5, ExtendedConnectivityProperty.getFingerprintLength());
@@ -219,9 +229,9 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             }
         }
         int offset=0;
-        for (int k=0; k < DEFAULT_SETUP.length; ++k) {
-            DEFAULT_PROPERTIES[k] = new MolecularProperty[DEFAULT_SETUP[k].length];
-            for (int i=0; i < DEFAULT_SETUP[k].length; ++i) {
+        for (int k=0; k < WITHOUT_ECFP_SETUP.length; ++k) {
+            DEFAULT_PROPERTIES[k] = new MolecularProperty[WITHOUT_ECFP_SETUP[k].length];
+            for (int i=0; i < WITHOUT_ECFP_SETUP[k].length; ++i) {
                 DEFAULT_PROPERTIES[k][i] = properties.get(offset++);
             }
         }
