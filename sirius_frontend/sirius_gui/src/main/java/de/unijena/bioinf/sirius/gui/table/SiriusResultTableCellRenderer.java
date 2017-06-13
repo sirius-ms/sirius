@@ -64,8 +64,7 @@ public class SiriusResultTableCellRenderer<E extends AbstractBean, F extends Sir
         setBackground(backColor);
         setForeground(foreColor);
 
-        if (value == null) System.out.println("col=" + column + " row=" + row);
-        this.value = value.toString();
+        this.value =  value == null ? "" : value.toString();
         setHorizontalAlignment(SwingConstants.LEFT);
 
         if (value instanceof Number) {
