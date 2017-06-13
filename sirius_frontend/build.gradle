@@ -246,8 +246,14 @@ publishing {
     }
 }
 
-task prepareChangelog {
-    outputs.file("${project.manualPath}/source/changelog.md")
+task prepareChangelog (type: Exec){
+    inputs.file("${project.manualPath}/source/changelog.tex")
+    outputs.file("${project.manualPath}/build/changelog.md")
+    commandLine(["pandoc","${inputs.files.singleFile}","-t", "markdown", "-o", "${outputs.files.singleFile}"])
+
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
 }
 
 task refreshDownloadLinks {
