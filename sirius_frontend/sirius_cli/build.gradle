@@ -190,7 +190,7 @@ distributions {
     artifactoryPublish.dependsOn 'distribute'
 
     task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
-        File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/sirius').toFile()
+        File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()
         commandLine([command.absolutePath])
     }
 }
