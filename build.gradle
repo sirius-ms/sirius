@@ -308,8 +308,8 @@ task refreshReadMe {
         List<String> changes =  Files.readAllLines(clg.toPath())
 
 
-        Map<String,String> keywords = ['[comment]: <> (begin download)':'[comment]: <> (end download)','[comment]: <> (begin changelog)':'[comment]: <> (end changelog)'];
-        Map<String,List<String>> replacements = ['[comment]: <> (begin download)':links,'[comment]: <> (begin changelog)':changes];
+        Map<String,String> keywords = ['<!--begin download-->':'<!--end download-->','<!--begin changelog-->':'<!--end changelog-->'];
+        Map<String,List<String>> replacements = ['<!--begin download-->':links,'<!--begin changelog-->':changes];
 
         List<String> lines = Files.readAllLines(out.toPath())
         List<String> nuLines = new LinkedList<>()
