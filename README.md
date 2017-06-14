@@ -60,7 +60,6 @@ command-line tool.
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-osx64.zip)
-&nbsp;
 
 ### Sirius Commandline Version 3.4.2-SNAPSHOT
 - for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64-headless.zip)
@@ -68,8 +67,6 @@ command-line tool.
 - for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-osx64-headless.zip)
 
 <!--end download-->
-
-&nbsp;
 
 ### Manual
 - [SIRIUS manual](https://bio.informatik.uni-jena.de/git/raw/ms/sirius_frontend.git/release/dist!sirius-manual.pdf)
