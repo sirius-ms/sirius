@@ -142,19 +142,37 @@ htmlDoku.mustRunAfter cleanDoku
 
 
 
-task pdfDoku(type: Exec) {
+task pdfLatex(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
+    commandLine(['pdflatex', '-output-directory', '../build', './SIRIUS'])
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
+}
+
+task biber(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}/source")
+    commandLine(['biber', '-output-directory', '../build', 'SIRIUS'])
+}
+
+
+
+task pdfDoku {
+    group = 'documentation'
+//    workingDir = file("${project.manualPath}/source")
     outputs.upToDateWhen { return false }
     outputs.file(file("${project.getRootDir()}/${project.appName}-manual.pdf"))
-    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
-    commandLine(['TEXMFOUTPUT="build:"', 'bibtex', '../build/SIRIUS'])
-    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
-    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
+
+    tasks.pdfLatex.execute()
+    tasks.biber.execute()
+    tasks.pdfLatex.execute()
+    tasks.pdfLatex.execute()
+
 
     doFirst {
         Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
 
     doLast {
@@ -162,6 +180,10 @@ task pdfDoku(type: Exec) {
     }
 
 }
+
+
+
+
 pdfDoku.mustRunAfter cleanDoku
 
 task buildDoku {

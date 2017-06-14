@@ -69,7 +69,7 @@ command-line tool.
 <!--end download-->
 
 ### Manual
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/git/raw/ms/sirius_frontend.git/master/sirius-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/git/raw/ms/sirius_frontend.git/release/sirius-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 

@@ -7,4 +7,5 @@
 **/gradlew
 **/gradlew.bat
 sirius_cli/src/main/resources/siriusBuild.properties
+manual/source/bibtex/
 manual/source/version.txt
