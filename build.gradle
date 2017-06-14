@@ -1,5 +1,6 @@
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 
 buildscript {
@@ -145,7 +146,7 @@ task pdfDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
     outputs.upToDateWhen { return false }
-    outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
+    outputs.file(file("${project.distPath}/${project.appName}-manual.pdf"))
     commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
     commandLine(['TEXMFOUTPUT="build:"', 'bibtex', '../build/SIRIUS'])
     commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
@@ -154,6 +155,10 @@ task pdfDoku(type: Exec) {
     doFirst {
         Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
+
+    doLast {
+        Files.copy(file("${project.manualPath}/build/SIRIUS.pdf").toPath(), outputs.files.singleFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 
 }
@@ -216,7 +221,7 @@ subprojects {
 }
 
 // what should be published
-publishing {
+/*publishing {
     publications {
         download(MavenPublication) {
             artifactId = "${project.appName}"
@@ -244,12 +249,15 @@ publishing {
 
 
     }
-}
+}*/
 
-task prepareChangelog (type: Exec){
+
+
+
+task prepareChangelog(type: Exec) {
     inputs.file("${project.manualPath}/source/changelog.tex")
     outputs.file("${project.manualPath}/build/changelog.md")
-    commandLine(["pandoc","${inputs.files.singleFile}","-t", "markdown", "-o", "${outputs.files.singleFile}"])
+    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "markdown", "-o", "${outputs.files.singleFile}"])
 
     doFirst {
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
@@ -279,17 +287,61 @@ task refreshDownloadLinks {
                 "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
                 "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
-                "&nbsp;",
-                "",
-                "### Manual",
-                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/manual/sirius-manual.pdf)",
-                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)"
         ] as List
 
         Files.deleteIfExists(outfile.toPath())
         Files.write(outfile.toPath(), lines, StandardOpenOption.CREATE)
     }
 }
+
+task refreshReadMe {
+    inputs.files(refreshDownloadLinks.outputs.files.singleFile, prepareChangelog.outputs.files.singleFile)
+    outputs.file("${getRootDir()}/README.md")
+
+
+    doFirst {
+        File dld = inputs.files.getAt(0);
+        File clg = inputs.files.getAt(1);
+        File out = outputs.files.singleFile
+
+        List<String> links =  Files.readAllLines(dld.toPath())
+        List<String> changes =  Files.readAllLines(clg.toPath())
+
+
+        Map<String,String> keywords = ['[comment]: <> (begin download)':'[comment]: <> (end download)','[comment]: <> (begin changelog)':'[comment]: <> (end changelog)'];
+        Map<String,List<String>> replacements = ['[comment]: <> (begin download)':links,'[comment]: <> (begin changelog)':changes];
+
+        List<String> lines = Files.readAllLines(out.toPath())
+        List<String> nuLines = new LinkedList<>()
+        String  keyword = null;
+        String  keywordEnd = null;
+
+        lines.each {String line ->
+            if(keyword == null){
+                keywordEnd = keywords.get(line)
+                nuLines.add(line);
+                if (keywordEnd != null){
+                    keyword = line
+                    def r = replacements.get(keyword)
+
+                    nuLines.add('')
+                    nuLines.addAll(r)
+                }
+            }else if(line.equals(keywordEnd)){
+                nuLines.add('');
+                nuLines.add(line);
+                keyword = null;
+                keywordEnd = null;
+            }
+        }
+
+
+        Files.deleteIfExists(Paths.get("${getRootDir()}/README.md"))
+        Files.write(Paths.get("${getRootDir()}/README.md"),nuLines,StandardOpenOption.CREATE)
+    }
+}
+refreshReadMe.dependsOn prepareChangelog
+refreshReadMe.dependsOn refreshDownloadLinks
 
 // publication artifactory
 artifactory {
@@ -310,9 +362,9 @@ artifactory {
             //Publish every distribution to Artifactory
             publications("sirius")
 //            if (repoKey.equals('dist-release-local'))
-            publications("download")
-            publications("manual")
-            publications("changelog")
+//            publications("download")
+//            publications("manual")
+//            publications("changelog")
         }
     }
 }
@@ -322,6 +374,8 @@ artifactory {
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
 artifactoryPublish.dependsOn 'prepareChangelog'
+artifactoryPublish.dependsOn 'refreshReadMe'
+
 
 
 
