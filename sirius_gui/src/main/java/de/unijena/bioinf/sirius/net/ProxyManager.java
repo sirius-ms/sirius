@@ -27,40 +27,12 @@ import java.util.LinkedHashSet;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-    public final static boolean DEBUG = true;
-    private static final LinkedHashSet<CloseableHttpClient> CONNECTIONS = new LinkedHashSet<>();
-
+    public final static boolean DEBUG = false;
     public static final String HTTPS_SCHEME = "https";
     public static final String HTTP_SCHEME = "http";
     public static final int MAX_STATE = 4;
     public static final int OK_STATE = 0;
     public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
-
-    /*public static void closeConnection(CloseableHttpClient client) {
-        try {
-            client.close();
-            CONNECTIONS.remove(client);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(ProxyManager.class).error("Could not close Existing connection!", e);
-        }
-    }
-
-    public static void shutdown() {
-        Iterator<CloseableHttpClient> it = CONNECTIONS.iterator();
-        while (it.hasNext()) {
-            try {
-                it.next().close();
-                it.remove();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(ProxyManager.class).error("Could not close Existing connection!", e);
-            }
-        }
-    }
-
-    private static void registerClient(CloseableHttpClient client) {
-        CONNECTIONS.add(client);
-    }
-*/
 
     public enum ProxyStrategy {SYSTEM, SIRIUS, NONE}
 
@@ -113,7 +85,6 @@ public class ProxyManager {
                 client = getJavaDefaultProxyClient();
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.SYSTEM);
         }
-//        registerClient(client);
         return client;
     }
 
@@ -150,7 +121,6 @@ public class ProxyManager {
     public static int checkInternetConnection() {
         CloseableHttpClient client = getSirirusHttpClient();
         int val = checkInternetConnection(client);
-//        closeConnection(client);
         return val;
     }
 
