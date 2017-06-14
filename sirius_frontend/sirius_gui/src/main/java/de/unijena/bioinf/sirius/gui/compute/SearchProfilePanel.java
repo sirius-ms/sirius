@@ -1,9 +1,15 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
+import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +21,8 @@ import java.util.Vector;
  * Created by Marcus Ludwig on 12.01.17.
  */
 public class SearchProfilePanel extends JPanel {
+
+    protected Logger logger = LoggerFactory.getLogger(SearchProfilePanel.class);
 
     public enum Instruments {
         QTOF("Q-TOF", "qtof", 10),
@@ -155,6 +163,11 @@ public class SearchProfilePanel extends JPanel {
             values.add("all PubChem formulas");
             values.add("organic PubChem formulas");
             values.add("formulas from Bio databases");
+
+            for (CustomDatabase customDatabase : CustomDatabase.customDatabases(true)) {
+                values.add(customDatabase.name());
+            }
+
             formulaCombobox = new JComboBox<>(values);
             mainwindow.add(new TwoCloumnPanel(label,formulaCombobox));
         }
@@ -181,10 +194,22 @@ public class SearchProfilePanel extends JPanel {
         return ((Number) candidatesSpinner.getModel().getValue()).intValue();
     }
 
-    public FormulaSource getFormulaSource() {
-        if (formulaCombobox.getSelectedIndex() == 0) return FormulaSource.ALL_POSSIBLE;
-        else if (formulaCombobox.getSelectedIndex() == 1) return FormulaSource.PUBCHEM_ALL;
-        else if (formulaCombobox.getSelectedIndex() == 2) return FormulaSource.PUBCHEM_ORGANIC;
-        else return FormulaSource.BIODB;
+    public SearchableDatabase getFormulaSource() {
+        final CSIFingerIdComputation csi = MainFrame.MF.getCsiFingerId();
+        if (formulaCombobox.getSelectedIndex() == 0) return null;
+        else if (formulaCombobox.getSelectedIndex() <= 2) return csi.getPubchemDb();
+        else if (formulaCombobox.getSelectedIndex() == 3) return csi.getBioDb();
+        else {
+            final String name = (String)formulaCombobox.getSelectedItem();
+            for (CustomDatabase customDatabase : CustomDatabase.customDatabases(true)) {
+                if (customDatabase.name().equals(name)) return customDatabase;
+            }
+            logger.error("Unknown database '" + name + "' selected.");
+            return null;
+        }
+    }
+
+    public boolean restrictToOrganics() {
+        return formulaCombobox.getSelectedIndex() == 2; // TODO: add checkbox instead
     }
 }

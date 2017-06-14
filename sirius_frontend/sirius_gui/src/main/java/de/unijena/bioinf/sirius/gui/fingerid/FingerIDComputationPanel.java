@@ -52,6 +52,18 @@ public class FingerIDComputationPanel extends JPanel {
         }
     }
 
+    public void setDb(SearchableDatabase database) {
+        if (database!=null) {
+            for (int i=0; i < db.getModel().getSize(); ++i) {
+                final SearchableDatabase d = db.getModel().getElementAt(i);
+                if (database.name().equals(d.name())) {
+                    db.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+    }
+
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);

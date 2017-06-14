@@ -69,9 +69,6 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
-
-
-
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
     public static final String FINGERID_WEB_API = "bio.informatik.uni-jena.de/csi-fingerid";
     public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";

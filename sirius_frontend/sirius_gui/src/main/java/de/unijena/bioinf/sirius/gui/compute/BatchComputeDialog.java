@@ -32,6 +32,8 @@ import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
@@ -41,9 +43,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.LoggerFactory;
@@ -117,9 +117,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         searchProfilePanel.formulaCombobox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
-                FormulaSource source = searchProfilePanel.getFormulaSource();
-                enableElementSelection(source == FormulaSource.ALL_POSSIBLE);
-                csiOptions.setIsBioDB(source == FormulaSource.BIODB);
+                SearchableDatabase source = searchProfilePanel.getFormulaSource();
+                enableElementSelection(source == null);
+                if (!csiOptions.isEnabled()) csiOptions.setDb(source);
             }
         });
 
@@ -132,7 +132,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         JPanel otherPanel = new JPanel();
         otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases());
-        if (searchProfilePanel.getFormulaSource() == FormulaSource.BIODB) csiOptions.setIsBioDB(true);
+        if (!csiOptions.isEnabled()) csiOptions.setDb(searchProfilePanel.getFormulaSource());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
 
         if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction)SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()) {
@@ -312,17 +312,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         String instrument = searchProfilePanel.getInstrument().profile;
 
-        FormulaSource formulaSource = searchProfilePanel.getFormulaSource();
-
-        //todo is that useful here?
-        /*if (formulaSource != FormulaSource.ALL_POSSIBLE) {
-            //Test connection, if needed
-            if (!MainFrame.MF.getCsiFingerId().testConnection()) {
-                new ConnectionDialog(MainFrame.MF);
-                dispose();
-                return;
-            }
-        }*/
+        SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
 
         FormulaConstraints constraints = elementPanel.getElementConstraints();
         List<Element> elementsToAutoDetect = Collections.EMPTY_LIST;
@@ -384,7 +374,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     }
                 }
 
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, formulaSource, searchProfilePanel.hasIsotopesEnabled(), runCSIFingerId.isSelected(), csiOptions.getDb());
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, searchableDatabase, searchProfilePanel.hasIsotopesEnabled(), runCSIFingerId.isSelected(), csiOptions.getDb(), searchProfilePanel.restrictToOrganics());
                 tasks.add(task);
                 compoundList.add(ec);
             }

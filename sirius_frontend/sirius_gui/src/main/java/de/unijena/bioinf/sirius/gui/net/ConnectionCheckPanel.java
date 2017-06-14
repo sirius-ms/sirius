@@ -2,8 +2,6 @@ package de.unijena.bioinf.sirius.gui.net;
 
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
-import org.jdesktop.swingx.VerticalLayout;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;

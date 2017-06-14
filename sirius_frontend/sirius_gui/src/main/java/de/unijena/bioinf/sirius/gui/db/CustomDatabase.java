@@ -494,7 +494,10 @@ public class CustomDatabase implements SearchableDatabase {
 
         private void addToBuffer(FingerprintCandidate fingerprintCandidate) throws IOException {
             buffer.add(fingerprintCandidate);
-            for (ImporterListener l : listeners) l.newFingerprintBufferSize(buffer.size());
+            for (ImporterListener l : listeners) {
+                l.newFingerprintBufferSize(buffer.size());
+                l.newInChI(fingerprintCandidate.getInchi());
+            }
             if (buffer.size() > 10000)
                 flushBuffer();
         }

@@ -8,7 +8,6 @@ package de.unijena.bioinf.sirius.net;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -28,7 +27,7 @@ import java.util.LinkedHashSet;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-    public final static boolean DEBUG = false;
+    public final static boolean DEBUG = true;
     private static final LinkedHashSet<CloseableHttpClient> CONNECTIONS = new LinkedHashSet<>();
 
     public static final String HTTPS_SCHEME = "https";

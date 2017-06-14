@@ -24,12 +24,16 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
 
     protected FilterRangeSlider probabilitySlider, atomSizeSlider;
 
+    private DoubleListStats __atomsizestats__;
 
     public FingerprintTableView(FingerprintTable table) {
         super(table,true);
         this.format = new FingerprintTableFormat(table);
-        this.maxAtomSize = 10;
-
+        this.maxAtomSize = 5;
+        for (FingerprintVisualization v : table.visualizations)
+            if (v != null)
+                this.maxAtomSize = Math.max(this.maxAtomSize, v.numberOfMatchesAtoms);
+        __atomsizestats__.addValue(this.maxAtomSize);
         this.actionTable = new ActionTable<>(filteredSource, sortedSource, format);
         TableComparatorChooser.install(actionTable, sortedSource, AbstractTableComparatorChooser.SINGLE_COLUMN);
         actionTable.setSelectionModel(getFilteredSelectionModel());
@@ -42,6 +46,19 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
         // set small width for ID column
         actionTable.getColumnModel().getColumn(0).setMaxWidth(50);
 
+        actionTable.getColumnModel().getColumn(3).setCellRenderer(new SiriusResultTableCellRenderer(-1){
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                String newValue;
+                if (value instanceof Integer) {
+                    if (((Integer) value).intValue() <= 0) newValue = "undefined";
+                    else newValue = value.toString();
+                } else {
+                    newValue = value.toString();
+                }
+                return super.getTableCellRendererComponent(table, newValue, isSelected, hasFocus, row, column);
+            }
+        });
 
 
     }
@@ -60,6 +77,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
 
     @Override
     protected JToolBar getToolBar() {
+        __atomsizestats__ = new DoubleListStats(new double[]{0,5});
         JToolBar tb =  new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
@@ -70,11 +88,10 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
                 return stats1;
             }
         };
-        final DoubleListStats stats2 = new DoubleListStats(new double[]{0,Math.max(5,maxAtomSize)});
         atomSizeSlider = new FilterRangeSlider(source, false, FilterRangeSlider.DEFAUTL_INT_FORMAT) {
             @Override
             protected DoubleListStats getDoubleListStats(ActionList list) {
-                return stats2;
+                return __atomsizestats__;
             }
         };
 

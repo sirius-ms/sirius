@@ -33,13 +33,12 @@ public class MolecularPropertyTableEntry extends AbstractBean implements Compara
     }
 
     public int getMatchSize() {
-        if (visualization==null) return -1;
+        if (visualization==null) return 0;
         return visualization.numberOfMatchesAtoms;
     }
 
-    public String getMatchSizeDescription() {
-        if (getMatchSize() < 0) return "undefined";
-        else return String.valueOf(getMatchSize());
+    public int getMatchSizeDescription() {
+        return Math.max(0, getMatchSize());
     }
 
     public CdkFingerprintVersion.USED_FINGERPRINTS getFingerprintType() {

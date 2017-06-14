@@ -16,7 +16,6 @@ import de.unijena.bioinf.sirius.gui.utils.PlaceholderTextField;
 import org.jdesktop.swingx.JXRadioGroup;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ReaderFactory;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -617,11 +616,21 @@ public class DatabaseDialog extends JDialog {
             setPreferredSize(new Dimension(640, 480));
             setLayout(new BorderLayout());
 
+            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
+            final Box hbox = Box.createHorizontalBox();
+            hbox.add(explain);
+            final Box vbox = Box.createVerticalBox();
+            vbox.add(hbox);
+            vbox.add(Box.createVerticalStrut(4));
+
             final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
             inh.setLayoutAxis(BoxLayout.X_AXIS);
-            inh.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
-
-            add(inh, BorderLayout.NORTH);
+            vbox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
+            final Box hbox2 = Box.createHorizontalBox();
+            hbox2.add(inh);
+            hbox2.add(Box.createHorizontalGlue());
+            vbox.add(hbox2);
+            add(vbox, BorderLayout.NORTH);
             if (database.deriveFromBioDb) inh.setSelectedValue(BIO);
             else if (database.deriveFromPubchem) inh.setSelectedValue(PUBCHEM);
             else inh.setSelectedValue(NONE);
@@ -643,7 +652,7 @@ public class DatabaseDialog extends JDialog {
 
             final Box box = Box.createVerticalBox();
             box.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or other molecule formats (e.g. MDL) into this text field.");
+            final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
             box.add(label);
             final JTextArea textArea = new JTextArea();
@@ -656,12 +665,12 @@ public class DatabaseDialog extends JDialog {
             box.add(importButton);
 
 
-            box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "import compounds"));
+            box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
 
             add(box, BorderLayout.CENTER);
 
             final Box box2 = Box.createVerticalBox();
-            box2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "already imported"));
+            box2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Recently imported"));
 
             ilist = new ImportList();
             box2.add(new JScrollPane(ilist, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,  ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
