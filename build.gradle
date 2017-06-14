@@ -220,40 +220,6 @@ subprojects {
     }
 }
 
-// what should be published
-/*publishing {
-    publications {
-        download(MavenPublication) {
-            artifactId = "${project.appName}"
-            version = 'download'
-            groupId = project.group
-
-            artifact file(refreshDownloadLinks.outputs.files.singleFile)
-        }
-
-        changelog(MavenPublication) {
-            artifactId = "${project.appName}"
-            version = 'changelog'
-            groupId = project.group
-
-            artifact file(prepareChangelog.outputs.files.singleFile)
-        }
-
-        manual(MavenPublication) {
-            artifactId = "${project.appName}"
-            version = 'manual'
-            groupId = project.group
-
-            artifact file(buildDoku.outputs.files.singleFile)
-        }
-
-
-    }
-}*/
-
-
-
-
 task prepareChangelog(type: Exec) {
     inputs.file("${project.manualPath}/source/changelog.tex")
     outputs.file("${project.manualPath}/build/changelog.md")
@@ -281,7 +247,6 @@ task refreshDownloadLinks {
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
-                "&nbsp;",
                 "",
                 "### Sirius Commandline Version $version",
                 "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
@@ -336,8 +301,8 @@ task refreshReadMe {
         }
 
 
-        Files.deleteIfExists(Paths.get("${getRootDir()}/README.md"))
-        Files.write(Paths.get("${getRootDir()}/README.md"),nuLines,StandardOpenOption.CREATE)
+        Files.deleteIfExists(out.toPath())
+        Files.write(out.toPath(),nuLines,StandardOpenOption.CREATE)
     }
 }
 refreshReadMe.dependsOn prepareChangelog
@@ -361,10 +326,6 @@ artifactory {
         defaults {
             //Publish every distribution to Artifactory
             publications("sirius")
-//            if (repoKey.equals('dist-release-local'))
-//            publications("download")
-//            publications("manual")
-//            publications("changelog")
         }
     }
 }
