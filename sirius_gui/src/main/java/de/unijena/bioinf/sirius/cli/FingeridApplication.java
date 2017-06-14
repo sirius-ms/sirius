@@ -2,25 +2,25 @@ package de.unijena.bioinf.sirius.cli;
 
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.sirius.fingerid.SearchableDbOnDisc;
+import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
+import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.projectspace.ProjectReader;
@@ -240,24 +240,58 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         }
     }
 
-    private AbstractChemicalDatabase getDatabase() {
+    private SearchableDatabase getDatabase() {
         return getDatabase(options.getDatabase());
     }
 
-    private AbstractChemicalDatabase getDatabase(String name) {
+    private SearchableDatabase getDatabase(String name) {
         final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
         if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
             try {
-                return new FileDatabase(new File(name));
+                final CustomDatabase db = new CustomDatabase(new File(name).getName(), new File(name));
+                db.readSettings();
+                if (db.needsUpgrade()) {
+                    System.err.println("Database '" + name + "' is outdated and have to be upgraded or reimported.");
+                    System.exit(1);
+                }
+                return db;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            return new RESTDatabase(getBioFilter());
+            if (customDatabases.containsKey(name)) return customDatabases.get(name);
+
+            final BioFilter filter = getBioFilter();
+            if (filter == BioFilter.ALL) return pubchemDatabase;
+            else return bioDatabase;
         }
     }
 
-    private AbstractChemicalDatabase getFingerIdDatabase() {
+
+    SearchableDatabase pubchemDatabase, bioDatabase;
+    HashMap<File, FilebasedDatabase> customDatabaseCache;
+    private HashMap<String, SearchableDatabase> customDatabases;
+    protected File db_cache_dir;
+    protected void initializeDatabaseCache() {
+        final File d = Workspace.CONFIG_STORAGE.getDatabaseDirectory();
+        db_cache_dir = d;
+        pubchemDatabase = new SearchableDbOnDisc("PubChem", d, true,true,false);
+        bioDatabase = new SearchableDbOnDisc("biological database", d, true,true,false);
+        this.customDatabaseCache = new HashMap<>();
+        customDatabases = new HashMap<>();
+        for (SearchableDatabase db : CustomDatabase.customDatabases(true)) {
+            customDatabases.put(db.name(), db);
+        }
+    }
+
+    protected FilebasedDatabase getFileBasedDb(SearchableDatabase db) throws IOException {
+        if (!customDatabaseCache.containsKey(db.getDatabasePath())) {
+            customDatabaseCache.put(db.getDatabasePath(), new FilebasedDatabase(WebAPI.getFingerprintVersion(), db.getDatabasePath()));
+        }
+        return customDatabaseCache.get(db.getDatabasePath());
+    }
+
+    private SearchableDatabase getFingerIdDatabase() {
         if (options.getFingerIdDb() != null) {
             return getDatabase(options.getFingerIdDb());
         } else {
@@ -276,7 +310,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             final TIntArrayList indizes = new TIntArrayList();
             final BioFilter bioFilter = getBioFilter();
             final PredictionPerformance[] performances = webAPI.getStatistics(indizes);
-            this.fingerblast = new Fingerblast(getFingerIdDatabase());
+            this.fingerblast = new Fingerblast(getFingerIdDatabaseWrapper());
 //            this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
             this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
@@ -294,13 +328,92 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         progress.info("CSI:FingerId initialization done.");
     }
 
+    // bad hack
+    private AbstractChemicalDatabase getFingerIdDatabaseWrapper() {
+        final SearchableDatabase db = getFingerIdDatabase();
+        if (db.isCustomDb()) {
+            return new AbstractChemicalDatabase() {
+                @Override
+                public List<FormulaCandidate> lookupMolecularFormulas(double v, Deviation deviation, PrecursorIonType precursorIonType) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula molecularFormula) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws DatabaseException {
+                    try (final WebAPI webAPI = WebAPI.newInstance()) {
+                        if (db.searchInBio()) {
+                            try (final RESTDatabase db = webAPI.getRESTDb( BioFilter.ONLY_BIO,db_cache_dir)) {
+                                fingerprintCandidates = db.lookupStructuresAndFingerprintsByFormula(molecularFormula,fingerprintCandidates);
+                            }
+                        }
+                        if (db.searchInPubchem()) {
+                            try (final RESTDatabase db = webAPI.getRESTDb( BioFilter.ONLY_NONBIO,db_cache_dir)) {
+                                fingerprintCandidates = db.lookupStructuresAndFingerprintsByFormula(molecularFormula,fingerprintCandidates);
+                            }
+                        }
+                        if (db.isCustomDb()) {
+                            fingerprintCandidates = getFileBasedDb(db).lookupStructuresAndFingerprintsByFormula(molecularFormula, fingerprintCandidates);
+                        }
+                        return fingerprintCandidates;
+                    } catch (IOException e) {
+                        logger.error(e.getMessage(),e);
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> iterable) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> iterable) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> iterable) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> iterable) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void annotateCompounds(List<? extends CompoundCandidate> list) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public List<InChI> findInchiByNames(List<String> list) throws DatabaseException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void close() throws IOException {
+
+                }
+            };
+        } else {
+            final BioFilter bf = getBioFilter();
+            return new RESTDatabase(bf);
+        }
+
+    }
+
     @Override
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
         if (options.getDatabase().equalsIgnoreCase("all")) return super.getFormulaWhiteset(i, whitelist);
         else {
             final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
-
-            final AbstractChemicalDatabase database = getDatabase();
+            final SearchableDatabase searchableDatabase = getDatabase();
             final int flag;
 
             if (aliasMap.containsKey(options.getDatabase().toLowerCase())) {
@@ -325,7 +438,27 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final FormulaConstraints allowedAlphabet;
                 if (options.getElements() != null) allowedAlphabet = options.getElements();
                 else allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF");
-                List<List<FormulaCandidate>> candidates = database.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()]));
+
+                List<List<FormulaCandidate>> candidates = new ArrayList<>();
+                try (final WebAPI api = WebAPI.newInstance()) {
+                    if (searchableDatabase.searchInBio()) {
+                        try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_BIO, bioDatabase.getDatabasePath())) {
+                            candidates.addAll(db.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
+                        }
+                    }
+                    if (searchableDatabase.searchInPubchem()){
+                        try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_NONBIO, pubchemDatabase.getDatabasePath())) {
+                            candidates.addAll(db.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
+                        }
+                    }
+                    if (searchableDatabase.isCustomDb()) {
+                        candidates.addAll(getFileBasedDb(searchableDatabase).lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
+                    }
+                } catch (IOException e) {
+                    logger.error(e.getMessage(),e);
+                    System.exit(1);
+                }
+
                 final HashSet<MolecularFormula> allowedSet = new HashSet<>();
                 for (List<FormulaCandidate> fc : candidates) {
                     for (FormulaCandidate f : fc) {
@@ -354,9 +487,19 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
         aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
         aliasMap.put("all", 0);
-        if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists()) {
-            LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(aliasMap.keySet()));
+        if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists() && !customDatabases.containsKey(options.getDatabase())) {
+            final List<String> knownDatabases = new ArrayList<>();
+            knownDatabases.addAll(aliasMap.keySet());
+            knownDatabases.addAll(customDatabases.keySet());
+            LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(knownDatabases));
+            System.exit(1);
         }
         return aliasMap;
+    }
+
+    @Override
+    public void setup() {
+        initializeDatabaseCache();
+        super.setup();
     }
 }
