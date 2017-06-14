@@ -16,11 +16,13 @@
 \usepackage[version=3]{mhchem}
 
 %% BIBLATEX uses BIBER
-\usepackage[backend=bibtex,natbib,style=nature,date=year,isbn=false,%
+%% For Ubuntu install: apt-get install biber
+%% compile pdflatex biber pdflatex pdflatex
+\usepackage[backend=biber,natbib,style=nature,date=year,isbn=false,%
   doi=false,url=false]{biblatex}
 \addbibresource{bibtex/group-literature.bib}
 
-\graphicspath{{./graphics/}}
+\graphicspath{./graphics/}
 
 \newcommand{\todo}[1]{\xspace{\bfseries\sffamily\textcolor{red}{[#1]}}\xspace}
 \newcommand\etal{\emph{et~al.\@}\xspace}
