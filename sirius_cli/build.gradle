@@ -65,12 +65,10 @@ distributions {
                     from("${project.distPath}") {
                         exclude('sirius3-gui')
                     }
+                    from("${getRootDir()}/LICENSE.md")
                 }
                 into('doc') {
-                    from("${project.manualPath}/build/latex") {
-                        include('SIRIUS.pdf')
-                    }
-                    from("${project.manualPath}/build/singleText")
+                    from("${project.getRootDir()}/${project.appName}-manual.pdf")
                 }
                 into('doc/html') {
                     from("${project.manualPath}/build/html")
@@ -98,14 +96,12 @@ distributions {
                 from("${project.distPath}") {
                     exclude('sirius3-gui')
                 }
+                from{"${getRootDir()}/LICENSE.md"}
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from("${project.manualPath}/build") {
-                        include('SIRIUS.pdf')
-                    }
-                    from("${project.manualPath}/build/singleText")
+                    from("${project.getRootDir()}/${project.appName}-manual.pdf")
                 }
                 into('doc/html') {
                     from("${project.manualPath}/build/html")
@@ -135,12 +131,10 @@ distributions {
                     exclude("*.bat")
                 }
                 from("${project.distPath}")
+                from("${getRootDir()}/LICENSE.md")
             }
             into('doc') {
-                from("${project.manualPath}/build") {
-                    include('SIRIUS.pdf')
-                }
-                from("${project.manualPath}/build/singleText")
+                from("${project.getRootDir()}/${project.appName}-manual.pdf")
             }
             into('doc/html') {
                 from("${project.manualPath}/build/html")
