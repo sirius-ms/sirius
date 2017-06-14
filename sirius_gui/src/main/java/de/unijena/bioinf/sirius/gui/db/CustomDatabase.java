@@ -79,7 +79,7 @@ public class CustomDatabase implements SearchableDatabase {
         return db;
     }
 
-    CustomDatabase(String name, File path) {
+    public CustomDatabase(String name, File path) {
         this.name = name;
         this.path = path;
     }
@@ -130,7 +130,7 @@ public class CustomDatabase implements SearchableDatabase {
         this.deriveFromBioDb = deriveFromBioDb;
     }
 
-    protected  void readSettings() throws IOException {
+    public  void readSettings() throws IOException {
         synchronized (this) {
             if (settingsFile().exists()) {
                 deriveFromPubchem = false;
