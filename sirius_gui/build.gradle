@@ -1,0 +1,218 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+
+dependencies {
+//project
+    compile project(':sirius_cli')
+
+//internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_file", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
+//external
+    compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
+    compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
+
+    compile "net.sf.opencsv:opencsv:2.3"
+    compile "org.swinglabs.swingx:swingx-all:1.+"
+    compile "org.openscience.cdk:cdk-silent:$cdk_version"
+    compile "org.openscience.cdk:cdk-render:$cdk_version"
+    compile "org.openscience.cdk:cdk-renderextra:$cdk_version"
+    compile "org.openscience.cdk:cdk-renderawt:$cdk_version"
+    compile "org.openscience.cdk:cdk-data:$cdk_version"
+    compile "org.openscience.cdk:cdk-core:$cdk_version"
+    compile "org.openscience.cdk:cdk-interfaces:$cdk_version"
+    compile "org.openscience.cdk:cdk-inchi:$cdk_version"
+    compile "org.openscience.cdk:cdk-smiles:$cdk_version"
+    compile "org.openscience.cdk:cdk-io:$cdk_version"
+    compile "org.openscience.cdk:cdk-ioformats:$cdk_version"
+    compile "org.openscience.cdk:cdk-sdg:$cdk_version"
+    compile "org.openscience.cdk:cdk-smarts:$cdk_version"
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+    compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
+
+
+
+    compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
+}
+
+/*################### Environment variables ################### */
+mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+project.ext.set("type", "gui,console")
+
+/*################### Jar build Stuff ################### */
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+/*################### Windows release Stuff ################### */
+launch4j {
+    mainClassName = project.mainClassName
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+
+    guiCLIArgument = '--gui'
+    outfile = "${project.appName}.exe"
+
+    jar = "lib/${project.tasks.jar.archiveName}"
+}
+
+/*################### Build distributions ################### */
+task distribute { group = 'distribution' }
+distribute.dependsOn ':buildDoku'
+
+distributions {
+    project.arch.split(',').each { ar ->
+        def n = "${project.linSuffix}${ar}"
+
+        create(n, {
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from("build/install/${project.name}/lib") {
+                        exclude("$gurobiExclude")
+                    }
+                    from("${project.glpkPath}/l${ar}/")
+                    exclude('*.zip')
+                }
+
+                into('bin') {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+    }
+
+    //crete win32And64 zip tasks
+    project.arch.split(',').each { ar ->
+        def n = "${project.winSuffix}${ar}"
+        create(n, {
+
+            baseName = "${project.appName}-$n"
+            contents {
+                into('lib') {
+                    from('build/launch4j/lib') {
+                        exclude("$gurobiExclude")
+                    }
+                    exclude('*.zip')
+                }
+                from { "${project.glpkPath}/w${ar}/" }
+                from("${project.distPath}") {
+                    exclude('sirius-gui')
+                }
+                from('build/launch4j') {
+                    include("*-${ar}.exe")
+                }
+                into('doc') {
+                    from("${project.manualPath}/build") {
+                        include('SIRIUS.pdf')
+                    }
+                    from("${project.manualPath}/build/singleText")
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+    }
+
+    //create osx zip
+    def n = "${project.macSuffix}64"
+    create(n, {
+        baseName = "${project.appName}-$n"
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib") {
+                    exclude("$gurobiExclude")
+                }
+                from("${project.glpkPath}/osx/")
+                exclude('*.zip')
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+                from("${project.distPath}")
+            }
+            into('doc') {
+                from("${project.manualPath}/build") {
+                    include('SIRIUS.pdf')
+                }
+                from("${project.manualPath}/build/singleText")
+            }
+            into('doc/html') {
+                from("${project.manualPath}/build/html")
+            }
+        }
+    })
+    distribute.dependsOn "${n}DistZip"
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
+
+    linux32DistZip.dependsOn 'installDist'
+    linux32DistTar.dependsOn 'installDist'
+    installLinux32Dist.dependsOn 'installDist'
+
+    linux64DistZip.dependsOn 'installDist'
+    linux64DistTar.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
+
+    win32DistZip.dependsOn 'createExe'
+    win32DistTar.dependsOn 'createExe'
+    installWin32Dist.dependsOn 'createExe'
+
+    win64DistZip.dependsOn 'createExe'
+    win64DistTar.dependsOn 'createExe'
+    installWin64Dist.dependsOn 'createExe'
+}
+
+// what should be published
+publishing {
+    publications {
+        sirius(MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+
+            artifact source: win64DistZip, classifier: 'win64', extension: 'zip'
+            artifact source: win32DistZip, classifier: 'win32', extension: 'zip'
+            artifact source: linux32DistZip, classifier: 'linux32', extension: 'zip'
+            artifact source: linux64DistZip, classifier: 'linux64', extension: 'zip'
+            artifact source: osx64DistZip, classifier: 'osx64', extension: 'zip'
+        }
+    }
+}
+
+//artifactoryPublish.dependsOn 'distribute'
+
+task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
+    commandLine([command.absolutePath])
+}

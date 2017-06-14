@@ -1,0 +1,327 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "http://bio.informatik.uni-jena.de/repository/local" }
+    }
+    dependencies {
+        classpath group: 'de.unijena.bioinf.gradle', name: 'launch4jj', version: '1.6.2'
+        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+    }
+
+}
+
+plugins {
+    id "com.jfrog.artifactory" version "4.3.0"
+}
+
+//Global Properties
+ext {
+    //version for external libraries
+    slf4j_version = '1.7.21'
+
+    json_version = '1.0' //todo move to gson
+    json_impl_version = "1.0.4" //todo move to gson
+
+    glpk_lib_version = '4.60'
+    cdk_version = "1.5.14"
+
+    siriusVersion = '3.4.2-SNAPSHOT'
+    fingeridVersion = "1.0.9-SNAPSHOT"
+
+    jewelcli_version = '0.8.+'
+
+    //locations of runtime libraries
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar'
+    gurobiExclude = "gurobi-*.jar"
+
+//    commons_email_version = '1.4'
+//    oshi_version = '3.2'
+    error_reporter_version = "0.9"
+
+    buildNumber = '1'
+}
+
+
+
+allprojects {
+    apply plugin: "com.jfrog.artifactory"
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+
+    version = "$siriusVersion"
+    group = 'de.unijena.bioinf.ms'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/local"
+        }
+        maven {
+            url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+        }
+        maven {
+            url "https://www.xypron.de/repository" //glpk repo
+        }
+
+    }
+
+    dependencies {
+        compile 'net.sf.trove4j:trove4j:3.0.3'
+        compile 'com.google.guava:guava:18.0'
+
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+}
+
+task downloadGLPK(type: Copy) {
+    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
+    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
+
+    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
+
+    copy {
+        println(dir.toString())
+        dir.resolve('glpk').toFile().deleteDir()
+        Files.createDirectories(dir)
+
+        def glpkZipFile = Paths.get('glpk.zip')
+        def file = dir.resolve(glpkZipFile).newOutputStream()
+        file << glpkURL.openStream()
+        file.close()
+
+        from zipTree(dir.resolve(glpkZipFile).toFile())
+        into dir.toFile()
+    }
+
+}
+
+/*################### DISTRIBUTION STUFF ################### */
+project.ext.set("linSuffix", "linux")
+project.ext.set("winSuffix", "win")
+project.ext.set("macSuffix", "osx")
+project.ext.set("arch", "64,32")
+project.ext.set("appName", "sirius")
+project.ext.set("manualPath", file('manual').absolutePath)
+project.ext.set("distPath", file('dist').absolutePath)
+
+/*################### Building the Documentation ################### */
+
+
+task cleanDoku {
+    group = 'documentation'
+    doLast {
+        def f = file("${project.manualPath}/build")
+        if (f.exists())
+            f.deleteDir()
+    }
+}
+clean.dependsOn cleanDoku
+
+task htmlDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}/source")
+    outputs.file("${project.manualPath}/build/html")
+    outputs.upToDateWhen { return false }
+    commandLine(['latex2html', '-rootdir', '../build/html', '-mkdir', 'SIRIUS'])
+
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
+}
+htmlDoku.mustRunAfter cleanDoku
+
+
+
+task pdfDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${project.manualPath}/source")
+    outputs.upToDateWhen { return false }
+    outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
+    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
+    commandLine(['TEXMFOUTPUT="build:"', 'bibtex', '../build/SIRIUS'])
+    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
+    commandLine(['pdflatex', '--shell-escape', '-output-directory', '../build', './SIRIUS'])
+
+    doFirst {
+        Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
+
+}
+pdfDoku.mustRunAfter cleanDoku
+
+task buildDoku {
+    group = 'documentation'
+    outputs.files(pdfDoku.outputs.files.singleFile)
+}
+
+buildDoku.mustRunAfter cleanDoku
+buildDoku.dependsOn /*htmlDoku,*/ pdfDoku //todo solve problem and re enable
+
+
+subprojects {
+    apply plugin: 'application'
+    apply plugin: 'de.unijena.bioinf.launch4jj'
+
+    /*################### Windows release Stuff ################### */
+    launch4j {
+        icon = file('../dist/sirius.ico')
+        copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
+        companyName = "Friedrich-Schiller-University Jena"
+        version = project.version
+        textVersion = project.version
+        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+
+        initialHeapPercent = 50
+        maxHeapPercent = 80
+
+        dontWrapJar = true
+        jdkPreference = "preferJre"
+
+        classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
+
+    }
+
+    /*################### Linux release Stuff ################### */
+    startScripts {
+        applicationName = "${project.appName}"
+        doLast {
+//            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
+            def siriusLibPath = '$GUROBI_HOME/lib:$APP_HOME/lib'
+            def lines = unixScript.text.split(System.lineSeparator())
+            int insertIndex = -1
+            for (int i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('CLASSPATH=')) {
+                    lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
+                }
+                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
+//                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', 'export LD_LIBRARY_PATH="' + siriusLibPath + ':\\"$LD_LIBRARY_PATH\\""' + "${System.lineSeparator()}" + 'DEFAULT_JVM_OPTS="-Djava.library.path=' + siriusLibPath + '"')
+                    insertIndex = i - 1
+                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
+                }
+            }
+            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"\nexport DYLD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
+            unixScript.text = lines.join(System.lineSeparator())
+        }
+    }
+}
+
+// what should be published
+publishing {
+    publications {
+        download(MavenPublication) {
+            artifactId = "${project.appName}"
+            version = 'download'
+            groupId = project.group
+
+            artifact file(refreshDownloadLinks.outputs.files.singleFile)
+        }
+
+        changelog(MavenPublication) {
+            artifactId = "${project.appName}"
+            version = 'changelog'
+            groupId = project.group
+
+            artifact file(prepareChangelog.outputs.files.singleFile)
+        }
+
+        manual(MavenPublication) {
+            artifactId = "${project.appName}"
+            version = 'manual'
+            groupId = project.group
+
+            artifact file(buildDoku.outputs.files.singleFile)
+        }
+
+
+    }
+}
+
+task prepareChangelog (type: Exec){
+    inputs.file("${project.manualPath}/source/changelog.tex")
+    outputs.file("${project.manualPath}/build/changelog.md")
+    commandLine(["pandoc","${inputs.files.singleFile}","-t", "markdown", "-o", "${outputs.files.singleFile}"])
+
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
+}
+
+task refreshDownloadLinks {
+    project.ext.set("webPath", getBuildDir().toPath().resolve('tmp/webSite/').toFile())
+    group = 'publishing'
+    File outfile = file("${project.webPath}/sirius-download.md")
+    outputs.file(outfile)
+
+    doLast {
+        Files.createDirectories(Paths.get("${project.webPath}"))
+        def repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
+
+        List<String> lines = [
+                "### Sirius+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
+                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip) / " +
+                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
+                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
+                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
+                "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
+                "&nbsp;",
+                "",
+                "### Sirius Commandline Version $version",
+                "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
+                "- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
+                "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                "&nbsp;",
+                "",
+                "### Manual",
+                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/manual/sirius-manual.pdf)",
+                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)"
+        ] as List
+
+        Files.deleteIfExists(outfile.toPath())
+        Files.write(outfile.toPath(), lines, StandardOpenOption.CREATE)
+    }
+}
+
+// publication artifactory
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
+            Properties properties = new Properties()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            propertiesFile.withInputStream {
+                properties.load(it)
+            }
+
+            username = properties['username']
+            password = properties['password']
+        }
+        defaults {
+            //Publish every distribution to Artifactory
+            publications("sirius")
+//            if (repoKey.equals('dist-release-local'))
+            publications("download")
+            publications("manual")
+            publications("changelog")
+        }
+    }
+}
+
+
+
+
+artifactoryPublish.dependsOn 'refreshDownloadLinks'
+artifactoryPublish.dependsOn 'prepareChangelog'
+
+
+

@@ -1,0 +1,3 @@
+rootProject.name = 'sirius_frontend'
+include ':sirius_cli'
+include ':sirius_gui'
