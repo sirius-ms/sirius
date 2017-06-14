@@ -54,7 +54,7 @@ command-line tool.
 
 ## Download Links
 
-[comment]: <> (begin download)
+<!--begin download-->
 
 ### Sirius+CSI:FingerID GUI and CLI - Version 3.4.2-SNAPSHOT (Build 1 from 2017-06-14)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64.zip)
@@ -67,12 +67,12 @@ command-line tool.
 - for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-linux64-headless.zip)
 - for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-osx64-headless.zip)
 
-[comment]: <> (end download)
+<!--end download-->
 
 &nbsp;
 
 ### Manual
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/manual/sirius-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/git/raw/ms/sirius_frontend.git/release/dist!sirius-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 
@@ -135,7 +135,7 @@ literature to cite transparent to the user.
 
 ## Changelog
 
-[comment]: <> (begin changelog)
+<!--begin changelog-->
 
 #### 3.5
 
@@ -231,4 +231,4 @@ literature to cite transparent to the user.
 
 -   release version
 
-[comment]: <> (end changelog)
+
