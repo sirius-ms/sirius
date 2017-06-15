@@ -47,7 +47,6 @@ public class CsvFields {
                     double t = m.getAtomCount();
                     if (n/t <= 0.75) likely -= 10;
                 }
-                System.err.println(likely);
                 return likely;
             } catch (InvalidSmilesException e) {
                 return -1;

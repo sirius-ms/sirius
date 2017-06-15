@@ -19,7 +19,9 @@ import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IChemFile;
 import org.openscience.cdk.interfaces.IChemModel;
+import org.openscience.cdk.interfaces.IChemSequence;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -375,10 +377,14 @@ public class CustomDatabase implements SearchableDatabase {
                 try (InputStream stream = new FileInputStream(file)) {
                     try {
                         reader.setReader(stream);
-                        IChemModel model = SilentChemObjectBuilder.getInstance().newInstance(IChemModel.class);
-                        model = reader.read(model);
-                        for (IAtomContainer molecule : model.getMoleculeSet().atomContainers()) {
-                            addMolecule(molecule);
+                        IChemFile chemFile =SilentChemObjectBuilder.getInstance().newInstance(IChemFile.class);
+                        chemFile = reader.read(chemFile);
+                        for (IChemSequence s : chemFile.chemSequences()) {
+                            for (IChemModel m : s.chemModels()) {
+                                for (IAtomContainer c : m.getMoleculeSet().atomContainers()) {
+                                    addMolecule(c);
+                                }
+                            }
                         }
                     } catch (CDKException e) {
                         throw new IOException(e);
@@ -452,7 +458,6 @@ public class CustomDatabase implements SearchableDatabase {
             try {
                 final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
                 for (IAtomContainer c : moleculeBuffer) {
-                    System.err.println(SmilesGenerator.unique().create(c));
                     final String key;
                     try {
                         key = icf.getInChIGenerator(c).getInchiKey().substring(0, 14);

@@ -60,7 +60,6 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Si
                 }
             }
             setFScores();
-            System.err.println(elementList.size());
             notifyListeners(sre,null,getElementList(),getResultListSelectionModel());
         } finally {
             elementList.getReadWriteLock().writeLock().unlock();
