@@ -297,16 +297,12 @@
         "maxSize": 200
       },
       {
-        "$name": "PeakIsNoiseScorer",
+        "$name": "ClippedPeakIsNoiseScorer",
         "distribution": {
           "$name": "ParetoDistribution$EstimateByMedian",
           "xmin": 0.002
-        }
-      },
-      {
-        "$name": "PeakIsNoiseScorer2",
-        "lambda": 20,
-        "min": 0.002
+        },
+        "beta": 0.00001
       }
     ],
     "peakPairScorers": [
@@ -319,16 +315,6 @@
           "mean": 4.022526672023266,
           "variance": 0.3124649410213113
         }
-      },
-      {
-        "$name": "SmallestLossScorer2",
-        "normalization": -5.310349962255842,
-        "distribution": {
-          "$name": "LogNormalDistribution",
-          "mean": 4.022526672023266,
-          "variance": 0.3124649410213113
-        },
-        "expectationValue": 55.8
       }
     ],
     "lossScorers": [

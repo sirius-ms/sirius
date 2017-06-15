@@ -25,4 +25,9 @@ public class Smiles {
     public Smiles(String smiles) {
         this.smiles = smiles;
     }
+
+    @Override
+    public String toString() {
+        return smiles;
+    }
 }

@@ -28,6 +28,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,6 +84,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
         private String inchi, inchikey, smiles, splash;
         private MutableMs2Experiment experiment;
+        private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
+        private HashMap<String,String> fields;
 
         private void newCompound(String name) {
             inchi=null; inchikey=null; smiles=null; splash=null;
@@ -94,6 +98,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             charge=0;
             formula=null;
             compoundName = name;
+            instrumentation = MsInstrumentation.Unknown;
         }
 
         private MutableMs2Experiment parse() throws IOException {
@@ -155,13 +160,20 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             final String optionName = options[0].toLowerCase();
             final String value = options.length==2 ? options[1] : "";
             if (optionName.equals("compound")) {
-                final boolean newCompound = compoundName!=null;
+                final boolean newCompound = compoundName != null;
                 if (newCompound) {
                     flushCompound();
                 }
                 newCompound(value);
                 if (newCompound) return true;
-
+            } else if (optionName.startsWith("instrument")) {
+                final String v = value.toLowerCase();
+                for (MsInstrumentation.Instrument i : MsInstrumentation.Instrument.values()) {
+                    if (i.isInstrument(v)) {
+                        instrumentation = i;
+                        break;
+                    }
+                }
             } else if (optionName.equals("formula")) {
                 if (formula != null) warn("Molecular formula is set twice");
                 this.formula = MolecularFormula.parse(value);
@@ -259,7 +271,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
             if (splash!=null) exp.setAnnotation(Splash.class, new Splash(splash));
             if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
+            if (instrumentation!=null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
+            if (retentionTime!=0) exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTime));
+            if (fields != null) exp.setAnnotation(Map.class, fields);
             this.experiment = exp;
+            fields = null;
             this.compoundName = null;
         }
 
@@ -272,8 +288,16 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
 
         private void parseComment(String line) {
+            // legacy mode
             if (line.startsWith("#retention")) {
                 parseRetention(line.substring(line.indexOf("#retention")+"#retention".length()));
+            }
+            if (line.charAt(0)=='#') {
+                final String[] options = line.substring(line.indexOf('#')+1).split("\\s+", 2);
+                final String optionName = options[0].toLowerCase();
+                final String value = options.length==2 ? options[1] : "";
+                if (fields==null) fields = new HashMap<>();
+                fields.put(optionName, value);
             }
         }
 
