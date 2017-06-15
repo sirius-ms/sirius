@@ -360,11 +360,7 @@ public class CSIFingerIdComputation {
                 Files.deleteIfExists(f.toPath());
             }
         }
-        if (directory.exists()) {
-            for (File f : directory.listFiles()) {
-                Files.deleteIfExists(f.toPath());
-            }
-        } else {
+        if (!directory.exists()) {
             directory.mkdirs();
             bio.mkdirs();
             nonBio.mkdirs();
