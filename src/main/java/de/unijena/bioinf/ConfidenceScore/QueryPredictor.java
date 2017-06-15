@@ -283,6 +283,7 @@ public class QueryPredictor implements Parameterized{
 
     public static QueryPredictor loadFromStream(Reader reader) throws IOException {
         final JsonObject json = JSONDocumentType.read(reader);
+        if (json.isJsonObject() && json.entrySet().isEmpty()) return null;
         final JSONDocumentType document = new JSONDocumentType();
         return loadFromProfile(document, json);
     }

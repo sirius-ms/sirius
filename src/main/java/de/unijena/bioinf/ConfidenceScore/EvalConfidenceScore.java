@@ -45,12 +45,12 @@ public class EvalConfidenceScore {
 
 
     public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> correctQueries, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.NoLogScoresNoMFRobust(useLinearSVM);
         train(correctQueries, null, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
     public static void train(List<CompoundWithAbstractFP<ProbabilityFingerprint>> predictedQueries, List<InChI> correctInchis, PredictionPerformance[] statistics, MaskedFingerprintVersion maskedFingerprintVersion, Path outputFile, boolean useLinearSVM, ChemicalDatabase db) throws IOException, InterruptedException, DatabaseException {
-        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.JustScoreFeature(useLinearSVM);
+        TrainConfidenceScore trainConfidenceScore = TrainConfidenceScore.NoLogScoresNoMFRobust(useLinearSVM);
         train(predictedQueries, correctInchis, statistics, maskedFingerprintVersion, outputFile, db, trainConfidenceScore);
     }
 
