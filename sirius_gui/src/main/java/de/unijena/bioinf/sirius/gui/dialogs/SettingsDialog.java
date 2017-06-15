@@ -6,6 +6,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  */
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.sirius.gui.settings.GerneralSettingsPanel;
 import de.unijena.bioinf.sirius.gui.settings.ProxySettingsPanel;
@@ -101,7 +102,9 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 protected Integer doInBackground() throws Exception {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     ApplicationCore.changeDefaultProptertiesPersistent(nuProps);
+                    new CheckConnectionAction().actionPerformed(null); //todo maybe some run check function for the settings panels
                     return 1;
+
                 }
             }.execute();
             this.dispose();

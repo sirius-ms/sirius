@@ -439,9 +439,23 @@ Note that you have to reopen your ''bash'' shell to make the changes effective.
 
 \section{Proxy servers}
 \label{install:proxy}
+To use database related functionality of Sirius, Sirius needs needs ann 
+Internet connection. You have to ensure that it is not blocked by any security 
+software on your computer.
 
-\todo{If you get this error message, you are sitting behind a proxy server
-  and have to do this and that.}
+If you have to use a proxy server to connect to the Internet, Sirius 
+automatically uses the system wide java proxy 
+configuration\footnote{\sphinxAtStartFootnote{\url{https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html}}}:if
+ available. 
+Alternatively you can specify your proxy configuration in the Sirius 
+user interface (setting -> proxy settings). Your specified configuration will 
+be tested if you hit the save button.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.4\textwidth]{{proxySetting}.png}
+	\includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
+\end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
