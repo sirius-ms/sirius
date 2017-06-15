@@ -20,12 +20,12 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
+import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
+import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -64,22 +64,13 @@ public class Sirius {
     protected boolean autoIonMode;
 
     public static void main(String[] args) {
+        System.out.println(new ParetoDistribution.EstimateByMedian(0.0025).extimateByMedian(0.005));System.exit(0);
 
-        final File F = new File("/home/kaidu/Documents/temp/532.0707@8.27.ms");
+        final File F = new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms");
         try {
-            Sirius s = new Sirius("qtof");
-            final Ms2Experiment exp = s.parseExperiment(F).next();
-
-            final HashSet<MolecularFormula> formulas = new HashSet<>();
-            formulas.add(MolecularFormula.parse("C19H22O5"));
-            formulas.add(MolecularFormula.parse("C13H15N5O3"));
-            formulas.add(MolecularFormula.parse("C15H20N6O4"));
-            formulas.add(MolecularFormula.parse("C12H10N6O2"));
-
-            final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit, formulas);
-            for (IdentificationResult r : results) {
-                System.out.println(r.formula + "\t" + r.getStandardTree().getAnnotationOrThrow(PrecursorIonType.class));
-            }
+            Sirius s = new Sirius("qtof_fixed");
+            Ms2Experiment exp = s.parseExperiment(F).next();
+            final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -258,7 +249,7 @@ public class Sirius {
             elementPrediction = defaultPredictor;
             */
             DNNRegressionPredictor defaultPredictor = new DNNRegressionPredictor();
-            //defaultPredictor.disableSilicon();
+            defaultPredictor.disableSilicon();
             elementPrediction = defaultPredictor;
         }
         return elementPrediction;
@@ -398,12 +389,14 @@ public class Sirius {
             }
             feedback.clear();
             // recalibrate trees
+            double maximalPossibleScoreByRecalibration=0d;
             if (recalibrating) {
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
                     if (deisotope.isScoring()) addIsoScore(isoScores, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
@@ -427,6 +420,19 @@ public class Sirius {
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
+    }
+
+    private double addRecalibrationPenalty(FTree result, int rank, double maximalPossibleScoreByRecalibration) {
+        if (rank == 10) {
+            maximalPossibleScoreByRecalibration = result.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+        } else if (rank > 10) {
+            TreeScoring scoring = result.getAnnotationOrThrow(TreeScoring.class);
+            if (scoring.getOverallScore() > maximalPossibleScoreByRecalibration) {
+                scoring.setRecalibrationPenalty(maximalPossibleScoreByRecalibration-scoring.getOverallScore());
+                scoring.setOverallScore(maximalPossibleScoreByRecalibration);
+            }
+        }
+        return maximalPossibleScoreByRecalibration;
     }
 
     private List<IonWhitelist> splitWhitelistByIonizationAndAlphabet(Ms2Experiment exp, Set<MolecularFormula> whiteList){
@@ -752,11 +758,13 @@ public class Sirius {
             }
             feedback.clear();
             if (recalibrating) {
+                double maximalPossibleScoreByRecalibration = 0d;
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
                     if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
@@ -891,11 +899,13 @@ public class Sirius {
             }
             feedback.clear();
             if (recalibrating) {
+                double maximalPossibleScoreByRecalibration=0d;
                 // now recalibrate the trees and recompute them another time...
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
+                    maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
                     if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
@@ -1020,11 +1030,33 @@ public class Sirius {
      */
     public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment, boolean recalibrating){
         if (result.getBeautifulTree()!=null) return true;
-        final MolecularFormula formula = result.getMolecularFormula();
-        final FTree tree = result.getStandardTree();
-        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment, FormulaConstraints.allSubsetsOf(formula));
+        FTree beautifulTree = beautifyTree(result.getStandardTree(), experiment, recalibrating);
+        if (beautifulTree!=null){
+            result.setBeautifulTree(beautifulTree);
+            return true;
+        }
+        return false;
+    }
+
+    public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating){
+        final MolecularFormula formula;
+        final IonTreeUtils.Type type =tree.getAnnotationOrNull(IonTreeUtils.Type.class);
+        if (type == IonTreeUtils.Type.RESOLVED) {
+            formula = tree.getRoot().getFormula();
+        } else if (type == IonTreeUtils.Type.IONIZED) {
+            formula = tree.getAnnotationOrThrow(PrecursorIonType.class).precursorIonToNeutralMolecule(tree.getRoot().getFormula());
+        } else {
+            formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+        }
+
+        final MutableMs2Experiment mutableMs2Experiment = new MutableMs2Experiment(experiment);
+        mutableMs2Experiment.setMolecularFormula(formula);
+        mutableMs2Experiment.setMoleculeNeutralMass(0d);
+        mutableMs2Experiment.setPrecursorIonType(tree.getAnnotationOrNull(PrecursorIonType.class));
+
+        ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
         final TreeSizeScorer treeSizeScorer = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, profile.fragmentationPatternAnalysis.getFragmentPeakScorers());
-        if (treeSizeScorer==null) return false;
+        if (treeSizeScorer==null) return null;
         final double originalTreeSize = treeSizeScorer.getTreeSizeScore();
 
         double modifiedTreeSizeScore = originalTreeSize;
@@ -1044,34 +1076,35 @@ public class Sirius {
         final int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
 
         FTree beautifulTree = new FTree(tree);
+        int iteration = 0;
         try {
             while (true) {
-                final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
+                final double intensity = (beautifulTree==null ? 0 : beautifulTree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensityOfExplainablePeaks());
+//                final double intensity = (beautifulTree==null ? 0 : profile.fragmentationPatternAnalysis.getIntensityRatioOfExplainablePeaks(beautifulTree));
                 if (modifiedTreeSizeScore >= MAX_TREESIZE_SCORE){
                     if (beautifulTree!=null){
-                        profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
-                        result.setBeautifulTree(beautifulTree);
-                        return true;
+                        if (iteration>0) profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
+                        return beautifulTree;
                     } else {
-                        return false;
+                        return null;
                     }
                 }else if (beautifulTree!=null && (beautifulTree.numberOfVertices() >= SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS && intensity >= MIN_EXPLAINED_INTENSITY)) {
-                    profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
-                    result.setBeautifulTree(beautifulTree);
-                    return true;
+                    if (iteration>0) profile.fragmentationPatternAnalysis.recalculateScores(beautifulTree);
+                    return beautifulTree;
                 } else {
                     modifiedTreeSizeScore += TREE_SIZE_INCREASE;
                     treeSizeScorer.setTreeSizeScore(modifiedTreeSizeScore);
                     // TODO!!!! find a smarter way to do this -_-
-                    pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment);
+                    pinput = profile.fragmentationPatternAnalysis.preprocessing(mutableMs2Experiment.clone(), FormulaConstraints.allSubsetsOf(formula));
                 }
 
-                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).optimalTree();
+                beautifulTree = profile.fragmentationPatternAnalysis.computeTrees(pinput).withRecalibration(recalibrating).onlyWith(Arrays.asList(formula)).withBackbones(beautifulTree).optimalTree();
+                ++iteration;
             }
 
         } catch (Exception e){
             e.printStackTrace();
-            return false;
+            return null;
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
         }
@@ -1266,6 +1299,28 @@ public class Sirius {
      */
     public List<MolecularFormula> decompose(double mass, Ionization ion, FormulaConstraints constr, Deviation dev) {
         return getMs2Analyzer().getDecomposerFor(constr.getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(mass), dev, constr);
+    }
+
+    /**
+     * Applies a given biotransformation on a given Molecular formular and return the transformed formula(s)
+     *
+     * @param source   source formula for transformation
+     * @param transformation to that will be applied to given Formula    ionization mode (might be a Charge, in which case the decomposer will enumerate the ion formulas instead of the neutral formulas)
+     * @return transformed MolecularFormulas
+     */
+    public List<MolecularFormula> bioTransform(MolecularFormula source, BioTransformation transformation) {
+        return BioTransformer.transform(source,transformation);
+    }
+
+
+    /**
+     * Applies all known biotransformation on a given Molecular formular and returns the transformed formula(s)
+     *
+     * @param source   source formula for transformation
+     * @return transformed MolecularFormulas
+     */
+    public List<MolecularFormula> bioTransform(MolecularFormula source) {
+        return BioTransformer.getAllTransformations(source);
     }
 
     /**

@@ -43,6 +43,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
 
     /**
      * Converts a map of elements to amounts into a molecular formula
+     *
      * @param map
      * @return
      */
@@ -50,11 +51,11 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final PeriodicTable table = PeriodicTable.getInstance();
         int maxid = 0;
         for (Element e : map.keySet()) maxid = Math.max(maxid, e.getId());
-        final BitSet bitset = new BitSet(maxid+1);
+        final BitSet bitset = new BitSet(maxid + 1);
         for (Element e : map.keySet()) bitset.set(e.getId());
         final TableSelection selection = table.getSelectionFor(bitset);
         final short[] buffer = new short[selection.size()];
-        for (int i=0; i < buffer.length; ++i) {
+        for (int i = 0; i < buffer.length; ++i) {
             final Element e = selection.get(i);
             final Integer amount = map.get(e);
             if (amount != null) {
@@ -273,8 +274,21 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         return sum;
     }
 
+    /**
+     * absolute number of atoms in this formula. e.g. C5H-2 counts 7, not 3
+     */
+    public int absAtomCount() {
+        int sum = 0;
+        final short[] amounts = buffer();
+        for (int i = 0; i < amounts.length; ++i) {
+            sum += Math.abs(amounts[i]);
+        }
+        return sum;
+    }
+
+
     public boolean isEmpty() {
-        return atomCount()==0;
+        return absAtomCount() == 0;
     }
 
     public boolean isCHNO() {
@@ -286,11 +300,12 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     }
 
     private static HashSet<String> ALLOWED_ELEMS_CHNOPSBBRClIF = new HashSet<>(Arrays.asList("C", "H", "N", "O", "P", "S", "B", "Br", "Cl", "I", "F"));
+
     public boolean isCHNOPSBBrClFI() {
         final short[] buf = buffer();
         final TableSelection sel = getTableSelection();
-        for (int k=0; k < buf.length; ++k) {
-            if (buf[k]>0 && !ALLOWED_ELEMS_CHNOPSBBRClIF.contains(sel.get(k).getSymbol())) {
+        for (int k = 0; k < buf.length; ++k) {
+            if (buf[k] > 0 && !ALLOWED_ELEMS_CHNOPSBBRClIF.contains(sel.get(k).getSymbol())) {
                 return false;
             }
         }
@@ -416,7 +431,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final TableSelection sel2 = other.getTableSelection();
         final int carbon = sel2.carbonIndex();
         final int hydrogen = sel2.hydrogenIndex();
-        int atoms=0;
+        int atoms = 0;
         for (short val : amounts) atoms += val;
         atoms -= numberOfCarbons();
         atoms -= numberOfHydrogens();
@@ -460,6 +475,24 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] amounts = buffer();
         for (int i = 0; i < amounts.length; ++i) {
             if (amounts[i] < 0) return false;
+        }
+        return true;
+    }
+
+    /*
+            checks if the given formula is a subset of this formula
+         */
+    public boolean contains(final MolecularFormula other) {
+        if (other == null || other.equals(MolecularFormula.emptyFormula())) return true;
+        final short[] amounts = buffer();
+        final TableSelection selection = getTableSelection();
+        final short[] otherAmounts = other.buffer();
+        final TableSelection otherSelection = other.getTableSelection();
+
+        for (int i = 0; i < otherAmounts.length; i++) {
+            int j = selection.indexOf(otherSelection.get(i));
+            if (j < 0 || j >= amounts.length || amounts[j] < otherAmounts[i])
+                return false;
         }
         return true;
     }
@@ -510,8 +543,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (selection != otherSelection) {
             final Counter counter = new Counter(other);
             visit(counter);
-            final int hydrogenDifference = Math.abs(other.numberOfHydrogens()-numberOfHydrogens());
-            return counter.count-hydrogenDifference;
+            final int hydrogenDifference = Math.abs(other.numberOfHydrogens() - numberOfHydrogens());
+            return counter.count - hydrogenDifference;
         } else {
             final int hydrogenIndex = selection.hydrogenIndex();
             for (int k = 0; k < Math.min(amounts.length, otherAmounts.length); ++k) {
@@ -537,9 +570,9 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (selection != otherSelection) {
             final Counter counter = new Counter(other);
             visit(counter);
-            final int hydrogenDifference = Math.abs(other.numberOfHydrogens()-numberOfHydrogens());
-            final int carbonDifference = Math.abs(other.numberOfCarbons()-numberOfCarbons());
-            return counter.count-(hydrogenDifference+carbonDifference);
+            final int hydrogenDifference = Math.abs(other.numberOfHydrogens() - numberOfHydrogens());
+            final int carbonDifference = Math.abs(other.numberOfCarbons() - numberOfCarbons());
+            return counter.count - (hydrogenDifference + carbonDifference);
         } else {
             final int hydrogenIndex = selection.hydrogenIndex();
             final int carbonIndex = selection.carbonIndex();
@@ -653,7 +686,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         if (formula == null) return false;
         final short[] amounts = buffer();
         final short[] otherAmounts = formula.buffer();
-        if (amounts.length==0 && otherAmounts.length==0) return true;
+        if (amounts.length == 0 && otherAmounts.length == 0) return true;
         final TableSelection selection = getTableSelection();
         final TableSelection otherSelection = formula.getTableSelection();
         if ((long) getMass() != (long) formula.getMass()) return false;
@@ -683,7 +716,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final TableSelection selection = getTableSelection();
         final StringBuilder buffer = new StringBuilder(3 * amounts.length);
         final int c = numberOfCarbons();
-        final boolean hasCarbon = c!=0;
+        final boolean hasCarbon = c != 0;
         final Element[] elements = new Element[Math.max(0, hasCarbon ? amounts.length - 2 : amounts.length)];
         int k = 0;
         for (int i = 0; i < amounts.length; ++i) {
@@ -777,7 +810,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     }
 
 
-
     /**
      * Two molecular formulas are only equal iff they are the same
      * formula. This is even the case if their masses are "equal" (which
@@ -798,7 +830,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] copy = buffer().clone();
         final int hi = sel.hydrogenIndex();
         if (hi < copy.length) copy[sel.hydrogenIndex()] = 0;
-        return new ImmutableMolecularFormula(sel,copy);
+        return new ImmutableMolecularFormula(sel, copy);
     }
 
     /**
@@ -811,7 +843,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             final int j = sel.getIndexIfExist(e);
             if (j >= 0 && j < copy.length) copy[j] = 0;
         }
-        return new ImmutableMolecularFormula(sel,copy);
+        return new ImmutableMolecularFormula(sel, copy);
     }
 
     private final static class Counter implements FormulaVisitor<Object> {

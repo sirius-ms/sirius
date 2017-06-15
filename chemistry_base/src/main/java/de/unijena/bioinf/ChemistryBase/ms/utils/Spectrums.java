@@ -217,7 +217,7 @@ public class Spectrums {
         }
     }
 
-    private static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
+    public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double dotProductPeaks(S left, S2 right, Deviation deviation) {
         int i=0, j=0;
         final int nl=left.size(), nr=right.size();

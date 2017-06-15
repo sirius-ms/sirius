@@ -26,7 +26,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = '3.4.1'
+    version = '3.5'
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -36,7 +36,8 @@ allprojects {
             url "https://bio.informatik.uni-jena.de/repository/local"
         }
         maven {
-            url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+            //url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
         }
         maven {
             url "https://www.xypron.de/repository" //glpk repo
@@ -47,7 +48,7 @@ allprojects {
         compile 'net.sf.trove4j:trove4j:3.0.3'
         compile 'com.google.guava:guava:18.0'
 
-        testCompile group: 'junit', name: 'junit', version: '4.+'
+        testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
     task sourceJar(type: Jar) {
