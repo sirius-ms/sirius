@@ -142,7 +142,7 @@ htmlDoku.mustRunAfter cleanDoku
 
 
 
-task pdfLatex(type: Exec) {
+/*task pdfLatex(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
     commandLine(['pdflatex', '-output-directory', '../build', './SIRIUS'])
@@ -155,7 +155,7 @@ task biber(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
     commandLine(['biber', '-output-directory', '../build', 'SIRIUS'])
-}
+}*/
 
 
 
@@ -164,28 +164,29 @@ task createVersion {
         Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
     }
 }
-task pdfDoku {
+task pdfDoku(type: Exec){
     group = 'documentation'
-//    workingDir = file("${project.manualPath}/source")
+    workingDir = file("${project.manualPath}/source")
     outputs.upToDateWhen { return false }
     outputs.file(file("${project.getRootDir()}/${project.appName}-manual.pdf"))
 
-    tasks.createVersion.execute()
-    tasks.pdfLatex.execute()
-    tasks.biber.execute()
-    tasks.pdfLatex.execute()
-    tasks.pdfLatex.execute()
+    doFirst {
+        Files.createDirectories(Paths.get("${project.manualPath}/build"))
+    }
+
+    commandLine 'bash', '-e', '-c', """
+        pdflatex -output-directory ../build ./SIRIUS
+        biber -output-directory ../build SIRIUS
+        pdflatex -output-directory ../build ./SIRIUS
+        pdflatex -output-directory ../build ./SIRIUS
+    """
 
     doLast {
-
         Files.copy(file("${project.manualPath}/build/SIRIUS.pdf").toPath(), outputs.files.singleFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 
 }
-
-
-
-
+pdfDoku.dependsOn createVersion
 pdfDoku.mustRunAfter cleanDoku
 
 task buildDoku {
