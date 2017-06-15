@@ -56,15 +56,15 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.4.2-SNAPSHOT (Build 1 from 2017-06-14)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-osx64.zip)
+### Sirius+CSI:FingerID GUI and CLI - Version 3.5 (Build 1 from 2017-06-15)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win64.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win64.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-osx64.zip)
 
-### Sirius Commandline Version 3.4.2-SNAPSHOT
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-win64-headless.zip)
-- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-linux64-headless.zip)
-- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.4.2-SNAPSHOT/sirius-3.4.2-SNAPSHOT-osx64-headless.zip)
+### Sirius Commandline Version 3.5
+- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win64-headless.zip)
+- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux64-headless.zip)
+- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-osx64-headless.zip)
 
 <!--end download-->
 
