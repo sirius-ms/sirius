@@ -2,16 +2,17 @@ package de.unijena.bioinf.sirius.gui.db;
 
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.DialogHaeder;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.ext.ListAction;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.load.CsvFields;
 import de.unijena.bioinf.sirius.gui.load.csv.GeneralCSVDialog;
 import de.unijena.bioinf.sirius.gui.load.csv.SimpleCsvParser;
-import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.utils.PlaceholderTextField;
 import org.jdesktop.swingx.JXRadioGroup;
@@ -162,7 +163,7 @@ public class DatabaseDialog extends JDialog {
 
                 if (new QuestionDialog(getOwner(),msg).isSuccess()) {
                     if (index>0) {
-                        new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).getImporter().deleteDatabase();
+                        new CustomDatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name)).deleteDatabase();
                         customDatabases.remove(name);
                         dbList.setListData(collectDatabases().toArray(new String[0]));
                     } else {
@@ -607,8 +608,7 @@ public class DatabaseDialog extends JDialog {
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", true);
-            MainFrame.MF.getCsiFingerId().waitForInitialization();
-            database = CustomDatabase.createNewdatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name), MainFrame.MF.getCsiFingerId().getFingerprintVersion());
+            database = CustomDatabase.createNewdatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name), (CdkFingerprintVersion) WebAPI.getFingerprintVersion());
             importer = database.getImporter();
             importer.init();
             importer.addListener(this);

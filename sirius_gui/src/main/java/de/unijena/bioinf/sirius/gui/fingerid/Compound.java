@@ -349,10 +349,11 @@ public class Compound {
      * @return number of newly added candidates
      */
     public static int merge(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
-        int sizeDiff=candidates.size();
+        int sizeDiff=0;
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion)version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
         final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
         for (FingerprintCandidate fc : candidates) compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
+        sizeDiff = compoundPerInchiKey.size();
         if (file.exists()) {
             final List<Compound> compounds = new ArrayList<>();
             try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(file)))) {
