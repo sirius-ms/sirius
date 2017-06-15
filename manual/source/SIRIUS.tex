@@ -1811,7 +1811,15 @@ If this option is set, SIRIUS~3 will search for molecular structure using CSI:Fi
 
 \begin{fulllineitems}
 \phantomsection\label{commandline:cmdoption--database}\pysigline{\bfcode{-{-}database}\code{}\code{,~}\bfcode{-d}\code{}}
-If this option is set, SIRIUS~3 will only consider molecular formulas from the given database. Either \code{PubChem} or \code{bio} can be chosen, as well as other concrete databases like \code{hmdb}, \code{kegg}, \code{knapsack{}`{}`{}`or {}`{}`biocyc}. When used with the option --fingerid, the chosen database will also be used to search for candidate structures.
+If this option is set, SIRIUS~3 will only consider molecular formulas from the given database. Either \code{PubChem} or \code{bio} can be chosen, as well as other concrete databases like \code{hmdb}, \code{kegg}, \code{knapsack{}`{}`{}`or {}`{}`biocyc}. When used with the option --fingerid, the chosen database will also be used to search for candidate structures. When setting this value to \code{all}, SIRIUS will consider all possible molecular formulas (without database search) and CSI:FingerId will use PubChem.
+
+\end{fulllineitems}
+
+\index{command line option!--fingerid-db}\index{--fingerid-db!command line option}
+
+\begin{fulllineitems}
+\phantomsection\label{commandline:cmdoption--fingerid-db}\pysigline{\bfcode{-{-}fingerid-db}\code{}}
+With this option you can specify the structure database to search in with CSI:FingerID. You only have to set this option if you want to have different settings for searching molecular formulas and structures. For example, it might be common to search in the space of all possible molecular formulas (using -d all) but restrict the structures to a user specified database. 
 
 \end{fulllineitems}
 

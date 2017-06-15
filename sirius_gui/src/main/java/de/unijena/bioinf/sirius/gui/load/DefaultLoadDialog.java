@@ -4,14 +4,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.myxo.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.io.DataFormat;
 import de.unijena.bioinf.sirius.gui.io.DataFormatIdentifier;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.structure.SpectrumContainer;
-import de.unijena.bioinf.sirius.gui.configs.Buttons;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -292,7 +292,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
     @Override
     public void ionizationChanged(PrecursorIonType ionization) {
-        System.err.println(ionization);
         if (ionization!=null) {
             final Ionization enumbla = SiriusDataConverter.siriusIonizationToEnum(ionization);
             if (enumbla.isUnknown() && !ionization.isIonizationUnknown()) {
