@@ -399,17 +399,16 @@ type \code{sirius3-console-64.exe}.
 For Mac OS\,X, make sure that you have installed JAVA version~8 or higher
 from \url{https://java.com/}; Apple only provides the deprecated version~6.
 
-The bash scripts to execute SIRIUS~3 are located in
-\code{/path/to/sirius3/bin}.  \todo{what is /path/to/??}
+Extract SIRIUS into a folder of your choice, for example \code{\textasciitilde{}/sirius3}.
 
-To start the SIRIUS~3 command line tool:
+To start the SIRIUS~3 command line tool you then have to enter:
 \begin{Verbatim}[commandchars=\\\{\}]
-./path/to/sirius3/bin/sirius3
+\textasciitilde{}/sirius3/bin/sirius3
 \end{Verbatim}
 
 To start the graphical user interface of SIRIUS~3:
 \begin{Verbatim}[commandchars=\\\{\}]
-./path/to/sirius3/bin/sirius3-gui
+\textasciitilde{}/sirius3/bin/sirius3-gui
 \end{Verbatim}
 
 To execute SIRIUS~3 from every location you have to add 
@@ -417,7 +416,7 @@ To execute SIRIUS~3 from every location you have to add
 to your PATH variable. To do so, open \code{\textasciitilde{}/.bashrc} in an 
 editor and add the following line (replacing the placeholder path):
 \begin{Verbatim}[commandchars=\\\{\}]
-export PATH=\PYGZdl{}PATH:/path/to/sirius3/bin
+export PATH=\PYGZdl{}PATH:\textasciitilde{}/sirius3/bin/sirius3/bin
 \end{Verbatim}
 Note that you have to reopen your ''bash'' shell to make the changes effective.
 
@@ -426,7 +425,7 @@ Note that you have to reopen your ''bash'' shell to make the changes effective.
 
 \begin{itemize}
 \item ``Max OS~X ships with Java, do I still have to install a Java
-  version?''  $\to$ Yes. Gecko3 does not work with Apple Java~6, the latest
+  version?''  $\to$ Yes. SIRIUS~3 does not work with Apple Java~6, the latest
   Java version OS~X installed and updated by default. Later OS~X version do
   not contain an Apple Java, but instead suggest installing Oracle Java.
 
@@ -788,13 +787,15 @@ SIRIUS~3 interpretes this parameter as a ``guarantee'' and, hence, assumes
 that \textbf{this is the maximum allowed mass deviation}; it
 will \textbf{discard} all explanations that require a larger mass deviation.
 This implies that \textbf{if in doubt, you should use a larger mass accuracy}
-to ensure that SIRIUS~3 can successfully annotate peaks in the spectrum.  By
-default, SIRIUS~3 further assumes that this mass accuracy is 3 times the
-standard deviation $\sigma$ of the normal distribution, and mass deviations
-are distributed according to $\mathcal{N}(0,\sigma^2)$.  Under this
-assumption $99.7\,\%$ of the mass deviations fall within the specified range,
-whereas larger mass deviations are truncated.  For masses below 100~Da, we
-use the absolute mass deviation at 100~Da, as we found that small masses vary
+to ensure that SIRIUS~3 can successfully annotate peaks in the spectrum.  
+%By
+%default, SIRIUS~3 further assumes that this mass accuracy is 3 times the
+%standard deviation $\sigma$ of the normal distribution, and mass deviations
+%are distributed according to $\mathcal{N}(0,\sigma^2)$.  Under this
+%assumption $99.7\,\%$ of the mass deviations fall within the specified range,
+%whereas larger mass deviations are truncated.  
+For masses below 200~Da, we
+use the absolute mass deviation at 200~Da, as we found that small masses vary
 according to an absolute rather than a relative error.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
