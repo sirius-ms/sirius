@@ -96,7 +96,7 @@ distributions {
                 from("${project.distPath}") {
                     exclude('sirius3-gui')
                 }
-                from{"${getRootDir()}/LICENSE.md"}
+                from { "${getRootDir()}/LICENSE.md" }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }

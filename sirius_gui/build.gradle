@@ -1,7 +1,3 @@
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
-
 dependencies {
 //project
     compile project(':sirius_cli')
@@ -119,7 +115,7 @@ distributions {
                 from("${project.distPath}") {
                     exclude('sirius-gui')
                 }
-                from {"${getRootDir()}/LICENSE.md"}
+                from { "${getRootDir()}/LICENSE.md" }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }
