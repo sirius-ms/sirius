@@ -3,7 +3,10 @@ package de.unijena.bioinf.sirius.cli;
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
@@ -91,15 +94,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     }
 
     private void generateCustomDatabase(FingerIdOptions options) throws IOException {
-        final TIntArrayList indizes = new TIntArrayList();
-        try (final WebAPI api = WebAPI.newInstance()) {
-            api.getStatistics(indizes);
-        }
-        final MaskedFingerprintVersion.Builder mv = MaskedFingerprintVersion.buildMaskFor(WebAPI.getFingerprintVersion());
-        mv.disableAll();
-        for (int i : indizes.toArray())
-            mv.enable(i);
-        DatabaseImporter.importDatabase(mv.toMask(), options.getGeneratingCompoundDatabase(), options.getInput());
+        DatabaseImporter.importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
     }
 
     @Override
