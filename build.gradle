@@ -159,23 +159,25 @@ task biber(type: Exec) {
 
 
 
+task createVersion {
+    doFirst {
+        Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
+    }
+}
 task pdfDoku {
     group = 'documentation'
 //    workingDir = file("${project.manualPath}/source")
     outputs.upToDateWhen { return false }
     outputs.file(file("${project.getRootDir()}/${project.appName}-manual.pdf"))
 
+    tasks.createVersion.execute()
     tasks.pdfLatex.execute()
     tasks.biber.execute()
     tasks.pdfLatex.execute()
     tasks.pdfLatex.execute()
 
-
-    doFirst {
-        Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
-    }
-
     doLast {
+
         Files.copy(file("${project.manualPath}/build/SIRIUS.pdf").toPath(), outputs.files.singleFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 
@@ -291,30 +293,30 @@ task refreshReadMe {
         File clg = inputs.files.getAt(1);
         File out = outputs.files.singleFile
 
-        List<String> links =  Files.readAllLines(dld.toPath())
-        List<String> changes =  Files.readAllLines(clg.toPath())
+        List<String> links = Files.readAllLines(dld.toPath())
+        List<String> changes = Files.readAllLines(clg.toPath())
 
 
-        Map<String,String> keywords = ['<!--begin download-->':'<!--end download-->','<!--begin changelog-->':'<!--end changelog-->'];
-        Map<String,List<String>> replacements = ['<!--begin download-->':links,'<!--begin changelog-->':changes];
+        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->', '<!--begin changelog-->': '<!--end changelog-->'];
+        Map<String, List<String>> replacements = ['<!--begin download-->': links, '<!--begin changelog-->': changes];
 
         List<String> lines = Files.readAllLines(out.toPath())
         List<String> nuLines = new LinkedList<>()
-        String  keyword = null;
-        String  keywordEnd = null;
+        String keyword = null;
+        String keywordEnd = null;
 
-        lines.each {String line ->
-            if(keyword == null){
+        lines.each { String line ->
+            if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line);
-                if (keywordEnd != null){
+                if (keywordEnd != null) {
                     keyword = line
                     def r = replacements.get(keyword)
 
                     nuLines.add('')
                     nuLines.addAll(r)
                 }
-            }else if(line.equals(keywordEnd)){
+            } else if (line.equals(keywordEnd)) {
                 nuLines.add('');
                 nuLines.add(line);
                 keyword = null;
@@ -324,7 +326,7 @@ task refreshReadMe {
 
 
         Files.deleteIfExists(out.toPath())
-        Files.write(out.toPath(),nuLines,StandardOpenOption.CREATE)
+        Files.write(out.toPath(), nuLines, StandardOpenOption.CREATE)
     }
 }
 refreshReadMe.dependsOn prepareChangelog
