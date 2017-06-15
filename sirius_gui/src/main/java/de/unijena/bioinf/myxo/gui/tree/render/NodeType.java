@@ -6,5 +6,5 @@ public enum NodeType{
 	thumbnail{public String toString(){return "thumbnail";}},
 	small {public String toString(){return "small";}}, 
 	big{public String toString(){return "big";}}, 
-	score{public String toString(){return "scores";}};
+	score{public String toString(){return "scores";}}
 }

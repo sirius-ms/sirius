@@ -3,7 +3,10 @@ package de.unijena.bioinf.myxo.gui.tree.render;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class FirstEdgeRearrangement implements EdgeRearrangement {
 	
@@ -33,7 +36,6 @@ public class FirstEdgeRearrangement implements EdgeRearrangement {
 			else middlePos = (int) Math.ceil(middleTemp);
 			
 //			int middlePos = edges.size()- / 2;
-			System.out.println(node.getMolecularFormula()+" "+middlePos);
 			TreeEdge[] temp = new TreeEdge[edges.size()];
 			temp[middlePos] = edges.get(0);
 			

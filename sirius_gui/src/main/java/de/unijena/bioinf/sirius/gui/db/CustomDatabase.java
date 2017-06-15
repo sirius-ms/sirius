@@ -233,11 +233,11 @@ public class CustomDatabase implements SearchableDatabase {
 
     public interface ImporterListener {
         // informs about fingerprints that have to be computed
-        public void newFingerprintBufferSize(int size);
+        void newFingerprintBufferSize(int size);
         // informs about molecules that have to be parsed
-        public void newMoleculeBufferSize(int size);
+        void newMoleculeBufferSize(int size);
         // informs about imported molecule
-        public void newInChI(InChI inchi);
+        void newInChI(InChI inchi);
     }
 
     public static abstract class AbstractImporterListener implements ImporterListener {

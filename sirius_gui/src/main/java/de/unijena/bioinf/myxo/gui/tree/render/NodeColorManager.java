@@ -6,14 +6,14 @@ import java.awt.*;
 
 public interface NodeColorManager {
 	
-	public Color getColor(TreeNode node);
+	Color getColor(TreeNode node);
 	
 	@SuppressWarnings("unused")
-	public double getMinimalValue();
+    double getMinimalValue();
 	
 	@SuppressWarnings("unused")
-	public double getMaximalValue();
+    double getMaximalValue();
 	
-	public Color getColor(double value);
+	Color getColor(double value);
 
 }

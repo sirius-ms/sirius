@@ -323,6 +323,8 @@ public class BackgroundComputation extends AbstractBean {
                     results = hasMS2 ? sirius.identify(experiment,
                             container.numberOfCandidates, true, IsotopePatternHandling.score, formulas) :
                             sirius.identifyByIsotopePattern(experiment, container.numberOfCandidates, formulas);
+                    for (IdentificationResult ir : results)
+                        sirius.beautifyTree(ir, experiment, true);
                 }
 
                 container.results = results;

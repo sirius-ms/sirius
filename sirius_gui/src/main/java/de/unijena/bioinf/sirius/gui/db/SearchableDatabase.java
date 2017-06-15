@@ -4,15 +4,15 @@ import java.io.File;
 
 public interface SearchableDatabase {
 
-    public String name();
+    String name();
 
-    public boolean searchInPubchem();
+    boolean searchInPubchem();
 
-    public boolean searchInBio();
+    boolean searchInBio();
 
-    public boolean isCustomDb();
+    boolean isCustomDb();
 
-    public File getDatabasePath();
+    File getDatabasePath();
 
 
 }

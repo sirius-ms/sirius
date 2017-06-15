@@ -38,6 +38,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -76,8 +77,8 @@ public class WebAPI implements Closeable {
     public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
-    public static final String VERSION = "3.4.1"; //todo get from properties file
-    public static final String DATE = "2017-02-06";
+    public static final String VERSION = "3.5.0"; //todo get from properties file
+    public static final String DATE = "2017-06-15";
 
 
     public static WebAPI newInstance() {
@@ -340,6 +341,7 @@ public class WebAPI implements Closeable {
         final HttpGet get;
         try {
             get = new HttpGet(getFingerIdURI("/webapi/compounds/" + (bio ? "bio/" : "not-bio/") + formula.toString() + ".json").build());
+            get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }

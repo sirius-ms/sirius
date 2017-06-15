@@ -3,31 +3,31 @@ package de.unijena.bioinf.myxo.gui.tree.structure;
 public interface TreeEdge {
 	
 	@SuppressWarnings("unused")
-	public TreeNode getSource();
+    TreeNode getSource();
 	
-	public TreeNode getTarget();
+	TreeNode getTarget();
 	
-	public String getLossFormula();
-	
-	@SuppressWarnings("unused")
-	public double getLossMass();
+	String getLossFormula();
 	
 	@SuppressWarnings("unused")
-	public double getScore();
+    double getLossMass();
 	
 	@SuppressWarnings("unused")
-	public void setSource(TreeNode source);
+    double getScore();
 	
 	@SuppressWarnings("unused")
-	public void setTarget(TreeNode target);
+    void setSource(TreeNode source);
 	
 	@SuppressWarnings("unused")
-	public void setLossFormula(String formula);
+    void setTarget(TreeNode target);
 	
 	@SuppressWarnings("unused")
-	public void setLossMass(double mass);
+    void setLossFormula(String formula);
 	
 	@SuppressWarnings("unused")
-	public void setScore(double score);
+    void setLossMass(double mass);
+	
+	@SuppressWarnings("unused")
+    void setScore(double score);
 
 }

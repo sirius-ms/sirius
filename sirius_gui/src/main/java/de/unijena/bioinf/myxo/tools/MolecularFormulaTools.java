@@ -162,7 +162,7 @@ public class MolecularFormulaTools {
 	@SuppressWarnings("unused")
 	public static void convertFormulasToMasses(File formulaFile, File massFile){
 		
-		try(BufferedReader reader = new BufferedReader(new FileReader(formulaFile)); BufferedWriter writer=new BufferedWriter(new FileWriter(massFile));){
+		try(BufferedReader reader = new BufferedReader(new FileReader(formulaFile)); BufferedWriter writer=new BufferedWriter(new FileWriter(massFile))){
 			
 			List<String> formulaList = new ArrayList<String>(1000);
 

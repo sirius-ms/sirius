@@ -4,43 +4,43 @@ package de.unijena.bioinf.myxo.gui.msviewer.data;
 public interface MSViewerDataModel {
 	
 	@SuppressWarnings("unused")
-	public int getSize();
+    int getSize();
 	
-	public double getMass(int index);
+	double getMass(int index);
 	
-	public double getRelativeIntensity(int index);
-	
-	@SuppressWarnings("unused")
-	public double getSignalNoise(int index);
-	
-	public double getAbsoluteIntensity(int index);
-	
-	public String getMolecularFormula(int index);
+	double getRelativeIntensity(int index);
 	
 	@SuppressWarnings("unused")
-	public PeakInformation getInformations(int index);
+    double getSignalNoise(int index);
 	
-	public boolean isMarked(int index);
+	double getAbsoluteIntensity(int index);
 	
-	public boolean isImportantPeak(int index);
+	String getMolecularFormula(int index);
 	
-	public boolean isUnimportantPeak(int index);
+	@SuppressWarnings("unused")
+    PeakInformation getInformations(int index);
+	
+	boolean isMarked(int index);
+	
+	boolean isImportantPeak(int index);
+	
+	boolean isUnimportantPeak(int index);
 	
 //	public boolean isNoise(int index);
 	
-	public boolean isPlusZeroPeak(int index);
+	boolean isPlusZeroPeak(int index);
 	
-	public boolean isIsotope(int index);
-	
-	@SuppressWarnings("unused")
-	public int[] getIsotopePeaks(int index);
-	
-	public String getLabel();
+	boolean isIsotope(int index);
 	
 	@SuppressWarnings("unused")
-	public int getIndexWithMass(double mass);
+    int[] getIsotopePeaks(int index);
+	
+	String getLabel();
 	
 	@SuppressWarnings("unused")
-	public int findIndexOfPeak(double mass, double tolerance);
+    int getIndexWithMass(double mass);
+	
+	@SuppressWarnings("unused")
+    int findIndexOfPeak(double mass, double tolerance);
 
 }

@@ -3,6 +3,7 @@ package de.unijena.bioinf.myxo.gui.tree.render;
 import de.unijena.bioinf.myxo.gui.tree.render.color.*;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -336,7 +337,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
             smallValueFont = tempFont.deriveFont(8f);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            LoggerFactory.getLogger(TreeRenderPanel.class).error(e.getMessage(),e);
         }
     }
 

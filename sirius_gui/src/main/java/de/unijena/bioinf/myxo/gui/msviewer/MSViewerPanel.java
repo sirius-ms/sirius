@@ -2,6 +2,7 @@ package de.unijena.bioinf.myxo.gui.msviewer;
 
 import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModel;
 import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModelListener;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,8 +84,8 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	
 	private void initPeakPositionParameter(){
 		
-		double intDiff = this.maxScaleInt - this.minScaleInt;;
-		this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
+		double intDiff = this.maxScaleInt - this.minScaleInt;
+        this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
 		
 		intDiff = this.maxScaleMass - this.minScaleMass;
 		this.xAxisPixelPerMassVal = ((double) xPixelNumber) / intDiff;
@@ -158,7 +159,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 			monoFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
 			monoFont = monoFont.deriveFont(12f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			LoggerFactory.getLogger(de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel.class).error(e.getMessage(),e);
 		}
 		
 		try{
@@ -168,7 +169,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 			labelFont = tempFont.deriveFont(12f);
 			titleFont = tempFont.deriveFont(24f);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			LoggerFactory.getLogger(de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel.class).error(e.getMessage(),e);
 		}
 		
 		this.initColors();
@@ -862,7 +863,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 			this.repaint();
 		}else{
 			boolean isImportant = this.dataModel.isImportantPeak(indexWithMaxInt);
-			if((showPeakInfoOnlyForImportantPeaks && isImportant)||!showPeakInfoOnlyForImportantPeaks){
+			if(!showPeakInfoOnlyForImportantPeaks || isImportant){
 				this.peakIndex = indexWithMaxInt;
 				this.repaint();
 			}

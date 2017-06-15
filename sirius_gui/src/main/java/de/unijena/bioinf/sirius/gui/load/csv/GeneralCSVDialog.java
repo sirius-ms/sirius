@@ -497,7 +497,7 @@ public class GeneralCSVDialog extends JPanel {
          * -1 means - unlikely. Everything above 0 is likely.
          * 0 is reserved for the unknown field
          */
-        public int check(List<String> values, int column);
+        int check(List<String> values, int column);
     }
 
 }
