@@ -287,12 +287,10 @@ public class CSIFingerIdComputation {
 
     private List<Compound> internalLoadCompoundsFromCustomDb(SearchableDatabase db, MolecularFormula formula) throws IOException {
         try {
-            logger.info("Search in Custom database: " + db.name() + " in " + db.getDatabasePath());
             final List<FingerprintCandidate> candidates = new FilebasedDatabase(fingerprintVersion.getMaskedFingerprintVersion(), db.getDatabasePath()).lookupStructuresAndFingerprintsByFormula(formula);
             final List<Compound> cs = new ArrayList<>();
             final List<Compound> todo = new ArrayList<>();
             for (FingerprintCandidate fc : candidates) {
-                logger.info(String.valueOf(fc.getInchi()) + " found (" + String.valueOf(fc.getSmiles()));
                 if (compounds.containsKey(fc.getInchiKey2D())) {
                     final Compound c;
                     synchronized (compounds) {
