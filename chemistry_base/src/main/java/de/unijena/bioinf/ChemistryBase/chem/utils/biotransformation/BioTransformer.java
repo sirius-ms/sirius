@@ -15,7 +15,6 @@ public class BioTransformer {
         for (BioTransformation transformation : BioTransformation.values()) {
             ts.addAll(transform(source, transformation));
         }
-        ;
         return ts;
     }
 

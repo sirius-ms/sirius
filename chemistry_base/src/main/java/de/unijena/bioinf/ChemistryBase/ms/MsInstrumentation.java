@@ -8,19 +8,19 @@ import java.util.regex.Pattern;
  */
 public interface MsInstrumentation {
 
-    public boolean hasIsotopesInMs2();
-    public String description();
-    public Deviation getExpectedMassDeviation();
-    public String getRecommendedProfile();
-    public Chromatrography getChromatography();
+    boolean hasIsotopesInMs2();
+    String description();
+    Deviation getExpectedMassDeviation();
+    String getRecommendedProfile();
+    Chromatrography getChromatography();
 
-    public boolean isInstrument(String description);
+    boolean isInstrument(String description);
 
-    public enum Chromatrography {
-        GC, LC;
+    enum Chromatrography {
+        GC, LC
     }
 
-    public static final MsInstrumentation Unknown = new MsInstrumentation() {
+    MsInstrumentation Unknown = new MsInstrumentation() {
         @Override
         public boolean hasIsotopesInMs2() {
             return false;
@@ -52,7 +52,7 @@ public interface MsInstrumentation {
         }
     };
 
-    public static enum Instrument implements MsInstrumentation {
+    enum Instrument implements MsInstrumentation {
         BRUKER_MAXIS("Bruker Q-ToF (LCMS)", "bruker_tof", new Deviation(10), true, "maxis|bruker"),
         QTOF("Q-ToF (LCMS)", "qtof", new Deviation(10), false, "tof"),
         ORBI("Orbitrap (LCMS)", "orbitrap", new Deviation(5), false, "orbi|exactive"),
@@ -65,7 +65,7 @@ public interface MsInstrumentation {
         protected Chromatrography chromatrography;
         protected Pattern pattern;
 
-        private Instrument(String description, String profile, Deviation dev, boolean iso, String pattern) {
+        Instrument(String description, String profile, Deviation dev, boolean iso, String pattern) {
             this.description = description;
             this.profile = profile;
             this.ppm = dev;

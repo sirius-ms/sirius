@@ -24,7 +24,7 @@ public class SimpleMutableSpectrum extends BasicMutableSpectrum<Peak> {
 
     @SuppressWarnings("unchecked")
     public <T extends Peak, S extends Spectrum<T>> SimpleMutableSpectrum(S immutable) {
-        super((Spectrum<? extends Peak>)immutable);
+        super(immutable);
     }
 
     public SimpleMutableSpectrum() {
