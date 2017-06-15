@@ -817,30 +817,31 @@ from compounds not marked as biomolecules --- are penalized.  Molecular
 formulas are never rewarded by SIRIUS~3.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{table}
-\caption{\todo{Outlier molecular formulas not penalized by SIRIUS~3}, despite
-being classified as ``not biomolecule-like''.}
-\label{tab:outlier-mfs}
-\smallskip
-
-\begin{center}
-\begin{tabular}{rrrr}
-\ce{H2O} & \ce{CO2} & \ce{C10HF19O2} & \ce{C10HF19O2} \\
-\ce{H2O} & \ce{CO2} & \ce{C10HF19O2} & \ce{C10HF19O2}
-\end{tabular}
-\end{center}
-\end{table}
+%\begin{table}
+%\caption{\todo{Outlier molecular formulas not penalized by SIRIUS~3}, despite
+%being classified as ``not biomolecule-like''.}
+%\label{tab:outlier-mfs}
+%\smallskip
+%
+%\begin{center}
+%\begin{tabular}{rrrr}
+%\ce{H2O} & \ce{CO2} & \ce{C10HF19O2} & \ce{C10HF19O2} \\
+%\ce{H2O} & \ce{CO2} & \ce{C10HF19O2} & \ce{C10HF19O2}
+%\end{tabular}
+%\end{center}
+%\end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 SIRIUS~3 uses a short list of outlier molecular formulas which would be
 penalized by the above method, as they are not ``biomolecule-like''; these
 molecular formulas are not penalized, as they have been observed in
 metabolomics experiments (for example, as solvents), but are also not
-rewarded.  \todo{Kai, stimmt das folgende?} These outlier molecular formulas
+rewarded. These outlier molecular formulas
 will be considered as candidates by SIRIUS~3 even if they violate elemental
-constrains such as ``at most 2 fluorine''.  See Table~\ref{tab:outlier-mfs}
-for a complete list of all molecular formulas which are explicitly not
-penalized.
+constrains such as ``at most 2 fluorine''.  
+%See Table~\ref{tab:outlier-mfs}
+%for a complete list of all molecular formulas which are explicitly not
+%penalized.
 
 Considering all molecular formulas implies that a set of elements has to be
 provided from which these molecular formulas are generated.  SIRIUS~3
@@ -940,9 +941,9 @@ SMARTS (SMiles ARbitrary Target Specification)
 string\footnote{\sphinxAtStartFootnote%
 \url{https://en.wikipedia.org/wiki/Smiles_arbitrary_target_specification}}:
 For example, molecular property 357 of PubChem CACTVS encodes SMARTS string
-``\verb=C(~C)(:C)(:N)='', corresponding to a central carbon atom connected to
-a second carbon atom via any bond, to a third carbon atom via a double bond,
-and to a nitrogen atom via a double bond.
+``\verb=[#6](~[#6])(:c)(:n)='', corresponding to a central carbon atom connected to
+a second carbon atom via any bond, to a third aromatic carbon atom via an aromatic bond,
+and to an aromatic nitrogen atom via an aromatic bond.
 See \url{ftp://ftp.ncbi.nlm.nih.gov/pubchem/specifications/pubchem_fingerprints.pdf}
 for the full description of the CACTVS fingerprint. We ignore all 
 molecular properties that can be derived from the molecular formula of the query compound (for example, bits 0 to 114 of PubChem CACTVS).
@@ -975,7 +976,7 @@ due to a hash collision.
 
 CSI:FingerID predicts only those molecular properties that showed reasonable
 prediction quality in cross validation (F$_1$ at least $0.25$, see below).
-In total, \todo{xxx} molecular properties are predicted by CSI:FingerID~1.1.
+In total, $3\,215$ molecular properties are predicted by CSI:FingerID~1.1.
 
 CSI:FingerID does not only predict if some molecular property is zero
 (absent) or one (present); it also provides an \textbf{estimate how sure it
@@ -1025,11 +1026,14 @@ database''.
 \item When searching \emph{PubChem}, we use a local copy of the database
   where we have precomputed all molecular fingerprints, as computing the
   fingerprints of the candidates ``on the fly'' is too time-consuming.  We
-  are sporadically updating our local copy of PubChem.  \todo{There should be
-  a way for the user to find out what PubChem copy was used; same for bio-db.
-  How about a web server command which returns a flat text file describing DB
-  statistics?  something like ``PubChem (22-09-2016) 894567 structures RETURN
-  KNApSAcK (23-03-2017) 1234 structures etc''}
+  are sporadically updating our local copy of PubChem.  
+  You can lookup the date of the latest database update in the database dialog.
+  %\todo{There should be
+  %a way for the user to find out what PubChem copy was used; same for bio-db.
+  %How about a web server command which returns a flat text file describing DB
+  %statistics?  something like ``PubChem (22-09-2016) 894567 structures RETURN
+  %KNApSAcK (23-03-2017) 1234 structures etc''}
+  % we report this in the database dialog.
 
 \item The \emph{biomolecule structure database} is an amalgamation of several
   structure databases that contain biomolecules (metabolites and other
@@ -1043,8 +1047,6 @@ database''.
   ZINC \citep{irwin12zinc}, all structures from GNPS \citep{wang16sharing}
   and MassBank \citep{horai10massbank}, and MeSH-annotated compounds from
   PubChem \citep{nelson01relationships, kim16pubchem}.
-
-\item \todo{suspect DB}
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1065,8 +1067,8 @@ but there is no guarantee for that.
 
 The Machine Learning part of CSI:FingerID, namely the essemble of linear
 Support Vector Machines, is currently (CSI:FingerID version~1.1) trained
-on \todo{xxx} compounds from \citep{wang16sharing} and \todo{xxx} compounds
-from MassBank \citep{horai10massbank}.  Again, all spectra were recorded in
+on $12\,108$ compounds from \citep{wang16sharing} and $2\,073$ compounds
+from MassBank \citep{horai10massbank}.  In total, CSI:FingerId is trained on $14\,181$ compounds with $8\,210$ unique structures. Again, all spectra were recorded in
 positive ion mode.  Different from fragmentation tree computation, we assume
 that the \textbf{prediction of molecular fingerprints is challenging for
 negative ion mode data}, given that we have no training data.  Hopefully,
@@ -1164,7 +1166,6 @@ right-clicking on a compound and choosing \textbf{Compute} in the context
 menu. The Batch Computation will compute all compounds in the workspace.
 Besides, you can select multiple compounds and choose \textbf{Compute} to 
 only compute a subset of your imported compounds.
-\todo{anything else new? single/batch for sirius and csi still correct?}
 
 \begin{figure}[htbp]
 \centering
@@ -1185,7 +1186,7 @@ Adding additional elements will increase running time. Using (too many) elements
 
 The automated detection of a set of ``uncommon elements'' is available if the 
 isotope pattern is provided. These elements are sulfur (S), chlorine (Cl), 
-bromine (Br), boron (B), selenium (Se) and silicon (Si). \todo{wollten wir Si deaktivieren?} 
+bromine (Br), boron (B), and selenium (Se). 
 Using \textbf{Auto detect} will clear your element selection and will set new values based on the detection. Autodetection is usually quite sensitive and rather overpredicts the actual quantity of an element.
 
 \subsection{Other}
@@ -1195,7 +1196,7 @@ The ionization mode determines the polarity of the measurement (positive or nega
 
 Choose either \emph{Q-TOF}, \emph{Orbitrap} or \emph{FT-ICR} in the instrument field. The chosen instrument affects only very few parameters of the method (mainly the allowed mass deviation). If your instrument is not one of these three then just select the Q-TOF instrument.
 
-You can change the maximal allowed mass deviation in the \textbf{ppm} field. SIRIUS~3 will only consider molecular formulas which mass deviations are either below the chosen ppm or smaller than \(\frac{100 \cdot ppm_{max}}{10^6}\)
+You can change the maximal allowed mass deviation in the \textbf{ppm} field. SIRIUS~3 will only consider molecular formulas which mass deviations are either below the chosen ppm or smaller than \(\frac{200 \cdot ppm_{max}}{10^6}\)
 
 Finally, you can select the number of molecular formula candidates that should be given in the output as well as where they come from.
 
@@ -1204,8 +1205,7 @@ enumerate over all molecular formulas that match the ion mass, filtering out
 only molecular formulas with negative ring double bond equivalent. If you 
 choose \textbf{all PubChem formulas} then SIRIUS~3 will select all molecular 
 formulas from PubChem. 
-\textbf{organic PubChem formulas} ignores molecular formulas containing Si. 
-\todo{only difference?}
+\textbf{organic PubChem formulas} ignores molecular formulas containing elements untypical for organic compounds (like Si or Mg). Molecular formulas pass this filter if they are composed solely of CHNOPSBBrClIF.
 When choosing \textbf{formulas from biological databases} SIRIUS~3 will select 
 formulas that are contained in any database of either biological compounds or 
 compounds that could be expected in biological experiments (e.g. KEGG, BioCyc, 
@@ -1983,8 +1983,8 @@ Now you can integrate SIRIUS~3 in your project by adding the following dependenc
 \begin{Verbatim}[commandchars=\\\{\}]
 \PYG{n+nt}{\PYGZlt{}dependency}\PYG{n+nt}{\PYGZgt{}}
   \PYG{n+nt}{\PYGZlt{}groupId}\PYG{n+nt}{\PYGZgt{}}de.unijena.bioinf\PYG{n+nt}{\PYGZlt{}/groupId\PYGZgt{}}
-  \PYG{n+nt}{\PYGZlt{}artifactId}\PYG{n+nt}{\PYGZgt{}}SIRIUSCLI\PYG{n+nt}{\PYGZlt{}/artifactId\PYGZgt{}}
-  \PYG{n+nt}{\PYGZlt{}version}\PYG{n+nt}{\PYGZgt{}}3.0.0\PYG{n+nt}{\PYGZlt{}/version\PYGZgt{}}
+  \PYG{n+nt}{\PYGZlt{}artifactId}\PYG{n+nt}{\PYGZgt{}}sirius_api\PYG{n+nt}{\PYGZlt{}/artifactId\PYGZgt{}}
+  \PYG{n+nt}{\PYGZlt{}version}\PYG{n+nt}{\PYGZgt{}}3.5.0\PYG{n+nt}{\PYGZlt{}/version\PYGZgt{}}
 \PYG{n+nt}{\PYGZlt{}/dependency\PYGZgt{}}
 \end{Verbatim}
 
