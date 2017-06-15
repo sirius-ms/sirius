@@ -54,7 +54,7 @@ allprojects {
     apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    targetCompatibility = 1.8
 
 
     version = "$siriusVersion"
@@ -213,6 +213,9 @@ subprojects {
 
         initialHeapPercent = 50
         maxHeapPercent = 80
+
+//        jreMinVersion = '1.7.0'
+//        jreMaxVersion = '1.9.0'
 
         dontWrapJar = true
         jdkPreference = "preferJre"
