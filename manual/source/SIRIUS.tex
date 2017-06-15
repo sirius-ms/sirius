@@ -441,24 +441,23 @@ Note that you have to reopen your ''bash'' shell to make the changes effective.
 
 \section{Proxy servers}
 \label{install:proxy}
-To use database related functionality of Sirius, Sirius needs needs ann 
-Internet connection. You have to ensure that it is not blocked by any security 
-software on your computer.
+To use database related functionality of Sirius, it needs an 
+Internet connection. You have to ensure that Sirius is not blocked by any 
+security software on your computer.
 
 If you have to use a proxy server to connect to the Internet, Sirius 
 automatically uses the system wide Java proxy 
 configuration\footnote{\sphinxAtStartFootnote{\url{https://www.java.com/de/download/help/proxy_setup.xml}}}
- if available. 
-Alternatively you can specify the proxy configuration in the Sirius 
-user interface (setting -> proxy settings). Your specified configuration will 
-be tested if you hit the save button.
+if available. Alternatively you can specify the proxy configuration in the 
+Sirius user interface setting (see Section~\ref{sec:settings}). 
 
+
+If Sirius cannot connect to the Internet it will report on which stage the 
+error occurred.
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.4\textwidth]{{proxySetting}.png}
 	\includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
 \end{figure}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1441,7 +1440,7 @@ Exporting ``CSI:FingerID results'' will create one \emph{csv} file for each comp
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Settings}
+\section{Settings}\label{sec:settings}
 \todo{General, Proxy, Error report}
 \begin{itemize}
 \item \textbf{General settings}
@@ -1452,7 +1451,22 @@ Exporting ``CSI:FingerID results'' will create one \emph{csv} file for each comp
 
 \item \textbf{Proxy settings}
 \begin{itemize}
-	\item Edit this information if you want to address CSI:FingerID via a proxy server.
+	\item Sirius support three different kinds of proxy configuration SYSTEM, 
+	SIRIUS and NONE. If SYSTEM (default) is select Sirius uses the system wide 
+	Java proxy settings. If SIRIUS is selected it uses the configuration you 
+	have specified int the Settings -> Proxy panel. If NONE is selected 
+	Sirius ignores all proxy settings.
+	  
+	\item Edit the information in the Settings -> Proxy panel if you want to 
+	address CSI:FingerID via a proxy server. Your specified configuration will 
+	be tested if you hit the save button (see Figure below).
+	
+	\begin{figure}[htbp]
+		\label{fig:proxy}
+		\centering
+		\includegraphics[width=0.4\textwidth]{{proxySetting}.png}
+		\includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
+	\end{figure}
 \end{itemize}
 
 \item \textbf{Error report settings}
