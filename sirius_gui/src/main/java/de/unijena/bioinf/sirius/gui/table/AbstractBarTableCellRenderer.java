@@ -103,7 +103,7 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
 
         String v = value;
         if (!Float.isNaN(percentageValue))
-            v =  String.format("%.2f",percentageValue) + "%";;
+            v =  String.format("%.2f",percentageValue) + "%";
 
         g2d.drawString(v, (getWidth() / 2) + (maxWord / 2) - (g2d.getFontMetrics().stringWidth(v)), (getHeight() - 4));
     }

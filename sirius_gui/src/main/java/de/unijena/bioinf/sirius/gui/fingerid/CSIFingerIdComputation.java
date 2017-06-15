@@ -25,7 +25,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
-import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.chemdb.DatabaseException;
+import de.unijena.bioinf.chemdb.FilebasedDatabase;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
@@ -39,10 +41,7 @@ import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TShortArrayList;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.fingerprint.IBitFingerprint;
-import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,7 +173,7 @@ public class CSIFingerIdComputation {
         this.pubchemConfidenceScorePredictor = webAPI.getConfidenceScore(false);
         this.bioConfidenceScorePredictor = webAPI.getConfidenceScore(true);
 
-        final CdkFingerprintVersion version = (CdkFingerprintVersion) webAPI.getFingerprintVersion();
+        final CdkFingerprintVersion version = (CdkFingerprintVersion) WebAPI.getFingerprintVersion();
 
         final MaskedFingerprintVersion.Builder v = MaskedFingerprintVersion.buildMaskFor(version);
         v.disableAll();
@@ -616,17 +615,18 @@ public class CSIFingerIdComputation {
                 }
             }
             final QueryPredictor queryPredictor = bio ? bioConfidenceScorePredictor : pubchemConfidenceScorePredictor;
-
-            CompoundWithAbstractFP<ProbabilityFingerprint> query = data.compounds[0].asQuery(data.platts);
-            CompoundWithAbstractFP<Fingerprint>[] candidates = new CompoundWithAbstractFP[data.compounds.length];
-            for (int k = 0; k < candidates.length; ++k) {
-                candidates[k] = data.compounds[k].asCandidate();
-            }
-            try {
-                data.setConfidence(queryPredictor.estimateProbability(query, candidates));
-            } catch (PredictionException e) {
-                data.setConfidence(Double.NaN);
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            if (queryPredictor != null) {
+                CompoundWithAbstractFP<ProbabilityFingerprint> query = data.compounds[0].asQuery(data.platts);
+                CompoundWithAbstractFP<Fingerprint>[] candidates = new CompoundWithAbstractFP[data.compounds.length];
+                for (int k = 0; k < candidates.length; ++k) {
+                    candidates[k] = data.compounds[k].asCandidate();
+                }
+                try {
+                    data.setConfidence(queryPredictor.estimateProbability(query, candidates));
+                } catch (PredictionException e) {
+                    data.setConfidence(Double.NaN);
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+                }
             }
         }
 
@@ -810,10 +810,8 @@ public class CSIFingerIdComputation {
                         }
                         continue;
                     } else {
-                        System.out.println("Blast " + container.experiment.getName());
 
                         if (!container.structuresDownloaded || !container.fingerprintPredicted) {
-                            System.out.println("Wait for " + (container.structuresDownloaded ? "PREDICTION" : "DOWNLOADING STRUCTURES"));
                             final boolean lookedAtAll = container.cycle == cycle;
                             container.cycle = cycle;
                             blastQueue.add(container);

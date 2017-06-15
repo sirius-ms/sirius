@@ -145,7 +145,6 @@ public class WorkspaceIO {
                     @Override
                     public Void apply(BufferedWriter input) {
                         try {
-                            System.out.println(ir.getResult().getRawTree().getRoot().getFormula());
                             new FTJsonWriter().writeTree(input,ir.getResult().getRawTree());
                         } catch (IOException e) {
                             throw new RuntimeException(e);

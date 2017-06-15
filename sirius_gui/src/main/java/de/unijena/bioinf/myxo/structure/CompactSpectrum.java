@@ -5,48 +5,48 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 public interface CompactSpectrum {
 	
 	@SuppressWarnings("unused")
-	public CollisionEnergy getCollisionEnergy();
+    CollisionEnergy getCollisionEnergy();
 	
 	@SuppressWarnings("unused")
-	public void setCollisionEnergy(CollisionEnergy e);
+    void setCollisionEnergy(CollisionEnergy e);
 
 	@SuppressWarnings("unused")
-	public double getTIC();
+    double getTIC();
 	
 	@SuppressWarnings("unused")
-	public int getSize();
+    int getSize();
 	
 	@SuppressWarnings("unused")
-	public int getMSLevel();
+    int getMSLevel();
 	
 	@SuppressWarnings("unused")
-	public void setMSLevel(int level);
+    void setMSLevel(int level);
 	
 	@SuppressWarnings("unused")
-	public double getMass(int index);
+    double getMass(int index);
 	
 	@SuppressWarnings("unused")
-	public double getAbsoluteIntensity(int index);
+    double getAbsoluteIntensity(int index);
 	
 	@SuppressWarnings("unused")
-	public double getSignalToNoise(int index);
+    double getSignalToNoise(int index);
 	
 	@SuppressWarnings("unused")
-	public double getResolution(int index);
+    double getResolution(int index);
 	
 	@SuppressWarnings("unused")
-	public double getBasePeakIntensity();
+    double getBasePeakIntensity();
 	
 	@SuppressWarnings("unused")
-	public double getRelativeIntensity(int index);
+    double getRelativeIntensity(int index);
 	
 	@SuppressWarnings("unused")
-	public boolean signalNoisePresent();
+    boolean signalNoisePresent();
 	
 	@SuppressWarnings("unused")
-	public boolean resolutionPresent();
+    boolean resolutionPresent();
 	
 	@SuppressWarnings("unused")
-	public CompactPeak getPeak(int index);
+    CompactPeak getPeak(int index);
 
 }

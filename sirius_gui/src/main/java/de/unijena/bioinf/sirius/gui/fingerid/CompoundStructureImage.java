@@ -136,7 +136,7 @@ class CompoundStructureImage extends JPanel {
 //                gg.drawString(scoreText3, (int) (getWidth() - (tw + w3 + 8)), (int) (getHeight() - 4));
 
             gg.setFont(matchFont);
-            gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), (int) (getHeight() - 4));
+            gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
 
 
         }

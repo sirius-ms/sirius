@@ -6,21 +6,21 @@ import java.util.List;
 public interface PeakInformation {
 	
 	@SuppressWarnings("unused")
-	public double getMass();
+    double getMass();
 	
 	@SuppressWarnings("unused")
-	public double getRelativeIntensity();
+    double getRelativeIntensity();
 	
 	@SuppressWarnings("unused")
-	public double getAbsoluteIntensity();
+    double getAbsoluteIntensity();
 	
 	@SuppressWarnings("unused")
-	public double getSignalToNoise();
+    double getSignalToNoise();
 	
 	@SuppressWarnings("unused")
-	public boolean isIsotope();
+    boolean isIsotope();
 	
 	@SuppressWarnings("unused")
-	public List<MolecularFormulaInformation> getDecompositions();
+    List<MolecularFormulaInformation> getDecompositions();
 
 }

@@ -5,18 +5,18 @@ package de.unijena.bioinf.myxo.gui.msviewer.data;
 public interface MolecularFormulaInformation {
 	
 	@SuppressWarnings("unused")
-	public String getMolecularFormula();
+    String getMolecularFormula();
 	
 	@SuppressWarnings("unused")
-	public double getMass();
+    double getMass();
 	
 	@SuppressWarnings("unused")
-	public void useFormula(boolean use);
+    void useFormula(boolean use);
 	
 	@SuppressWarnings("unused")
-	public boolean formulaUsed();
+    boolean formulaUsed();
 	
 	@SuppressWarnings("unused")
-	public PeakInformation getPeak();
+    PeakInformation getPeak();
 
 }

@@ -116,8 +116,6 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
                     // workaround... we should think about that carefully
                     final FTree tree = result.getResolvedTree();
-                    // ???
-                    //tree.setAnnotation(PrecursorIonType.class, tree.getFragmentAnnotationOrNull(PrecursorIonType.class).get(tree.getRoot()));
                     futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion));
                 }
                 final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
@@ -177,26 +175,32 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     final CompoundCandidate fc = allCandidates.get(0).getCandidate();
                     final CompoundWithAbstractFP[] list = new CompoundWithAbstractFP[confidenceList.size()];
                     for (int k = 0; k < confidenceList.size(); ++k) list[k] = confidenceList.get(k).getCandidate();
-                    final double confidenceScore = confidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(c.getCandidate().getInchi(), predictedFingerprints.get(c.getCandidate().getInchi().extractFormula())), list);
+                    final double confidenceScore = confidence==null ? 0d : confidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(c.getCandidate().getInchi(), predictedFingerprints.get(c.getCandidate().getInchi().extractFormula())), list);
 
                     if (topResult!=null) topResult.setConfidence(confidenceScore);
 
                     String name = fc.getName();
                     if (name == null || name.isEmpty()) name = fc.getSmiles();
                     if (name == null || name.isEmpty()) name = "";
-                    progress.info(String.format(Locale.US, "Top compound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
+                    if (confidence==null)
+                        progress.info(String.format(Locale.US, "Top compound is %s (%s)\n", name, fc.getInchi().in2D));
+                    else
+                        progress.info(String.format(Locale.US, "Top compound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
                 }
                 if (bioFilter != BioFilter.ONLY_BIO && topBio!=null && topBio != allCandidates.get(0).getCandidate()) {
                     final Scored<CompoundWithAbstractFP<Fingerprint>> c = bioConfidenceList.get(0);
                     final CompoundCandidate fc = topBio;
                     final CompoundWithAbstractFP[] list = new CompoundWithAbstractFP[bioConfidenceList.size()];
                     for (int k = 0; k < bioConfidenceList.size(); ++k) list[k] = bioConfidenceList.get(k).getCandidate();
-                    final double confidenceScore = bioConfidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(c.getCandidate().getInchi(), predictedFingerprints.get(c.getCandidate().getInchi().extractFormula())), list);
+                    final double confidenceScore = bioConfidence==null ? 0 : bioConfidence.estimateProbability(new CompoundWithAbstractFP<ProbabilityFingerprint>(c.getCandidate().getInchi(), predictedFingerprints.get(c.getCandidate().getInchi().extractFormula())), list);
 
                     String name = fc.getName();
                     if (name == null || name.isEmpty()) name = fc.getSmiles();
                     if (name == null || name.isEmpty()) name = "";
-                    progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
+                    if (bioConfidence==null)
+                        progress.info(String.format(Locale.US, "Top biocompound is %s (%s)\n", name, fc.getInchi().in2D));
+                    else
+                        progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
                 }
 
                 for (int k = 0; k < Math.min(20, allCandidates.size()); ++k) {
@@ -314,7 +318,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 //            this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
             this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
-            MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(webAPI.getFingerprintVersion());
+            MaskedFingerprintVersion.Builder b = MaskedFingerprintVersion.buildMaskFor(WebAPI.getFingerprintVersion());
             b.disableAll();
             for (int index : indizes.toArray()) {
                 b.enable(index);

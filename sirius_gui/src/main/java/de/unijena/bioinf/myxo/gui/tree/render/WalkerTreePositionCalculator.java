@@ -9,8 +9,6 @@ package de.unijena.bioinf.myxo.gui.tree.render;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeEdge;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class WalkerTreePositionCalculator extends AbstractTreePositionCalculator {
@@ -159,8 +157,6 @@ public class WalkerTreePositionCalculator extends AbstractTreePositionCalculator
 			if(d<minPos)minPos = d;
 		}
 		
-		System.out.println("minPos: "+minPos);
-		
 		for(TreeNode node : relHorPositions.keySet()){
 			Double d = relHorPositions.get(node);
 			positions.add(d-minPos);
@@ -177,14 +173,11 @@ public class WalkerTreePositionCalculator extends AbstractTreePositionCalculator
 			double diff = val2 - val1;
 			if(minDiff>diff) minDiff = diff;
 		}
-		
-		System.out.println("minDiff: "+minDiff);
-		
+
 		for(TreeNode node : relHorPositions.keySet()){
 			double doubleVal = relHorPositions.get(node);
 			int intVal = (int) Math.round((doubleVal-minPos) / minDiff);
 			node.setHorizontalPosition(intVal);
-			System.out.println(node.getMolecularFormula()+" "+node.getHorizontalPosition()+" "+node.getVerticalPosition());
 //			System.out.println(node.getMolecularFormula()+" "+((doubleVal-minPos)/minDiff) +" "+intVal);
 //			System.out.println("b "+node.getMolecularFormula()+" "+doubleVal);
 		}

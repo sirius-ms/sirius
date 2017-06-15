@@ -289,26 +289,26 @@ task refreshReadMe {
 
 
     doFirst {
-        File dld = inputs.files.getAt(0);
-        File clg = inputs.files.getAt(1);
+        File dld = inputs.files.getAt(0)
+        File clg = inputs.files.getAt(1)
         File out = outputs.files.singleFile
 
         List<String> links = Files.readAllLines(dld.toPath())
         List<String> changes = Files.readAllLines(clg.toPath())
 
 
-        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->', '<!--begin changelog-->': '<!--end changelog-->'];
-        Map<String, List<String>> replacements = ['<!--begin download-->': links, '<!--begin changelog-->': changes];
+        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->', '<!--begin changelog-->': '<!--end changelog-->']
+        Map<String, List<String>> replacements = ['<!--begin download-->': links, '<!--begin changelog-->': changes]
 
         List<String> lines = Files.readAllLines(out.toPath())
         List<String> nuLines = new LinkedList<>()
-        String keyword = null;
-        String keywordEnd = null;
+        String keyword = null
+        String keywordEnd = null
 
         lines.each { String line ->
             if (keyword == null) {
                 keywordEnd = keywords.get(line)
-                nuLines.add(line);
+                nuLines.add(line)
                 if (keywordEnd != null) {
                     keyword = line
                     def r = replacements.get(keyword)
@@ -317,10 +317,10 @@ task refreshReadMe {
                     nuLines.addAll(r)
                 }
             } else if (line.equals(keywordEnd)) {
-                nuLines.add('');
-                nuLines.add(line);
-                keyword = null;
-                keywordEnd = null;
+                nuLines.add('')
+                nuLines.add(line)
+                keyword = null
+                keywordEnd = null
             }
         }
 

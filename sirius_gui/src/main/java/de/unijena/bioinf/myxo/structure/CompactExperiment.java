@@ -7,32 +7,32 @@ import java.util.List;
 
 public interface CompactExperiment {
 	
-	public CompactSpectrum getMS1Spectrum();
+	CompactSpectrum getMS1Spectrum();
 	
-	public List<CompactSpectrum> getMS2Spectra();
-	
-	@SuppressWarnings("unused")
-	public double getFocusedMass();
+	List<CompactSpectrum> getMS2Spectra();
 	
 	@SuppressWarnings("unused")
-	public String getCompoundName();
+    double getFocusedMass();
 	
 	@SuppressWarnings("unused")
-	public double getRetentionTime();
+    String getCompoundName();
 	
 	@SuppressWarnings("unused")
-	public MolecularFormula getMolecularFormula();
+    double getRetentionTime();
 	
 	@SuppressWarnings("unused")
-	public Deviation getDeviation();
+    MolecularFormula getMolecularFormula();
 	
 	@SuppressWarnings("unused")
-	public void setFocusedMass(double mass);
+    Deviation getDeviation();
 	
 	@SuppressWarnings("unused")
-	public void setIonization(String ion);
+    void setFocusedMass(double mass);
 	
 	@SuppressWarnings("unused")
-	public String getIonization();
+    void setIonization(String ion);
+	
+	@SuppressWarnings("unused")
+    String getIonization();
 
 }
