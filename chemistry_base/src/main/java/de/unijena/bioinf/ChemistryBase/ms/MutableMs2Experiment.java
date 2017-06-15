@@ -23,24 +23,24 @@ public class MutableMs2Experiment implements Ms2Experiment {
     private String name;
 
     public MutableMs2Experiment() {
-        this.ms1Spectra = new ArrayList<SimpleSpectrum>();
-        this.ms2Spectra = new ArrayList<MutableMs2Spectrum>();
-        this.annotations = new HashMap<Class<Object>, Object>();
+        this.ms1Spectra = new ArrayList<>();
+        this.ms2Spectra = new ArrayList<>();
+        this.annotations = new HashMap<>();
         this.source = null;
         this.name = "";
     }
 
     public MutableMs2Experiment(Ms2Experiment experiment) {
         this.precursorIonType = experiment.getPrecursorIonType();
-        this.ms1Spectra = new ArrayList<SimpleSpectrum>();
+        this.ms1Spectra = new ArrayList<>();
         for (Spectrum<Peak> spec : experiment.getMs1Spectra())
             ms1Spectra.add(new SimpleSpectrum(spec));
         this.mergedMs1Spectrum = experiment.getMergedMs1Spectrum() == null ? null : new SimpleSpectrum(experiment.getMergedMs1Spectrum());
-        this.ms2Spectra = new ArrayList<MutableMs2Spectrum>();
+        this.ms2Spectra = new ArrayList<>();
         for (Ms2Spectrum<Peak> ms2spec : experiment.getMs2Spectra()) {
             this.ms2Spectra.add(new MutableMs2Spectrum(ms2spec));
         }
-        this.annotations = new HashMap<Class<Object>, Object>();
+        this.annotations = new HashMap<>();
         final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
         while (iter.hasNext()) {
             final Map.Entry<Class<Object>, Object> v = iter.next();

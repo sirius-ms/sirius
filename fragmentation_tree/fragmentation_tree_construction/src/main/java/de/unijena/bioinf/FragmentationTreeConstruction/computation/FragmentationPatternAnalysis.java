@@ -109,6 +109,30 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private RecalibrationMethod recalibrationMethod;
     private GraphReduction reduction;
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
+    private IsotopeInMs2Handling isotopeInMs2Handling;
+
+    public enum IsotopeInMs2Handling {
+        /**
+         * never look for isotopes in MS2
+         */
+        IGNORE,
+
+        /**
+         * look for isotopes in MS2 if experiment is measured on a Bruker Maxis
+         */
+        BRUKER_ONLY,
+
+        /**
+         * look for isotopes in MS2 if experiment is measured on a Bruker Maxis.
+         * But enable isotope scoring only if enough intensive peaks show an isotope pattern
+         */
+        BRUKER_IF_NECESSARY,
+
+        /**
+         * enforce scoring of isotopes in MS2, even if spectrum is not measured on a Bruker Maxis.
+         */
+        ALWAYS
+    }
 
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
 
@@ -615,7 +639,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
-        setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+        //setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
 
         getDefaultProfile().setMedianNoiseIntensity(ExponentialDistribution.fromLambda(0.4d).getMedian());
     }
@@ -679,7 +703,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPostProcessors().add(new LimitNumberOfPeaksFilter(40));
 
         //analysis.setTreeBuilder(new DPTreeBuilder(15));
-        analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+        //analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
 
@@ -744,8 +768,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         analysis.getPreprocessors().add(new NormalizeToSumPreprocessor());
 
 
-        final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
-        analysis.setTreeBuilder(solver);
+        //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
+        //analysis.setTreeBuilder(solver);
 
         final MutableMeasurementProfile profile = new MutableMeasurementProfile();
         profile.setAllowedMassDeviation(new Deviation(10));
@@ -790,7 +814,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (Object o : this.postProcessors) {
             initialize(o);
         }
-        initialize(treeBuilder);
+        //initialize(treeBuilder);
         initialize(recalibrationMethod);
         initialize(reduction);
         initialize(isoInMs2Scorer);
@@ -876,11 +900,12 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
         this.defaultProfile = new MutableMeasurementProfile();
-
+        isoInMs2Scorer = new IsotopePatternInMs2Scorer();
+        isotopeInMs2Handling = IsotopeInMs2Handling.IGNORE;
         this.reduction = new SimpleReduction();
 
-        final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
-        setTreeBuilder(solver);
+        //final TreeBuilder solver = TreeBuilderFactory.getInstance().getTreeBuilder();
+        //setTreeBuilder(solver);
 
     }
 
@@ -904,7 +929,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration) {
-        FTree tree = treeBuilder.buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
+        FTree tree = getTreeBuilder().buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
         if (tree == null) return null;
         addTreeAnnotations(graph, tree);
         if (recalibration) tree = recalibrate(tree);
@@ -1351,12 +1376,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             assert !Double.isInfinite(score);
             loss.setWeight(score);
         }
-
-        ///////////////////
-        if (isoInMs2Scorer!=null) isoInMs2Scorer.score(input, graph);
-        ///////////////////
+        scoreIsotopesInMs2(input, graph);
 
         return graph;
+    }
+
+    private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+        final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown).hasIsotopesInMs2();
+        switch (isotopeInMs2Handling) {
+            case IGNORE: return;
+            case BRUKER_IF_NECESSARY:
+                throw new UnsupportedOperationException("Not supported yet");
+            case BRUKER_ONLY:
+                if (!isBrukerMaxis) return;
+            case ALWAYS:
+                default:
+        }
+        isoInMs2Scorer.score(input, graph);
     }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {
@@ -1367,9 +1403,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         processedPeaks.add(syntheticParent);
     }
 
-    public void enableIsotopesInMs2(boolean value) {
-        if (value) isoInMs2Scorer = new IsotopePatternInMs2Scorer();
-        else isoInMs2Scorer=null;
+    public void setIsotopeHandling(IsotopeInMs2Handling handling) {
+        this.isotopeInMs2Handling = handling;
     }
 
     /*
@@ -1495,6 +1530,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public TreeBuilder getTreeBuilder() {
+        if (treeBuilder==null) {
+            setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+        }
         return treeBuilder;
     }
 
@@ -1528,6 +1566,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         fillList(fragmentPeakScorers, helper, document, dictionary, "peakScorers");
         fillList(peakPairScorers, helper, document, dictionary, "peakPairScorers");
         fillList(lossScorers, helper, document, dictionary, "lossScorers");
+        if (document.hasKeyInDictionary(dictionary, "isotopesInMs2")) {
+            this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
+        }
         peakMerger = (PeakMerger) helper.unwrap(document, document.getFromDictionary(dictionary, "merge"));
         if (document.hasKeyInDictionary(dictionary, "recalibrationMethod")) {
             recalibrationMethod = (RecalibrationMethod) helper.unwrap(document, document.getFromDictionary(dictionary, "recalibrationMethod"));
@@ -1575,6 +1616,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         list = document.newList();
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
+        document.addToDictionary(dictionary, "isotopesInMs2", helper.wrap(document, isoInMs2Scorer));
         if (recalibrationMethod != null)
             document.addToDictionary(dictionary, "recalibrationMethod", helper.wrap(document, recalibrationMethod));
         document.addToDictionary(dictionary, "merge", helper.wrap(document, peakMerger));

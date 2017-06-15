@@ -237,6 +237,9 @@ class DefaultDescriptors {
             }
 
             scoring.setRecalibrationBonus(document.getDoubleFromDictionary(score, "recalibrationBonus"));
+            if (document.hasKeyInDictionary(score, "recalibrationPenalty")) {
+                scoring.setRecalibrationPenalty(document.getDoubleFromDictionary(score, "recalibrationPenalty"));
+            }
             if (document.hasKeyInDictionary(score, "beautificationPenalty")){
                 scoring.setBeautificationPenalty(document.getDoubleFromDictionary(score, "beautificationPenalty"));
             } else scoring.setBeautificationPenalty(0);
@@ -244,7 +247,9 @@ class DefaultDescriptors {
 
             for (String key : document.keySetOfDictionary(score)) {
                 if (key.equals("total") || key.equals("root") || key.equals("recalibrationBonus") || key.equals("beautificationPenalty") || key.equals("tree")) continue;
-                scoring.addAdditionalScore(key, document.getDoubleFromDictionary(score, key));
+                final double addScore = document.getDoubleFromDictionary(score, key);
+                scoring.addAdditionalScore(key, addScore);
+                scoring.setOverallScore(scoring.getOverallScore()-addScore);
             }
 
             if (document.hasKeyInDictionary(dictionary, "ratioOfExplainedPeaks")) {
@@ -266,6 +271,7 @@ class DefaultDescriptors {
             final D score = document.newDictionary();
             document.addToDictionary(score, "total", annotation.getOverallScore());
             document.addToDictionary(score, "recalibrationBonus", annotation.getRecalibrationBonus());
+            document.addToDictionary(score, "recalibrationPenalty", annotation.getRecalibrationPenalty());
             document.addToDictionary(score, "beautificationPenalty", annotation.getBeautificationPenalty());
             document.addToDictionary(score, "root", annotation.getRootScore());
             double sum = 0d;

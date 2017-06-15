@@ -165,6 +165,10 @@
         }
       }
     ],
+    "isotopesInMs2": {
+      "$name": "IsotopePatternInMs2Scorer",
+      "baselineAbsoluteIntensity": 300
+    },
     "recalibrationMethod": {
       "$name": "HypothesenDrivenRecalibration",
       "method": {
@@ -179,11 +183,6 @@
     },
     "$name": "FragmentationPatternAnalysis",
     "preProcessing": [
-      {
-        "$name": "NoiseEstimateFilter",
-        "percentile": 0.9,
-        "minNumberOfNoisePeaks": 50
-      },
       {
         "$name": "NormalizeToSumPreprocessor",
         "onlyForRelativeIntensities": true
@@ -297,16 +296,21 @@
         "score": -0.5
       },
       {
+        "$name": "NoIsotopePatternPenalty",
+        "lambda": 2
+      },
+      {
         "$name": "FragmentSizeScorer",
         "maxScore": 2,
         "maxSize": 200
       },
       {
-        "$name": "PeakIsNoiseScorer",
+        "$name": "ClippedPeakIsNoiseScorer",
         "distribution": {
           "$name": "ParetoDistribution$EstimateByMedian",
           "xmin": 0.002
-        }
+        },
+        "beta": 0.00001
       }
     ],
     "peakPairScorers": [
@@ -577,7 +581,7 @@
         "threshold": 0.002
       },
       {
-        "limit": 120,
+        "limit": 60,
         "$name": "LimitNumberOfPeaksFilter"
       }
     ]

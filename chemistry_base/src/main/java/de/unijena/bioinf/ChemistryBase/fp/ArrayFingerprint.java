@@ -1,7 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
-import com.google.common.base.Joiner;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -162,7 +160,14 @@ public class ArrayFingerprint extends Fingerprint {
 
     @Override
     public String toTabSeparatedString() {
-        return Joiner.on('\t').join(this);
+        if (indizes.length==0) return "";
+        final StringBuilder buffer = new StringBuilder(indizes.length*5);
+        buffer.append(String.valueOf(indizes[0]));
+        for (int k=1; k < indizes.length; ++k) {
+            buffer.append('\t');
+            buffer.append(String.valueOf(indizes[k]));
+        }
+        return buffer.toString();
     }
 
     @Override
