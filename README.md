@@ -80,12 +80,16 @@ command-line tool.
 Kai Dührkop and Sebastian Böcker. [Fragmentation trees
 reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
 Cheminform*, 8:5, 2016. (Cite this for *fragmentation pattern analysis
-and fragmentation tree computation*) Kai Dührkop, Huibin Shen, Marvin
+and fragmentation tree computation*) 
+
+Kai Dührkop, Huibin Shen, Marvin
 Meusel, Juho Rousu, and Sebastian Böcker. [Searching molecular structure
 databases with tandem mass spectra using
 CSI:FingerID](http://dx.doi.org/10.1073/pnas.1509788112). *Proc Natl
 Acad Sci U S A*, 112(41):12580-12585, 2015. (cite this when *using
-CSI:FingerID*) Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták
+CSI:FingerID*) 
+
+Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták
 and Anton Pervukhin. [SIRIUS: decomposing isotope patterns for
 metabolite
 identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full) *Bioinformatics*
@@ -98,27 +102,35 @@ Sebastian Böcker. [Speedy Colorful
 Subtrees.](http://dx.doi.org/10.1007/978-3-319-16706-0_10) In *Proc. of
 Computing and Combinatorics Conference (COCOON 2015)*, volume 9198 of
 *Lect Notes Comput Sci*, pages 310-322. Springer, Berlin, 2015. (cite
-this on *why computations are swift*, even on a laptop computer) Huibin
-Shen, Kai Dührkop, Sebastian Böcker and Juho Rousu. [Metabolite
+this on *why computations are swift*, even on a laptop computer) 
+
+Huibin Shen, Kai Dührkop, Sebastian Böcker and Juho Rousu. [Metabolite
 Identification through Multiple Kernel Learning on Fragmentation
 Trees.](http://dx.doi.org/10.1093/bioinformatics/btu275)
 *Bioinformatics*, 30(12):i157-i164, 2014. Proc. of *Intelligent Systems
 for Molecular Biology* (ISMB 2014). (Introduces *the machinery behind
-CSI:FingerID*) Imran Rauf, Florian Rasche, François Nicolas and
+CSI:FingerID*) 
+
+Imran Rauf, Florian Rasche, François Nicolas and
 Sebastian Böcker. [Finding Maximum Colorful Subtrees in
 practice.](http://dx.doi.org/10.1089/cmb.2012.0083) *J Comput Biol*,
 20(4):1-11, 2013. (More, earlier work on *why computations are swift*
-today) Heinonen, M.; Shen, H.; Zamboni, N.; Rousu, J. [Metabolite
+today) 
+
+Heinonen, M.; Shen, H.; Zamboni, N.; Rousu, J. [Metabolite
 identification and molecular fingerprint prediction through machine
 learning](http://dx.doi.org/10.1093/bioinformatics/bts437).
 *Bioinformatics*, 2012. Vol. 28, nro 18, pp. 2333-2341. (Introduces the
 *idea of predicting molecular fingerprints* from tandem MS data) Florian
+
 Rasche, Aleš Svatoš, Ravi Kumar Maddula, Christoph Böttcher, and
 Sebastian Böcker. [Computing Fragmentation Trees from Tandem Mass
 Spectrometry
 Data](http://pubs.acs.org/doi/abs/10.1021/ac101825k). *Analytical
 Chemistry* (2011) 83 (4): 1243–1251. (Cite this for *introduction of
-fragmentation trees* as used by SIRIUS) Sebastian Böcker and Florian
+fragmentation trees* as used by SIRIUS) 
+
+Sebastian Böcker and Florian
 Rasche. [Towards de novo identification of metabolites by analyzing
 tandem mass
 spectra](http://bioinformatics.oxfordjournals.org/content/24/16/i49.abstract).
