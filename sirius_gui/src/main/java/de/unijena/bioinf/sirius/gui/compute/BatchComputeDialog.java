@@ -23,6 +23,10 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
@@ -421,6 +425,26 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
         } else {
             useMS1 = false;
+            // take the highest peak with at least 5% intensity that is not preceeded by
+            // possible isotope peaks
+
+            // I hate marvins data structures -_-
+            final SimpleMutableSpectrum mergedSpec = new SimpleMutableSpectrum(Spectrums.mergeSpectra(new Deviation(20), true, true, SiriusDataConverter.myxoMs2ToSiriusMs2(ec.getMs2Spectra(), 0d)));
+            Spectrums.normalize(mergedSpec, Normalization.Max(1d));
+            Spectrums.applyBaseline(mergedSpec, 0.05);
+            final SimpleSpectrum spec = new SimpleSpectrum(mergedSpec);
+            // search parent peak
+            int largestPeak = spec.size()-1;
+            for (; largestPeak > 0; --largestPeak) {
+                final int isotopePeak = Spectrums.mostIntensivePeakWithin(spec, spec.getMzAt(largestPeak)-1d, new Deviation(10, 0.2));
+                if (isotopePeak<0 || spec.getIntensityAt(isotopePeak) < spec.getIntensityAt(largestPeak)) break;
+            }
+            double expectedParentMass = 0d;
+            if (largestPeak>0) {
+                expectedParentMass = spec.getMzAt(largestPeak);
+            }
+
+
             for (CompactSpectrum sp : ec.getMs2Spectra()) {
                 for (int i = 0; i < sp.getSize(); i++) {
                     if (sp.getPeak(i).getAbsoluteIntensity() > maxInt) {
@@ -428,7 +452,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                         maxObj = sp.getPeak(i);
                     }
                     masses.add(sp.getPeak(i));
-                    if (focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+                    if ((focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) || (expectedParentMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), expectedParentMass))) {
                         if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
                             bestDataIon = sp.getPeak(i);
                     }
@@ -444,7 +468,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         box.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.err.println("TRIGGERED!");
                 final Double value = getSelectedIonMass();
                 if (value != null) ec.setSelectedFocusedMass(value);
             }
@@ -481,7 +504,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (masses.isEmpty()) autoDetectFM.setEnabled(false);
         JButton expFM = new JButton("File value");
         expFM.addActionListener(this);
-        if (ec.getDataFocusedMass() <= 0) {
+        if (bestDataIon == null) {
             expFM.setEnabled(false);
             if (masses.isEmpty()) {
                 box.setSelectedItem("");

@@ -156,6 +156,12 @@ public class SiriusDataConverter {
         return new MutableMs2Spectrum(myxoMs1ToSiriusMs1(cs), parentMass, cs.getCollisionEnergy() == null ? CollisionEnergy.none() : cs.getCollisionEnergy(), 2);
     }
 
+    public static List<MutableMs2Spectrum> myxoMs2ToSiriusMs2(List<CompactSpectrum> cs, double parentMass) {
+        final List<MutableMs2Spectrum> spectra = new ArrayList<>(cs.size());
+        for (CompactSpectrum c : cs) spectra.add(myxoMs2ToSiriusMs2(c, parentMass));
+        return spectra;
+    }
+
     public static SimpleSpectrum myxoMs1ToSiriusMs1(CompactSpectrum cs) {
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum(cs.getSize());
         for (int i=0; i < cs.getSize(); ++i) {
