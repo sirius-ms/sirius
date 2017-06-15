@@ -21,6 +21,10 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         return other.fingerprintVersion.compatible(fingerprintVersion);
     }
 
+    public double tanimoto(Fingerprint other) {
+        return Tanimoto.tanimoto(this, other);
+    }
+
     public String toCommaSeparatedString() {
         final StringBuilder buffer = new StringBuilder();
         final FPIter iter  = presentFingerprints();

@@ -1,5 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
+import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@HasParameters
 public class IsotopePatternInMs2Scorer {
 
 
@@ -33,6 +36,18 @@ public class IsotopePatternInMs2Scorer {
     private static final double MULTIPLIER = 1d/10d;
 
     private static final boolean USE_FRAGMENT_ISOGEN = false;
+
+
+    @Parameter
+    protected double baselineAbsoluteIntensity = 300;
+
+    public double getBaselineAbsoluteIntensity() {
+        return baselineAbsoluteIntensity;
+    }
+
+    public void setBaselineAbsoluteIntensity(double baselineAbsoluteIntensity) {
+        this.baselineAbsoluteIntensity = baselineAbsoluteIntensity;
+    }
 
     public void score(ProcessedInput input, FGraph graph) {
 
@@ -60,7 +75,7 @@ public class IsotopePatternInMs2Scorer {
                 double abs = 0d;
                 for (Peak ap : p.getOriginalPeaks()) abs = Math.max(ap.getIntensity(),abs);
                 final double scale = p.getRelativeIntensity()/abs;
-                sig = 300*scale;
+                sig = baselineAbsoluteIntensity*scale;
                 break;
             }
             sigmaAbs = sig;

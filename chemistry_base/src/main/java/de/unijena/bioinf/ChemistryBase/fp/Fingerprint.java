@@ -36,6 +36,18 @@ public abstract class Fingerprint extends AbstractFingerprint {
         return fromOneZeroString(CdkFingerprintVersion.getDefault(), fp);
     }
 
+    public static ArrayFingerprint fromCommaSeparatedString(FingerprintVersion version, String s) {
+        if (s.length()==0) return new ArrayFingerprint(version, new short[]{});
+        if (s.charAt(0)=='{' || s.charAt(0)=='[' || s.charAt(0)=='(') s = s.substring(1, s.length()-1);
+        String[] tbs = s.split(",");
+        final short[] indizes = new short[tbs.length];
+        for (int i=0; i < tbs.length; ++i) indizes[i] = Short.parseShort(tbs[i]);
+        return new ArrayFingerprint(version, indizes);
+    }
+    public static ArrayFingerprint fromCommaSeparatedString(String s) {
+        return fromCommaSeparatedString(CdkFingerprintVersion.getDefault(), s);
+    }
+
     /**
      * Computes the dot product of two fingerprints represented as -1|1 vector
      */
@@ -73,19 +85,6 @@ public abstract class Fingerprint extends AbstractFingerprint {
             if (a || b) ++union;
         }
         return union;
-    }
-
-    public double tanimoto(Fingerprint other) {
-        enforceCompatibility(other);
-        short union=0, intersection=0;
-        for (FPIter2 pairwise : foreachPair(other)) {
-            final boolean a = pairwise.isLeftSet();
-            final boolean b = pairwise.isRightSet();
-
-            if (a || b) ++union;
-            if (a && b) ++intersection;
-        }
-        return ((double)intersection)/union;
     }
 
 

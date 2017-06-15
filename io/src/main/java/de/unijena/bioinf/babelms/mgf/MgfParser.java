@@ -41,6 +41,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private HashMap<String, String> fields;
         private String inchi, smiles, name;
         private RetentionTime retentionTime;
+        private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
 
         public MgfSpec(MgfSpec s) {
             this.spectrum=new MutableMs2Spectrum(s.spectrum);
@@ -109,11 +110,18 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 spec.featureId = value;
             } else if (keyword.contains("RTINSECONDS")) {
                 final String[] parts = value.split("-");
-                if (parts.length==1) {
+                if (parts.length == 1) {
                     spec.retentionTime = new RetentionTime(Double.parseDouble(parts[0]));
                 } else {
                     double a = Double.parseDouble(parts[0]), b = Double.parseDouble(parts[1]);
-                    spec.retentionTime = new RetentionTime(a, b, a + (b-a)/2d);
+                    spec.retentionTime = new RetentionTime(a, b, a + (b - a) / 2d);
+                }
+            } else if (keyword.equals("SOURCE_INSTRUMENT")) {
+                for (MsInstrumentation.Instrument i : MsInstrumentation.Instrument.values()) {
+                    if (i.isInstrument(value)) {
+                        spec.instrumentation = i;
+                        break;
+                    }
                 }
             } else if (keyword.equals("CHARGE")) {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
@@ -283,6 +291,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     exp.setAnnotation(RetentionTime.class, spec.retentionTime);
                 }
             }
+            if (spec.instrumentation != null) {
+                if (exp.hasAnnotation(MsInstrumentation.class)) {
+                    if (spec.instrumentation!=MsInstrumentation.Unknown)
+                        exp.setAnnotation(MsInstrumentation.class, spec.instrumentation);
+                } else {
+                    exp.setAnnotation(MsInstrumentation.class, spec.instrumentation);
+                }
+            }
             additionalFields.putAll(spec.fields);
 
             if (inst.hasNext()) {
@@ -290,7 +306,11 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 if (spec.featureId!=null && !spec.featureId.equals(nextOne.featureId)) break;
                 if (spec.name != null && spec.featureId==null && !spec.name.equals(nextOne.name)) break;
                 if (exp.getPrecursorIonType()!=null && !exp.getPrecursorIonType().equals(spec.ionType)) break;
-                if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.002) break;
+                if (nextOne.spectrum.getPrecursorMz() != 0) {
+                    if ((spec.featureId!=null || spec.name!=null)) {
+                        if (Math.abs(nextOne.spectrum.getPrecursorMz() - exp.getIonMass()) > 0.002) break;
+                    } else if (nextOne.spectrum.getPrecursorMz()!=exp.getIonMass()) break;
+                }
             } else break;
         }
 
