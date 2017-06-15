@@ -94,11 +94,6 @@ public class FineStructureMerger {
             masses[nominal].add(mz);
             intensities[nominal].add(intens);
         }
-        for (int k=0; k < masses.length; ++k) {
-            System.out.println(k);
-            System.out.println(masses[k]);
-            System.out.println(intensities[k]);
-        }
         final SimpleMutableSpectrum peaks = new SimpleMutableSpectrum(masses.length);
         for (int k = 0; k < masses.length; ++k) {
             if (masses[k] != null) {

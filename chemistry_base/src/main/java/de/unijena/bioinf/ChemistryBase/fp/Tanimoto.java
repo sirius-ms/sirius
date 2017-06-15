@@ -3,8 +3,8 @@ package de.unijena.bioinf.ChemistryBase.fp;
 public class Tanimoto {
 
     public interface ProbabilisticTanimoto {
-        public double expectationValue();
-        public double variance();
+        double expectationValue();
+        double variance();
     }
 
     public static ProbabilisticTanimoto probabilisticTanimoto(AbstractFingerprint left, AbstractFingerprint right) {

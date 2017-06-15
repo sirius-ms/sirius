@@ -71,9 +71,6 @@ public class Sirius {
             Sirius s = new Sirius("qtof_fixed");
             Ms2Experiment exp = s.parseExperiment(F).next();
             final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit);
-            for (IdentificationResult r : results) {
-                System.out.println(r.formula + "\t" + r.getStandardTree().getAnnotationOrThrow(PrecursorIonType.class));
-            }
 
         } catch (IOException e) {
             e.printStackTrace();
