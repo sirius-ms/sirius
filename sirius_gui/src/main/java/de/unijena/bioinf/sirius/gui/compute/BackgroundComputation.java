@@ -328,7 +328,10 @@ public class BackgroundComputation extends AbstractBean {
                 }
 
                 container.results = results;
-                if (results==null || results.size()==0) container.state = ComputingStatus.FAILED;
+                if (results==null || results.size()==0){
+                    container.state = ComputingStatus.FAILED;
+                    container.job.done();
+                }
             } catch (Exception e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
                 container.state = ComputingStatus.FAILED;
