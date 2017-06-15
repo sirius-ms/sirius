@@ -11,6 +11,7 @@ import de.unijena.bioinf.sirius.gui.ext.ListAction;
 import de.unijena.bioinf.sirius.gui.load.CsvFields;
 import de.unijena.bioinf.sirius.gui.load.csv.GeneralCSVDialog;
 import de.unijena.bioinf.sirius.gui.load.csv.SimpleCsvParser;
+import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
 import de.unijena.bioinf.sirius.gui.utils.PlaceholderTextField;
 import org.jdesktop.swingx.JXRadioGroup;
@@ -606,8 +607,8 @@ public class DatabaseDialog extends JDialog {
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", true);
-
-            database = CustomDatabase.createNewdatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name));
+            MainFrame.MF.getCsiFingerId().waitForInitialization();
+            database = CustomDatabase.createNewdatabase(name, new File(Workspace.CONFIG_STORAGE.getCustomDatabaseDirectory(), name), MainFrame.MF.getCsiFingerId().getFingerprintVersion());
             importer = database.getImporter();
             importer.init();
             importer.addListener(this);

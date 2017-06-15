@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.dbgen;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import org.openscience.cdk.exception.CDKException;
 
@@ -19,9 +20,8 @@ public class DatabaseImporter {
     public DatabaseImporter() {
     }
 
-    public static void importDatabase(CdkFingerprintVersion version, String dbPath, List<String> files) {
-        final CustomDatabase db = CustomDatabase.createNewdatabase(new File(dbPath).getName(), new File(dbPath));
-        db.setFingerprintVersion(version);
+    public static void importDatabase(MaskedFingerprintVersion version, String dbPath, List<String> files) {
+        final CustomDatabase db = CustomDatabase.createNewdatabase(new File(dbPath).getName(), new File(dbPath), version);
         final List<File> inchiorsmiles = new ArrayList<>();
         for (String f : files) inchiorsmiles.add(new File(f));
         try {

@@ -581,7 +581,7 @@ public class CSIFingerIdComputation {
         exp.setBestHit(best);
     }
 
-    private void recomputeConfidence(SiriusResultElement best) {
+    public void waitForInitialization() {
         try {
             globalLock.lock();
             if (performances == null) {
@@ -595,6 +595,10 @@ public class CSIFingerIdComputation {
         } finally {
             globalLock.unlock();
         }
+    }
+
+    private void recomputeConfidence(SiriusResultElement best) {
+        waitForInitialization();
 
         if (bioConfidenceScorePredictor != null) {
             final FingerIdData data = best.getFingerIdData();

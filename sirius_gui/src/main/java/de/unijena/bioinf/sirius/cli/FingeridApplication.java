@@ -69,7 +69,12 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     @Override
     public void compute() {
         if (options.getGeneratingCompoundDatabase() != null) {
-            generateCustomDatabase(options);
+            try {
+                generateCustomDatabase(options);
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+                System.exit(1);
+            }
             return;
         }
         fingeridEnabled = options.isFingerid();
@@ -85,8 +90,16 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         }
     }
 
-    private void generateCustomDatabase(FingerIdOptions options) {
-        DatabaseImporter.importDatabase((CdkFingerprintVersion) WebAPI.getFingerprintVersion(), options.getGeneratingCompoundDatabase(), options.getInput());
+    private void generateCustomDatabase(FingerIdOptions options) throws IOException {
+        final TIntArrayList indizes = new TIntArrayList();
+        try (final WebAPI api = WebAPI.newInstance()) {
+            api.getStatistics(indizes);
+        }
+        final MaskedFingerprintVersion.Builder mv = MaskedFingerprintVersion.buildMaskFor(WebAPI.getFingerprintVersion());
+        mv.disableAll();
+        for (int i : indizes.toArray())
+            mv.enable(i);
+        DatabaseImporter.importDatabase(mv.toMask(), options.getGeneratingCompoundDatabase(), options.getInput());
     }
 
     @Override

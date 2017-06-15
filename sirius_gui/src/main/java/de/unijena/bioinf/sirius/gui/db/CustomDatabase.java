@@ -5,9 +5,7 @@ import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.sirius.gui.fingerid.Compound;
@@ -71,13 +69,13 @@ public class CustomDatabase implements SearchableDatabase {
     }
 
     protected boolean deriveFromPubchem, deriveFromBioDb;
-    protected CdkFingerprintVersion version = CdkFingerprintVersion.getDefault();
+    protected MaskedFingerprintVersion version;
     protected int databaseVersion;
 
-    public static CustomDatabase createNewdatabase(String name, File path) {
+    public static CustomDatabase createNewdatabase(String name, File path, MaskedFingerprintVersion version) {
         CustomDatabase db = new CustomDatabase(name, path);
         db.databaseVersion = VersionsInfo.CUSTOM_DATABASE_SCHEMA;
-        db.version = CdkFingerprintVersion.getDefault();
+        db.version = version;
         return db;
     }
 
@@ -153,7 +151,7 @@ public class CustomDatabase implements SearchableDatabase {
                     }
                     JsonArray fpAry = o.getJsonArray("fingerprintVersion");
                     if (fpAry == null) {
-                        this.version = CdkFingerprintVersion.getDefault();
+                        this.version = MaskedFingerprintVersion.buildMaskFor(CdkFingerprintVersion.getDefault()).enableAll().toMask();
                     } else {
                         final List<CdkFingerprintVersion.USED_FINGERPRINTS> usedFingerprints = new ArrayList<>();
                         for (JsonValue v : fpAry) {
@@ -165,7 +163,15 @@ public class CustomDatabase implements SearchableDatabase {
                                 }
                             }
                         }
-                        this.version = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
+                        JsonArray fpIndizes = o.getJsonArray("fingerprintIndizes");
+
+                        final CdkFingerprintVersion v = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
+                        final MaskedFingerprintVersion.Builder mv = MaskedFingerprintVersion.buildMaskFor(v);
+                        mv.disableAll();
+                        for (JsonValue num : fpIndizes) {
+                            mv.enable(((JsonNumber)num).intValue());
+                        }
+                        this.version = mv.toMask();
                     }
                     JsonNumber num = o.getJsonNumber("schemaVersion");
                     if (num==null) {
@@ -204,7 +210,7 @@ public class CustomDatabase implements SearchableDatabase {
         return new File(path, "settings.json");
     }
 
-    public void setFingerprintVersion(CdkFingerprintVersion version) {
+    public void setFingerprintVersion(MaskedFingerprintVersion version) {
         this.version = version;
     }
 
@@ -273,9 +279,9 @@ public class CustomDatabase implements SearchableDatabase {
         protected InChIGeneratorFactory inChIGeneratorFactory;
         protected SmilesGenerator smilesGen;
         protected SmilesParser smilesParser;
-        protected CdkFingerprintVersion fingerprintVersion;
+        protected MaskedFingerprintVersion fingerprintVersion;
 
-        protected Importer(CustomDatabase database, CdkFingerprintVersion version) {
+        protected Importer(CustomDatabase database, MaskedFingerprintVersion version) {
             this.database = database;
             fingerprintVersion = version;
             this.buffer = new ArrayList<>();
@@ -285,7 +291,7 @@ public class CustomDatabase implements SearchableDatabase {
             try {
                 inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
                 smilesGen = SmilesGenerator.generic().aromatic();
-                fingerprinter = Fingerprinter.getFor(version);
+                fingerprinter = Fingerprinter.getFor(version.getMaskedFingerprintVersion());
                         /*
                         // TODO: find a better solution
                         new Fingerprinter(Arrays.asList(new OpenBabelFingerprinter(), new SubstructureFingerprinter(), new FixedMACCSFingerprinter(), new PubchemFingerprinter(DefaultChemObjectBuilder.getInstance()), new KlekotaRothFingerprinter(), new ECFPFingerprinter()));
@@ -598,10 +604,18 @@ public class CustomDatabase implements SearchableDatabase {
                     writer.endArray();
                     writer.name("fingerprintVersion");
                     writer.beginArray();
-                    for (int t=0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
-                        writer.value(fingerprintVersion.getFingerprintTypeAt(t).name());
+                    final CdkFingerprintVersion cdk = (CdkFingerprintVersion) fingerprintVersion.getMaskedFingerprintVersion();
+                    for (int t=0; t < cdk.numberOfFingerprintTypesInUse(); ++t) {
+                        writer.value(cdk.getFingerprintTypeAt(t).name());
                     }
                     writer.endArray();
+                    writer.name("fingerprintIndizes");
+                    writer.beginArray();
+                    for (int t : fingerprintVersion.allowedIndizes()) {
+                        writer.value(t);
+                    }
+                    writer.endArray();
+
                     writer.name("schemaVersion");
                     writer.value(VersionsInfo.CUSTOM_DATABASE_SCHEMA);
                     writer.name("statistics");
