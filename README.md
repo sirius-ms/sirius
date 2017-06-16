@@ -58,7 +58,7 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.5 (Build 1 from 2017-06-16)
+### Sirius+CSI:FingerID GUI and CLI - Version 3.5 (Build 2 from 2017-06-16)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-osx64.zip)
@@ -68,12 +68,11 @@ command-line tool.
 - for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux64-headless.zip)
 - for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-osx64-headless.zip)
 
-<!--end download-->
-
 ### Manual
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/git/raw/ms/sirius_frontend.git/release/sirius-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
+<!--end download-->
 
 ## Main citations
 
@@ -161,8 +160,8 @@ literature to cite transparent to the user.
 
 -   **Visualization of the predicted fingerprints**.
 
--   **ECFP fingerprints** are now stored in the CSI:FingerID database and
-    do no longer have to be computed on the users side.
+-   **ECFP fingerprints** are now also in the CSI:FingerID database and
+    have do no longer have to be computed on the users side.
 
 -   Connection error detection and refresh feature. No restart required
     anymore to apply Sirius internal proxy settings.
