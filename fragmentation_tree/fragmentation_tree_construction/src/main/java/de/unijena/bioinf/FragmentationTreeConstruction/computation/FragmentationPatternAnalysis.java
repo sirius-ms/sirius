@@ -1531,7 +1531,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     public TreeBuilder getTreeBuilder() {
         if (treeBuilder==null) {
-            setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+            setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder());
         }
         return treeBuilder;
     }
