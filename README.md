@@ -161,8 +161,8 @@ literature to cite transparent to the user.
 
 -   **Visualization of the predicted fingerprints**.
 
--   **ECFP fingerprints** are now also in the CSI:FingerID database and
-    have do no longer have to be computed on the users side.
+-   **ECFP fingerprints** are now stored in the CSI:FingerID database and
+    do no longer have to be computed on the users side.
 
 -   Connection error detection and refresh feature. No restart required
     anymore to apply Sirius internal proxy settings.
