@@ -5,13 +5,14 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 
 public class LogNormalDistribution implements ScoreProbabilityDistribution {
     private double threshold;
+    private double thresholdFreq;
     private double logMean;
     private double logVar;
     private double normalizationForThreshold;
     private boolean estimateByMedian;
 
-    public LogNormalDistribution(double threshold, boolean estimateByMedian) {
-        this.threshold = threshold;
+    public LogNormalDistribution(double thresholdFreq, boolean estimateByMedian) {
+        this.thresholdFreq = thresholdFreq;
         this.estimateByMedian = estimateByMedian;
         if(estimateByMedian) {
             throw new NoSuchMethodError("median estimation for log-normal not supported");
@@ -63,11 +64,11 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     private double tryThreshold() {
         double t = 0.0D;
 
-        for(double step = 0.001D; MathUtils.cdf(Math.log(t), this.logMean, this.logVar) < this.threshold; t += step) {
+        for(double step = 0.001D; MathUtils.cdf(Math.log(t), this.logMean, this.logVar) < this.thresholdFreq; t += step) {
             ;
         }
 
-        System.out.println("change threshold " + this.threshold + " to " + t);
+        System.out.println("change threshold " + this.thresholdFreq + " to " + t);
         return t;
     }
 

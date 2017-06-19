@@ -4,23 +4,22 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 
 public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
     private double basicThreshold;
-    private double ratioOfCandidatesWithMinConnCount;
+    private int numberOfCandidatesWithMinConnCount;
     private int minimumConnectionCount;
 
-    public EdgeThresholdMinConnectionsFilter(double basicThreshold, double ratioOfCandidatesWithMinConnCount, int minimumConnectionCount) {
+    public EdgeThresholdMinConnectionsFilter(double basicThreshold, int numberOfCandidatesWithMinConnCount, int minimumConnectionCount) {
         super(Double.NaN);
-        System.out.println("EdgeThresholdMinConnectionsFilter " + basicThreshold + " " + ratioOfCandidatesWithMinConnCount + " " + minimumConnectionCount);
+        System.out.println("EdgeThresholdMinConnectionsFilter " + basicThreshold + " " + numberOfCandidatesWithMinConnCount + " " + minimumConnectionCount);
         if(minimumConnectionCount < 0) {
             throw new IllegalArgumentException("min connection count must be positive");
-        } else if(ratioOfCandidatesWithMinConnCount<0 || ratioOfCandidatesWithMinConnCount>1){
-            throw new IllegalArgumentException("ratio of candidates with minimum number of connections must lie in [0,1] ");
+        } else if(numberOfCandidatesWithMinConnCount<0){
+            throw new IllegalArgumentException("number of candidates with minimum number of connections must be >= 0 ");
         } else {
             this.basicThreshold = Math.log(basicThreshold);
-            this.ratioOfCandidatesWithMinConnCount = ratioOfCandidatesWithMinConnCount;
+            this.numberOfCandidatesWithMinConnCount = numberOfCandidatesWithMinConnCount;
             this.minimumConnectionCount = minimumConnectionCount;
         }
     }
@@ -94,7 +93,8 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             }
 
             Arrays.sort(thresholds);
-            w2 = (int)(this.ratioOfCandidatesWithMinConnCount * (double)thresholds.length);
+//            w2 = (int)(this.numberOfCandidatesWithMinConnCount * (double)thresholds.length);
+            w2 = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length); //changed
             double t = w2 == 0?thresholds[thresholds.length - 1]:thresholds[thresholds.length - w2];
             if(t > this.basicThreshold) {
                 t = this.basicThreshold;
