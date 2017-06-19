@@ -91,6 +91,9 @@ public class GibbsSamplerMain {
     private static final String[] reactionStringsMyCompoundID = new String[]{"H2", "CH2", "NH", "O", "NH3", "H2O", "CO", "C2H4", "C2H2O", "CO2", "C2H3NO", "SO3", "HPO3", "C4H3N3", "C4H2N2O", "C3H5NOS", "C2H5NO2S", "C5H4N2O", "C3H5NO2S", "C5H8O4", "C5H3N5", "C7H13NO2", "C5H7NO3S", "C6H10O5", "C6H8O6", "C10H12N2O4", "C9H11N3O4", "C9H10N2O5", "C16H30O", "C6H11O8P", "C10H11N5O3", "C10H11N5O4", "C10H15N3O5S", "C10H15N3O6S", "C12H20O10", "C18H30O15"};
     private static final String[] reactionStringsRogers = new String[]{"C10H11N5O3", "C10H11N5O4", "C10H12N2O4", "C10H12N5O6P", "C10H12N5O7P", "C10H13N2O7P", "C10H13N5O10P2", "C10H13N5O9P2", "C10H14N2O10P2", "C10H14N2O2S", "C10H15N2O3S", "C10H15N3O5S", "C11H10N2O", "C12H20O11", "C16H30O", "C18H30O15", "C21H33N7O15P3S", "C21H34N7O16P3S", "C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5NOS", "C3H5O", "C4H3N2O2", "C4H4N3O", "C4H4O2", "C4H5NO3", "C4H6N2O2", "C4H7NO2", "C5H4N5", "C5H4N5O", "C5H5N2O2", "C5H7", "C5H7NO", "C5H7NO3", "C5H8N2O2", "C5H8O4", "C5H9NO", "C5H9NOS", "C6H10N2O3S2", "C6H10O5", "C6H10O6", "C6H11NO", "C6H11O8P", "C6H12N2O", "C6H12N4O", "C6H7N3O", "C6H8O6", "C8H8NO5P", "C9H10N2O5", "C9H11N2O8P", "C9H12N2O11P2", "C9H12N3O7P", "C9H13N3O10P2", "C9H9NO", "C9H9NO2", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "H3O6P2", "HPO3", "N", "NH", "NH2", "O", "P", "PP", "SO3"};
 
+
+    private static ScoreProbabilityDistribution probabilityDistribution;
+
     public GibbsSamplerMain() {
     }
 
@@ -148,7 +151,7 @@ public class GibbsSamplerMain {
                 edgeScorers = new EdgeScorer[]{probabilityDistribution};
             } else {
                 new DummyScoreProbabilityDistribution();
-                Object probabilityDistribution1;
+                ScoreProbabilityDistribution probabilityDistribution1;
                 if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
                     probabilityDistribution1 = new ExponentialDistribution(0.0D, opts.getThresholdFilter(), opts.isMedian());
                 } else if(opts.getProbabilityDistribution().toLowerCase().equals("pareto")) {
@@ -162,9 +165,10 @@ public class GibbsSamplerMain {
                     probabilityDistribution1 = new LogNormalDistribution(opts.getThresholdFilter(), opts.isMedian());
                 }
 
+                probabilityDistribution = probabilityDistribution1;
                 //todo changed !!!?!?!??!?!?!
-                double minimumOverlap = 0.1D;
-                ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(0.1D), (ScoreProbabilityDistribution)probabilityDistribution1);
+                double minimumOverlap = 0.01D; //changed from 0.1
+                ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution1);
                 edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
             }
 
@@ -309,7 +313,8 @@ public class GibbsSamplerMain {
         guessIonizationAndRemove(candidatesMap, ionTypes);
 
 
-        parseLibraryHits(libraryHitsPath, candidatesMap);
+        parseLibraryHits(libraryHitsPath, candidatesMap); //changed
+//        parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
 
         Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
 
@@ -447,23 +452,32 @@ public class GibbsSamplerMain {
 
 
 
+
+            //todo changed. Just a hotfix!!!!
+            double minimumOverlap = 0.1D;
+            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution);
+            edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
 
 
             System.out.println("start");
             gibbsParallel.iteration(iterationSteps, burnInIterations);
 
-            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
+            Scored<FragmentsCandidate>[][] standardresult = gibbsParallel.getChosenFormulasBySampling();
             System.out.println("standard");
-            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            statisticsOfKnownCompounds(standardresult, ids, evaluationIds, correctHits);
 
-            result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
+            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
             System.out.println("addedPosterior");
             statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
 
             result = gibbsParallel.getChosenFormulasByMaxPosterior();
             System.out.println("maxPosterior");
             statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+
+
+            writeBestFormulas(standardresult, gibbsParallel.getGraph(), outputFile);
 
         }
 
@@ -485,6 +499,27 @@ public class GibbsSamplerMain {
 //            candidate.setLibraryHit(null);
         }
     }
+
+
+    private void writeBestFormulas(Scored<FragmentsCandidate>[][] results, Graph<FragmentsCandidate> graph, Path outputFile) throws IOException {
+        BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset(), new OpenOption[0]);
+        String SEP = "\t";
+
+        for(int i = 0; i < results.length; ++i) {
+            Scored<FragmentsCandidate>[] result = results[i];
+            Scored<FragmentsCandidate> best = result[0];
+            FragmentsCandidate initalBest = graph.getPossibleFormulas()[i][0].getCandidate(); //todo correctly sorted?
+            String id = best.getCandidate().getExperiment().getName();
+            String formula = best.getCandidate().getFormula().formatByHill();
+            String iniFormula = initalBest.getFormula().formatByHill();
+            int numberOfEdges = graph.getConnections(graph.getAbsoluteFormulaIdx(i, 0)).length;
+            double score = (double)result.length / best.getScore();
+            writer.write(id + SEP + iniFormula + SEP + formula + SEP + score + SEP + numberOfEdges + "\n");
+        }
+
+        writer.close();
+    }
+
 
     private void writeBestFormulas(Scored<FragmentsCandidate>[][] results, FragmentsCandidate[][] initialAssignment, Graph graph, Path outputFile) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset(), new OpenOption[0]);
@@ -770,34 +805,39 @@ public class GibbsSamplerMain {
                 indices[i] = idx;
             }
             for (String line : lines) {
-                String[] cols = line.split("\t");
-                final int scanNumber = Integer.parseInt(cols[indices[0]]);
-                final String featureId = featureIDs.get(scanNumber-1); //starting with 1!
+                try {
+                    String[] cols = line.split("\t");
+                    final int scanNumber = Integer.parseInt(cols[indices[0]]);
+                    final String featureId = featureIDs.get(scanNumber-1); //starting with 1!
 
-                List<C> candidatesList = candidatesMap.get(featureId);
-                if (candidatesList == null) {
-                    //todo check:q
+                    List<C> candidatesList = candidatesMap.get(featureId);
+                    if (candidatesList == null) {
+                        //todo check:q
 //                    System.err.println("no corresponding compound (FEATURE_ID: " +featureId+ ", #SCAN# "+scanNumber+") to library hit found");
-                    continue;
+                        continue;
+                    }
+
+                    final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
+                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]], cols[indices[2]]);
+
+                    if (formula==null){
+                        System.err.println("cannot compute molecular formula of library hit #SCAN# "+scanNumber);
+                        continue;
+                    }
+
+                    final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
+                    final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
+                    final double cosine = Double.parseDouble(cols[indices[4]]);
+                    final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
+                    final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
+                    LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
+                    for (C candidate : candidatesList) {
+                        candidate.setLibraryHit(libraryHit);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Warning: Cannot parse library hit. Reason: "+ e.getMessage());
                 }
 
-                final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
-                final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]], cols[indices[2]]);
-
-                if (formula==null){
-                    System.err.println("cannot compute molecular formula of library hit #SCAN# "+scanNumber);
-                    continue;
-                }
-
-                final String structure = (isInchi(cols[indices[1]]) ? cols[indices[1]] : cols[indices[2]]);
-                final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
-                final double cosine = Double.parseDouble(cols[indices[4]]);
-                final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
-                final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
-                LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
-                for (C candidate : candidatesList) {
-                    candidate.setLibraryHit(libraryHit);
-                }
             }
         } catch (Exception e){
             throw new IOException("cannot parse library hits. Reason "+e.getMessage());
@@ -1291,7 +1331,16 @@ public class GibbsSamplerMain {
         for (String key : keys) {
             List<FTree> trees  = idToTrees.get(key);
 
-            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
+            List<FragmentsCandidate> candidates;
+            try{
+                candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
+            } catch (Exception e){
+                System.out.println("experiment "+experimentMap.get(key));
+                System.out.println("specs size "+experimentMap.get(key).getMs2Spectra().size());
+                System.out.println("trees "+trees.size());
+                throw e;
+            }
+
             Collections.sort(candidates);
             if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
             listMap.put(key, candidates);

@@ -1,18 +1,18 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class ExponentialDistribution implements ScoreProbabilityDistribution {
     private double estimationThreshold;
     private double scoringThreshold;
+    private double scoringThresholdFreq;
     private double lambda;
     private boolean estimateByMedian;
     private double normalizationForThreshold;
 
-    public ExponentialDistribution(double estimationThreshold, double scoringThreshold, boolean estimateByMedian) {
+    public ExponentialDistribution(double estimationThreshold, double scoringThresholdFreq, boolean estimateByMedian) {
         this.estimationThreshold = estimationThreshold;
-        this.scoringThreshold = scoringThreshold;
+        this.scoringThresholdFreq = scoringThresholdFreq;
         this.estimateByMedian = estimateByMedian;
     }
 
@@ -51,7 +51,7 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
             }
         }
 
-        this.scoringThreshold = -Math.log(1.0D - this.scoringThreshold) / this.lambda;
+        this.scoringThreshold = -Math.log(1.0D - this.scoringThresholdFreq) / this.lambda;
         this.normalizationForThreshold = 1.0D - Math.exp(-this.lambda * this.scoringThreshold);
 //        System.out.println("scoringThreshold " + this.scoringThreshold + " normalizationForThreshold " + this.normalizationForThreshold);
     }

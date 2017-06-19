@@ -25,7 +25,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
-    private final int MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 5;
+    private final int MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3; //changed from 5
 
     public CommonFragmentAndLossScorer(double threshold) {
         this.threshold = threshold;
@@ -80,7 +80,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for (BitSet bitSet : this.maybeSimilar) {
             sum += bitSet.cardinality();
         }
-//        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
+        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
     }
 
 //    private void prepareData(){
