@@ -43,7 +43,7 @@ ext {
 //    oshi_version = '3.2'
     error_reporter_version = "0.9"
 
-    buildNumber = '2'
+    buildNumber = '3'
 }
 
 
