@@ -28,6 +28,7 @@
 \newcommand{\todo}[1]{}
 
 \newcommand\etal{\emph{et~al.\@}\xspace}
+\newcommand\gui[1]{\guilsinglleft\textsl{#1}\guilsinglright\xspace}
 
 \hyphenation{Meth-od-ol high-light-ed}
 
@@ -490,69 +491,69 @@ settings dialog (GUI).
 \subsection{Working in single mode}
 \label{gui:working-in-single-mode}
 
-SIRIUS~3's ``single mode'' corresponds to analyzing a single compound with
+SIRIUS~3's ``Single mode'' corresponds to analyzing a single compound with
 one or more mass spectra.
 
 \begin{enumerate}
 \item {} 
-Move the three files \emph{txt/chelidonine\_ms.txt}, \emph{txt/chelidonine\_msms1.txt} and \emph{chelidonine\_msms2.txt} from the demo data via Drag and Drop into the application window
+Move the three files \code{txt/chelidonine\_ms.txt}, \code{txt/chelidonine\_msms1.txt} and \code{chelidonine\_msms2.txt} from the demo data via Drag and Drop into the application window
 
 \item {} 
-The following dialog offers you to select the columns for mass and intensity values. Just press \emph{Ok} as the default values are already correct.
+The following dialog offers you to select the columns for mass and intensity values. Just press \gui{Ok} as the default values are already correct.
 
 \item {} 
 You see the load dialog with three spectra. The first spectra is wrongly
 annotated as \emph{MS/MS} spectrum but should be an \emph{MS1} spectrum
-instead. Just select \emph{MS 1} in the drop down list labeled with \emph{ms
+instead. Just select \gui{MS 1} in the drop down list labeled with \gui{ms
 level}.
 
 \item {} 
-All other options are fine. However, you might want to choose a more memorizable name in the \emph{compound name} field.
+All other options are fine. However, you might want to choose a more memorizable name in the \gui{compound name} field.
 
 \item {} 
-Press the \emph{OK} button. The newly imported compound should now appear in your compound list on the left side.
+Press the \gui{OK} button. The newly imported compound should now appear in your compound list on the left side.
 
 \item {} 
-Choose the compound, right-click on it and press \emph{Compute}.
+Choose the compound, right-click on it and press \gui{Compute}.
 
 \item {} 
-In the compute dialog all options should be fine. Just check that the correct parent mass is chosen. You might want to add Chlorine or Fluorine to the set of considered elements. Furthermore, you can change the instrument type to \emph{Orbitrap}
+In the compute dialog all options should be fine. Just check that the correct parent mass is chosen. You might want to add Chlorine or Fluorine to the set of considered elements. Furthermore, you can change the instrument type to \gui{Orbitrap}
 
 \item {} 
 Just look into the candidate list: The first molecular formula has a quite large score. Furthermore, the second molecular formula has a much lower score. This is a good indication that the identification is correct. However, you can take a look at the fragmentation tree: Do the peak annotation look correct? Take a look at the spectrum view: Are all high intensive peaks are explained?
 
 \item {} 
-You can now save the result list as CSV file (by pressing the \emph{Export Results} button). Maybe you want save your workspace, too. Just press the \emph{Save Workspace} button.
+You can now save the result list as CSV file (by pressing the \gui{Export Results} button). Maybe you want save your workspace, too. Just press the \gui{Save Workspace} button.
 
 \end{enumerate}
 
 
 \subsection{Working in batch mode}
 
-SIRIUS~3's ``batch mode'' corresponds to analyzing many compounds at once,
+SIRIUS~3's ``Batch mode'' corresponds to analyzing many compounds at once,
 each having one or more mass spectra.
 
 \begin{enumerate}
 \item {} 
-Move the files \emph{Bicuculline.ms} and \emph{Kaempferol.ms} from the demo data via Drag and Drop into the application window
+Move the files \code{Bicuculline.ms} and \code{Kaempferol.ms} from the demo data via Drag and Drop into the application window
 
 \item {} 
 The two compounds are now displayed in the compound list
 
 \item {} 
-Just check if the ionization and parent mass is correctly annotated. You can change this values by clicking on the compound and then on \emph{Edit}.
+Just check if the ionization and parent mass is correctly annotated. You can change this values by clicking on the compound and then on \gui{Edit}.
 
 \item {} 
-Click on the \emph{Compute All} button.
+Click on the \gui{Compute All} button.
 
 \item {} 
 You can now select the allowed elements, the instrument type as well as the maximal allowed mass deviation. Be aware that this settings will be used for all imported compounds
 
 \item {} 
-Choose \emph{Orbitrap} in the instrument field and press \emph{OK}
+Choose \gui{Orbitrap} in the instrument field and press \gui{OK}
 
 \item {} 
-A \emph{...} symbol occurs on the lower right corner of each compound. This 
+A \gui{...} symbol occurs on the lower right corner of each compound. This 
 means that the compound will be computed soon. A gear symbol tells you that 
 this compound is currently computed in background. A check mark appears in 
 all compounds that were successfully computed, a red cross marks compounds 
@@ -564,9 +565,9 @@ Probably you will not see anything than a check mark, as the computation is very
 \item {} 
 Sometimes a computation might take a long time (e.g. for compounds with a lot 
 of elements or very high masses). You can cancel the computation of a single 
-compound by selecting \emph{Cancel Computation} in the right-click context 
+compound by selecting \gui{Cancel Computation} in the right-click context 
 menu. You can cancel the computation of all compounds by clicking on 
-\emph{Cancel Computation} in the toolbar.
+\gui{Cancel Computation} in the toolbar.
 \end{enumerate}
 
 
@@ -579,16 +580,16 @@ Download the files \url{http://casmi-contest.org/2014/Challenge2014/Challenge1/1
 Move these files via Drag and Drop into the application window
 
 \item {} 
-Change the ms level of the first file into \emph{Ms 1}
+Change the ms level of the first file into \gui{Ms 1}
 
 \item {} 
-Click on \emph{OK}
+Click on \gui{OK}
 
 \item {} 
-Click on \emph{Compute} in the right-click context menu of the imported compound
+Click on \gui{Compute} in the right-click context menu of the imported compound
 
 \item {} 
-Choose \emph{Q-TOF} as instrument and press the \emph{OK} button
+Choose \gui{Q-TOF} as instrument and press the \gui{OK} button
 
 \item {} 
 \emph{C23H46NO7P} should be suggested as number one hit in the candidate list
@@ -1128,18 +1129,19 @@ training data!
 \label{gui:overview}
 
 Starting with version~3.1, our software ships with a Graphical User
-Interface.  On top of the screen you find the toolbar~(1). On the left side is
-the compound list (2) displaying all imported compounds. A ``compound'' lists
-MS and MS/MS spectra corresponding to a single measured compound. If a
-compound has been processed successfully, you will see a tick mark on the
-right~(3); if something goes wrong during computation you will see a cross
-symbol~(4). The output of a computation is an ordered list of suggested
-molecular formula candidates.  After selecting a compound an overview is
-displayed. It shows a list of all molecular formula candidates~(5), sorted by
-score, the corresponding spectrum (6) and the fragmentation tree of the
-selected candidate molecular formula~(7).  Explained peaks are highlighted in
-the spectrum. Nodes in the fragmentation tree are colored according to their
-score.  In the upper right corner are settings and bug report dialogs~(8).
+Interface.  On top of the screen you find the toolbar~(1).  On the left side
+is the compound list (2) displaying all imported compounds.
+Each \gui{compound} lists MS and MS/MS spectra corresponding to a single
+measured compound.  If a compound has been processed successfully, you will
+see a tick mark on the right~(3); if something goes wrong during computation
+you will see a cross symbol~(4).  The output of a computation is an ordered
+list of suggested molecular formula candidates.  After selecting a compound
+an overview is displayed.  It shows a list of all molecular formula
+candidates~(5), sorted by score, the corresponding spectrum (6) and the
+fragmentation tree of the selected candidate molecular formula~(7).
+Explained peaks are highlighted in the spectrum.  Nodes in the fragmentation
+tree are colored according to their score.  In the upper right corner are
+settings and bug report dialogs~(8).
 \todo{filter options etc}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1147,14 +1149,14 @@ score.  In the upper right corner are settings and bug report dialogs~(8).
 \section{Data import}
 \label{gui:data-import}
 
-SIRIUS~3 offers two modes for data import: \textbf{Single import}
-and \textbf{Batch import}. The Single import is triggered when clicking on
-the \emph{Import} button in the toolbar. It allows you to import \textbf{one}
-compound.  (We will use the term ``compound'' as a description of MS and
-MS/MS spectra belonging to a single compound.)  The Single import mode is
-recommended if your data consists of several CSV (comma separated values)
-files (like the data from the CASMI challenges). First press on \emph{Import}
-to start the import dialog.
+SIRIUS~3 offers two modes for data import: \gui{Single import} and \gui{Batch
+import}. The single import is triggered when clicking on the \gui{Import}
+button in the toolbar. It allows you to import \textbf{one} compound.  (We
+will use the term ``compound'' as a description of MS and MS/MS spectra
+belonging to a single compound.)  The single import mode is recommended if
+your data consists of several CSV (comma separated values) files, such as the
+data from the CASMI challenges. First press on \gui{Import} to start the
+import dialog.
 
 \begin{figure}[htbp]
 \centering
@@ -1164,14 +1166,14 @@ to start the import dialog.
 
 For each spectrum you have to select the MS level (either MS1 or MS/MS). If you have MSn spectra you can just import them as MS/MS spectra. You can select a name for the compound as well as an ionization mode. The collision energy is an optional attribute as it does not affect the computation.
 
-You can import \emph{.ms} and \emph{.mgf} files using the \emph{Batch Import}. In this mode SIRIUS~3 will read all attributes (MS level, ionization, parent mass) directly from the file. You can, however, change these attributes afterward by selecting the imported compound and clicking on the \textbf{Edit} button.
+You can import \code{.ms} and \code{.mgf} files using the \gui{Batch Import}. In this mode SIRIUS~3 will read all attributes (MS level, ionization, parent mass) directly from the file. You can, however, change these attributes afterward by selecting the imported compound and clicking on the \gui{Edit} button.
 
-See section \emph{Supported Input Formats} for a description of the file formats \emph{.ms} and \emph{.mgf}.
+See section \emph{Supported Input Formats} for a description of the file formats \code{.ms} and \code{.mgf}.
 
 
 \subsection{Drag and drop}
 \label{gui:drag-and-drop}
-SIRIUS~3 supports Drag and Drop: Just move your input files into the application window. This is usually the easiest way to import data into SIRIUS. Supported file formats for Drag and Drop are \emph{.csv}, \emph{.ms}, \emph{.sirius} and \emph{.mgf}.
+SIRIUS~3 supports Drag and Drop: Just move your input files into the application window. This is usually the easiest way to import data into SIRIUS. Supported file formats for Drag and Drop are \code{.csv}, \code{.ms}, \code{.sirius} and \code{.mgf}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1179,12 +1181,12 @@ SIRIUS~3 supports Drag and Drop: Just move your input files into the application
 \section{Identifying molecular formulas with SIRIUS}
 \label{gui:identifying-molecular-formulas-with-sirius}
 
-As for importing data SIRIUS~3 offers two computation modes: \textbf{Single 
-Computation} and \textbf{Batch Computation}. The Single Computation allows you 
+As for importing data SIRIUS~3 offers two computation modes: \gui{Single 
+Computation} and \gui{Batch Computation}. The Single Computation allows you 
 to setup different parameters for each compound. You can trigger it by 
-right-clicking on a compound and choosing \textbf{Compute} in the context 
+right-clicking on a compound and choosing \gui{Compute} in the context 
 menu. The Batch Computation will compute all compounds in the workspace.
-Besides, you can select multiple compounds and choose \textbf{Compute} to 
+Besides, you can select multiple compounds and choose \gui{Compute} to 
 only compute a subset of your imported compounds.
 
 \begin{figure}[htbp]
@@ -1201,35 +1203,38 @@ The exact m/z of the parent peak. If MS1 data is present, the m/z of the monoiso
 
 \subsection{Elements besides CHNOPS}
 \label{gui:elements-besides-chnops}
-SIRIUS~3 will use the elements carbon (C), hydrogen (H), nitrogen (N), oxygen (O), phosphorus (P) and sulfur (S) by default. Additional elements can be selected within the \textbf{Select elements} dialog. 
+SIRIUS~3 will use the elements carbon (C), hydrogen (H), nitrogen (N), oxygen (O), phosphorus (P) and sulfur (S) by default. Additional elements can be selected within the \gui{Select elements} dialog. 
 Adding additional elements will increase running time. Using (too many) elements that do not occur in the correct molecular formula of the compound might worsen the results.
 
 The automated detection of a set of ``uncommon elements'' is available if the 
 isotope pattern is provided. These elements are sulfur (S), chlorine (Cl), 
 bromine (Br), boron (B), and selenium (Se). 
-Using \textbf{Auto detect} will clear your element selection and will set new values based on the detection. Autodetection is usually quite sensitive and rather overpredicts the actual quantity of an element.
+Using \gui{Auto detect} will clear your element selection and will set new values based on the detection. Autodetection is usually quite sensitive and rather overpredicts the actual quantity of an element.
 
 \subsection{Other}
 \label{gui:other}
 
-The ionization mode determines the polarity of the measurement (positive or negative) as well as the adduct (e.g. protonation or sodium adduct). If you choose \textbf{Unknown Positive} or \textbf{Unknown Negative} SIRIUS~3 will not care about the adduct, but report the molecular formula of the \textbf{ion} in the candidate list. Otherwise, SIRIUS~3 will subtract the adducts formula from the ions formula and report neutral molecular formulas in the candidate list as well as in the fragmentation trees.
+The ionization mode determines the polarity of the measurement (positive or negative) as well as the adduct (e.g. protonation or sodium adduct). If you choose \gui{Unknown Positive} or \gui{Unknown Negative} SIRIUS~3 will not care about the adduct, but report the molecular formula of the \textbf{ion} in the candidate list. Otherwise, SIRIUS~3 will subtract the adducts formula from the ions formula and report neutral molecular formulas in the candidate list as well as in the fragmentation trees.
 
-Choose either \emph{Q-TOF}, \emph{Orbitrap} or \emph{FT-ICR} in the instrument field. The chosen instrument affects only very few parameters of the method (mainly the allowed mass deviation). If your instrument is not one of these three then just select the Q-TOF instrument.
+Choose either \gui{Q-TOF}, \gui{Orbitrap} or \gui{FT-ICR} in the instrument field. The chosen instrument affects only very few parameters of the method (mainly the allowed mass deviation). If your instrument is not one of these three then just select the Q-TOF instrument.
 
-You can change the maximal allowed mass deviation in the \textbf{ppm} field. SIRIUS~3 will only consider molecular formulas which mass deviations are either below the chosen ppm or smaller than \(\frac{200 \cdot ppm_{max}}{10^6}\)
+You can change the maximal allowed mass deviation in the \gui{ppm}
+field. SIRIUS~3 will only consider molecular formulas which mass deviations
+below the chosen ppm; for masses below 200~Da, the allowed mass deviation
+is \(200 \cdot \frac{ppm_{max}}{10^6}\).
 
-Finally, you can select the number of molecular formula candidates that should be given in the output as well as where they come from.
-
-If you select option ``\textbf{all possible molecular formulas}'' then
-SIRIUS~3 will enumerate over all molecular formulas that match the ion mass,
-filtering out only molecular formulas with negative ring double bond
-equivalent. If you choose ``\textbf{all PubChem formulas}'' then SIRIUS~3
-will select all molecular formulas from PubChem.  Option ``\textbf{organic
-PubChem formulas}'' ignores molecular formulas containing elements untypical
-for organic compounds such as Si or Mg; molecular formulas pass this filter
-if they are composed solely of \ce{CHNOPSBBrClIF}.  When choosing
-``\textbf{formulas from biomolecule databases}'', \todo{change name of option
-in program, biomolecule instead of biological!} SIRIUS~3 will use all
+Finally, you can select the number of molecular formula candidates that
+should be reported in the output, and what molecular formulas are considered
+as candidates: If you select option \gui{all possible molecular
+formulas} then SIRIUS~3 will enumerate over all molecular formulas that
+match the ion mass, filtering out only molecular formulas with negative ring
+double bond equivalent. If you choose \gui{all PubChem formulas} then
+SIRIUS~3 will select all molecular formulas from PubChem.  Option
+\gui{organic PubChem formulas} ignores molecular formulas containing
+elements untypical for organic compounds such as Si or Mg; molecular formulas
+pass this filter if they are composed solely of \ce{CHNOPSBBrClIF}.  When
+choosing \gui{formulas from biomolecule databases}, \todo{change name of
+option in program, biomolecule instead of biological!} SIRIUS~3 will use all
 formulas contained in databases with biological compounds or compounds that
 could be expected in biological experiments (e.g. KEGG, BioCyc, HMDB, but
 also MaConDa).
@@ -1242,8 +1247,8 @@ copies. Although we regularly update our database, it may happen that some
 new compound in, say, ChEBI is not already contained in our local copy.
 
 \item {} 
-When choosing a ``molecular fromulas from a database'' option, SIRIUS~3 will
-ignore your element restrictions and instead allow all elements.
+When choosing a \gui{molecular fromulas from a database} option, SIRIUS~3
+will ignore your element restrictions and instead allow all elements.
 
 \item {} 
 We do not recommend to restrict molecular formula searching to biomolecule
@@ -1259,8 +1264,8 @@ smaller candidate structure lists.
 \section{Identifying molecular structure with CSI:FingerID}
 \label{gui:identifying-molecular-structure-with-csi-fingerid}
 
-After computing the fragmentation trees you can search these in a structure database. Again we provide a \textbf{single mode} and a \textbf{batch mode}. The single mode is available by clicking on the molecular formula of interest, then switching to the \textbf{CSI:FingerID} tab and pressing on the \textbf{Search online with CSI:FingerID} button.
-The batch mode can be triggered by pressing on the \textbf{CSI:FingerID} in the toolbar.
+After computing the fragmentation trees you can search these in a structure database. Again we provide a \gui{single mode} and a \gui{batch mode}. The single mode is available by clicking on the molecular formula of interest, then switching to the \gui{CSI:FingerID} tab and pressing on the \gui{Search online with CSI:FingerID} button.
+The batch mode can be triggered by pressing on the \gui{CSI:FingerID} in the toolbar.
 \begin{figure}[htbp]
 \centering
 
@@ -1283,14 +1288,15 @@ list if you expect the result to be contained in biomolecule databases.
 \section{Visualization of the results}
 \label{gui:visualization-of-the-results}
 
-Each compound has an ``overview'' panel to display the most important 
-information. The candidate list contains the best candidate molecular formulas 
-ordered by score. Molecular formulas are always written in neutral form, except 
-for compounds with unknown ionization mode. For the selected molecular formula 
-candidates the ``spectra view'' visualizes which peak is assigned to a fragment.
-The corresponding fragmentation tree is visualized in the ``tree view''.
-Both views can be displayed in a separate panel to have a more detailed look.
-The ``CSI:FingerID'' panel displays candidates from structure prediction.
+Each compound has an \gui{Overview} panel to display the most important
+information. The candidate list contains the best candidate molecular
+formulas ordered by score. Molecular formulas are always written in neutral
+form, except for compounds with unknown ionization mode. For the selected
+molecular formula candidates the \gui{Spectra view} visualizes which peak is
+assigned to a fragment.  The corresponding fragmentation tree is visualized
+in the \gui{Tree view}.  Both views can be displayed in a separate panel to
+have a more detailed look.  The \gui{CSI:FingerID} panel displays candidates
+from structure prediction.
 
 \subsection{Overview}
 The overview displays the candidate list, spectrum and fragmentation tree of 
@@ -1374,7 +1380,7 @@ You can open a context menu by right click on the compound. It offers you to ope
 
 If the compound is contained in any biomolecule database, a blue label with the name of this database is displayed below the compound. You can click on most of these labels to open the database entry in your browser window.
 
-You can export a single candidate list by clicking on the \textbf{export list} button.
+You can export a single candidate list by clicking on the \gui{export list} button.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1382,18 +1388,18 @@ You can export a single candidate list by clicking on the \textbf{export list} b
 \section{Workspace}
 \label{gui:workspace}
 
-All imported compounds together with their results (the candidate molecular formulas and corresponding fragmentation trees) form the \textbf{workspace}. You can save the workspace into a file by clicking on \textbf{Save Workspace} in the toolbar. Analogously, you can load a workspace using \textbf{Load Workspace}. The workspace is saved in the \textbf{.sirius} format, which is simply a Zip Archive containing the input spectra and fragmentation trees. You can share the \emph{.sirius} files with other people. But be aware that the input spectra are contained in these files!
+All imported compounds together with their results (the candidate molecular formulas and corresponding fragmentation trees) form the \textbf{workspace}. You can save the workspace into a file by clicking on \gui{Save Workspace} in the toolbar. Analogously, you can load a workspace using \gui{Load Workspace}. The workspace is saved in the \code{.sirius} format, which is simply a Zip Archive containing the input spectra and fragmentation trees. You can share the \code{.sirius} files with other people. But be aware that the input spectra are contained in these files!
 
-The SIRIUS~3 Commandline Tool is able to output \emph{.sirius} files by using the option \textbf{-O sirius}. You can import these files with the SIRIUS~3 Graphical User Interface to get a visualization of the results.
+The SIRIUS~3 Commandline Tool is able to output \code{.sirius} files by using the option \code{-O sirius}. You can import these files with the SIRIUS~3 Graphical User Interface to get a visualization of the results.
 
-Currently, CSI:FingerID predictions are not stored in the \emph{.sirius} file. This will hopefully change in future releases.
+Currently, CSI:FingerID predictions are not stored in the \code{.sirius} file. This will hopefully change in future releases.
 
 
 \subsection{Export results}
 \label{gui:export-results}
-You can export your results as a simple \textbf{csv} file for all compounds by clicking on the 
-\textbf{Export Results} button and selecting single file export. Such a 
-\emph{csv} file can then be imported into \emph{Excel}, \emph{Matlab} or 
+You can export your results as a simple \code{csv} file for all compounds by clicking on the 
+\gui{Export Results} button and selecting single file export. Such a 
+\code{.csv} file can then be imported into \emph{Excel}, \emph{Matlab} or 
 \emph{R}.
 \begin{description}
 \item[{The CSV file contains the following fields:}] \leavevmode\begin{itemize}
@@ -1415,7 +1421,7 @@ for each molecular formula candidate there are two columns: one with the molecul
 
 If the number of molecular formula candidates differ between compounds, the number of fields per row might differ, too. However, most software programs do not have a problem with such \emph{malformed} CSV files.
 
-Selecting the \textbf{multiple files} option will create one file per compound. Exporting the ``tree results'' will give you a \emph{csv} file for each compound containing the molecular formula candidates with the following fields: 
+Selecting the \gui{multiple files} option will create one file per compound. Exporting the \gui{Tree results} will give you a \code{.csv} file for each compound containing the molecular formula candidates with the following fields: 
 \begin{itemize}
 \item molecular formula
 \item rank
@@ -1425,7 +1431,7 @@ Selecting the \textbf{multiple files} option will create one file per compound. 
 \item number of peaks which where annotated with a fragment molecular formula
 \item ratio of explained intensity. It is the sum of intensities of all annotated peaks divided by the total intensity.
 \end{itemize}
-Exporting ``CSI:FingerID results'' will create one \emph{csv} file for each compounds with the following fields:
+Exporting \gui{CSI:FingerID results} will create one \code{.csv} file for each compounds with the following fields:
 \begin{itemize}
 \item InChI key's first 14 positions (no stereochemistry information)
 \item InChI
@@ -1449,7 +1455,7 @@ Exporting ``CSI:FingerID results'' will create one \emph{csv} file for each comp
 %unfortunately, get a lot of wrong predictions among the correct ones. With 
 %SIRIUS~3.2 we offer a confidence score that reflects the likelihood that some 
 %identification is correct. You can list all identifications by opening the 
-%\textbf{identification} tab.
+%\gui{identification} tab.
 %\begin{figure}[htbp]
 %\centering
 %
@@ -1465,13 +1471,13 @@ Exporting ``CSI:FingerID results'' will create one \emph{csv} file for each comp
 \section{Settings}\label{sec:settings}
 \todo{General, Proxy, Error report}
 \begin{itemize}
-\item \textbf{General settings}
+\item \gui{General settings}
 \begin{itemize}
-	\item \textbf{Allowed solvers:} chose the ILP solver for SIRIUS~3 to use for fragmentation tree computation. GLPK is free, Gurobi is commericial but offers free academic license.
-	\item \textbf{Database cache:} location of cache directory. CSI:FingerID download candidate structures from our server and caches them for faster retrieval.
+	\item \gui{Allowed solvers:} chose the ILP solver for SIRIUS~3 to use for fragmentation tree computation. GLPK is free, Gurobi is commericial but offers free academic license.
+	\item \gui{Database cache:} location of cache directory. CSI:FingerID download candidate structures from our server and caches them for faster retrieval.
 \end{itemize}
 
-\item \textbf{Proxy settings}
+\item \gui{Proxy settings}
 \begin{itemize}
 	\item Sirius support three different kinds of proxy configuration SYSTEM, 
 	SIRIUS and NONE. If SYSTEM (default) is select Sirius uses the system wide 
@@ -1491,7 +1497,7 @@ Exporting ``CSI:FingerID results'' will create one \emph{csv} file for each comp
 	\end{figure}
 \end{itemize}
 
-\item \textbf{Error report settings}
+\item \gui{Error report settings}
 \begin{itemize}
 	\item Add an email address which will be sent with a bug report. This makes it possible for us to contact you, in case we need additional information to solve your problem. 
 	\item Decide whether specific hardware and operating system information is send with your bug report.
@@ -1509,7 +1515,8 @@ send us a bug report in case you encounter an error.  It is very helpful if
 you specify your email address. Often, errors are very specific and can only
 be reproduced and understood with help of the input file and knowledge of the
 used parameter settings. Therefore, we might reach out to you. \todo{or add
-an upload field?}  With your help, we will continue to improve SIRIUS~3.
+an upload field?}  With your help, we will continue to improve SIRIUS~3.  You
+can also contact us at \url{sirius@uni-jena.de}.
 
 
 
@@ -1594,7 +1601,7 @@ See also the GNPS \footnote{\sphinxAtStartFootnote%
 \url{http://gnps.ucsd.edu/}
 } database for other examples of MGF files.
 
-A disadvantage of these data formats is that they do not contain all information necessary for SIRIUS~3 to perform the computation. Missing meta information have to be provided via the commandline. Therefore, SIRIUS~3 supports also an own file format very similar to the MGF format above. The file ending of this format is \textbf{.ms}. Each file contains one measured compound (but arbitrary many spectra). Each line may contain a peak (given as m/z and intensity separated by a whitespace), meta information (starting with the \textbf{\textgreater{}} symbol followed by the information type, a whitespace and the value) or comments (starting with the \textbf{\#} symbol). The following fields are recognized by SIRIUS:
+A disadvantage of these data formats is that they do not contain all information necessary for SIRIUS~3 to perform the computation. Missing meta information have to be provided via the commandline. Therefore, SIRIUS~3 supports also an own file format very similar to the MGF format above. The file ending of this format is \code{.ms}. Each file contains one measured compound (but arbitrary many spectra). Each line may contain a peak (given as m/z and intensity separated by a whitespace), meta information (starting with the \textbf{\textgreater{}} symbol followed by the information type, a whitespace and the value) or comments (starting with the \textbf{\#} symbol). The following fields are recognized by SIRIUS:
 \begin{itemize}
 \item {} 
 \textgreater{}compound: The name of the measured compound (or any placeholder). This field is \textbf{mandatory}.
@@ -1690,15 +1697,15 @@ sirius [OPTIONS] \PYGZhy{}z \PYGZlt{}PARENTMASS\PYGZgt{} \PYGZhy{}i \PYGZlt{}ION
 
 Where MS FILE and MS/MS FILE are either CSV or MGF files. If MGF files are used, you might omit the PARENTMASS option. If you omit the IONIZATION option, {[}M+H{]}+ is used as default. It is also possible to give a list of MS/MS files if you have several measurements of the same compound with different collision energies. SIRIUS~3 will merge these MS/MS spectra into one spectrum.
 
-If your input files are in \emph{.ms} or \emph{.mgf} format (containing MSLEVEL and PEPMASS meta information), you can omit the -1 and -2 flag. For example:
+If your input files are in \code{.ms} or \code{.mgf} format (containing MSLEVEL and PEPMASS meta information), you can omit the -1 and -2 flag. For example:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius [OPTIONS] demo\PYGZhy{}data/ms
 \end{Verbatim}
 
-SIRIUS~3 will pick the meta information (parentmass, ionization etc.) from the \emph{.ms} files in the given directory. This allows SIRIUS~3 to run in batch mode (analyzing multiple compounds without starting a new jvm process every time).
+SIRIUS~3 will pick the meta information (parentmass, ionization etc.) from the \code{.ms} files in the given directory. This allows SIRIUS~3 to run in batch mode (analyzing multiple compounds without starting a new jvm process every time).
 
-SIRIUS~3 will output a candidate list containing the \textbf{rank}, \textbf{overall score}, \textbf{fragmentation pattern score}, \textbf{isotope pattern score}, the number of \textbf{explained peaks} and the relative amount of \textbf{explained intensity}. See the following example output:
+SIRIUS~3 will output a candidate list containing the \gui{rank}, \gui{overall score}, \gui{fragmentation pattern score}, \gui{isotope pattern score}, the number of \gui{explained peaks} and the relative amount of \gui{explained intensity}. See the following example output:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius  \PYGZhy{}z 354.1347 \PYGZhy{}p orbitrap  \PYGZhy{}1 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}ms.txt
@@ -1720,7 +1727,7 @@ SIRIUS~3 recognizes the following options:
 
 \begin{fulllineitems}
 \phantomsection\label{commandline:cmdoption-p}\pysigline{\bfcode{-p}\code{~\textless{}name\textgreater{}}\code{,~}\bfcode{-{-}profile}\code{~\textless{}name\textgreater{}}}
-Specify the used analysis profile. Choose either \textbf{qtof}, \textbf{orbitrap} or \textbf{fticr}. By default, \textbf{qtof} is selected.
+Specify the used analysis profile. Choose either \code{qtof}, \code{orbitrap} or \code{fticr}. By default, \code{qtof} is selected.
 
 \end{fulllineitems}
 
@@ -1737,7 +1744,7 @@ fragmentation trees into this directory.
 
 \begin{fulllineitems}
 \phantomsection\label{commandline:cmdoption-O}\pysigline{\bfcode{-O}\code{~\textless{}format\textgreater{}}\code{,~}\bfcode{-{-}format}\code{~\textless{}format\textgreater{}}}
-Specify the format of the output of the fragmentation trees. This can be either \textbf{json} (machine readable), \textbf{dot} (for vizualization) or \textbf{sirius} (can be viewed with the SIRIUS~3 Graphical User Interface).
+Specify the format of the output of the fragmentation trees. This can be either \code{json} (machine readable), \code{dot} (for vizualization) or \code{sirius} (can be viewed with the SIRIUS~3 Graphical User Interface).
 
 \end{fulllineitems}
 
@@ -1769,7 +1776,7 @@ The number of candidates in the output. By default, SIRIUS~3 will only write the
 
 \begin{fulllineitems}
 \phantomsection\label{commandline:cmdoption-s}\pysigline{\bfcode{-s}\code{~\textless{}val\textgreater{}}\code{,~}\bfcode{-{-}isotope}\code{~\textless{}val\textgreater{}}}
-This option specifies the way SIRIUS~3 will handle the isotope patterns. If it is set to \textbf{omit}, SIRIUS~3 will omit the isotope pattern analysis. If it is set to \textbf{filter}, SIRIUS~3 will use the isotope pattern to select a subset of candidates before starting the fragmentation pattern analysis (this will improve the speed of the analysis). Only if it is set to \textbf{score}, SIRIUS~3 will use it for filtering and scoring the candidates. The default setting is \textbf{score}.
+This option specifies the way SIRIUS~3 will handle the isotope patterns. If it is set to \code{omit}, SIRIUS~3 will omit the isotope pattern analysis. If it is set to \code{filter}, SIRIUS~3 will use the isotope pattern to select a subset of candidates before starting the fragmentation pattern analysis (this will improve the speed of the analysis). Only if it is set to \code{score}, SIRIUS~3 will use it for filtering and scoring the candidates. The default setting is \code{score}.
 
 \end{fulllineitems}
 
@@ -1912,7 +1919,7 @@ dot \PYGZhy{}Tpdf \PYGZhy{}O trees/Bicuculline.dot
 This creates a file Bicuculline.dot.pdf
 ({\hyperref[commandline:treeimg]{\crossref{\DUrole{std,std-ref}{Fig.1}}}}). Remark
 that SIRIUS~3 uses automatically the file name of the input spectrum to name
-the output file. You can specify another filename with the \textbf{-o}
+the output file. You can specify another filename with the \code{-o}
 option, as long as only one fragmentation tree is computed.
 \begin{quote}
 
@@ -1929,7 +1936,14 @@ dot -Tpdf -O compound.dot
 
 \paragraph{Identifying Molecular Structures}
 \label{commandline:identifying-molecular-structures}
-With SIRIUS~3.2 you can also search for molecular structures with CSI:FingerID. Just add the option \textbf{--fingerid} to trigger a CSI:FingerID search after fragmentation tree computation. With \textbf{--database} can now also specify the database SIRIUS~3 should search in. Available are \emph{pubchem} and \emph{bio}. However, you can also specify certain databases like \emph{kegg} and \emph{hmdb}, although it is recommended to filter the list afterwards.
+
+With SIRIUS~3.2 you can also search for molecular structures with
+CSI:FingerID. Just add the option \code{--fingerid} to trigger a CSI:FingerID
+search after fragmentation tree computation. With \code{--database} can now
+also specify the database SIRIUS~3 should search in. Available
+are \code{pubchem} and \code{bio}.  You can also specify certain databases
+like \emph{code} and \emph{code}; however, we strongly recommended to instead
+filter the output list afterwards.
 
 SIRIUS~3 will generate CSV files for each input spectrum containing a ordered candidate list of structures with the CSI:FingerID score. Furthermore, another result CSV file is generated only the top candidates from all input spectra ordered by their confidence.
 \begin{quote}
@@ -1970,16 +1984,16 @@ sirius \PYGZhy{}p orbitrap \PYGZhy{}o outputdir demo\PYGZhy{}data/mgf/laudanosin
 \end{Verbatim}
 
 Now, SIRIUS~3 will write the computed fragmentation trees into
-the \emph{outputdir} directory. You can visualize this trees in PDF format
+the \code{outputdir} directory. You can visualize this trees in PDF format
 using Graphviz:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 dot \PYGZhy{}Tpdf \PYGZhy{}O outputdir/laudanosine\PYGZus{}1\PYGZus{}C21H27NO4.dot
 \end{Verbatim}
 
-This creates a pdf file \emph{outputdir/laudanosine\_1\_C21H27NO4.dot.pdf}.
+This creates a pdf file \code{outputdir/laudanosine\_1\_C21H27NO4.dot.pdf}.
 
-The directory \emph{ms} contains two examples of the ms format. Each file contains a single compound measured with an Orbitrap instrument. To analyze this compound run:
+The directory \code{ms} contains two examples of the ms format. Each file contains a single compound measured with an Orbitrap instrument. To analyze this compound run:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius \PYGZhy{}p orbitrap \PYGZhy{}o outputdir demo\PYGZhy{}data/ms/Bicuculline.ms
@@ -1987,14 +2001,14 @@ sirius \PYGZhy{}p orbitrap \PYGZhy{}o outputdir demo\PYGZhy{}data/ms/Bicuculline
 
 As the ms file already contains the correct molecular formula, SIRIUS~3 will
 directly compute the fragmentation tree. For such cases (as well as when you
-specify exactly one molecular formula via \emph{-f} option) you can also
+specify exactly one molecular formula via \code{-f} option) you can also
 specify the concrete filename of the output file:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius \PYGZhy{}p orbitrap \PYGZhy{}o mycompound.dot demo\PYGZhy{}data/ms/Bicuculline.ms
 \end{Verbatim}
 
-If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file) you can specify the number of candidates with the \emph{-c} option:
+If you want to enforce a molecular formula analysis and ranking (although the correct molecular formula is given within the file) you can specify the number of candidates with the \code{-c} option:
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius \PYGZhy{}p orbitrap \PYGZhy{}c 5 demo\PYGZhy{}data/ms/Bicuculline.ms
@@ -2009,7 +2023,7 @@ sirius  \PYGZhy{}p orbitrap  \PYGZhy{}z 354.134704589844 \PYGZhy{}1 demo\PYGZhy{
         \PYGZhy{}2 demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms1.txt demo\PYGZhy{}data/txt/chelidonine\PYGZus{}msms2.txt
 \end{Verbatim}
 
-The demo data contain a clean MS spectrum (e.g. there is only one isotope pattern contained in the MS spectrum). In such cases, SIRIUS~3 can infer the correct parent mass from the MS data (by simply using the monoisotopic mass of the isotope pattern as parent mass). So you can omit the \emph{-z} option in this cases.
+The demo data contain a clean MS spectrum (e.g. there is only one isotope pattern contained in the MS spectrum). In such cases, SIRIUS~3 can infer the correct parent mass from the MS data (by simply using the monoisotopic mass of the isotope pattern as parent mass). So you can omit the \code{-z} option in this cases.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2052,6 +2066,7 @@ Now you can integrate SIRIUS~3 in your project by adding the following dependenc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Main API}
+
 \label{library:main-api}
 The main class in SIRIUS~3 is \textbf{de.unijena.bioinf.sirius.SIRIUS}. It is basically a wrapper around the important functionalities of the library. Although there are special classes for all parts of the analysis pipeline it is recommended to only use the SIRIUS~3 class as the API of all other classes might change in future releases. The SIRIUS~3 class also provides factory methods for the most important data structures. Although, for many of this data structures you could also use their constructors directly, it is recommended to use the methods in the SIRIUS~3 class.
 \phantomsection\label{library:package-de.unijena.bioinf.sirius}\index{de.unijena.bioinf.sirius (package)}\index{SIRIUS~3 (Java class)}
