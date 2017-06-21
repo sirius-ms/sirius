@@ -29,7 +29,7 @@
 
 \newcommand\etal{\emph{et~al.\@}\xspace}
 
-\hyphenation{Meth-od-ol}
+\hyphenation{Meth-od-ol high-light-ed}
 
 \addto\captionsenglish{\renewcommand{\figurename}{Fig.\@ }}
 \addto\captionsenglish{\renewcommand{\tablename}{Table }}
@@ -635,7 +635,9 @@ successfully process your data:
 
 \item You will find that CSI:FingerID can sometimes identify the correct
   structure although the fragmentation spectrum is (almost) empty --- do not
-  get fooled, this is often nothing but lucky guessing.
+  get fooled, this is often nothing but lucky guessing.  If you know how to
+  structurally elucidate a compound based on an empty spectrum, please
+  contact us and tell us how.
 
 \item You may have heard that peaks in a MS/MS spectrum with high mass
   carry more information than peaks with low mass: This is a
@@ -965,9 +967,9 @@ molecular properties that can be derived from the molecular formula of the query
 
 Given the molecular structure of a compound, we can deterministically compute
 its molecular fingerprint: We use the Chemical Development Kit CDK
-\citep{steinbeck03chemistry, steinbeck06recent} for this
-purpose.  \citet{heinonen12metabolite} pioneered the idea of predicting a
-complete molecular fingerprint from the fragmentation spectrum of a query
+\citep{steinbeck03chemistry, steinbeck06recent, willighagen17chemistry} for
+this purpose.  \citet{heinonen12metabolite} pioneered the idea of predicting
+a complete molecular fingerprint from the fragmentation spectrum of a query
 compound: Before this, only few, usually hand-selected properties (presence
 or absence of certain substructures) were predicted from fragmentation
 spectra, in particular for GC-MS with Electron Ionization;
@@ -1010,14 +1012,16 @@ Furthermore, estimation parameters were derived from the training data, and
 if your query molecule structures are very different from those in the
 training data, it is rather likely that some estimates are imprecise.  In
 addition to Platt probabilities, we also report the performance of each
-molecular property classifier in cross validation: The F$_1$ score is the
-harmonic mean of precision (fraction of retrieved instances that are
-relevant) and recall (fraction of relevant instances that are
+molecular property classifier in cross validation: The F$_1$
+score\footnote{\url{https://en.wikipedia.org/wiki/F1_score}} is the harmonic
+mean\footnote{\url{https://en.wikipedia.org/wiki/Harmonic_mean}} of precision
+(fraction of retrieved instances that are relevant) and recall (fraction of
+relevant instances that are
 retrieved).\footnote{\url{https://en.wikipedia.org/wiki/Precision_and_recall}}
 Molecular properties that have a classifier with F$_1$ score close to one,
 are more trustworthy than those with F$_1$ score close to zero; again, this
-has to be treated with some care, as these measures were estimated on the
-training data.
+has to be treated with some care, as these measures were estimated from the
+training data using cross validation.
 
 It is important to understand that the predicted molecular fingerprint which
 is returned by the CSI:FingerID web service, has \emph{per~se} no connections
@@ -1083,7 +1087,7 @@ but there is no guarantee for that.
 The Machine Learning part of CSI:FingerID, namely the essemble of linear
 Support Vector Machines, is currently (CSI:FingerID version~1.1) trained
 on $12\,108$ compounds from \citep{wang16sharing} and $2\,073$ compounds
-from MassBank \citep{horai10massbank}.  In total, CSI:FingerId is trained on $14\,181$ compounds with $8\,210$ unique structures. Again, all spectra were recorded in
+from MassBank \citep{horai10massbank}.  In total, CSI:FingerID is trained on $14\,181$ compounds with $8\,210$ unique structures. Again, all spectra were recorded in
 positive ion mode.  Different from fragmentation tree computation, we assume
 that the \textbf{prediction of molecular fingerprints is challenging for
 negative ion mode data}, given that we have no training data.  Hopefully,
@@ -1122,19 +1126,20 @@ training data!
 
 \section{Overview}
 \label{gui:overview}
+
 Starting with version~3.1, our software ships with a Graphical User
-Interface.  On top of the screen you find the toolbar(1). On the left side is
+Interface.  On top of the screen you find the toolbar~(1). On the left side is
 the compound list (2) displaying all imported compounds. A ``compound'' lists
 MS and MS/MS spectra corresponding to a single measured compound. If a
 compound has been processed successfully, you will see a tick mark on the
-right (3); if something goes wrong during computation you will see a cross
-symbol (4). The output of a computation is an ordered list of suggested
+right~(3); if something goes wrong during computation you will see a cross
+symbol~(4). The output of a computation is an ordered list of suggested
 molecular formula candidates.  After selecting a compound an overview is
-displayed. It shows a list of all molecular formula candidates (5), sorted by
+displayed. It shows a list of all molecular formula candidates~(5), sorted by
 score, the corresponding spectrum (6) and the fragmentation tree of the
-selected candidate molecular formula (7).  Explained peaks are highlighted in
+selected candidate molecular formula~(7).  Explained peaks are highlighted in
 the spectrum. Nodes in the fragmentation tree are colored according to their
-score.  In the upper right corner are settings and bug report dialogs (8).
+score.  In the upper right corner are settings and bug report dialogs~(8).
 \todo{filter options etc}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1215,29 +1220,37 @@ You can change the maximal allowed mass deviation in the \textbf{ppm} field. SIR
 
 Finally, you can select the number of molecular formula candidates that should be given in the output as well as where they come from.
 
-If you select \textbf{All possible molecular formulas} then SIRIUS~3 will 
-enumerate over all molecular formulas that match the ion mass, filtering out 
-only molecular formulas with negative ring double bond equivalent. If you 
-choose \textbf{all PubChem formulas} then SIRIUS~3 will select all molecular 
-formulas from PubChem. 
-\textbf{organic PubChem formulas} ignores molecular formulas containing elements untypical for organic compounds (like Si or Mg). Molecular formulas pass this filter if they are composed solely of CHNOPSBBrClIF.
-When choosing \textbf{formulas from biological databases} SIRIUS~3 will select 
-formulas that are contained in any database of either biological compounds or 
-compounds that could be expected in biological experiments (e.g. KEGG, BioCyc, 
-HMDB but also MaConDa).
+If you select option ``\textbf{all possible molecular formulas}'' then
+SIRIUS~3 will enumerate over all molecular formulas that match the ion mass,
+filtering out only molecular formulas with negative ring double bond
+equivalent. If you choose ``\textbf{all PubChem formulas}'' then SIRIUS~3
+will select all molecular formulas from PubChem.  Option ``\textbf{organic
+PubChem formulas}'' ignores molecular formulas containing elements untypical
+for organic compounds such as Si or Mg; molecular formulas pass this filter
+if they are composed solely of \ce{CHNOPSBBrClIF}.  When choosing
+``\textbf{formulas from biomolecule databases}'', \todo{change name of option
+in program, biomolecule instead of biological!} SIRIUS~3 will use all
+formulas contained in databases with biological compounds or compounds that
+could be expected in biological experiments (e.g. KEGG, BioCyc, HMDB, but
+also MaConDa).
+%
 \begin{description}
 \item[{Please consider the following:}] \leavevmode\begin{itemize}
 \item {} 
-we never search in any of these databases but instead in our own in-house database. Although we regularly update our database it might happen that some new compound in e.g. CHEBI is not already contained in our own copy of CHEBI.
+We never search in these databases directly, but rather in our local database
+copies. Although we regularly update our database, it may happen that some
+new compound in, say, ChEBI is not already contained in our local copy.
 
 \item {} 
-when choosing a database SIRIUS~3 will ignore your element restrictions and instead allow all elements. However, if you provide MS1 spectra SIRIUS~3 can usually determine the elemental composition from them anyways.
+When choosing a ``molecular fromulas from a database'' option, SIRIUS~3 will
+ignore your element restrictions and instead allow all elements.
 
 \item {} 
-while we recommend searching in PubChem and filtering the results afterwards, searching in bio databases significantly speeds up the computation, as SIRIUS~3 has to consider much less molecular formulas and have to download much smaller candidate structure lists.
-
+We do not recommend to restrict molecular formula searching to biomolecule
+databases, but doing so significantly speeds up computations, as SIRIUS~3 has
+to consider significantly less molecular formulas and download significantly
+smaller candidate structure lists.
 \end{itemize}
-
 \end{description}
 
 
@@ -1254,7 +1267,15 @@ The batch mode can be triggered by pressing on the \textbf{CSI:FingerID} in the 
 \includegraphics[width=0.4\textwidth]{{fingerid}.png}
 \end{figure}
 
-When starting the CSI:FingerID search you are again asked to choose between PubChem or biological databases. This is mainly a performance issue because you can filter your result lists afterwards by any database you want to. Our biological database is several magnitudes smaller than PubChem and downloading and searching structure lists from biological databases is significantly faster. However, when searching in biological databases you might never see if there are structures with possibly much better score from PubChem. Therefore, we recommend to search in PubChem and filter the result list if you expect the result to be contained in biological databases.
+When starting the CSI:FingerID search you are again asked to choose between
+PubChem or biomolecule databases. This is mainly a performance issue because
+you can filter your result lists afterwards by any database you want to. Our
+biomolecule database is several magnitudes smaller than PubChem and
+downloading and searching structure lists from biomolecule databases is
+significantly faster. However, when searching in biomolecule databases you
+might never see if there are structures with possibly much better score from
+PubChem. Therefore, we recommend to search in PubChem and filter the result
+list if you expect the result to be contained in biomolecule databases.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1324,7 +1345,8 @@ Another way of filtering is the XLogP slider. If you have information about
 retention times and expected logP values of your measured compound you can
 use this slider to filter the candidate list by certain XLogP values. The
 slider allows you to define min and max values. XLogP is calculated using the
-Chemical Development Kit CDK \citep{steinbeck03chemistry, steinbeck06recent}.
+Chemical Development Kit CDK \citep{steinbeck03chemistry, steinbeck06recent,
+willighagen17chemistry}.
 
 The blue and red squares are some visualization of the CSI:FingerID predictions 
 and scoring. All blue squares represent molecular structures that are found in 
@@ -1350,7 +1372,7 @@ substructures are expected in the measured compound.
 
 You can open a context menu by right click on the compound. It offers you to open the compound in PubChem or copy the InChI or InChI key in your clipboard.
 
-If the compound is contained in any biological database, a blue label with the name of this database is displayed below the compound. You can click on most of these labels to open the database entry in your browser window.
+If the compound is contained in any biomolecule database, a blue label with the name of this database is displayed below the compound. You can click on most of these labels to open the database entry in your browser window.
 
 You can export a single candidate list by clicking on the \textbf{export list} button.
 
@@ -1827,7 +1849,7 @@ If this option is set, SIRIUS~3 will search for molecular structure using CSI:Fi
 
 \begin{fulllineitems}
 \phantomsection\label{commandline:cmdoption--database}\pysigline{\bfcode{-{-}database}\code{}\code{,~}\bfcode{-d}\code{}}
-If this option is set, SIRIUS~3 will only consider molecular formulas from the given database. Either \code{PubChem} or \code{bio} can be chosen, as well as other concrete databases like \code{hmdb}, \code{kegg}, \code{knapsack{}`{}`{}`or {}`{}`biocyc}. When used with the option --fingerid, the chosen database will also be used to search for candidate structures. When setting this value to \code{all}, SIRIUS will consider all possible molecular formulas (without database search) and CSI:FingerId will use PubChem.
+If this option is set, SIRIUS~3 will only consider molecular formulas from the given database. Either \code{PubChem} or \code{bio} can be chosen, as well as other concrete databases like \code{hmdb}, \code{kegg}, \code{knapsack{}`{}`{}`or {}`{}`biocyc}. When used with the option --fingerid, the chosen database will also be used to search for candidate structures. When setting this value to \code{all}, SIRIUS will consider all possible molecular formulas (without database search) and CSI:FingerID will use PubChem.
 
 \end{fulllineitems}
 
