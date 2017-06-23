@@ -28,7 +28,7 @@
 \newcommand{\todo}[1]{}
 
 \newcommand\etal{\emph{et~al.\@}\xspace}
-\newcommand\gui[1]{\guilsinglleft\textsl{#1}\guilsinglright\xspace}
+\newcommand\gui[1]{\textsl{\guilsinglleft#1\guilsinglright\xspace}}
 
 \hyphenation{Meth-od-ol high-light-ed}
 
@@ -453,12 +453,12 @@ if available. Alternatively you can specify the proxy configuration in the
 Sirius user interface setting (see Section~\ref{sec:settings}). 
 
 
-If Sirius cannot connect to the Internet it will report on which stage the 
+If Sirius cannot connect to the Internet, it will report on which stage the
 error occurred.
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
-\end{figure}
+
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
+\end{center}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -959,12 +959,14 @@ SMARTS (SMiles ARbitrary Target Specification)
 string\footnote{\sphinxAtStartFootnote%
 \url{https://en.wikipedia.org/wiki/Smiles_arbitrary_target_specification}}:
 For example, molecular property 357 of PubChem CACTVS encodes SMARTS string
-``\verb=[#6](~[#6])(:c)(:n)='', corresponding to a central carbon atom connected to
-a second carbon atom via any bond, to a third aromatic carbon atom via an aromatic bond,
-and to an aromatic nitrogen atom via an aromatic bond.
+``\verb=[#6](~[#6])(:c)(:n)='', corresponding to a central carbon atom
+connected to a second carbon atom via any bond, to a third aromatic carbon
+atom via an aromatic bond, and to an aromatic nitrogen atom via an aromatic
+bond.
 See \url{ftp://ftp.ncbi.nlm.nih.gov/pubchem/specifications/pubchem_fingerprints.pdf}
-for the full description of the CACTVS fingerprint. We ignore all 
-molecular properties that can be derived from the molecular formula of the query compound (for example, bits 0 to 114 of PubChem CACTVS).
+for the full description of the CACTVS fingerprint. We ignore all molecular
+properties that can be derived from the molecular formula of the query
+compound (for example, bits 0 to 114 of PubChem CACTVS).
 
 Given the molecular structure of a compound, we can deterministically compute
 its molecular fingerprint: We use the Chemical Development Kit CDK
@@ -1088,7 +1090,9 @@ but there is no guarantee for that.
 The Machine Learning part of CSI:FingerID, namely the essemble of linear
 Support Vector Machines, is currently (CSI:FingerID version~1.1) trained
 on $12\,108$ compounds from \citep{wang16sharing} and $2\,073$ compounds
-from MassBank \citep{horai10massbank}.  In total, CSI:FingerID is trained on $14\,181$ compounds with $8\,210$ unique structures. Again, all spectra were recorded in
+from MassBank \citep{horai10massbank}.  In total, CSI:FingerID is trained on
+$14\,181$ compounds with $8\,210$ unique structures. Again, all spectra were
+recorded in
 positive ion mode.  Different from fragmentation tree computation, we assume
 that the \textbf{prediction of molecular fingerprints is challenging for
 negative ion mode data}, given that we have no training data.  Hopefully,
@@ -1117,12 +1121,12 @@ training data!
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  CHAPTER  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Graphical User Interface}\label{gui::doc}\label{gui:user-interface}
+\chapter{Graphical User Interface}
+\label{gui::doc}\label{gui:user-interface}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics{{gui}.png}
-\end{figure}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{{gui}.png}
+\end{center}
 
 
 \section{Overview}
@@ -1158,11 +1162,9 @@ your data consists of several CSV (comma separated values) files, such as the
 data from the CASMI challenges. First press on \gui{Import} to start the
 import dialog.
 
-\begin{figure}[htbp]
-\centering
-
-\includegraphics{{load}.png}
-\end{figure}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{{load}.png}
+\end{center}
 
 For each spectrum you have to select the MS level (either MS1 or MS/MS). If you have MSn spectra you can just import them as MS/MS spectra. You can select a name for the compound as well as an ionization mode. The collision energy is an optional attribute as it does not affect the computation.
 
@@ -1189,15 +1191,14 @@ menu. The Batch Computation will compute all compounds in the workspace.
 Besides, you can select multiple compounds and choose \gui{Compute} to 
 only compute a subset of your imported compounds.
 
-\begin{figure}[htbp]
-\centering
-
-\includegraphics{{compute}.png}
-\end{figure}
+\begin{center}
+  \centering
+\end{center}
 
 
 \subsection{Parent mass}
 \label{gui:parent-mass}
+
 The exact m/z of the parent peak. If MS1 data is present, the m/z of the monoisotopic peak is presented as default. Otherwise, an autocompletion offers a list of high intensive peaks from the MS/MS spectra.
 
 
@@ -1266,11 +1267,10 @@ smaller candidate structure lists.
 
 After computing the fragmentation trees you can search these in a structure database. Again we provide a \gui{single mode} and a \gui{batch mode}. The single mode is available by clicking on the molecular formula of interest, then switching to the \gui{CSI:FingerID} tab and pressing on the \gui{Search online with CSI:FingerID} button.
 The batch mode can be triggered by pressing on the \gui{CSI:FingerID} in the toolbar.
-\begin{figure}[htbp]
-\centering
 
-\includegraphics[width=0.4\textwidth]{{fingerid}.png}
-\end{figure}
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{{fingerid}.png}
+\end{center}
 
 When starting the CSI:FingerID search you are again asked to choose between
 PubChem or biomolecule databases. This is mainly a performance issue because
@@ -1298,52 +1298,72 @@ in the \gui{Tree view}.  Both views can be displayed in a separate panel to
 have a more detailed look.  The \gui{CSI:FingerID} panel displays candidates
 from structure prediction.
 
-\subsection{Overview}
-The overview displays the candidate list, spectrum and fragmentation tree of 
-the selected candidate. Candidates are ordered by total score, but can be 
-sorted by any other column. Moreover, the list can be filtered using the 
-corresponding text field. A green row highlights the molecular formula of the 
-best candidate structure found by CSI:FingerID.
+\subsection{Overview tab}
 \label{gui:overview-view}
-\begin{figure}[htbp]
-\includegraphics{{overview}.png}
-\end{figure}
 
-\subsection{Tree view}
-\label{gui:tree-view}\begin{figure}[htbp]
+The \gui{Overview} tab displays the candidate list, spectrum and
+fragmentation tree of the selected candidate. Candidates are ordered by total
+score, but can be sorted by any other column. Moreover, the list can be
+filtered using the corresponding text field. A green row highlights the
+molecular formula of the best candidate structure found by CSI:FingerID.
 
-\includegraphics{{tree_view}.png}
-\end{figure}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{{overview}.png}
+\end{center}
 
-The tree view displays the estimated fragmentation tree. Each node in this
-tree assigns a molecular formula to a peak in the (merged) MS/MS
+The length of the bars for the different score columns (isotope pattern,
+fragmentation pattern, total) as well as the displayed numbers for
+columns \gui{Isotope Score} and \gui{Tree Score}, correspond
+to \emph{logarithms} of maximum likelihoods (probability that this
+hypothesis, i.e.\ molecular formula, will generate the observed data).  In
+contrast, the number in the \gui{Score} column is the posterior probability
+of the hypothesis (molecular formula), and these probablities sum to one.  A
+higher posterior probability of the top hit may indicate that this molecular
+formula has a higher chance of being correct; but we stress that \textbf{a
+posterior probability of 90\,\%, must not be misunderstood as a 90\,\%
+probability that this molecular formula identification is correct!}  The
+displayed probabilities are neither q-values nor Posterior Error
+Probabilities.
+
+
+\subsection{Tree view tab}
+\label{gui:tree-view}
+
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{{tree_view}.png}
+\end{center}
+
+The \gui{Tree view} tab displays the estimated fragmentation tree. Each node
+in this tree assigns a molecular formula to a peak in the (merged) MS/MS
 spectrum. Each edge is a hypothetical fragmentation reaction. The user has
-the choice between different node styles and color schemes. The shown
-fragmentation tree can be exported as JPEG, GIF, and PNG. Alternatively, the
-Dot file format contains a text description of the tree. It can be used to
-render the tree externally. The command-line tool Graphviz can transform dot
-files into image formats (PDF, SVG, PNG etc). The JSON format yields a
-machine-readable representation of the tree.
+the choice between different node styles and color schemes.
+
+The displayed fragmentation tree can be exported as JPEG, GIF, and
+PNG. Alternatively, the Dot file format contains a text description of the
+tree. It can be used to render the tree externally. The command-line tool
+Graphviz can transform dot files into image formats (PDF, SVG, PNG etc). The
+JSON format yields a machine-readable representation of the tree.
 
 
-\subsection{Spectrum view}
-\label{gui:spectrum-view}\begin{figure}[htbp]
-\centering
+\subsection{Spectrum view tab}
+\label{gui:spectrum-view}
 
-\includegraphics{{spectra_view}.png}
-\end{figure}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{{spectra_view}.png}
+\end{center}
 
-In the spectrum view all peaks that are annotated by the fragmentation tree are 
-colored in orange. Peaks that are annotated as noise are colored black. 
-Hovering with the mouse over a peak shows its annotation.
+In the \gui{Spectrum view} tab, all peaks that are annotated by the
+fragmentation tree are colored in orange. Peaks that are annotated as noise
+are colored black.  Hovering with the mouse over a peak shows its detailed
+annotation.
 
 
 \subsection{CSI:FingerID view}
-\label{gui:csi-fingerid-view}\begin{figure}[htbp]
-\centering
+\label{gui:csi-fingerid-view}
 
-\includegraphics{{fingerprints}.png}
-\end{figure}
+\begin{center}
+  \includegraphics[width=0.8\textwidth]{{fingerprints}.png}
+\end{center}
 
 This tab shows you the candidate structures for the selected molecular formula ordered by the CSI:FingerID search score. If you want to filter the candidate list by a certain database (e.g. only compounds from KEGG and BioCyc) you can press the filter button. A menu will open displaying all available databases. Only candidates will be displayed that are enabled in this filter menu. Note that PubChem is enabled by default and, therefore, always the complete list is shown. If you want to see only compounds from KEGG and BioCyc you have to disable PubChem and enable KEGG and BioCyc.
 
@@ -1397,10 +1417,12 @@ Currently, CSI:FingerID predictions are not stored in the \code{.sirius} file. T
 
 \subsection{Export results}
 \label{gui:export-results}
-You can export your results as a simple \code{csv} file for all compounds by clicking on the 
-\gui{Export Results} button and selecting single file export. Such a 
-\code{.csv} file can then be imported into \emph{Excel}, \emph{Matlab} or 
-\emph{R}.
+
+You can export your results as a simple \code{csv} file for all compounds by
+clicking on the \gui{Export Results} button and selecting single file
+export. Such a \code{.csv} file can then be imported
+into \emph{Excel}, \emph{Matlab} or \emph{R}.
+%
 \begin{description}
 \item[{The CSV file contains the following fields:}] \leavevmode\begin{itemize}
 \item {} 
@@ -1456,7 +1478,7 @@ Exporting \gui{CSI:FingerID results} will create one \code{.csv} file for each c
 %SIRIUS~3.2 we offer a confidence score that reflects the likelihood that some 
 %identification is correct. You can list all identifications by opening the 
 %\gui{identification} tab.
-%\begin{figure}[htbp]
+%\begin{figure}[htb]
 %\centering
 %
 %\includegraphics{{confidence}.png}
@@ -1489,12 +1511,10 @@ Exporting \gui{CSI:FingerID results} will create one \code{.csv} file for each c
 	address CSI:FingerID via a proxy server. Your specified configuration will 
 	be tested if you hit the save button (see Figure below).
 	
-	\begin{figure}[htbp]
-		\label{fig:proxy}
-		\centering
-		\includegraphics[width=0.4\textwidth]{{proxySetting}.png}
-		\includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
-	\end{figure}
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{{proxySetting}.png}
+  \includegraphics[width=0.4\textwidth]{{connectionCheck}.png}
+\end{center}
 \end{itemize}
 
 \item \gui{Error report settings}
@@ -1916,23 +1936,19 @@ sirius \PYGZhy{}p orbitrap \PYGZhy{}f C20H17NO6 \PYGZhy{}o trees demo\PYGZhy{}da
 dot \PYGZhy{}Tpdf \PYGZhy{}O trees/Bicuculline.dot
 \end{Verbatim}
 
-This creates a file Bicuculline.dot.pdf
-({\hyperref[commandline:treeimg]{\crossref{\DUrole{std,std-ref}{Fig.1}}}}). Remark
-that SIRIUS~3 uses automatically the file name of the input spectrum to name
-the output file. You can specify another filename with the \code{-o}
-option, as long as only one fragmentation tree is computed.
-\begin{quote}
+This creates a file Bicuculline.dot.pdf:
 
+\begin{center}
+  \includegraphics[width=0.3\textwidth]{{tree}.pdf}
+\end{center}
+
+SIRIUS~3 uses automatically the file name of the input spectrum to name the
+output file. You can specify another filename with the \code{-o} option, as
+long as only one fragmentation tree is computed.
+\begin{quote}
 sirius -p orbitrap -f C20H17NO6 -o compound.dot demo-data/ms/Bicuculline.ms
 dot -Tpdf -O compound.dot
 \end{quote}
-\begin{figure}[htbp]
-\centering
-\capstart
-
-\includegraphics{{tree}.pdf}
-\caption{The output of the dot program to visualize the computed fragmentation tree}\label{commandline:treeimg}\label{commandline:id4}\end{figure}
-
 
 \paragraph{Identifying Molecular Structures}
 \label{commandline:identifying-molecular-structures}
@@ -1954,16 +1970,23 @@ sirius -c 10 --database=pubchem --fingerid demo-data/ms/Bicuculline.ms
 
 \paragraph{Demo Data}
 \label{commandline:demo-data}
-You can download some sample spectra from the SIRIUS~3 website at \url{http://bio.informatik.uni-jena.de/sirius2/wp-content/uploads/2015/05/demo.zip}
 
-The demo-data contain examples for three different data formats readable by SIRIUS. The MGF folder contain an example for a MGF file containing a single compound with several MS/MS spectra measured on an Orbitrap instrument. SIRIUS~3 recognizes that these MS/MS spectra belong to the same compound because they have the same parent mass. To analyze this compound, run:
+You can download some sample spectra from the SIRIUS~3 website
+at \url{http://bio.informatik.uni-jena.de/sirius2/wp-content/uploads/2015/05/demo.zip}
 
+The demo-data contain examples for three different data formats readable by
+SIRIUS. The MGF folder contain an example for a MGF file containing a single
+compound with several MS/MS spectra measured on an Orbitrap
+instrument. SIRIUS~3 recognizes that these MS/MS spectra belong to the same
+compound because they have the same parent mass. To analyze this compound,
+run:
+%
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius \PYGZhy{}p orbitrap demo\PYGZhy{}data/mgf/laudanosine.mgf
 \end{Verbatim}
 
 The output is:
-
+%
 \begin{Verbatim}[commandchars=\\\{\}]
 1.) C21H27NO4         score: 25.41    tree: +17.55    iso: 7.86       peaks: 12       97.94 \PYGZpc{}
 2.) C17H30N2O4P       score: 21.46    tree: +13.97    iso: 7.49       peaks: 12       97.94 \PYGZpc{}
@@ -1972,9 +1995,22 @@ The output is:
 5.) C14H27N7O2S       score: 13.69    tree: +13.69    iso: 0.00       peaks: 11       97.38 \PYGZpc{}
 \end{Verbatim}
 
-This is a ranking list of the top molecular formula candidates. The best candidate is C21H27NO4 with a overall score of 25.41. This score is the sum of the fragmentation pattern scoring (17.55) and the isotope pattern scoring (7.86). For the last three candidates, the isotope pattern scoring is 0. In fact, this score can never fall below zero. If all isotope pattern scores are zero, you can assume that the isotope pattern has very low quality and cannot be used to determine the molecular formula. If the isotope pattern score of the top candidate is over 10, it is assumed to be a high quality isotope pattern. In this case, the isotope pattern is also used to filter out unlikely candidates and speed up the analysis.
+This is a ranking list of the top molecular formula candidates. The best
+candidate is \ce{C21H27NO4} with a overall score of 25.41. This score is the
+sum of the fragmentation pattern scoring (17.55) and the isotope pattern
+scoring (7.86). For the last three candidates, the isotope pattern scoring is
+0. In fact, this score can never fall below zero. If all isotope pattern
+scores are zero, you can assume that the isotope pattern has very low quality
+and cannot be used to determine the molecular formula. If the isotope pattern
+score of the top candidate is over 10, it is assumed to be a high quality
+isotope pattern. In this case, the isotope pattern is also used to filter out
+unlikely candidates and speed up the analysis.
 
-The last two columns contain the number of explained peaks in MS/MS spectrum as well as the relative amount of explained intensity. The last value should usually be over 80 \% or even 90 \%. If this value is very low you either have strange high intensive noise in your spectrum or the allowed mass deviation might be too low to explain all the peaks.
+The last two columns contain the number of explained peaks in MS/MS spectrum
+as well as the relative amount of explained intensity. The last value should
+usually be over 80 \% or even 90 \%. If this value is very low you either
+have strange high intensive noise in your spectrum, or the allowed mass
+deviation might be too low to explain all the peaks.
 
 If you want to look at the fragmentation trees, you have to add the output
 option:
@@ -2031,9 +2067,11 @@ The demo data contain a clean MS spectrum (e.g. there is only one isotope patter
 
 \chapter{SIRIUS~3 Java Library}
 \label{library:sirius-java-library}\label{library::doc}
-You can integrate the SIRIUS~3 library in your Java project, either by using Maven \footnote{\sphinxAtStartFootnote%
-\url{https://maven.apache.org/}
-} or by including the jar file directly. The latter is not recommended, as the SIRIUS~3 jar contains also dependencies to other external libraries.
+
+You can integrate the SIRIUS~3 library in your Java project, either by using
+Maven \footnote{\sphinxAtStartFootnote\url{https://maven.apache.org/}} or by
+including the jar file directly. The latter is not recommended, as the
+SIRIUS~3 jar contains also dependencies to other external libraries.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2066,9 +2104,17 @@ Now you can integrate SIRIUS~3 in your project by adding the following dependenc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Main API}
-
 \label{library:main-api}
-The main class in SIRIUS~3 is \textbf{de.unijena.bioinf.sirius.SIRIUS}. It is basically a wrapper around the important functionalities of the library. Although there are special classes for all parts of the analysis pipeline it is recommended to only use the SIRIUS~3 class as the API of all other classes might change in future releases. The SIRIUS~3 class also provides factory methods for the most important data structures. Although, for many of this data structures you could also use their constructors directly, it is recommended to use the methods in the SIRIUS~3 class.
+
+The main class in SIRIUS~3 is \textbf{de.unijena.bioinf.sirius.SIRIUS}. It is
+basically a wrapper around the important functionalities of the
+library. Although there are special classes for all parts of the analysis
+pipeline it is recommended to only use the SIRIUS~3 class as the API of all
+other classes might change in future releases. The SIRIUS~3 class also
+provides factory methods for the most important data structures. Although,
+for many of this data structures you could also use their constructors
+directly, it is recommended to use the methods in the SIRIUS~3 class.
+
 \phantomsection\label{library:package-de.unijena.bioinf.sirius}\index{de.unijena.bioinf.sirius (package)}\index{SIRIUS~3 (Java class)}
 
 \begin{fulllineitems}
