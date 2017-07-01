@@ -172,7 +172,9 @@ public class GibbsSamplerMain {
                 edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
             }
 
-            if(opts.isSampleScores()) {
+            if (opts.isMakeStats()) {
+                main.makeStats(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
+            } else if(opts.isSampleScores()) {
                 main.sampleFromScoreDistribution(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
             } else if(opts.isCrossvalidation()) {
                 main.doCVEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
@@ -288,6 +290,120 @@ public class GibbsSamplerMain {
             }
         }
         writer.close();
+
+    }
+
+    protected void makeStats(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException {
+
+        int workerCount = Runtime.getRuntime().availableProcessors();
+//            workerCount = 6;
+        //Zloty
+        if (Runtime.getRuntime().availableProcessors()>20){
+            workerCount /= 2;
+        }
+
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
+
+        PrecursorIonType[] ionTypes = Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map(s -> PrecursorIonType.getPrecursorIonType(s)).toArray(l -> new PrecursorIonType[l]);
+        guessIonizationAndRemove(candidatesMap, ionTypes);
+
+
+        parseLibraryHits(libraryHitsPath, candidatesMap); //changed
+//        parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
+
+        Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+
+
+
+
+
+        Deviation deviation = new Deviation(20);
+        for (String id : candidatesMap.keySet()) {
+            final List<FragmentsCandidate> candidateList = candidatesMap.get(id);
+            if (!candidateList.get(0).hasLibraryHit()) continue;
+
+            final LibraryHit libraryHit = candidateList.get(0).getLibraryHit();
+
+            // || sharedPeaksRatio<0.5 //todo use sharedPeaksRatio
+            //at least cosine 0.8 and 10 shared peaks
+//            if (libraryHit.getQuality()!=LibraryHitQuality.Gold || libraryHit.getCosine()<0.8 || libraryHit.getSharedPeaks()<10) continue;
+
+            System.out.println("using lower threshold for references: Bronze, cos 0.66, shared 5 peaks");
+            if (libraryHit.getCosine()<0.66 || libraryHit.getSharedPeaks()<5) continue;
+
+            final double theoreticalMass = libraryHit.getIonType().neutralMassToPrecursorMass(libraryHit.getMolecularFormula().getMass());
+            final double measuredMass = libraryHit.getQueryExperiment().getIonMass();
+
+            //todo compare without aduct!?
+            PrecursorIonType hitIonization = libraryHit.getIonType().withoutAdduct().withoutInsource();
+
+            boolean sameIonization = candidateList.stream().anyMatch(c -> c.getIonType().equals(hitIonization));
+            //same mass?
+            boolean matches = deviation.inErrorWindow(theoreticalMass, measuredMass);
+            //changed matches if one with correct MF
+//            boolean matches = candidateList.stream().anyMatch(c -> c.getFormula().equals(libraryHit.getMolecularFormula()));
+            //changed --> disadvantage: just 'correct' if Sirius has found it as well
+            if (!matches){
+                //any know MF diff?
+                for (FragmentsCandidate candidate : candidateList) {
+                    if (!candidate.getIonType().equals(libraryHit.getIonType())) continue;
+                    MolecularFormula mFDiff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
+                    if (mFDiff.getMass()<0) mFDiff = mFDiff.negate();
+                    if (netSingleReactionDiffs.contains(mFDiff)){
+                        matches = true;
+                        break;
+                    }
+                }
+            }
+
+            if (matches){
+                if (sameIonization){
+                    correctHits.put(id, libraryHit);
+                    System.out.println("all good for "+id+" "+libraryHit.getMolecularFormula());
+                } else {
+                    System.out.println("warning: different ionizations for library hit "+id);
+                }
+            } else {
+                double closestMassAbs = Math.abs(theoreticalMass-measuredMass);
+                double closestMassRel = Math.abs(theoreticalMass-measuredMass);
+                double closestMassRelPPM = Math.abs(theoreticalMass-measuredMass)/measuredMass*10e6;
+
+                for (MolecularFormula molecularFormula : netSingleReactionDiffs) {
+                    for (FragmentsCandidate candidate : candidateList) {
+                        MolecularFormula mFDiff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
+                        if (mFDiff.getMass()<0) mFDiff = mFDiff.negate();
+                        if (molecularFormula.equals(mFDiff)){
+                            MolecularFormula mFDiff2 = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
+                            double shiftedMeasuredMass = measuredMass+mFDiff2.getMass();
+                            double currentDiff = Math.abs(shiftedMeasuredMass-theoreticalMass);
+                            if (currentDiff<closestMassRel){
+                                closestMassRel = currentDiff;
+                                closestMassRelPPM = currentDiff/measuredMass*10e6;
+                            }
+                        }
+
+                    }
+
+                }
+
+                System.out.println("not found: "+id+" "+libraryHit.getMolecularFormula()+" with abs "+closestMassAbs+" ,rel: "+closestMassRel+", ppm:"+closestMassRelPPM+" measured "+measuredMass+" theoretical "+theoreticalMass);
+
+                //any know MF diff?
+                for (FragmentsCandidate candidate : candidateList) {
+                    if (!candidate.getIonType().equals(libraryHit.getIonType())) continue;
+                    MolecularFormula mFDiff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
+                    if (mFDiff.getMass()<0) mFDiff = mFDiff.negate();
+                    if (netSingleReactionDiffs.contains(mFDiff)){
+                        matches = true;
+                        break;
+                    }
+                }
+
+            }
+        }
+
 
     }
 

@@ -129,6 +129,12 @@ public interface GibbsSamplerOptions {
     boolean isSampleScores();
 
     @Option(
+            longName = {"makeStats"},
+            description = "make stats"
+    )
+    boolean isMakeStats();
+
+    @Option(
             longName = {"distribution"},
             description = "which probability distribution to assume: exponential, pareto",
             defaultValue = {"exponential"}
