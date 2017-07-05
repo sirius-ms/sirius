@@ -24,10 +24,10 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
             String line;
             while ((line=br.readLine())!=null) {
                 String[] tbs = line.split("\t", 4);
-                final int id = Integer.parseInt(tbs[0]);
-                properties.put(id, new ClassyfireProperty(id, tbs[1], tbs[3], Integer.parseInt(tbs[2])));
+                final int id = Integer.parseInt(tbs[1]);
+                properties.put(id, new ClassyfireProperty(id, tbs[0], tbs[3], Integer.parseInt(tbs[2])));
             }
-        } catch (IOException e) {
+        } finally {
             if (fr!=null) fr.close();
         }
         for (ClassyfireProperty entry : properties.values()) {
