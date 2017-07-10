@@ -102,7 +102,6 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
         }
         if (adjustNormalizationBasedOnData && lossSizeScores.size() > 0) {
             final double avgScore = lossSizeScores.sum()/((double)lossSizeScores.size());
-            System.out.println(avgScore);
             if (avgScore < 0 && !Double.isInfinite(avgScore)) {
                 for (int fragment=0; fragment < peaks.size(); ++fragment) {
                     for (int parent=fragment+1; parent < peaks.size(); ++parent) {
