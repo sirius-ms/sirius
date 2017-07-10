@@ -15,21 +15,12 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
+package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
-/**
- * Can be implemented by logger, PrintStreams or others to track warnings in the validation process
- */
-public interface Warning {
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
-    class Noop implements Warning{
+public interface Ms2ExperimentValidator {
 
-        @Override
-        public void warn(String message) {
-            // dead code!
-        }
-    }
-
-    void warn(String message);
+    Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException;
 
 }
