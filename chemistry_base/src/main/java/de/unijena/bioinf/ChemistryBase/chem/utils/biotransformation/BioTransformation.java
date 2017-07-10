@@ -139,11 +139,11 @@ public enum BioTransformation {
 
     public boolean isConditional(){
         return !getCondition().equals(MolecularFormula.emptyFormula());
-    };
+    }
 
     public boolean isSymmetric(){
         return symmetric ;
-    };
+    }
 
     public MolecularFormula getCondition() {
         return condition;

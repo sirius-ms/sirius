@@ -68,8 +68,6 @@ public class FragmentIsotopeGenerator extends FastIsotopePatternGenerator {
 
             final MolecularFormula fragment = f.subtract(loss);
 
-            System.out.println(f.toString() + "\t" + fragment.toString());
-
             final SimpleSpectrum ms1 = isoGen.simulatePattern(f, PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization());
 
             final SimpleSpectrum ms2New = Spectrums.getNormalizedSpectrum(new FragmentIsotopeGenerator().simulatePattern(ms1, f, loss, PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization()), Normalization.Sum(1d));

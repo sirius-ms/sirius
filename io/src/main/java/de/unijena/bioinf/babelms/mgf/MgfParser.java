@@ -110,8 +110,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 spec.featureId = value;
             } else if (keyword.contains("RTINSECONDS")) {
                 final String[] parts = value.split("-");
-                if (parts.length == 1) {
-                    spec.retentionTime = new RetentionTime(Double.parseDouble(parts[0]));
+                if (parts.length == 1 || parts[0].isEmpty()) {
+                    spec.retentionTime = new RetentionTime(Double.parseDouble(parts[parts.length-1]));
                 } else {
                     double a = Double.parseDouble(parts[0]), b = Double.parseDouble(parts[1]);
                     spec.retentionTime = new RetentionTime(a, b, a + (b - a) / 2d);

@@ -111,7 +111,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
     private IsotopeInMs2Handling isotopeInMs2Handling;
 
-    public static enum IsotopeInMs2Handling {
+    public enum IsotopeInMs2Handling {
         /**
          * never look for isotopes in MS2
          */
@@ -132,7 +132,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
          * enforce scoring of isotopes in MS2, even if spectrum is not measured on a Bruker Maxis.
          */
         ALWAYS
-    };
+    }
 
     private static ParameterHelper parameterHelper = ParameterHelper.getParameterHelper();
 
@@ -900,7 +900,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         this.graphBuilder = new SubFormulaGraphBuilder();
         this.lossScorers = new ArrayList<LossScorer>();
         this.defaultProfile = new MutableMeasurementProfile();
-        isoInMs2Scorer = new IsotopePatternInMs2Scorer();;
+        isoInMs2Scorer = new IsotopePatternInMs2Scorer();
         isotopeInMs2Handling = IsotopeInMs2Handling.IGNORE;
         this.reduction = new SimpleReduction();
 
@@ -1531,7 +1531,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     public TreeBuilder getTreeBuilder() {
         if (treeBuilder==null) {
-            setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder(TreeBuilderFactory.DefaultBuilder.GUROBI));
+            setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder());
         }
         return treeBuilder;
     }
