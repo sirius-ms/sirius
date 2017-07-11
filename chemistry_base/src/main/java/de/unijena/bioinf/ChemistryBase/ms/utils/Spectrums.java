@@ -217,7 +217,7 @@ public class Spectrums {
         }
     }
 
-    private static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
+    public static <P extends Peak, S extends Spectrum<P>, P2 extends Peak, S2 extends Spectrum<P2>>
     double dotProductPeaks(S left, S2 right, Deviation deviation) {
         int i=0, j=0;
         final int nl=left.size(), nr=right.size();
@@ -475,6 +475,53 @@ public class Spectrums {
             }
         }
     }
+
+    /**
+     * extract hypothetical isotope pattern for a given mass
+     * @param ms1Spec
+     * @param profile
+     * @param targetMz
+     * @return
+     */
+    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+        return extractIsotopePattern(ms1Spec, profile, targetMz, 1);
+    }
+
+    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
+        // extract all isotope peaks starting from the given target mz
+        final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
+        final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
+        final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
+        if (index < 0) return null;
+        final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
+        spec.addPeak(massOrderedSpectrum.getPeakAt(index));
+        // add additional peaks
+        final double monoMass = spec.getMzAt(0);
+        for (int k=1; k <= 5; ++k) {
+            final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, profile.getAllowedMassDeviation(), monoMass, k);
+
+            final double a = (nextMz.lowerEndpoint()-monoMass)/absCharge+monoMass;
+            final double b = (nextMz.upperEndpoint()-monoMass)/absCharge+monoMass;
+            final double m = a+(b-a)/2d;
+            final double startPoint = a - profile.getStandardMassDifferenceDeviation().absoluteFor(a);
+            final double endPoint = b + profile.getStandardMassDifferenceDeviation().absoluteFor(b);
+            final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);
+            if (nextIndex < 0) break;
+            double mzBuffer = 0d;
+            double intensityBuffer = 0d;
+            for (int i=nextIndex; i < massOrderedSpectrum.size(); ++i) {
+                final double mz = massOrderedSpectrum.getMzAt(i);
+                if (mz > endPoint) break;
+                final double intensity = massOrderedSpectrum.getIntensityAt(i);
+                mzBuffer += mz*intensity;
+                intensityBuffer += intensity;
+            }
+            mzBuffer /= intensityBuffer;
+            spec.addPeak(mzBuffer, intensityBuffer);
+        }
+        return spec;
+    }
+
 
     /**
      * try to guess the ionization by looking for mass differences to other peaks which might be the same compound ionized with a different adduct.

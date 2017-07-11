@@ -66,6 +66,20 @@ public class FormulaTest {
 		final MolecularFormula formula2 = MolecularFormula.parse("C3H6(CH2(COH)2)8C3H6");
 		assertEquals("C30H44O16", formula2.formatByHill());
 	}
+
+	@Test
+	public void testContains() {
+		final MolecularFormula formula = MolecularFormula.parse("C3H6O2");
+		final MolecularFormula formula2 = MolecularFormula.parse("C2H4");
+		final MolecularFormula formula3 = MolecularFormula.parse("C7H4");
+		final MolecularFormula formula4 = MolecularFormula.parse("C3H6O2");
+		final MolecularFormula formula5 = MolecularFormula.emptyFormula();
+		assertTrue(formula.contains(formula2));
+		assertFalse(formula.contains(formula3));
+		assertTrue(formula.contains(formula4));
+		assertTrue(formula.contains(formula5));
+		assertTrue(formula.contains(null));
+	}
 	
 
 }
