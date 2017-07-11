@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * NOTES:
@@ -132,6 +134,8 @@ public class GLPKSolver implements TreeBuilder {
     ///                           ///
     /////////////////////////////////
 
+    protected final static Lock GLPK_LOCK = new ReentrantLock();
+
 
     /**
      * The actual solver. Instances will be initiated from outer class
@@ -150,13 +154,17 @@ public class GLPKSolver implements TreeBuilder {
 
         protected Solver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) {
             super(graph, input, lowerbound, feasibleSolver, timeLimit);
-            this.LP = GLPK.glp_create_prob();
-            GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
+            GLPK_LOCK.lock();
+            try {
+                this.LP = GLPK.glp_create_prob();
+                GLPK.glp_set_prob_name(this.LP, "ColSubtreeProbGLPK");
 
 
-            GLPK.glp_java_set_msg_lvl(GLPKConstants.GLP_JAVA_MSG_LVL_OFF);
-            GLPK.glp_term_out(GLPKConstants.GLP_OFF);
-
+                GLPK.glp_java_set_msg_lvl(GLPKConstants.GLP_JAVA_MSG_LVL_OFF);
+                GLPK.glp_term_out(GLPKConstants.GLP_OFF);
+            } finally {
+                GLPK_LOCK.unlock();
+            }
         }
 
 
@@ -168,13 +176,17 @@ public class GLPKSolver implements TreeBuilder {
         @Override
         protected void defineVariables() throws Exception {
             final int N = this.losses.size();
-            GLPK.glp_add_cols(this.LP, N);
-
-            // for GLPK: structure variables
-            for (int i=1; i<=N; i++) {
-                GLPK.glp_set_col_name(LP, i, null);
-                GLPK.glp_set_col_kind(LP, i, GLPKConstants.GLP_BV); //Integer Variable
-                //GLPK.glp_set_col_bnds(LP, i, GLPKConstants.GLP_DB, 0.0, 1.0); // double-bound | either zero or one!
+            GLPK_LOCK.lock();
+            try {
+                GLPK.glp_add_cols(this.LP, N);
+                // for GLPK: structure variables
+                for (int i=1; i<=N; i++) {
+                    GLPK.glp_set_col_name(LP, i, null);
+                    GLPK.glp_set_col_kind(LP, i, GLPKConstants.GLP_BV); //Integer Variable
+                    //GLPK.glp_set_col_bnds(LP, i, GLPKConstants.GLP_DB, 0.0, 1.0); // double-bound | either zero or one!
+                }
+            } finally {
+                GLPK_LOCK.unlock();
             }
         }
 
@@ -210,209 +222,237 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected void setTreeConstraint() {
-            // returns the index of the first newly created row
-            final int N = graph.numberOfEdges()-graph.getRoot().getOutDegree();
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, N);
+            GLPK_LOCK.lock();
+            try {
+                // returns the index of the first newly created row
+                final int N = graph.numberOfEdges()-graph.getRoot().getOutDegree();
+                final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, N);
 
-            // create auxiliary variables first
-            for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + N; r++) {
-                //GLPK.glp_set_row_name(this.LP, r, "r"+r);
-                GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_LO, 0.0, 0.0);
-            }
-
-            int CONSTR_INDEX = CONSTR_START_INDEX;
-            final Fragment pseudoRoot = graph.getRoot();
-            // set up row entries
-            int lossId = 0;
-            for (int k=0; k<graph.numberOfVertices(); k++) {
-                final Fragment f = graph.getFragmentAt(k);
-                if (f==pseudoRoot) continue;
-                {
-                    SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree() + 2);
-                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree() + 2);
-                    int rowIndex = 1;
-                    for (int in=0; in < f.getInDegree(); ++in) {
-                        assert losses.get(lossId).getTarget() == f;
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, ++lossId); // each edge is weighted equally here
-                        GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
-                        ++rowIndex;
-                    }
-
-                    GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
-                    final int offset = edgeOffsets[k];
-                    for (int out=0; out < f.getOutDegree(); ++out ) {
-                        final int outgoingEdge = edgeIds[offset+out];
-                        assert losses.get(outgoingEdge).getSource()==f;
-                        GLPK.intArray_setitem(rowIndizes, rowIndex, outgoingEdge + 1); // each edge is weighted equally here
-                        GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree()+1, rowIndizes, rowValues);
-                        assert CONSTR_INDEX < CONSTR_START_INDEX+N;
-                        ++CONSTR_INDEX;
-                    }
-                    GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
-                    GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
+                // create auxiliary variables first
+                for (int r=CONSTR_START_INDEX; r < CONSTR_START_INDEX + N; r++) {
+                    //GLPK.glp_set_row_name(this.LP, r, "r"+r);
+                    GLPK.glp_set_row_bnds(this.LP, r, GLPKConstants.GLP_LO, 0.0, 0.0);
                 }
+
+                int CONSTR_INDEX = CONSTR_START_INDEX;
+                final Fragment pseudoRoot = graph.getRoot();
+                // set up row entries
+                int lossId = 0;
+                for (int k=0; k<graph.numberOfVertices(); k++) {
+                    final Fragment f = graph.getFragmentAt(k);
+                    if (f==pseudoRoot) continue;
+                    {
+                        SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(f.getInDegree() + 2);
+                        SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(f.getInDegree() + 2);
+                        int rowIndex = 1;
+                        for (int in=0; in < f.getInDegree(); ++in) {
+                            assert losses.get(lossId).getTarget() == f;
+                            GLPK.intArray_setitem(rowIndizes, rowIndex, ++lossId); // each edge is weighted equally here
+                            GLPK.doubleArray_setitem(rowValues, rowIndex, 1d);
+                            ++rowIndex;
+                        }
+
+                        GLPK.doubleArray_setitem(rowValues, rowIndex, -1d);
+                        final int offset = edgeOffsets[k];
+                        for (int out=0; out < f.getOutDegree(); ++out ) {
+                            final int outgoingEdge = edgeIds[offset+out];
+                            assert losses.get(outgoingEdge).getSource()==f;
+                            GLPK.intArray_setitem(rowIndizes, rowIndex, outgoingEdge + 1); // each edge is weighted equally here
+                            GLPK.glp_set_mat_row(this.LP, CONSTR_INDEX, f.getInDegree()+1, rowIndizes, rowValues);
+                            assert CONSTR_INDEX < CONSTR_START_INDEX+N;
+                            ++CONSTR_INDEX;
+                        }
+                        GLPK.delete_intArray(rowIndizes); // free memory. Doesn't delete lp matrix entry!
+                        GLPK.delete_doubleArray(rowValues); // free memory. Doesn't delete lp matrix entry!
+                    }
+                }
+                assert CONSTR_INDEX==CONSTR_START_INDEX+N;
+            } finally {
+                GLPK_LOCK.unlock();
             }
-            assert CONSTR_INDEX==CONSTR_START_INDEX+N;
         }
 
         @Override
         protected void setColorConstraint() {
+            GLPK_LOCK.lock();
+            try {
+                final int COLOR_NUM = this.graph.maxColor()+1;
 
-            final int COLOR_NUM = this.graph.maxColor()+1;
+                // get all edges of each color first. We can add each color-constraint afterwards + save much memory!
+                final TIntArrayList[] edgesOfColors = new TIntArrayList[COLOR_NUM];
+                for (int c=0; c<COLOR_NUM; c++)
+                    edgesOfColors[c] = new TIntArrayList();
 
-            // get all edges of each color first. We can add each color-constraint afterwards + save much memory!
-            final TIntArrayList[] edgesOfColors = new TIntArrayList[COLOR_NUM];
-            for (int c=0; c<COLOR_NUM; c++)
-                edgesOfColors[c] = new TIntArrayList();
-
-            int colnum = 0;
-            int l=0;
-            for (int k=0; k < graph.numberOfVertices(); ++k) {
-                final Fragment u = graph.getFragmentAt(k);
-                final TIntArrayList list = edgesOfColors[u.getColor()];
-                for (int i=0; i < u.getInDegree(); ++i) {
-                    list.add(l++);
+                int colnum = 0;
+                int l=0;
+                for (int k=0; k < graph.numberOfVertices(); ++k) {
+                    final Fragment u = graph.getFragmentAt(k);
+                    final TIntArrayList list = edgesOfColors[u.getColor()];
+                    for (int i=0; i < u.getInDegree(); ++i) {
+                        list.add(l++);
+                    }
                 }
-            }
 
-            for (TIntArrayList list : edgesOfColors)
-                if (list.size()>0) ++colnum;
+                for (TIntArrayList list : edgesOfColors)
+                    if (list.size()>0) ++colnum;
 
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, colnum);
-            for (int c=CONSTR_START_INDEX; c < CONSTR_START_INDEX + colnum; ++c) {
-                GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_UP, 0.0, 1.0);
-            }
-
-            // add constraints. Maximum one edge per color.
-            int constrIndex=0;
-            for (int c=0; c < edgesOfColors.length; c++) {
-                final TIntArrayList COL_ENTRIES = edgesOfColors[c];
-                if (COL_ENTRIES.isEmpty()) continue;
-                SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(COL_ENTRIES.size()+1); // alloc memory
-                SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(COL_ENTRIES.size()+1); // alloc memory
-                for (int i=1; i<=COL_ENTRIES.size(); i++) {
-                    GLPK.intArray_setitem(rowIndizes, i, COL_ENTRIES.get(i-1)+1);
-                    GLPK.doubleArray_setitem(rowValues, i, 1.0d);
+                final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, colnum);
+                for (int c=CONSTR_START_INDEX; c < CONSTR_START_INDEX + colnum; ++c) {
+                    GLPK.glp_set_row_bnds(this.LP, c, GLPKConstants.GLP_UP, 0.0, 1.0);
                 }
-                GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + constrIndex++, COL_ENTRIES.size(), rowIndizes, rowValues);
-                GLPK.delete_intArray(rowIndizes); // free memory
-                GLPK.delete_doubleArray(rowValues); // free memory
 
+                // add constraints. Maximum one edge per color.
+                int constrIndex=0;
+                for (int c=0; c < edgesOfColors.length; c++) {
+                    final TIntArrayList COL_ENTRIES = edgesOfColors[c];
+                    if (COL_ENTRIES.isEmpty()) continue;
+                    SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(COL_ENTRIES.size()+1); // alloc memory
+                    SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(COL_ENTRIES.size()+1); // alloc memory
+                    for (int i=1; i<=COL_ENTRIES.size(); i++) {
+                        GLPK.intArray_setitem(rowIndizes, i, COL_ENTRIES.get(i-1)+1);
+                        GLPK.doubleArray_setitem(rowValues, i, 1.0d);
+                    }
+                    GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX + constrIndex++, COL_ENTRIES.size(), rowIndizes, rowValues);
+                    GLPK.delete_intArray(rowIndizes); // free memory
+                    GLPK.delete_doubleArray(rowValues); // free memory
+
+                }
+            } finally {
+                GLPK_LOCK.unlock();
             }
         }
 
 
         @Override
         protected void setMinimalTreeSizeConstraint() {
-            // returns the index of the first newly created row
-            final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
-            GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
-            GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_FX, 1.0, 1.0); // fixed variable!
+            GLPK_LOCK.lock();
+            try {
+                // returns the index of the first newly created row
+                final int CONSTR_START_INDEX = GLPK.glp_add_rows(this.LP, 1);
+                GLPK.glp_set_row_name(this.LP, CONSTR_START_INDEX, null);
+                GLPK.glp_set_row_bnds(this.LP, CONSTR_START_INDEX, GLPKConstants.GLP_FX, 1.0, 1.0); // fixed variable!
 
-            final Fragment localRoot = graph.getRoot();
-            final int fromIndex = edgeOffsets[localRoot.getVertexId()];
-            final int toIndex = fromIndex + localRoot.getOutDegree();
+                final Fragment localRoot = graph.getRoot();
+                final int fromIndex = edgeOffsets[localRoot.getVertexId()];
+                final int toIndex = fromIndex + localRoot.getOutDegree();
 
-            SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(localRoot.getOutDegree()+1);
-            SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(localRoot.getOutDegree()+1);
-            int i=1;
-            for (int k=fromIndex; k<toIndex; k++) {
-                GLPK.doubleArray_setitem(rowValues, i, 1.0);
-                GLPK.intArray_setitem(rowIndizes, i, k+1);
-                ++i;
+                SWIGTYPE_p_int rowIndizes = GLPK.new_intArray(localRoot.getOutDegree()+1);
+                SWIGTYPE_p_double rowValues = GLPK.new_doubleArray(localRoot.getOutDegree()+1);
+                int i=1;
+                for (int k=fromIndex; k<toIndex; k++) {
+                    GLPK.doubleArray_setitem(rowValues, i, 1.0);
+                    GLPK.intArray_setitem(rowIndizes, i, k+1);
+                    ++i;
+                }
+
+
+                GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX, localRoot.getOutDegree(), rowIndizes, rowValues);
+                GLPK.delete_intArray(rowIndizes); // free memory
+                GLPK.delete_doubleArray(rowValues); // free memory
+            } finally {
+                GLPK_LOCK.unlock();
             }
-
-
-            GLPK.glp_set_mat_row(this.LP, CONSTR_START_INDEX, localRoot.getOutDegree(), rowIndizes, rowValues);
-            GLPK.delete_intArray(rowIndizes); // free memory
-            GLPK.delete_doubleArray(rowValues); // free memory
         }
 
 
         @Override
         protected void setObjective()  {
-            // nothing to do yet?
-            GLPK.glp_set_obj_dir(this.LP, GLPKConstants.GLP_MAX);
-            GLPK.glp_set_obj_name(this.LP, "z");
+            GLPK_LOCK.lock();
+            try {
+                // nothing to do yet?
+                GLPK.glp_set_obj_dir(this.LP, GLPKConstants.GLP_MAX);
+                GLPK.glp_set_obj_name(this.LP, "z");
 
-            GLPK.glp_set_obj_coef(this.LP, 0, 0.0); // non-variables constant of function
+                GLPK.glp_set_obj_coef(this.LP, 0, 0.0); // non-variables constant of function
 
-            final int N = losses.size();
-            int k=1;
-            for (int i=0; i < graph.numberOfVertices(); ++i) {
-                final Fragment u = graph.getFragmentAt(i);
-                for (int j=0; j < u.getInDegree(); ++j) {
-                    GLPK.glp_set_obj_coef(this.LP, k++, u.getIncomingEdge(j).getWeight());
+                final int N = losses.size();
+                int k=1;
+                for (int i=0; i < graph.numberOfVertices(); ++i) {
+                    final Fragment u = graph.getFragmentAt(i);
+                    for (int j=0; j < u.getInDegree(); ++j) {
+                        GLPK.glp_set_obj_coef(this.LP, k++, u.getIncomingEdge(j).getWeight());
+                    }
                 }
-            }
 
-            assert ((k-1) == this.LP_NUM_OF_VARIABLES) : "the objective function should contain the same amount of coefs as the number of variables just! (" + k  + " vs. " + LP_NUM_OF_VARIABLES;
+                assert ((k-1) == this.LP_NUM_OF_VARIABLES) : "the objective function should contain the same amount of coefs as the number of variables just! (" + k  + " vs. " + LP_NUM_OF_VARIABLES;
+            } finally {
+                GLPK_LOCK.unlock();
+            }
         }
 
 
         @Override
         protected SolverState solveMIP() throws InvalidPropertiesFormatException {
+            GLPK_LOCK.lock();
+            try {
+                //glp_smcp parm = new glp_smcp();
+                glp_iocp parm = new glp_iocp();
+                GLPK.glp_init_iocp(parm);
+                parm.setPresolve(GLPKConstants.GLP_ON);
+                //GLPK.glp_init_smcp(parm);
 
-            //glp_smcp parm = new glp_smcp();
-            glp_iocp parm = new glp_iocp();
-            GLPK.glp_init_iocp(parm);
-            parm.setPresolve(GLPKConstants.GLP_ON);
-            //GLPK.glp_init_smcp(parm);
+                //int result = GLPK.glp_simplex(this.LP, parm);
 
-            //int result = GLPK.glp_simplex(this.LP, parm);
-
-            int result = GLPK.glp_intopt(this.LP, parm);
+                int result = GLPK.glp_intopt(this.LP, parm);
 
 
 
-            int status = GLPK.glp_mip_status(this.LP);
-            if (status == GLPKConstants.GLP_OPT) {
-            } else if (status == GLPKConstants.GLP_FEAS) {
-               LoggerFactory.getLogger(this.getClass()).info("The solution is feasible.");
-            } else if (status == GLPKConstants.GLP_INFEAS) {
-               LoggerFactory.getLogger(this.getClass()).info("The solution is infeasible!");
-            } else if (status == GLPKConstants.GLP_NOFEAS) {
-               LoggerFactory.getLogger(this.getClass()).info("The problem has no feasible solution!");
-            } else if (status == GLPKConstants.GLP_UNBND) {
-               LoggerFactory.getLogger(this.getClass()).info("The problem has unbound solution!");
-            } else if (status == GLPKConstants.GLP_UNDEF) {
-               LoggerFactory.getLogger(this.getClass()).info("The solution is undefined!");
-            }
+                int status = GLPK.glp_mip_status(this.LP);
+                if (status == GLPKConstants.GLP_OPT) {
+                } else if (status == GLPKConstants.GLP_FEAS) {
+                    LoggerFactory.getLogger(this.getClass()).info("The solution is feasible.");
+                } else if (status == GLPKConstants.GLP_INFEAS) {
+                    LoggerFactory.getLogger(this.getClass()).info("The solution is infeasible!");
+                } else if (status == GLPKConstants.GLP_NOFEAS) {
+                    LoggerFactory.getLogger(this.getClass()).info("The problem has no feasible solution!");
+                } else if (status == GLPKConstants.GLP_UNBND) {
+                    LoggerFactory.getLogger(this.getClass()).info("The problem has unbound solution!");
+                } else if (status == GLPKConstants.GLP_UNDEF) {
+                    LoggerFactory.getLogger(this.getClass()).info("The solution is undefined!");
+                }
 
-            if (result == 0)
-                return SolverState.SHALL_BUILD_SOLUTION;
-            else if (result == GLPKConstants.GLP_EBADB) {
-                LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because the initial basis speci\fed in the problem object\n" +
-                        "is invalid|the number of basic (auxiliary and structural) variables is not the same\n" +
-                        "as the number of rows in the problem object.");
-                throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
-            } else if (result == GLPKConstants.GLP_ESING) {
-                LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because the basis matrix corresponding to the initial\n" +
-                        "basis is exactly singular.");
-                throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
-            } else if (result == GLPKConstants.GLP_EBOUND) {
-                LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because some double-bounded (auxiliary or structural)\n" +
-                        "variables have incorrect bounds.");
-                throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
-            } else if (result == GLPKConstants.GLP_EFAIL) {
-               LoggerFactory.getLogger(this.getClass()).error("The problem does not have variables or conditions!");
-                return SolverState.SHALL_RETURN_NULL;
-            } else if (result == GLPKConstants.GLP_EITLIM) {
-                LoggerFactory.getLogger(this.getClass()).error("GLPK reached iteration limit! Prematurely termination.");
-                return SolverState.SHALL_RETURN_NULL;
-            } else if (result == GLPKConstants.GLP_ETMLIM) {
-                LoggerFactory.getLogger(this.getClass()).error("GLPK reached time limit! Prematurely termination.");
-                return SolverState.SHALL_RETURN_NULL;
-            } else {
-                LoggerFactory.getLogger(this.getClass()).error("Unrecognized return value from simplex. Abort!");
-                return SolverState.SHALL_RETURN_NULL;
+                if (result == 0)
+                    return SolverState.SHALL_BUILD_SOLUTION;
+                else if (result == GLPKConstants.GLP_EBADB) {
+                    LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because the initial basis speci\fed in the problem object\n" +
+                            "is invalid|the number of basic (auxiliary and structural) variables is not the same\n" +
+                            "as the number of rows in the problem object.");
+                    throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
+                } else if (result == GLPKConstants.GLP_ESING) {
+                    LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because the basis matrix corresponding to the initial\n" +
+                            "basis is exactly singular.");
+                    throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
+                } else if (result == GLPKConstants.GLP_EBOUND) {
+                    LoggerFactory.getLogger(this.getClass()).error("Unable to start the search, because some double-bounded (auxiliary or structural)\n" +
+                            "variables have incorrect bounds.");
+                    throw new InvalidPropertiesFormatException("GLPKSolver algorithm is not correctly set up!");
+                } else if (result == GLPKConstants.GLP_EFAIL) {
+                    LoggerFactory.getLogger(this.getClass()).error("The problem does not have variables or conditions!");
+                    return SolverState.SHALL_RETURN_NULL;
+                } else if (result == GLPKConstants.GLP_EITLIM) {
+                    LoggerFactory.getLogger(this.getClass()).error("GLPK reached iteration limit! Prematurely termination.");
+                    return SolverState.SHALL_RETURN_NULL;
+                } else if (result == GLPKConstants.GLP_ETMLIM) {
+                    LoggerFactory.getLogger(this.getClass()).error("GLPK reached time limit! Prematurely termination.");
+                    return SolverState.SHALL_RETURN_NULL;
+                } else {
+                    LoggerFactory.getLogger(this.getClass()).error("Unrecognized return value from simplex. Abort!");
+                    return SolverState.SHALL_RETURN_NULL;
+                }
+            } finally {
+                GLPK_LOCK.unlock();
             }
         }
 
 
         @Override
         protected SolverState pastBuildSolution() throws Exception {
-            GLPK.glp_delete_prob(this.LP); // free memory
+            GLPK_LOCK.lock();
+            try {
+                GLPK.glp_delete_prob(this.LP); // free memory
+            } finally {
+                GLPK_LOCK.unlock();
+            }
             return SolverState.FINISHED;
         }
 
@@ -423,14 +463,20 @@ public class GLPKSolver implements TreeBuilder {
          * @return
          */
         final protected boolean[] getVariableAssignment() {
+
             final boolean[] assignments = new boolean[this.LP_NUM_OF_VARIABLES];
 
-            final int N = GLPK.glp_get_num_cols(this.LP);
-            for (int x=1; x<=N; x++) {
-                final double VAL = GLPK.glp_mip_col_val(this.LP, x);
-                assert VAL > -0.5 : "LP_LOWERBOUND violation for var " + x + " with value " + VAL;
-                assert VAL < 1.5  : "LP_LOWERBOUND violation for var " + x + " with value " + VAL;
-                assignments[x-1] = VAL > 0.5d;
+            GLPK_LOCK.lock();
+            try {
+                final int N = GLPK.glp_get_num_cols(this.LP);
+                for (int x=1; x<=N; x++) {
+                    final double VAL = GLPK.glp_mip_col_val(this.LP, x);
+                    assert VAL > -0.5 : "LP_LOWERBOUND violation for var " + x + " with value " + VAL;
+                    assert VAL < 1.5  : "LP_LOWERBOUND violation for var " + x + " with value " + VAL;
+                    assignments[x-1] = VAL > 0.5d;
+                }
+            } finally {
+                GLPK_LOCK.unlock();
             }
 
             {
@@ -460,7 +506,12 @@ public class GLPKSolver implements TreeBuilder {
 
         @Override
         protected double getSolverScore() throws Exception {
-            return GLPK.glp_mip_obj_val(this.LP);
+            GLPK_LOCK.lock();
+            try {
+                return GLPK.glp_mip_obj_val(this.LP);
+            } finally {
+                GLPK_LOCK.unlock();
+            }
         }
     }
 
