@@ -7,6 +7,7 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
     protected final FingerprintVersion fingerprintVersion;
 
     public AbstractFingerprint(FingerprintVersion fingerprintVersion) {
+        if (fingerprintVersion == null) throw new NullPointerException();
         this.fingerprintVersion = fingerprintVersion;
     }
 
@@ -19,6 +20,10 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
 
     public boolean isCompatible(AbstractFingerprint other) {
         return other.fingerprintVersion.compatible(fingerprintVersion);
+    }
+
+    public double tanimoto(Fingerprint other) {
+        return Tanimoto.tanimoto(this, other);
     }
 
     public String toCommaSeparatedString() {
