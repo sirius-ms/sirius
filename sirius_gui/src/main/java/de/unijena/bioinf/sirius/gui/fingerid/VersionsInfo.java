@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.*;
 
@@ -12,16 +13,16 @@ public class VersionsInfo {
      */
     public static final int CUSTOM_DATABASE_SCHEMA = 1;
 
-    public String siriusGuiVersion, siriusGuiDate, databaseDate;
+    public String  databaseDate;
+    public final DefaultArtifactVersion siriusGuiVersion;
     protected List<News> newsList;
 
-    public VersionsInfo(String siriusGuiVersion, String siriusGuiDate, String databaseDate) {
-        this(siriusGuiVersion, siriusGuiDate, databaseDate, Collections.<News>emptyList());
+    public VersionsInfo(String siriusGuiVersion, String databaseDate) {
+        this(siriusGuiVersion, databaseDate, Collections.<News>emptyList());
     }
 
-    public VersionsInfo(String siriusGuiVersion, String siriusGuiDate, String databaseDate, List<News> newsList) {
-        this.siriusGuiVersion = siriusGuiVersion;
-        this.siriusGuiDate = siriusGuiDate;
+    public VersionsInfo(String siriusGuiVersion, String databaseDate, List<News> newsList) {
+        this.siriusGuiVersion = new DefaultArtifactVersion(siriusGuiVersion);
         this.databaseDate = databaseDate;
         this.newsList = filterNews(newsList);
     }
@@ -44,7 +45,7 @@ public class VersionsInfo {
     }
 
     public boolean outdated() {
-        return (siriusGuiDate.compareTo(WebAPI.DATE) > 0 || !siriusGuiVersion.equalsIgnoreCase(WebAPI.VERSION));
+        return (siriusGuiVersion.compareTo(WebAPI.VERSION) > 0);
     }
 
     public boolean hasNews(){
@@ -61,6 +62,6 @@ public class VersionsInfo {
 
     @Override
     public String toString() {
-        return "Sirius-gui-version: " + siriusGuiVersion + ", Sirius-gui-date: " + siriusGuiDate + ", Database-date: " + databaseDate;
+        return "Sirius-gui-version: " + siriusGuiVersion  + ", Database-date: " + databaseDate;
     }
 }

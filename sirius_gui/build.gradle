@@ -27,9 +27,10 @@ dependencies {
     compile "org.openscience.cdk:cdk-ioformats:$cdk_version"
     compile "org.openscience.cdk:cdk-sdg:$cdk_version"
     compile "org.openscience.cdk:cdk-smarts:$cdk_version"
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
 
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
+    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
 
 
 

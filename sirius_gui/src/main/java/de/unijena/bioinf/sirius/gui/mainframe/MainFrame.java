@@ -163,7 +163,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 if (versionsNumber != null) {
                     mf.csiFingerId.setVersionNumber(versionsNumber);
                     if (versionsNumber.outdated()) {
-                        new UpdateDialog(mf, versionsNumber.siriusGuiVersion);
+                        new UpdateDialog(mf, versionsNumber.siriusGuiVersion.toString());
                     } else {
                         mf.csiFingerId.setEnabled(true);
                     }
