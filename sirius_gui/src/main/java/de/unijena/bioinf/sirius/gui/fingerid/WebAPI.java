@@ -50,6 +50,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
@@ -77,9 +78,7 @@ public class WebAPI implements Closeable {
     public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
-    public static final String VERSION = "3.5.0"; //todo get from properties file
-    public static final String DATE = "2017-06-15";
-
+    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(System.getProperty("de.unijena.bioinf.sirius.version"));
 
     public static WebAPI newInstance() {
         WebAPI i = new WebAPI();
@@ -135,8 +134,8 @@ public class WebAPI implements Closeable {
                     JsonObject o = r.readObject();
                     JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
-                    final String id = gui.getString("version");
-                    final String date = gui.getString("date");
+                    final String version = gui.getString("version");
+//                    final String date = gui.getString("date");
                     String database = o.getJsonObject("database").getString("version");
 
                     List<News> newsList = Collections.emptyList();
@@ -144,7 +143,7 @@ public class WebAPI implements Closeable {
                         final String newsJson = o.getJsonArray("news").toString();
                         newsList = News.parseJsonNews(newsJson);
                     }
-                    return new VersionsInfo(id, date, database, newsList);
+                    return new VersionsInfo(version, database, newsList);
                 }
             } catch (IOException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
