@@ -111,13 +111,13 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
             Properties properties = new Properties()
-            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
             propertiesFile.withInputStream {
                 properties.load(it)
             }
 
-            username = properties['username']
-            password = properties['password']
+            username = properties['de.unijena.bioinf.build.artifactory.username']
+            password = properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             publications('mavenJava')
