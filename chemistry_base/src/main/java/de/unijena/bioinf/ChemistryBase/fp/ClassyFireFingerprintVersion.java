@@ -8,7 +8,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
 
     protected ClassyfireProperty[] properties;
 
-    protected ClassyFireFingerprintVersion(ClassyfireProperty[] classyfireProperties) {
+    public ClassyFireFingerprintVersion(ClassyfireProperty[] classyfireProperties) {
         this.properties = classyfireProperties;
     }
 
@@ -39,7 +39,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
     }
 
     @Override
-    public MolecularProperty getMolecularProperty(int index) {
+    public ClassyfireProperty getMolecularProperty(int index) {
         return properties[index];
     }
 
