@@ -44,6 +44,21 @@ public final class PredictionPerformance {
             return this;
         }
 
+        public Modify update(Modify m) {
+            tp += m.tp;
+            fp += m.fp;
+            tn += m.tn;
+            fn += m.fn;
+            return this;
+        }
+        public Modify update(PredictionPerformance m) {
+            tp += m.tp;
+            fp += m.fp;
+            tn += m.tn;
+            fn += m.fn;
+            return this;
+        }
+
         public Modify update(boolean[] truths, boolean[] predictions) {
             for (int k=0; k < truths.length; ++k) update(truths[k], predictions[k]);
             return this;
@@ -122,12 +137,12 @@ public final class PredictionPerformance {
 
     private double tp, fp, tn, fn;
     private double pseudoCount;
-    private double f, precision, recall, accuracy, specitivity;
+    private double f, precision, recall, accuracy, specitivity, mcc;
     private final boolean allowRelabeling;
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.4f\tprecision=%.4f\trecall=%.4f\taccuracy=%.4f", tp,fp,tn,fn,f,precision,recall,accuracy);
+        return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.4f\tprecision=%.4f\trecall=%.4f\tmcc=%.4f\taccuracy=%.4f", tp,fp,tn,fn,f,precision,recall, mcc, accuracy);
     }
 
     /**
@@ -168,6 +183,12 @@ public final class PredictionPerformance {
         for (PredictionPerformance p : ps) f1 += p.getF();
         f1 /= ps.length;
         return f1;
+    }
+    public static double averageMCC(PredictionPerformance[] ps) {
+        double mccVal=0d;
+        for (PredictionPerformance p : ps) mccVal += p.mcc;
+        mccVal /= ps.length;
+        return mccVal;
     }
 
     public static PredictionPerformance fromString(String string) {
@@ -268,6 +289,10 @@ public final class PredictionPerformance {
         return pseudoCount;
     }
 
+    public double getMcc() {
+        return mcc;
+    }
+
     public double numberOfSamples() {
         return tp+fp+tn+fn;
     }
@@ -317,6 +342,11 @@ public final class PredictionPerformance {
         } else {
             f = 0;
         }
+
+        // now calculate MCC
+        final double mccDiv = Math.sqrt((TP+FP) * (TP+FN) * (TN+FP) * (TN+FN));
+        mcc = ((TP*TN) - (FP * FN)) / (mccDiv == 0 ? 1 : mccDiv);
+
     }
 
 }
