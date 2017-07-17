@@ -68,7 +68,7 @@ distributions {
                     from("${getRootDir()}/LICENSE.md")
                 }
                 into('doc') {
-                    from("${project.getRootDir()}/${project.appName}-manual.pdf")
+                    from(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
                 }
                 into('doc/html') {
                     from("${project.manualPath}/build/html")
@@ -101,7 +101,7 @@ distributions {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from("${project.getRootDir()}/${project.appName}-manual.pdf")
+                    from(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
                 }
                 into('doc/html') {
                     from("${project.manualPath}/build/html")
@@ -134,7 +134,7 @@ distributions {
                 from("${getRootDir()}/LICENSE.md")
             }
             into('doc') {
-                from("${project.getRootDir()}/${project.appName}-manual.pdf")
+                from(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
             }
             into('doc/html') {
                 from("${project.manualPath}/build/html")

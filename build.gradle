@@ -43,7 +43,7 @@ ext {
 //    oshi_version = '3.2'
     error_reporter_version = "0.9"
 
-    buildNumber = '1'
+    buildNumber = '3'
 }
 
 
@@ -168,8 +168,8 @@ task pdfDoku(type: Exec){
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
     outputs.upToDateWhen { return false }
-    outputs.file(file("${project.getRootDir()}/${project.appName}-manual.pdf"))
-
+    outputs.file(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
+//    outputs.file(file(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf")))
     doFirst {
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
@@ -191,7 +191,7 @@ pdfDoku.mustRunAfter cleanDoku
 
 task buildDoku {
     group = 'documentation'
-    outputs.files(pdfDoku.outputs.files.singleFile)
+    outputs.files(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
 }
 
 buildDoku.mustRunAfter cleanDoku
@@ -213,6 +213,9 @@ subprojects {
 
         initialHeapPercent = 50
         maxHeapPercent = 80
+
+//        jreMinVersion = '1.7.0'
+//        jreMaxVersion = '1.9.0'
 
         dontWrapJar = true
         jdkPreference = "preferJre"
@@ -267,7 +270,7 @@ task refreshDownloadLinks {
 
         List<String> lines = [
                 "### Sirius+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
-                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip) / " +
+                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
@@ -277,6 +280,10 @@ task refreshDownloadLinks {
                 "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
                 "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                "",
+                "### Manual",
+                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}.pdf)",
+                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)"
         ] as List
 
         Files.deleteIfExists(outfile.toPath())
@@ -333,6 +340,39 @@ task refreshReadMe {
 refreshReadMe.dependsOn prepareChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
 
+
+// what should be published
+publishing {
+    publications {
+        /*download(MavenPublication) {
+            artifactId = "${project.appName}"
+            version = 'download'
+            groupId = project.group
+
+            artifact file(refreshDownloadLinks.outputs.files.singleFile)
+        }
+
+        changelog(MavenPublication) {
+            artifactId = "${project.appName}"
+            version = 'changelog'
+            groupId = project.group
+
+            artifact file(prepareChangelog.outputs.files.singleFile)
+        }*/
+
+        manual(MavenPublication) {
+            artifactId = "${project.appName}"
+            artifact file(buildDoku.outputs.files.singleFile)
+        }
+
+
+    }
+}
+
+
+
+
+
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
@@ -351,12 +391,10 @@ artifactory {
         defaults {
             //Publish every distribution to Artifactory
             publications("sirius")
+            publications("manual")
         }
     }
 }
-
-
-
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
 artifactoryPublish.dependsOn 'prepareChangelog'
