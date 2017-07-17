@@ -232,7 +232,9 @@ abstract class AbstractFragmentationGraph implements Iterable<Fragment> {
     @SuppressWarnings("unchecked cast")
     public <T> T getAnnotationOrThrow(Class<T> klass) {
         final T ano = (T) annotations.get(klass);
+
         if (ano == null) throw new NullPointerException("No annotation '" + klass.getName() + "' in ProcessedInput");
+
         return ano;
     }
 
