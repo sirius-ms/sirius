@@ -1,4 +1,4 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ftreeheuristics.solver;
+package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.solver;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
