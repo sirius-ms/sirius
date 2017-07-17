@@ -37,9 +37,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBu
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SimpleReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.InputValidator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.Warning;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
@@ -90,7 +90,7 @@ import java.util.*;
  *
  */
 public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
-    private List<InputValidator> inputValidators;
+    private List<Ms2ExperimentValidator> inputValidators;
     private Warning validatorWarning;
     private boolean repairInput;
     private NormalizationType normalizationType;
@@ -184,7 +184,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
         MutableMs2Experiment input = new MutableMs2Experiment(originalExperiment);
         Ms2Experiment exp = input;
-        for (InputValidator validator : inputValidators) {
+        for (Ms2ExperimentValidator validator : inputValidators) {
             exp = validator.validate(exp, validatorWarning, repairInput);
         }
 
@@ -885,7 +885,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Remove all scorers and set analyzer to clean state
      */
     public void setInitial() {
-        this.inputValidators = new ArrayList<InputValidator>();
+        this.inputValidators = new ArrayList<Ms2ExperimentValidator>();
         inputValidators.add(new MissingValueValidator());
         this.validatorWarning = new Warning.Noop();
         this.normalizationType = NormalizationType.GLOBAL;
@@ -1433,11 +1433,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     //////////////////////////////////////////
 
 
-    public List<InputValidator> getInputValidators() {
+    public List<Ms2ExperimentValidator> getInputValidators() {
         return inputValidators;
     }
 
-    public void setInputValidators(List<InputValidator> inputValidators) {
+    public void setInputValidators(List<Ms2ExperimentValidator> inputValidators) {
         this.inputValidators = inputValidators;
     }
 

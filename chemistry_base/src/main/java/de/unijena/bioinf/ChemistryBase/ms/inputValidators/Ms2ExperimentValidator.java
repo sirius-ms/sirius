@@ -15,11 +15,11 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
+package de.unijena.bioinf.ChemistryBase.ms.inputValidators;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
-public interface InputValidator {
+public interface Ms2ExperimentValidator {
 
     Ms2Experiment validate(Ms2Experiment input, Warning warning, boolean repair) throws InvalidException;
 

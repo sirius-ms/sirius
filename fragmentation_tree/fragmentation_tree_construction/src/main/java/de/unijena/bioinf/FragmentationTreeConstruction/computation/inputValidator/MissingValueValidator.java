@@ -22,6 +22,9 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
@@ -36,7 +39,7 @@ import java.util.Iterator;
  * Time: 18:11
  * To change this template use File | Settings | File Templates.
  */
-public class MissingValueValidator implements InputValidator {
+public class MissingValueValidator implements Ms2ExperimentValidator {
 
 
     private boolean validDouble(double val, boolean mayNegative) {
