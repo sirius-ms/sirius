@@ -88,7 +88,7 @@ public class PreprocessingTest {
         analysis.setInitial();
         analysis.setPostProcessors(Arrays.asList((PostProcessor)new NoiseThresholdFilter(0.015d)));
         analysis.setPeakMerger(new HighIntensityMerger());
-        analysis.setInputValidators(Arrays.asList((InputValidator)new MissingValueValidator()));
+        analysis.setInputValidators(Arrays.asList((Ms2ExperimentValidator)new MissingValueValidator()));
         analysis.setNormalizationType(NormalizationType.GLOBAL);
         // input validation
         experiment = new Ms2ExperimentImpl(analysis.validate(experiment));
