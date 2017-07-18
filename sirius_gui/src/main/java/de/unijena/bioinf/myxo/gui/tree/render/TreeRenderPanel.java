@@ -19,54 +19,54 @@ import java.util.List;
 
 public class TreeRenderPanel extends JPanel implements ComponentListener, MouseMotionListener {
 
-    private static int NORTH_BORDER = 5, EAST_BORDER = 5, SOUTH_BORDER = 5, WEST_BORDER = 5;
+    protected static int NORTH_BORDER = 5, EAST_BORDER = 5, SOUTH_BORDER = 5, WEST_BORDER = 5;
 
-    private TreeNode root;
+    protected TreeNode root;
 
-    private HashMap<TreeNode, BufferedImage> thumbnailNodes, previewNodes, smallNodes, bigNodes, withScoresNodes, /*maximalNodes,*/
+    protected HashMap<TreeNode, BufferedImage> thumbnailNodes, previewNodes, smallNodes, bigNodes, withScoresNodes, /*maximalNodes,*/
             selectedNodeStyle;
-    private HashMap<TreeNode, PositionContainer> positonsMap;
-    private TreeNode[][] nodePositionArray;
+    protected HashMap<TreeNode, PositionContainer> positonsMap;
+    protected TreeNode[][] nodePositionArray;
 
-    private int thumbnailNodesWidth, previewNodesWidth, smallNodesWidth, bigNodesWidth, minimalNodesWidth, withScoresNodesWidth, /*maximalNodesWidth,*/
+    protected int thumbnailNodesWidth, previewNodesWidth, smallNodesWidth, bigNodesWidth, minimalNodesWidth, withScoresNodesWidth, /*maximalNodesWidth,*/
             selectedWidth;
-    private int thumbnailNodesHeight, previewNodesHeight, smallNodesHeight, bigNodesHeight, minimalNodesHeight, withScoresNodesHeight, /*maximalNodesHeight,*/
+    protected int thumbnailNodesHeight, previewNodesHeight, smallNodesHeight, bigNodesHeight, minimalNodesHeight, withScoresNodesHeight, /*maximalNodesHeight,*/
             selectedHeight;
 
-    private int maxXPosition, maxYPosition;
-    private int firstXPixel, firstYPixel, pixelNumberX, pixelNumberY, horizontalPixelNumber, verticalPixelNumber;
-//	private int minimalWidth, minmalHeight;
+    protected int maxXPosition, maxYPosition;
+    protected int firstXPixel, firstYPixel, pixelNumberX, pixelNumberY, horizontalPixelNumber, verticalPixelNumber;
+//	protected int minimalWidth, minmalHeight;
 
-    private Font formulaFont, propertyFont, valueFont, lossFont;
-    private FontMetrics formulaFM, propertyFM, valueFM, lossFM;
+    protected Font formulaFont, propertyFont, valueFont, lossFont;
+    protected FontMetrics formulaFM, propertyFM, valueFM, lossFM;
 
-    private Font smallFormulaFont, smallValueFont;
-    private FontMetrics smallFormulaFM, smallValueFM;
+    protected Font smallFormulaFont, smallValueFont;
+    protected FontMetrics smallFormulaFM, smallValueFM;
 
-    private DecimalFormat scoreFormat;
-    private DecimalFormat massFormat;
-    private DecimalFormat intFormat;
+    protected DecimalFormat scoreFormat;
+    protected DecimalFormat massFormat;
+    protected DecimalFormat intFormat;
     @SuppressWarnings("unused")
-    private DecimalFormat snFormat;
+    protected DecimalFormat snFormat;
 
-    private BufferedImage image;
+    protected BufferedImage image;
 
-    private List<TreeSet<LinearFunction>> edgeStorage = new ArrayList<>(20);
+    protected List<TreeSet<LinearFunction>> edgeStorage = new ArrayList<>(20);
 
     @SuppressWarnings("unused")
-    private int cePropertyWidth, scorePropertyWidth;
+    protected int cePropertyWidth, scorePropertyWidth;
 
-    private boolean treeInitNeeded;
-    private NodeType nodeType;
+    protected boolean treeInitNeeded;
+    protected NodeType nodeType;
 
-    private NodeColorManager nodeColorManager;
-    private NodeColor nodeColor;
+    protected NodeColorManager nodeColorManager;
+    protected NodeColor nodeColor;
 
-    private TreeNode tooltipNode;
+    protected TreeNode tooltipNode;
 
-    private JScrollPane scrollPane;
+    protected JScrollPane scrollPane;
 
-    private Color backColor;
+    protected Color backColor;
 
     public TreeRenderPanel(TreeNode root) {
 
@@ -95,7 +95,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         this.repaint();
     }
 
-    private void init(TreeNode root, NodeType nodeType, NodeColor nodeColor) {
+    protected void init(TreeNode root, NodeType nodeType, NodeColor nodeColor) {
 
 //		if(root==null) return;
 //		
@@ -224,7 +224,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         this.scrollPane = scrollPane;
     }
 
-    private void changeNodeTypeStep1(NodeType type) {
+    protected void changeNodeTypeStep1(NodeType type) {
         this.nodeType = type;
         if (type == NodeType.small) {
             selectedNodeStyle = smallNodes;
@@ -268,7 +268,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         return this.nodeColor;
     }
 
-    private void changeNodeColorStep1(NodeColor nodeColor) {
+    protected void changeNodeColorStep1(NodeColor nodeColor) {
         this.nodeColor = nodeColor;
         if (nodeColor == NodeColor.rgbScore) {
             this.nodeColorManager = new RGBScoreNodeColorManager(root);
@@ -321,7 +321,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         return this.root;
     }
 
-    private void readFonts() {
+    protected void readFonts() {
         try {
             InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
             Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
@@ -341,7 +341,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         }
     }
 
-    private void calculateGridParameters() {
+    protected void calculateGridParameters() {
 
         final int offset_x;
         if (maxXPosition <= 1) {
@@ -365,7 +365,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private int getXPosition(int xVal) {
+    protected int getXPosition(int xVal) {
         if (maxXPosition < 1) {
             return firstXPixel;
         } else {
@@ -375,7 +375,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 //		return (int) ( pixelNumberX * relXValue + startX );
     }
 
-    private int getYPosition(int yVal) {
+    protected int getYPosition(int yVal) {
         if (maxYPosition < 1) {
             return firstYPixel;
         } else {
@@ -444,7 +444,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         }
     }
 
-    private void paintToolTip(Graphics2D g2, TreeNode node) {
+    protected void paintToolTip(Graphics2D g2, TreeNode node) {
 
         PositionContainer cont = positonsMap.get(node);
 
@@ -565,7 +565,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void initalizeFonts() {
+    protected void initalizeFonts() {
         this.readFonts();
         propertyFM = this.getFontMetrics(this.propertyFont);
         valueFM = this.getFontMetrics(this.valueFont);
@@ -578,7 +578,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         scorePropertyWidth = propertyFM.stringWidth("score:");
     }
 
-    private void initalizeTreeNodeImages(TreeNode root) {
+    protected void initalizeTreeNodeImages(TreeNode root) {
 
         thumbnailNodes.clear();
         previewNodes.clear();
@@ -609,7 +609,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void calculateMinimalSize(TreeNode root) {
+    protected void calculateMinimalSize(TreeNode root) {
         if (root == null) return;
         ArrayDeque<TreeNode> nodes = new ArrayDeque<TreeNode>();
         nodes.addFirst(root);
@@ -648,7 +648,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         this.setMinimumSize(new Dimension(minimalNodesWidth, minimalNodesHeight));
     }
 
-    private void calculatePositionArray() {
+    protected void calculatePositionArray() {
         if (root == null) return;
         this.nodePositionArray = new TreeNode[maxXPosition + 1][maxYPosition + 1];
         ArrayDeque<TreeNode> nodes = new ArrayDeque<>();
@@ -662,14 +662,14 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         }
     }
 
-    private void processImages(TreeNode node) {
+    protected void processImages(TreeNode node) {
         buildNodeImages(node);
         for (TreeEdge edge : node.getOutEdges()) {
             processImages(edge.getTarget());
         }
     }
 
-    private void buildNodeImages(TreeNode node) {
+    protected void buildNodeImages(TreeNode node) {
         String mf = node.getMolecularFormula();
 //		String ce = node.getCollisionEnergy();
         String score = scoreFormat.format(node.getScore());
@@ -690,7 +690,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void buildPreviewImage(TreeNode node) {
+    protected void buildPreviewImage(TreeNode node) {
         BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = (Graphics2D) image.getGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -702,7 +702,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         previewNodes.put(node, image);
     }
 
-    private void buildThumbnailImage(TreeNode node) {
+    protected void buildThumbnailImage(TreeNode node) {
         BufferedImage image = new BufferedImage(6, 6, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = (Graphics2D) image.getGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -714,7 +714,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         thumbnailNodes.put(node, image);
     }
 
-    private void buildSmallImage(TreeNode node, String mf, String mass) {
+    protected void buildSmallImage(TreeNode node, String mf, String mass) {
 
         int formulaLength = smallFormulaFM.stringWidth(mf);
         int massLength = smallValueFM.stringWidth(mass);
@@ -747,7 +747,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void buildBigImage(TreeNode node, String mf, String mass) {
+    protected void buildBigImage(TreeNode node, String mf, String mass) {
 
         int formulaLength = formulaFM.stringWidth(mf);
         int massLength = valueFM.stringWidth(mass);
@@ -779,7 +779,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void buildWithScoresImage(TreeNode node, String mf, String mass, String score) {
+    protected void buildWithScoresImage(TreeNode node, String mf, String mass, String score) {
         int scoreValueWidth = valueFM.stringWidth(score);
 //		int ceValueWidth    = valueFM.stringWidth(ce);
 //		int propertyMax = Math.max(cePropertyWidth,scorePropertyWidth);
@@ -820,18 +820,18 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         withScoresNodes.put(node, image);
     }
 
-//	private void buildMaximalImage(TreeNode node, String mf, String ce, String mass, String score, String relInt){
+//	protected void buildMaximalImage(TreeNode node, String mf, String ce, String mass, String score, String relInt){
 //		//TODO
 //	}
 
-    private void printNodes(Graphics2D g2, TreeNode node) {
+    protected void printNodes(Graphics2D g2, TreeNode node) {
         printNode(g2, node);
         for (TreeEdge edge : node.getOutEdges()) {
             printNodes(g2, edge.getTarget());
         }
     }
 
-    private void printNode(Graphics2D g2, TreeNode node) {
+    protected void printNode(Graphics2D g2, TreeNode node) {
         int relX = node.getHorizontalPosition();
         int relY = node.getVerticalPosition();
         int absX = getXPosition(relX);
@@ -853,7 +853,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void printEdgeLines(Graphics2D g2) {
+    protected void printEdgeLines(Graphics2D g2) {
 
         for (TreeSet<LinearFunction> functions : edgeStorage) {
             for (LinearFunction function : functions) {
@@ -863,7 +863,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void constructEdgeLinearFunctions(TreeNode root) {
+    protected void constructEdgeLinearFunctions(TreeNode root) {
         edgeStorage = new ArrayList<>(20);
 
         ArrayList<TreeNode> nodeList = new ArrayList<>();
@@ -921,7 +921,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
     }
 
-    private void printLabel(Graphics2D g2, String label, int xPos, int yPos, int labelWidth, int labelHeight, LinearFunction owner) {
+    protected void printLabel(Graphics2D g2, String label, int xPos, int yPos, int labelWidth, int labelHeight, LinearFunction owner) {
         g2.drawString(label, xPos, yPos);
         owner.setEastLabelBorder(xPos);
         owner.setWestLabelBorder(xPos + labelWidth);
@@ -929,7 +929,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         owner.setNorthLabelBorder(yPos - labelHeight);
     }
 
-    private void printTreeEdgeLabels(Graphics2D g2) {
+    protected void printTreeEdgeLabels(Graphics2D g2) {
         g2.setFont(lossFont);
         g2.setColor(Color.black);
 
@@ -1237,7 +1237,7 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
 
 class PositionContainer {
 
-    private int westX, eastX, northY, southY;
+    protected int westX, eastX, northY, southY;
 
     public int getWestX() {
         return westX;
@@ -1275,12 +1275,12 @@ class PositionContainer {
 
 class LinearFunction {
 
-    private double m, n;
-    private int startX, startY, endX, endY;
+    protected double m, n;
+    protected int startX, startY, endX, endY;
 
-    private TreeEdge edge;
+    protected TreeEdge edge;
 
-    private int westLabelBorder, eastLabelBorder, northLabelBorder, southLabelBorder;
+    protected int westLabelBorder, eastLabelBorder, northLabelBorder, southLabelBorder;
 
     public LinearFunction(int startX, int endX, int startY, int endY, TreeEdge edge) {
 
