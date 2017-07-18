@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import gnu.trove.map.hash.TIntIntHashMap;
+
 import java.io.*;
 import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
@@ -7,9 +9,22 @@ import java.util.zip.GZIPInputStream;
 public class ClassyFireFingerprintVersion extends FingerprintVersion {
 
     protected ClassyfireProperty[] properties;
+    protected TIntIntHashMap chemOntIdToIndex;
 
     public ClassyFireFingerprintVersion(ClassyfireProperty[] classyfireProperties) {
         this.properties = classyfireProperties;
+        this.chemOntIdToIndex = new TIntIntHashMap(classyfireProperties.length);
+        for (int k=0; k < classyfireProperties.length; ++k) {
+            chemOntIdToIndex.put(classyfireProperties[k].getChemOntId(), k);
+        }
+    }
+
+    public ClassyfireProperty getPropertyWithChemontId(int id) {
+        return properties[chemOntIdToIndex.get(id)];
+    }
+
+    public int getIndexOfMolecularProperty(ClassyfireProperty property) {
+        return chemOntIdToIndex.get(property.getChemOntId());
     }
 
     public static ClassyFireFingerprintVersion loadClassyfire(File csvFile) throws IOException {
