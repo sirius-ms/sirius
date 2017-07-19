@@ -1,14 +1,16 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Created by ge28quv on 05/07/17.
  */
 public class MutableMs2Dataset implements Ms2Dataset {
 
-    private List<Ms2Experiment> experiments;
+    private List<MutableMs2Experiment> experiments;
     String profile; //todo enum
     double isolationWindowWidth;
     private IsolationWindow isolationWindow;
@@ -28,7 +30,10 @@ public class MutableMs2Dataset implements Ms2Dataset {
      * @param measurementProfile
      */
     public MutableMs2Dataset(List<Ms2Experiment> experiments, String profile, double isolationWindowWidth, MeasurementProfile measurementProfile) {
-        this.experiments = experiments;
+        this.experiments = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            this.experiments.add(new MutableMs2Experiment(experiment));
+        }
         this.profile = profile;
         this.isolationWindowWidth = isolationWindowWidth;
         this.measurementProfile = measurementProfile;
@@ -55,12 +60,15 @@ public class MutableMs2Dataset implements Ms2Dataset {
     }
 
 
-    public List<Ms2Experiment> getExperiments() {
+    public List<MutableMs2Experiment> getExperiments() {
         return experiments;
     }
 
     public void setExperiments(List<Ms2Experiment> experiments) {
-        this.experiments = experiments;
+        this.experiments = new ArrayList<>();
+        for (Ms2Experiment experiment : experiments) {
+            this.experiments.add(new MutableMs2Experiment(experiment));
+        }
     }
 
 
@@ -91,7 +99,28 @@ public class MutableMs2Dataset implements Ms2Dataset {
     }
 
 
+    @Override
+    public Iterator<Ms2Experiment> iterator() {
+        return new Iterator<Ms2Experiment>() {
+            private int index;
+            @Override
+            public boolean hasNext() {
+                return index < experiments.size();
+            }
 
+            @Override
+            public Ms2Experiment next() {
+                if (index < experiments.size())
+                    return experiments.get(index++);
+                else
+                    throw new NoSuchElementException();
+            }
 
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
 
+        };
+    }
 }

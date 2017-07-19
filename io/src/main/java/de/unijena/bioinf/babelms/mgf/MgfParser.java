@@ -96,7 +96,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 buffer.addLast(s);
         }
 
-        private static Pattern CHARGE_PATTERN = Pattern.compile("(\\d+)([+-])?");
+        private static Pattern CHARGE_PATTERN = Pattern.compile("([+-]?\\d+)([+-])?");
         private static Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
 
         private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {

@@ -1,24 +1,21 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by ge28quv on 07/07/17.
  */
 public class SimpleIsolationWindow extends IsolationWindow {
 
-    private double[] relMz;
-    private double[] filterRatio;
-
-
-
-    public SimpleIsolationWindow(double maxWindowSize, double massShift) {
-        super(maxWindowSize,massShift);
-    }
+    protected double[] relMz;
+    protected double[] filterRatio;
 
     public SimpleIsolationWindow(double maxWindowSize) {
         super(maxWindowSize);
+    }
+
+    public SimpleIsolationWindow(double maxWindowSize, double massShift, boolean estimateSize) {
+        super(maxWindowSize, massShift, estimateSize);
     }
 
 
@@ -63,16 +60,31 @@ public class SimpleIsolationWindow extends IsolationWindow {
 
     @Override
     protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation) {
-        relMz = isotopeRatioInformation.getPosToMedian().keys();
-        Arrays.sort(relMz);
-        filterRatio = new double[relMz.length];
-        for (int i = 0; i < relMz.length; i++) {
-            filterRatio[i] = isotopeRatioInformation.getPosToMedian().get(relMz[i]);
+        double[] positions = isotopeRatioInformation.getPosToMedianIntensity().keys();
+        Arrays.sort(positions);
+        relMz = new double[positions.length];
+        filterRatio = new double[positions.length];
+        for (int i = 0; i < positions.length; i++) {
+            filterRatio[i] = isotopeRatioInformation.getPosToMedianIntensity().get(positions[i]);
+            relMz[i] = isotopeRatioInformation.getPosToMedianMz().get(positions[i]);
         }
     }
 
     @Override
     public double getEstimatedWindowSize() {
-        return relMz[relMz.length]-relMz[0]+0.2;//or bigger?
+        return relMz[relMz.length-1]-relMz[0]+0.2;//or bigger?
+    }
+
+    @Override
+    public double getEstimatedMassShift() {
+        return (relMz[relMz.length-1]-relMz[0])/2+relMz[0];
+    }
+
+    public double[] getFilterMassValues(){
+        return Arrays.copyOf(relMz, relMz.length);
+    }
+
+    public double[] getFilterIntensityRatios(){
+        return Arrays.copyOf(filterRatio, filterRatio.length);
     }
 }
