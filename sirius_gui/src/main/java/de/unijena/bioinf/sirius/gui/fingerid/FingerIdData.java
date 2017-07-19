@@ -28,6 +28,9 @@ import java.util.EnumSet;
 public class FingerIdData extends AbstractBean {
 
     protected final ProbabilityFingerprint platts;
+
+    protected ProbabilityFingerprint canopusFingerprint;
+
     protected final Compound[] compounds;
     protected final double[] scores;
     protected final double[] tanimotoScores;
@@ -46,6 +49,14 @@ public class FingerIdData extends AbstractBean {
         this.topScore = scores.length == 0 ? Double.NEGATIVE_INFINITY : scores[0];
         this.confidence = Double.NaN;
         this.dbSelection = EnumSet.of(DatasourceService.Sources.PUBCHEM);
+    }
+
+    public ProbabilityFingerprint getCanopusFingerprint() {
+        return canopusFingerprint;
+    }
+
+    public void setCanopusFingerprint(ProbabilityFingerprint canopusFingerprint) {
+        this.canopusFingerprint = canopusFingerprint;
     }
 
     public ProbabilityFingerprint getPlatts() {
