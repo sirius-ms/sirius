@@ -234,10 +234,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         Iterator<ExperimentContainer> compounds = this.compoundsToProcess.iterator();
         while (compounds.hasNext()) {
             final ExperimentContainer ec = compounds.next();
-            if (ec.isUncomputed()) {
-                if (ec.getIonization() == null || ec.getIonization().isIonizationUnknown()) {
-                    return true;
-                }
+            if (ec.getIonization() == null || ec.getIonization().isIonizationUnknown()) {
+                return true;
             }
         }
         return false;
