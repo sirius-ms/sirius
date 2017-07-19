@@ -56,8 +56,6 @@ launch4j {
 
     guiCLIArgument = '--gui'
     outfile = "${project.appName}.exe"
-
-    jar = "lib/${project.tasks.jar.archiveName}"
 }
 
 /*################### Build distributions ################### */
