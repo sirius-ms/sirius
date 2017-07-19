@@ -4,10 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -83,7 +80,13 @@ public class IsotopePatternInMs2Scorer {
 
         final MolecularFormula ms1Formula = graph.getRoot().getChildren(0).getFormula();
         final FragmentIsotopeGenerator fisogen = new FragmentIsotopeGenerator();
-        final SimpleSpectrum ms1Pattern = findMs1PatternInMs2(input, graph, generator, ion);
+        IsolationWindow isolationWindow = input.getExperimentInformation().getAnnotation(IsolationWindow.class);
+        final SimpleSpectrum ms1Pattern;
+        if (isolationWindow!=null){
+            ms1Pattern = isolationWindow.transform(generator.simulatePattern(ms1Formula, ion), input.getExperimentInformation().getIonMass());
+        } else {
+            ms1Pattern = findMs1PatternInMs2(input, graph, generator, ion);
+        }
 
 
         ////////////
