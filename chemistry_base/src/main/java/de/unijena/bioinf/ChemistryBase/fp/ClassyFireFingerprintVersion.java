@@ -17,6 +17,15 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
         for (int k=0; k < classyfireProperties.length; ++k) {
             chemOntIdToIndex.put(classyfireProperties[k].getChemOntId(), k);
         }
+        updateParents();
+    }
+
+    private void updateParents() {
+        for (ClassyfireProperty prop : properties) {
+            if (prop.parentId>=0) {
+                prop.parent = properties[chemOntIdToIndex.get(prop.parentId)];
+            }
+        }
     }
 
     public ClassyfireProperty getPropertyWithChemontId(int id) {
