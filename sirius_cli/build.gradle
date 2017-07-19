@@ -21,7 +21,6 @@ launch4j {
     jreRuntimeBits = "$project.arch"
 
     outfile = "${project.appName}.exe"
-    jar = "lib/${project.tasks.jar.archiveName}"
 }
 
 /*################### Build distributions ################### */

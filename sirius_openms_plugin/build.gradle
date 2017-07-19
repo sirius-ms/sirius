@@ -1,0 +1,145 @@
+dependencies {
+//project
+    compile project(':sirius_gui')
+}
+
+/*################### Environment variables ################### */
+mainClassName = "de.unijena.bioinf.sirius.cli.SiriusApplication"
+project.ext.set("type", "console")
+
+/*################### Jar build Stuff ################### */
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+/*################### Windows release Stuff ################### */
+launch4j {
+    mainClassName = project.mainClassName
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+    outfile = "${project.appName}.exe"
+    jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
+    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}","../../../All/Sirius/lib/*"]
+}
+
+startScripts {
+    applicationName = "${project.appName}"
+
+    doLast {
+//            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
+        def openMSLibPath = '$APP_HOME/../../../All/Sirius/lib'
+        String[] lines = unixScript.text.split(System.lineSeparator())
+
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith('APP_HOME="`pwd -P`"')){
+                lines[i] = lines[i].replace('APP_HOME="`pwd -P`"','APP_HOME=$SAVED')
+            }
+            if (lines[i].startsWith('CLASSPATH=')) {
+                lines[i] = "CLASSPATH=\"${openMSLibPath}/*:${runtimeClasspath}\""
+            }
+            /*if (lines[i].startsWith("DEFAULT_JVM_OPTS=\"-Djava.library.path=")) {
+                lines[i] = lines[i].replace("-Djava.library.path=\\\"", "-Djava.library.path=\\\"${openMSLibPath}:")
+            }
+            if (lines[i].startsWith("export LD_LIBRARY_PATH=")) {
+                lines[i] = lines[i].replace("export LD_LIBRARY_PATH=\"", "export LD_LIBRARY_PATH=\"${openMSLibPath}:")
+            }*/
+        }
+        unixScript.text = lines.join(System.lineSeparator())
+    }
+}
+
+/*################### Build distributions ################### */
+task distribute { group = 'distribution' }
+
+distributions {
+    //create OpenMS dist
+    def n = "openMS"
+    create(n, {
+        baseName = "${project.appName}-$n"
+        contents {
+            into('All/Sirius/lib') {
+                from("build/install/${project.name}/lib") {
+                    exclude("$gurobiExclude")
+                }
+            }
+
+            project.arch.split(',').each { ar ->
+                into("Linux/${ar}bit/Sirius/lib") {
+                    from("${project.glpkPath}/l${ar}/")
+                    exclude('*.zip')
+                }
+
+                into("Linux/${ar}bit/Sirius") {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}"){
+                        include('COPYING.txt')
+                    }
+                    from("${getRootDir()}/LICENSE.txt")
+                }
+
+                into("Windows/${ar}bit/Sirius") {
+                    from { "${project.glpkPath}/w${ar}/" }
+                    from("${project.distPath}"){
+                        include('COPYING.txt')
+                    }
+                    from { "${getRootDir()}/LICENSE.txt" }
+                    from('build/launch4j') {
+                        include("sirius-console-${ar}.exe")
+                    }
+                }
+
+            }
+            into('MacOS/64bit/Sirius/lib') {
+                from("${project.glpkPath}/osx/")
+                exclude('*.zip')
+            }
+
+            into('MacOS/64bit/Sirius') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+                from("${project.distPath}"){
+                    include('COPYING.txt')
+                }
+                from("${getRootDir()}/LICENSE.txt")
+            }
+        }
+    })
+    distribute.dependsOn "${n}DistZip"
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+
+
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
+
+    openMSDistZip.dependsOn 'installDist'
+    openMSDistTar.dependsOn 'installDist'
+    installOpenMSDist.dependsOn 'installDist'
+    openMSDistZip.dependsOn 'createExe'
+    openMSDistTar.dependsOn 'createExe'
+    installOpenMSDist.dependsOn 'createExe'
+}
+
+// what should be published
+publishing {
+    publications {
+        sirius(MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+
+            artifact source: openMSDistZip, classifier: 'openMS', extension: 'zip'
+        }
+    }
+}
+
+//artifactoryPublish.dependsOn 'distribute'
+
+/*task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
+    commandLine([command.absolutePath])
+}*/
