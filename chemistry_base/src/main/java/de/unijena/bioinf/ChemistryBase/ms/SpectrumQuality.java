@@ -40,4 +40,18 @@ public class SpectrumQuality {
         }
         return false;
     }
+
+    public static boolean isNotBadQuality(Ms2Experiment experiment){
+        return experiment.getAnnotation(SpectrumQuality.class, new SpectrumQuality(SpectrumProperty.Good)).isGoodQuality();
+    }
+
+    public static String getQualityString(Ms2Experiment experiment){
+        SpectrumQuality quality = experiment.getAnnotation(SpectrumQuality.class);
+        if (quality==null) return "";
+        StringBuilder builder = new StringBuilder(",");
+        for (SpectrumProperty spectrumProperty : quality.getProperties()) {
+            builder.append(spectrumProperty.toString());
+        }
+        return builder.toString();
+    }
 }

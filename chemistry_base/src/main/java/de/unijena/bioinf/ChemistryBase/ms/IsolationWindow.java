@@ -1,8 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -10,7 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TDoubleDoubleHashMap;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
-import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 import java.io.BufferedWriter;
@@ -19,6 +15,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,21 +53,60 @@ public abstract class IsolationWindow {
     protected abstract void estimateDistribution(IsotopeRatioInformation intensityRatios);
 
 
+    /**
+     * test if target Mz is in filter window relative to precursorMz
+     * @param precursorMz
+     * @param targetMz
+     * @return
+     */
+    public boolean isInWindow(double precursorMz, double targetMz) {
+        double onSideWindow = getEstimatedWindowSize()/2;
+        double center = getEstimatedMassShift();
+        if (targetMz<precursorMz+center-onSideWindow || targetMz>precursorMz+center+onSideWindow) return false;
+        return true;
+    }
+
+    /**
+     * filters the complete spectrum using the isolationWindow relative to precursorMz
+     * @param spectrum
+     * @param precursorMz
+     * @return
+     */
+    public SimpleSpectrum transform(Spectrum<Peak> spectrum, double precursorMz){
+        SimpleMutableSpectrum transformed = new SimpleMutableSpectrum();
+        for (Peak peak : spectrum) {
+            double mz = peak.getMass();
+            if (isInWindow(precursorMz, mz)){
+                double newInt = getIntensity(peak.getIntensity(), precursorMz, mz);
+                transformed.addPeak(mz, newInt);
+            }
+        }
+        return new SimpleSpectrum(transformed);
+    }
+
+
 //    private static final boolean ONLY_ESTIMATE_ON_ISOTOPE_PATTERN = false;
 
     protected double maxWindowSize;
     protected double massShift = 0;
-
+    protected boolean estimateSize;
 
     private NormalDistribution normalDistribution;
 
     public IsolationWindow(double maxWindowSize) {
-        this(maxWindowSize, 0d);
+        this(maxWindowSize, 0d, true);
     }
 
-    public IsolationWindow(double maxWindowSize, double massShift) {
+    /**
+     * //todo big problem. For huge windows and sparse data we don't estimate complete window as we need a path of relative intensity ratios
+     * @param maxWindowSize maximum expected size
+     * @param massShift shift window relative to precursor mass
+     * @param estimateSize if true estimate the real window size, else keep it fixed
+     */
+    public IsolationWindow(double maxWindowSize, double massShift, boolean estimateSize) {
         this.maxWindowSize = maxWindowSize;
         this.massShift = massShift;
+        this.estimateSize = estimateSize;
     }
 
 
@@ -84,10 +120,13 @@ public abstract class IsolationWindow {
 
     public abstract double getEstimatedWindowSize();
 
+    public abstract double getEstimatedMassShift();
+
     public void estimate(Ms2Dataset ms2Dataset) {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
         estimateDistribution(isotopeRatioInformation);
     }
+
 
 
 
@@ -96,9 +135,12 @@ public abstract class IsolationWindow {
         MutableMeasurementProfile mutableMeasurementProfile = new MutableMeasurementProfile(ms2Dataset.getMeasurementProfile());
 //        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(100, 0.01));
 
+        int expCounter = 0;
+        int expCounter2 = 0;
+        int expCounter3 = 0;
+        int expCounter4 = 0;
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             if (!isGoodQuality(experiment)) continue;
-
 
             double ionMass = experiment.getIonMass();
 
@@ -107,10 +149,25 @@ public abstract class IsolationWindow {
             Spectrum<Peak> spectrum2 = experiment.getMs2Spectra().get(0); //tdoo iterate over all
 
 
-            Spectrum<Peak> ms1 = spectrum1;
-            Spectrum<Peak> ms2 = spectrum2;
+            MutableSpectrum<Peak> ms1 = new SimpleMutableSpectrum(spectrum1);
+            MutableSpectrum<Peak> ms2 = new SimpleMutableSpectrum(spectrum2);
+
+            MutableSpectrum<Peak> intensityMs1 = new MutableMs2Spectrum(Spectrums.getIntensityOrderedSpectrum(spectrum1));
 
             final double center = experiment.getIonMass()+massShift;
+            final double oneSideWindowSize = maxWindowSize/2;
+            Spectrums.PeakPredicate filter = new Spectrums.PeakPredicate() {
+                @Override
+                public boolean apply(double mz, double intensity) {
+                    return (mz>center-oneSideWindowSize && mz<center+oneSideWindowSize);
+                }
+            };
+
+            Spectrums.filter(intensityMs1, filter);
+            Spectrums.filter(ms1, filter);
+            Spectrums.filter(ms2, filter);
+
+
             int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
             int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
 
@@ -126,18 +183,11 @@ public abstract class IsolationWindow {
 
             //match peaks
             //todo match based on relative diff -> allow just smaller mass diff?
-            final double oneSideWindowSize = maxWindowSize/2;
+
             final double ms2MonoMass = ms2.getMzAt(monoMs2Idx);
 
 
 
-            MutableSpectrum<Peak> intensityMs1 = new MutableMs2Spectrum(Spectrums.getIntensityOrderedSpectrum(spectrum1));
-            Spectrums.filter(intensityMs1, new Spectrums.PeakPredicate() {
-                @Override
-                public boolean apply(double mz, double intensity) {
-                    return (mz>center-oneSideWindowSize && mz<center+oneSideWindowSize);
-                }
-            });
 
             double monoIntensityRatio = ms1.getIntensityAt(monoMs1Idx)/ms2.getIntensityAt(monoMs2Idx);
             Deviation deviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation().divide(2); //todo or smaller?
@@ -150,18 +200,21 @@ public abstract class IsolationWindow {
 
             if (monoIntensityRatio<1d){
                 System.out.println(monoIntensityRatio);
-                continue;
+//                continue;
             }
-
+            expCounter++;
 
             TDoubleHashSet usedPeaks = new TDoubleHashSet();
             for (Peak peak : intensityMs1) {
                 //todo may use peaks multiple times!
-                ChargedSpectrum isotopePatternMs1 = extractPattern(ms1, mutableMeasurementProfile, peak.getMass());
+                ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, mutableMeasurementProfile, peak.getMass());
                 ChargedSpectrum isotopePatternMs2 = extractPattern(ms2, mutableMeasurementProfile, peak.getMass(), isotopePatternMs1.getAbsCharge());
 
+                expCounter2++;
 
                 if (isotopePatternMs2==null) continue;
+
+                expCounter3++;
 
                 //todo extract multiple charged spectra!!!!
                 trimToSuitablePeaks(isotopePatternMs1, isotopePatternMs2, maxMs1Intensity, maxMs2Intensity, medianNoiseIntensity);
@@ -169,6 +222,7 @@ public abstract class IsolationWindow {
 
                 double monoPosition = round(peak.getMass()-ionMass); // -1, -0.5, 0, 0.5, 1, ...
                 int normalizationPosition;
+                //todo good idea?
                 if (monoPosition<0) normalizationPosition = 1; //all isotope patterns starting on left of precursor mass are normalized on +1 peak
                 else  normalizationPosition = 0;
 
@@ -178,8 +232,9 @@ public abstract class IsolationWindow {
                     continue;
                 }
 
+                expCounter4++;
 
-                NormalizedPattern normalizedPattern = new NormalizedPattern(isotopePatternMs1, isotopePatternMs2, normalizationPosition, monoPosition, isotopePatternMs1.getAbsCharge());
+                NormalizedPattern normalizedPattern = new NormalizedPattern(isotopePatternMs1, isotopePatternMs2, normalizationPosition, monoPosition, ionMass, isotopePatternMs1.getAbsCharge());
 
                 normalizedPatterns.add(normalizedPattern);
 
@@ -187,30 +242,90 @@ public abstract class IsolationWindow {
 
         }
 
+        System.out.println(expCounter+" used experiments");
+        System.out.println("counters "+expCounter2+" "+expCounter3+" "+expCounter4);
+        System.out.println(normalizedPatterns.size()+" patterns");
+
         Collections.sort(normalizedPatterns);
 
-        TDoubleDoubleHashMap posToMedian = new TDoubleDoubleHashMap(10, 0.75f, -1d, -1d);
-        posToMedian.put(0, 1d);
-        TDoubleObjectHashMap<TDoubleArrayList> posToRatios = new TDoubleObjectHashMap<>();
+        TDoubleDoubleHashMap posToMedianIntensity = new TDoubleDoubleHashMap(10, 0.75f, Double.NaN, Double.NaN);
+        posToMedianIntensity.put(0, 1d);
+        TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios = new TDoubleObjectHashMap<>();
+
+        TDoubleObjectHashMap<TDoubleArrayList> posToMasses = new TDoubleObjectHashMap<>();
+        TDoubleDoubleHashMap posToMedianMz = new TDoubleDoubleHashMap(10, 0.75f, Double.NaN, Double.NaN);
+//        posToMedianMz.put(0, 0d);
 
         double currentMonoPostion = 0d;
-        double currentMedian = posToMedian.get(0);
+        double currentMedian = posToMedianIntensity.get(0);
         for (NormalizedPattern normalizedPattern : normalizedPatterns) {
             final double monoPos = normalizedPattern.monoPosition;
             final int charge = normalizedPattern.getAbsCharge();
 
             if (monoPos!=currentMonoPostion) {
-                updateNeigboursMedian(posToMedian, posToRatios, currentMonoPostion);
+                updateNeigboursMedian(posToMedianIntensity, posToIntensityRatios, currentMonoPostion);
                 currentMonoPostion = monoPos;
+                System.out.println("current mono pos "+currentMonoPostion);
             }
 
 
-            double normalizationPos = round(currentMonoPostion+normalizedPattern.getNormalizationPosition());
-            if (!posToMedian.containsKey(normalizationPos)){
-                System.out.println("skip "+currentMonoPostion);
-                continue;
+            double normalizationPos = round(currentMonoPostion+normalizedPattern.getNormalizationRelativeMz());
+            if (!posToMedianIntensity.containsKey(normalizationPos)){
+                boolean fixed = false;
+                double median = estimateMedianIntensity(posToIntensityRatios, normalizationPos, posToMedianIntensity); //should just happen for positive side
+                if (!Double.isNaN(median)) {
+                    //todo what about mass
+                    //all good
+                    posToMedianIntensity.put(normalizationPos, median);
+                    currentMedian = median;
+                    fixed = true;
+                } else {
+                    if (normalizationPos<0){
+                        int relNormalizationPos = normalizedPattern.getNormalizationPosition();
+                        while (relNormalizationPos< normalizedPattern.size()-1){
+                            ++relNormalizationPos;
+                            double relMz = round(currentMonoPostion+relNormalizationPos/normalizedPattern.getAbsCharge());
+                            median = Double.NaN;
+                            if (posToMedianIntensity.containsKey(relMz)){
+                                median = posToMedianIntensity.get(relMz);
+                            }
+                            if (Double.isNaN(median)){
+                                median = estimateMedianIntensity(posToIntensityRatios, relMz, posToMedianIntensity);
+                                if (!Double.isNaN(median)) posToMedianIntensity.put(relMz, median);
+                            }
+
+                            if (!Double.isNaN(median)){
+                                normalizedPattern.changeNormalizationPosition(relNormalizationPos);
+                                currentMedian = median;
+                                fixed = true;
+                                break;
+                            }
+
+
+                        }
+                    }
+                }
+                if (fixed) System.out.println("fixed median estimation for "+currentMonoPostion);
+                else {
+                    //todo again change normalization Pos??
+                    double[] keys = posToMedianIntensity.keys();
+                    if (keys.length<2){
+                        System.out.println("skip "+currentMonoPostion);
+                        continue;
+                    }
+                    Arrays.sort(keys);
+                    double[] values = new double[keys.length];
+                    for (int i = 0; i < keys.length; i++) values[i] = posToMedianIntensity.get(keys[i]);
+                    median = regression(keys, values, normalizationPos);
+                    posToMedianIntensity.put(normalizationPos, median);
+                    System.out.println("guess a good median for "+normalizationPos);
+                    currentMedian = median;
+                }
+//                System.out.println("skip "+currentMonoPostion);
+//                ... change herer...
+//                continue;
             } else {
-                currentMedian = posToMedian.get(normalizationPos);
+                currentMedian = posToMedianIntensity.get(normalizationPos);
             }
 
             normalizedPattern.setNormalizationConstant(currentMedian);
@@ -218,51 +333,113 @@ public abstract class IsolationWindow {
 
             for (int i = 0; i < normalizedPattern.size(); i++) {
                 final double currentPos = round(monoPos + 1d*i/charge);
-                TDoubleArrayList ratioList = posToRatios.get(currentPos);
+                TDoubleArrayList ratioList = posToIntensityRatios.get(currentPos);
+                TDoubleArrayList massList = posToMasses.get(currentPos);
                 if (ratioList==null){
                     ratioList = new TDoubleArrayList();
-                    posToRatios.put(currentPos, ratioList);
+                    posToIntensityRatios.put(currentPos, ratioList);
+                    massList = new TDoubleArrayList();
+                    posToMasses.put(currentPos, massList);
                 }
                 ratioList.add(normalizedPattern.getFilterRatio(i));
+                massList.add(normalizedPattern.getMz(i));
             }
         }
 
-        for (double key : posToRatios.keys()) {
-            if (!posToMedian.containsKey(key)){
-                updateMedian(posToMedian, posToRatios, key);
+        //forgot something?
+        for (double key : posToIntensityRatios.keys()) {
+            if (!posToMedianIntensity.containsKey(key)){
+                updateMedian(posToMedianIntensity, posToIntensityRatios, key, true);
+//                if (!Double.isNaN(posToMedianIntensity.get(key))){
+//                    posToMedianIntensity.remove(key);
+//                }
+//                updateMedian(posToMedianMz, posToMasses, key);
+//                if (Double.isNaN(posToMedianIntensity.get(key)) || Double.isNaN(posToMedianMz.get(key))){
+//                    posToMedianMz.remove(key);
+//                    posToMedianIntensity.remove(key);
+//                }
+            }
+        }
+
+        //update the masses
+        for (double key : posToMedianIntensity.keys()) {
+            if (!posToMedianMz.containsKey(key)){
+                updateMedian(posToMedianMz, posToMasses, key, false);
+                //no data?
+                if (!posToMedianMz.containsKey(key)){
+                    posToMedianMz.put(key, key);
+                }
             }
         }
 
         System.out.println("rel mz to median filter ratio");
-        for (double key : posToMedian.keys()) {
-            System.out.println(key+": "+posToMedian.get(key));
+        for (double key : posToMedianIntensity.keys()) {
+            System.out.println(key+": "+posToMedianIntensity.get(key)+"\tmz: "+posToMedianMz.get(key));
         }
 
 
-        return new IsotopeRatioInformation(posToMedian, posToRatios);
+        return new IsotopeRatioInformation(posToMedianIntensity, posToIntensityRatios, posToMedianMz, posToMasses);
 
     }
 
-    private void updateNeigboursMedian(TDoubleDoubleHashMap posToMedian, TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double currentMonoPostion){
+    private double regression(double[] x, double[] y, double newX) {
+        double clostestX, scndClosestX, closestY, scndClosestY;
+        if (newX>0){
+            clostestX = x[x.length-1];
+            scndClosestX = x[x.length-2];
+            closestY = y[y.length-1];
+            scndClosestY = y[y.length-2];
+        } else {
+            clostestX = x[0];
+            scndClosestX = x[1];
+            closestY = y[0];
+            scndClosestY = y[1];
+        }
+        double diffY = closestY-scndClosestY;
+        //todo should decrease?
+        if (diffY>=0) return closestY;
+
+        double diff1 = clostestX-scndClosestX;
+        double diff2 = newX-clostestX;
+
+        return diffY/diff1*diff2+closestY;
+    }
+
+    private void updateNeigboursMedian(TDoubleDoubleHashMap posToMedianIntensity, TDoubleObjectHashMap<TDoubleArrayList> posToIntRatios , double currentMonoPostion){
+        //update neighbor medians to left (negative) or right (positive) because we won't get more information
         if (currentMonoPostion>=0){
-            for (double key : posToRatios.keys()) {
+            for (double key : posToIntRatios.keys()) {
                 if (key>currentMonoPostion && key<=currentMonoPostion+1){
-                    final double median = estimateMedian(posToRatios, key);
-                    if (!Double.isNaN(median)) posToMedian.put(key,median);
+                    final double median = estimateMedianIntensity(posToIntRatios, key, posToMedianIntensity);
+                    if (!Double.isNaN(median)){
+                        posToMedianIntensity.put(key,median);
+                    }
+//                    final double medianMz = estimateMedian(posToMasses, key);
+//                    if (!Double.isNaN(median) && !Double.isNaN(medianMz)){
+//                        posToMedianIntensity.put(key,median);
+////                        posToMedianMz.put(key,medianMz);
+//                    }
                 }
             }
         } else {
-            for (double key : posToRatios.keys()) {
+            for (double key : posToIntRatios.keys()) {
                 if (key<currentMonoPostion && key>=currentMonoPostion-1){
-                    final double median = estimateMedian(posToRatios, key);
-                    if (!Double.isNaN(median)) posToMedian.put(key,median);
+                    final double median = estimateMedianIntensity(posToIntRatios, key, posToMedianIntensity);
+                    if (!Double.isNaN(median)){
+                        posToMedianIntensity.put(key,median);
+                    }
+//                    final double medianMz = estimateMedian(posToMasses, key);
+//                    if (!Double.isNaN(median) && !Double.isNaN(medianMz)){
+//                        posToMedianIntensity.put(key,median);
+//                        posToMedianMz.put(key,medianMz);
+//                    }
                 }
             }
         }
     }
 
-    private void updateMedian(TDoubleDoubleHashMap posToMedian, TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double pos){
-        final double median = estimateMedian(posToRatios, pos);
+    private void updateMedian(TDoubleDoubleHashMap posToMedian, TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double pos, boolean isIntensity){
+        final double median = isIntensity ? estimateMedianIntensity(posToRatios, pos, posToMedian) : estimateMedian(posToRatios, pos);
         if (!Double.isNaN(median)) {
             //enough examples to estimate
             posToMedian.put(pos, median);
@@ -277,8 +454,10 @@ public abstract class IsolationWindow {
                 double leftMedian = posToMedian.get(left);
                 double rightMedian = posToMedian.get(right);
 
-                if (leftMedian<0) leftMedian = estimateMedian(posToRatios, left);
-                if (leftMedian<0) rightMedian = estimateMedian(posToRatios, right);
+                if (Double.isNaN(leftMedian)) leftMedian = isIntensity ? estimateMedianIntensity(posToRatios, pos, posToMedian) : estimateMedian(posToRatios, left);
+                if (Double.isNaN(rightMedian)) rightMedian = isIntensity ? estimateMedianIntensity(posToRatios, pos, posToMedian) : estimateMedian(posToRatios, right);
+
+                if (Double.isNaN(leftMedian) || Double.isNaN(rightMedian)) return;
 
                 final double dist = right-left;
                 posToMedian.put(pos, leftMedian*(right-pos)/dist+rightMedian*(pos-left)/dist);
@@ -286,9 +465,28 @@ public abstract class IsolationWindow {
         }
     }
 
+    private double estimateMedianIntensity(TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double key, TDoubleDoubleHashMap posToMedian){
+        if (!posToRatios.containsKey(key)) return Double.NaN;
+        final double median = estimateMedian(posToRatios, key);
+        if (posToRatios.get(key).size()>=10) return median;
+        if (posToRatios.get(key).size()<=3) return Double.NaN;
+        //don't believe to much deviation if sample is small
+        double closestKey = Double.NaN;
+        for (double k : posToMedian.keys()) {
+            if (Double.isNaN(closestKey) || Math.abs(key-k)<Math.abs(key-closestKey)){
+                closestKey = k;
+            } else if (Math.abs(key-k)==Math.abs(key-closestKey) && Math.abs(k)<Math.abs(closestKey)){
+                closestKey = k;
+            }
+        }
+        double ratio = median/posToMedian.get(closestKey);
+        if (ratio>1.5 || ratio<0.5) return Double.NaN;
+        return median;
+    }
+
     private double estimateMedian(TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double key){
         final TDoubleArrayList ratioList = posToRatios.get(key);
-        if (ratioList==null || ratioList.size()<10) return Double.NaN; //not enough examples to estimate
+        if (ratioList==null || ratioList.size()<1) return Double.NaN; //not enough examples to estimate
         ratioList.sort();
         final double median = ratioList.get(ratioList.size()/2);
         return median;
@@ -323,7 +521,7 @@ public abstract class IsolationWindow {
         if (ms1Peak.getIntensity()<ms2Peak.getIntensity()) return false;
         if (ms1Peak.getIntensity()/maxMs1Intensity<minRelIntensity) return false;
         if (ms2Peak.getIntensity()/maxMs2Intensity<minRelIntensity) return false;
-        if (ms2Peak.getIntensity()<4*medianNoiseMs2) return false;
+        if (ms2Peak.getIntensity()<2*medianNoiseMs2) return false;
         return true;
     }
 
@@ -335,16 +533,34 @@ public abstract class IsolationWindow {
         return true;
     }
 
-    private final static int[] charges = new int[]{1,2};
-    public ChargedSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+    protected final static int[] charges = new int[]{1,2};
+    public ChargedSpectrum extractPatternMs1(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
         //test charge
         ChargedSpectrum bestSpec = null;
         for (int charge : charges) {
             ChargedSpectrum current = extractPattern(ms1Spec, profile, targetMz, charge);
+            //filter unlikely peaks
+            filterUnlikelyIsoPeaks(current);
             if (bestSpec==null) bestSpec = current;
             else if (current.size()>bestSpec.size()) bestSpec = current;
         }
         return bestSpec;
+    }
+
+    private final static double maxIntensityRatioAt0 = 0.2;
+    private final static double maxIntensityRatioAt1000 = 0.55;
+    protected void filterUnlikelyIsoPeaks(SimpleMutableSpectrum s){
+        double monoInt = s.getIntensityAt(0);
+        int idx = 0;
+        while (++idx<s.size()){
+            final double maxIntensityRatio = (maxIntensityRatioAt1000-maxIntensityRatioAt0)*s.getMzAt(idx)/1000d+maxIntensityRatioAt0;
+            if (s.getIntensityAt(idx)/monoInt>maxIntensityRatio){
+                break;
+            }
+        }
+        for (int i = s.size() - 1; i >= idx; i--) {
+            s.removePeakAt(i);
+        }
     }
 
     public ChargedSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
@@ -357,8 +573,8 @@ public abstract class IsolationWindow {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
         List<IntensityRatio> intensityRatios = new ArrayList<>();
 
-        for (double key : isotopeRatioInformation.getPosToRatios().keys()) {
-            double[] ratios = isotopeRatioInformation.getPosToRatios().get(key).toArray();
+        for (double key : isotopeRatioInformation.getPosToIntensityRatios().keys()) {
+            double[] ratios = isotopeRatioInformation.getPosToIntensityRatios().get(key).toArray();
             for (double ratio : ratios) {
                 intensityRatios.add(new IntensityRatio(key, ratio));
             }
@@ -379,8 +595,10 @@ public abstract class IsolationWindow {
         int normalizationPosition;
         double normalizationConstant;
         double ms1Ms2Ratio;
+        double normalizationMz;
 
         double monoPosition;
+        double precursorMass;
 
         int absCharge;
 
@@ -391,12 +609,14 @@ public abstract class IsolationWindow {
          * @param normalizationPosition on which isotope position to normalize
          * @param monoPosition relative Position to parent mass of Ms2 (e.g -0.5, 0, 0.5, 1)
          */
-        public NormalizedPattern(Spectrum<Peak> ms1, Spectrum<Peak> ms2, int normalizationPosition, double monoPosition, int absCharge) {
+        public NormalizedPattern(Spectrum<Peak> ms1, Spectrum<Peak> ms2, int normalizationPosition, double monoPosition, double precursorMass, int absCharge) {
             this.ms1 = ms1;
             this.ms2 = ms2;
             this.normalizationPosition = normalizationPosition;
             this.ms1Ms2Ratio = ms1.getIntensityAt(normalizationPosition)/ms2.getIntensityAt(normalizationPosition);
+            this.normalizationMz = (ms1.getMzAt(normalizationPosition)+ms2.getMzAt(normalizationPosition))/2d;
             this.monoPosition = monoPosition;
+            this.precursorMass = precursorMass;
             this.absCharge = absCharge;
             this.normalizationConstant = 1d;
         }
@@ -409,8 +629,22 @@ public abstract class IsolationWindow {
             this.normalizationConstant = normalizationConstant;
         }
 
+        private void changeNormalizationPosition(int normalizationPosition) {
+            this.normalizationPosition = normalizationPosition;
+            this.ms1Ms2Ratio = ms1.getIntensityAt(normalizationPosition)/ms2.getIntensityAt(normalizationPosition);
+            this.normalizationMz = (ms1.getMzAt(normalizationPosition)+ms2.getMzAt(normalizationPosition))/2d;
+        }
+
         public int getNormalizationPosition() {
             return normalizationPosition;
+        }
+
+        /**
+         * on which mass to normalize. e.g. +3 peak and +2 charge -> 1.5Da
+         * @return
+         */
+        public double getNormalizationRelativeMz() {
+            return normalizationPosition/getAbsCharge();
         }
 
         public int size() {
@@ -425,12 +659,20 @@ public abstract class IsolationWindow {
             return ms2.getIntensityAt(pos)/ms1.getIntensityAt(pos)*ms1Ms2Ratio*normalizationConstant;
         }
 
+        public double getMz(int pos) {
+//            return (ms2.getMzAt(pos)+ms1.getMzAt(pos))/2d-normalizationMz;
+            return (ms2.getMzAt(pos)+ms1.getMzAt(pos))/2d-precursorMass;
+        }
+
         @Override
         public int compareTo(NormalizedPattern o) {
+            if (monoPosition==o.monoPosition){
+                return Double.compare((o.size()-1)/o.getAbsCharge(), (size()-1)/getAbsCharge()); //if same size, longest first
+            }
             final double absMono1 = Math.abs(monoPosition);
             final double absMono2 = Math.abs(o.monoPosition);
-            if (absMono1==absMono2) return Double.compare(o.monoPosition, monoPosition);
-            return Double.compare(absMono1, absMono2);
+            if (absMono1==absMono2) return Double.compare(o.monoPosition, monoPosition); //positive first
+            return Double.compare(absMono1, absMono2); //smallest abs first
         }
     }
 
@@ -482,20 +724,33 @@ public abstract class IsolationWindow {
     }
 
     protected class IsotopeRatioInformation {
-        private TDoubleDoubleHashMap posToMedian;
-        private TDoubleObjectHashMap<TDoubleArrayList> posToRatios;
+        private TDoubleDoubleHashMap posToMedianIntensity;
+        private TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios;
 
-        public IsotopeRatioInformation(TDoubleDoubleHashMap posToMedian, TDoubleObjectHashMap<TDoubleArrayList> posToRatios) {
-            this.posToMedian = posToMedian;
-            this.posToRatios = posToRatios;
+        private TDoubleDoubleHashMap posToMedianMz;
+        private TDoubleObjectHashMap<TDoubleArrayList> posToMasses;
+
+        public IsotopeRatioInformation(TDoubleDoubleHashMap posToMedianIntensity, TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios, TDoubleDoubleHashMap posToMedianMz, TDoubleObjectHashMap<TDoubleArrayList> posToMasses) {
+            this.posToMedianIntensity = posToMedianIntensity;
+            this.posToIntensityRatios = posToIntensityRatios;
+            this.posToMedianMz = posToMedianMz;
+            this.posToMasses = posToMasses;
         }
 
-        public TDoubleDoubleHashMap getPosToMedian() {
-            return posToMedian;
+        public TDoubleDoubleHashMap getPosToMedianIntensity() {
+            return posToMedianIntensity;
         }
 
-        public TDoubleObjectHashMap<TDoubleArrayList> getPosToRatios() {
-            return posToRatios;
+        public TDoubleObjectHashMap<TDoubleArrayList> getPosToIntensityRatios() {
+            return posToIntensityRatios;
+        }
+
+        public TDoubleDoubleHashMap getPosToMedianMz() {
+            return posToMedianMz;
+        }
+
+        public TDoubleObjectHashMap<TDoubleArrayList> getPosToMasses() {
+            return posToMasses;
         }
     }
 
