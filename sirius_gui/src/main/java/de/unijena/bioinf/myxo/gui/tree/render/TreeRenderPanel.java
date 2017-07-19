@@ -1233,273 +1233,274 @@ public class TreeRenderPanel extends JPanel implements ComponentListener, MouseM
         }
     }
 
-}
 
-class PositionContainer {
+    protected static class PositionContainer {
 
-    protected int westX, eastX, northY, southY;
+        protected int westX, eastX, northY, southY;
 
-    public int getWestX() {
-        return westX;
-    }
-
-    public void setWestX(int westX) {
-        this.westX = westX;
-    }
-
-    public int getEastX() {
-        return eastX;
-    }
-
-    public void setEastX(int eastX) {
-        this.eastX = eastX;
-    }
-
-    public int getNorthY() {
-        return northY;
-    }
-
-    public void setNorthY(int northY) {
-        this.northY = northY;
-    }
-
-    public int getSouthY() {
-        return southY;
-    }
-
-    public void setSouthY(int southY) {
-        this.southY = southY;
-    }
-
-}
-
-class LinearFunction {
-
-    protected double m, n;
-    protected int startX, startY, endX, endY;
-
-    protected TreeEdge edge;
-
-    protected int westLabelBorder, eastLabelBorder, northLabelBorder, southLabelBorder;
-
-    public LinearFunction(int startX, int endX, int startY, int endY, TreeEdge edge) {
-
-        this.startX = startX;
-        this.startY = startY;
-        this.endX = endX;
-        this.endY = endY;
-
-        if (startX != startY) {
-            m = (double) (endY - startY) / (double) (endX - startX);
-            n = startY - (startX * m);
-        } else { // stehen übereinander
-            m = Double.NaN;
-            n = Double.NaN;
+        public int getWestX() {
+            return westX;
         }
 
-        this.edge = edge;
+        public void setWestX(int westX) {
+            this.westX = westX;
+        }
 
-        this.northLabelBorder = -1;
-        this.eastLabelBorder = -1;
-        this.southLabelBorder = -1;
-        this.westLabelBorder = -1;
+        public int getEastX() {
+            return eastX;
+        }
+
+        public void setEastX(int eastX) {
+            this.eastX = eastX;
+        }
+
+        public int getNorthY() {
+            return northY;
+        }
+
+        public void setNorthY(int northY) {
+            this.northY = northY;
+        }
+
+        public int getSouthY() {
+            return southY;
+        }
+
+        public void setSouthY(int southY) {
+            this.southY = southY;
+        }
 
     }
 
-    @SuppressWarnings("unused")
-    public double getM() {
-        return this.m;
-    }
+    protected static class LinearFunction {
 
-    @SuppressWarnings("unused")
-    public double getN() {
-        return this.n;
-    }
+        protected double m, n;
+        protected int startX, startY, endX, endY;
 
-    public int getStartX() {
-        return this.startX;
-    }
+        protected TreeEdge edge;
 
-    public int getStartY() {
-        return this.startY;
-    }
+        protected int westLabelBorder, eastLabelBorder, northLabelBorder, southLabelBorder;
 
-    public int getEndX() {
-        return this.endX;
-    }
+        public LinearFunction(int startX, int endX, int startY, int endY, TreeEdge edge) {
 
-    public int getEndY() {
-        return this.endY;
-    }
+            this.startX = startX;
+            this.startY = startY;
+            this.endX = endX;
+            this.endY = endY;
 
-    public TreeEdge getTreeEdge() {
-        return edge;
-    }
-
-    public int getEastLabelBorder() {
-        return this.eastLabelBorder;
-    }
-
-    @SuppressWarnings("unused")
-    public int getWestLabelBorder() {
-        return this.westLabelBorder;
-    }
-
-    public int getNorthLabelBorder() {
-        return this.northLabelBorder;
-    }
-
-    public int getSouthLabelBorder() {
-        return this.southLabelBorder;
-    }
-
-    public void setSouthLabelBorder(int southBorder) {
-        this.southLabelBorder = southBorder;
-    }
-
-    public void setWestLabelBorder(int westBorder) {
-        this.westLabelBorder = westBorder;
-    }
-
-    public void setNorthLabelBorder(int northBorder) {
-        this.northLabelBorder = northBorder;
-    }
-
-    public void setEastLabelBorder(int eastBorder) {
-        this.eastLabelBorder = eastBorder;
-    }
-
-    public int getXPosition(int yPos) {
-        if (startX == endX) return startX;
-
-        if (yPos <= startY) return startX;
-        if (yPos >= endY) return endX;
-        return (int) Math.round((yPos - n) / m);
-    }
-
-    @SuppressWarnings("unused")
-    public int getYPosition(int xPos) {
-        if (startX == endX) return Integer.MAX_VALUE;
-
-        if (xPos <= startX) return startY;
-        if (xPos >= endX) return endY;
-        return (int) Math.round(xPos * m + n);
-    }
-
-    @SuppressWarnings("unused")
-    public int getMiddleYPos() {
-        return (endY - startY) / 2 + startY;
-    }
-
-    static int getFirstYIndexWithDistance(LinearFunction f1, LinearFunction f2, int rectSizeX, int rectSizeY) {
-
-        if (f1.getStartY() != f2.getStartY() || f1.getEndY() != f2.getEndY())
-            throw new RuntimeException("startY and endY must be identical");
-
-        int startYPos = (f1.getEndY() - f1.getStartY()) / 2 + f1.getStartY();
-
-        int endYPos = f1.getEndY() - 5;
-
-        int firstYLabelPos = f1.getNorthLabelBorder() - 1;
-        int lastYLabelPos = f1.getSouthLabelBorder() + 1;
-        int lastXLabelPos = f1.getEastLabelBorder();
-
-        if (f1.getStartX() >= f1.getEndX() && f2.getStartX() <= f2.getEndX()) {
-            // -> / \
-
-            for (int i = startYPos; i < endYPos; i++) {
-                int yTestVal1 = i - rectSizeY;
-                int yTestVal2 = i - rectSizeY;
-
-                int pos1 = f1.getXPosition(yTestVal1);
-                if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
-
-                int pos2 = f2.getXPosition(yTestVal2);
-                if (pos2 - pos1 > rectSizeX) return i;
+            if (startX != startY) {
+                m = (double) (endY - startY) / (double) (endX - startX);
+                n = startY - (startX * m);
+            } else { // stehen übereinander
+                m = Double.NaN;
+                n = Double.NaN;
             }
 
-        } else if (f1.getStartX() >= f1.getEndX() && f2.getStartX() >= f2.getEndX()) {
-            // -> / /
+            this.edge = edge;
 
-            for (int i = startYPos; i < endYPos; i++) {
-                int yTestVal1 = i - rectSizeY;
-                int yTestVal2 = i;
-
-                int pos1 = f1.getXPosition(yTestVal1);
-                if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
-
-                int pos2 = f2.getXPosition(yTestVal2);
-                if (pos2 - pos1 > rectSizeX) return i;
-            }
-
-        } else if (f1.getStartX() < f1.getEndX() && f2.getStartX() < f2.getEndX()) {
-            // -> \ \
-
-            for (int i = startYPos; i < endYPos; i++) {
-                int yTestVal1 = i;
-                int yTestVal2 = i - rectSizeY;
-
-                int pos1 = f1.getXPosition(yTestVal1);
-                if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
-
-                int pos2 = f2.getXPosition(yTestVal2);
-                if (pos2 - pos1 > rectSizeX) return i;
-            }
-
-        } else {
-
-            // -> \  /
-
-            for (int i = startYPos; i < endYPos; i++) {
-                int yTestVal1 = i;
-                int yTestVal2 = i;
-
-                int pos1 = f1.getXPosition(yTestVal1);
-                if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
-
-                int pos2 = f2.getXPosition(yTestVal2);
-                if (pos2 - pos1 > rectSizeX) return i;
-            }
+            this.northLabelBorder = -1;
+            this.eastLabelBorder = -1;
+            this.southLabelBorder = -1;
+            this.westLabelBorder = -1;
 
         }
 
-        return -1;
-
-    }
-
-    static int getLastYIndexWithDistanceToLeftBorder(LinearFunction f1, int rectSizeX, int rectSizeY) {
-
-        int startYPos = f1.getEndY() - 5;
-        int endYPos = f1.getStartY() + 5 + rectSizeY;
-
-        for (int i = startYPos; i >= endYPos; i--) {
-            if (f1.getXPosition(i) > rectSizeX) return i;
+        @SuppressWarnings("unused")
+        public double getM() {
+            return this.m;
         }
 
-        return -1;
-    }
-
-    static int getLastYIndexWithDistanceToRightBorder(LinearFunction f1, int rectSizeX, int rectSizeY, int rightBorder) {
-
-        int startYPos = f1.getEndY() - 5;
-        int endYPos = f1.getStartY() + 5 + rectSizeY;
-
-        for (int i = startYPos; i >= endYPos; i--) {
-            if (f1.getXPosition(i) + rectSizeX < rightBorder) return i;
+        @SuppressWarnings("unused")
+        public double getN() {
+            return this.n;
         }
 
-        return -1;
+        public int getStartX() {
+            return this.startX;
+        }
+
+        public int getStartY() {
+            return this.startY;
+        }
+
+        public int getEndX() {
+            return this.endX;
+        }
+
+        public int getEndY() {
+            return this.endY;
+        }
+
+        public TreeEdge getTreeEdge() {
+            return edge;
+        }
+
+        public int getEastLabelBorder() {
+            return this.eastLabelBorder;
+        }
+
+        @SuppressWarnings("unused")
+        public int getWestLabelBorder() {
+            return this.westLabelBorder;
+        }
+
+        public int getNorthLabelBorder() {
+            return this.northLabelBorder;
+        }
+
+        public int getSouthLabelBorder() {
+            return this.southLabelBorder;
+        }
+
+        public void setSouthLabelBorder(int southBorder) {
+            this.southLabelBorder = southBorder;
+        }
+
+        public void setWestLabelBorder(int westBorder) {
+            this.westLabelBorder = westBorder;
+        }
+
+        public void setNorthLabelBorder(int northBorder) {
+            this.northLabelBorder = northBorder;
+        }
+
+        public void setEastLabelBorder(int eastBorder) {
+            this.eastLabelBorder = eastBorder;
+        }
+
+        public int getXPosition(int yPos) {
+            if (startX == endX) return startX;
+
+            if (yPos <= startY) return startX;
+            if (yPos >= endY) return endX;
+            return (int) Math.round((yPos - n) / m);
+        }
+
+        @SuppressWarnings("unused")
+        public int getYPosition(int xPos) {
+            if (startX == endX) return Integer.MAX_VALUE;
+
+            if (xPos <= startX) return startY;
+            if (xPos >= endX) return endY;
+            return (int) Math.round(xPos * m + n);
+        }
+
+        @SuppressWarnings("unused")
+        public int getMiddleYPos() {
+            return (endY - startY) / 2 + startY;
+        }
+
+        static int getFirstYIndexWithDistance(LinearFunction f1, LinearFunction f2, int rectSizeX, int rectSizeY) {
+
+            if (f1.getStartY() != f2.getStartY() || f1.getEndY() != f2.getEndY())
+                throw new RuntimeException("startY and endY must be identical");
+
+            int startYPos = (f1.getEndY() - f1.getStartY()) / 2 + f1.getStartY();
+
+            int endYPos = f1.getEndY() - 5;
+
+            int firstYLabelPos = f1.getNorthLabelBorder() - 1;
+            int lastYLabelPos = f1.getSouthLabelBorder() + 1;
+            int lastXLabelPos = f1.getEastLabelBorder();
+
+            if (f1.getStartX() >= f1.getEndX() && f2.getStartX() <= f2.getEndX()) {
+                // -> / \
+
+                for (int i = startYPos; i < endYPos; i++) {
+                    int yTestVal1 = i - rectSizeY;
+                    int yTestVal2 = i - rectSizeY;
+
+                    int pos1 = f1.getXPosition(yTestVal1);
+                    if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
+
+                    int pos2 = f2.getXPosition(yTestVal2);
+                    if (pos2 - pos1 > rectSizeX) return i;
+                }
+
+            } else if (f1.getStartX() >= f1.getEndX() && f2.getStartX() >= f2.getEndX()) {
+                // -> / /
+
+                for (int i = startYPos; i < endYPos; i++) {
+                    int yTestVal1 = i - rectSizeY;
+                    int yTestVal2 = i;
+
+                    int pos1 = f1.getXPosition(yTestVal1);
+                    if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
+
+                    int pos2 = f2.getXPosition(yTestVal2);
+                    if (pos2 - pos1 > rectSizeX) return i;
+                }
+
+            } else if (f1.getStartX() < f1.getEndX() && f2.getStartX() < f2.getEndX()) {
+                // -> \ \
+
+                for (int i = startYPos; i < endYPos; i++) {
+                    int yTestVal1 = i;
+                    int yTestVal2 = i - rectSizeY;
+
+                    int pos1 = f1.getXPosition(yTestVal1);
+                    if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
+
+                    int pos2 = f2.getXPosition(yTestVal2);
+                    if (pos2 - pos1 > rectSizeX) return i;
+                }
+
+            } else {
+
+                // -> \  /
+
+                for (int i = startYPos; i < endYPos; i++) {
+                    int yTestVal1 = i;
+                    int yTestVal2 = i;
+
+                    int pos1 = f1.getXPosition(yTestVal1);
+                    if (yTestVal1 >= firstYLabelPos && yTestVal1 <= lastYLabelPos) pos1 = Math.max(pos1, lastXLabelPos);
+
+                    int pos2 = f2.getXPosition(yTestVal2);
+                    if (pos2 - pos1 > rectSizeX) return i;
+                }
+
+            }
+
+            return -1;
+
+        }
+
+        static int getLastYIndexWithDistanceToLeftBorder(LinearFunction f1, int rectSizeX, int rectSizeY) {
+
+            int startYPos = f1.getEndY() - 5;
+            int endYPos = f1.getStartY() + 5 + rectSizeY;
+
+            for (int i = startYPos; i >= endYPos; i--) {
+                if (f1.getXPosition(i) > rectSizeX) return i;
+            }
+
+            return -1;
+        }
+
+        static int getLastYIndexWithDistanceToRightBorder(LinearFunction f1, int rectSizeX, int rectSizeY, int rightBorder) {
+
+            int startYPos = f1.getEndY() - 5;
+            int endYPos = f1.getStartY() + 5 + rectSizeY;
+
+            for (int i = startYPos; i >= endYPos; i--) {
+                if (f1.getXPosition(i) + rectSizeX < rightBorder) return i;
+            }
+
+            return -1;
+        }
+
     }
 
-}
+    protected static class LinearFunctionComarator implements Comparator<LinearFunction> {
 
-class LinearFunctionComarator implements Comparator<LinearFunction> {
+        @Override
+        public int compare(LinearFunction o1, LinearFunction o2) {
+            if (o1.getStartX() < o2.getStartX()) return -1;
+            else if (o1.getStartX() == o2.getStartX()) return 0;
+            else return 1;
+        }
 
-    @Override
-    public int compare(LinearFunction o1, LinearFunction o2) {
-        if (o1.getStartX() < o2.getStartX()) return -1;
-        else if (o1.getStartX() == o2.getStartX()) return 0;
-        else return 1;
     }
 
 }

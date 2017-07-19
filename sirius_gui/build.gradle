@@ -8,6 +8,9 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemdb_file", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
+
+    compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
+
 //external
     compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
     compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
