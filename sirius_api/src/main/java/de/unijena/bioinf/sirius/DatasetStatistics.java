@@ -83,6 +83,13 @@ public class DatasetStatistics {
         return medianNoiseIntensity;
     }
 
+    public double getQuantileMs2NoiseIntensity(int quantile){
+        //todo implement fast median
+            TDoubleArrayList copy = new TDoubleArrayList(noiseIntensities);
+            copy.sort();
+            return copy.get((int)(copy.size()*(quantile/100d)));
+    }
+
     public TDoubleArrayList getNoiseIntensities() {
         return noiseIntensities;
     }
