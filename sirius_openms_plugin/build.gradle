@@ -67,7 +67,10 @@ distributions {
 
             project.arch.split(',').each { ar ->
                 into("Linux/${ar}bit/Sirius/lib") {
-                    from("${project.glpkPath}/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/"){
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
                     exclude('*.zip')
                 }
 
@@ -112,7 +115,6 @@ distributions {
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-
 
     project.getTasksByName("distTar", false).each { it.setEnabled(false) }
     project.getTasksByName("distZip", false).each { it.setEnabled(false) }

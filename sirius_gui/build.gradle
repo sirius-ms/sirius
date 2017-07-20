@@ -73,7 +73,10 @@ distributions {
                     from("build/install/${project.name}/lib") {
                         exclude("$gurobiExclude")
                     }
-                    from("${project.glpkPath}/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/"){
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
                     exclude('*.zip')
                 }
 
