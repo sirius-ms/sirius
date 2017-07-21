@@ -10,10 +10,8 @@ import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer.ExponentialReactionStepSizeScorer;
 import de.unijena.bioinf.GibbsSampling.model.distributions.DummyScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.EmpiricalScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
@@ -47,7 +45,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -63,13 +60,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -1330,7 +1325,7 @@ public class GibbsSamplerMain {
             List<FragmentsCandidate> candidates;
             try{
                 Ms2Experiment experiment = experimentMap.get(key);
-                if (SpectrumQuality.isNotBadQuality(experiment)){
+                if (CompoundQuality.isNotBadQuality(experiment)){
                     candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
                 } else {
                     System.out.println("exclude "+key+". Bad quality.");

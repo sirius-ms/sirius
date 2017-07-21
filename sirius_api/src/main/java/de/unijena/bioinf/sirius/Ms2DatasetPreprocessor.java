@@ -28,6 +28,7 @@ import java.util.*;
 public class Ms2DatasetPreprocessor {
 
     private static String[] STANDARD_IONIZATIONS = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+"};
+    private static Deviation findMs1PeakDeviation = new Deviation(100, 0.1);
 
     private IsolationWindow standardIsolationWindow;
     private Sirius sirius;
@@ -73,7 +74,12 @@ public class Ms2DatasetPreprocessor {
         ms2Dataset = flagChimericSpectra(ms2Dataset);
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             experiment.setAnnotation(IsolationWindow.class,  ms2Dataset.getIsolationWindow());
+            CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+            if (quality==null) {
+                experiment.setAnnotation(CompoundQuality.class, new CompoundQuality(SpectrumProperty.Good));
+            } else if (quality.isNotBadQuality() && !quality.isGoodQuality()) quality.addProperty(SpectrumProperty.Good);
         }
+
         return ms2Dataset;
     }
 
@@ -198,11 +204,10 @@ public class Ms2DatasetPreprocessor {
 
 
         //no MS1 peak
-        Deviation hasPeakDeviation = new Deviation(100, 0.1);
         for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
             Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
 
-            if (Spectrums.binarySearch(ms1, experiment.getIonMass(), hasPeakDeviation)<0){
+            if (Spectrums.binarySearch(ms1, experiment.getIonMass(), findMs1PeakDeviation)<0){
 
                 setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
             }
@@ -243,7 +248,7 @@ public class Ms2DatasetPreprocessor {
             if (hasProperty(experiment, SpectrumProperty.NoMS1Peak)) continue;
             Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
             double highestInCurrentMs1 = Spectrums.getMaximalIntensity(ms1);
-            double ionIntensity = ms1.getIntensityAt(Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), hasPeakDeviation));
+            double ionIntensity = ms1.getIntensityAt(Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation));
             if (ionIntensity/highestInCurrentMs1<0.01) setSpectrumProperty(experiment, SpectrumProperty.LowIntensity);
             //todo another way with absolute intensities
 //            else if (ionIntensity<10*datasetStatistics.getMedianMs2NoiseIntensity()) setSpectrumProperty(experiment, SpectrumProperty.LowIntensity); //todo ???
@@ -269,7 +274,7 @@ public class Ms2DatasetPreprocessor {
         for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
             Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
 
-            int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), maxDeviation);
+            int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation);
             if (ms1PrecursorIdx<0){
                 if (!hasProperty(experiment, SpectrumProperty.NoMS1Peak)){
                     setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
@@ -375,23 +380,23 @@ public class Ms2DatasetPreprocessor {
     }
 
     private void setSpectrumProperty(Ms2Experiment experiment, SpectrumProperty property){
-        SpectrumQuality quality = experiment.getAnnotation(SpectrumQuality.class);
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
         if (quality==null){
-            quality = new SpectrumQuality(property);
-            experiment.setAnnotation(SpectrumQuality.class, quality);
+            quality = new CompoundQuality(property);
+            experiment.setAnnotation(CompoundQuality.class, quality);
         } else {
             quality.addProperty(property);
         }
     }
 
     private boolean hasProperty(Ms2Experiment experiment, SpectrumProperty property) {
-        SpectrumQuality quality = experiment.getAnnotation(SpectrumQuality.class);
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
         if (quality==null) return false;
         else return quality.hasProperty(property);
     }
 
     private boolean isNotBadQuality(Ms2Experiment experiment) {
-        return experiment.getAnnotation(SpectrumQuality.class, new SpectrumQuality(SpectrumProperty.Good)).isGoodQuality();
+        return experiment.getAnnotation(CompoundQuality.class, new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
     }
 
     private FormulaConstraints predictElements(Ms2Experiment experiment, Ms2Dataset ms2Dataset) {

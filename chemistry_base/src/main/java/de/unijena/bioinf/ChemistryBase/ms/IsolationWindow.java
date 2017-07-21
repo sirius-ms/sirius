@@ -526,7 +526,7 @@ public abstract class IsolationWindow {
     }
 
     private boolean isGoodQuality(Ms2Experiment experiment) {
-        SpectrumQuality quality = experiment.getAnnotation(SpectrumQuality.class);
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
         if (quality!=null) return quality.isGoodQuality();
         //todo all this preprocessing
 
