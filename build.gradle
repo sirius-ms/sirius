@@ -43,7 +43,7 @@ ext {
 //    oshi_version = '3.2'
     error_reporter_version = "0.9"
 
-    buildNumber = '3'
+    buildNumber = '4'
 }
 
 
@@ -283,7 +283,12 @@ task refreshDownloadLinks {
                 "",
                 "### Manual",
                 "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}.pdf)",
-                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)"
+                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
+                "",
+                "### Sources on GitHub",
+                "- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)",
+                "- [SIRIUS library](https://github.com/boecker-lab/sirius)"
+
         ] as List
 
         Files.deleteIfExists(outfile.toPath())

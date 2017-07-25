@@ -74,10 +74,6 @@ command-line tool.
 
 <!--end download-->
 
-### Sources on GitHub
-- [Sirius frontend](https://github.com/boecker-lab/sirius_frontend)
-- [Sirius library](https://github.com/boecker-lab/sirius)
-
 ## Main citations
 
 1. Kai Dührkop and Sebastian Böcker. [Fragmentation trees
