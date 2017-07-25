@@ -369,7 +369,7 @@ artifactory {
         defaults {
             //Publish every distribution to Artifactory
             publications("sirius")
-            //publications("manual")
+            publications("manual")
         }
     }
 }
