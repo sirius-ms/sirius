@@ -3,6 +3,7 @@ package de.unijena.bioinf.GibbsSampling;
 import com.lexicalscope.jewel.cli.Option;
 
 public interface GibbsSamplerOptions {
+
     @Option(
             shortName = {"mgf"},
             longName = {"mgf"},
@@ -146,4 +147,13 @@ public interface GibbsSamplerOptions {
             description = "estimate distribution by median"
     )
     boolean isMedian();
+
+
+    @Option(
+            longName = {"treescoring"},
+            description = ""
+    )
+    boolean useFTScoring();
+
+
 }
