@@ -150,7 +150,7 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
 //                        PrecursorIonType ion2 = (PrecursorIonType)var41.next();
 //                        var26[0] = ion2;
 //                        double[] sp2 = this.mapSpec(var22[var30], ion2);
-//                        int commonF = this.countCommons(var40, sp2);
+//                        int commonF = this.scoreCommons(var40, sp2);
 //                        double score = (double)commonF / (double)var24[i] + (double)commonF / (double)var24[var30];
 //                        var35.add(score);
 //                        if(commonF >= 1 && score >= this.threshold) {

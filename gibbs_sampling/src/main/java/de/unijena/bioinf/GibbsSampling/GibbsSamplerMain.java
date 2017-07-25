@@ -11,18 +11,14 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.GibbsSampling.model.*;
+import de.unijena.bioinf.GibbsSampling.model.scorer.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.GibbsSampling.model.distributions.DummyScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.EmpiricalScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ParetoDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
-import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.CommonRootLossScorer;
-import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
@@ -141,30 +137,44 @@ public class GibbsSamplerMain {
 //            new ReactionScorer(reactions, new ExponentialReactionStepSizeScorer(4.0D));
             EdgeScorer[] edgeScorers;
             if(opts.getPCPScoreFile() != null) {
-                ScoreProbabilityDistribution scoreProbabilityDistribution = readPCP(opts.getPCPScoreFile());
-                CommonFragmentAndLossScorer probabilityDistribution = new CommonFragmentAndLossScorer(opts.getThresholdFilter());
-                edgeScorers = new EdgeScorer[]{probabilityDistribution};
+                probabilityDistribution = readPCP(opts.getPCPScoreFile());
+                CommonFragmentAndLossScorer commonFragmentAndLossScorer;
+                if (opts.useFTScoring()){
+//                if (true) {
+                    commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(opts.getThresholdFilter());
+                } else {
+                    commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(opts.getThresholdFilter());
+                }
+
+                ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution);
+                edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
             } else {
-                new DummyScoreProbabilityDistribution();
-                ScoreProbabilityDistribution probabilityDistribution1;
                 if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
-                    probabilityDistribution1 = new ExponentialDistribution(0.0D, opts.getThresholdFilter(), opts.isMedian());
+                    probabilityDistribution = new ExponentialDistribution(0.0D, opts.getThresholdFilter(), opts.isMedian());
                 } else if(opts.getProbabilityDistribution().toLowerCase().equals("pareto")) {
-                    probabilityDistribution1 = new ParetoDistribution(opts.getThresholdFilter(), opts.isMedian());
+                    probabilityDistribution = new ParetoDistribution(opts.getThresholdFilter(), opts.isMedian());
                 } else {
                     if(!opts.getProbabilityDistribution().toLowerCase().equals("lognormal") && !opts.getProbabilityDistribution().toLowerCase().equals("log-normal")) {
                         System.out.println("unkown distribution function");
                         return;
                     }
 
-                    probabilityDistribution1 = new LogNormalDistribution(opts.getThresholdFilter(), opts.isMedian());
+                    probabilityDistribution = new LogNormalDistribution(opts.getThresholdFilter(), opts.isMedian());
                 }
 
-                probabilityDistribution = probabilityDistribution1;
                 //todo changed !!!?!?!??!?!?!
-                double minimumOverlap = 0.01D; //changed from 0.1
-                ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution1);
-                edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+                double minimumOverlap = 0.001D; //changed from 0.1
+
+                CommonFragmentAndLossScorer commonFragmentAndLossScorer;
+                if (opts.useFTScoring()){
+//                if (true) {
+                    commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(minimumOverlap);
+                } else {
+                    commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
+                }
+
+                ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution);
+                edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
             }
 
             if (opts.isMakeStats()) {
