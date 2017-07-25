@@ -128,7 +128,7 @@ public class CommonRootLossScorer extends CommonFragmentScorer {
 //
 //            for(int var31 = i + 1; var31 < var23.length; ++var31) {
 //                Set var34 = this.collectIons(candidates[i]);
-//                var35 = this.countCommons(var23[i], var23[var31]);
+//                var35 = this.scoreCommons(var23[i], var23[var31]);
 //                TDoubleArrayList var39 = new TDoubleArrayList();
 //                Iterator var40 = var30.iterator();
 //
@@ -143,7 +143,7 @@ public class CommonRootLossScorer extends CommonFragmentScorer {
 //                        PrecursorIonType ion2 = (PrecursorIonType)var16.next();
 //                        var27[0] = ion2;
 //                        double[] sp2 = this.mapSpec(var23[var31], ion2);
-//                        int commonF = this.countCommons(var44, sp2);
+//                        int commonF = this.scoreCommons(var44, sp2);
 //                        double score = (double)(commonF + var35) / (double)var25[i] + (double)(commonF + var35) / (double)var25[var31];
 //                        var39.add(score);
 //                        if(commonF + var35 >= 1 && score >= this.threshold) {

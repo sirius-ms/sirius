@@ -3,13 +3,9 @@ package de.unijena.bioinf.GibbsSampling.model;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -122,6 +118,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         FragmentWithIndex[] fragWithIdx = new FragmentWithIndex[fragments.size()];
         FragmentAnnotation<AnnotatedPeak> annotation = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
 
+        LossAnnotation<Score> lscore = tree.getOrCreateLossAnnotation(Score.class);
+        FragmentAnnotation<Score> fscore = tree.getOrCreateFragmentAnnotation(Score.class);
+
 
         int i = 0;
         for (Fragment f : fragments) {
@@ -133,7 +132,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                     throw new RuntimeException("index < 0");
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx);
+                final double score = fscore.get(f).sum()+lscore.get(f.getIncomingEdge()).sum();
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx, score);
 
             }
         }
@@ -147,7 +147,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 throw new RuntimeException("index < 0");
             }
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx);
+            //todo is root??
+            final double score = fscore.get(f).sum()+(f.isRoot()?0:lscore.get(f.getIncomingEdge()).sum());
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx, score);
 
         }
 
@@ -170,7 +172,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             fIdx[j] = fragWithIdx[j].idx;
         }
 
-        return new FragmentsAndLosses(fStrings, fIdx, lStrings, lIdx);
+        return new FragmentsAndLosses(fragWithIdx, lossWithIdx);
     }
 
 
@@ -235,7 +237,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                     throw new RuntimeException("index < 0");
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx);
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), (short)idx, f.getIncomingEdge().getWeight());
 
             }
         }
@@ -262,7 +264,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 throw new RuntimeException("index < 0");
             }
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx);
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), (short)idx, f.getIncomingEdge().getWeight());
 
 //            fStrings[i++] = f.getFormula().formatByHill();
 //            fIdx[i] = (short)f.getColor();
@@ -287,15 +289,15 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             fIdx[j] = fragWithIdx[j].idx;
         }
 
-        return new FragmentsAndLosses(fStrings, fIdx, lStrings, lIdx);
+        return new FragmentsAndLosses(fragWithIdx, lossWithIdx);
     }
 
 
-    public String[] getFragments(){
+    public FragmentWithIndex[] getFragments(){
         return getCandidate().getFragments();
     }
 
-    public String[] getLosses(){
+    public FragmentWithIndex[] getLosses(){
         return getCandidate().getLosses();
     }
 
