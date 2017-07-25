@@ -58,7 +58,7 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.5 (Build 3 from 2017-06-20)
+### Sirius+CSI:FingerID GUI and CLI - Version 3.5 (Build 4 from 2017-07-25)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5-osx64.zip)
@@ -71,6 +71,10 @@ command-line tool.
 ### Manual
 - [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5/sirius-3.5.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+
+### Sources on GitHub
+- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
+- [SIRIUS library](https://github.com/boecker-lab/sirius)
 
 <!--end download-->
 
