@@ -43,8 +43,8 @@ public class ResultPanel extends JTabbedPane {
         addTab("Sirius Overview", null, rvp, rvp.getDescription());
         addTab("Spectra", null, new FormulaListHeaderPanel(suriusResultElements, svp), svp.getDescription());
         addTab("Trees", null, new FormulaListHeaderPanel(suriusResultElements, tvp), tvp.getDescription());
-        addTab("CSI:FingerId Overview", null, cov, cov.getDescription());
-        addTab("CSI:FingerId Details", null, new FormulaListHeaderPanel(suriusResultElements, ccv), ccv.getDescription());
+        addTab("CSI:FingerID Overview", null, cov, cov.getDescription());
+        addTab("CSI:FingerID Details", null, new FormulaListHeaderPanel(suriusResultElements, ccv), ccv.getDescription());
         if (fpt != null)
             addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(suriusResultElements, fpt), fpt.getDescription());
     }
