@@ -45,7 +45,7 @@ public class ProxyManager {
     }
 
     public static ProxyStrategy getProxyStrategy() {
-        return getStrategyByName(System.getProperty("de.unijena.bioinf.sirius.proxy"));
+        return getStrategyByName(System.getProperty("de.unijena.bioinf.sirius.proxy",ProxyStrategy.SYSTEM.name()));
     }
 
     public static boolean useSystemProxyConfig() {
