@@ -116,10 +116,11 @@ public abstract class FilterRangeSlider<L extends ActionList<E, D>, E extends Ab
                 int pmax = ((int) Math.ceil(stats.getMax())) * (int) valueMultiplier;
 
                 rangeSlider.setMinimum(pmin);
-                rangeSlider.setMaximum(pmax);
-
-                rangeSlider.setUpperValue(pmax);
                 rangeSlider.setLowerValue(pmin);
+
+                rangeSlider.setMaximum(pmax);
+                rangeSlider.setUpperValue(pmax);
+
 
                 refreshText();
 
