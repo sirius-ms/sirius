@@ -50,11 +50,6 @@ public class DummySpectrumContainer implements MSViewerDataModel{
 	}
 
 	@Override
-	public double getSignalNoise(int arg0) {
-		return 0;
-	}
-
-	@Override
 	public int getSize() {
 		return 0;
 	}

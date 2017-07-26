@@ -15,9 +15,6 @@ public interface PeakInformation {
     double getAbsoluteIntensity();
 	
 	@SuppressWarnings("unused")
-    double getSignalToNoise();
-	
-	@SuppressWarnings("unused")
     boolean isIsotope();
 	
 	@SuppressWarnings("unused")

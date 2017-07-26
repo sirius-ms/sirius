@@ -6,21 +6,20 @@ import java.util.List;
 
 public class DefaultPeakInformation implements PeakInformation{
 	
-	private double mass, relInt, absInt, signalNoise;
+	private double mass, relInt, absInt;
 	
 	private List<MolecularFormulaInformation> decomps;
 	
-	public DefaultPeakInformation(double mass, double relInt, double absInt, double signalNoise){
+	public DefaultPeakInformation(double mass, double relInt, double absInt){
 		this.mass = mass;
 		this.relInt = relInt;
 		this.absInt = absInt;
-		this.signalNoise = signalNoise;
 		
 		this.decomps = new ArrayList<MolecularFormulaInformation>(5);
 	}
 	
 	public DefaultPeakInformation(){
-		this(-1,-1,-1,-1);
+		this(-1,-1,-1);
 	}
 	
 	public void addMolecularFormulaInformation(MolecularFormulaInformation info){
@@ -43,10 +42,6 @@ public class DefaultPeakInformation implements PeakInformation{
 		this.absInt = absInt;
 	}
 	
-	public void setSignalNoise(double signalNoise){
-		this.signalNoise = signalNoise;
-	}
-
 	@Override
 	public double getMass() {
 		return this.mass;
@@ -60,11 +55,6 @@ public class DefaultPeakInformation implements PeakInformation{
 	@Override
 	public double getAbsoluteIntensity() {
 		return this.absInt;
-	}
-
-	@Override
-	public double getSignalToNoise() {
-		return this.signalNoise;
 	}
 
 	@Override

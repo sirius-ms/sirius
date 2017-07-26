@@ -76,7 +76,7 @@ public class ResultsMSViewerDataModel implements MSViewerDataModel {
 		double minMass = mass - tolerance;
 		double maxMass = mass + tolerance;
 		for(int i=0;i<selectedSpectrum.getSize();i++){
-			if(selectedSpectrum.getPeak(i).getMass()>=minMass && selectedSpectrum.getPeak(i).getMass()<=maxMass){
+			if(selectedSpectrum.getPeakAt(i).getMass()>=minMass && selectedSpectrum.getPeakAt(i).getMass()<=maxMass){
 				return i;
 			}
 		}
@@ -107,7 +107,6 @@ public class ResultsMSViewerDataModel implements MSViewerDataModel {
 		dpi.setAbsoluteIntensity(selectedSpectrum.getAbsoluteIntensity(index));
 		dpi.setMass(selectedSpectrum.getMass(index));
 		dpi.setRelativeIntensity(selectedSpectrum.getRelativeIntensity(index));
-		dpi.setSignalNoise(selectedSpectrum.getSignalToNoise(index));
 		return dpi;
 	}
 
@@ -133,11 +132,6 @@ public class ResultsMSViewerDataModel implements MSViewerDataModel {
 		return selectedSpectrum.getRelativeIntensity(index);
 	}
 
-	@Override
-	public double getSignalNoise(int index) {
-		if(selectedSpectrum==null)return -1;
-		return selectedSpectrum.getSignalToNoise(index);
-	}
 
 	@Override
 	public int getSize() {

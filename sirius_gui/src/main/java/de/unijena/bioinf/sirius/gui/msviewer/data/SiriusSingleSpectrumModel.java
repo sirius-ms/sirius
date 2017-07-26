@@ -30,10 +30,10 @@ public class SiriusSingleSpectrumModel implements MSViewerDataModel {
         return spectrum.getIntensityAt(index)/scale;
     }
 
-    @Override
-    public double getSignalNoise(int index) {
-        return 0;
-    }
+//    @Override
+//    public double getSignalNoise(int index) {
+//        return 0;
+//    }
 
     @Override
     public double getAbsoluteIntensity(int index) {

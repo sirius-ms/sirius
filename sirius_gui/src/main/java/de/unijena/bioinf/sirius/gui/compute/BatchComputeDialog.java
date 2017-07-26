@@ -24,13 +24,13 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
-import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -70,7 +70,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private ElementsPanel elementPanel;
     private JButton elementAutoDetect = null;
-    private JComboBox<CompactPeak> box = null;
+    private JComboBox<Peak> box = null;
 
     private SearchProfilePanel searchProfilePanel;
     private ToolbarToggleButton runCSIFingerId;
@@ -275,8 +275,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private Double getSelectedIonMass() {
         Object selected = box.getSelectedItem();
         double pm = 0;
-        if (selected instanceof CompactPeak) {
-            CompactPeak cp = (CompactPeak) selected;
+        if (selected instanceof Peak) {
+            Peak cp = (Peak) selected;
             pm = cp.getMass();
         } else if (selected != null && !selected.toString().isEmpty()) {
             pm = Double.parseDouble(selected.toString());
@@ -398,28 +398,28 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     public void initSingleExperiment(Box mainPanel, List<Element> detectableElements) {
         final ExperimentContainer ec = compoundsToProcess.get(0);
         JPanel focMassPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        Vector<CompactPeak> masses = new Vector<>();
+        Vector<Peak> masses = new Vector<>();
         double maxInt = -1;
         Object maxObj = null;
         List<CompactSpectrum> ms1Spectra = ec.getMs1Spectra();
         // falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
         boolean useMS1;
-        CompactPeak bestDataIon = null;
+        Peak bestDataIon = null;
         final Deviation dev = new Deviation(10);
         final double focusedMass = ec.getDataFocusedMass();
         if (!ms1Spectra.isEmpty()) {
             useMS1 = true;
             CompactSpectrum sp = ms1Spectra.get(0);
             for (int i = 0; i < sp.getSize(); i++) {
-                if (sp.getPeak(i).getAbsoluteIntensity() > maxInt) {
-                    maxInt = sp.getPeak(i).getAbsoluteIntensity();
-                    maxObj = sp.getPeak(i);
+                if (sp.getPeakAt(i).getIntensity() > maxInt) {
+                    maxInt = sp.getPeakAt(i).getIntensity();
+                    maxObj = sp.getPeakAt(i);
                 }
-                if (focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
-                    if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
-                        bestDataIon = sp.getPeak(i);
+                if (focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) {
+                    if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
+                        bestDataIon = sp.getPeakAt(i);
                 }
-                masses.add(sp.getPeak(i));
+                masses.add(sp.getPeakAt(i));
             }
         } else {
             useMS1 = false;
@@ -445,14 +445,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
             for (CompactSpectrum sp : ec.getMs2Spectra()) {
                 for (int i = 0; i < sp.getSize(); i++) {
-                    if (sp.getPeak(i).getAbsoluteIntensity() > maxInt) {
-                        maxInt = sp.getPeak(i).getAbsoluteIntensity();
-                        maxObj = sp.getPeak(i);
+                    if (sp.getPeakAt(i).getIntensity() > maxInt) {
+                        maxInt = sp.getPeakAt(i).getIntensity();
+                        maxObj = sp.getPeakAt(i);
                     }
-                    masses.add(sp.getPeak(i));
-                    if ((focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) || (expectedParentMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), expectedParentMass))) {
-                        if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
-                            bestDataIon = sp.getPeak(i);
+                    masses.add(sp.getPeakAt(i));
+                    if ((focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) || (expectedParentMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), expectedParentMass))) {
+                        if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
+                            bestDataIon = sp.getPeakAt(i);
                     }
                 }
             }
@@ -474,8 +474,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         AutoCompleteDecorator.decorate(box, new ObjectToStringConverter() {
             @Override
             public String getPreferredStringForItem(Object item) {
-                if (item instanceof CompactPeak) {
-                    CompactPeak peak = (CompactPeak) item;
+                if (item instanceof Peak) {
+                    Peak peak = (Peak) item;
                     return String.valueOf(peak.getMass());
                 } else {
                     return (String) item;

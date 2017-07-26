@@ -81,20 +81,6 @@ public class SiriusDataConverter {
         return aenum.toRealIonization();
     }
 
-    public static CompactExperiment siriusExperimentToCompactExperiment(Ms2Experiment sirius) {
-        sirius = validateInput(sirius);
-        final DefaultCompactExperiment exp = new DefaultCompactExperiment();
-        exp.setMolecularFormula(sirius.getMolecularFormula());
-        exp.setCompoundName(sirius.getName());
-        exp.setFocusedMass(sirius.getIonMass());
-        exp.setIonization(sirius.getPrecursorIonType().toString());
-        exp.setMS1Spectrum(siriusSpectrumToMyxoSpectrum(sirius.getMergedMs1Spectrum()));
-        for (Ms2Spectrum<? extends Peak> spec : sirius.getMs2Spectra()) {
-            exp.addMS2Spectrum(siriusSpectrumToMyxoSpectrum(spec));
-        }
-        return exp;
-    }
-
     public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, PrecursorIonType ionType, double ionMass) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(myxo.getName());
@@ -140,7 +126,7 @@ public class SiriusDataConverter {
     }
 
     public static CompactSpectrum siriusSpectrumToMyxoSpectrum(Spectrum<? extends Peak> spec) {
-        final CompactSpectrum cs = new DefaultCompactSpectrum(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
+        final CompactSpectrum cs = new CompactSpectrum(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
         if (spec instanceof Ms2Spectrum) {
             final Ms2Spectrum<? extends Peak> ms2Spec = (Ms2Spectrum<? extends Peak>)spec;
             cs.setCollisionEnergy(ms2Spec.getCollisionEnergy());
@@ -165,8 +151,7 @@ public class SiriusDataConverter {
     public static SimpleSpectrum myxoMs1ToSiriusMs1(CompactSpectrum cs) {
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum(cs.getSize());
         for (int i=0; i < cs.getSize(); ++i) {
-            final CompactPeak cp = cs.getPeak(i);
-            ms.addPeak(cp.getMass(), cp.getAbsoluteIntensity());
+            ms.addPeak(cs.getPeakAt(i));
         }
         return new SimpleSpectrum(ms);
     }

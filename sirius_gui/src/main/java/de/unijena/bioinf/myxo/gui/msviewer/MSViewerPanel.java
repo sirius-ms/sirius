@@ -829,7 +829,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 			for(int i = Math.max(xPos-5,0);i<=maxHorPos;i++){
 				
 				if(this.peakPositions[i]>=0){
-//					System.out.println(this.dataModel.getMass(peakPositions[i])+" "+this.dataModel.getRelativeIntensity(peakPositions[i])+" "+this.dataModel.getAbsoluteIntensity(peakPositions[i]));
+//					System.out.println(this.dataModel.getMass(peakPositions[i])+" "+this.dataModel.getRelativeIntensity(peakPositions[i])+" "+this.dataModel.getIntensity(peakPositions[i]));
 					if(this.dataModel.getRelativeIntensity(peakPositions[i])>maxRelativeInt){
 						indexWithMaxInt = peakPositions[i];
 						maxRelativeInt = this.dataModel.getRelativeIntensity(peakPositions[i]);

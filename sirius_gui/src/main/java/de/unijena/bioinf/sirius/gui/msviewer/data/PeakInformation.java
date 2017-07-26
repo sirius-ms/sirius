@@ -10,9 +10,7 @@ public interface PeakInformation {
 	double getRelativeIntensity();
 	
 	double getAbsoluteIntensity();
-	
-	double getSignalToNoise();
-	
+
 	boolean isIsotope();
 	
 	List<MolecularFormulaInformation> getDecompositions();

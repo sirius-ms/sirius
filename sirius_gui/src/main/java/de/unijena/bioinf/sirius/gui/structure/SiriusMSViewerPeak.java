@@ -63,11 +63,6 @@ public class SiriusMSViewerPeak implements PeakInformation{
 	}
 
 	@Override
-	public double getSignalToNoise() {
-		return sn;
-	}
-
-	@Override
 	public boolean isIsotope() {
 		return false;
 	}

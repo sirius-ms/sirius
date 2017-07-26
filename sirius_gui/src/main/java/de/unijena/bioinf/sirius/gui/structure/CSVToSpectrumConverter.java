@@ -2,7 +2,6 @@ package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.myxo.structure.DefaultCompactSpectrum;
 import de.unijena.bioinf.sirius.gui.load.CSVDialogReturnContainer;
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -36,8 +35,8 @@ public class CSVToSpectrumConverter {
 //			masses[i] = data.get(i).get(massIndex);
 //			ints[i] = data.get(i).get(absIntIndex);
 //		}
-		
-		DefaultCompactSpectrum sp = new DefaultCompactSpectrum(masses,ints);
+
+		CompactSpectrum sp = new CompactSpectrum(masses,ints);
 		sp.setMSLevel(msLevel);
 		if(minEnergy>0 && maxEnergy>0 && minEnergy<=maxEnergy) sp.setCollisionEnergy(new CollisionEnergy(minEnergy,maxEnergy));
 		return sp;
