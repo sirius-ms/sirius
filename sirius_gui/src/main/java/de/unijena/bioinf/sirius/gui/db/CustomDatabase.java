@@ -451,10 +451,12 @@ public class CustomDatabase implements SearchableDatabase {
         }
 
         protected void addMolecule(IAtomContainer mol) throws IOException {
-            moleculeBuffer.add(mol);
-            for (ImporterListener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
-            if (moleculeBuffer.size()> 1000) {
-                flushMoleculeBuffer();
+            synchronized (moleculeBuffer) {
+                moleculeBuffer.add(mol);
+                for (ImporterListener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
+                if (moleculeBuffer.size()> 1000) {
+                    flushMoleculeBuffer();
+                }
             }
         }
 
@@ -477,6 +479,7 @@ public class CustomDatabase implements SearchableDatabase {
             } catch (CDKException | IllegalArgumentException e) {
                 logger.error(e.getMessage(), e);
             }
+            moleculeBuffer.clear();
             logger.info("Try downloading compounds");
             try (final WebAPI webAPI = WebAPI.newInstance()){
                 try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ALL, new File("."))) {
@@ -499,21 +502,22 @@ public class CustomDatabase implements SearchableDatabase {
                     logger.error(e.getMessage(),e);
                 }
             }
-            moleculeBuffer.clear();
             for (ImporterListener l : listeners) l.newMoleculeBufferSize(0);
         }
 
         private void addToBuffer(FingerprintCandidate fingerprintCandidate) throws IOException {
-            buffer.add(fingerprintCandidate);
-            for (ImporterListener l : listeners) {
-                l.newFingerprintBufferSize(buffer.size());
-                l.newInChI(fingerprintCandidate.getInchi());
+            synchronized (buffer) {
+                buffer.add(fingerprintCandidate);
+                for (ImporterListener l : listeners) {
+                    l.newFingerprintBufferSize(buffer.size());
+                    l.newInChI(fingerprintCandidate.getInchi());
+                }
+                if (buffer.size() > 10000)
+                    flushBuffer();
             }
-            if (buffer.size() > 10000)
-                flushBuffer();
         }
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName, FingerprintCandidate fc) throws CDKException {
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName, FingerprintCandidate fc) throws CDKException, IOException {
             if (fc==null) return computeCompound(molecule,optionalName);
             logger.info("download fingerprint " + fc.getInchiKey2D());
             if (fc.getLinks()==null) fc.setLinks(new DBLink[0]);
@@ -530,11 +534,13 @@ public class CustomDatabase implements SearchableDatabase {
             fc.setBitset(fc.getBitset() | DatasourceService.Sources.CUSTOM.flag);
             synchronized (buffer){
                 buffer.add(fc);
+                if (buffer.size() > 10000)
+                    flushBuffer();
             }
             return fc;
         }
 
-        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName) throws CDKException, IllegalArgumentException {
+        protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName) throws CDKException, IllegalArgumentException, IOException {
             InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule);
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             molecule = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
@@ -554,6 +560,8 @@ public class CustomDatabase implements SearchableDatabase {
             fc.setBitset(DatasourceService.Sources.CUSTOM.flag);
             synchronized (buffer){
                 buffer.add(fc);
+                if (buffer.size() > 10000)
+                    flushBuffer();
             }
             return fc;
         }

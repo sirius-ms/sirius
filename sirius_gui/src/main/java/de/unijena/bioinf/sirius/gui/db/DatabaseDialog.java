@@ -313,9 +313,15 @@ public class DatabaseDialog extends JDialog {
             }
         }
 
-        public void addCompound(InChI inchi) {
+        public void addCompound(final InChI inchi) {
             if (importedCompounds.add(inchi.key2D())) {
-                model.addElement(inchi);
+                // I dont understand why this have to be run in swing thread
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        model.addElement(inchi);
+                    }
+                });
             }
         }
 

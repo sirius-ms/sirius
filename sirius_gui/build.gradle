@@ -56,8 +56,6 @@ launch4j {
 
     guiCLIArgument = '--gui'
     outfile = "${project.appName}.exe"
-
-    jar = "lib/${project.tasks.jar.archiveName}"
 }
 
 /*################### Build distributions ################### */
@@ -75,7 +73,10 @@ distributions {
                     from("build/install/${project.name}/lib") {
                         exclude("$gurobiExclude")
                     }
-                    from("${project.glpkPath}/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/"){
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
                     exclude('*.zip')
                 }
 
@@ -87,7 +88,7 @@ distributions {
                     from("${getRootDir()}/LICENSE.md")
                 }
                 into('doc') {
-                    from("${project.getRootDir()}/${project.appName}-manual.pdf")
+                    from(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
                 }
                 into('doc/html') {
                     from("${project.manualPath}/build/html")
@@ -121,7 +122,7 @@ distributions {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from("${project.getRootDir()}/${project.appName}-manual.pdf")
+                    from(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
                 }
                 into('doc/html') {
                     from("${project.manualPath}/build/html")
@@ -154,7 +155,7 @@ distributions {
                 from("${getRootDir()}/LICENSE.md")
             }
             into('doc') {
-                from("${project.getRootDir()}/${project.appName}-manual.pdf")
+                from(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
             }
             into('doc/html') {
                 from("${project.manualPath}/build/html")
