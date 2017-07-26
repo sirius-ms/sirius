@@ -366,11 +366,11 @@ artifactory {
             username = properties['de.unijena.bioinf.build.artifactory.username']
             password = properties['de.unijena.bioinf.build.artifactory.password']
         }
-        defaults {
+        /*defaults {
             //Publish every distribution to Artifactory
             publications("sirius")
             publications("manual")
-        }
+        }*/
     }
 }
 
