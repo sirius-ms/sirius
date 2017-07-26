@@ -32,6 +32,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumC
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.myxo.structure.CompactPeak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
@@ -409,6 +410,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         CompactPeak bestDataIon = null;
         final Deviation dev = new Deviation(10);
         final double focusedMass = ec.getDataFocusedMass();
+        CompactPeak focMass = focusedMass<=0 ? null : new DefaultCompactPeak(focusedMass, 0d,0d,0d);
+        if (focusedMass>0) {
+            masses.add(focMass);
+            bestDataIon = focMass;
+        }
         if (!ms1Spectra.isEmpty()) {
             useMS1 = true;
             CompactSpectrum sp = ms1Spectra.get(0);
@@ -420,6 +426,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 if (focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
                     if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
                         bestDataIon = sp.getPeak(i);
+                    masses.remove(focMass);
+                    focMass = null;
                 }
                 masses.add(sp.getPeak(i));
             }
@@ -504,7 +512,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (masses.isEmpty()) autoDetectFM.setEnabled(false);
         JButton expFM = new JButton("File value");
         expFM.addActionListener(this);
-        if (bestDataIon == null) {
+        if (focMass!=null) {
+            box.setSelectedItem(focMass);
+        } else if (bestDataIon == null) {
             expFM.setEnabled(false);
             if (masses.isEmpty()) {
                 box.setSelectedItem("");
