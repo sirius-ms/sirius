@@ -56,7 +56,7 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.5.1-SNAPSHOT (Build 3 from 2017-07-25)
+### Sirius+CSI:FingerID GUI and CLI - Version 3.5.1-SNAPSHOT (Build 0 from 2017-07-26)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-osx64.zip)
@@ -75,14 +75,6 @@ command-line tool.
 - [SIRIUS library](https://github.com/boecker-lab/sirius)
 
 <!--end download-->
-
-### Manual
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/git/raw/ms/sirius_frontend.git/release/sirius-manual.pdf)
-- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
-
-### Sources on GitHub
-- [Sirius frontend](https://github.com/boecker-lab/sirius_frontend)
-- [Sirius library](https://github.com/boecker-lab/sirius)
 
 ## Main citations
 
