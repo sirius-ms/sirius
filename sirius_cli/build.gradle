@@ -4,23 +4,6 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
-processResources.doFirst {
-    logger.lifecycle('writing properties file...')
-    Properties properties = new Properties()
-    File propertiesFileIn = new File("$projectDir/src/main/resources/siriusBuildSource.properties")
-    propertiesFileIn.withReader("UTF8", {
-        properties.load(it)
-    })
-    properties.setProperty("de.unijena.bioinf.sirius.version", "$version")
-    properties.setProperty("de.unijena.bioinf.utils.errorReport.softwareName", "${project.appName}".capitalize())
-    properties.setProperty("de.unijena.bioinf.sirius.build", "${project.buildNumber}".capitalize())
-
-    File propertiesFile = new File("$projectDir/src/main/resources/siriusBuild.properties")
-    propertiesFile.withWriter("UTF8", {
-        properties.store(it, "")
-    })
-}
-
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
 project.ext.set("type", "console")
 
@@ -38,7 +21,6 @@ launch4j {
     jreRuntimeBits = "$project.arch"
 
     outfile = "${project.appName}.exe"
-    jar = "lib/${project.tasks.jar.archiveName}"
 }
 
 /*################### Build distributions ################### */

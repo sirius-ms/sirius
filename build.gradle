@@ -30,9 +30,6 @@ ext {
     glpk_lib_version = '4.60'
     cdk_version = "1.5.14"
 
-    siriusVersion = '3.5'
-    fingeridVersion = "1.1"
-
     jewelcli_version = '0.8.+'
 
     //locations of runtime libraries
@@ -41,10 +38,30 @@ ext {
 
 //    commons_email_version = '1.4'
 //    oshi_version = '3.2'
+
     error_reporter_version = "0.9"
 
-    buildNumber = '4'
+    logger.lifecycle('reading properties file...')
+    Properties properties = new Properties()
+    File propertiesFileIn = new File("$projectDir/sirius_cli/src/main/resources/build.properties")
+    propertiesFileIn.withReader("UTF8", {
+        properties.load(it)
+    })
+
+    // edit all these verions in sirius_cli/src/main/resources/build.properties
+    appName = properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
+    buildNumber = properties.getProperty('de.unijena.bioinf.sirius.build')
+    siriusVersion = properties.getProperty('de.unijena.bioinf.sirius.version')
+    fingeridVersion = properties.getProperty('de.unijena.bioinf.fingerid.version')
 }
+
+/*################### DISTRIBUTION STUFF ################### */
+project.ext.set("linSuffix", "linux")
+project.ext.set("winSuffix", "win")
+project.ext.set("macSuffix", "osx")
+project.ext.set("arch", "64,32")
+project.ext.set("manualPath", file('manual').absolutePath)
+project.ext.set("distPath", file('dist').absolutePath)
 
 
 
@@ -105,14 +122,7 @@ task downloadGLPK(type: Copy) {
 
 }
 
-/*################### DISTRIBUTION STUFF ################### */
-project.ext.set("linSuffix", "linux")
-project.ext.set("winSuffix", "win")
-project.ext.set("macSuffix", "osx")
-project.ext.set("arch", "64,32")
-project.ext.set("appName", "sirius")
-project.ext.set("manualPath", file('manual').absolutePath)
-project.ext.set("distPath", file('dist').absolutePath)
+
 
 /*################### Building the Documentation ################### */
 
@@ -214,9 +224,6 @@ subprojects {
         initialHeapPercent = 50
         maxHeapPercent = 80
 
-//        jreMinVersion = '1.7.0'
-//        jreMaxVersion = '1.9.0'
-
         dontWrapJar = true
         jdkPreference = "preferJre"
 
@@ -228,7 +235,6 @@ subprojects {
     startScripts {
         applicationName = "${project.appName}"
         doLast {
-//            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
             def siriusLibPath = '$GUROBI_HOME/lib:$APP_HOME/lib'
             def lines = unixScript.text.split(System.lineSeparator())
             int insertIndex = -1
@@ -237,12 +243,12 @@ subprojects {
                     lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
                 }
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
-//                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', 'export LD_LIBRARY_PATH="' + siriusLibPath + ':\\"$LD_LIBRARY_PATH\\""' + "${System.lineSeparator()}" + 'DEFAULT_JVM_OPTS="-Djava.library.path=' + siriusLibPath + '"')
                     insertIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
                 }
             }
-            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"\nexport DYLD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
+            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
+            lines = (lines as List).plus(insertIndex+1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
             unixScript.text = lines.join(System.lineSeparator())
         }
     }
@@ -345,39 +351,6 @@ task refreshReadMe {
 refreshReadMe.dependsOn prepareChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
 
-
-// what should be published
-publishing {
-    publications {
-        /*download(MavenPublication) {
-            artifactId = "${project.appName}"
-            version = 'download'
-            groupId = project.group
-
-            artifact file(refreshDownloadLinks.outputs.files.singleFile)
-        }
-
-        changelog(MavenPublication) {
-            artifactId = "${project.appName}"
-            version = 'changelog'
-            groupId = project.group
-
-            artifact file(prepareChangelog.outputs.files.singleFile)
-        }*/
-
-        manual(MavenPublication) {
-            artifactId = "${project.appName}"
-            artifact file(buildDoku.outputs.files.singleFile)
-        }
-
-
-    }
-}
-
-
-
-
-
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
@@ -385,13 +358,13 @@ artifactory {
         repository {
             repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
             Properties properties = new Properties()
-            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
             propertiesFile.withInputStream {
                 properties.load(it)
             }
 
-            username = properties['username']
-            password = properties['password']
+            username = properties['de.unijena.bioinf.build.artifactory.username']
+            password = properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             //Publish every distribution to Artifactory
