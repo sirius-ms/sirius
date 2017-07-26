@@ -169,10 +169,10 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         return underlyingModel.getRelativeIntensity(index);
     }
 
-    @Override
-    public double getSignalNoise(int index) {
-        return underlyingModel.getSignalNoise(index);
-    }
+//    @Override
+//    public double getSignalNoise(int index) {
+//        return underlyingModel.getSignalNoise(index);
+//    }
 
     @Override
     public double getAbsoluteIntensity(int index) {

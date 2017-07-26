@@ -25,7 +25,6 @@ public class SpectrumContainer implements MSViewerDataModel{
 			SiriusMSViewerPeak peak = new SiriusMSViewerPeak();
 			peak.setMass(sp.getMass(i));
 			peak.setAbsoluteIntensity(sp.getAbsoluteIntensity(i));
-			peak.setSn(sp.getSignalToNoise(i));
 			if(maxInt<peak.getAbsoluteIntensity()) maxInt = peak.getAbsoluteIntensity();
 			if(map.containsKey(peak.getMass())){
 				if(map.get(peak.getMass()).getAbsoluteIntensity()<peak.getAbsoluteIntensity()){
@@ -113,10 +112,10 @@ public class SpectrumContainer implements MSViewerDataModel{
 		return peaks[index].getRelativeIntensity();
 	}
 
-	@Override
-	public double getSignalNoise(int index) {
-		return peaks[index].getSignalToNoise();
-	}
+//	@Override
+//	public double getSignalNoise(int index) {
+//		return peaks[index].getSignalToNoise();
+//	}
 
 	@Override
 	public int getSize() {

@@ -8,9 +8,7 @@ public interface MSViewerDataModel {
 	double getMass(int index);
 	
 	double getRelativeIntensity(int index);
-	
-	double getSignalNoise(int index);
-	
+
 	double getAbsoluteIntensity(int index);
 	
 	String getMolecularFormula(int index);
@@ -22,8 +20,6 @@ public interface MSViewerDataModel {
 	boolean isImportantPeak(int index);
 	
 	boolean isUnimportantPeak(int index);
-	
-//	public boolean isNoise(int index);
 	
 	boolean isPlusZeroPeak(int index);
 	

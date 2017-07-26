@@ -1,6 +1,5 @@
 package de.unijena.bioinf.myxo.io.spectrum;
 
-import de.unijena.bioinf.myxo.structure.CompactExperiment;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.io.BufferedReader;
@@ -18,11 +17,6 @@ public class CSVFormatReader implements SpectraReader {
 	@SuppressWarnings("unused")
 	public CSVFormatReader() {
 		pattern = Pattern.compile("[-+]?(([0-9]*\\.?[0-9]+)|([0-9]+\\.{1}))([eE][-+]?[0-9]+)?");
-	}
-
-	@Override
-	public CompactExperiment read(File file) {
-		throw new RuntimeException("Method not supported");
 	}
 
 	@Override

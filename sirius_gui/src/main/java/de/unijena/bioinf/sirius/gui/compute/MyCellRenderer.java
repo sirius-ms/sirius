@@ -1,17 +1,16 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.myxo.structure.CompactPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.Collection;
 
-class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>{
+class MyListCellRenderer extends JLabel implements ListCellRenderer<Peak>{
 	
 	private double maxInt;
 	private Font textfont;
@@ -19,8 +18,8 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 	
 	private DecimalFormat numberFormat;
 	
-	private CompactPeak cp;
-	private Collection<CompactPeak> peaks;
+	private Peak cp;
+	private Collection<Peak> peaks;
 	
 	private int intPos; 
 	
@@ -29,7 +28,7 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 	boolean isInit;
 	boolean isSelected;
 	
-	MyListCellRenderer(Collection<CompactPeak> peaks){
+	MyListCellRenderer(Collection<Peak> peaks){
 		
 		initColorsAndFonts();
 		
@@ -43,8 +42,8 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 //		 = this.getGraphics().getFontMetrics(textfont);this.getgr
 		
 		maxInt = 0;
-		for(CompactPeak peak : peaks){
-			if(peak.getAbsoluteIntensity()>maxInt) maxInt = peak.getAbsoluteIntensity();
+		for(Peak peak : peaks){
+			if(peak.getIntensity()>maxInt) maxInt = peak.getIntensity();
 		}
 		
 //		this.setMinimumSize(new Dimension(145,15));
@@ -64,9 +63,9 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 		
 		int maxMassWidth = 0;
 		int maxIntWidth = 0;
-		for(CompactPeak peak : peaks){
+		for(Peak peak : peaks){
 			String massS = String.valueOf(peak.getMass());
-			String intS = numberFormat.format(peak.getAbsoluteIntensity()/maxInt);
+			String intS = numberFormat.format(peak.getIntensity()/maxInt);
 			int massWidth = fm.stringWidth(massS);
 			int intWidth  = fm.stringWidth(intS);
 			if(massWidth>maxMassWidth) maxMassWidth = massWidth;
@@ -111,9 +110,9 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 
 	@Override
 	public Component getListCellRendererComponent(
-			JList<? extends CompactPeak> list, CompactPeak value, int index,
+			JList<? extends Peak> list, Peak value, int index,
 			boolean isSelected, boolean cellHasFocus) {
-		this.setText(value.getMass()+" "+value.getAbsoluteIntensity());
+		this.setText(value.getMass()+" "+value.getIntensity());
 		this.cp = value;
 		
 		this.isSelected = isSelected;
@@ -144,7 +143,7 @@ class MyListCellRenderer extends JLabel implements ListCellRenderer<CompactPeak>
 //		FontMetrics fm = g2.getFontMetrics(this.textfont);
 		
 		String massS = String.valueOf(cp.getMass());
-		String intS = numberFormat.format(cp.getAbsoluteIntensity()/maxInt);
+		String intS = numberFormat.format(cp.getIntensity()/maxInt);
 		
 		if(isSelected){
 			g2.setColor(this.selectedForeground);

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
-import de.unijena.bioinf.myxo.structure.CompactPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
@@ -11,7 +11,7 @@ import java.util.TreeSet;
 
 public class MassSearchable implements Searchable<String, String>{
 
-	private HashMap<String,CompactPeak> peaks;
+	private HashMap<String,Peak> peaks;
 	
 	public MassSearchable(ExperimentContainer ec){
 		List<CompactSpectrum> ms1 = ec.getMs1Spectra();
@@ -23,9 +23,9 @@ public class MassSearchable implements Searchable<String, String>{
 //			System.out.println(spec);
 //			System.out.println(spec.getSize());
 			for(int i=0;i<spec.getSize();i++){
-//				System.out.println(spec.getMass(i)+" "+spec.getPeak(i));
+//				System.out.println(spec.getMass(i)+" "+spec.getPeakAt(i));
 //				System.out.println(String.valueOf(spec.getMass(i)));
-				peaks.put(String.valueOf(spec.getMass(i)),spec.getPeak(i));
+				peaks.put(String.valueOf(spec.getMass(i)),spec.getPeakAt(i));
 			}
 		}
 	}
