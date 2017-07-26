@@ -39,7 +39,7 @@ public abstract class ApplicationCore {
     static {
         //intit build properties
         final Properties BUILD_PROPERTIES = new Properties();
-        try (InputStream input = ApplicationCore.class.getResourceAsStream("/siriusBuild.properties")) {
+        try (InputStream input = ApplicationCore.class.getResourceAsStream("/build.properties")) {
             // load a properties file
             BUILD_PROPERTIES.load(new InputStreamReader(input, Charset.forName("UTF-8")));
             System.getProperties().putAll(BUILD_PROPERTIES);
