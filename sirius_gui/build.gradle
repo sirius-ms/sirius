@@ -27,8 +27,8 @@ dependencies {
     compile "org.openscience.cdk:cdk-ioformats:$cdk_version"
     compile "org.openscience.cdk:cdk-sdg:$cdk_version"
     compile "org.openscience.cdk:cdk-smarts:$cdk_version"
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
 
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
 
 
@@ -55,8 +55,6 @@ launch4j {
 
     guiCLIArgument = '--gui'
     outfile = "${project.appName}.exe"
-
-    jar = "lib/${project.tasks.jar.archiveName}"
 }
 
 /*################### Build distributions ################### */
@@ -74,7 +72,10 @@ distributions {
                     from("build/install/${project.name}/lib") {
                         exclude("$gurobiExclude")
                     }
-                    from("${project.glpkPath}/l${ar}/")
+                    from("${project.glpkPath}/l${ar}/"){
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
                     exclude('*.zip')
                 }
 
