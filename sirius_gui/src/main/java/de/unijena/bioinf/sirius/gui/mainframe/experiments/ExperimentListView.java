@@ -69,6 +69,9 @@ public class ExperimentListView extends JScrollPane {
 
             @Override
             public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    expPopMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
             }
 
             @Override
