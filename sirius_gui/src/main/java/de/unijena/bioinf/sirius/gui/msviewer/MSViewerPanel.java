@@ -944,7 +944,6 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		if(e.isPopupTrigger()) return;
 
 		if(dragged){
-
 			pressXPos = -1;
 
 			double startMass = this.getMassOfXPosition(dragStartPos);

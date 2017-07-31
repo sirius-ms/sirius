@@ -206,6 +206,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        if (e.isPopupTrigger()) popup(e);
     }
 
     @Override
