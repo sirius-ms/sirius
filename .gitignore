@@ -1,0 +1,10 @@
+**/*.iml
+**/.idea/**
+**/.svn/**
+**/*.class
+**/*.classpath
+**/gradle
+**/gradlew
+**/gradlew.bat
+manual/source/bibtex/
+manual/source/version.txt
