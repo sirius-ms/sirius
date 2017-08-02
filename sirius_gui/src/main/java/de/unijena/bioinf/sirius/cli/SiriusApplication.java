@@ -18,7 +18,7 @@ import java.util.Arrays;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusApplication extends ApplicationCore {
-    private SiriusApplication(){}
+//    private SiriusApplication(){}
     //-c 50 --guession '[M]+,[M+H]+,[M+Na]+,[M+K]+' --beautifytrees -w /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.workspace /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.mgf
     //--zodiac --spectral-hits /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/cleanHitsTable.csv -o /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/gibbsOutput.csv --iterations 200000 --burn-in 20000 --thresholdFilter 0.95 --distribution exponential --sirius /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.workspace
 //    private SiriusApplication(){}
@@ -45,7 +45,6 @@ public class SiriusApplication extends ApplicationCore {
             Zodiac zodiac = new Zodiac(options);
             zodiac.run();
         } else if (cli.options.isGUI()) {
-        if (cli.options.isGUI()) {
             if (ProxyManager.getProxyStrategy() == null) {
                 ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
             }
