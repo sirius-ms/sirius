@@ -64,11 +64,11 @@ public interface ZodiacOptions {
 
 
     @Option(
-            longName = {"localFilter"},
-            description = "",
+            longName = {"minLocalCandidates"},
+            description = "minimum number of candidates per compound which must have at least --minLocalConnections connections to other compounds",
             defaultValue = {"-1"}
     )
-    double getLocalFilter();
+    int getLocalFilter();
 
     @Option(
             longName = {"thresholdFilter"},

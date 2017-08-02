@@ -515,6 +515,7 @@ public class Zodiac {
                 }
                 if (matches){
                     candidate.setCorrect(true);
+                    System.out.println(id+" has library hit. correct MF is "+candidate.getFormula()+". Library hit is "+correctMF);
                 }
                 candidate.setInTrainingSet(true);
 
