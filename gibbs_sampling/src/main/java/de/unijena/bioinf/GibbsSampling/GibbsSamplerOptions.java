@@ -149,11 +149,11 @@ public interface GibbsSamplerOptions {
     boolean isMedian();
 
 
-    @Option(
-            longName = {"treescoring"},
-            description = ""
-    )
-    boolean useFTScoring();
+//    @Option(
+//            longName = {"treescoring"},
+//            description = ""
+//    )
+//    boolean useFTScoring();
 
 
 }

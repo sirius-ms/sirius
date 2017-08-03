@@ -15,8 +15,8 @@ import java.util.*;
  * Created by ge28quv on 11/05/17.
  */
 public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
-    protected MolecularFormula formula;
-    protected PrecursorIonType ionType;
+//    protected MolecularFormula formula;
+//    protected PrecursorIonType ionType;
 
     public static FragmentsCandidate newInstance(FTree tree, Ms2Experiment experiment){
 
@@ -27,13 +27,12 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
         FragmentsCandidate candidate = new FragmentsCandidate(fragmentsAndLosses, score, formula, ionType, experiment);
 
-        candidate.ionType = ionType;
-        candidate.formula = formula;
+//        candidate.ionType = ionType;
+//        candidate.formula = formula;
         candidate.addAnnotation(MolecularFormula.class, formula);
         candidate.addAnnotation(PrecursorIonType.class, ionType);
         return candidate;
     }
-
 
     public static List<FragmentsCandidate> createAllCandidateInstances(Collection<FTree> trees, Ms2Experiment experiment){
 
@@ -80,8 +79,8 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
             FragmentsCandidate candidate = new FragmentsCandidate(fragmentsAndLosses, score, formula, ionType, experiment);
 
-            candidate.ionType = ionType;
-            candidate.formula = formula;
+//            candidate.ionType = ionType;
+//            candidate.formula = formula;
             candidate.addAnnotation(MolecularFormula.class, formula);
             candidate.addAnnotation(PrecursorIonType.class, ionType);
 
@@ -176,7 +175,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
     }
 
 
-    private FragmentsCandidate(FragmentsAndLosses fragmentsAndLosses, double score, MolecularFormula formula, PrecursorIonType ionType, Ms2Experiment experiment) {
+    protected FragmentsCandidate(FragmentsAndLosses fragmentsAndLosses, double score, MolecularFormula formula, PrecursorIonType ionType, Ms2Experiment experiment) {
         super(fragmentsAndLosses, score, formula, ionType, experiment);
     }
 

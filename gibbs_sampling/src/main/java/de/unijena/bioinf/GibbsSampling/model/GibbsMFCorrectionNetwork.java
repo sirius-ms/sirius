@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
-    private static final double DEFAULT_CORRELATION_STEPSIZE = 100.0D;
+    private static final double DEFAULT_CORRELATION_STEPSIZE = 10.0D;
     protected Graph<C> graph;
     private static final boolean iniAssignMostLikely = true;
     private int burnInRounds;
