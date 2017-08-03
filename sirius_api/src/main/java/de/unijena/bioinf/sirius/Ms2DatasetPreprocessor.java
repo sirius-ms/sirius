@@ -27,8 +27,10 @@ import java.util.*;
  */
 public class Ms2DatasetPreprocessor {
 
-    private static String[] STANDARD_IONIZATIONS = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+"};
+    private static String[] STANDARD_IONIZATIONS = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+"};
     private static Deviation findMs1PeakDeviation = new Deviation(100, 0.1);
+
+    private int MIN_NUMBER_OF_PEAKS = 5;
 
     private IsolationWindow standardIsolationWindow;
     private Sirius sirius;
@@ -224,10 +226,12 @@ public class Ms2DatasetPreprocessor {
 
             int numberOfPeaks = 0;
             for (Peak peak : ms2Spec) {
-                if (peak.getIntensity()>2*datasetStatistics.getMedianMs2NoiseIntensity()) numberOfPeaks++;
+//                if (peak.getIntensity()>2*datasetStatistics.getMedianMs2NoiseIntensity()) numberOfPeaks++;
+                //todo what is a peak?
+                if (peak.getIntensity()>datasetStatistics.getMedianMs2NoiseIntensity()) numberOfPeaks++;
             }
 
-            if (numberOfPeaks<5) setSpectrumProperty(experiment, SpectrumProperty.FewPeaks);
+            if (numberOfPeaks<MIN_NUMBER_OF_PEAKS) setSpectrumProperty(experiment, SpectrumProperty.FewPeaks);
         }
 
         //estimate noise
@@ -283,7 +287,7 @@ public class Ms2DatasetPreprocessor {
             }
             Peak precursorPeak = ms1.getPeakAt(ms1PrecursorIdx);
             double precursorMz = precursorPeak.getMass();
-            double filteredIntensity = isolationWindow.getIntensity(precursorPeak.getIntensity(), precursorMz, precursorMz);
+            double filteredPrecursorIntensity = isolationWindow.getIntensity(precursorPeak.getIntensity(), precursorMz, precursorMz);
 
             double center = isolationWindow.getMassShift()+precursorPeak.getMass();
             double left = center-isolationWindow.getMaxWindowSize()/2;
@@ -297,7 +301,8 @@ public class Ms2DatasetPreprocessor {
             }else {
                 alphabet = mutableMs2Dataset.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet();
             }
-            Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation.multiply(2), 0.3, 0.7, 5, alphabet); //todo or add up isotope intensities
+            //todo rather remove too much?! chances that it's in fact an isotope are high
+            Spectrums.filterIsotpePeaks(ms1IsotopesRemoved, maxDeviation.multiply(2), 0.5, 1.2, 5, alphabet); //todo or add up isotope intensities
 
             Spectrum<Peak> massSorted = Spectrums.getMassOrderedSpectrum(ms1IsotopesRemoved);
             int precursorIdx = Spectrums.binarySearch(massSorted, precursorPeak.getMass());
@@ -332,7 +337,7 @@ public class Ms2DatasetPreprocessor {
 
 
             //todo best would be to look how much is fragmented in MS2. If nothing, it's not a problem
-            if (maxIntensity>=0.33*filteredIntensity || summedIntensity>=filteredIntensity){
+            if (maxIntensity>=0.33*filteredPrecursorIntensity || summedIntensity>=filteredPrecursorIntensity){
                 setSpectrumProperty(experiment, SpectrumProperty.Chimeric);
             }
         }
@@ -377,6 +382,7 @@ public class Ms2DatasetPreprocessor {
             }
 
         }
+        writer.close();
     }
 
     private void setSpectrumProperty(Ms2Experiment experiment, SpectrumProperty property){

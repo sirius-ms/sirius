@@ -194,6 +194,7 @@ public abstract class IsolationWindow {
             double maxMs1Intensity = Spectrums.getMaximalIntensity(spectrum1);
             double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
             double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
+            System.out.println("median noise is "+medianNoiseIntensity);
             int ms1Idx = monoMs1Idx;
             int ms2Idx;
             double ms1Mass;
@@ -253,6 +254,7 @@ public abstract class IsolationWindow {
         TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios = new TDoubleObjectHashMap<>();
 
         TDoubleObjectHashMap<TDoubleArrayList> posToMasses = new TDoubleObjectHashMap<>();
+        TDoubleObjectHashMap<TDoubleArrayList> posToAbsMasses = new TDoubleObjectHashMap<>();
         TDoubleDoubleHashMap posToMedianMz = new TDoubleDoubleHashMap(10, 0.75f, Double.NaN, Double.NaN);
 //        posToMedianMz.put(0, 0d);
 
@@ -268,6 +270,7 @@ public abstract class IsolationWindow {
                 System.out.println("current mono pos "+currentMonoPostion);
             }
 
+            if (currentMonoPostion!=0) continue;
 
             double normalizationPos = round(currentMonoPostion+normalizedPattern.getNormalizationRelativeMz());
             if (!posToMedianIntensity.containsKey(normalizationPos)){
@@ -335,14 +338,18 @@ public abstract class IsolationWindow {
                 final double currentPos = round(monoPos + 1d*i/charge);
                 TDoubleArrayList ratioList = posToIntensityRatios.get(currentPos);
                 TDoubleArrayList massList = posToMasses.get(currentPos);
+                TDoubleArrayList absMassList = posToAbsMasses.get(currentPos);
                 if (ratioList==null){
                     ratioList = new TDoubleArrayList();
                     posToIntensityRatios.put(currentPos, ratioList);
                     massList = new TDoubleArrayList();
                     posToMasses.put(currentPos, massList);
+                    absMassList = new TDoubleArrayList();
+                    posToAbsMasses.put(currentPos, absMassList);
                 }
                 ratioList.add(normalizedPattern.getFilterRatio(i));
                 massList.add(normalizedPattern.getMz(i));
+                absMassList.add(normalizedPattern.getAbsMz(i));
             }
         }
 
@@ -378,7 +385,7 @@ public abstract class IsolationWindow {
         }
 
 
-        return new IsotopeRatioInformation(posToMedianIntensity, posToIntensityRatios, posToMedianMz, posToMasses);
+        return new IsotopeRatioInformation(posToMedianIntensity, posToIntensityRatios, posToMedianMz, posToMasses, posToAbsMasses);
 
     }
 
@@ -519,9 +526,10 @@ public abstract class IsolationWindow {
 
     private boolean isSuitable(Peak ms1Peak, Peak ms2Peak, double maxMs1Intensity, double maxMs2Intensity, double medianNoiseMs2) {
         if (ms1Peak.getIntensity()<ms2Peak.getIntensity()) return false;
-        if (ms1Peak.getIntensity()/maxMs1Intensity<minRelIntensity) return false;
-        if (ms2Peak.getIntensity()/maxMs2Intensity<minRelIntensity) return false;
-        if (ms2Peak.getIntensity()<2*medianNoiseMs2) return false;
+        if (ms1Peak.getIntensity()/maxMs1Intensity<2*minRelIntensity) return false;
+        if (ms2Peak.getIntensity()/maxMs2Intensity<2*minRelIntensity) return false;
+        if (ms2Peak.getIntensity()<5*medianNoiseMs2) return false;
+        if (ms1Peak.getIntensity()<10*medianNoiseMs2) return false;
         return true;
     }
 
@@ -575,16 +583,19 @@ public abstract class IsolationWindow {
 
         for (double key : isotopeRatioInformation.getPosToIntensityRatios().keys()) {
             double[] ratios = isotopeRatioInformation.getPosToIntensityRatios().get(key).toArray();
-            for (double ratio : ratios) {
-                intensityRatios.add(new IntensityRatio(key, ratio));
+            double[] masses = isotopeRatioInformation.getPosToAbsMasses().get(key).toArray();
+            for (int i = 0; i < ratios.length; i++) {
+                double ratio = ratios[i];
+                double mass = masses[i];
+                intensityRatios.add(new IntensityRatio(mass, key, ratio));
             }
         }
 
         try(BufferedWriter writer = Files.newBufferedWriter(outpuPath, Charset.defaultCharset())){
-            writer.write("relMz\tintesityRatio");
+            writer.write("absMz\trelMz\tintesityRatio");
             for (IntensityRatio intensityRatio : intensityRatios) {
                 //todo use absolute intensities
-                writer.write("\n"+intensityRatio.getRelMz()+"\t"+intensityRatio.getIntensityRatio());
+                writer.write("\n"+intensityRatio.getAbsMz()+"\t"+intensityRatio.getRelMz()+"\t"+intensityRatio.getIntensityRatio());
             }
         }
     }
@@ -660,8 +671,11 @@ public abstract class IsolationWindow {
         }
 
         public double getMz(int pos) {
-//            return (ms2.getMzAt(pos)+ms1.getMzAt(pos))/2d-normalizationMz;
             return (ms2.getMzAt(pos)+ms1.getMzAt(pos))/2d-precursorMass;
+        }
+
+        public double getAbsMz(int pos) {
+            return (ms2.getMzAt(pos)+ms1.getMzAt(pos))/2d;
         }
 
         @Override
@@ -678,10 +692,12 @@ public abstract class IsolationWindow {
 
 
     protected class IntensityRatio implements Comparable<IntensityRatio> {
+        private double absMz;
         private double relMz;
         private double intensityRatio;
 
-        public IntensityRatio(double relMz, double intensityRatio) {
+        public IntensityRatio(double absMz, double relMz, double intensityRatio) {
+            this.absMz = absMz;
             this.relMz = relMz;
             this.intensityRatio = intensityRatio;
         }
@@ -689,6 +705,10 @@ public abstract class IsolationWindow {
         @Override
         public int compareTo(IntensityRatio o) {
             return Double.compare(relMz, o.relMz);
+        }
+
+        public double getAbsMz() {
+            return absMz;
         }
 
         public double getRelMz() {
@@ -729,12 +749,14 @@ public abstract class IsolationWindow {
 
         private TDoubleDoubleHashMap posToMedianMz;
         private TDoubleObjectHashMap<TDoubleArrayList> posToMasses;
+        private TDoubleObjectHashMap<TDoubleArrayList> posToAbsMasses;
 
-        public IsotopeRatioInformation(TDoubleDoubleHashMap posToMedianIntensity, TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios, TDoubleDoubleHashMap posToMedianMz, TDoubleObjectHashMap<TDoubleArrayList> posToMasses) {
+        public IsotopeRatioInformation(TDoubleDoubleHashMap posToMedianIntensity, TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios, TDoubleDoubleHashMap posToMedianMz, TDoubleObjectHashMap<TDoubleArrayList> posToMasses, TDoubleObjectHashMap<TDoubleArrayList> posToAbsMasses) {
             this.posToMedianIntensity = posToMedianIntensity;
             this.posToIntensityRatios = posToIntensityRatios;
             this.posToMedianMz = posToMedianMz;
             this.posToMasses = posToMasses;
+            this.posToAbsMasses = posToAbsMasses;
         }
 
         public TDoubleDoubleHashMap getPosToMedianIntensity() {
@@ -751,6 +773,10 @@ public abstract class IsolationWindow {
 
         public TDoubleObjectHashMap<TDoubleArrayList> getPosToMasses() {
             return posToMasses;
+        }
+
+        public TDoubleObjectHashMap<TDoubleArrayList> getPosToAbsMasses() {
+            return posToAbsMasses;
         }
     }
 
