@@ -72,6 +72,14 @@ public class FingerIdData extends AbstractBean {
         firePropertyChange("topScore",old,this.topScore);
     }
 
+    public Compound[] getCompounds() {
+        return compounds;
+    }
+
+    public double[] getScores() {
+        return scores;
+    }
+
     /*public double getMinLogPFilter() {
         return minLogPFilter;
     }
