@@ -60,13 +60,13 @@ public class SimpleIsolationWindow extends IsolationWindow {
 
     @Override
     protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation) {
-        double[] positions = isotopeRatioInformation.getPosToMedianIntensity().keys();
+        double[] positions = isotopeRatioInformation.getPositionsWithMedianIntensity();
         Arrays.sort(positions);
         relMz = new double[positions.length];
         filterRatio = new double[positions.length];
         for (int i = 0; i < positions.length; i++) {
-            filterRatio[i] = isotopeRatioInformation.getPosToMedianIntensity().get(positions[i]);
-            relMz[i] = isotopeRatioInformation.getPosToMedianMz().get(positions[i]);
+            filterRatio[i] = isotopeRatioInformation.getMedianIntensityRatio(positions[i]);
+            relMz[i] = isotopeRatioInformation.getMedianRelMz(positions[i]);
         }
     }
 

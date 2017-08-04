@@ -130,10 +130,14 @@ public abstract class IsolationWindow {
 
 
 
+
+
     public IsotopeRatioInformation extractIntensityRatios(Ms2Dataset ms2Dataset) {
         List<NormalizedPattern> normalizedPatterns = new ArrayList<>();
         MutableMeasurementProfile mutableMeasurementProfile = new MutableMeasurementProfile(ms2Dataset.getMeasurementProfile());
 //        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(100, 0.01));
+//        mutableMeasurementProfile.setAllowedMassDeviation(new Deviation(5));
+
 
         int expCounter = 0;
         int expCounter2 = 0;
@@ -194,7 +198,6 @@ public abstract class IsolationWindow {
             double maxMs1Intensity = Spectrums.getMaximalIntensity(spectrum1);
             double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
             double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
-            System.out.println("median noise is "+medianNoiseIntensity);
             int ms1Idx = monoMs1Idx;
             int ms2Idx;
             double ms1Mass;
@@ -249,37 +252,35 @@ public abstract class IsolationWindow {
 
         Collections.sort(normalizedPatterns);
 
-        TDoubleDoubleHashMap posToMedianIntensity = new TDoubleDoubleHashMap(10, 0.75f, Double.NaN, Double.NaN);
-        posToMedianIntensity.put(0, 1d);
-        TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios = new TDoubleObjectHashMap<>();
+        TDoubleObjectHashMap<FilterPosition> posToFilter = new TDoubleObjectHashMap<>();
+        FilterPosition filterPosition0 = new FilterPosition();
+        posToFilter.put(0, filterPosition0);
+        filterPosition0.setMedianIntensityRatio(1d);
 
-        TDoubleObjectHashMap<TDoubleArrayList> posToMasses = new TDoubleObjectHashMap<>();
-        TDoubleObjectHashMap<TDoubleArrayList> posToAbsMasses = new TDoubleObjectHashMap<>();
-        TDoubleDoubleHashMap posToMedianMz = new TDoubleDoubleHashMap(10, 0.75f, Double.NaN, Double.NaN);
-//        posToMedianMz.put(0, 0d);
 
         double currentMonoPostion = 0d;
-        double currentMedian = posToMedianIntensity.get(0);
+        double currentMedian = posToFilter.get(0).getMedianIntensityRatio();
         for (NormalizedPattern normalizedPattern : normalizedPatterns) {
             final double monoPos = normalizedPattern.monoPosition;
             final int charge = normalizedPattern.getAbsCharge();
 
             if (monoPos!=currentMonoPostion) {
-                updateNeigboursMedian(posToMedianIntensity, posToIntensityRatios, currentMonoPostion);
+                updateNeigboursMedian(posToFilter, currentMonoPostion);
                 currentMonoPostion = monoPos;
                 System.out.println("current mono pos "+currentMonoPostion);
             }
 
-            if (currentMonoPostion!=0) continue;
+            System.out.println("test!!");
+            if (currentMonoPostion!=0) continue;//todo just to test!!!!!!!!!!!
 
             double normalizationPos = round(currentMonoPostion+normalizedPattern.getNormalizationRelativeMz());
-            if (!posToMedianIntensity.containsKey(normalizationPos)){
+            if (!posToFilter.containsKey(normalizationPos) || !posToFilter.get(normalizationPos).hasMedianIntensityRatio()){
                 boolean fixed = false;
-                double median = estimateMedianIntensity(posToIntensityRatios, normalizationPos, posToMedianIntensity); //should just happen for positive side
+                double median = estimateMedianIntensity(posToFilter, normalizationPos); //should just happen for positive side
                 if (!Double.isNaN(median)) {
                     //todo what about mass
                     //all good
-                    posToMedianIntensity.put(normalizationPos, median);
+                    posToFilter.get(normalizationPos).setMedianIntensityRatio(median);
                     currentMedian = median;
                     fixed = true;
                 } else {
@@ -289,12 +290,15 @@ public abstract class IsolationWindow {
                             ++relNormalizationPos;
                             double relMz = round(currentMonoPostion+relNormalizationPos/normalizedPattern.getAbsCharge());
                             median = Double.NaN;
-                            if (posToMedianIntensity.containsKey(relMz)){
-                                median = posToMedianIntensity.get(relMz);
+                            if (posToFilter.containsKey(relMz) && posToFilter.get(relMz).hasMedianIntensityRatio()){
+                                median = posToFilter.get(relMz).getMedianIntensityRatio();
                             }
+
                             if (Double.isNaN(median)){
-                                median = estimateMedianIntensity(posToIntensityRatios, relMz, posToMedianIntensity);
-                                if (!Double.isNaN(median)) posToMedianIntensity.put(relMz, median);
+                                median = estimateMedianIntensity(posToFilter, relMz);
+                                if (!Double.isNaN(median)){
+                                    posToFilter.get(relMz).setMedianIntensityRatio(median);
+                                }
                             }
 
                             if (!Double.isNaN(median)){
@@ -311,16 +315,20 @@ public abstract class IsolationWindow {
                 if (fixed) System.out.println("fixed median estimation for "+currentMonoPostion);
                 else {
                     //todo again change normalization Pos??
-                    double[] keys = posToMedianIntensity.keys();
-                    if (keys.length<2){
+                    //todo remove these things?
+                    TDoubleArrayList keys = new TDoubleArrayList();
+                    for (double k : posToFilter.keys()) {
+                        if (posToFilter.get(k).hasMedianIntensityRatio()) keys.add(k);
+                    }
+                    if (keys.size()<2){
                         System.out.println("skip "+currentMonoPostion);
                         continue;
                     }
-                    Arrays.sort(keys);
-                    double[] values = new double[keys.length];
-                    for (int i = 0; i < keys.length; i++) values[i] = posToMedianIntensity.get(keys[i]);
-                    median = regression(keys, values, normalizationPos);
-                    posToMedianIntensity.put(normalizationPos, median);
+                    keys.sort();
+                    double[] values = new double[keys.size()];
+                    for (int i = 0; i < keys.size(); i++) values[i] = posToFilter.get(keys.get(i)).getMedianIntensityRatio();
+                    median = regression(keys.toArray(), values, normalizationPos);
+                    posToFilter.get(normalizationPos).setMedianIntensityRatio(median);
                     System.out.println("guess a good median for "+normalizationPos);
                     currentMedian = median;
                 }
@@ -328,7 +336,8 @@ public abstract class IsolationWindow {
 //                ... change herer...
 //                continue;
             } else {
-                currentMedian = posToMedianIntensity.get(normalizationPos);
+
+                currentMedian = posToFilter.get(normalizationPos).getMedianIntensityRatio();
             }
 
             normalizedPattern.setNormalizationConstant(currentMedian);
@@ -336,57 +345,32 @@ public abstract class IsolationWindow {
 
             for (int i = 0; i < normalizedPattern.size(); i++) {
                 final double currentPos = round(monoPos + 1d*i/charge);
-                TDoubleArrayList ratioList = posToIntensityRatios.get(currentPos);
-                TDoubleArrayList massList = posToMasses.get(currentPos);
-                TDoubleArrayList absMassList = posToAbsMasses.get(currentPos);
-                if (ratioList==null){
-                    ratioList = new TDoubleArrayList();
-                    posToIntensityRatios.put(currentPos, ratioList);
-                    massList = new TDoubleArrayList();
-                    posToMasses.put(currentPos, massList);
-                    absMassList = new TDoubleArrayList();
-                    posToAbsMasses.put(currentPos, absMassList);
+                FilterPosition filterPosition = posToFilter.get(currentPos);
+                if (filterPosition==null){
+                    filterPosition = new FilterPosition();
+                    posToFilter.put(currentPos, filterPosition);
                 }
-                ratioList.add(normalizedPattern.getFilterRatio(i));
-                massList.add(normalizedPattern.getMz(i));
-                absMassList.add(normalizedPattern.getAbsMz(i));
+                filterPosition.addPeak(normalizedPattern, i);
+
             }
         }
 
         //forgot something?
-        for (double key : posToIntensityRatios.keys()) {
-            if (!posToMedianIntensity.containsKey(key)){
-                updateMedian(posToMedianIntensity, posToIntensityRatios, key, true);
-//                if (!Double.isNaN(posToMedianIntensity.get(key))){
-//                    posToMedianIntensity.remove(key);
-//                }
-//                updateMedian(posToMedianMz, posToMasses, key);
-//                if (Double.isNaN(posToMedianIntensity.get(key)) || Double.isNaN(posToMedianMz.get(key))){
-//                    posToMedianMz.remove(key);
-//                    posToMedianIntensity.remove(key);
-//                }
-            }
+        for (double pos : posToFilter.keys()) {
+            FilterPosition filterPosition = posToFilter.get(pos);
+            if (!filterPosition.hasMedianIntensityRatio()) updateMedian(posToFilter, pos, true);
+            if (!filterPosition.hasMedianRelMz()) updateMedian(posToFilter, pos, false);
+            //no data?
+            if (!filterPosition.hasMedianRelMz()) filterPosition.setMedianRelMz(pos);
         }
 
-        //update the masses
-        for (double key : posToMedianIntensity.keys()) {
-            if (!posToMedianMz.containsKey(key)){
-                updateMedian(posToMedianMz, posToMasses, key, false);
-                //no data?
-                if (!posToMedianMz.containsKey(key)){
-                    posToMedianMz.put(key, key);
-                }
-            }
-        }
 
         System.out.println("rel mz to median filter ratio");
-        for (double key : posToMedianIntensity.keys()) {
-            System.out.println(key+": "+posToMedianIntensity.get(key)+"\tmz: "+posToMedianMz.get(key));
+        for (double key : posToFilter.keys()) {
+            System.out.println(key+": "+posToFilter.get(key).getMedianIntensityRatio()+"\tmz: "+posToFilter.get(key).getMedianRelMz());
         }
 
-
-        return new IsotopeRatioInformation(posToMedianIntensity, posToIntensityRatios, posToMedianMz, posToMasses, posToAbsMasses);
-
+        return new IsotopeRatioInformation(posToFilter);
     }
 
     private double regression(double[] x, double[] y, double newX) {
@@ -412,92 +396,111 @@ public abstract class IsolationWindow {
         return diffY/diff1*diff2+closestY;
     }
 
-    private void updateNeigboursMedian(TDoubleDoubleHashMap posToMedianIntensity, TDoubleObjectHashMap<TDoubleArrayList> posToIntRatios , double currentMonoPostion){
+    private void updateNeigboursMedian(TDoubleObjectHashMap<FilterPosition> posToFilterPosition, double currentMonoPostion){
         //update neighbor medians to left (negative) or right (positive) because we won't get more information
         if (currentMonoPostion>=0){
-            for (double key : posToIntRatios.keys()) {
+            for (double key : posToFilterPosition.keys()) {
                 if (key>currentMonoPostion && key<=currentMonoPostion+1){
-                    final double median = estimateMedianIntensity(posToIntRatios, key, posToMedianIntensity);
+                    final double median = estimateMedianIntensity(posToFilterPosition, key);
                     if (!Double.isNaN(median)){
-                        posToMedianIntensity.put(key,median);
+                        posToFilterPosition.get(key).setMedianIntensityRatio(median);
                     }
-//                    final double medianMz = estimateMedian(posToMasses, key);
-//                    if (!Double.isNaN(median) && !Double.isNaN(medianMz)){
-//                        posToMedianIntensity.put(key,median);
-////                        posToMedianMz.put(key,medianMz);
-//                    }
                 }
             }
         } else {
-            for (double key : posToIntRatios.keys()) {
+            for (double key : posToFilterPosition.keys()) {
                 if (key<currentMonoPostion && key>=currentMonoPostion-1){
-                    final double median = estimateMedianIntensity(posToIntRatios, key, posToMedianIntensity);
+                    final double median = estimateMedianIntensity(posToFilterPosition, key);
                     if (!Double.isNaN(median)){
-                        posToMedianIntensity.put(key,median);
+                        posToFilterPosition.get(key).setMedianIntensityRatio(median);
                     }
-//                    final double medianMz = estimateMedian(posToMasses, key);
-//                    if (!Double.isNaN(median) && !Double.isNaN(medianMz)){
-//                        posToMedianIntensity.put(key,median);
-//                        posToMedianMz.put(key,medianMz);
-//                    }
                 }
             }
         }
     }
 
-    private void updateMedian(TDoubleDoubleHashMap posToMedian, TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double pos, boolean isIntensity){
-        final double median = isIntensity ? estimateMedianIntensity(posToRatios, pos, posToMedian) : estimateMedian(posToRatios, pos);
+    private void updateMedian(TDoubleObjectHashMap<FilterPosition> posToFilter, double pos, boolean isIntensity){
+        double median = isIntensity ? estimateMedianIntensity(posToFilter, pos) : estimateMedian(posToFilter.get(pos).getRelMzs());
         if (!Double.isNaN(median)) {
             //enough examples to estimate
-            posToMedian.put(pos, median);
+            if (isIntensity){
+                posToFilter.get(pos).setMedianIntensityRatio(median);
+            } else {
+                posToFilter.get(pos).setMedianRelMz(median);
+            }
+//            posToMedian.put(pos, median);
         } else {
             double left = Double.NEGATIVE_INFINITY;
             double right = Double.POSITIVE_INFINITY;
-            for (double k : posToRatios.keys()) {
+            for (double k : posToFilter.keys()) {
                 if (k>pos && right>k) right = k;
                 else if (k<pos && left<k) left = k;
             }
             if (!Double.isInfinite(left) && !Double.isInfinite(right)){
-                double leftMedian = posToMedian.get(left);
-                double rightMedian = posToMedian.get(right);
+                double leftMedian, rightMedian;
+                if (isIntensity){
+                    leftMedian = posToFilter.get(left).getMedianIntensityRatio();
+                    rightMedian = posToFilter.get(right).getMedianIntensityRatio();
+                } else {
+                    leftMedian = posToFilter.get(left).getMedianRelMz();
+                    rightMedian = posToFilter.get(right).getMedianRelMz();
+                }
 
-                if (Double.isNaN(leftMedian)) leftMedian = isIntensity ? estimateMedianIntensity(posToRatios, pos, posToMedian) : estimateMedian(posToRatios, left);
-                if (Double.isNaN(rightMedian)) rightMedian = isIntensity ? estimateMedianIntensity(posToRatios, pos, posToMedian) : estimateMedian(posToRatios, right);
+                if (Double.isNaN(leftMedian)) leftMedian = isIntensity ? estimateMedianIntensity(posToFilter, left) : estimateMedian(posToFilter.get(left).getRelMzs());
+                if (Double.isNaN(rightMedian)) rightMedian = isIntensity ? estimateMedianIntensity(posToFilter, right) : estimateMedian(posToFilter.get(right).getRelMzs());
 
                 if (Double.isNaN(leftMedian) || Double.isNaN(rightMedian)) return;
 
                 final double dist = right-left;
-                posToMedian.put(pos, leftMedian*(right-pos)/dist+rightMedian*(pos-left)/dist);
+                median = leftMedian*(right-pos)/dist+rightMedian*(pos-left)/dist;
+                if (isIntensity){
+                    posToFilter.get(pos).setMedianIntensityRatio(median);
+                } else {
+                    posToFilter.get(pos).setMedianRelMz(median);
+                }
             }
         }
     }
 
-    private double estimateMedianIntensity(TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double key, TDoubleDoubleHashMap posToMedian){
-        if (!posToRatios.containsKey(key)) return Double.NaN;
-        final double median = estimateMedian(posToRatios, key);
-        if (posToRatios.get(key).size()>=10) return median;
-        if (posToRatios.get(key).size()<=3) return Double.NaN;
+    private double estimateMedianIntensity(TDoubleObjectHashMap<FilterPosition> posToFilterPosition, double key){
+        if (!posToFilterPosition.containsKey(key)) return Double.NaN;
+        FilterPosition filterPosition = posToFilterPosition.get(key);
+        final double median = filterPosition.estimateMedianIntensityRatio(filterPosition);
+        if (posToFilterPosition.get(key).exampleSize()>=10) return median;
+        if (posToFilterPosition.get(key).exampleSize()<=3) return Double.NaN;
         //don't believe to much deviation if sample is small
         double closestKey = Double.NaN;
-        for (double k : posToMedian.keys()) {
+        for (double k : posToFilterPosition.keys()) {
             if (Double.isNaN(closestKey) || Math.abs(key-k)<Math.abs(key-closestKey)){
                 closestKey = k;
             } else if (Math.abs(key-k)==Math.abs(key-closestKey) && Math.abs(k)<Math.abs(closestKey)){
                 closestKey = k;
             }
         }
-        double ratio = median/posToMedian.get(closestKey);
+        double ratio = median/posToFilterPosition.get(closestKey).getMedianIntensityRatio();
         if (ratio>1.5 || ratio<0.5) return Double.NaN;
         return median;
     }
 
+
     private double estimateMedian(TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double key){
-        final TDoubleArrayList ratioList = posToRatios.get(key);
+        TDoubleArrayList ratioList = posToRatios.get(key);
         if (ratioList==null || ratioList.size()<1) return Double.NaN; //not enough examples to estimate
+        ratioList = new TDoubleArrayList(ratioList);
         ratioList.sort();
         final double median = ratioList.get(ratioList.size()/2);
         return median;
     }
+
+
+    private double estimateMedian(TDoubleArrayList values){
+        if (values==null || values.size()<1) return Double.NaN; //not enough examples to estimate
+        values = new TDoubleArrayList(values);
+        values.sort();
+        final double median = values.get(values.size()/2);
+        return median;
+    }
+
 
 
     private double round(double d){
@@ -525,11 +528,11 @@ public abstract class IsolationWindow {
     }
 
     private boolean isSuitable(Peak ms1Peak, Peak ms2Peak, double maxMs1Intensity, double maxMs2Intensity, double medianNoiseMs2) {
-        if (ms1Peak.getIntensity()<ms2Peak.getIntensity()) return false;
+//        if (ms1Peak.getIntensity()<ms2Peak.getIntensity()) return false;
         if (ms1Peak.getIntensity()/maxMs1Intensity<2*minRelIntensity) return false;
         if (ms2Peak.getIntensity()/maxMs2Intensity<2*minRelIntensity) return false;
         if (ms2Peak.getIntensity()<5*medianNoiseMs2) return false;
-        if (ms1Peak.getIntensity()<10*medianNoiseMs2) return false;
+//        if (ms1Peak.getIntensity()<10*medianNoiseMs2) return false;
         return true;
     }
 
@@ -555,8 +558,8 @@ public abstract class IsolationWindow {
         return bestSpec;
     }
 
-    private final static double maxIntensityRatioAt0 = 0.2;
-    private final static double maxIntensityRatioAt1000 = 0.55;
+    private final static double maxIntensityRatioAt0 = 0.2; //0.3; //0.2;
+    private final static double maxIntensityRatioAt1000 = 0.55; //0.8; //0.55;
     protected void filterUnlikelyIsoPeaks(SimpleMutableSpectrum s){
         double monoInt = s.getIntensityAt(0);
         int idx = 0;
@@ -571,31 +574,32 @@ public abstract class IsolationWindow {
         }
     }
 
+    final static boolean mergeIsotopePeaks = false;
     public ChargedSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
-        Spectrum<Peak> spectrum = Spectrums.extractIsotopePattern(ms1Spec, profile, targetMz, absCharge);
+        Spectrum<Peak> spectrum = Spectrums.extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, mergeIsotopePeaks);
         if (spectrum==null) return null;
         return new ChargedSpectrum(spectrum, absCharge);
     }
+
 
     public void writeIntensityRatiosToCsv(Ms2Dataset ms2Dataset, Path outpuPath) throws IOException {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
         List<IntensityRatio> intensityRatios = new ArrayList<>();
 
-        for (double key : isotopeRatioInformation.getPosToIntensityRatios().keys()) {
-            double[] ratios = isotopeRatioInformation.getPosToIntensityRatios().get(key).toArray();
-            double[] masses = isotopeRatioInformation.getPosToAbsMasses().get(key).toArray();
-            for (int i = 0; i < ratios.length; i++) {
-                double ratio = ratios[i];
-                double mass = masses[i];
-                intensityRatios.add(new IntensityRatio(mass, key, ratio));
-            }
-        }
-
         try(BufferedWriter writer = Files.newBufferedWriter(outpuPath, Charset.defaultCharset())){
-            writer.write("absMz\trelMz\tintesityRatio");
-            for (IntensityRatio intensityRatio : intensityRatios) {
-                //todo use absolute intensities
-                writer.write("\n"+intensityRatio.getAbsMz()+"\t"+intensityRatio.getRelMz()+"\t"+intensityRatio.getIntensityRatio());
+            writer.write("absMz\trelMz\tintesityRatio\tms1Int\tms2Int");
+
+
+            for (double pos : isotopeRatioInformation.getPositions()) {
+                double[] ratios = isotopeRatioInformation.getIntensityRatios(pos);
+                double[] absMs1Int = isotopeRatioInformation.getMS1Intensity(pos);
+                double[] absMs2Int = isotopeRatioInformation.getMS2Intensity(pos);
+                double[] masses = isotopeRatioInformation.getAbsMzs(pos);
+                for (int i = 0; i < ratios.length; i++) {
+                    double ratio = ratios[i];
+                    double mass = masses[i];
+                    writer.write("\n"+mass+"\t"+pos+"\t"+ratio+"\t"+absMs1Int[i]+"\t"+absMs2Int[i]);
+                }
             }
         }
     }
@@ -744,39 +748,181 @@ public abstract class IsolationWindow {
     }
 
     protected class IsotopeRatioInformation {
-        private TDoubleDoubleHashMap posToMedianIntensity;
-        private TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios;
+        TDoubleObjectHashMap<FilterPosition> posToFilter;
 
-        private TDoubleDoubleHashMap posToMedianMz;
-        private TDoubleObjectHashMap<TDoubleArrayList> posToMasses;
-        private TDoubleObjectHashMap<TDoubleArrayList> posToAbsMasses;
-
-        public IsotopeRatioInformation(TDoubleDoubleHashMap posToMedianIntensity, TDoubleObjectHashMap<TDoubleArrayList> posToIntensityRatios, TDoubleDoubleHashMap posToMedianMz, TDoubleObjectHashMap<TDoubleArrayList> posToMasses, TDoubleObjectHashMap<TDoubleArrayList> posToAbsMasses) {
-            this.posToMedianIntensity = posToMedianIntensity;
-            this.posToIntensityRatios = posToIntensityRatios;
-            this.posToMedianMz = posToMedianMz;
-            this.posToMasses = posToMasses;
-            this.posToAbsMasses = posToAbsMasses;
+        public IsotopeRatioInformation(TDoubleObjectHashMap<FilterPosition> posToFilter) {
+            this.posToFilter = posToFilter;
         }
 
-        public TDoubleDoubleHashMap getPosToMedianIntensity() {
-            return posToMedianIntensity;
+        public double[] getPositions(){
+            return posToFilter.keys();
         }
 
-        public TDoubleObjectHashMap<TDoubleArrayList> getPosToIntensityRatios() {
-            return posToIntensityRatios;
+        public double[] getPositionsWithMedianIntensity(){
+            TDoubleArrayList positions = new TDoubleArrayList();
+            for (double k : posToFilter.keys()) {
+                if (posToFilter.get(k).hasMedianIntensityRatio()) positions.add(k);
+            }
+            return positions.toArray();
         }
 
-        public TDoubleDoubleHashMap getPosToMedianMz() {
-            return posToMedianMz;
+        public double getMedianIntensityRatio(double pos){
+            return posToFilter.get(pos).getMedianIntensityRatio();
         }
 
-        public TDoubleObjectHashMap<TDoubleArrayList> getPosToMasses() {
-            return posToMasses;
+        public double getMedianRelMz(double pos){
+            return posToFilter.get(pos).getMedianRelMz();
         }
 
-        public TDoubleObjectHashMap<TDoubleArrayList> getPosToAbsMasses() {
-            return posToAbsMasses;
+        public double[] getIntensityRatios(double pos){
+            return posToFilter.get(pos).getIntensityRatios().toArray();
+        }
+
+        public double[] getAbsMzs(double pos){
+            return posToFilter.get(pos).getAbsMzs().toArray();
+        }
+
+        public double[] getRelMzs(double pos){
+            return posToFilter.get(pos).getRelMzs().toArray();
+        }
+
+        public double[] getMS1Intensity(double pos){
+            return posToFilter.get(pos).getMS1Intensity().toArray();
+        }
+
+        public double[] getMS2Intensity(double pos){
+            return posToFilter.get(pos).getMS2Intensity().toArray();
+        }
+
+    }
+
+    protected class FilterPosition {
+        double medianRelMz;
+        double medianIntensityRatio;
+
+        List<PeakPair> peakPairs;
+
+        public FilterPosition() {
+            peakPairs = new ArrayList<>();
+            medianRelMz = Double.NaN;
+            medianIntensityRatio = Double.NaN;
+        }
+
+        public void setMedianRelMz(double medianRelMz) {
+            this.medianRelMz = medianRelMz;
+        }
+
+        public void setMedianIntensityRatio(double medianIntensityRatio) {
+            this.medianIntensityRatio = medianIntensityRatio;
+        }
+
+        public double getMedianRelMz() {
+            return medianRelMz;
+        }
+
+        public double getMedianIntensityRatio() {
+            return medianIntensityRatio;
+        }
+
+        public int exampleSize(){
+            return peakPairs.size();
+        }
+
+        private double estimateMedianIntensityRatio(FilterPosition filterPosition){
+            final TDoubleArrayList ratioList = getIntensityRatios();
+            if (ratioList.size()<1) return Double.NaN; //not enough examples to estimate
+            ratioList.sort();
+            final double median = ratioList.get(ratioList.size()/2);
+            return median;
+        }
+
+        private double estimateMedianIntensityRatio(){
+            double median = estimateMedianIntensityRatio(this);
+            medianIntensityRatio = median;
+            return median;
+        }
+
+        private boolean hasMedianIntensityRatio(){
+            return !Double.isNaN(medianIntensityRatio);
+        }
+
+        private boolean hasMedianRelMz(){
+            return !Double.isNaN(medianRelMz);
+        }
+
+        private void addPeak(NormalizedPattern pattern, int pos){
+            peakPairs.add(new PeakPair(pattern.precursorMass, pattern.ms1.getMzAt(pos), pattern.ms1.getIntensityAt(pos), pattern.ms2.getMzAt(pos), pattern.ms2.getIntensityAt(pos), pattern.getFilterRatio(pos)));
+        }
+
+        private TDoubleArrayList getIntensityRatios(){
+            final TDoubleArrayList list = new TDoubleArrayList(exampleSize());
+            for (PeakPair peakPair : peakPairs) {
+                list.add(peakPair.getIntensityRatio());
+            }
+            return list;
+        }
+
+        private TDoubleArrayList getRelMzs(){
+            final TDoubleArrayList list = new TDoubleArrayList(exampleSize());
+            for (PeakPair peakPair : peakPairs) {
+                list.add(peakPair.getRelMz());
+            }
+            return list;
+        }
+
+        private TDoubleArrayList getAbsMzs(){
+            final TDoubleArrayList list = new TDoubleArrayList(exampleSize());
+            for (PeakPair peakPair : peakPairs) {
+                list.add(peakPair.getAbsMz());
+            }
+            return list;
+        }
+
+        private TDoubleArrayList getMS1Intensity(){
+            final TDoubleArrayList list = new TDoubleArrayList(exampleSize());
+            for (PeakPair peakPair : peakPairs) {
+                list.add(peakPair.ms1Intensity);
+            }
+            return list;
+        }
+
+        private TDoubleArrayList getMS2Intensity(){
+            final TDoubleArrayList list = new TDoubleArrayList(exampleSize());
+            for (PeakPair peakPair : peakPairs) {
+                list.add(peakPair.ms2Intensity);
+            }
+            return list;
+        }
+    }
+
+    protected class PeakPair {
+        double ms1Mz;
+        double ms1Intensity;
+        double ms2Mz;
+        double ms2Intensity;
+        double focusedMass;
+
+        double intensityRatio;
+
+        public PeakPair(double focusedMass, double ms1Mz, double ms1Intensity, double ms2Mz, double ms2Intensity, double intensityRatio) {
+            this.focusedMass = focusedMass;
+            this.ms1Mz = ms1Mz;
+            this.ms1Intensity = ms1Intensity;
+            this.ms2Mz = ms2Mz;
+            this.ms2Intensity = ms2Intensity;
+            this.intensityRatio = intensityRatio;
+        }
+
+        public double getIntensityRatio() {
+            return intensityRatio;
+        }
+
+        public double getRelMz(){
+            return (ms2Mz+ms1Mz)/2-focusedMass;
+        }
+
+        public double getAbsMz(){
+            return (ms2Mz+ms1Mz)/2;
         }
     }
 
