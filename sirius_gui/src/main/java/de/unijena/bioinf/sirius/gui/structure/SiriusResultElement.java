@@ -1,11 +1,16 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
 import com.google.common.base.Function;
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
+import de.unijena.bioinf.sirius.gui.fingerid.Compound;
 import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
 import org.jdesktop.beans.AbstractBean;
 
@@ -47,6 +52,20 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
 
     public void setFingerIdData(FingerIdData fingerIdData) {
         this.fingerIdData = fingerIdData;
+        List<Scored<FingerprintCandidate>> candidates = getCandidates(fingerIdData);
+        resultElement.setAnnotation(FingerIdResult.class, new FingerIdResult(candidates, 0d, fingerIdData.getPlatts()));
+    }
+
+    private List<Scored<FingerprintCandidate>> getCandidates(FingerIdData fingerIdData){
+        //todo again duplicate data!
+        final Compound[] compounds = fingerIdData.getCompounds();
+        final double[] scores = fingerIdData.getScores();
+        List<Scored<FingerprintCandidate>> candidates = new ArrayList<>(compounds.length);
+        for (int i = 0; i < compounds.length; i++) {
+            final FingerprintCandidate candidate = compounds[i].asFingerprintCandidate();
+            candidates.add(new Scored<>(candidate, scores[i]));
+        }
+        return candidates;
     }
 
     public int getRank() {
