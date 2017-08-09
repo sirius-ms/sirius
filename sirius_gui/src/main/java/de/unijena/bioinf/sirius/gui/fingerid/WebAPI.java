@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
+import de.unijena.bioinf.fingerid.utils.PROPERTIES;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
@@ -71,14 +72,15 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
+
+    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(System.getProperty("de.unijena.bioinf.sirius.version"));
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
-    public static final String FINGERID_WEB_API = "bio.informatik.uni-jena.de/csi-fingerid";
-    public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
+    public static final String FINGERID_WEB_API = PROPERTIES.fingeridWebHost();
+//    public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
 
     public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
     public static PrecursorIonType[] negativeIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(-1), PrecursorIonType.class);
 
-    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(System.getProperty("de.unijena.bioinf.sirius.version"));
 
     public static WebAPI newInstance() {
         WebAPI i = new WebAPI();
@@ -155,15 +157,15 @@ public class WebAPI implements Closeable {
     }
 
     public static URIBuilder getFingerIdURI(String path) {
-        if (path== null)
+        if (path == null)
             path = "";
         URIBuilder b;
         if (ProxyManager.DEBUG) {
             b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
             b = b.setPort(8080).setPath("/frontend" + path);
         } else {
-            b = new URIBuilder().setScheme(ProxyManager.HTTPS_SCHEME).setHost(FINGERID_WEB_API);
-            b.setPath(path);
+            b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost(FINGERID_WEB_API); //todo back to https when we have a key
+            b = b.setPort(8080).setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path); //todo back to 443 later
         }
         return b;
     }
