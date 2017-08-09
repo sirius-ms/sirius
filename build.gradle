@@ -7,7 +7,7 @@ dependencies {
     compile project(':chemical_db')
 
 	//internal
-	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$sirius_version"
+	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
 
 	// external
 	compile group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
