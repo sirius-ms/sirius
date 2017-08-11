@@ -1,7 +1,6 @@
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.GibbsSampling.model.FragmentWithIndex;
-import de.unijena.bioinf.GibbsSampling.model.ScoredFragment;
 
 public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAndLossScorer{
 
