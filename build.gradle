@@ -111,6 +111,12 @@ allprojects {
     }
 }
 
+subprojects {
+    sourceSets.main.resources {
+        srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
+    }
+}
+
 task downloadGLPK(type: Copy) {
     def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
