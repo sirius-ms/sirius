@@ -53,6 +53,22 @@ public class CompoundQuality {
         return experiment.getAnnotation(CompoundQuality.class, new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
     }
 
+    public static boolean hasProperty(Ms2Experiment experiment, SpectrumProperty property) {
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+        if (quality==null) return false;
+        else return quality.hasProperty(property);
+    }
+
+    public static void setProperty(Ms2Experiment experiment, SpectrumProperty property){
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+        if (quality==null){
+            quality = new CompoundQuality(property);
+            experiment.setAnnotation(CompoundQuality.class, quality);
+        } else {
+            quality.addProperty(property);
+        }
+    }
+
     public static String getQualityString(Ms2Experiment experiment){
         CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
         if (quality==null) return "";

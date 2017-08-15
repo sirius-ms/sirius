@@ -144,7 +144,16 @@ public abstract class IsolationWindow {
         int expCounter3 = 0;
         int expCounter4 = 0;
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
-            if (!isGoodQuality(experiment)) continue;
+//            if (!isGoodQuality(experiment)) continue;
+            if (!CompoundQuality.isNotBadQuality(experiment)){
+                CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+                for (SpectrumProperty spectrumProperty : quality.getProperties()) {
+                    if (!spectrumProperty.equals(SpectrumProperty.Good) && spectrumProperty.equals(SpectrumProperty.Chimeric)){
+                        System.out.println("new");
+                        continue;
+                    }
+                }
+            }
 
             double ionMass = experiment.getIonMass();
 
@@ -197,7 +206,9 @@ public abstract class IsolationWindow {
             Deviation deviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation().divide(2); //todo or smaller?
             double maxMs1Intensity = Spectrums.getMaximalIntensity(spectrum1);
             double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
-            double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
+//            double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
+            DatasetStatistics datasetStatistics = ms2Dataset.getDatasetStatistics();
+            double medianNoiseIntensity = (datasetStatistics!=null ? datasetStatistics.getMedianMs2NoiseIntensity() : 0);
             int ms1Idx = monoMs1Idx;
             int ms2Idx;
             double ms1Mass;
@@ -270,8 +281,8 @@ public abstract class IsolationWindow {
                 System.out.println("current mono pos "+currentMonoPostion);
             }
 
-            System.out.println("test!!");
-            if (currentMonoPostion!=0) continue;//todo just to test!!!!!!!!!!!
+//            System.out.println("test!!");
+//            if (currentMonoPostion!=0) continue;//todo just to test!!!!!!!!!!!
 
             double normalizationPos = round(currentMonoPostion+normalizedPattern.getNormalizationRelativeMz());
             if (!posToFilter.containsKey(normalizationPos) || !posToFilter.get(normalizationPos).hasMedianIntensityRatio()){
@@ -328,7 +339,12 @@ public abstract class IsolationWindow {
                     double[] values = new double[keys.size()];
                     for (int i = 0; i < keys.size(); i++) values[i] = posToFilter.get(keys.get(i)).getMedianIntensityRatio();
                     median = regression(keys.toArray(), values, normalizationPos);
-                    posToFilter.get(normalizationPos).setMedianIntensityRatio(median);
+                    FilterPosition filterPosition = posToFilter.get(normalizationPos);
+                    if (filterPosition==null){
+                        filterPosition = new FilterPosition();
+                        posToFilter.put(normalizationPos, filterPosition);
+                    }
+                    filterPosition.setMedianIntensityRatio(median);
                     System.out.println("guess a good median for "+normalizationPos);
                     currentMedian = median;
                 }
@@ -483,16 +499,6 @@ public abstract class IsolationWindow {
     }
 
 
-    private double estimateMedian(TDoubleObjectHashMap<TDoubleArrayList> posToRatios, double key){
-        TDoubleArrayList ratioList = posToRatios.get(key);
-        if (ratioList==null || ratioList.size()<1) return Double.NaN; //not enough examples to estimate
-        ratioList = new TDoubleArrayList(ratioList);
-        ratioList.sort();
-        final double median = ratioList.get(ratioList.size()/2);
-        return median;
-    }
-
-
     private double estimateMedian(TDoubleArrayList values){
         if (values==null || values.size()<1) return Double.NaN; //not enough examples to estimate
         values = new TDoubleArrayList(values);
@@ -584,7 +590,6 @@ public abstract class IsolationWindow {
 
     public void writeIntensityRatiosToCsv(Ms2Dataset ms2Dataset, Path outpuPath) throws IOException {
         IsotopeRatioInformation isotopeRatioInformation = extractIntensityRatios(ms2Dataset);
-        List<IntensityRatio> intensityRatios = new ArrayList<>();
 
         try(BufferedWriter writer = Files.newBufferedWriter(outpuPath, Charset.defaultCharset())){
             writer.write("absMz\trelMz\tintesityRatio\tms1Int\tms2Int");

@@ -15,7 +15,7 @@ public class MutableMs2Dataset implements Ms2Dataset {
     double isolationWindowWidth;
     private IsolationWindow isolationWindow;
     private MeasurementProfile measurementProfile;
-
+    private DatasetStatistics statistics;
 
     public MutableMs2Dataset() {
         experiments = new ArrayList<>();
@@ -48,6 +48,7 @@ public class MutableMs2Dataset implements Ms2Dataset {
         this.isolationWindowWidth = dataset.getIsolationWindowWidth();
         this.measurementProfile = new MutableMeasurementProfile(dataset.getMeasurementProfile());
         this.isolationWindow = dataset.getIsolationWindow();
+        this.setDatasetStatistics(dataset.getDatasetStatistics());
     }
 
 
@@ -122,5 +123,14 @@ public class MutableMs2Dataset implements Ms2Dataset {
             }
 
         };
+    }
+
+    public void setDatasetStatistics(DatasetStatistics statistics){
+        this.statistics = statistics;
+    }
+
+    @Override
+    public DatasetStatistics getDatasetStatistics() {
+        return statistics;
     }
 }
