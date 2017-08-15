@@ -3,16 +3,14 @@ package de.unijena.bioinf.sirius;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.MissingMergedSpectrumValidator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeaklistSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredictor;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.NotMonoisotopicAnnotatorUsingIPA;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -32,7 +30,6 @@ public class Ms2DatasetPreprocessor {
 
     private int MIN_NUMBER_OF_PEAKS = 5;
 
-    private IsolationWindow standardIsolationWindow;
     private Sirius sirius;
     private PrecursorIonType[] precursorIonTypes;
     private DatasetStatistics datasetStatistics;
@@ -58,7 +55,6 @@ public class Ms2DatasetPreprocessor {
         ms2ExperimentValidators.add(new MissingMergedSpectrumValidator());
         //todo MissingValueValidator???
         this.validatorWarning = new Warning.Noop();
-        this.repairInput = true;
     }
 
     public List<Ms2Experiment> preprocess(List<Ms2Experiment> experiments) {
@@ -73,7 +69,16 @@ public class Ms2DatasetPreprocessor {
         ms2Dataset = validate(ms2Dataset);
         ms2Dataset = flagBadQualitySpectra(ms2Dataset);
         estimateIsolationWindow((MutableMs2Dataset) ms2Dataset);
-        ms2Dataset = flagChimericSpectra(ms2Dataset);
+
+        double max2ndMostIntenseRatio = 0.33;
+        double maxSummedIntensitiesRatio = 1.0;
+        ChimericAnnotator chimericAnnotator = new ChimericAnnotator(findMs1PeakDeviation, max2ndMostIntenseRatio, maxSummedIntensitiesRatio);
+        chimericAnnotator.prepare(ms2Dataset.getDatasetStatistics());
+        chimericAnnotator.annotate(ms2Dataset);
+
+//        ms2Dataset = flagChimericSpectra(ms2Dataset);
+
+
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             experiment.setAnnotation(IsolationWindow.class,  ms2Dataset.getIsolationWindow());
             CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
@@ -92,12 +97,12 @@ public class Ms2DatasetPreprocessor {
 
         for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             for (Ms2ExperimentValidator ms2ExperimentValidator : ms2ExperimentValidators) {
-                try {
+//                try {
                     Ms2Experiment validatedExperiment = ms2ExperimentValidator.validate(experiment, validatorWarning, repairInput);
                     validatedExperiments.add(validatedExperiment);
-                } catch (InvalidException exception) {
-                    //todo currently throw away all bad stuff
-                }
+//                } catch (InvalidException exception) {
+//                    //todo currently throw away all bad stuff
+//                }
 
             }
         }
@@ -131,28 +136,51 @@ public class Ms2DatasetPreprocessor {
         sirius.setElementPrediction(defaultPredictor);
     }
 
+
+
     public MutableMs2Dataset flagBadQualitySpectra(Ms2Dataset ms2Dataset){
         MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
+        init(ms2Dataset);
+        datasetStatistics = makeStatistics(mutableMs2Dataset);
+        mutableMs2Dataset.setDatasetStatistics(datasetStatistics);
+        //todo abosulte vs relative!!!!!
+//        ((MutableMeasurementProfile)mutableMs2Dataset.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
 
-        init(mutableMs2Dataset);
-        Deviation maxDeviation = mutableMs2Dataset.getMeasurementProfile().getAllowedMassDeviation();
+        //todo add test to Annotator order
+        NoMs1PeakAnnotator noMs1PeakAnnotator = new NoMs1PeakAnnotator(findMs1PeakDeviation);
+        FewPeaksAnnotator fewPeaksAnnotator = new FewPeaksAnnotator(MIN_NUMBER_OF_PEAKS);
+        LowIntensityAnnotator lowIntensityAnnotator = new LowIntensityAnnotator(findMs1PeakDeviation, 0.01, 0d);
+//        NotMonoisotopicAnnotator notMonoisotopicAnnotator = new NotMonoisotopicAnnotator(findMs1PeakDeviation);
+        NotMonoisotopicAnnotatorUsingIPA notMonoisotopicAnnotator = new NotMonoisotopicAnnotatorUsingIPA(findMs1PeakDeviation);
+
+        List<QualityAnnotator> qualityAnnotators = new ArrayList<>();
+        qualityAnnotators.add(noMs1PeakAnnotator);
+        qualityAnnotators.add(fewPeaksAnnotator);
+        qualityAnnotators.add(lowIntensityAnnotator);
+        qualityAnnotators.add(notMonoisotopicAnnotator);
 
 
+        for (QualityAnnotator qualityAnnotator : qualityAnnotators) {
+            qualityAnnotator.prepare(datasetStatistics);
+            qualityAnnotator.annotate(mutableMs2Dataset);
+        }
+
+        //todo saturation, brumm peaks, contamination ...
+
+        return mutableMs2Dataset;
+    }
+
+    private DatasetStatistics makeStatistics(Ms2Dataset ms2Dataset){
         //guess elements
-        for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
+        for (Ms2Experiment experiment : ms2Dataset.getExperiments()) {
             FormulaConstraints constraints = predictElements(experiment, ms2Dataset);
             experiment.setAnnotation(FormulaConstraints.class, constraints);
         }
 
-
-        datasetStatistics = new DatasetStatistics();
-
+        DatasetStatistics datasetStatistics = new DatasetStatistics();
 
 
-
-        List<ExperimentWithAnnotatedSpectra> experiments = extractSpectra(mutableMs2Dataset);
-//        List<Spectrum<PeakWithAnnotation>> ms1Spectra = extractAllMs1(ms2Dataset);
-//        List<Spectrum<PeakWithAnnotation>> ms2Spectra = extractAllMs1(ms2Dataset);
+        List<ExperimentWithAnnotatedSpectra> experiments = extractSpectra(ms2Dataset);
 
         //.... do some statistics
         for (ExperimentWithAnnotatedSpectra experiment : experiments) {
@@ -170,11 +198,6 @@ public class Ms2DatasetPreprocessor {
 
         for (ExperimentWithAnnotatedSpectra experiment : experiments) {
             annotateNoise(experiment);
-//            for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs1spectra()) {
-//                for (PeakWithAnnotation peakWithAnnotation : spectrum) {
-//                    if (peakWithAnnotation.isNoise()) datasetStatistics.addMs2NoiseIntensity(peakWithAnnotation.getIntensity());
-//                }
-//            }
             for (Spectrum<PeakWithAnnotation> spectrum : experiment.getMs2spectra()) {
                 for (PeakWithAnnotation peakWithAnnotation : spectrum) {
                     if (peakWithAnnotation.isNoise()){
@@ -184,10 +207,6 @@ public class Ms2DatasetPreprocessor {
                 }
             }
         }
-
-
-        //todo abosulte vs relative!!!!!
-        ((MutableMeasurementProfile)mutableMs2Dataset.getMeasurementProfile()).setMedianNoiseIntensity(datasetStatistics.getMedianMs2NoiseIntensity());
 
 
         System.out.println("number of noise peaks "+datasetStatistics.getNoiseIntensities().size());
@@ -204,68 +223,9 @@ public class Ms2DatasetPreprocessor {
 
         System.out.println(Arrays.toString(datasetStatistics.getNoiseIntensities().toArray()));
 
-
-        //no MS1 peak
-        for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
-            Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
-
-            if (Spectrums.binarySearch(ms1, experiment.getIonMass(), findMs1PeakDeviation)<0){
-
-                setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
-            }
-        }
-
-        //to few peaks
-        for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
-            Spectrum<Peak> ms2Spec = getMergedMs2(experiment, mutableMs2Dataset.getMeasurementProfile().getAllowedMassDeviation());
-            if (Double.isNaN(mutableMs2Dataset.getIsolationWindowWidth()) || mutableMs2Dataset.getIsolationWindowWidth()>1){
-                SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(ms2Spec);
-                Spectrums.filterIsotpePeaks(mutableSpectrum, mutableMs2Dataset.getMeasurementProfile().getAllowedMassDeviation());
-                ms2Spec = mutableSpectrum;
-            }
-
-            int numberOfPeaks = 0;
-            for (Peak peak : ms2Spec) {
-//                if (peak.getIntensity()>2*datasetStatistics.getMedianMs2NoiseIntensity()) numberOfPeaks++;
-                //todo what is a peak?
-                if (peak.getIntensity()>datasetStatistics.getMedianMs2NoiseIntensity()) numberOfPeaks++;
-            }
-
-            if (numberOfPeaks<MIN_NUMBER_OF_PEAKS) setSpectrumProperty(experiment, SpectrumProperty.FewPeaks);
-        }
-
-        //estimate noise
-
-
-        //detect saturation
-
-        //detect contamination
-
-        //detect grass peaks
-
-        //estimate isolation window!!!!!
-
-        //too low MS1 peak intensity
-        double maxMs1Intensity = datasetStatistics.getMaxMs1Intensity();
-        for (Ms2Experiment experiment : mutableMs2Dataset.getExperiments()) {
-//            if (!isNotBadQuality(experiment)) continue; //todo fast or better statistics?
-            if (hasProperty(experiment, SpectrumProperty.NoMS1Peak)) continue;
-            Spectrum<Peak> ms1 = experiment.getMergedMs1Spectrum();
-            double highestInCurrentMs1 = Spectrums.getMaximalIntensity(ms1);
-            double ionIntensity = ms1.getIntensityAt(Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation));
-            if (ionIntensity/highestInCurrentMs1<0.01) setSpectrumProperty(experiment, SpectrumProperty.LowIntensity);
-            //todo another way with absolute intensities
-//            else if (ionIntensity<10*datasetStatistics.getMedianMs2NoiseIntensity()) setSpectrumProperty(experiment, SpectrumProperty.LowIntensity); //todo ???
-
-        }
-
-        //detect too-low-intensity spectra (absolute and relative, (just precursor, no fragments
-
-        //exclude chimerics
-
-        return mutableMs2Dataset;
-
+        return datasetStatistics;
     }
+
 
     public MutableMs2Dataset flagChimericSpectra(Ms2Dataset ms2Dataset){
         MutableMs2Dataset mutableMs2Dataset = new MutableMs2Dataset(ms2Dataset);
@@ -281,6 +241,7 @@ public class Ms2DatasetPreprocessor {
             int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation);
             if (ms1PrecursorIdx<0){
                 if (!hasProperty(experiment, SpectrumProperty.NoMS1Peak)){
+                    System.out.println("strange");
                     setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
                 }
                 continue;
@@ -309,7 +270,8 @@ public class Ms2DatasetPreprocessor {
 
             if (precursorIdx<0) {
                 if (isNotMonoisotopicPeak(experiment, mutableMs2Dataset.getMeasurementProfile())){
-                    setSpectrumProperty(experiment, SpectrumProperty.NotMonoisotopicPeak);
+//                    setSpectrumProperty(experiment, SpectrumProperty.NotMonoisotopicPeak);
+                    System.out.println("could be NotMonoisotopicPeak");
                     continue;
                 } else {
                     ms1IsotopesRemoved.addPeak(precursorPeak);

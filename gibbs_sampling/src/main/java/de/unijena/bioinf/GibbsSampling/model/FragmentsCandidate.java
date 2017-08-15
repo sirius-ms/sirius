@@ -31,6 +31,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 //        candidate.formula = formula;
         candidate.addAnnotation(MolecularFormula.class, formula);
         candidate.addAnnotation(PrecursorIonType.class, ionType);
+        candidate.addAnnotation(FTree.class, tree);
         return candidate;
     }
 
@@ -83,6 +84,12 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 //            candidate.formula = formula;
             candidate.addAnnotation(MolecularFormula.class, formula);
             candidate.addAnnotation(PrecursorIonType.class, ionType);
+            candidate.addAnnotation(FTree.class, tree);
+            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = tree.getAnnotationOrNull(UnregardedCandidatesUpperBound.class);
+            if (unregardedCandidatesUpperBound!=null) {
+                candidate.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+            }
+
 
             candidates.add(candidate);
         }

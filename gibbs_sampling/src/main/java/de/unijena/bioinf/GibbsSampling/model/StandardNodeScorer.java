@@ -32,7 +32,7 @@ public class StandardNodeScorer implements NodeScorer {
                 for(int j = 0; j < length; ++j) {
                     Candidate candidate = currentCandidates[j];
                     score = candidate.getScore();
-                    if (candidate instanceof DummyFragmentCandidate){
+                    if (DummyFragmentCandidate.isDummy(candidate)){
                         int numberOfInstances = ((DummyFragmentCandidate) candidate).getNumberOfIgnoredInstances();
                         candidate.addNodeProbabilityScore(Math.exp(this.gamma * (score - max))*numberOfInstances);
                     } else {
@@ -47,7 +47,7 @@ public class StandardNodeScorer implements NodeScorer {
                 for(int j = 0; j < currentCandidates.length; ++j) {
                     Candidate candidate = currentCandidates[j];
                     double expS;
-                    if (candidate instanceof DummyFragmentCandidate){
+                    if (DummyFragmentCandidate.isDummy(candidate)){
                         int numberOfInstances = ((DummyFragmentCandidate) candidate).getNumberOfIgnoredInstances();
                         expS = Math.exp(this.gamma * (candidate.getScore() - max))*numberOfInstances;
                     } else {
