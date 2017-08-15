@@ -16,7 +16,7 @@ public class DummyFragmentCandidate extends FragmentsCandidate{
 
         FragmentsAndLosses fragmentsAndLosses = new FragmentsAndLosses(new FragmentWithIndex[0], new FragmentWithIndex[0]);
         MolecularFormula formula = MolecularFormula.emptyFormula();
-        PrecursorIonType ionType = experiment.getPrecursorIonType();
+        PrecursorIonType ionType = experiment.getPrecursorIonType(); //todo use unknown????
         DummyFragmentCandidate candidate = new DummyFragmentCandidate(fragmentsAndLosses, scoreThres, formula, ionType, experiment);
 
 //        candidate.ionType = ionType;
@@ -29,5 +29,9 @@ public class DummyFragmentCandidate extends FragmentsCandidate{
 
     public int getNumberOfIgnoredInstances() {
         return numberOfIgnoredInstances;
+    }
+
+    public static boolean isDummy(Candidate fragmentsCandidate) {
+        return (fragmentsCandidate instanceof DummyFragmentCandidate);
     }
 }

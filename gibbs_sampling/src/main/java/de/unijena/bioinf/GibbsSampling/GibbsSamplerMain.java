@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.ChemistryBase.ms.ft.UnregardedCandidatesUpperBound;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
@@ -430,14 +431,15 @@ public class GibbsSamplerMain {
         //all possible netto changes of MolecularFormulas using on of the reactions.
         Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
 
-        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
+//        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount); //remove candidates later when adding dummy
 
 
         //do before all that
 //        PrecursorIonType[] ionTypes = Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map(s -> PrecursorIonType.getPrecursorIonType(s)).toArray(l -> new PrecursorIonType[l]);
 
         System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap);
+        addNotExplainableDummy(candidatesMap, maxCandidates);
 
 
 //        parseLibraryHits(libraryHitsPath, candidatesMap); //changed
@@ -1083,80 +1085,109 @@ public class GibbsSamplerMain {
         }
     }
 
-    public  void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap){
+    public  void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
-        Sirius sirius = new Sirius();
-
-        final PrecursorIonType[] ionTypes = new PrecursorIonType[ionTypStrings.length];
-        for (int i = 0; i < ionTypes.length; i++) ionTypes[i] = PrecursorIonType.getPrecursorIonType(ionTypStrings[i]);
 
         for (String id : idList) {
             List<FragmentsCandidate> candidates = candidateMap.get(id);
             Ms2Experiment experiment = candidates.get(0).getExperiment();
 
-            Set<MolecularFormula> mfCandidates = getCandidateMF(experiment, ionTypes, sirius);
-            for (FragmentsCandidate candidate : candidates) {
-                if (!mfCandidates.contains(candidate.getFormula())){
-                    throw new RuntimeException("Something went wrong. molecular formula of tree not in candidate set.");
-                }
+            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = candidates.get(0).getAnnotation(UnregardedCandidatesUpperBound.class);
+
+            double worstScore = unregardedCandidatesUpperBound.getLowestConsideredCandidateScore();
+            int numberOfIgnored = unregardedCandidatesUpperBound.getNumberOfUnregardedCandidates();
+
+            if (candidates.size()>maxCandidates) {
+                numberOfIgnored += candidates.size()-maxCandidates;
+
+                candidates = candidates.subList(0,maxCandidates);
+                candidateMap.put(id, candidates);
+
+                worstScore = candidates.get(candidates.size()-1).getScore();
             }
 
-            double worstScore = Double.POSITIVE_INFINITY;
-            for (FragmentsCandidate candidate : candidates) {
-                worstScore = Math.min(worstScore, candidate.getScore());
+            if (numberOfIgnored>0) {
+                FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(worstScore, numberOfIgnored, experiment);
+                candidates.add(dummyCandidate);
             }
-
-            int numberOfIgnored= (mfCandidates.size()-candidates.size());
-            double dummyScore = numberOfIgnored*worstScore;
-
-            FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(dummyScore, numberOfIgnored, experiment);
-
-            candidates.add(dummyCandidate);
 
         }
     }
 
-
-    final static String[] ionTypStrings = new String[]{"[M+H]+", "[M+K]+", "[M+Na]+"};
-    final ChemicalAlphabet backupChemicalAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C","H", "N", "O", "P"));
-    public Set<MolecularFormula> getCandidateMF(Ms2Experiment experiment, PrecursorIonType[] ionTypes, Sirius sirius){
-        final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(experiment);
-        experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(experiment.getPrecursorIonType().getCharge()));
-
-        PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
-        PrecursorIonType priorIonType = experiment.getPrecursorIonType();
-        PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
-        if (!priorIonization.isIonizationUnknown()){
-            if (!arrayContains(specificIontypes, priorIonization)){
-                System.out.println("guessed ionization contradicts prior one for " + experiment.getName());
-                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length+1);
-                specificIontypes[specificIontypes.length-1] = priorIonization;
-            } else {
-                specificIontypes = new PrecursorIonType[]{priorIonization};
-            }
-
-        }
-        if (specificIontypes.length==0) specificIontypes = ionTypes;
-
-
-
-
-        FormulaConstraints constraints = sirius.predictElementsFromMs1(experimentMutable);
-        if (constraints==null){
-            System.out.println("no constraints predicted for "+experiment.getName());
-            constraints = new FormulaConstraints(backupChemicalAlphabet);
-        }
-        Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
-        for (PrecursorIonType ionType : specificIontypes) {
-            List<MolecularFormula> mfCandidates = sirius.decompose(experiment.getIonMass(), ionType.getIonization(), constraints);
-
-            for (MolecularFormula mfCandidate : mfCandidates) {
-                mfCandidatesSet.add(ionType.measuredNeutralMoleculeToNeutralMolecule(mfCandidate));
-            }
-
-        }
-        return mfCandidatesSet;
-    }
+//    public  void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap){
+//        List<String> idList = new ArrayList<>(candidateMap.keySet());
+//        Sirius sirius = new Sirius();
+//
+//        final PrecursorIonType[] ionTypes = new PrecursorIonType[ionTypStrings.length];
+//        for (int i = 0; i < ionTypes.length; i++) ionTypes[i] = PrecursorIonType.getPrecursorIonType(ionTypStrings[i]);
+//
+//        for (String id : idList) {
+//            List<FragmentsCandidate> candidates = candidateMap.get(id);
+//            Ms2Experiment experiment = candidates.get(0).getExperiment();
+//
+//            Set<MolecularFormula> mfCandidates = getCandidateMF(experiment, ionTypes, sirius);
+//            for (FragmentsCandidate candidate : candidates) {
+//                if (!mfCandidates.contains(candidate.getFormula())){
+//                    throw new RuntimeException("Something went wrong. molecular formula of tree not in candidate set.");
+//                }
+//            }
+//
+//            double worstScore = Double.POSITIVE_INFINITY;
+//            for (FragmentsCandidate candidate : candidates) {
+//                worstScore = Math.min(worstScore, candidate.getScore());
+//            }
+//
+//            int numberOfIgnored= (mfCandidates.size()-candidates.size());
+//            double dummyScore = numberOfIgnored*worstScore;
+//
+//            FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(dummyScore, numberOfIgnored, experiment);
+//
+//            candidates.add(dummyCandidate);
+//
+//        }
+//    }
+//
+//
+//    final static String[] ionTypStrings = new String[]{"[M+H]+", "[M+K]+", "[M+Na]+"};
+//    final ChemicalAlphabet backupChemicalAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C","H", "N", "O", "P"));
+//    public Set<MolecularFormula> getCandidateMF(Ms2Experiment experiment, PrecursorIonType[] ionTypes, Sirius sirius){
+//        final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(experiment);
+//        experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(experiment.getPrecursorIonType().getCharge()));
+//
+//        PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
+//        PrecursorIonType priorIonType = experiment.getPrecursorIonType();
+//        PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
+//        if (!priorIonization.isIonizationUnknown()){
+//            if (!arrayContains(specificIontypes, priorIonization)){
+//                System.out.println("guessed ionization contradicts prior one for " + experiment.getName());
+//                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length+1);
+//                specificIontypes[specificIontypes.length-1] = priorIonization;
+//            } else {
+//                specificIontypes = new PrecursorIonType[]{priorIonization};
+//            }
+//
+//        }
+//        if (specificIontypes.length==0) specificIontypes = ionTypes;
+//
+//
+//
+//
+//        FormulaConstraints constraints = sirius.predictElementsFromMs1(experimentMutable);
+//        if (constraints==null){
+//            System.out.println("no constraints predicted for "+experiment.getName());
+//            constraints = new FormulaConstraints(backupChemicalAlphabet);
+//        }
+//        Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
+//        for (PrecursorIonType ionType : specificIontypes) {
+//            List<MolecularFormula> mfCandidates = sirius.decompose(experiment.getIonMass(), ionType.getIonization(), constraints);
+//
+//            for (MolecularFormula mfCandidate : mfCandidates) {
+//                mfCandidatesSet.add(ionType.measuredNeutralMoleculeToNeutralMolecule(mfCandidate));
+//            }
+//
+//        }
+//        return mfCandidatesSet;
+//    }
 
     private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[] result, String ids[], Set<String> evaluationIDs, Map<String, MolecularFormula> correctHitsMap){
         List<String> correctIds = new ArrayList<>();
@@ -1190,6 +1221,20 @@ public class GibbsSamplerMain {
      * @return
      */
     private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[][] result, String ids[], Set<String> evaluationIDs, Map<String, LibraryHit> correctHitsMap){
+        int bestIsDummyCount = 0;
+        int total = 0;
+        for (int i = 0; i < result.length; i++) {
+            Scored<FragmentsCandidate>[] candidatesScored = result[i];
+            if (candidatesScored.length==0) continue;
+            ++total;
+            if (DummyFragmentCandidate.isDummy(candidatesScored[0].getCandidate())){
+                ++bestIsDummyCount;
+            }
+
+
+        }
+        System.out.println("used dummies: "+bestIsDummyCount + " of " + total);
+
         int correctId = 0;
         int wrongId = 0;
         for (int i = 0; i < result.length; i++) {
@@ -1199,16 +1244,23 @@ public class GibbsSamplerMain {
             if (correctHitsMap.containsKey(id) && evaluationIDs.contains(id)){
 //                MolecularFormula correct = correctHitsMap.get(id).getMolecularFormula();
                 int pos = 1;
+                int correctPos = Integer.MAX_VALUE;
+                int dummyPos = Integer.MAX_VALUE;
                 for (Scored<FragmentsCandidate> candidateScored : candidatesScored) {
                     if (candidateScored.getCandidate().isCorrect()) {
-                        break;
+                        correctPos = pos;
+                    } else if (DummyFragmentCandidate.isDummy(candidateScored.getCandidate())){
+                        dummyPos = pos;
                     }
                     pos++;
                 }
-                if (pos>candidatesScored.length){
-                    System.out.println(id + "not found");
+                if (dummyPos==1){
+                    System.out.println(id + " best is dummy.");
+                }
+                if (correctPos>candidatesScored.length){
+                    System.out.println(id + " not found");
                 } else {
-                    System.out.println(id + " found at " + pos + " (" + candidatesScored[pos-1].getScore()+ ") of " + candidatesScored.length);
+                    System.out.println(id + " found at " + correctPos + " (" + candidatesScored[correctPos-1].getScore()+ ") of " + candidatesScored.length);
                 }
             }
         }
