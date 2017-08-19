@@ -1,9 +1,9 @@
 package de.unijena.bioinf.sirius.gui.load;
 
-import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModel;
-import de.unijena.bioinf.myxo.gui.msviewer.data.PeakInformation;
+import de.unijena.bioinf.sirius.gui.msviewer.data.MSViewerDataModel;
+import de.unijena.bioinf.sirius.gui.msviewer.data.PeakInformation;
 
-public class DummySpectrumContainer implements MSViewerDataModel{
+public class DummySpectrumContainer implements MSViewerDataModel {
 
 	public DummySpectrumContainer() {
 		
@@ -52,6 +52,16 @@ public class DummySpectrumContainer implements MSViewerDataModel{
 	@Override
 	public double getSignalNoise(int arg0) {
 		return 0;
+	}
+
+	@Override
+	public double minMz() {
+		return 0d;
+	}
+
+	@Override
+	public double maxMz() {
+		return 400d;
 	}
 
 	@Override

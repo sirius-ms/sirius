@@ -45,12 +45,16 @@ import java.util.Map;
 public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<CompoundCandidate, ExperimentContainer>, MouseListener, ActionListener {
 
 
+    public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
+    public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
+    public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
+    public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
     protected JList<CompoundCandidate> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -81,14 +85,17 @@ public class CandidateListDetailView extends CandidateListView implements Active
         CopyInchi = new JMenuItem("Copy 2D InChI");
         OpenInBrowser1 = new JMenuItem("Open in PubChem");
         OpenInBrowser2 = new JMenuItem("Open in all databases");
+        highlight = new JMenuItem("Highlight matching substructures");
         CopyInchi.addActionListener(this);
         CopyInchiKey.addActionListener(this);
         OpenInBrowser1.addActionListener(this);
         OpenInBrowser2.addActionListener(this);
+        highlight.addActionListener(this);
         popupMenu.add(CopyInchiKey);
         popupMenu.add(CopyInchi);
         popupMenu.add(OpenInBrowser1);
         popupMenu.add(OpenInBrowser2);
+        popupMenu.add(highlight);
         setVisible(true);
 
     }
@@ -123,6 +130,35 @@ public class CandidateListDetailView extends CandidateListView implements Active
                     LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
                 }
             }
+        } else if (c!=null && e.getSource() == this.highlight) {
+            SwingWorker w = new SwingWorker<Object, Object>() {
+
+                @Override
+                protected Object doInBackground() throws Exception {
+                    System.out.println("START HIGHLIGHTING!");
+                    try {
+                        c.highlightInBackground();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Highlighted ^^");
+                    return c;
+                }
+
+                @Override
+                protected void done() {
+                    super.done();
+                    if (getState() == StateValue.DONE) {
+                        final CompoundMatchHighlighter h;
+                        synchronized (c) {
+                            h = c.highlighter;
+                        }
+                        h.hightlight(c);
+                        source.getElementList().elementChanged(c);
+                    }
+                }
+            };
+            w.execute();
         }
     }
 
@@ -217,9 +253,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
     public void mouseExited(MouseEvent e) {
 
     }
-
-    public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
-    public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, CompoundCandidate sre, List<CompoundCandidate> resultElements, ListSelectionModel selections) {

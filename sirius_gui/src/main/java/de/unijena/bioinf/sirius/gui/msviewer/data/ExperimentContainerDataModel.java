@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.msviewer.data;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -27,9 +28,12 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     protected TreeSet<Integer> marked;
 
+    protected double minMz, maxMz;
+
     public ExperimentContainerDataModel(ExperimentContainer ec) {
         this.ec = ec;
         this.marked = new TreeSet<Integer>();
+        refreshRanges();
         showDummySpectrum();
     }
 
@@ -82,18 +86,18 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
                 }
 
                 if (mode==DisplayMode.MSMS) {
-                    underlyingModel = new SiriusSingleSpectrumAnnotated(tree, ms2.getMs2Spectra().get(selectedMs2Spectrum));
+                    underlyingModel = new SiriusSingleSpectrumAnnotated(tree, ms2.getMs2Spectra().get(selectedMs2Spectrum), minMz, maxMz);
                 } else if (mode == DisplayMode.MERGED){
-                    underlyingModel = new SiriusMergedMs2Annotated(tree, ms2);
+                    underlyingModel = new SiriusMergedMs2Annotated(tree, ms2, minMz, maxMz);
                 } else {
                     underlyingModel = new DummySpectrumModel();
                 }
             } else {
                 final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(ec);
                 if (mode==DisplayMode.MSMS) {
-                    underlyingModel = new SiriusSingleSpectrumModel(experiment.getMs2Spectra().get(selectedMs2Spectrum));
+                    underlyingModel = new SiriusSingleSpectrumModel(experiment.getMs2Spectra().get(selectedMs2Spectrum), minMz, maxMz);
                 } else if (mode == DisplayMode.MERGED){
-                    underlyingModel = new SiriusMergedMs2(experiment);
+                    underlyingModel = new SiriusMergedMs2(experiment, minMz, maxMz);
                 } else {
                     underlyingModel = new DummySpectrumModel();
                 }
@@ -110,7 +114,28 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         }
         this.mode = mode;
         this.selectedMs2Spectrum = ms2index;
+        refreshRanges();
         refreshSpectrum();
+    }
+
+    private void refreshRanges() {
+        Range<Double> range = null;
+        if (ec==null) {
+            this.minMz = 0d;
+            this.maxMz = 400d;
+        } else {
+            /*
+            for (CompactSpectrum spec : ec.getMs2Spectra()) {
+                Range<Double> mzRange = SiriusSingleSpectrumAnnotated.getVisibleRange(SiriusDataConverter.myxoMs2ToSiriusMs2(spec, ec.getFocusedMass()));
+                if (range == null) range = mzRange;
+                else range = range.span(mzRange);
+            }
+            this.minMz = range.lowerEndpoint();
+            this.maxMz = ec.getDataFocusedMass()+5;
+            */
+            this.minMz = 0d;
+            this.maxMz = ec.getFocusedMass() + 5;
+        }
     }
 
     public void setMarked(int index, boolean add) {
@@ -152,6 +177,16 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         mode = DisplayMode.MERGED;
         selectedMs2Spectrum = -1;
         refreshSpectrum();
+    }
+
+    @Override
+    public double minMz() {
+        return underlyingModel.minMz();
+    }
+
+    @Override
+    public double maxMz() {
+        return underlyingModel.maxMz();
     }
 
     @Override

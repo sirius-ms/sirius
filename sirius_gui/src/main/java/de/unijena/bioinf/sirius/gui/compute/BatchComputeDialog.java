@@ -254,7 +254,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         } else if (e.getSource() == elementAutoDetect) {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             ExperimentContainer ec = compoundsToProcess.get(0);
-            if (!ec.getMs1Spectra().isEmpty()) {
+            if (!ec.getMs1Spectra().isEmpty() || ec.getCorrelatedSpectrum()!=null) {
                 MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
