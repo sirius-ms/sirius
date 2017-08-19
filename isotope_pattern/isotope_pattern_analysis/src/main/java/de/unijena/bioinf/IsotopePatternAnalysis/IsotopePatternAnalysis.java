@@ -291,9 +291,9 @@ public class IsotopePatternAnalysis implements Parameterized {
         }
         int k=0;
         final double[] scoreBuffer = new double[allPatternVariants.length];
-        for (MolecularFormula f : formulas) {
+        for (MolecularFormula formula : formulas) {
             Arrays.fill(scoreBuffer, 0d);
-            f = ion.neutralMoleculeToMeasuredNeutralMolecule(f);
+            final MolecularFormula f = ion.neutralMoleculeToMeasuredNeutralMolecule(formula);
             Spectrum<Peak> measuredOne = measuredSpectrum;
             Spectrum<Peak> theoreticalSpectrum = patternGenerator.simulatePattern(f, ion.getIonization());
             if (theoreticalSpectrum.size()==0) continue;
@@ -308,7 +308,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             for (int j=0; j < scoreBuffer.length; ++j) {
                 if (scoreBuffer[j] > scoreBuffer[optScoreIndex]) optScoreIndex=j;
             }
-            patterns.add(new IsotopePattern(f, scoreBuffer[optScoreIndex], allPatternVariants[optScoreIndex]));
+            patterns.add(new IsotopePattern(formula, scoreBuffer[optScoreIndex], allPatternVariants[optScoreIndex]));
         }
         Collections.sort(patterns, Scored.<MolecularFormula>desc());
         return patterns;

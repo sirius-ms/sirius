@@ -176,7 +176,7 @@ public class CommonFragmentsScore implements DecompositionScorer<Object>, Molecu
     public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
         double score = getRecombinatedFragments().get(formula);
         // if ionization unknown, try also intrinsically charged
-        if (input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
+        if (input.getExperimentInformation().getPrecursorIonType().isIonizationUnknown() || input.getExperimentInformation().getPrecursorIonType().isIntrinsicalCharged()) {
             score = Math.max(getRecombinatedFragments().get(formula.subtract((MolecularFormula)precomputed)), score);
         }
         return score;
