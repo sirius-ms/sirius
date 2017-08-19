@@ -21,4 +21,5 @@ public interface Ms2Dataset extends Iterable<Ms2Experiment>{
 
     public double getIsolationWindowWidth();
 
+    public DatasetStatistics getDatasetStatistics();
 }

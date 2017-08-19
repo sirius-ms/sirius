@@ -488,6 +488,10 @@ public class Spectrums {
     }
 
     public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
+        return extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, true);
+    }
+
+    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
         // extract all isotope peaks starting from the given target mz
         final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
@@ -513,11 +517,20 @@ public class Spectrums {
                 final double mz = massOrderedSpectrum.getMzAt(i);
                 if (mz > endPoint) break;
                 final double intensity = massOrderedSpectrum.getIntensityAt(i);
-                mzBuffer += mz*intensity;
-                intensityBuffer += intensity;
+                if (mergePeaks) {
+                    mzBuffer += mz*intensity;
+                    intensityBuffer += intensity;
+                } else if (intensity>intensityBuffer){
+                    //don't merge. just take most intense peak within window
+                    mzBuffer = mz;
+                    intensityBuffer = intensity;
+                }
             }
-            mzBuffer /= intensityBuffer;
+            if (mergePeaks){
+                mzBuffer /= intensityBuffer;
+            }
             spec.addPeak(mzBuffer, intensityBuffer);
+
         }
         return spec;
     }

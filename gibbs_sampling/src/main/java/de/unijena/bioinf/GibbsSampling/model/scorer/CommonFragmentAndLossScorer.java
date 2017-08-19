@@ -1,20 +1,8 @@
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
-import de.unijena.bioinf.ChemistryBase.chem.IonMode;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.Transformation;
-import de.unijena.bioinf.GibbsSampling.model.Candidate;
-import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
-import de.unijena.bioinf.GibbsSampling.model.FormulaFactory;
-import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
-import gnu.trove.list.array.TDoubleArrayList;
+import de.unijena.bioinf.GibbsSampling.model.*;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -25,14 +13,13 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
-    private final int MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3; //changed from 5
+    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3; //changed from 5
 
     public CommonFragmentAndLossScorer(double threshold) {
         this.threshold = threshold;
     }
 
     public void prepare(FragmentsCandidate[][] candidates) {
-        long time = System.currentTimeMillis();
         double[] norm = this.normalization(candidates);
         this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
 
@@ -64,9 +51,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
         for(int i = 0; i < allFragmentPeaks.length; ++i) {
             for(int j = i + 1; j < allFragmentPeaks.length; ++j) {
-                final int commonL = this.countCommons(allFragmentPeaks[i], allFragmentPeaks[j]);
-                final int commonF = this.countCommons(allLossPeaks[i], allLossPeaks[j]);
-                final double score = ((double)(commonF + commonL) / norm[i]) + ((double)(commonF + commonL) / norm[j]);
+                final double commonL = this.scoreCommons(allFragmentPeaks[i], allFragmentPeaks[j]);
+                final double commonF = this.scoreCommons(allLossPeaks[i], allLossPeaks[j]);
+                final double score = ((commonF + commonL) / norm[i]) + ((commonF + commonL) / norm[j]);
 
                 if((commonF + commonL) >= MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES && (score >= this.threshold)){
                     this.maybeSimilar[i].set(j);
@@ -100,7 +87,8 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
         int maxIdx = -1;
         for (FragmentsCandidate currentCandidate : currentCandidates) {
-            for (short idx : currentCandidate.getCandidate().getFragIndices()) {
+            for (FragmentWithIndex scoredFragment : currentCandidate.getCandidate().getFragments()) {
+                final short idx = scoredFragment.getIndex();
                 if (idx>maxIdx) maxIdx = idx;
             }
         }
@@ -124,15 +112,13 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for(int j = 0; j < currentCandidates.length; ++j) {
             FragmentsCandidate c = currentCandidates[j];
             PrecursorIonType currentIon = c.getIonType();
-            final String[] formulas;
+            final FragmentWithIndex[] fragments;
             final short[] indices;
             if (useFragments){
-                formulas = c.getFragments();
-                indices = c.getCandidate().getFragIndices();
-
-                for (int i = 0; i < formulas.length; i++) {
-                    final String formula = formulas[i];
-                    final int idx = indices[i]+maxIdx*ionToIdx.get(currentIon);
+                fragments = c.getFragments();
+                for (int i = 0; i < fragments.length; i++) {
+                    final String formula = fragments[i].getFormula();
+                    final int idx = fragments[i].getIndex()+maxIdx*ionToIdx.get(currentIon);
                     if (matchedFragments[idx]==null){
                         matchedFragments[idx] = new HashSet<>();
                     }
@@ -140,12 +126,11 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
                 }
 
             } else {
-                formulas = c.getLosses();
-                indices = c.getCandidate().getLossIndices();
+                fragments = c.getLosses();
 
-                for (int i = 0; i < formulas.length; i++) {
-                    final String formula = formulas[i];
-                    final short idx = indices[i];
+                for (int i = 0; i < fragments.length; i++) {
+                    final String formula = fragments[i].getFormula();
+                    final short idx = fragments[i].getIndex();
                     if (matchedFragments[idx]==null){
                         matchedFragments[idx] = new HashSet<>();
                     }
@@ -169,7 +154,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             if (matchedFragments[j]!=null){
                 final String[] mfArray = matchedFragments[j].toArray(new String[0]);
                 final double mass = meanMass(mfArray);
-                peaksWithExplanations[pos++] = new PeakWithExplanation(mfArray, mass);
+                peaksWithExplanations[pos++] = new PeakWithExplanation(mfArray, mass, 1d);
             }
         }
 
@@ -213,11 +198,11 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             }
         }
 
-        final int commonF = this.countCommons(candidate1.getFragments(), candidate2.getFragments());
-        final int commonL = this.countCommons(candidate1.getLosses(), candidate2.getLosses());
+        final double commonF = this.scoreCommons(candidate1.getFragments(), candidate2.getFragments());
+        final double commonL = this.scoreCommons(candidate1.getLosses(), candidate2.getLosses());
         final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
         final double norm2 = this.normalizationMap.get(candidate2.getExperiment());
-        final double score =  ((double)(commonF + commonL) / norm1) + ((double)(commonF + commonL) / norm2);
+        final double score =  ((commonF + commonL) / norm1) + ((commonF + commonL) / norm2);
 
         return score;
     }
@@ -251,8 +236,8 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         return norm;
     }
 
-    private int countCommons(PeakWithExplanation[] peaks1, PeakWithExplanation[] peaks2){
-        int commonCounter = 0;
+    protected double scoreCommons(PeakWithExplanation[] peaks1, PeakWithExplanation[] peaks2){
+        int commonScore = 0;
         int i = 0;
         int j = 0;
         double mz1 = peaks1[0].mass;
@@ -262,7 +247,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             boolean match = hasMatch(peaks1[i].formulas, peaks2[j].formulas);
             int compare = Double.compare(mz1, mz2);
             if(match) {
-                ++commonCounter;
+                commonScore += scoreMatchedPeaks(peaks1[i], peaks2[j]);
                 ++i;
                 ++j;
                 if(i >= peaks1.length || j >= peaks2.length) {
@@ -288,7 +273,11 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             }
         }
 
-        return commonCounter;
+        return commonScore;
+    }
+
+    protected double scoreMatchedPeaks(PeakWithExplanation peak1, PeakWithExplanation peak2){
+        return 1;
     }
 
     private boolean hasMatch(String[] fragments1, String[] fragments2){
@@ -308,7 +297,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
 
-    private int countCommons(Comparable[] fragments1, Comparable[] fragments2) {
+    protected double scoreCommons(FragmentWithIndex[] fragments1, FragmentWithIndex[] fragments2) {
         int commonCounter = 0;
         int i = 0;
         int j = 0;
@@ -320,24 +309,30 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
             } else if(compare > 0) {
                 ++j;
             } else {
+                commonCounter += scoreMatchedFragments(fragments1[i], fragments2[j]);
                 ++i;
                 ++j;
-                ++commonCounter;
             }
         }
 
         return commonCounter;
     }
 
+    protected double scoreMatchedFragments(FragmentWithIndex fragment1, FragmentWithIndex fragment2){
+        return 1;
+    }
+
 
     class PeakWithExplanation implements Comparable<PeakWithExplanation>{
         String[] formulas;
         double mass;
+        double bestScore;
 
-        public PeakWithExplanation(String[] formulas, double mass) {
+        public PeakWithExplanation(String[] formulas, double mass, double bestScore) {
             this.formulas = formulas;
             Arrays.sort(this.formulas);
             this.mass = mass;
+            this.bestScore = bestScore;
         }
 
 
