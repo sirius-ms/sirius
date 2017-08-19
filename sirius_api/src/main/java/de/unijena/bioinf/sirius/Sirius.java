@@ -538,7 +538,7 @@ public class Sirius {
             final TreeScoring scoring = new TreeScoring();
             scoring.setOverallScore(0);
             scoring.addAdditionalScore(ISOTOPE_SCORE, pattern.getScore());
-            final FTree dummyTree = new FTree(pattern.getCandidate());
+            final FTree dummyTree = new FTree(experiment.getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(pattern.getCandidate()));
             dummyTree.setAnnotation(TreeScoring.class, scoring);
             dummyTree.getOrCreateLossAnnotation(Score.class);
             dummyTree.getOrCreateFragmentAnnotation(Score.class);
@@ -960,14 +960,25 @@ public class Sirius {
                 throw new RuntimeException("Please provide the parentmass of the measured compound");
             List<IsotopePattern> candidates = profile.isotopePatternAnalysis.deisotope(experiment, pinput.getMeasurementProfile());
             experiment.setIonMass(candidates.get(0).getMonoisotopicMass());
-            return deisotope ? candidates : Collections.<IsotopePattern>emptyList();
+            return deisotope ? filterIsotopes(candidates) : Collections.<IsotopePattern>emptyList();
         }
-        return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment,pinput.getMeasurementProfile()) : Collections.<IsotopePattern>emptyList();
+        return deisotope ? filterIsotopes(profile.isotopePatternAnalysis.deisotope(experiment,pinput.getMeasurementProfile())) : Collections.<IsotopePattern>emptyList();
+    }
+
+    /**
+     * check if at least one isotope pattern contains more than one peak and has a score above zero. Otherwise,
+     * omit isotopes.
+     */
+    private List<IsotopePattern> filterIsotopes(List<IsotopePattern> deisotope) {
+        for (IsotopePattern pattern : deisotope) {
+            if (pattern.getPattern().size()>1 && pattern.getScore()>0) return deisotope;
+        }
+        return Collections.emptyList();
     }
 
     protected void addIsoScore(HashMap<MolecularFormula, IsotopePattern> isoFormulas, FTree tree) {
         final TreeScoring sc = tree.getAnnotationOrThrow(TreeScoring.class);
-        final IsotopePattern pat = isoFormulas.get(tree.getRoot().getFormula());
+        final IsotopePattern pat = isoFormulas.get(tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()));
         if (pat != null) {
             sc.addAdditionalScore(ISOTOPE_SCORE, pat.getScore());
             tree.setAnnotation(IsotopePattern.class, pat);

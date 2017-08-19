@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -138,7 +139,7 @@ public class IonTreeUtils {
             for (Fragment g : childs) {
                 reduceSubtree(tree, iontype, adduct, g);
             }
-        } else {
+        } else if (vertex.getInDegree()>0){
             // if adduct is part of the loss, remove it from loss
             final MolecularFormula l = vertex.getIncomingEdge().getFormula().subtract(adduct);
             if (l.isAllPositiveOrZero()) {
@@ -148,8 +149,11 @@ public class IonTreeUtils {
                 // otherwise: delete whole subtree
                 tree.deleteSubtree(vertex);
             }
+        } else {
+            logger.warn("Cannot remove adduct from ion formula: " + vertex.getFormula() + " with adduct " + iontype.toString());
         }
     }
+    protected static Logger logger = LoggerFactory.getLogger(IonTreeUtils.class);
 
     private void setPrecursorToEachNode(FTree tree, Fragment f, final PrecursorIonType ionType) {
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
