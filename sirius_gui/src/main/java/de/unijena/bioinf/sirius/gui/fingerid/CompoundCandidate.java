@@ -49,6 +49,15 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
     protected final int rank, index;
     protected final String molecularFormulaString;
 
+    protected CompoundMatchHighlighter highlighter;
+
+    public void highlightInBackground() {
+        CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
+        synchronized (this) {
+            this.highlighter = h;
+        }
+    }
+
 
     public double getTanimotoScore() {
         return data.tanimotoScores[index];

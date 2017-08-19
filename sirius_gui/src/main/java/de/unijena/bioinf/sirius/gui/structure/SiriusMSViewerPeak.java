@@ -1,12 +1,13 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import de.unijena.bioinf.myxo.gui.msviewer.data.MolecularFormulaInformation;
-import de.unijena.bioinf.myxo.gui.msviewer.data.PeakInformation;
+
+import de.unijena.bioinf.sirius.gui.msviewer.data.MolecularFormulaInformation;
+import de.unijena.bioinf.sirius.gui.msviewer.data.PeakInformation;
 
 import java.util.Collections;
 import java.util.List;
 
-public class SiriusMSViewerPeak implements PeakInformation{
+public class SiriusMSViewerPeak implements PeakInformation {
 	
 	private double absInt, relInt, mass, sn;
 //	private 

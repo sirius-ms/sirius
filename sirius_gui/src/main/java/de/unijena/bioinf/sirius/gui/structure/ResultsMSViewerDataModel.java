@@ -140,6 +140,16 @@ public class ResultsMSViewerDataModel implements MSViewerDataModel {
 	}
 
 	@Override
+	public double minMz() {
+		return 0d;
+	}
+
+	@Override
+	public double maxMz() {
+		return 0;
+	}
+
+	@Override
 	public int getSize() {
 		if(selectedSpectrum==null)return 0;
 		return selectedSpectrum.getSize();

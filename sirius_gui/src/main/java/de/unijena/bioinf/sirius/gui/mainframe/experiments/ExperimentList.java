@@ -16,9 +16,10 @@ import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 
-import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -65,6 +66,28 @@ public class ExperimentList {
             @Override
             public void listChanged(final ListEvent<ExperimentContainer> listChanges) {
                 notifyListenerDataChange(listChanges);
+            }
+        });
+    }
+
+    public void orderById() {
+        Collections.sort(compoundList, new Comparator<ExperimentContainer>() {
+            @Override
+            public int compare(ExperimentContainer o1, ExperimentContainer o2) {
+                return o1.getGUIName().compareTo(o2.getGUIName());
+            }
+        });
+    }
+
+    public void orderByMass() {
+        Collections.sort(compoundList, new Comparator<ExperimentContainer>() {
+            @Override
+            public int compare(ExperimentContainer o1, ExperimentContainer o2) {
+                double mz1 = o1.getFocusedMass();
+                if (mz1 <= 0 || Double.isNaN(mz1)) mz1 = Double.POSITIVE_INFINITY;
+                double mz2 = o2.getFocusedMass();
+                if (mz2 <= 0 || Double.isNaN(mz2)) mz2 = Double.POSITIVE_INFINITY;
+                return Double.compare(mz1, mz2);
             }
         });
     }

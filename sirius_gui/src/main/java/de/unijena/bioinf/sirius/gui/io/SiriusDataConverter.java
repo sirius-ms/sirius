@@ -70,6 +70,9 @@ public class SiriusDataConverter {
         for (Spectrum<Peak> s : sirius.getMs2Spectra()) {
             c.getMs2Spectra().add(siriusSpectrumToMyxoSpectrum(s));
         }
+        if (sirius.getMergedMs1Spectrum()!=null) {
+            c.setCorrelatedSpectrum(siriusSpectrumToMyxoSpectrum(sirius.getMergedMs1Spectrum()));
+        }
         return c;
     }
 
@@ -104,7 +107,13 @@ public class SiriusDataConverter {
         for (CompactSpectrum cs : myxo.getMs1Spectra()) {
             exp.getMs1Spectra().add(myxoMs1ToSiriusMs1(cs));
         }
-        if (myxo.getMs1Spectra().size()>0) exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(exp.getMs1Spectra()));
+
+        if (myxo.getCorrelatedSpectrum()!=null) {
+            exp.setMergedMs1Spectrum(myxoMs1ToSiriusMs1(myxo.getCorrelatedSpectrum()));
+        } else if (myxo.getMs1Spectra().size()>0) {
+            exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(exp.getMs1Spectra()));
+        }
+
         for (CompactSpectrum cs : myxo.getMs2Spectra()) {
             exp.getMs2Spectra().add(myxoMs2ToSiriusMs2(cs, myxo.getDataFocusedMass()));
         }

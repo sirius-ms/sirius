@@ -2,6 +2,9 @@ package de.unijena.bioinf.sirius.gui.msviewer.data;
 
 
 public interface MSViewerDataModel {
+
+	public double minMz();
+	public double maxMz();
 	
 	int getSize();
 	

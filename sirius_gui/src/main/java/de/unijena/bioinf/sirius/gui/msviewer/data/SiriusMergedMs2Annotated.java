@@ -9,6 +9,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 public class SiriusMergedMs2Annotated extends SiriusSingleSpectrumAnnotated {
 
+    public SiriusMergedMs2Annotated(FTree tree, Ms2Experiment experiment, double minMz, double maxMz) {
+        super(tree, merge(experiment), minMz, maxMz);
+    }
+
     public SiriusMergedMs2Annotated(FTree tree, Ms2Experiment experiment) {
         super(tree, merge(experiment));
     }

@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FilebasedDatabase;
@@ -221,6 +222,9 @@ public class BackgroundComputation extends AbstractBean {
             final Sirius sirius= siriusPerProfile.get(container.profile);
             final SearchableDatabase searchableDatabase = container.searchableDatabase;
             sirius.getMs2Analyzer().setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
+            if (container.enableIsotopesInMs2) {
+                FragmentationPatternAnalysis.getByClassName(LimitNumberOfPeaksFilter.class, sirius.getMs2Analyzer().getPostProcessors()).setLimit(150);
+            }
             sirius.setProgress(new Progress() {
                 @Override
                 public void init(double maxProgress) {

@@ -2,6 +2,16 @@ package de.unijena.bioinf.sirius.gui.msviewer.data;
 
 public class DummySpectrumModel implements MSViewerDataModel{
     @Override
+    public double minMz() {
+        return 0;
+    }
+
+    @Override
+    public double maxMz() {
+        return 400d;
+    }
+
+    @Override
     public int getSize() {
         return 0;
     }
