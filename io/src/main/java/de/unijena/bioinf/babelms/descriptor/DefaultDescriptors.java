@@ -34,6 +34,7 @@ class DefaultDescriptors {
 
         registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
 
+        registry.put(FTree.class, UnregardedCandidatesUpperBound.class, new UnregardedCandidatesUpperBoundDescriptor());
     }
 
     private static class IonizationDescriptor implements Descriptor<Ionization> {
@@ -498,6 +499,32 @@ class DefaultDescriptors {
             }
             document.addToDictionary(dictionary, TOK, value);
 
+        }
+    }
+
+    private static class UnregardedCandidatesUpperBoundDescriptor implements Descriptor<UnregardedCandidatesUpperBound> {
+
+        @Override
+        public String[] getKeywords() {
+            return new String[]{"numberOfUnregardedCandidates", "lowestConsideredCandidateScore"};
+        }
+
+        @Override
+        public Class<UnregardedCandidatesUpperBound> getAnnotationClass() {
+            return UnregardedCandidatesUpperBound.class;
+        }
+
+        @Override
+        public <G, D, L> UnregardedCandidatesUpperBound read(DataDocument<G, D, L> document, D dictionary) {
+            final int numberOfUnregardedCandidates = (int)document.getIntFromDictionary(dictionary, "numberOfUnregardedCandidates");
+            final double lowestConsideredCandidateScore = document.getDoubleFromDictionary(dictionary, "lowestConsideredCandidateScore");
+            return new UnregardedCandidatesUpperBound(numberOfUnregardedCandidates, lowestConsideredCandidateScore);
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, UnregardedCandidatesUpperBound annotation) {
+            document.addToDictionary(dictionary, "numberOfUnregardedCandidates", annotation.getNumberOfUnregardedCandidates());
+            document.addToDictionary(dictionary, "lowestConsideredCandidateScore", annotation.getLowestConsideredCandidateScore());
         }
     }
 }
