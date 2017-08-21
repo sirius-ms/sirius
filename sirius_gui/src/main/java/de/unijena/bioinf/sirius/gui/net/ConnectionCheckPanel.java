@@ -1,7 +1,11 @@
 package de.unijena.bioinf.sirius.gui.net;
 
+import de.unijena.bioinf.chemdb.BioFilter;
+import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import org.apache.http.impl.client.CloseableHttpClient;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +33,7 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
         add(new JLabel("Connection to the internet (google.com)"), internet, 15, false);
         add(new JLabel("Connection to uni-jena.de"), jena, 5, false);
         add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
-        add(new JLabel("Connection to CSI:FingerID RESTful"), fingerID, 5, false);
+        add(new JLabel("Connection to CSI:FingerID REST API"),fingerID, 5, false);
 
 
         addVerticalGlue();

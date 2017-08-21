@@ -246,7 +246,7 @@ public class ProxyManager {
 
     public static boolean checkFingerID(CloseableHttpClient proxy) {
         return new RESTDatabase(null, BioFilter.ALL, DEBUG ? "http://localhost:8080/frontend" : null, proxy).testConnection();
-        //todo this test should be in the webapi
+        //todo this test should be in the webapi -> move api to cli?
     }
 
     public static boolean checkConnectionToUrl(final CloseableHttpClient proxy, String url) {

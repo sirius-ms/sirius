@@ -4,6 +4,7 @@ import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.net.ProxyManager;
+import org.apache.http.impl.client.CloseableHttpClient;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

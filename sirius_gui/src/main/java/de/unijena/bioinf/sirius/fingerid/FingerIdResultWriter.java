@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
@@ -19,7 +20,7 @@ public class FingerIdResultWriter extends DirectoryWriter {
     protected List<Scored<String>> topHits = new ArrayList<>();
 
     public FingerIdResultWriter(WritingEnvironment w) {
-        super(w);
+        super(w, ApplicationCore.VERSION_STRING);
     }
 
     @Override

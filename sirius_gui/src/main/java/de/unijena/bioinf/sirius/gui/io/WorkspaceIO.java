@@ -27,6 +27,9 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.fingerid.FingerIdResultReader;
+import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.projectspace.*;
@@ -47,7 +50,8 @@ public class WorkspaceIO {
         } else {
             env = new SiriusWorkspaceWriter(file);
         }
-        final DirectoryWriter w = new DirectoryWriter(env);
+        System.out.println("new io");
+        final FingerIdResultWriter w = new FingerIdResultWriter(env);
         for (ExperimentContainer c : containers) {
             final Ms2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(c);
             w.writeExperiment(new ExperimentResult(exp, c.getRawResults()));
@@ -62,7 +66,7 @@ public class WorkspaceIO {
         } else {
             env = new SiriusWorkspaceReader(file);
         }
-        final DirectoryReader reader = new DirectoryReader(env);
+        final FingerIdResultReader reader = new FingerIdResultReader(env);
 
         while (reader.hasNext()) {
             final ExperimentResult result = reader.next();
