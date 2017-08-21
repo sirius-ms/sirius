@@ -427,11 +427,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     }
 
     protected ProjectWriter getSiriusOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
-        return new DirectoryWriter(env);
+        return new DirectoryWriter(env, ApplicationCore.VERSION_STRING);
     }
 
     protected ProjectWriter getDirectoryOutputWriter(String sirius, DirectoryWriter.WritingEnvironment env) {
-        return new DirectoryWriter(env);
+        return new DirectoryWriter(env, ApplicationCore.VERSION_STRING);
     }
 
     protected DirectoryReader.ReadingEnvironment getWorkspaceReadingEnvironmentForSirius(String value) {
