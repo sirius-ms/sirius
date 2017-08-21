@@ -6,7 +6,11 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.*;
+import de.unijena.bioinf.sirius.gui.compute.JobLog;
+import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialogReturnValue;
+import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
@@ -26,7 +30,9 @@ import java.awt.dnd.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
 
@@ -238,14 +244,21 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
     }
 
+    protected static Pattern CANOPUS_PATTERN = Pattern.compile("canopus[^.]*\\.data(?:\\.gz)?", Pattern.CASE_INSENSITIVE);
     private void importDragAndDropFiles(List<File> rawFiles) {
-
+        rawFiles = new ArrayList<>(rawFiles);
         // entferne nicht unterstuetzte Files und suche nach CSVs
         // suche nach Sirius files
         final List<File> siriusFiles = new ArrayList<>();
-        for (File f : rawFiles) {
+        final Iterator<File> rawFileIterator = rawFiles.iterator();
+        while (rawFileIterator.hasNext()) {
+            final File f = rawFileIterator.next();
             if (f.getName().toLowerCase().endsWith(".sirius")) {
                 siriusFiles.add(f);
+                rawFileIterator.remove();
+            } else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
+                importCanopus(f);
+                rawFileIterator.remove();
             }
         }
         if (siriusFiles.size() > 0) {
@@ -297,6 +310,34 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 Workspace.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
+    }
+
+    private void importCanopus(final File f) {
+        final SwingWorker<Object,Object> worker = new SwingWorker<Object, Object>() {
+            @Override
+            protected Object doInBackground() throws Exception {
+                final JobLog.Job j = JobLog.getInstance().submit("Load CANOPUS", "Load CANOPUS prediction model");
+                try {
+                    getCsiFingerId().loadCanopus(f);
+                } catch (Exception e) {
+                    j.error(e.getMessage(), e);
+                    return null;
+                }
+                j.done();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                activateCanopus();
+            }
+        };
+        worker.execute();
+    }
+
+    private void activateCanopus() {
+        resultsPanel.enableCanopus();
     }
 
 

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.msviewer.data;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
@@ -9,10 +10,30 @@ public class SiriusSingleSpectrumModel implements MSViewerDataModel {
 
     protected final Spectrum<? extends Peak> spectrum;
     protected double scale;
+    protected double minMz, maxMz;
 
     public SiriusSingleSpectrumModel(Spectrum<? extends Peak> spectrum) {
+        this(spectrum, 0, 400d);
+        Range<Double> range = SiriusSingleSpectrumAnnotated.getVisibleRange(spectrum);
+        this.minMz = range.lowerEndpoint();
+        this.maxMz = range.upperEndpoint();
+    }
+
+    public SiriusSingleSpectrumModel(Spectrum<? extends Peak> spectrum, double minMz, double maxMz) {
         this.spectrum = spectrum;
         this.scale = Spectrums.getMaximalIntensity(spectrum);
+        this.minMz = minMz;
+        this.maxMz = maxMz;
+    }
+
+    @Override
+    public double minMz() {
+        return minMz;
+    }
+
+    @Override
+    public double maxMz() {
+        return maxMz;
     }
 
     @Override

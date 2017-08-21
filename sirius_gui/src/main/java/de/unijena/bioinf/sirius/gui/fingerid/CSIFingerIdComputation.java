@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
+import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.DatabaseException;
 import de.unijena.bioinf.chemdb.FilebasedDatabase;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -49,10 +50,7 @@ import org.slf4j.LoggerFactory;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.stream.JsonParser;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -92,6 +90,8 @@ public class CSIFingerIdComputation {
     private File directory;
     private boolean enabled;
     protected List<Runnable> enabledListeners = new ArrayList<>();
+
+    protected Canopus canopus;
 
     protected QueryPredictor pubchemConfidenceScorePredictor, bioConfidenceScorePredictor;
 
@@ -144,6 +144,32 @@ public class CSIFingerIdComputation {
         this.jobThread = new Thread(jobWorker);
         jobThread.start();
 
+    }
+
+    protected ReentrantLock readCanopusLock = new ReentrantLock();
+    public void loadCanopus(InputStream stream) throws IOException {
+        final Canopus canopus;
+        readCanopusLock.lock();
+        try {
+            canopus = Canopus.load(stream);
+        } finally {
+            readCanopusLock.unlock();
+        }
+        this.canopus = canopus;
+    }
+    public void loadCanopus(File file) throws IOException {
+        final Canopus canopus;
+        readCanopusLock.lock();
+        try {
+            canopus = Canopus.loadFromFile(file);
+        } finally {
+            readCanopusLock.unlock();
+        }
+        this.canopus = canopus;
+    }
+
+    public Canopus getCanopus() {
+        return canopus;
     }
 
     public List<Runnable> getEnabledListeners() {
