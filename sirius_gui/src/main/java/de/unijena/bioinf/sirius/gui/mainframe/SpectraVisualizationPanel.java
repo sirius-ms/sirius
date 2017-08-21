@@ -2,14 +2,14 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.configs.Buttons;
+import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanelListener;
 import de.unijena.bioinf.sirius.gui.msviewer.data.ExperimentContainerDataModel;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
-import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 
 import javax.swing.*;
@@ -131,7 +131,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			this.zoomOutMI.setEnabled(false);
 			java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
 			java.util.List<CompactSpectrum> ms2 = ec.getMs2Spectra();
-			if (!(ms1 == null || ms1.isEmpty())) {
+			if (!(ms1 == null || ms1.isEmpty()) || ec.getCorrelatedSpectrum()!=null) {
 				cbModel.addElement(MS1_DISPLAY);
 				hasMs1 = true;
 			}

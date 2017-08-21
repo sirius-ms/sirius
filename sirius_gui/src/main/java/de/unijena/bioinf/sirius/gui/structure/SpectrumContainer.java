@@ -1,19 +1,21 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import de.unijena.bioinf.myxo.gui.msviewer.data.MSViewerDataModel;
-import de.unijena.bioinf.myxo.gui.msviewer.data.PeakInformation;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.sirius.gui.msviewer.data.MSViewerDataModel;
+import de.unijena.bioinf.sirius.gui.msviewer.data.PeakInformation;
 
 import java.util.TreeMap;
 
-public class SpectrumContainer implements MSViewerDataModel{
+public class SpectrumContainer implements MSViewerDataModel {
 
 	private CompactSpectrum sp;
 	
 	private TreeMap<Double,Integer> massToIndex;
 	
 	private SiriusMSViewerPeak[] peaks;
-	
+
+	protected double maxMass;
+
 	public SpectrumContainer(CompactSpectrum sp) {
 		this.sp = sp;
 		
@@ -21,10 +23,13 @@ public class SpectrumContainer implements MSViewerDataModel{
 		
 		TreeMap<Double,SiriusMSViewerPeak> map = new TreeMap<>();
 		double maxInt = 0;
+		maxMass = 0d;
 		for(int i=0;i<sp.getSize();i++){
 			SiriusMSViewerPeak peak = new SiriusMSViewerPeak();
 			peak.setMass(sp.getMass(i));
 			peak.setAbsoluteIntensity(sp.getAbsoluteIntensity(i));
+			peak.setSn(sp.getSignalToNoise(i));
+			maxMass = Math.max(peak.getMass(), maxMass);
 			if(maxInt<peak.getAbsoluteIntensity()) maxInt = peak.getAbsoluteIntensity();
 			if(map.containsKey(peak.getMass())){
 				if(map.get(peak.getMass()).getAbsoluteIntensity()<peak.getAbsoluteIntensity()){
@@ -116,6 +121,16 @@ public class SpectrumContainer implements MSViewerDataModel{
 //	public double getSignalNoise(int index) {
 //		return peaks[index].getSignalToNoise();
 //	}
+
+	@Override
+	public double minMz() {
+		return 0;
+	}
+
+	@Override
+	public double maxMz() {
+		return maxMass;
+	}
 
 	@Override
 	public int getSize() {

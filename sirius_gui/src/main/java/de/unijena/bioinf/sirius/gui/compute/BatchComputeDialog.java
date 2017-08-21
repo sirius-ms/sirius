@@ -32,6 +32,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.myxo.structure.DefaultCompactPeak;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
@@ -251,7 +252,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         } else if (e.getSource() == elementAutoDetect) {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             ExperimentContainer ec = compoundsToProcess.get(0);
-            if (!ec.getMs1Spectra().isEmpty()) {
+            if (!ec.getMs1Spectra().isEmpty() || ec.getCorrelatedSpectrum()!=null) {
                 MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
@@ -407,6 +408,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         Peak bestDataIon = null;
         final Deviation dev = new Deviation(10);
         final double focusedMass = ec.getDataFocusedMass();
+        CompactPeak focMass = focusedMass<=0 ? null : new DefaultCompactPeak(focusedMass, 0d,0d,0d);
+        if (focusedMass>0) {
+            masses.add(focMass);
+            bestDataIon = focMass;
+        }
         if (!ms1Spectra.isEmpty()) {
             useMS1 = true;
             CompactSpectrum sp = ms1Spectra.get(0);
@@ -418,6 +424,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 if (focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) {
                     if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
                         bestDataIon = sp.getPeakAt(i);
+                if (focusedMass > 0 && dev.inErrorWindow(sp.getPeak(i).getMass(), focusedMass)) {
+                    if (bestDataIon == null || sp.getPeak(i).getAbsoluteIntensity() > bestDataIon.getAbsoluteIntensity())
+                        bestDataIon = sp.getPeak(i);
+                    masses.remove(focMass);
+                    focMass = null;
                 }
                 masses.add(sp.getPeakAt(i));
             }
@@ -502,7 +513,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (masses.isEmpty()) autoDetectFM.setEnabled(false);
         JButton expFM = new JButton("File value");
         expFM.addActionListener(this);
-        if (bestDataIon == null) {
+        if (focMass!=null) {
+            box.setSelectedItem(focMass);
+        } else if (bestDataIon == null) {
             expFM.setEnabled(false);
             if (masses.isEmpty()) {
                 box.setSelectedItem("");
