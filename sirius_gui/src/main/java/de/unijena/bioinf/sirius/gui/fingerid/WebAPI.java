@@ -156,16 +156,16 @@ public class WebAPI implements Closeable {
         return null;
     }
 
-    public static URIBuilder getFingerIdURI(String path) {
+    public static URIBuilder getFingerIdURI(String path) throws URISyntaxException {
         if (path == null)
             path = "";
         URIBuilder b;
         if (ProxyManager.DEBUG) {
             b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
-            b = b.setPort(8080).setPath("/frontend" + path);
+            b = b.setPort(80).setPath("/frontend" + path);
         } else {
-            b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost(FINGERID_WEB_API); //todo back to https when we have a key
-            b = b.setPort(8080).setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path); //todo back to 443 later
+            b = new URIBuilder(FINGERID_WEB_API);
+            b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path);
         }
         return b;
     }
