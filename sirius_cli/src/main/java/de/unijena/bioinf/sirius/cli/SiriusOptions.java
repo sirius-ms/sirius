@@ -122,4 +122,7 @@ public interface SiriusOptions {
     @Option(shortName = "f", longName = {"guession"}, description = "specifies a list of possible ionizations/adducts, e.g. '[M]+,[M+H]+,[M+Na]+,[M+K]+'. Sirius tries to guess possible ionizations by mass differences in the MS1. Using only '[M]+,[M+H]+' will have no effect because of isotope peaks.", defaultToNull = true)
     List<String> getPossibleIonizations();
 
+    @Option(longName = "maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultToNull = true)
+    Double getMaxMz();
+
 }

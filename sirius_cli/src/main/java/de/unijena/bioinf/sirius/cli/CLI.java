@@ -673,6 +673,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 }
 
                 private Iterator<Ms2Experiment> fetchNext() {
+                    start:
                     while (true) {
                         if (experimentIterator==null || !experimentIterator.hasNext()) {
                             if (fileIter.hasNext()) {
@@ -687,6 +688,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                                 }
                             } else return null;
                         } else {
+                            Ms2Experiment experiment = experimentIterator.next();
+                            if (options.getMaxMz()!=null){
+                                //skip high-mass compounds
+                                if (experiment.getIonMass()>options.getMaxMz()) continue start;
+                            }
                             instances.add(new Instance(experimentIterator.next(), currentFile));
                             return experimentIterator;
                         }
