@@ -85,10 +85,6 @@ public class Zodiac {
 
 
 //        //reactions
-//        int stepsize = 2; //low for testing purposes
-//        Reaction[] reactions = parseReactions(stepsize);
-            //all possible netto changes of MolecularFormulas using on of the reactions.
-
             Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
             Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
             for (Reaction reaction : reactions) {
@@ -102,7 +98,9 @@ public class Zodiac {
 
 //            //// TODO: 24/05/17
             boolean ignoreSilicon = true;
-            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidates(workSpacePath, Paths.get(options.getSpectraFile()), maxCandidates, workerCount, ignoreSilicon);
+            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidates(workSpacePath, Paths.get(options.getSpectraFile()), Integer.MAX_VALUE, workerCount, ignoreSilicon);
+
+
 
             //changed
 //            Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(input, maxCandidates);
@@ -114,6 +112,7 @@ public class Zodiac {
             if (libraryHitsFile!=null) GibbsSamplerMain.parseLibraryHits(libraryHitsFile, Paths.get(options.getSpectraFile()),  candidatesMap);
             setKnownCompounds(candidatesMap, netSingleReactionDiffs);
 
+            GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
 
 
             String[] ids = getIdsOfKnownEmptyCompounds(candidatesMap, input);
@@ -128,11 +127,10 @@ public class Zodiac {
             NodeScorer[] nodeScorers;
             //todo useful score
             boolean useLibraryHits = (libraryHitsFile!=null);
-            double libraryScore = 1d;
+            double libraryScore = 5d;//todo which bias!?
             if (useLibraryHits){
-
                 //todo fix LibraryHitScorer!!!!!!!!!!!
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
+                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
                 System.out.println("use LibraryHitScorer");
             } else {
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
@@ -172,10 +170,10 @@ public class Zodiac {
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
 
-            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, options.getSeparateRuns());
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, options.getSeparateRuns());
 
             //validate Graph
-            Graph<FragmentsCandidate> graph = gibbsParallel.getGraph();
+            Graph<FragmentsCandidate> graph = twoPhaseGibbsSampling.getGraph();
 
             GraphValidationMessage validationMessage = graph.validate();
 
@@ -186,15 +184,13 @@ public class Zodiac {
                 LoggerFactory.getLogger(this.getClass()).warn(validationMessage.getMessage());
             }
 
-
             System.out.println("start gibbs sampling");
-            gibbsParallel.iteration(options.getIterationSteps(), options.getBurnInSteps());
+            twoPhaseGibbsSampling.run(options.getIterationSteps(), options.getBurnInSteps());
 
 
             Scored<FragmentsCandidate>[][] bestInitial = getBestInitialAssignments(ids, candidatesMap);
 
-            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
-            //todo this or rather Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
+            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
 
             writeOutput(ids, bestInitial, result, graph, outputPath.resolve("zodiac_summary.csv"));
             writeSpectra(ids, result, outputPath);
