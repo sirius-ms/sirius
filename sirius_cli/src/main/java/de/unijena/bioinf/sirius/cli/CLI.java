@@ -597,7 +597,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                                 //skip high-mass compounds
                                 if (experiment.getIonMass()>options.getMaxMz()) continue start;
                             }
-                            instances.add(new Instance(experimentIterator.next(), currentFile));
+                            instances.add(new Instance(experiment, currentFile));
                             return experimentIterator;
                         }
                     }
