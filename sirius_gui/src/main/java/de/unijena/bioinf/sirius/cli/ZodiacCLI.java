@@ -71,7 +71,10 @@ public class ZodiacCLI extends FingeridApplication {
 
     @Override
     public void setup() {
-        if (!isZodiac()) super.setup();
+        if (!isZodiac()){
+            super.setup();
+            return;
+        }
         Path output = Paths.get(zodiacOptions.getOutputPath());
         if (!Files.exists(output)){
             try {
@@ -84,7 +87,10 @@ public class ZodiacCLI extends FingeridApplication {
 
     @Override
     public void validate() {
-        if (!isZodiac()) super.validate();
+        if (!isZodiac()){
+            super.validate();
+            return;
+        }
         Path output = Paths.get(zodiacOptions.getOutputPath());
         if (!Files.isDirectory(output) && Files.exists(output)){
             LoggerFactory.getLogger(this.getClass()).error("the output must be a directory or non-existing.");
