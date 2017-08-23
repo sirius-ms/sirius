@@ -581,7 +581,7 @@
         "threshold": 0.002
       },
       {
-        "limit": 60,
+        "limit": 100,
         "$name": "LimitNumberOfPeaksFilter"
       }
     ]
