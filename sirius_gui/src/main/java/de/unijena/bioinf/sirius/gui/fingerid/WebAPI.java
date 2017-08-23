@@ -30,6 +30,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.utils.PROPERTIES;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
@@ -51,7 +52,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.slf4j.LoggerFactory;
 
 import javax.json.Json;

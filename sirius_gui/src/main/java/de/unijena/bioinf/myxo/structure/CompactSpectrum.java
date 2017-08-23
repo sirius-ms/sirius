@@ -4,9 +4,12 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.BasicSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
-public class CompactSpectrum {
+import java.util.Iterator;
+
+public class CompactSpectrum implements Spectrum<Peak>, OrderedSpectrum {
 	
 //	private double[] masses, intensities;
 	private CollisionEnergy colEnergy;
@@ -141,9 +144,29 @@ public class CompactSpectrum {
 		return spectrum.getIntensityAt(index)/this.maxInt;
 	}
 
-//	@Override
+	@Override
+	public double getMzAt(int index) {
+		return spectrum.getMzAt(index);
+	}
+
+	@Override
+	public double getIntensityAt(int index) {
+		return spectrum.getIntensityAt(index);
+	}
+
+	//	@Override
 	public Peak getPeakAt(int index) {
 		return spectrum.getPeakAt(index);
+	}
+
+	@Override
+	public int size() {
+		return spectrum.size();
+	}
+
+	@Override
+	public Iterator<Peak> iterator() {
+		return spectrum.iterator();
 	}
 
 //	@Override

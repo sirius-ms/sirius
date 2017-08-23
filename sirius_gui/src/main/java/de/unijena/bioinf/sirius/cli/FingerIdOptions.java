@@ -2,6 +2,8 @@ package de.unijena.bioinf.sirius.cli;
 
 import com.lexicalscope.jewel.cli.Option;
 
+import java.io.File;
+
 public interface FingerIdOptions extends SiriusGUIOptions {
 
     @Option(shortName = "d", defaultValue = "all", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
@@ -15,6 +17,10 @@ public interface FingerIdOptions extends SiriusGUIOptions {
 
     @Option(longName = "generate-custom-db", description = "EXPERIMENTAL FEATURE: generate a custom compound database. Ignore all other options. Import compounds from all given files. Usage: sirius --generate-custom-db [DATABASENAME] [INPUTFILE1] [INPUTFILE2] ... ", defaultToNull = true)
     String getGeneratingCompoundDatabase();
+
+    @Option(longName = "experimental-canopus", hidden = true, defaultToNull = true)
+    File getExperimentalCanopus();
+
 
     /*
     @Option(description = "output predicted fingerprint")
