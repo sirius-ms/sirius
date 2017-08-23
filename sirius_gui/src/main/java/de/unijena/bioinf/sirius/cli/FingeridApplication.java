@@ -3,14 +3,12 @@ package de.unijena.bioinf.sirius.cli;
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
+import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -21,6 +19,7 @@ import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.sirius.fingerid.SearchableDbOnDisc;
 import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
+import de.unijena.bioinf.sirius.gui.fingerid.CanopusResult;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
@@ -81,7 +80,11 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             return;
         }
         fingeridEnabled = options.isFingerid();
-        if (fingeridEnabled) initFingerBlast();
+        if (fingeridEnabled) {
+            initFingerBlast();
+            initCanopus();
+        }
+
         try {
             super.compute();
         } finally {
@@ -134,6 +137,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final HashMap<MolecularFormula, ProbabilityFingerprint> predictedFingerprints = new HashMap<>();
                 for (int k = 0; k < filteredResults.size(); ++k) {
                     final ProbabilityFingerprint fp = futures.get(k).get();
+                    if (canopus != null) handleCanopus(filteredResults.get(k), fp);
                     final List<Scored<FingerprintCandidate>> cds = fingerblast.search(filteredResults.get(k).getMolecularFormula(), fp);
                     if (bioFilter != BioFilter.ALL) {
                         final Iterator<Scored<FingerprintCandidate>> iter = cds.iterator();
@@ -230,6 +234,20 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         }
     }
 
+    private void handleCanopus(IdentificationResult identificationResult, ProbabilityFingerprint fp) {
+        if (canopus==null) return;
+        println("Predict compound categories: \nid\tname\tprobability");
+        final ProbabilityFingerprint fingerprint = canopus.predictClassificationFingerprint(identificationResult.getMolecularFormula(), fp);
+        for (FPIter category : fingerprint.iterator()) {
+            if (category.getProbability()>=0.333) {
+                ClassyfireProperty prop = ((ClassyfireProperty)category.getMolecularProperty());
+                println(prop.getChemontIdentifier() + "\t"  + prop.getName() + "\t" + category.getProbability());
+            }
+        }
+        println("");
+        identificationResult.setAnnotation(CanopusResult.class, new CanopusResult(fingerprint));
+    }
+
     private String escape(String name) {
         if (name == null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
@@ -248,6 +266,10 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         super.validate();
         if (options.getFingerIdDb() != null && !options.isFingerid()) {
             LoggerFactory.getLogger(this.getClass()).error("--fingerid_db defines the database CSI:FingerId should search in. This option makes only sense when used together with --fingerid. Use --db for setting up the database in which SIRIUS should search for molecular formulas.");
+            System.exit(1);
+        }
+        if (options.getExperimentalCanopus() != null && !options.isFingerid()) {
+            LoggerFactory.getLogger(this.getClass()).error("Cannot predict compound categories with CSI:FingerID is disabled. Please enable CSI:FingerID with --fingerid option.");
             System.exit(1);
         }
     }
@@ -338,6 +360,17 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             System.exit(1);
         }
         progress.info("CSI:FingerId initialization done.");
+    }
+
+    protected Canopus canopus = null;
+    public void initCanopus() {
+        if (options.getExperimentalCanopus()!=null) {
+            try {
+                this.canopus = Canopus.loadFromFile(options.getExperimentalCanopus());
+            } catch (IOException e) {
+                System.err.println("Cannot load given canopus model: " + e.getMessage());
+            }
+        }
     }
 
     // bad hack

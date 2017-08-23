@@ -28,7 +28,6 @@ public class SpectrumContainer implements MSViewerDataModel {
 			SiriusMSViewerPeak peak = new SiriusMSViewerPeak();
 			peak.setMass(sp.getMass(i));
 			peak.setAbsoluteIntensity(sp.getAbsoluteIntensity(i));
-			peak.setSn(sp.getSignalToNoise(i));
 			maxMass = Math.max(peak.getMass(), maxMass);
 			if(maxInt<peak.getAbsoluteIntensity()) maxInt = peak.getAbsoluteIntensity();
 			if(map.containsKey(peak.getMass())){

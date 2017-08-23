@@ -223,7 +223,7 @@ public class BackgroundComputation extends AbstractBean {
             final SearchableDatabase searchableDatabase = container.searchableDatabase;
             sirius.getMs2Analyzer().setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
             if (container.enableIsotopesInMs2) {
-                FragmentationPatternAnalysis.getByClassName(LimitNumberOfPeaksFilter.class, sirius.getMs2Analyzer().getPostProcessors()).setLimit(150);
+                FragmentationPatternAnalysis.getByClassName(LimitNumberOfPeaksFilter.class, sirius.getMs2Analyzer().getPostProcessors()).setLimit(100);
             }
             sirius.setProgress(new Progress() {
                 @Override

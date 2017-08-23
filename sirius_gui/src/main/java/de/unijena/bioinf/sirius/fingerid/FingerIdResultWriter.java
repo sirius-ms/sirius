@@ -1,23 +1,31 @@
 package de.unijena.bioinf.sirius.fingerid;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
+import de.unijena.bioinf.ChemistryBase.fp.FPIter;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
+import de.unijena.bioinf.sirius.gui.fingerid.CanopusResult;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
+import gnu.trove.map.hash.TIntFloatHashMap;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class FingerIdResultWriter extends DirectoryWriter {
 
     protected List<Scored<String>> topHits = new ArrayList<>();
+
+    protected TIntFloatHashMap canopusSummary = new TIntFloatHashMap(2048, 0.75f, -1,-1);
+    protected FingerprintVersion canopusVersion = null;
 
     public FingerIdResultWriter(WritingEnvironment w) {
         super(w, ApplicationCore.VERSION_STRING);
@@ -38,14 +46,56 @@ public class FingerIdResultWriter extends DirectoryWriter {
                 }
             }
             W.leaveDirectory();
+            if (hasCanopus(results)) {
+                W.enterDirectory("canopus");
+                for (IdentificationResult result : results) {
+                    final CanopusResult r = result.getAnnotationOrNull(CanopusResult.class);
+                    if (r != null)
+                        writeCanopus(result, r);
+                }
+                W.leaveDirectory();
+            }
             // and CSI:FingerId summary
             writeFingerIdResults(er, results, frs);
         }
     }
 
+    private void writeCanopus(final IdentificationResult result, final CanopusResult r) throws IOException {
+        write(makeFileName(result) + ".fpt", new Do() {
+            @Override
+            public void run(Writer w) throws IOException {
+                /*
+                if (canopusSummary.isEmpty()) {
+                    for (FPIter iter : r.getCanopusFingerprint()) {
+                        canopusSummary.adjustValue(iter.getIndex(), 0);
+                    }
+                    canopusVersion = r.getCanopusFingerprint().getFingerprintVersion();
+                }
+                */
+                for (FPIter iter : r.getCanopusFingerprint()) {
+                    w.write(String.format(Locale.US, "%.2f\n", iter.getProbability()));
+                    /*
+                    float prob = (float)iter.getProbability();
+                    if (prob < 0.1f) prob = 0f;
+                    if (prob > 0.9f) prob = 1f;
+                    if (prob > 0f)
+                        canopusSummary.adjustOrPutValue(iter.getIndex(), prob, prob);
+                        */
+                }
+            }
+        });
+
+    }
+
     private boolean hasFingerId(List<IdentificationResult> results) {
         for (IdentificationResult r : results) {
             if (r.getAnnotationOrNull(FingerIdResult.class)!=null) return true;
+        }
+        return false;
+    }
+    private boolean hasCanopus(List<IdentificationResult> results) {
+        for (IdentificationResult r : results) {
+            if (r.getAnnotationOrNull(CanopusResult.class)!=null) return true;
         }
         return false;
     }
@@ -74,8 +124,39 @@ public class FingerIdResultWriter extends DirectoryWriter {
                 }
             });
         }
+        /*
+        if (canopusSummary.size()>0) {
+            writeCanopusSummary();
+        }
+        */
     }
-
+/*
+    private void writeCanopusSummary() throws IOException {
+        final StringWriter string = new StringWriter(2048);
+        JsonWriter writer = new JsonWriter(string);
+        writer.beginObject();
+        write("summary_canopus.csv", new Do() {
+            @Override
+            public void run(Writer w) throws IOException {
+                w.write("index\tid\tname\texpectedFrequency\tdescription\n");
+                final int[] indizes = canopusSummary.keys();
+                Arrays.sort(indizes);
+                int k=0;
+                for (int index : indizes) {
+                    final ClassyfireProperty prop = (ClassyfireProperty) canopusVersion.getMolecularProperty(index);
+                    w.write(String.format(Locale.US, "%d\tCHEMONT:%07d\t%s\t%.1f\t%s\n", k, prop.getChemOntId(), prop.getName(), canopusSummary.get(index), prop.getDescription() ));
+                }
+            }
+        });
+        write("summary_canopus.html", new Do() {
+            @Override
+            public void run(Writer w) throws IOException {
+                final String html = FileUtils.read(FileUtils.resource(FingerIdResultWriter.class, "/sirius/canopus.html.gz"));
+                html.replace("null;//{{INSERT JSON DATA HERE}}//", json));
+            }
+        });
+    }
+*/
     private void writeFingerIdResults(ExperimentResult er,  List<IdentificationResult> results, final List<FingerIdResult> frs) throws IOException {
         final StringWriter w = new StringWriter(128);
         new CSVExporter().exportFingerIdResults(w, frs);
