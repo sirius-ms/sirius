@@ -246,6 +246,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             } else {
                 warn("Unknown option '>" + optionName + "'");
+                fields.put(optionName, value);
             }
             return false;
         }

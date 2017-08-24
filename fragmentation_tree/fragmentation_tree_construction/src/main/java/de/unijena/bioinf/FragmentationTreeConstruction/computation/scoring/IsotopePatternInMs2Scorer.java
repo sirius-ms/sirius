@@ -36,7 +36,7 @@ public class IsotopePatternInMs2Scorer {
 
 
     @Parameter
-    protected double baselineAbsoluteIntensity = 300;
+    protected double baselineAbsoluteIntensity = 500;
 
     public double getBaselineAbsoluteIntensity() {
         return baselineAbsoluteIntensity;
@@ -47,7 +47,11 @@ public class IsotopePatternInMs2Scorer {
     }
 
     public void score(ProcessedInput input, FGraph graph) {
-
+        final List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>(input.getExperimentInformation().getMs2Spectra());
+        for (int k=0; k < ms2Spectra.size(); ++k) {
+            ms2Spectra.set(k, new MutableMs2Spectrum(ms2Spectra.get(k)));
+            Spectrums.sortSpectrumByMass(ms2Spectra.get(k));
+        }
         final Deviation peakDev = input.getMeasurementProfile().getAllowedMassDeviation();
         final Deviation shiftDev = peakDev.divide(2);
         // 1. for each fragment compute Isotope Pattern and match them against raw spectra
@@ -62,20 +66,16 @@ public class IsotopePatternInMs2Scorer {
         // find patterns and score
 
         //////////
-        // TODO: ONLY FOR QTOF!!!!
-        final double sigmaAbs;
+        final double sigmaAbs; // absolute error depending relatively on the base peak
         {
-            double sig = 0.05;
+            double abs = 0d;
+            double sig = 0.0025;
             for (int k=0; k < input.getMergedPeaks().size(); ++k) {
-                final ProcessedPeak p = input.getMergedPeaks().get(0);
+                final ProcessedPeak p = input.getMergedPeaks().get(k);
                 if (p.isSynthetic()) continue;
-                double abs = 0d;
                 for (Peak ap : p.getOriginalPeaks()) abs = Math.max(ap.getIntensity(),abs);
-                final double scale = p.getRelativeIntensity()/abs;
-                sig = baselineAbsoluteIntensity*scale;
-                break;
             }
-            sigmaAbs = sig;
+            sigmaAbs = abs*sig;
         }
 
         final MolecularFormula ms1Formula = graph.getRoot().getChildren(0).getFormula();
@@ -85,7 +85,7 @@ public class IsotopePatternInMs2Scorer {
         if (isolationWindow!=null){
             ms1Pattern = isolationWindow.transform(generator.simulatePattern(ms1Formula, ion), input.getExperimentInformation().getIonMass());
         } else {
-            ms1Pattern = findMs1PatternInMs2(input, graph, generator, ion);
+            ms1Pattern = findMs1PatternInMs2(input, graph, generator, ms2Spectra, ion);
         }
 
 
@@ -130,8 +130,10 @@ public class IsotopePatternInMs2Scorer {
                         continue;
                     }
                     final SimpleSpectrum foundPattern = extractPattern(peakDev, shiftDev, simulated, msms, maxIntensity, index);
+                    if (foundPattern.size() <= 1) continue ;
                     final double[] pkscores = new double[foundPattern.size()];
-                    double score = scorePatternPeakByPeak(simulated, foundPattern, pkscores, peakAno.get(f).getRelativeIntensity(), sigmaAbs);
+                    final double baselineAbs = Math.max(baselineAbsoluteIntensity/msms.getIntensityAt(index), sigmaAbs/msms.getIntensityAt(index));
+                    double score = scorePatternPeakByPeak(simulated, foundPattern, pkscores, peakAno.get(f).getRelativeIntensity(), baselineAbs);
                     if (score <= 0) continue ;
                     ids.add(msmsId);
                     scores.add(score);
@@ -240,7 +242,7 @@ public class IsotopePatternInMs2Scorer {
     }
 
 
-    private SimpleSpectrum findMs1PatternInMs2(ProcessedInput input, FGraph graph, FastIsotopePatternGenerator generator, Ionization ion) {
+    private SimpleSpectrum findMs1PatternInMs2(ProcessedInput input, FGraph graph, FastIsotopePatternGenerator generator, List<MutableMs2Spectrum> ms2Spectra, Ionization ion) {
         SimpleSpectrum ms1Pattern;// find MS1 spectrum
         final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
         if (USE_FRAGMENT_ISOGEN) {
@@ -249,7 +251,7 @@ public class IsotopePatternInMs2Scorer {
             double intens = 0d;
 
             int k=-1;
-            for (Ms2Spectrum spec : input.getExperimentInformation().getMs2Spectra()) {
+            for (Ms2Spectrum spec : ms2Spectra) {
                 ++k;
                 final int parent = Spectrums.mostIntensivePeakWithin(spec, input.getExperimentInformation().getIonMass(), dev);
                 if (parent<0) continue;
@@ -289,23 +291,35 @@ public class IsotopePatternInMs2Scorer {
         double score = 0d;
         double bestScore = 0d;
         // adjust sigmaAbs to relative intensity
-        sigmaAbs = Math.min(0.5, sigmaAbs * (1d/relativeIntensityOfMono));
+        sigmaAbs = Math.min(0.05, sigmaAbs);// * (1d/relativeIntensityOfMono));
         final double absDiff = new Deviation(20).absoluteFor(simulated.getMzAt(0));
         double lastPenalty = 0d;
 
         final double normMz = Math.log(Erf.erfc((1.5*absDiff)/(Math.sqrt(2)*absDiff)));
-
-        for (int k=1, n = Math.min(foundPattern.size(), simulated.size()); k < n; ++k) {
+        int foundIndex = 1;
+        for (int k=1, n = simulated.size(); k < n; ++k) {
+            if (foundIndex >= foundPattern.size()) break;
+            if (k < simulated.size() && foundPattern.getMzAt(foundIndex) > (0.25+simulated.getMzAt(k))) {
+                final double intensScore = scoreLogOddIntensity(0d, simulated.getIntensityAt(k), 0.15, sigmaAbs)*MULTIPLIER;
+                final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*sigmaAbs)));
+                score += intensScore ;//+ 3*Math.min(1,relativeIntensityOfMono)*(foundPattern.getIntensityAt(k)/foundPattern.getIntensityAt(0));
+                if (score+penalty > bestScore) bestScore = (score+penalty);
+                scores[foundIndex] += score + (penalty-lastPenalty);
+                lastPenalty = penalty;
+                continue;
+            }
+            if (foundIndex>=foundPattern.size()) break;
             intensityLeft -= simulated.getIntensityAt(k);
             // mass dev score
-            final double mz1Score = Math.log(Erf.erfc(Math.abs(simulated.getMzAt(k) - foundPattern.getMzAt(k))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
-            final double mz2Score = Math.log(Erf.erfc(Math.abs((simulated.getMzAt(k)-simulated.getMzAt(0)) - (foundPattern.getMzAt(k)-foundPattern.getMzAt(0)))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
-            final double intensScore = scoreLogOddIntensity(foundPattern.getIntensityAt(k), simulated.getIntensityAt(k), 0.1, sigmaAbs)*MULTIPLIER;
-            final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*Math.max(sigmaAbs, 0.05))));
+            final double mz1Score = Math.log(Erf.erfc(Math.abs(simulated.getMzAt(k) - foundPattern.getMzAt(foundIndex))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
+            final double mz2Score = Math.log(Erf.erfc(Math.abs((simulated.getMzAt(k)-simulated.getMzAt(0)) - (foundPattern.getMzAt(foundIndex)-foundPattern.getMzAt(0)))/(Math.sqrt(2)*absDiff)))*MULTIPLIER;
+            final double intensScore = scoreLogOddIntensity(foundPattern.getIntensityAt(foundIndex), simulated.getIntensityAt(k), 0.15, sigmaAbs)*MULTIPLIER;
+            final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*sigmaAbs)));
             score += (Math.max(mz1Score,mz2Score)-normMz) + intensScore ;//+ 3*Math.min(1,relativeIntensityOfMono)*(foundPattern.getIntensityAt(k)/foundPattern.getIntensityAt(0));
             if (score+penalty > bestScore) bestScore = (score+penalty);
-            scores[k] = score + (penalty-lastPenalty);
+            scores[foundIndex] += score + (penalty-lastPenalty);
             lastPenalty = penalty;
+            ++foundIndex;
         }
         return bestScore;
     }
