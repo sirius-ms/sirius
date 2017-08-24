@@ -179,7 +179,7 @@ public class Spectrums {
             int bestIndex = spec.size();
             for (int k=0; k < spec.size(); ++k) {
                 double dist = spec.getMzAt(k)-mass;
-                if (dist >= 0 && dist < smallestDist) {
+                if (dist >= 1e-12 && dist < smallestDist) {
                     smallestDist = dist;
                     bestIndex = k;
                 }

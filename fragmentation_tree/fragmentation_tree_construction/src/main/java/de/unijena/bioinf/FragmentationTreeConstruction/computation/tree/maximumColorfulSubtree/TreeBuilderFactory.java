@@ -36,7 +36,7 @@ public final class TreeBuilderFactory {
         }
         GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version");
         GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version");
-        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK v" + GLPK_VERSION + ", " + "Gurobi v" + GUROBI_VERSION;
+        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or similar)";
     }
 
     private static TreeBuilderFactory INSTANCE = null;
