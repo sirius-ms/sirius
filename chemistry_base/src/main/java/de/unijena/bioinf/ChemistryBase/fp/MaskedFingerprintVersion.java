@@ -151,6 +151,12 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         } else return false;
     }
 
+    public MaskedFingerprintVersion invert() {
+        final BitSet copy = (BitSet) mask.clone();
+        copy.flip(0, copy.size());
+        return new MaskedFingerprintVersion(innerVersion, copy);
+    }
+
     public Builder modify() {
         return new Builder(innerVersion, mask);
     }
@@ -166,6 +172,11 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
             this.version = version;
             this.bitSet = new BitSet(version.size());
             enableAll();
+        }
+
+        public Builder invert() {
+            this.bitSet.flip(0, bitSet.size());
+            return this;
         }
 
         public Builder set(int index, boolean value) {

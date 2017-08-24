@@ -29,6 +29,8 @@ import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -37,9 +39,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphBu
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.GraphReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SimpleReduction;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.graph.SubFormulaGraphBuilder;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
@@ -358,9 +358,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // now search the parent peak. If it is not contained in the spectrum: create one!
         // delete all peaks behind the parent, such that the parent is the heaviest peak in the spectrum
         // Now we can access the parent peak by peaklist[peaklist.size-1]
-        final Deviation parentDeviation = getDefaultProfile().getAllowedMassDeviation();
+        final Deviation parentDeviation = getDefaultProfile().getAllowedMassDeviation().divide(2d);
         for (int i = processedPeaks.size() - 1; i >= 0; --i) {
-            if (!parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
+            if (processedPeaks.get(i).getRelativeIntensity() < 0.05 || !parentDeviation.inErrorWindow(parentmass, processedPeaks.get(i).getMz())) {
                 if (processedPeaks.get(i).getMz() < parentmass) {
                     // parent peak is not contained. Create a synthetic one
                     addSyntheticParent(experiment, processedPeaks, parentmass);
