@@ -143,11 +143,23 @@ public interface GibbsSamplerOptions {
     String getProbabilityDistribution();
 
     @Option(
+            longName = {"lambda"},
+            description = "lambda for exponential distribution. If not set, it is estimated from the distribution",
+            defaultValue = {"-1"}
+    )
+    double getLambda();
+
+
+
+    @Option(
             longName = {"median"},
             description = "estimate distribution by median"
     )
     boolean isMedian();
 
+
+    @Option(longName = "twophase", description = "do 2 rounds of gibbs sampling. First one with good quality compounds, second one with all.")
+    boolean isTwoPhase();
 
 //    @Option(
 //            longName = {"treescoring"},

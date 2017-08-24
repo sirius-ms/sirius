@@ -12,6 +12,8 @@ public interface EdgeScorer<C extends Candidate<?>> {
 
     double score(C var1, C var2);
 
+    double scoreWithoutThreshold(C var1, C var2);
+
     void clean();
 
     double[] normalization(C[][] var1);
