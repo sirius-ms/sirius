@@ -9,6 +9,7 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import java.util.*;
 
 public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidate> {
+    private static final boolean DEBUG = false;
     protected TObjectIntHashMap<Ms2Experiment> idxMap;
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
@@ -20,6 +21,10 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
     public void prepare(FragmentsCandidate[][] candidates) {
+        prepare(candidates, MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES);
+    }
+
+    private void prepare(FragmentsCandidate[][] candidates, double minimum_numer_matched_peaks_losses) {
         double[] norm = this.normalization(candidates);
         this.normalizationMap = new TObjectDoubleHashMap(candidates.length, 0.75F, 0.0D / 0.0);
 
@@ -55,7 +60,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
                 final double commonF = this.scoreCommons(allLossPeaks[i], allLossPeaks[j]);
                 final double score = ((commonF + commonL) / norm[i]) + ((commonF + commonL) / norm[j]);
 
-                if((commonF + commonL) >= MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES && (score >= this.threshold)){
+                if((commonF + commonL) >= minimum_numer_matched_peaks_losses && (score >= this.threshold)){
                     this.maybeSimilar[i].set(j);
 
                 }
@@ -67,7 +72,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for (BitSet bitSet : this.maybeSimilar) {
             sum += bitSet.cardinality();
         }
-        System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
+        if (DEBUG) System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
     }
 
 //    private void prepareData(){
@@ -208,6 +213,20 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
     @Override
+    public double scoreWithoutThreshold(FragmentsCandidate candidate1, FragmentsCandidate candidate2) {
+        int i = this.idxMap.get(candidate1.getExperiment());
+        int j = this.idxMap.get(candidate2.getExperiment());
+
+        final double commonF = this.scoreCommons(candidate1.getFragments(), candidate2.getFragments());
+        final double commonL = this.scoreCommons(candidate1.getLosses(), candidate2.getLosses());
+        final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
+        final double norm2 = this.normalizationMap.get(candidate2.getExperiment());
+        final double score =  ((commonF + commonL) / norm1) + ((commonF + commonL) / norm2);
+
+        return score;
+    }
+
+    @Override
     public void setThreshold(double threshold) {
         this.threshold = threshold;
     }
@@ -237,6 +256,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     }
 
     protected double scoreCommons(PeakWithExplanation[] peaks1, PeakWithExplanation[] peaks2){
+        if (peaks1.length==0 || peaks2.length==0) return 0d;
         int commonScore = 0;
         int i = 0;
         int j = 0;
