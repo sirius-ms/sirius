@@ -58,6 +58,12 @@ public class Candidate<T> implements Comparable<Candidate> {
         return ano;
     }
 
+
+    public <T> T getAnnotationOrNull(Class<T> c) {
+        final T ano = (T) annotations.get(c);
+        return ano;
+    }
+
     public <T> void addAnnotation(Class<T> klass, T annotation) {
         if (annotations.containsKey(klass))
             throw new RuntimeException("annotation '" + klass.getName() + "' is already present.");

@@ -323,6 +323,7 @@ public class Sirius {
         double modifiedTreeSizeScore = originalTreeSize;
         final double MAX_TREESIZE_SCORE = originalTreeSize + MAX_TREESIZE_INCREASE;
         int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS=MIN_NUMBER_OF_EXPLAINED_PEAKS;
+        int numberOfPossibleCandidates = 0;
         try {
             final ArrayList<FTree> computedTrees = new ArrayList<FTree>();
             final FeedbackFlag feedback = new FeedbackFlag();
@@ -330,7 +331,9 @@ public class Sirius {
             while (true) {
                 progress.init(whiteList.size());
                 int counter = 0;
+                numberOfPossibleCandidates = 0;
                 for (IonWhitelist wl : subsets) {
+                    numberOfPossibleCandidates += wl.whitelist.size();
                     final MutableMs2Experiment specificExp = exp.clone();
                     specificExp.setPrecursorIonType(wl.ionization);
                     final FormulaConstraints constraints = FormulaConstraints.allSubsetsOf(wl.whitelist);
@@ -415,10 +418,28 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k + 1));
             }
-
+            addScoreThresholdOnUnconsideredCandidates(list, numberOfPossibleCandidates);
             return list;
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
+        }
+    }
+
+    private void addScoreThresholdOnUnconsideredCandidates(List<IdentificationResult> identificationResults, int numberOfCandidates){
+        double lowestConsideredCandidatesScore = Double.POSITIVE_INFINITY;
+        int numberOfUnconsideredCandidates = numberOfCandidates - identificationResults.size();
+        for (IdentificationResult identificationResult : identificationResults) {
+            final double score = identificationResult.getScore();
+            if (score<lowestConsideredCandidatesScore) lowestConsideredCandidatesScore = score;
+        }
+
+        for (IdentificationResult identificationResult : identificationResults) {
+            FTree tree = identificationResult.getStandardTree();
+            FTree beautifulTree = identificationResult.getBeautifulTree();
+            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = new UnregardedCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
+
+            tree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+            if (beautifulTree!=null) beautifulTree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
         }
     }
 
@@ -782,6 +803,7 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k + 1));
             }
+            addScoreThresholdOnUnconsideredCandidates(list, maxNumberOfFormulas);
 
             return list;
         } finally {
@@ -829,6 +851,7 @@ public class Sirius {
         final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
         final FeedbackFlag feedback = new FeedbackFlag();
         int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS=MIN_NUMBER_OF_EXPLAINED_PEAKS;
+        int allPossibleFormulas = 0;
         try {
             outerLoop:
             while (true) {
@@ -841,6 +864,8 @@ public class Sirius {
                     assert experiment.getMolecularFormula() == null;
                     experiment.setMoleculeNeutralMass(0d); // previous neutral mass is not correct anymore
                     final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment.clone());
+                    maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
+                    allPossibleFormulas += maxNumberOfFormulas;
                     SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
                     MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
                     trees = trees.inParallel(3);
@@ -924,6 +949,7 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k + 1));
             }
+            addScoreThresholdOnUnconsideredCandidates(list, allPossibleFormulas);
 
             return list;
         } finally {

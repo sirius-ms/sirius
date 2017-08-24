@@ -23,6 +23,8 @@ import java.util.List;
  * Created by ge28quv on 01/07/17.
  */
 public abstract class IsolationWindow {
+    private static final boolean DEBUG = false;
+
 
     /**
      * use peaks for filter estimation with intensity higher than this threshold.
@@ -149,7 +151,6 @@ public abstract class IsolationWindow {
                 CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
                 for (SpectrumProperty spectrumProperty : quality.getProperties()) {
                     if (!spectrumProperty.equals(SpectrumProperty.Good) && spectrumProperty.equals(SpectrumProperty.Chimeric)){
-                        System.out.println("new");
                         continue;
                     }
                 }
@@ -157,109 +158,141 @@ public abstract class IsolationWindow {
 
             double ionMass = experiment.getIonMass();
 
-            //todo extend for multiple ms1 and ms2
-            Spectrum<Peak> spectrum1 = experiment.getMergedMs1Spectrum();
-            Spectrum<Peak> spectrum2 = experiment.getMs2Spectra().get(0); //tdoo iterate over all
 
+            List<Spectrum<Peak>> ms1Spectra = new ArrayList<>();
+            List<Spectrum<Peak>> ms2Spectra = new ArrayList<>();
 
-            MutableSpectrum<Peak> ms1 = new SimpleMutableSpectrum(spectrum1);
-            MutableSpectrum<Peak> ms2 = new SimpleMutableSpectrum(spectrum2);
-
-            MutableSpectrum<Peak> intensityMs1 = new MutableMs2Spectrum(Spectrums.getIntensityOrderedSpectrum(spectrum1));
-
-            final double center = experiment.getIonMass()+massShift;
-            final double oneSideWindowSize = maxWindowSize/2;
-            Spectrums.PeakPredicate filter = new Spectrums.PeakPredicate() {
-                @Override
-                public boolean apply(double mz, double intensity) {
-                    return (mz>center-oneSideWindowSize && mz<center+oneSideWindowSize);
+            if (experiment.getMs1Spectra().size()== experiment.getMs2Spectra().size()){
+                for (int i = 0; i < experiment.getMs1Spectra().size(); i++) {
+                    ms1Spectra.add(experiment.getMs1Spectra().get(i));
+                    ms2Spectra.add(experiment.getMs2Spectra().get(i));
                 }
-            };
-
-            Spectrums.filter(intensityMs1, filter);
-            Spectrums.filter(ms1, filter);
-            Spectrums.filter(ms2, filter);
-
-
-            int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
-            int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
-
-
-            //todo exclude low intensity ms1 and ms2 peaks !!!
-
-            if (monoMs2Idx<0) continue;
-            if (monoMs1Idx<0) {
-                System.err.println("no molecular ion peak found in MS1 for "+experiment.getName());
+            } else if (experiment.getMs1Spectra().size()==1){
+                for (int i = 0; i < experiment.getMs2Spectra().size(); i++) {
+                    ms1Spectra.add(experiment.getMs1Spectra().get(0));
+                    ms2Spectra.add(experiment.getMs2Spectra().get(i));
+                }
+            } else {
+                if (DEBUG) {
+                    System.out.println("warning: cannot match ms1 and ms2 spectra for isolation filter estimation: "+experiment.getName());
+                }
                 continue;
             }
 
 
-            //match peaks
-            //todo match based on relative diff -> allow just smaller mass diff?
+            for (int i = 0; i < ms1Spectra.size(); i++) {
+                Spectrum<Peak> spectrum1 = ms1Spectra.get(i);
+                Spectrum<Peak> spectrum2 = ms2Spectra.get(i);
 
-            final double ms2MonoMass = ms2.getMzAt(monoMs2Idx);
+                MutableSpectrum<Peak> ms1 = new SimpleMutableSpectrum(spectrum1);
+                MutableSpectrum<Peak> ms2 = new SimpleMutableSpectrum(spectrum2);
 
+                MutableSpectrum<Peak> intensityMs1 = new MutableMs2Spectrum(Spectrums.getIntensityOrderedSpectrum(spectrum1));
 
+                final double center = experiment.getIonMass()+massShift;
+                final double oneSideWindowSize = maxWindowSize/2;
+                Spectrums.PeakPredicate filter = new Spectrums.PeakPredicate() {
+                    @Override
+                    public boolean apply(double mz, double intensity) {
+                        return (mz>center-oneSideWindowSize && mz<center+oneSideWindowSize);
+                    }
+                };
 
-
-            double monoIntensityRatio = ms1.getIntensityAt(monoMs1Idx)/ms2.getIntensityAt(monoMs2Idx);
-            Deviation deviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation().divide(2); //todo or smaller?
-            double maxMs1Intensity = Spectrums.getMaximalIntensity(spectrum1);
-            double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
-//            double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
-            DatasetStatistics datasetStatistics = ms2Dataset.getDatasetStatistics();
-            double medianNoiseIntensity = (datasetStatistics!=null ? datasetStatistics.getMedianMs2NoiseIntensity() : 0);
-            int ms1Idx = monoMs1Idx;
-            int ms2Idx;
-            double ms1Mass;
-
-            if (monoIntensityRatio<1d){
-                System.out.println(monoIntensityRatio);
-//                continue;
-            }
-            expCounter++;
-
-            TDoubleHashSet usedPeaks = new TDoubleHashSet();
-            for (Peak peak : intensityMs1) {
-                //todo may use peaks multiple times!
-                ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, mutableMeasurementProfile, peak.getMass());
-                ChargedSpectrum isotopePatternMs2 = extractPattern(ms2, mutableMeasurementProfile, peak.getMass(), isotopePatternMs1.getAbsCharge());
-
-                expCounter2++;
-
-                if (isotopePatternMs2==null) continue;
-
-                expCounter3++;
-
-                //todo extract multiple charged spectra!!!!
-                trimToSuitablePeaks(isotopePatternMs1, isotopePatternMs2, maxMs1Intensity, maxMs2Intensity, medianNoiseIntensity);
+                Spectrums.filter(intensityMs1, filter);
+                Spectrums.filter(ms1, filter);
+                Spectrums.filter(ms2, filter);
 
 
-                double monoPosition = round(peak.getMass()-ionMass); // -1, -0.5, 0, 0.5, 1, ...
-                int normalizationPosition;
-                //todo good idea?
-                if (monoPosition<0) normalizationPosition = 1; //all isotope patterns starting on left of precursor mass are normalized on +1 peak
-                else  normalizationPosition = 0;
+                int monoMs1Idx = Spectrums.mostIntensivePeakWithin(ms1, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
+                int monoMs2Idx = Spectrums.mostIntensivePeakWithin(ms2, ionMass, mutableMeasurementProfile.getAllowedMassDeviation());
 
 
-                int size = isotopePatternMs1.size(); //should be same for ms2
-                if (size<=1 || size<=normalizationPosition ){
+                //todo exclude low intensity ms1 and ms2 peaks !!!
+
+                if (monoMs2Idx<0) continue;
+                if (monoMs1Idx<0) {
+                    if (DEBUG) {
+                        System.err.println("no molecular ion peak found in MS1 for "+experiment.getName());
+                    }
                     continue;
                 }
 
-                expCounter4++;
 
-                NormalizedPattern normalizedPattern = new NormalizedPattern(isotopePatternMs1, isotopePatternMs2, normalizationPosition, monoPosition, ionMass, isotopePatternMs1.getAbsCharge());
+                //match peaks
+                //todo match based on relative diff -> allow just smaller mass diff?
 
-                normalizedPatterns.add(normalizedPattern);
+                final double ms2MonoMass = ms2.getMzAt(monoMs2Idx);
 
+
+
+
+                double monoIntensityRatio = ms1.getIntensityAt(monoMs1Idx)/ms2.getIntensityAt(monoMs2Idx);
+                Deviation deviation = ms2Dataset.getMeasurementProfile().getAllowedMassDeviation().divide(2); //todo or smaller?
+                double maxMs1Intensity = Spectrums.getMaximalIntensity(spectrum1);
+                double maxMs2Intensity = Spectrums.getMaximalIntensity(spectrum2);
+//            double medianNoiseIntensity = mutableMeasurementProfile.getMedianNoiseIntensity();
+                DatasetStatistics datasetStatistics = ms2Dataset.getDatasetStatistics();
+                double medianNoiseIntensity = (datasetStatistics!=null ? datasetStatistics.getMedianMs2NoiseIntensity() : 0);
+                int ms1Idx = monoMs1Idx;
+                int ms2Idx;
+                double ms1Mass;
+
+                if (monoIntensityRatio<1d){
+                    if (DEBUG){
+                        System.out.println(monoIntensityRatio);
+                    }
+
+//                continue;
+                }
+                expCounter++;
+
+                TDoubleHashSet usedPeaks = new TDoubleHashSet();
+                for (Peak peak : intensityMs1) {
+                    //todo may use peaks multiple times!
+                    ChargedSpectrum isotopePatternMs1 = extractPatternMs1(ms1, mutableMeasurementProfile, peak.getMass());
+                    ChargedSpectrum isotopePatternMs2 = extractPattern(ms2, mutableMeasurementProfile, peak.getMass(), isotopePatternMs1.getAbsCharge());
+
+                    expCounter2++;
+
+                    if (isotopePatternMs2==null) continue;
+
+                    expCounter3++;
+
+                    //todo extract multiple charged spectra!!!!
+                    trimToSuitablePeaks(isotopePatternMs1, isotopePatternMs2, maxMs1Intensity, maxMs2Intensity, medianNoiseIntensity);
+
+
+                    double monoPosition = round(peak.getMass()-ionMass); // -1, -0.5, 0, 0.5, 1, ...
+                    int normalizationPosition;
+                    //todo good idea?
+                    if (monoPosition<0) normalizationPosition = 1; //all isotope patterns starting on left of precursor mass are normalized on +1 peak
+                    else  normalizationPosition = 0;
+
+
+                    int size = isotopePatternMs1.size(); //should be same for ms2
+                    if (size<=1 || size<=normalizationPosition ){
+                        continue;
+                    }
+
+                    expCounter4++;
+
+                    NormalizedPattern normalizedPattern = new NormalizedPattern(isotopePatternMs1, isotopePatternMs2, normalizationPosition, monoPosition, ionMass, isotopePatternMs1.getAbsCharge());
+
+                    normalizedPatterns.add(normalizedPattern);
+
+                }
             }
+
+
 
         }
 
-        System.out.println(expCounter+" used experiments");
-        System.out.println("counters "+expCounter2+" "+expCounter3+" "+expCounter4);
-        System.out.println(normalizedPatterns.size()+" patterns");
+        if (DEBUG) {
+            System.out.println(expCounter+" used experiments");
+            System.out.println("counters "+expCounter2+" "+expCounter3+" "+expCounter4);
+            System.out.println(normalizedPatterns.size()+" patterns");
+        }
+
 
         Collections.sort(normalizedPatterns);
 
@@ -278,7 +311,7 @@ public abstract class IsolationWindow {
             if (monoPos!=currentMonoPostion) {
                 updateNeigboursMedian(posToFilter, currentMonoPostion);
                 currentMonoPostion = monoPos;
-                System.out.println("current mono pos "+currentMonoPostion);
+//                System.out.println("current mono pos "+currentMonoPostion);
             }
 
 //            System.out.println("test!!");
@@ -323,7 +356,10 @@ public abstract class IsolationWindow {
                         }
                     }
                 }
-                if (fixed) System.out.println("fixed median estimation for "+currentMonoPostion);
+                if (DEBUG){
+                    if (fixed) System.out.println("fixed median estimation for "+currentMonoPostion);
+                }
+
                 else {
                     //todo again change normalization Pos??
                     //todo remove these things?
@@ -332,7 +368,9 @@ public abstract class IsolationWindow {
                         if (posToFilter.get(k).hasMedianIntensityRatio()) keys.add(k);
                     }
                     if (keys.size()<2){
-                        System.out.println("skip "+currentMonoPostion);
+                        if (DEBUG){
+                            System.out.println("skip "+currentMonoPostion);
+                        }
                         continue;
                     }
                     keys.sort();
@@ -345,7 +383,10 @@ public abstract class IsolationWindow {
                         posToFilter.put(normalizationPos, filterPosition);
                     }
                     filterPosition.setMedianIntensityRatio(median);
-                    System.out.println("guess a good median for "+normalizationPos);
+                    if (DEBUG) {
+                        System.out.println("guess a good median for "+normalizationPos);
+                    }
+
                     currentMedian = median;
                 }
 //                System.out.println("skip "+currentMonoPostion);
@@ -381,9 +422,11 @@ public abstract class IsolationWindow {
         }
 
 
-        System.out.println("rel mz to median filter ratio");
-        for (double key : posToFilter.keys()) {
-            System.out.println(key+": "+posToFilter.get(key).getMedianIntensityRatio()+"\tmz: "+posToFilter.get(key).getMedianRelMz());
+        if (DEBUG) {
+            System.out.println("rel mz to median filter ratio");
+            for (double key : posToFilter.keys()) {
+                System.out.println(key+": "+posToFilter.get(key).getMedianIntensityRatio()+"\tmz: "+posToFilter.get(key).getMedianRelMz());
+            }
         }
 
         return new IsotopeRatioInformation(posToFilter);

@@ -73,6 +73,11 @@ public class ReactionScorer implements EdgeScorer {
     }
 
     @Override
+    public double scoreWithoutThreshold(Candidate var1, Candidate var2) {
+        throw new NoSuchMethodError("has to be debugged");
+    }
+
+    @Override
     public void setThreshold(double threshold) {
         throw new NoSuchMethodError("has to be debugged");
     }
