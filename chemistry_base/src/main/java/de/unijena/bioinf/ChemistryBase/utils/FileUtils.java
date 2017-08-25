@@ -65,6 +65,19 @@ public class FileUtils {
         }
     }
 
+    public static void eachRow(BufferedReader reader, TObjectProcedure<String[]> proc) throws IOException {
+        String line;
+        while ((line=reader.readLine())!=null) {
+            if (!proc.execute(line.split("\t")))
+                break;
+        }
+    }
+    public static void eachRow(File file, TObjectProcedure<String[]> proc) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            eachRow(br, proc);
+        }
+    }
+
     public static String[][] readTable(File file, String sep) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readTable(br, sep);
