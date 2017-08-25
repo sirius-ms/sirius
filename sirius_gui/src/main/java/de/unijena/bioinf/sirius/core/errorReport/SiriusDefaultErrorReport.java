@@ -41,7 +41,7 @@ public class SiriusDefaultErrorReport extends ErrorReport {
             e.printStackTrace();
         }
         try {
-            addAdditionalFiles(ErrorUtils.getErrorLoggingStream(), "sirius.updateProgress");
+            addAdditionalFiles(ErrorUtils.getErrorLoggingStream(), "sirius.log");
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Could not load Logging Stream", e);
         }

@@ -20,6 +20,7 @@ public abstract class ErrorUtils {
             for (Handler h : Logger.getLogger("").getHandlers()) {
                 if (h instanceof ErrorReportHandler){
                     REPORT_HANDLER = (ErrorReportHandler) h;
+                    break;
                 }
             }
         }
