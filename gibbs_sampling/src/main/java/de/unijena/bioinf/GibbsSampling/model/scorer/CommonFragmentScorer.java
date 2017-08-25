@@ -214,6 +214,24 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
     }
 
     @Override
+    public double scoreWithoutThreshold(FragmentsCandidate candidate1, FragmentsCandidate candidate2) {
+        int i = this.idxMap.get(candidate1.getExperiment());
+        int j = this.idxMap.get(candidate2.getExperiment());
+        if(i < j) {
+            if(!this.maybeSimilar[i].get(j)) {
+                return 0.0D;
+            }
+        } else if(!this.maybeSimilar[j].get(i)) {
+            return 0.0D;
+        }
+
+        MolecularFormula[] fragments1 = (MolecularFormula[])this.fragmentsMap.get(candidate1);
+        MolecularFormula[] fragments2 = (MolecularFormula[])this.fragmentsMap.get(candidate2);
+        int commonCounter = this.countCommons((Comparable[])fragments1, (Comparable[])fragments2);
+        return commonCounter < 0?0.0D:(this.normalizePerInstance?this.alpha * (1.0D * (double)commonCounter / (double)fragments1.length + 1.0D * (double)commonCounter / (double)fragments2.length):this.alpha * (double)commonCounter / this.normalizationMap.get(candidate2.getExperiment()));
+    }
+
+    @Override
     public void setThreshold(double threshold) {
         this.threshold = threshold;
     }

@@ -9,6 +9,7 @@ public class UnregardedCandidatesUpperBound {
     private double lowestConsideredCandidateScore;
 
     public UnregardedCandidatesUpperBound(int numberOfUnregardedCandidates, double lowestConsideredCandidateScore) {
+        if (numberOfUnregardedCandidates<0) throw new IllegalArgumentException("the number of unconsidered candidates must be positive.");
         this.numberOfUnregardedCandidates = numberOfUnregardedCandidates;
         this.lowestConsideredCandidateScore = lowestConsideredCandidateScore;
     }

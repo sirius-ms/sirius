@@ -65,6 +65,19 @@ public class FileUtils {
         }
     }
 
+    public static void eachRow(BufferedReader reader, TObjectProcedure<String[]> proc) throws IOException {
+        String line;
+        while ((line=reader.readLine())!=null) {
+            if (!proc.execute(line.split("\t")))
+                break;
+        }
+    }
+    public static void eachRow(File file, TObjectProcedure<String[]> proc) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            eachRow(br, proc);
+        }
+    }
+
     public static String[][] readTable(File file, String sep) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return readTable(br, sep);
@@ -80,6 +93,19 @@ public class FileUtils {
         try (final BufferedReader br = getReader(file)) {
             return readLines(br);
         }
+    }
+
+    public static String read(File file) throws IOException {
+        final StringBuilder buffer = new StringBuilder(512);
+        eachLine(file, new TObjectProcedure<String>() {
+            @Override
+            public boolean execute(String object) {
+                buffer.append(object);
+                buffer.append('\n');
+                return true;
+            }
+        });
+        return buffer.toString();
     }
 
     public static String[][] readTable(BufferedReader reader) throws IOException {
@@ -102,6 +128,27 @@ public class FileUtils {
             lines.add(line);
         }
         return lines.toArray(new String[lines.size()]);
+    }
+
+    public static String read(BufferedReader reader) throws IOException {
+        final StringBuilder buffer = new StringBuilder(512);
+        eachLine(reader, new TObjectProcedure<String>() {
+            @Override
+            public boolean execute(String object) {
+                buffer.append(object);
+                buffer.append('\n');
+                return true;
+            }
+        });
+        return buffer.toString();
+    }
+
+    public static BufferedReader resource(Class<?> klass, String path) throws IOException {
+        if (path.toLowerCase().endsWith(".gz")) {
+            return new BufferedReader(new InputStreamReader(new GZIPInputStream(klass.getResourceAsStream(path), getRecommendetBufferSize())));
+        } else {
+            return new BufferedReader(new InputStreamReader(new BufferedInputStream(klass.getResourceAsStream(path), getRecommendetBufferSize())));
+        }
     }
 
     public static float[][] readAsFloatMatrix(File file) throws IOException {
@@ -161,7 +208,7 @@ public class FileUtils {
      */
     public static BufferedOutputStream getOut(File file) throws IOException {
         if (file.getName().endsWith(".gz")) {
-            return new BufferedOutputStream(new FileOutputStream(file), getRecommendetBufferSize());
+            return new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(file), getRecommendetBufferSize()), getRecommendetBufferSize());
         } else {
             return new BufferedOutputStream(new FileOutputStream(file), getRecommendetBufferSize());
         }

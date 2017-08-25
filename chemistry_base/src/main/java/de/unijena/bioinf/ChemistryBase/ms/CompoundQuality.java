@@ -49,6 +49,17 @@ public class CompoundQuality {
         return false;
     }
 
+    public boolean removeProperty(SpectrumProperty property) {
+        Iterator<SpectrumProperty> iterator = properties.iterator();
+        while (iterator.hasNext()) {
+            SpectrumProperty p = iterator.next();
+            if (p.equals(property)){
+                iterator.remove();
+                return true;
+            }
+        }
+        return false;
+    }
     public static boolean isNotBadQuality(Ms2Experiment experiment){
         return experiment.getAnnotation(CompoundQuality.class, new CompoundQuality(SpectrumProperty.Good)).isGoodQuality();
     }
@@ -66,7 +77,14 @@ public class CompoundQuality {
             experiment.setAnnotation(CompoundQuality.class, quality);
         } else {
             quality.addProperty(property);
+            quality.removeProperty(SpectrumProperty.Good);//all other properties are negative!
         }
+    }
+
+    public static boolean removeProperty(Ms2Experiment experiment, SpectrumProperty property) {
+        CompoundQuality quality = experiment.getAnnotation(CompoundQuality.class);
+        if (quality==null) return false;
+        else return quality.hasProperty(property);
     }
 
     public static String getQualityString(Ms2Experiment experiment){

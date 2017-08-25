@@ -25,6 +25,8 @@ import java.util.*;
  */
 public class Ms2DatasetPreprocessor {
 
+    private static final boolean DEBUG = false;
+
     private static String[] STANDARD_IONIZATIONS = new String[]{"[M]+", "[M+H]+", "[M+Na]+", "[M+K]+"};
     private static Deviation findMs1PeakDeviation = new Deviation(100, 0.1);
 
@@ -208,20 +210,22 @@ public class Ms2DatasetPreprocessor {
             }
         }
 
+        if (DEBUG) {
+            System.out.println("number of noise peaks "+datasetStatistics.getNoiseIntensities().size());
+            System.out.println("mean noise intensity "+datasetStatistics.getMeanMs2NoiseIntensity());
+            System.out.println("median noise intensity "+datasetStatistics.getMedianMs2NoiseIntensity());
+            System.out.println("80% quantile noise intensity "+datasetStatistics.getQuantileMs2NoiseIntensity(80));
 
-        System.out.println("number of noise peaks "+datasetStatistics.getNoiseIntensities().size());
-        System.out.println("mean noise intensity "+datasetStatistics.getMeanMs2NoiseIntensity());
-        System.out.println("median noise intensity "+datasetStatistics.getMedianMs2NoiseIntensity());
-        System.out.println("80% quantile noise intensity "+datasetStatistics.getQuantileMs2NoiseIntensity(80));
+            System.out.println("min intensity ms1 "+datasetStatistics.getMinMs1Intensity());
+            System.out.println("max intensity ms1 "+datasetStatistics.getMaxMs1Intensity());
 
-        System.out.println("min intensity ms1 "+datasetStatistics.getMinMs1Intensity());
-        System.out.println("max intensity ms1 "+datasetStatistics.getMaxMs1Intensity());
+            System.out.println("min intensity ms2 "+datasetStatistics.getMinMs2Intensity());
+            System.out.println("max intensity ms2 "+datasetStatistics.getMaxMs2Intensity());
 
-        System.out.println("min intensity ms2 "+datasetStatistics.getMinMs2Intensity());
-        System.out.println("max intensity ms2 "+datasetStatistics.getMaxMs2Intensity());
+            System.out.println(Arrays.toString(datasetStatistics.getNoiseIntensities().toArray()));
+        }
 
 
-        System.out.println(Arrays.toString(datasetStatistics.getNoiseIntensities().toArray()));
 
         return datasetStatistics;
     }
@@ -241,7 +245,7 @@ public class Ms2DatasetPreprocessor {
             int ms1PrecursorIdx = Spectrums.mostIntensivePeakWithin(ms1, experiment.getIonMass(), findMs1PeakDeviation);
             if (ms1PrecursorIdx<0){
                 if (!hasProperty(experiment, SpectrumProperty.NoMS1Peak)){
-                    System.out.println("strange");
+//                    System.out.println("strange");
                     setSpectrumProperty(experiment, SpectrumProperty.NoMS1Peak);
                 }
                 continue;
@@ -271,7 +275,7 @@ public class Ms2DatasetPreprocessor {
             if (precursorIdx<0) {
                 if (isNotMonoisotopicPeak(experiment, mutableMs2Dataset.getMeasurementProfile())){
 //                    setSpectrumProperty(experiment, SpectrumProperty.NotMonoisotopicPeak);
-                    System.out.println("could be NotMonoisotopicPeak");
+//                    System.out.println("could be NotMonoisotopicPeak");
                     continue;
                 } else {
                     ms1IsotopesRemoved.addPeak(precursorPeak);
