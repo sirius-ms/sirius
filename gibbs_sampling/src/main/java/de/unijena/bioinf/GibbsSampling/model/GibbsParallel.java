@@ -150,9 +150,6 @@ public class GibbsParallel<C extends Candidate<?>> {
         executorService.shutdown();
         this.combineResults();
 
-        for (GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
-            gibbsNetwork.shutdown();
-        }
     }
 
     public Scored<C>[][] getChosenFormulasByMaxPosterior() {

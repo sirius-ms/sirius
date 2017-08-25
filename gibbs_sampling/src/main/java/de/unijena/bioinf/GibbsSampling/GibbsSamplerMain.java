@@ -10,14 +10,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.ChemistryBase.ms.ft.UnregardedCandidatesUpperBound;
 import de.unijena.bioinf.GibbsSampling.model.*;
+import de.unijena.bioinf.GibbsSampling.model.distributions.*;
 import de.unijena.bioinf.GibbsSampling.model.scorer.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
-import de.unijena.bioinf.GibbsSampling.model.distributions.EmpiricalScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ParetoDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
@@ -30,6 +25,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.procedure.TIntIntProcedure;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
+import org.apache.commons.math3.analysis.function.Exp;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -81,6 +77,7 @@ public class GibbsSamplerMain {
     private static final String[] reactionStringsMyCompoundID = new String[]{"H2", "CH2", "NH", "O", "NH3", "H2O", "CO", "C2H4", "C2H2O", "CO2", "C2H3NO", "SO3", "HPO3", "C4H3N3", "C4H2N2O", "C3H5NOS", "C2H5NO2S", "C5H4N2O", "C3H5NO2S", "C5H8O4", "C5H3N5", "C7H13NO2", "C5H7NO3S", "C6H10O5", "C6H8O6", "C10H12N2O4", "C9H11N3O4", "C9H10N2O5", "C16H30O", "C6H11O8P", "C10H11N5O3", "C10H11N5O4", "C10H15N3O5S", "C10H15N3O6S", "C12H20O10", "C18H30O15"};
     private static final String[] reactionStringsRogers = new String[]{"C10H11N5O3", "C10H11N5O4", "C10H12N2O4", "C10H12N5O6P", "C10H12N5O7P", "C10H13N2O7P", "C10H13N5O10P2", "C10H13N5O9P2", "C10H14N2O10P2", "C10H14N2O2S", "C10H15N2O3S", "C10H15N3O5S", "C11H10N2O", "C12H20O11", "C16H30O", "C18H30O15", "C21H33N7O15P3S", "C21H34N7O16P3S", "C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5NOS", "C3H5O", "C4H3N2O2", "C4H4N3O", "C4H4O2", "C4H5NO3", "C4H6N2O2", "C4H7NO2", "C5H4N5", "C5H4N5O", "C5H5N2O2", "C5H7", "C5H7NO", "C5H7NO3", "C5H8N2O2", "C5H8O4", "C5H9NO", "C5H9NOS", "C6H10N2O3S2", "C6H10O5", "C6H10O6", "C6H11NO", "C6H11O8P", "C6H12N2O", "C6H12N4O", "C6H7N3O", "C6H8O6", "C8H8NO5P", "C9H10N2O5", "C9H11N2O8P", "C9H12N2O11P2", "C9H12N3O7P", "C9H13N3O10P2", "C9H9NO", "C9H9NO2", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "H3O6P2", "HPO3", "N", "NH", "NH2", "O", "P", "PP", "SO3"};
 
+    private static boolean is2Phase;
 
     private static ScoreProbabilityDistribution probabilityDistribution;
 
@@ -131,6 +128,8 @@ public class GibbsSamplerMain {
                 System.out.println("don\'t normalize");
             }
 
+            is2Phase = opts.isTwoPhase();
+
             byte stepsize = 2;
 //            Reaction[] reactions = parseReactions(stepsize);
 //            new ReactionScorer(reactions, new ExponentialReactionStepSizeScorer(4.0D));
@@ -161,7 +160,7 @@ public class GibbsSamplerMain {
                 }
 
                 //todo changed !!!?!?!??!?!?!
-                double minimumOverlap = 0.001D; //changed from 0.1
+                double minimumOverlap = 0.01D; //changed from 0.1
 
                 CommonFragmentAndLossScorer commonFragmentAndLossScorer;
                 if (false) {
@@ -170,7 +169,14 @@ public class GibbsSamplerMain {
                     commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
                 }
 
-                ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution);
+                EdgeScorer scoreProbabilityDistributionEstimator;
+                if (opts.getLambda()<0){
+                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution);
+                } else {
+                    ((ExponentialDistribution)probabilityDistribution).setLambda(opts.getLambda());
+                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionFix(commonFragmentAndLossScorer, probabilityDistribution);
+                }
+
                 edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
             }
 
@@ -432,18 +438,15 @@ public class GibbsSamplerMain {
         Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
 
 //        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
-        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount); //remove candidates later when adding dummy
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
 
 
         //do before all that
 //        PrecursorIonType[] ionTypes = Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map(s -> PrecursorIonType.getPrecursorIonType(s)).toArray(l -> new PrecursorIonType[l]);
 
-        System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap, maxCandidates);
-
-
 //        parseLibraryHits(libraryHitsPath, candidatesMap); //changed
         parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
+
 
         Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
 
@@ -451,6 +454,15 @@ public class GibbsSamplerMain {
         double useFreq = 0.0; //use x*100 percent of knowledge
         //todo don't use as strict information
         Set<String> evaluationIds = extractEvaluationIds(candidatesMap, correctHits, useFreq, netSingleReactionDiffs);
+
+
+
+
+        System.out.println("adding dummy node");
+        addNotExplainableDummy(candidatesMap, maxCandidates);
+
+
+
 
 
 //        //start Gibbs
@@ -472,39 +484,49 @@ public class GibbsSamplerMain {
 
         NodeScorer[] nodeScorers;
         if (useLibraryHits){
-//            nodeScorers = new NodeScorer[]{new RankNodeScorer(), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
             nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
             System.out.println("use LibraryHitScorer");
         } else {
-//            nodeScorers = new NodeScorer[]{new RankNodeScorer()};
             nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1)};
             System.out.println("ignore Library Hits");
         }
 
 
-        GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
+
+        if (is2Phase){
+            TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            System.out.println("start");
+            twoPhaseGibbsSampling.run(iterationSteps, burnInIterations);
+
+            Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
+            System.out.println("standard");
+            statisticsOfKnownCompounds(result, twoPhaseGibbsSampling.getIds(), evaluationIds, correctHits);
+        } else {
+            //GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
+            //changed
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
 
 
-        if (graphOutputDir!=null) writeMFNetworkToDir(graphOutputDir, gibbsParallel.getGraph());
-
-
-        System.out.println("start");
-        gibbsParallel.iteration(iterationSteps, burnInIterations);
-
-        Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
-        System.out.println("standard");
-        statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
-
-        result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
-        System.out.println("addedPosterior");
-        statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
-
-        result = gibbsParallel.getChosenFormulasByMaxPosterior();
-        System.out.println("maxPosterior");
-        statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+            if (graphOutputDir!=null) writeMFNetworkToDir(graphOutputDir, gibbsParallel.getGraph());
 
 
 
+
+            System.out.println("start");
+            gibbsParallel.iteration(iterationSteps, burnInIterations);
+
+            Scored<FragmentsCandidate>[][] result = gibbsParallel.getChosenFormulasBySampling();
+            System.out.println("standard");
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+
+            result = gibbsParallel.getChosenFormulasByAddedUpPosterior();
+            System.out.println("addedPosterior");
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+
+            result = gibbsParallel.getChosenFormulasByMaxPosterior();
+            System.out.println("maxPosterior");
+            statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+        }
     }
 
     protected void doCVEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException {
@@ -523,17 +545,26 @@ public class GibbsSamplerMain {
         //all possible netto changes of MolecularFormulas using on of the reactions.
         Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
 
-        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
+//        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
+//
+//        parseLibraryHits(libraryHitsPath, candidatesMap);
+//
+//        Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
 
 
-        //do before all that
-//        PrecursorIonType[] ionTypes = Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map(s -> PrecursorIonType.getPrecursorIonType(s)).toArray(l -> new PrecursorIonType[l]);
-//        guessIonizationAndRemove(candidatesMap, ionTypes);
 
 
-        parseLibraryHits(libraryHitsPath, candidatesMap);
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount); //remove candidates later when adding dummy
+//        parseLibraryHits(libraryHitsPath, candidatesMap); //changed
+        parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
+
 
         Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+
+        System.out.println("adding dummy node");
+        addNotExplainableDummy(candidatesMap, maxCandidates);
+
+
 
 
         List<String> knownIDs = new ArrayList<>(correctHits.keySet());
@@ -572,22 +603,25 @@ public class GibbsSamplerMain {
             statisticsOfKnownCompounds(candidatesArray, ids, evaluationIds, correctHits);
 
 
-            NodeScorer[] nodeScorers;
-            if (useLibraryHits){
-                nodeScorers = new NodeScorer[]{new RankNodeScorer(), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
-                System.out.println("use LibraryHitScorer");
-            } else {
-                nodeScorers = new NodeScorer[]{new RankNodeScorer()};
-                System.out.println("ignore Library Hits");
-            }
+//            NodeScorer[] nodeScorers;
+//            if (useLibraryHits){
+////                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
+//                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1), new AllOrNothingLibraryHitsScorer()};
+//                System.out.println("use LibraryHitScorer");
+//            } else {
+//                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1)};
+//                System.out.println("ignore Library Hits");
+//            }
 
 
+            NodeScorer[] nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1), new AllOrNothingLibraryHitsScorer()};
+            System.out.println("use LibraryHitScorer");
 
 
-            //todo changed. Just a hotfix!!!!
-            double minimumOverlap = 0.1D;
-            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution);
-            edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
+//            //todo changed. Just a hotfix!!!!
+//            double minimumOverlap = 0.1D;
+//            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution);
+//            edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
             GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<FragmentsCandidate>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
 
@@ -946,12 +980,12 @@ public class GibbsSamplerMain {
                     List<C> candidatesList = candidatesMap.get(featureId);
                     if (candidatesList == null) {
                         //todo check:q
-//                    System.err.println("no corresponding compound (FEATURE_ID: " +featureId+ ", #SCAN# "+scanNumber+") to library hit found");
+                    System.err.println("no corresponding compound (FEATURE_ID: " +featureId+ ", #SCAN# "+scanNumber+") to library hit found");
                         continue;
                     }
 
                     final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
-                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]], cols[indices[2]]);
+                    final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
                         System.err.println("cannot compute molecular formula of library hit #SCAN# "+scanNumber);
@@ -1002,7 +1036,7 @@ public class GibbsSamplerMain {
     private static boolean isInchi(String inchi) {
         if (!inchi.toLowerCase().startsWith("inchi=")) return false;
         int idx1 = inchi.indexOf("/");
-        int idx2 = inchi.indexOf("/", idx1);
+        int idx2 = inchi.indexOf("/", idx1+1);
         if (idx1>0 && idx2>0 && (idx2-idx1)>1) return true;
         return false;
     }
@@ -1085,14 +1119,19 @@ public class GibbsSamplerMain {
         }
     }
 
-    public  void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates){
+    public static void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap, int maxCandidates){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
 
         for (String id : idList) {
             List<FragmentsCandidate> candidates = candidateMap.get(id);
             Ms2Experiment experiment = candidates.get(0).getExperiment();
 
-            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = candidates.get(0).getAnnotation(UnregardedCandidatesUpperBound.class);
+            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = candidates.get(0).getAnnotationOrNull(UnregardedCandidatesUpperBound.class);
+
+            if (unregardedCandidatesUpperBound==null){
+                System.err.println("Cannot create dummy node. Information missing.");
+                break;
+            }
 
             double worstScore = unregardedCandidatesUpperBound.getLowestConsideredCandidateScore();
             int numberOfIgnored = unregardedCandidatesUpperBound.getNumberOfUnregardedCandidates();
@@ -1114,80 +1153,6 @@ public class GibbsSamplerMain {
         }
     }
 
-//    public  void addNotExplainableDummy(Map<String, List<FragmentsCandidate>> candidateMap){
-//        List<String> idList = new ArrayList<>(candidateMap.keySet());
-//        Sirius sirius = new Sirius();
-//
-//        final PrecursorIonType[] ionTypes = new PrecursorIonType[ionTypStrings.length];
-//        for (int i = 0; i < ionTypes.length; i++) ionTypes[i] = PrecursorIonType.getPrecursorIonType(ionTypStrings[i]);
-//
-//        for (String id : idList) {
-//            List<FragmentsCandidate> candidates = candidateMap.get(id);
-//            Ms2Experiment experiment = candidates.get(0).getExperiment();
-//
-//            Set<MolecularFormula> mfCandidates = getCandidateMF(experiment, ionTypes, sirius);
-//            for (FragmentsCandidate candidate : candidates) {
-//                if (!mfCandidates.contains(candidate.getFormula())){
-//                    throw new RuntimeException("Something went wrong. molecular formula of tree not in candidate set.");
-//                }
-//            }
-//
-//            double worstScore = Double.POSITIVE_INFINITY;
-//            for (FragmentsCandidate candidate : candidates) {
-//                worstScore = Math.min(worstScore, candidate.getScore());
-//            }
-//
-//            int numberOfIgnored= (mfCandidates.size()-candidates.size());
-//            double dummyScore = numberOfIgnored*worstScore;
-//
-//            FragmentsCandidate dummyCandidate = DummyFragmentCandidate.newDummy(dummyScore, numberOfIgnored, experiment);
-//
-//            candidates.add(dummyCandidate);
-//
-//        }
-//    }
-//
-//
-//    final static String[] ionTypStrings = new String[]{"[M+H]+", "[M+K]+", "[M+Na]+"};
-//    final ChemicalAlphabet backupChemicalAlphabet = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("C","H", "N", "O", "P"));
-//    public Set<MolecularFormula> getCandidateMF(Ms2Experiment experiment, PrecursorIonType[] ionTypes, Sirius sirius){
-//        final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(experiment);
-//        experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(experiment.getPrecursorIonType().getCharge()));
-//
-//        PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
-//        PrecursorIonType priorIonType = experiment.getPrecursorIonType();
-//        PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
-//        if (!priorIonization.isIonizationUnknown()){
-//            if (!arrayContains(specificIontypes, priorIonization)){
-//                System.out.println("guessed ionization contradicts prior one for " + experiment.getName());
-//                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length+1);
-//                specificIontypes[specificIontypes.length-1] = priorIonization;
-//            } else {
-//                specificIontypes = new PrecursorIonType[]{priorIonization};
-//            }
-//
-//        }
-//        if (specificIontypes.length==0) specificIontypes = ionTypes;
-//
-//
-//
-//
-//        FormulaConstraints constraints = sirius.predictElementsFromMs1(experimentMutable);
-//        if (constraints==null){
-//            System.out.println("no constraints predicted for "+experiment.getName());
-//            constraints = new FormulaConstraints(backupChemicalAlphabet);
-//        }
-//        Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
-//        for (PrecursorIonType ionType : specificIontypes) {
-//            List<MolecularFormula> mfCandidates = sirius.decompose(experiment.getIonMass(), ionType.getIonization(), constraints);
-//
-//            for (MolecularFormula mfCandidate : mfCandidates) {
-//                mfCandidatesSet.add(ionType.measuredNeutralMoleculeToNeutralMolecule(mfCandidate));
-//            }
-//
-//        }
-//        return mfCandidatesSet;
-//    }
 
     private int[] statisticsOfKnownCompounds(Scored<FragmentsCandidate>[] result, String ids[], Set<String> evaluationIDs, Map<String, MolecularFormula> correctHitsMap){
         List<String> correctIds = new ArrayList<>();
@@ -1258,9 +1223,9 @@ public class GibbsSamplerMain {
                     System.out.println(id + " best is dummy.");
                 }
                 if (correctPos>candidatesScored.length){
-                    System.out.println(id + " not found");
+                    System.out.println(id + " not found | best has "+candidatesScored[0].getScore());
                 } else {
-                    System.out.println(id + " found at " + correctPos + " (" + candidatesScored[correctPos-1].getScore()+ ") of " + candidatesScored.length);
+                    System.out.println(id + " found at " + correctPos + " (" + candidatesScored[correctPos-1].getScore()+ ") of " + candidatesScored.length+"  | best has "+candidatesScored[0].getScore());
                 }
             }
         }
@@ -1342,10 +1307,10 @@ public class GibbsSamplerMain {
         return parseMFCandidates(treeDir, mgfFile, maxCandidates, workercount, false);
     }
 
+
     public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path treeDir, Path mgfFile, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
         System.out.println(treeDir.toString());
         Path[] trees = Files.find(treeDir, 2, (path, basicFileAttributes) -> path.toString().endsWith(".json")).toArray(s -> new Path[s]);
-        System.out.println("number "+trees.length);
 
         final MsExperimentParser parser = new MsExperimentParser();
         List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
@@ -1358,7 +1323,22 @@ public class GibbsSamplerMain {
     }
 
 
-    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesEval(Path treeDir, Path mgfFile, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
+        System.out.println(treeDir.toString());
+        Path[] trees = Files.find(treeDir, 2, (path, basicFileAttributes) -> path.toString().endsWith(".json")).toArray(s -> new Path[s]);
+        System.out.println("number "+trees.length);
+
+        final MsExperimentParser parser = new MsExperimentParser();
+        List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
+
+        Ms2Dataset dataset = new MutableMs2Dataset(allExperiments, "default", Double.NaN, (new Sirius("default")).getMs2Analyzer().getDefaultProfile());
+        Ms2DatasetPreprocessor preprocessor = new Ms2DatasetPreprocessor(true);
+        dataset = preprocessor.preprocess(dataset);
+//        return parseMFCandidates(trees, allExperiments, maxCandidates, workercount, ignoreSilicon);
+        return parseMFCandidatesEval(trees, dataset.getExperiments(), maxCandidates, workercount, ignoreSilicon);
+    }
+
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidatesEval(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
 //        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
 //        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
@@ -1459,27 +1439,12 @@ public class GibbsSamplerMain {
                 System.out.println("exclude "+key+". No tree explains enough intensity.");
                 continue;
             }
-            if (!atLeastOneTreeExplainsSomePeaks(trees)){
-                System.out.println("exclude "+key+". No tree explains enough peaks.");
-                continue;
-            }
+//            if (!atLeastOneTreeExplainsSomePeaks(trees)){
+//                System.out.println("exclude "+key+". No tree explains enough peaks.");
+//                continue;
+//            }
 
-            List<FragmentsCandidate> candidates;
-            try{
-                Ms2Experiment experiment = experimentMap.get(key);
-                if (CompoundQuality.isNotBadQuality(experiment)){
-                        candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
-                } else {
-                    System.out.println("exclude "+key+". Bad quality.");
-                    continue;
-                }
-
-            } catch (Exception e){
-                System.out.println("experiment "+experimentMap.get(key));
-                System.out.println("specs size "+experimentMap.get(key).getMs2Spectra().size());
-                System.out.println("trees "+trees.size());
-                throw e;
-            }
+            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experimentMap.get(key));
 
             Collections.sort(candidates);
             if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
@@ -1492,18 +1457,146 @@ public class GibbsSamplerMain {
         return listMap;
     }
 
+    public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
+//        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
+//        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
+        final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
+        for (Ms2Experiment experiment : experiments) {
+            String name = cleanString(experiment.getName());
+            if (experimentMap.containsKey(name)) throw new RuntimeException("experiment name duplicate");
+            experimentMap.put(name, experiment);
+        }
 
-    private static boolean atLeastOneTreeExplainsSomeIntensity(List<FTree> trees){
+
+        ExecutorService service = Executors.newFixedThreadPool(workercount);
+        List<Future> futures = new ArrayList<>();
+
+
+        Map<String, List<FTree>> idToTrees = new HashMap<>();
+
+        int[] pos = new int[]{0};
+        final ConcurrentLinkedQueue<Path> pathQueue = new ConcurrentLinkedQueue<>(Arrays.asList(treesPaths));
+        for (int i = 0; i < workercount; i++) {
+            futures.add(service.submit(new Runnable() {
+                @Override
+                public void run() {
+                    while (!pathQueue.isEmpty()) {
+                        Path treePath = pathQueue.poll();
+                        if (treePath==null) continue;
+
+                        if (++pos[0]%1000==0) System.out.println("tree "+pos[0]);
+
+                        final String name = treePath.getFileName().toString();
+                        final String id = name.split("_")[0];
+                        assert id.length()>0;
+
+//                        Ms2Experiment experiment = experimentMap.get(id);
+//                        if (experiment==null) throw new RuntimeException("cannot find experiment");
+
+                        FTree tree = null;
+                        try {
+                            tree = new GenericParser<FTree>(new FTJsonReader()).parseFromFile(treePath.toFile()).get(0);
+                        } catch (RuntimeException e) {
+                            System.out.println("cannot read tree "+treePath.getFileName().toString());
+                            continue;
+                        } catch (IOException e){
+                            throw new RuntimeException(e);
+                        }
+
+                        //todo changed
+//                        if(tree.numberOfVertices() >= 3) {
+                        //hier nochmal schauen....
+                        if(tree.numberOfVertices() >= 1) {
+                            tree = new IonTreeUtils().treeToNeutralTree(tree);
+
+                            if (ignoreSilicon && tree.getRoot().getFormula().numberOf("Si")>0) continue;
+
+
+                            List<FTree> trees = idToTrees.get(id);
+                            if (trees==null){
+                                synchronized (idToTrees){
+                                    trees = idToTrees.get(id);
+                                    if (trees==null){
+                                        trees = new ArrayList<FTree>();
+                                        idToTrees.put(id, trees);
+                                    }
+                                }
+                            }
+
+                            trees.add(tree);
+                        }
+
+
+                    }
+                }
+            }));
+
+
+        }
+
+        for (Future future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+
+        service.shutdown();
+
+
+        final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
+        Set<String> keys = idToTrees.keySet();
+        for (String key : keys) {
+            List<FTree> trees  = idToTrees.get(key);
+            Ms2Experiment experiment = experimentMap.get(key);
+            if (!atLeastOneTreeExplainsSomeIntensity(trees, 0.5)){
+                CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+//                System.out.println("exclude "+key+". No tree explains enough intensity.");
+//                continue;
+            }
+            if (!atLeastOneTreeExplainsSomePeaks(trees, 3)){
+                CompoundQuality.setProperty(experiment, SpectrumProperty.PoorlyExplained);
+//                System.out.println("exclude "+key+". No tree explains enough peaks.");
+//                continue;
+            }
+
+            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
+
+            Collections.sort(candidates);
+            if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
+            listMap.put(key, candidates);
+        }
+
+        System.out.println("keys size "+keys.size());
+        System.out.println("all compounds: "+experiments.size()+" | used compounds: "+listMap.size());
+
+        return listMap;
+    }
+
+    public static boolean atLeastOneTreeExplainsSomeIntensity(List<FTree> trees){
+        return atLeastOneTreeExplainsSomeIntensity(trees, 0.5);
+    }
+
+    public static boolean atLeastOneTreeExplainsSomeIntensity(List<FTree> trees, double threshold){
         for (FTree tree : trees) {
             final double intensity = tree.getAnnotationOrThrow(TreeScoring.class).getExplainedIntensity();
-            if (intensity>0.5) return true;
+            if (intensity>threshold) return true;
         }
         return false;
     }
 
-    private static boolean atLeastOneTreeExplainsSomePeaks(List<FTree> trees){
+    public static boolean atLeastOneTreeExplainsSomePeaks(List<FTree> trees){
+        return atLeastOneTreeExplainsSomePeaks(trees, 3);
+    }
+
+    public static boolean atLeastOneTreeExplainsSomePeaks(List<FTree> trees, int threshold){
         for (FTree tree : trees) {
-            if (tree.numberOfVertices()>=3) return true;
+            if (tree.numberOfVertices()>=threshold) return true;
         }
         return false;
     }
