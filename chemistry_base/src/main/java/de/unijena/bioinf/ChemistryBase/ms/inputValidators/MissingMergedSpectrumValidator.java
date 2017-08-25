@@ -24,7 +24,7 @@ public class MissingMergedSpectrumValidator implements Ms2ExperimentValidator {
         }
         if (mutableMs2Experiment.getMergedMs1Spectrum() == null) {
             if (repair) {
-                if (mutableMs2Experiment.getMs1Spectra().size() == 1){
+                if (mutableMs2Experiment.getMs1Spectra().size() != 1){
                     warning.warn("no merged MS1 given for "+mutableMs2Experiment.getName());
                 }
                 mutableMs2Experiment.setMergedMs1Spectrum(mutableMs2Experiment.getMs1Spectra().get(0));

@@ -821,7 +821,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
     private void initialize(Object o)  {
         if (o==null) return;
-        if (o.getClass().isAssignableFrom(Initializable.class)) {
+        if (o instanceof Initializable) {
             ((Initializable)o).initialize(this);
         }
     }
@@ -1381,18 +1381,23 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return graph;
     }
 
-    private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+    public boolean isScoringIsotopes(ProcessedInput input) {
         final boolean isBrukerMaxis = input.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown).hasIsotopesInMs2();
         switch (isotopeInMs2Handling) {
-            case IGNORE: return;
+            case IGNORE: return false;
             case BRUKER_IF_NECESSARY:
                 throw new UnsupportedOperationException("Not supported yet");
             case BRUKER_ONLY:
-                if (!isBrukerMaxis) return;
+                if (!isBrukerMaxis) return false;
             case ALWAYS:
-                default:
+            default:
         }
-        isoInMs2Scorer.score(input, graph);
+        return true;
+    }
+
+    private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+        if (isScoringIsotopes(input))
+            isoInMs2Scorer.score(input, graph);
     }
 
     private void addSyntheticParent(Ms2Experiment experiment, List<ProcessedPeak> processedPeaks, double parentmass) {

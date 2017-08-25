@@ -2,11 +2,15 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
+import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
+import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
+import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.lang.reflect.Array;
@@ -17,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Graph<C extends Candidate<?>> {
+    private static final boolean DEBUG = false;
     final TIntIntHashMap[] indexMap;
     final TDoubleArrayList[] weights;
     double[] edgeThresholds;
@@ -179,8 +184,14 @@ public class Graph<C extends Candidate<?>> {
     public void init(EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
         this.edgeScorers = edgeScorers;
         this.edgeFilter = edgeFilter;
-        this.calculateWeight(threads);
-        this.setConnections();
+        if (possibleFormulas.length==0){
+            connections = new int[0][0];
+        } else {
+            this.calculateWeight(threads);
+            this.setConnections();
+
+            thinOutGraph();
+        }
     }
 
     public GraphValidationMessage validate(){
@@ -263,6 +274,36 @@ public class Graph<C extends Candidate<?>> {
         }
 
         System.out.println("number of connections " + sum / 2);
+
+        if (DEBUG) {
+            final TDoubleArrayList samples = new TDoubleArrayList();
+            for (TDoubleArrayList weight : weights) {
+                weight.forEach(new TDoubleProcedure() {
+                    @Override
+                    public boolean execute(double v) {
+                        if (v<0) throw new RuntimeException("graph weights are negative");
+                        if (random.nextDouble()<0.001) samples.add(v);
+                        return true;
+                    }
+                });
+            }
+            samples.sort();
+            System.out.println("all good");
+            System.out.println("mean: "+samples.sum()/samples.size());
+            System.out.println("median: "+samples.get(samples.size()/2));
+            System.out.println("min: "+samples.min());
+            System.out.println("max: "+samples.max());
+
+            final TDoubleList s2;
+            if (samples.size()>1000){
+                samples.shuffle(random);
+                s2 = samples.subList(0, 1000);
+            } else {
+                s2 = samples;
+            }
+            System.out.println(Arrays.toString(s2.toArray()));
+        }
+
     }
 
     private void makeWeightsSymmetricAndCreateConnectionsArray() {
@@ -343,7 +384,10 @@ public class Graph<C extends Candidate<?>> {
 
         //todo this is a big hack!!!!
         for (EdgeScorer<C> edgeScorer : edgeScorers) {
-            if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
+            if (edgeScorer instanceof ScoreProbabilityDistributionFix){
+                edgeScorer.prepare(allCandidates);
+                minV *= ((ScoreProbabilityDistributionFix)edgeScorer).getProbabilityDistribution().getMinProbability();
+            } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
@@ -360,13 +404,18 @@ public class Graph<C extends Candidate<?>> {
 
         
         minV = Math.log(minV);
+
+//        //todo changed
+//        minV = ((ExponentialDistribution)((ScoreProbabilityDistributionEstimator)edgeScorers[0]).getProbabilityDistribution()).getMinProbability2();
+        if (DEBUG) System.out.println("minV "+minV);
+
         this.edgeFilter.setThreshold(minV);
 //        System.out.println("min value " + minV);
         final Graph final_graph = this;
         long time = System.currentTimeMillis();
 
         System.out.println("start computing edges");
-        int step = this.getSize()/20;
+        int step = Math.max(this.getSize()/20, 1);
 
         for(int i = 0; i < this.getSize(); ++i) {
             if(i % step == 0 || i==(this.getSize()-1)) {
@@ -390,7 +439,8 @@ public class Graph<C extends Candidate<?>> {
 
                             for(int var8 = 0; var8 < var7; ++var8) {
                                 EdgeScorer edgeScorer = var6[var8];
-                                score += Math.log(edgeScorer.score(var16, candidate2));
+                                score += Math.log(edgeScorer.score(var16, candidate2));//todo changed
+//                                score += edgeScorer.score(var16, candidate2);
                             }
 
                             scores.add(score);
@@ -401,7 +451,7 @@ public class Graph<C extends Candidate<?>> {
 //                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
 //                    }
 
-                    Graph.this.edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
+                    edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
                 }
             }));
         }
@@ -409,7 +459,7 @@ public class Graph<C extends Candidate<?>> {
         this.futuresGet(futures);
         executorService.shutdown();
 
-        System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
+        if (DEBUG) System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
 
         for (EdgeScorer edgeScorer : edgeScorers) {
             edgeScorer.clean();
@@ -434,6 +484,91 @@ public class Graph<C extends Candidate<?>> {
 
     }
 
+
+    private void thinOutGraph() {
+//        this.ids = ids;
+//        Scored<C>[][] this.possibleFormulas = possibleFormulas;
+//        this.possibleFormulas1D = this.setUp(possibleFormulas);
+//        this.size = this.possibleFormulas1D.length;
+//        this.indexMap = new TIntIntHashMap[this.size];
+//        this.weights = new TDoubleArrayList[this.size];
+//        this.edgeThresholds = new double[this.size];
+
+
+        //still todo ....
+        if (true) return;
+
+        for(int i = 0; i < this.indexMap.length; ++i) {
+            this.indexMap[i] = new TIntIntHashMap(this.size / 100, 0.75F, -1, -1);
+            this.weights[i] = new TDoubleArrayList(this.size / 100);
+        }
+
+
+        int[] boundaries = new int[possibleFormulas.length];
+        int idx = -1;
+
+        for(int i = 0; i < possibleFormulas.length; ++i) {
+            idx += possibleFormulas[i].length;
+            this.boundaries[i] = idx;
+        }
+
+
+        int numberOfDeleted = 0;
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+
+            for (int i = 0; i < numberOfCompounds(); i++) {
+                int left = getPeakLeftBoundary(i, boundaries);
+                int right = getPeakRightBoundary(i, boundaries);
+
+                double candidateScoreSum = 0;
+                double[] maxPossibleScore = new double[right-left+1];
+                for (int j = left; j <= right; j++) {
+                    maxPossibleScore[j] = getCandidateScore(j);
+                    candidateScoreSum += Math.exp(getCandidateScore(j));
+
+                    for (int k = 0; k < numberOfCompounds(); k++) {
+                        if (i==k) continue;
+                        maxPossibleScore[j] += Math.max(0, getMaxEdgeScore(j, k));
+                    }
+                }
+
+                candidateScoreSum = Math.log(candidateScoreSum);
+
+                for (int j = left; j <= right; j++) {
+                    if (maxPossibleScore[j]-candidateScoreSum<1e-6){
+                        //remove candidate from net
+//                        changed = true;
+                        ++numberOfDeleted;
+                    }
+
+                }
+
+            }
+        }
+        if (DEBUG) System.out.println("remove "+numberOfDeleted);
+    }
+
+    /**
+     * get maximum weight of any edge from the candidate to all candidates of the peak
+     * @param absCandidateIdx
+     * @param peakIndex
+     * @return
+     */
+    private double getMaxEdgeScore(int absCandidateIdx, int peakIndex) {
+        int left = getPeakLeftBoundary(peakIndex);
+        int right = getPeakRightBoundary(peakIndex);
+        int[] conns = getConnections(absCandidateIdx);
+        double max = Double.NEGATIVE_INFINITY;
+        for (int conn : conns) {
+            if (conn>=left && conn<=right){
+                max = Math.max(max, getLogWeight(absCandidateIdx, conn));
+            }
+        }
+        return max;
+    }
+
     public int getPeakIdx(int formulaIdx) {
         return this.formulaIdxToPeakIdx[formulaIdx];
     }
@@ -456,11 +591,19 @@ public class Graph<C extends Candidate<?>> {
     }
 
     public int getPeakLeftBoundary(int peakIdx) {
-        return peakIdx == 0?0:this.boundaries[peakIdx - 1] + 1;
+        return getPeakLeftBoundary(peakIdx, this.boundaries);
     }
 
     public int getPeakRightBoundary(int peakIdx) {
-        return this.boundaries[peakIdx];
+        return getPeakRightBoundary(peakIdx, this.boundaries);
+    }
+
+    public int getPeakLeftBoundary(int peakIdx, int[] boundaries) {
+        return peakIdx == 0?0:boundaries[peakIdx - 1] + 1;
+    }
+
+    public int getPeakRightBoundary(int peakIdx, int[] boundaries) {
+        return boundaries[peakIdx];
     }
 
     private boolean isSymmetricSparse(int[][] connections) {

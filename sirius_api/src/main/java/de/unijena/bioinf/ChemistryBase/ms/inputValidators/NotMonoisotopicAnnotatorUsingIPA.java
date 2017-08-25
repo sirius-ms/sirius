@@ -52,7 +52,6 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
             sirius = new Sirius();
         }
         for (Ms2Experiment ms2Experiment : dataset) {
-            System.out.println(ms2Experiment.getName());
             if (CompoundQuality.hasProperty(ms2Experiment, SpectrumProperty.NoMS1Peak)) continue;
             if (isNotMonoisotopicPeak(ms2Experiment, dataset.getMeasurementProfile())){
                 CompoundQuality.setProperty(ms2Experiment, SpectrumProperty.NotMonoisotopicPeak);
@@ -72,17 +71,16 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
         double realPrecursorMass = merged.getMzAt(idx);
         double precursorIntensity = merged.getIntensityAt(idx);
         if (idx<0){
-//            merged.addPeak(precursorMass, experiment.getIonMass());
             throw new RuntimeException("could not find precursor peak");
         }
 
         if (!containsAnyAlternativeMonoisotopicPeak(realPrecursorMass, precursorIntensity, idx, merged)) return false;
 
         List<IsotopePattern> patterns = computeIsotopePatterns(realPrecursorMass, merged, profile, realPrecursorMass);
-        if (patterns.size()>0){
-            System.out.println("mono best "+patterns.get(0).getCandidate()+" with "+patterns.get(0).getScore()+" at "+patterns.get(0).getMonoisotopicMass());
-
-        }
+//        if (patterns.size()>0){
+//            System.out.println("mono best "+patterns.get(0).getCandidate()+" with "+patterns.get(0).getScore()+" at "+patterns.get(0).getMonoisotopicMass());
+//
+//        }
         //todo never a negative score for the "mono" pattern?
         double bestMonoScore = Math.max((patterns.size()>0 ? patterns.get(0).getScore() : 0d), 0d);
         double bestScoreWithNotMonoPeak = Double.NEGATIVE_INFINITY;
@@ -105,7 +103,7 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
             for (IsotopePattern isotopePattern : isotopePatterns) {
                 if (containsMass(realPrecursorMass, isotopePattern)){
                     if (isotopePattern.getScore()>bestMonoScore+betterThanMonoisotopicThreshold){
-                        System.out.println(isotopePattern.getCandidate()+" at "+isotopePattern.getMonoisotopicMass()+" with "+isotopePattern.getScore());
+//                        System.out.println(isotopePattern.getCandidate()+" at "+isotopePattern.getMonoisotopicMass()+" with "+isotopePattern.getScore());
                     }
                     bestScoreWithNotMonoPeak = Math.max(isotopePattern.getScore(), bestScoreWithNotMonoPeak);
                 }
@@ -174,7 +172,6 @@ public class NotMonoisotopicAnnotatorUsingIPA implements QualityAnnotator {
         for (Peak peak : simpleMutableSpectrum) {
             double currentRatio = peak.getIntensity()/monoInt;
             if (currentRatio>0.5 && lastIntRatio<0.1){
-                System.out.println("trim");
                 break;
             }
             s.addPeak(peak);
