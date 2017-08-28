@@ -128,13 +128,13 @@ public class Spectrums {
 
     private static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum performPeakMerging(SimpleSpectrum merged, Deviation massWindow, boolean sumIntenstities, boolean mergeMasses) {
+        assert isMassOrderedSpectrum(merged);
         final Spectrum<Peak> intensityOrdered = getIntensityOrderedSpectrum(merged);
         final BitSet alreadyMerged = new BitSet(merged.size());
         final SimpleMutableSpectrum mergedSpectrum = new SimpleMutableSpectrum();
         for (int k=0; k < intensityOrdered.size(); ++k) {
             final double mz = intensityOrdered.getMzAt(k);
             final int index = binarySearch(merged, mz);
-            assert intensityOrdered.getIntensityAt(k)==merged.getIntensityAt(index);
 
             if (alreadyMerged.get(index)) continue;
             // merge all surrounding peaks
@@ -153,15 +153,15 @@ public class Spectrums {
                     intensitySum += merged.getIntensityAt(j);
                 }
             }
-            final double intensity, mergedMz;
+            final double mergedIntensity, mergedMz;
             if (sumIntenstities) {
-                intensity = intensitySum;
-            } else intensity = intensityOrdered.getIntensityAt(k);
+                mergedIntensity = intensitySum;
+            } else mergedIntensity = intensityOrdered.getIntensityAt(k);
             if (mergeMasses) {
                 mergedMz = mzSum / intensitySum;
             } else mergedMz = mz;
 
-            mergedSpectrum.addPeak(mergedMz, intensity);
+            mergedSpectrum.addPeak(mergedMz, mergedIntensity);
         }
         return new SimpleSpectrum(mergedSpectrum);
     }
@@ -971,6 +971,46 @@ public class Spectrums {
         return -1;
     }
 
+    /**
+     * Search for an exact mz and intensity value. spectrum sorted by mz.
+     *
+     * @see Spectrums#binarySearch(Spectrum, double, Deviation)
+     */
+    public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz, double intensity) {
+        if (spectrum.size() > 0) {
+            int low = 0;
+            int high = spectrum.size() - 1;
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                int c = Double.compare(spectrum.getMzAt(mid), mz);
+                if (c < 0)
+                    low = mid + 1;
+                else if (c > 0)
+                    high = mid - 1;
+                else {
+                    // key found
+                    if (spectrum.getIntensityAt(mid)==intensity) return mid;
+                    int mid2 = mid;
+                    while (mid2>0){
+                        --mid2;
+                        if (spectrum.getMzAt(mid2)!=mz) break;
+                        if (spectrum.getIntensityAt(mid2)==intensity) return mid;
+                    }
+                    mid2 = mid;
+                    while (mid2<spectrum.size()-2){
+                        ++mid2;
+                        if (spectrum.getMzAt(mid2)!=mz) break;
+                        if (spectrum.getIntensityAt(mid2)==intensity) return mid;
+                    }
+                    return -mid-1;
+                }
+
+            }
+            return -(low + 1);
+        }
+        return -1;
+    }
+
     // TODO: Might want to use an more efficient algorithm, e.g. median of medians
     static double __getMedianIntensity(Spectrum<? extends Peak> spec) {
         final int N = spec.size();
@@ -996,6 +1036,16 @@ public class Spectrums {
         if (spectrum instanceof OrderedSpectrum) return (Spectrum<Peak>) spectrum;
         return new SimpleSpectrum(spectrum);
 
+    }
+
+    public static boolean isMassOrderedSpectrum(Spectrum<? extends Peak> spectrum){
+        double mz = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < spectrum.size(); i++) {
+            final double mz2 = spectrum.getMzAt(i);
+            if (mz2<mz) return false;
+            mz = mz2;
+        }
+        return true;
     }
 
     /**
