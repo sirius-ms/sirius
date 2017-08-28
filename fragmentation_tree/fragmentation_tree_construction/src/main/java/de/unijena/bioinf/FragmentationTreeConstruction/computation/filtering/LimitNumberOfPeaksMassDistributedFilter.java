@@ -35,6 +35,7 @@ import java.util.*;
 //   - 1/4 n of the most intensive peaks peaks in each block are selected
 // This processor should take care that peaks in the low mass range are not deleted just because
 // peaks in high mass range have larger intensities
+
 //
 public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, Initializable {
 
@@ -43,8 +44,8 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
     private double[] masses;
     private int[] limits;
 
-    private static double[] DEFAULT_MASSES = new double[]{300, 600, Double.POSITIVE_INFINITY};
-    private static int[] DEFAULT_LIMITS = new int[]{40, 60, 80};
+    private static double[] DEFAULT_MASSES = new double[]{300, 500, 700};
+    private static int[] DEFAULT_LIMITS = new int[]{60, 80, 100};
 
     public DecomposerCache getCache() {
         if (cache == null) cache = new DecomposerCache(3);
@@ -69,7 +70,10 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
 
     public int getLimit(double mass) {
         for (int i=0; i < masses.length; ++i) {
-            if (mass < masses[i]) return limits[i];
+            if (mass < masses[i]) {
+                if (i==0) return limits[0];
+                else return (int)Math.floor(limits[i-1] + (limits[i]-limits[i-1])*((mass-masses[i-1])/(masses[i]-masses[i-1])));
+            }
         }
         return limits[limits.length-1];
     }
@@ -96,14 +100,14 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
         // 0 - 1/6
         final double parentmass = input.getExperimentInformation().getIonMass();
         final double blocksize = parentmass/6d;
-        final int numberOfPeaksPerBlock = limit/6;
+        final int numberOfPeaksPerBlock = limit/8;
 
         final List<ProcessedPeak> orderedByIntensity = new ArrayList<>(input.getMergedPeaks());
         Collections.sort(orderedByIntensity, new ProcessedPeak.RelativeIntensityComparator());
         Collections.reverse(orderedByIntensity);
         final double maxMass = parentmass-1;
         int selected=0;
-        selected += keep(orderedByIntensity, keepPeaks, 0, maxMass, 2*numberOfPeaksPerBlock);
+        selected += keep(orderedByIntensity, keepPeaks, 0, maxMass, 4*numberOfPeaksPerBlock);
         selected += keep(orderedByIntensity, keepPeaks, 0, blocksize, numberOfPeaksPerBlock);
         selected += keep(orderedByIntensity, keepPeaks, blocksize, 2*blocksize, numberOfPeaksPerBlock);
         selected += keep(orderedByIntensity, keepPeaks, 2*blocksize, 4*blocksize, numberOfPeaksPerBlock);
