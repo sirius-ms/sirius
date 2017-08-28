@@ -1,23 +1,14 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.net.ConnectionCheckPanel;
-import de.unijena.bioinf.sirius.net.ProxyManager;
-import org.jdesktop.swingx.VerticalLayout;
-import oshi.jna.platform.unix.solaris.LibKstat;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * Created by Marcus Ludwig on 17.11.16.
@@ -29,12 +20,12 @@ public class ConnectionDialog extends JDialog implements ActionListener {
 
     public ConnectionDialog(Dialog owner) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(ProxyManager.checkInternetConnection());
+        initDialog(WebAPI.checkFingerIDConnectionStatic());
     }
 
     public ConnectionDialog(Frame owner) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(ProxyManager.checkInternetConnection());
+        initDialog(WebAPI.checkFingerIDConnectionStatic());
     }
 
     public ConnectionDialog(Frame owner, int state) {
@@ -73,7 +64,7 @@ public class ConnectionDialog extends JDialog implements ActionListener {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
-        if (state > ProxyManager.MAX_STATE)
+        if (state > WebAPI.MAX_STATE)
             if (getParent() instanceof Dialog) {
                 new ErrorReportDialog((Dialog) getParent(), "An unknown Network Error occurred!");
             }else{

@@ -2,9 +2,9 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ConnectionDialog;
+import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.net.ProxyManager;
-import org.apache.http.impl.client.CloseableHttpClient;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,12 +19,12 @@ public class CheckConnectionAction extends AbstractAction {
     public CheckConnectionAction() {
         super("Refresh");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh internet connection");
-        setState(ProxyManager.hasInternetConnection());
+        setState(WebAPI.canConnect());
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        int state = ProxyManager.checkInternetConnection();
+        int state = WebAPI.checkFingerIDConnectionStatic();
         setState(state == ProxyManager.OK_STATE);
         if (!isActive.get()) {
             new ConnectionDialog(MainFrame.MF, state);
