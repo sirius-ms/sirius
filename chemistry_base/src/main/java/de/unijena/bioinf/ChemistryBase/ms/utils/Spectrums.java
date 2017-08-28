@@ -222,6 +222,8 @@ public class Spectrums {
         int i=0, j=0;
         final int nl=left.size(), nr=right.size();
         double score=0d;
+        while (i < nl && left.getMzAt(i) < 0.5d) ++i;
+        while (j < nr && right.getMzAt(j) < 0.5d) ++j;
         while (i < nl && j < nr) {
             final double difference = left.getMzAt(i)- right.getMzAt(j);
             final double allowedDifference = deviation.absoluteFor(Math.min(left.getMzAt(i), right.getMzAt(j)));
