@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -81,11 +82,14 @@ public class Compound {
     protected String name;
     protected IAtomContainer molecule;
     protected double xlogP = Double.NaN;
-    protected int bitset;
+    protected long bitset;
 
     protected Fingerprint fingerprint;
     protected Multimap<String, String> databases;
     protected int[] pubchemIds; // special case for the lots of pubchem ids a structure might have
+
+    protected int pLayer;
+    protected int qLayer;
 
     protected Compound(FingerprintCandidate candidate) {
         this.inchi = candidate.getInchi();
@@ -97,9 +101,12 @@ public class Compound {
         names.remove(DatasourceService.Sources.PUBCHEM.name);
         this.databases = ArrayListMultimap.create(names.size(), 1);
         for (String aname : names) this.databases.put(aname,null);
+        this.pLayer = candidate.getpLayer();
+        this.qLayer = candidate.getqLayer();
+        this.xlogP = candidate.getXlogp();
     }
 
-    public int getBitset() {
+    public long getBitset() {
         return bitset;
     }
 
@@ -130,6 +137,9 @@ public class Compound {
         fc.setLinks(links.toArray(new DBLink[links.size()]));
         if (name != null) fc.setName(name);
         if (smiles != null) fc.setSmiles(smiles.smiles);
+        fc.setpLayer(pLayer);
+        fc.setqLayer(qLayer);
+        fc.setXlogp(xlogP);
         return fc;
     }
 
@@ -175,7 +185,9 @@ public class Compound {
     public static Compound parseFromJSON(JsonParser parser, MaskedFingerprintVersion version) {
         final Compound compound = new Compound();
         String inchi = null, inchikey = null;
-        int flags=0;
+        long flags=0;
+        int pLayer=0; int qLayer=0;
+        double xlogp = Double.NaN;
         while (true) {
             final JsonParser.Event event = parser.next();
             switch (event) {
@@ -197,9 +209,15 @@ public class Compound {
                             compound.fingerprint = version==null ? new ArrayFingerprint(CdkFingerprintVersion.getDefault(), values.toArray()) : version.mask(values.toArray());
                             break;
                         case "bitset":
-                            flags = expectInt(parser); break;
+                            flags = expectLong(parser); break;
                         case "links":
                             parseLinks(compound, parser); break;
+                        case "pLayer":
+                            pLayer = expectInt(parser); break;
+                        case "qLayer":
+                            qLayer = expectInt(parser); break;
+                        case "xlogp":
+                            xlogp = expectInt(parser); break;
                     }
                     break;
                 case END_OBJECT:
@@ -218,6 +236,9 @@ public class Compound {
                         compound.databases = ArrayListMultimap.create(names.size(), 1);
                         for (String aname : names) compound.databases.put(aname,null);
                     }
+                    compound.pLayer = pLayer;
+                    compound.qLayer = qLayer;
+                    compound.xlogP = xlogp;
                     return compound;
             }
         }
@@ -239,6 +260,12 @@ public class Compound {
         final JsonParser.Event event = parser.next();
         if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
         return parser.getInt();
+    }
+
+    private static long expectLong(JsonParser parser) {
+        final JsonParser.Event event = parser.next();
+        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        return parser.getLong();
     }
 
     private static void parseLinks(Compound compound, JsonParser parser) {
@@ -420,5 +447,22 @@ public class Compound {
 
     public void addDatabase(String name, String id) {
         databases.put(name, id);
+    }
+
+
+    public boolean canBeNeutralCharged(){
+        return (hasChargeState(pLayer, CompoundCandidate.NEUTRAL_CHARGE) || hasChargeState(qLayer, CompoundCandidate.NEUTRAL_CHARGE));
+    }
+
+    public boolean canBePositivelyCharged(){
+        return (hasChargeState(pLayer, CompoundCandidate.POSITIVE_CHARGE) || hasChargeState(qLayer, CompoundCandidate.POSITIVE_CHARGE));
+    }
+
+    public boolean canBeNegativelyCharged(){
+        return (hasChargeState(pLayer, CompoundCandidate.NEGATIVE_CHARGE) || hasChargeState(qLayer, CompoundCandidate.NEGATIVE_CHARGE));
+    }
+
+    private boolean hasChargeState(int chargeLayer, int chargeState){
+        return ((chargeLayer & chargeState) == chargeState);
     }
 }
