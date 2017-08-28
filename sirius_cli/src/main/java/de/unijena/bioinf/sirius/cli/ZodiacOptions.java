@@ -58,7 +58,7 @@ public interface ZodiacOptions {
     @Option(
             longName = {"separateRuns"},
             description = "number of separate runs",
-            defaultValue = {"20"}
+            defaultValue = {"10"}
     )
     int getSeparateRuns();
 
@@ -71,7 +71,7 @@ public interface ZodiacOptions {
     int getLocalFilter();
 
     @Option(
-            longName = {"thresholdFilter"},
+            longName = {"thresholdFilter", "thresholdfilter"},
             description = "Defines the proportion of edges of the complete network which will be ignored. Default is 0.95 = 95%",
             defaultValue = {"0.95"}
     )

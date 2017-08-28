@@ -98,12 +98,14 @@ public class Zodiac {
 
 //            //// TODO: 24/05/17
             boolean ignoreSilicon = true;
-            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidates(workSpacePath, Paths.get(options.getSpectraFile()), Integer.MAX_VALUE, workerCount, ignoreSilicon);
+//            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidates(workSpacePath, Paths.get(options.getSpectraFile()), Integer.MAX_VALUE, workerCount, ignoreSilicon);
+            //changed
+//            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidatesEval(workSpacePath, Paths.get(options.getSpectraFile()), Integer.MAX_VALUE, workerCount, ignoreSilicon);
 
 
 
             //changed
-//            Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(input, maxCandidates);
+            Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(input, maxCandidates);
 
             System.out.println("number of compounds: "+candidatesMap.size());
 
@@ -127,14 +129,14 @@ public class Zodiac {
             NodeScorer[] nodeScorers;
             //todo useful score
             boolean useLibraryHits = (libraryHitsFile!=null);
-            double libraryScore = 5d;//todo which bias!?
+            double libraryScore = 1d;//todo which bias!?
             if (useLibraryHits){
                 //todo fix LibraryHitScorer!!!!!!!!!!!
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
-                System.out.println("use LibraryHitScorer");
+//                System.out.println("use LibraryHitScorer");
             } else {
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
-                System.out.println("ignore Library Hits");
+//                System.out.println("ignore Library Hits");
             }
 
 
