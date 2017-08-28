@@ -24,6 +24,10 @@ public class SiriusApplication extends ApplicationCore {
 //    private SiriusApplication(){}
 
     //--zodiac --spectral-hits /home/ge28quv/@data/gibbsTestData/METABOLOMICS-SNETS-ANNOTATED-PAIRS-66d88580-view_all_annotations_DB-main.tsv --spectra /home/ge28quv/@data/gibbsTestData/spectral_data_ms1-2.mgf -o /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/gibbsOutput.csv --iterations 200000 --burn-in 20000 --thresholdFilter 0.95 --distribution exponential --sirius /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.workspace
+
+
+
+    //--zodiac --sirius /home/ge28quv/OutputFolderSirius --spectral-hits /home/ge28quv/Downloads/zodiac_testdata/GNPS_annotation_subset5.txt --thresholdfilter 0.96 --output /home/ge28quv/OutputZodiac --spectra /home/ge28quv/Downloads/zodiac_testdata/Tobramycin_camera_Sirius_subset_5.mgf
     public static void main(String[] args) {
 //        final FingeridApplication cli = new FingeridApplication();
 //        cli.parseArgs(args, FingerIdOptions.class);
