@@ -15,6 +15,7 @@ public class VersionsInfo {
 
     public String  databaseDate;
     public final DefaultArtifactVersion siriusGuiVersion;
+    public int errorState = 0;
     protected List<News> newsList;
 
     public VersionsInfo(String siriusGuiVersion, String databaseDate) {

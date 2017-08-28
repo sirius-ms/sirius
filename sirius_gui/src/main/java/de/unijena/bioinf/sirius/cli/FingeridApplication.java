@@ -336,7 +336,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private void initFingerBlast() {
         progress.info("Initialize CSI:FingerId...");
         try (WebAPI webAPI = WebAPI.newInstance()) {
-            final VersionsInfo needsUpdate = webAPI.needsUpdate();
+            final VersionsInfo needsUpdate = webAPI.getVersionInfo();
             if (needsUpdate != null && needsUpdate.outdated()) {
                 progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + needsUpdate.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
                 System.exit(1);

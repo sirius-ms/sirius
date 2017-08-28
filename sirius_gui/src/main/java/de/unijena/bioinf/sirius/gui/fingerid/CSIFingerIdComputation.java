@@ -88,7 +88,7 @@ public class CSIFingerIdComputation {
     protected final HashMap<String, Compound> compounds;
     protected final HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
     private File directory;
-    private boolean enabled;
+    private boolean enabled = false;
     protected List<Runnable> enabledListeners = new ArrayList<>();
 
     protected Canopus canopus;
@@ -608,18 +608,20 @@ public class CSIFingerIdComputation {
     }
 
     public void waitForInitialization() {
-        try {
-            globalLock.lock();
-            if (performances == null) {
-                final WebAPI webAPI = WebAPI.newInstance();
-                loadStatistics(webAPI);
-                webAPI.close();
+        if (isEnabled()) {
+            try {
+                globalLock.lock();
+                if (performances == null) {
+                    final WebAPI webAPI = WebAPI.newInstance();
+                    loadStatistics(webAPI);
+                    webAPI.close();
+                }
+            } catch (IOException e) {
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+                return;
+            } finally {
+                globalLock.unlock();
             }
-        } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            return;
-        } finally {
-            globalLock.unlock();
         }
     }
 
