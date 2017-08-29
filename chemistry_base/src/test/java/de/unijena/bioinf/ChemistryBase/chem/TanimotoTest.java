@@ -52,6 +52,13 @@ public class TanimotoTest {
 
         assertEquals(5d/24d, Tanimoto.probabilisticTanimoto(fp2, fp3).expectationValue(), 1e-6);
 
+        final double[] probabilities4 = new double[M.size()];
+        for (short index : indizes2) probabilities4[index] = 1.0d;
+        probabilities4[5] = 0.5;
+        probabilities4[8] = 0.5;
+        fp1 = new ArrayFingerprint(M, indizes1);
+        fp2 = new ProbabilityFingerprint(M, probabilities4);
+        assertEquals(1d/3d, Tanimoto.probabilisticTanimotoFixedLength(fp2, fp1).expectationValue(), 1e-6);
 
 
     }

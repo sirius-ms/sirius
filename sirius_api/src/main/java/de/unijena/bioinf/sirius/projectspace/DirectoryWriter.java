@@ -290,7 +290,7 @@ public class DirectoryWriter extends AbstractProjectWriter {
     @Override
     protected void endWritingExperiment(Ms2Experiment experiment)throws IOException  {
         W.leaveDirectory();
-        W.updateProgress(currentExperimentName + "\tdone.");
+        W.updateProgress(currentExperimentName + "\tdone.\n");
     }
 
     public static String makeFileName(IdentificationResult result) {

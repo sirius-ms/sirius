@@ -274,7 +274,7 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
 
     public void setBound(Element e, int lowerbound, int upperbound) {
         final int i = chemicalAlphabet.indexOf(e);
-        if (i < 0 && lowerbound > 0 || upperbound > 0) {
+        if ((i < 0) && (upperbound > 0)) {
             throw new NoSuchElementException(e + " is not contained in the chemical alphabet " + chemicalAlphabet);
         }
         if (lowerbound > upperbound)
@@ -500,5 +500,28 @@ public class FormulaConstraints implements ImmutableParameterized<FormulaConstra
             }
         }
         return buf.toString();
+    }
+
+    public FormulaConstraints intersection(FormulaConstraints formulaConstraints) {
+        final List<Element> elements = new ArrayList<>(this.chemicalAlphabet.getElements());
+        final Iterator<Element> eli = elements.iterator();
+        while (eli.hasNext()) {
+            final Element e = eli.next();
+            if (!formulaConstraints.hasElement(e)) {
+                eli.remove();
+            }
+        }
+        final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(new Element[elements.size()]));
+        final FormulaConstraints intersection = new FormulaConstraints(alphabet);
+        final HashMap<Class<? extends FormulaFilter>, FormulaFilter> ifils = new HashMap<>();
+        for (FormulaFilter f : this.filters)
+            ifils.put(f.getClass(), f);
+        for (FormulaFilter f : formulaConstraints.filters)
+            ifils.put(f.getClass(), f);
+        intersection.filters.addAll(ifils.values());
+        for (Element e : elements) {
+            intersection.setBound(e, Math.max(getLowerbound(e), formulaConstraints.getLowerbound(e)), Math.min(getUpperbound(e), formulaConstraints.getUpperbound(e)));
+        }
+        return intersection;
     }
 }

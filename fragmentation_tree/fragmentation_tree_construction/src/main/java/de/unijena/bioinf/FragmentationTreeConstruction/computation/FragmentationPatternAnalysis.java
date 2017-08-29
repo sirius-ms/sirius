@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.Hetero2CarbonScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
@@ -50,6 +51,9 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumC
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import gnu.trove.map.hash.TLongObjectHashMap;
+import gnu.trove.map.hash.TObjectLongHashMap;
+import gnu.trove.procedure.TLongProcedure;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -409,6 +413,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Decompose each peak as well as the parent peak
      */
     public ProcessedInput performDecomposition(ProcessedInput input) {
+        final Whiteset whiteset = input.getAnnotation(Whiteset.class, null);
         final FormulaConstraints constraints = input.getMeasurementProfile().getFormulaConstraints();
         final Ms2Experiment experiment = input.getExperimentInformation();
         final Deviation parentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
@@ -421,7 +426,26 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final MassToFormulaDecomposer decomposer = decomposers.getDecomposer(constraints.getChemicalAlphabet());
         final Ionization ion = experiment.getPrecursorIonType().getIonization();
         final Deviation fragmentDeviation = input.getMeasurementProfile().getAllowedMassDeviation();
-        final List<MolecularFormula> pmds = decomposer.decomposeToFormulas(experiment.getPrecursorIonType().subtractIonAndAdduct(parentPeak.getOriginalMz()), parentDeviation, constraints);
+
+        final List<MolecularFormula> pmds;
+        if (whiteset!=null && !whiteset.getFormulas().isEmpty()) {
+            pmds = new ArrayList<>(whiteset.getFormulas());
+            final Iterator<MolecularFormula> fiter = pmds.iterator();
+            while (fiter.hasNext()) {
+                if (!parentDeviation.inErrorWindow(parentPeak.getOriginalMz(), experiment.getPrecursorIonType().neutralMassToPrecursorMass(fiter.next().getMass()))) {
+                    fiter.remove();
+                }
+            }
+        } else {
+            pmds = decomposer.decomposeToFormulas(experiment.getPrecursorIonType().subtractIonAndAdduct(parentPeak.getOriginalMz()), parentDeviation, constraints);
+        }
+
+
+        // may split pmds if multiple alphabets are present
+        final List<MassToFormulaDecomposer> decomposers = new ArrayList<>();
+        final List<FormulaConstraints> constraintList = new ArrayList<>();
+        getDecomposersFor(pmds, constraints, decomposers, constraintList);
+
         // add adduct to molecular formula of the ion - because the adduct might get lost during fragmentation
         {
             final MolecularFormula adduct = experiment.getPrecursorIonType().getAdduct();
@@ -431,14 +455,21 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 iter.set(f.add(adduct));
             }
         }
+
         decompositionList.set(parentPeak, DecompositionList.fromFormulas(pmds));
         int j = 0;
         for (ProcessedPeak peak : processedPeaks.subList(0, processedPeaks.size() - 1)) {
             peak.setIndex(j++);
             final double mass = peak.getUnmodifiedMass();
             if (mass > 0) {
-                decompositionList.set(peak, DecompositionList.fromFormulas(decomposer.decomposeToFormulas(mass, fragmentDeviation, constraints)));
-            } else decompositionList.set(peak, new DecompositionList(new ArrayList<Scored<MolecularFormula>>(0)));
+                final HashSet<MolecularFormula> formulas = new HashSet<>();
+                for (int D=0; D < decomposers.size(); ++D) {
+                    formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation, constraintList.get(D)));
+                }
+                decompositionList.set(peak, DecompositionList.fromFormulas(formulas));;
+            } else {
+                decompositionList.set(peak, new DecompositionList(new ArrayList<Scored<MolecularFormula>>(0)));
+            }
         }
         parentPeak.setIndex(processedPeaks.size() - 1);
         assert parentPeak == processedPeaks.get(processedPeaks.size() - 1);
@@ -468,6 +499,55 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
 
         return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, input);
+    }
+
+    private void getDecomposersFor(List<MolecularFormula> pmds, FormulaConstraints constraint, List<MassToFormulaDecomposer> decomposers, List<FormulaConstraints> constraintList) {
+        pmds = new ArrayList<>(pmds);
+        final TObjectLongHashMap<Element> elementMap = new TObjectLongHashMap<>(10, 0.75f, -1);
+        final TLongObjectHashMap<MassToFormulaDecomposer> decomposerMap = new TLongObjectHashMap<>(10);
+        final long[] buf = new long[2];
+        Collections.sort(pmds, new Comparator<MolecularFormula>() {
+            @Override
+            public int compare(MolecularFormula o1, MolecularFormula o2) {
+                return o2.getNumberOfElements()-o1.getNumberOfElements();
+            }
+        });
+        for (MolecularFormula formula : pmds) {
+            buf[0] = 0l;
+            formula.visit(new FormulaVisitor<Object>() {
+                @Override
+                public Object visit(Element element, int amount) {
+                    long val = elementMap.get(element);
+                    if (val < 0) {
+                        val =  1L << elementMap.size();
+                        elementMap.put(element,val);
+                    }
+                    buf[0] |= val;
+                    return null;
+                }
+            });
+            buf[1] = -1L;
+            if (!decomposerMap.containsKey(buf[0])) {
+                decomposerMap.forEachKey(new TLongProcedure() {
+                    @Override
+                    public boolean execute(long value) {
+                        if ((value & buf[0]) == buf[0]) {
+                            buf[1] = 1L;
+                            return false;
+                        } else return true;
+                    }
+                });
+                if (buf[1] < 0) {
+                    MassToFormulaDecomposer newDecomposer = getDecomposerCache().getDecomposer(new ChemicalAlphabet(formula.elementArray()));
+                    decomposerMap.put(buf[0], newDecomposer);
+                }
+            }
+        }
+        for (MassToFormulaDecomposer decomposer : decomposerMap.valueCollection()) {
+            final FormulaConstraints cs = constraint.intersection(new FormulaConstraints(decomposer.getChemicalAlphabet()));
+            constraintList.add(cs);
+            decomposers.add(decomposer);
+        }
     }
 
     /**
@@ -536,6 +616,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // set peak indizes
         for (int i = 0; i < processedPeaks.size(); ++i) processedPeaks.get(i).setIndex(i);
 
+        return input;
+    }
+
+    ProcessedInput preprocessInputForGraphBuilding(ProcessedInput input) {
+        input = performPreprocessing(input);
+        input = performNormalization(input);
+        input = performPeakMerging(input);
+        input = performParentPeakDetection(input);
+        input = performDecomposition(input);
+        input = performPeakScoring(input);
         return input;
     }
 
