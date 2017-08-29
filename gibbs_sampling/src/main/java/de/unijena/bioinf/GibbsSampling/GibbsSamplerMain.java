@@ -988,7 +988,7 @@ public class GibbsSamplerMain {
                     final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]].replace("\"", ""), cols[indices[2]].replace("\"", ""));
 
                     if (formula==null){
-                        System.err.println("cannot compute molecular formula of library hit #SCAN# "+scanNumber);
+                        System.err.println("cannot parse molecular formula of library hit #SCAN# "+scanNumber);
                         continue;
                     }
 
@@ -1344,7 +1344,7 @@ public class GibbsSamplerMain {
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
         for (Ms2Experiment experiment : experiments) {
             String name = cleanString(experiment.getName());
-            if (experimentMap.containsKey(name)) throw new RuntimeException("experiment name duplicate");
+            if (experimentMap.containsKey(name)) throw new RuntimeException("experiment name duplicate: "+name);
             experimentMap.put(name, experiment);
         }
 
