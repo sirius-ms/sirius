@@ -42,7 +42,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 //        this.pseudo = 0.01D;
 //        this.logPseudo = Math.log(0.01D);
         this.pseudo = Double.NaN;
-        this.logPseudo = -0.1d;
+        this.logPseudo = -0.2d;
 //        this.logPseudo = 0.0;
 
 
@@ -66,7 +66,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 //        this.logPseudo = Math.log(0.01D);
 
         this.pseudo = Double.NaN;
-        this.logPseudo = -0.1d;
+        this.logPseudo = -0.2d;
 //        this.logPseudo = 0.0;
 
 
