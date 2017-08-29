@@ -86,7 +86,6 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	}
 
 	private void initPeakPositionParameter(){
-
 		double intDiff = this.maxScaleInt - this.minScaleInt;
 		this.yAxisPixelPerIntVal = ((double) yPixelNumber) / intDiff;
 
@@ -230,10 +229,11 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 	public void setData(MSViewerDataModel dataModel){
 		this.dataModel = dataModel;
+		this.firstVisibleIndex = 0;
+		this.lastVisibleIndex = dataModel.getSize();
 		this.setOverviewMode(false);
 		this.setVisibleIndices(0, dataModel.getSize()-1);
 		this.computeScale();
-		this.initPeakPositionParameter();
 		this.notInitialized = true;
 		this.peakArrayNotInitialized = true;
 	}
@@ -268,30 +268,24 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 //		this.setOverviewMode(true);
 		this.setOverviewMode(false);
 		this.setVisibleIndices(0, dataModel.getSize()-1);
-		this.computeScale();
+		computeScale();
 		this.initPeakPositionParameter();
 		this.repaint();
 	}
 
 	private void computeScale(){
-		double minInt = Double.MAX_VALUE;
-		double maxInt = 0;
-		double minMass = Double.MAX_VALUE;
-		double maxMass = 0;
 
-		if(dataModel.getSize()>0){
-			for(int i=this.firstVisibleIndex;i<=this.lastVisibleIndex;i++){
-				if(this.dataModel.getMass(i)<minMass) minMass = this.dataModel.getMass(i);
-				if(this.dataModel.getMass(i)>maxMass) maxMass = this.dataModel.getMass(i);
-				if(this.dataModel.getRelativeIntensity(i)<minInt) minInt = this.dataModel.getRelativeIntensity(i);
-				if(this.dataModel.getRelativeIntensity(i)>maxInt) maxInt = this.dataModel.getRelativeIntensity(i);
-			}
-		}else{
-			minInt = 0;
-			maxInt = 1.0;
-			minMass = 0;
-			maxMass = 1000;
+		double minInt = 0d; double maxInt = 1d;
+		final double minMass, maxMass;
+		if (firstVisibleIndex > 0 || lastVisibleIndex < dataModel.getSize()-1) {
+			minMass = Math.max(dataModel.getMass(firstVisibleIndex), dataModel.minMz());
+			maxMass = Math.min(dataModel.maxMz(), dataModel.getMass(lastVisibleIndex));
+		} else {
+			minMass = dataModel.minMz();
+			maxMass = dataModel.maxMz();
 		}
+
+
 
 
 		//calculate max intensity
@@ -326,22 +320,16 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		}else{
 			minScaleMass = Math.floor(minMass)-1;
 		}
+		/*
+		for (firstVisibleIndex = 0; firstVisibleIndex < dataModel.getSize(); ++firstVisibleIndex) {
+		    if (dataModel.getMass(firstVisibleIndex) >= minMass) break;
+        }
+        for (lastVisibleIndex = dataModel.getSize()-1; lastVisibleIndex >= 0; --lastVisibleIndex) {
+            if (dataModel.getMass(lastVisibleIndex) < maxMass) break;
+        }
+        */
+        this.initPeakPositionParameter();
 
-
-
-//		int tempInt = (int) temp;
-//		if(maxMass % 5 != 0){
-//			maxScaleMass = ((tempInt / 5)+1) * 5.0;
-//		}else{
-//			maxScaleMass = temp;
-//		}
-
-//		System.out.println("firstIndex: "+this.firstVisibleIndex);
-//		System.out.println("lastIndex:  "+this.lastVisibleIndex);
-//		System.out.println("MinInt:  "+minScaleInt);
-//		System.out.println("MaxInt:  "+maxScaleInt);
-//		System.out.println("MinMass: "+minScaleMass);
-//		System.out.println("MaxMass: "+maxScaleMass);
 
 	}
 
@@ -354,7 +342,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 		if(notInitialized){
 			this.initBasicPositionParameter(this.getSize().width, this.getSize().height);
-			this.initPeakPositionParameter();
+            computeScale();
 		}
 		if(peakArrayNotInitialized){
 			this.initPeakPositionArray();
@@ -567,9 +555,10 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 		peakInts = new double[sizeX];
 		Arrays.fill(peakInts,Double.NEGATIVE_INFINITY);
-
 		for(int i=this.firstVisibleIndex;i<=this.lastVisibleIndex;i++){
 			double mass = this.dataModel.getMass(i);
+			if (mass < dataModel.minMz() || mass > dataModel.maxMz())
+			    continue;
 			double relInt = this.dataModel.getRelativeIntensity(i);
 			int peakXPos = this.getXPeakPosition(mass);
 			if(relInt>peakInts[peakXPos]) {
@@ -588,6 +577,8 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 			for(int i=this.firstVisibleIndex;i<=this.lastVisibleIndex;i++){
 
 				double mass = this.dataModel.getMass(i);
+                if (mass < dataModel.minMz() || mass > dataModel.maxMz())
+                    continue;
 				double intensity = this.dataModel.getRelativeIntensity(i);
 				if (intensity >= 0.05) {
 					g2.setStroke(largePeak);
@@ -983,8 +974,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	public void componentMoved(ComponentEvent e) {
 //		System.out.println("componentMoved "+e.paramString());
 		this.initBasicPositionParameter(this.getSize().width, this.getSize().height);
-		this.initPeakPositionParameter();
-
+		computeScale();
 		this.peakArrayNotInitialized = true;
 	}
 
@@ -992,8 +982,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	public void componentResized(ComponentEvent e) {
 //		System.out.println("new Size "+this.getSize().getWidth()+" "+this.getHeight());
 		this.initBasicPositionParameter(this.getSize().width, this.getSize().height);
-		this.initPeakPositionParameter();
-
+        computeScale();
 		this.peakArrayNotInitialized = true;
 	}
 

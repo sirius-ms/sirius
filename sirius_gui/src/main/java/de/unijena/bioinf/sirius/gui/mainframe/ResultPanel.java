@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
+import de.unijena.bioinf.sirius.gui.canopus.CanopusPanel;
 import de.unijena.bioinf.sirius.gui.fingerid.CandidateList;
 import de.unijena.bioinf.sirius.gui.fingerid.CandidateListDetailViewPanel;
 import de.unijena.bioinf.sirius.gui.fingerid.fingerprints.FingerprintPanel;
@@ -24,6 +25,9 @@ public class ResultPanel extends JTabbedPane {
     private CandidateOverviewPanel cov;
     private FingerprintPanel fpt;
 
+    private CanopusPanel classyfireTreePanel;
+    private FormulaList fl;
+
     public ResultPanel(final FormulaList suriusResultElements) {
         super();
         this.setToolTipText("Results");
@@ -47,9 +51,17 @@ public class ResultPanel extends JTabbedPane {
         addTab("CSI:FingerID Details", null, new FormulaListHeaderPanel(suriusResultElements, ccv), ccv.getDescription());
         if (fpt != null)
             addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(suriusResultElements, fpt), fpt.getDescription());
+
+        this.fl = suriusResultElements;
     }
 
     public void dispose() {
         ccv.dispose();
     }
+
+    public void enableCanopus() {
+        classyfireTreePanel = new CanopusPanel();
+        addTab("Compound Classification", null, new FormulaListHeaderPanel(fl, classyfireTreePanel));
+    }
+
 }

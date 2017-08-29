@@ -31,6 +31,8 @@ public class SiriusExperimentPopUpMenu extends JPopupMenu {
 //		addSeparator();
         add(editMI);
         add(closeMI);
-//		addSeparator();
+		addSeparator();
+		add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance()));
+        add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance()));
     }
 }
