@@ -129,6 +129,10 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         return formulas;
     }
 
+    public ChemicalAlphabet getChemicalAlphabet() {
+        return alphabet;
+    }
+
     @Override
     public ValencyAlphabet<Element> getAlphabet() {
         return new ChemicalAlphabetWrapper(alphabet);

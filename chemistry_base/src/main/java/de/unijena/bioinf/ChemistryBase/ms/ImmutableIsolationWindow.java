@@ -1,0 +1,30 @@
+package de.unijena.bioinf.ChemistryBase.ms;
+
+/**
+ * Created by ge28quv on 11/07/17.
+ */
+public class ImmutableIsolationWindow extends SimpleIsolationWindow{
+
+    public ImmutableIsolationWindow(double maxWindowSize, double massShift, double[] relMz, double[] filterRatio) {
+        super(maxWindowSize, massShift, false);
+        this.relMz = relMz;
+        this.filterRatio = filterRatio;
+    }
+
+    public ImmutableIsolationWindow(double maxWindowSize, double[] relMz, double[] filterRatio) {
+        super(maxWindowSize);
+        this.relMz = relMz;
+        this.filterRatio = filterRatio;
+    }
+
+    public ImmutableIsolationWindow(SimpleIsolationWindow window){
+        super(window.getMaxWindowSize(), window.getMassShift(), false);
+        this.relMz = window.getFilterMassValues();
+        this.filterRatio = window.getFilterIntensityRatios();
+    }
+
+    @Override
+    protected void estimateDistribution(IsotopeRatioInformation isotopeRatioInformation) {
+        throw new UnsupportedOperationException("cannot estimate distribution. immutable.");
+    }
+}

@@ -82,7 +82,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private SimpleMutableSpectrum currentSpectrum;
         private ArrayList<MutableMs2Spectrum> ms2spectra = new ArrayList<MutableMs2Spectrum>();
         private ArrayList<SimpleSpectrum> ms1spectra = new ArrayList<SimpleSpectrum>();
-        private String inchi, inchikey, smiles, splash;
+        private String inchi, inchikey, smiles, splash, spectrumQualityString;
         private MutableMs2Experiment experiment;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
         private HashMap<String,String> fields;
@@ -201,6 +201,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
                 splash = value;
+            } else if (optionName.equalsIgnoreCase("quality")){
+                spectrumQualityString = value;
             } else if (optionName.contains("collision") || optionName.contains("energy") || optionName.contains("ms2")) {
                 if (currentSpectrum.size()>0) newSpectrum();
                 if (currentEnergy != null) warn("Collision energy is set twice");
@@ -244,6 +246,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             } else {
                 warn("Unknown option '>" + optionName + "'");
+                fields.put(optionName, value);
             }
             return false;
         }
@@ -270,6 +273,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setSource(source);
             if (smiles!=null) exp.setAnnotation(Smiles.class, new Smiles(smiles));
             if (splash!=null) exp.setAnnotation(Splash.class, new Splash(splash));
+            if (spectrumQualityString!=null) exp.setAnnotation(CompoundQuality.class, CompoundQuality.fromString(spectrumQualityString));
             if (inchi!=null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
             if (instrumentation!=null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
             if (retentionTime!=0) exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTime));

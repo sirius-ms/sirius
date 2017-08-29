@@ -199,6 +199,17 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     }
 
     /**
+     * @return number of different elements in this molecular formula
+     */
+    public int getNumberOfElements() {
+        int i=0;
+        for (short val : buffer())
+            if (val > 0)
+                ++i;
+        return i;
+    }
+
+    /**
      * build an array of elements this formula contains. Each call of this method builds a new array.
      */
     public Element[] elementArray() {
