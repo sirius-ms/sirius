@@ -232,6 +232,8 @@ public class Zodiac {
             final Scored<FragmentsCandidate>[] currentResults = result[i];
             final Scored<FragmentsCandidate> bestResult = currentResults[0];
 
+            if (DummyFragmentCandidate.isDummy(bestResult.getCandidate())) continue;
+
             MutableMs2Experiment experiment = new MutableMs2Experiment(bestResult.getCandidate().getExperiment());
             experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
             experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
@@ -513,7 +515,7 @@ public class Zodiac {
                 }
                 if (matches){
                     candidate.setCorrect(true);
-                    System.out.println(id+" has library hit. correct MF is "+candidate.getFormula()+". Library hit is "+correctMF);
+                    System.out.println("Compound "+id+" has library hit. candidate MF is "+candidate.getFormula()+". Library hit is "+correctMF);
                 }
                 candidate.setInTrainingSet(true);
 
