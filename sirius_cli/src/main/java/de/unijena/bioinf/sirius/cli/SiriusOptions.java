@@ -44,7 +44,7 @@ public interface SiriusOptions {
     /////////////////////////////////////////////////
     // run Zodiac
 
-    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.")
+    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
     boolean isZodiac();
 
     /////////////////////////////////////////////////

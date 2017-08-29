@@ -37,7 +37,6 @@ dependencies {
 
 
 
-    compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
 }
 
 /*################### Environment variables ################### */
