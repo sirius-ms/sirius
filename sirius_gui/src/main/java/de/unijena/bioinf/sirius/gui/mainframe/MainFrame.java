@@ -163,13 +163,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 final VersionsInfo versionsNumber = (VersionsInfo) chunks.get(0);
                 final int errorState = (int) chunks.get(1);
 
-                if (errorState != 0)
-                    new ConnectionDialog(mf, errorState);
                 if (versionsNumber != null) {
                     if (errorState != 0)
                         mf.csiFingerId.setVersionNumber(versionsNumber);
-                    if (versionsNumber.outdated()) {
-                        new UpdateDialog(mf, versionsNumber.siriusGuiVersion.toString());
+                    if (versionsNumber.expired()) {
+                        new UpdateDialog(mf, versionsNumber);
                     } else {
                         mf.csiFingerId.setEnabled(true);
                     }
@@ -177,6 +175,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
                         new NewsDialog(mf, versionsNumber.getNews());
                     }
                 }
+                if (errorState != 0)
+                    new ConnectionDialog(mf, errorState);
             }
 
             @Override

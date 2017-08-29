@@ -64,6 +64,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -142,19 +143,18 @@ public class WebAPI implements Closeable {
     public static final int MAX_STATE = 6;
 
     public int checkConnection() {
-        if (!checkFingerIDConnection()) {
-            VersionsInfo v = getVersionInfo();
-            if (v == null) {
-                int error = ProxyManager.checkInternetConnection(client);
-                if (error > 0) return error;
-                else return 4;
-            } else if (v.outdated()) {
-                return MAX_STATE;
-            }
+        VersionsInfo v = getVersionInfo();
+        if (v == null) {
+            int error = ProxyManager.checkInternetConnection(client);
+            if (error > 0) return error;
+            else return 4;
+        } else if (v.outdated()) {
+            return MAX_STATE;
+        } else if (checkFingerIDConnection()) {
+            return 0;
+        } else {
             return 5;
         }
-        return 0;
-
     }
 
     public static int checkFingerIDConnectionStatic() {
@@ -182,6 +182,8 @@ public class WebAPI implements Closeable {
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
+        if (v != null)
+            LoggerFactory.getLogger(this.getClass()).debug(v.toString());
         return v;
     }
 
@@ -195,12 +197,25 @@ public class WebAPI implements Closeable {
 //                    final String date = gui.getString("date");
                 String database = o.getJsonObject("database").getString("version");
 
+                boolean expired = true;
+                Timestamp accept = null;
+                Timestamp finish = null;
+
+                if (o.containsKey("expiry dates")) {
+                    JsonObject expiryInfo = o.getJsonObject("expiry dates");
+                    expired = expiryInfo.getBoolean("isExpired");
+                    if (expiryInfo.getBoolean("isAvailable")) {
+                        accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
+                        finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                    }
+                }
+
                 List<News> newsList = Collections.emptyList();
                 if (o.containsKey("news")) {
                     final String newsJson = o.getJsonArray("news").toString();
                     newsList = News.parseJsonNews(newsJson);
                 }
-                return new VersionsInfo(version, database, newsList);
+                return new VersionsInfo(version, database, expired, accept, finish, newsList);
             }
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
@@ -217,7 +232,7 @@ public class WebAPI implements Closeable {
             if (ProxyManager.DEBUG) {
                 b = b.setPath("/frontend" + path);
             } else {
-                b = b.setPath("/csi_fingerid-" + "1.0.0"/*PROPERTIES.fingeridVersion()*/ + path);
+                b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path);
             }
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);

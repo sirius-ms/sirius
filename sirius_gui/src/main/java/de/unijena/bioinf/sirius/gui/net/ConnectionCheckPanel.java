@@ -66,47 +66,47 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
         final JLabel label;
         switch (state) {
             case 0:
-                label = new JLabel("<html>Connection to CSI:FingerID Server successfully established <br>" +
+                label = new JLabel("<html>Connection to CSI:FingerID Server successfully established!<br>" +
                         "</html>");
                 break;
             case 6:
-                label = new JLabel("<html>" + " ErrorCode " + state +
-                        " Could not reach the CSI:FingerID WebAPI <br>" +
-                        "Out Service is no longer available for your current Sirius version <br>" +
-                        "Please <a href=download>https://bio.informatik.uni-jena.de/software/sirius/</a> the current version of Sirius<br>" +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach the CSI:FingerID WebAPI. <br>" +
+                        "Our Service is no longer available for your current Sirius version. <br>" +
+                        "Please <a href=https://bio.informatik.uni-jena.de/software/sirius/>download</a> the current version of Sirius<br>" +
                         "</html>");
                 break;
             case 5:
-                label = new JLabel("<html>" + " ErrorCode " + state +
-                        " Could not reach the CSI:FingerID WebAPI <br>" +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach the CSI:FingerID WebAPI. <br>" +
                         "Your Sirius version is still supported but the Service <br>" +
                         "is unfortunately not available.<br>" +
                         "Please <a href=mailto:sirius@uni-jena.de>contact</a> the developer for help.<br>" +
                         "</html>");
                 break;
             case 4:
-                label = new JLabel("<html>" + " ErrorCode " + state +
-                        " Could not connect to the CSI:FingerID Server <br>" +
-                        " Either our the CSI:FingerID server is temporary not available<br>" +
-                        " or its URL cannot be reached because of your network configuration <br>" +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not connect to the CSI:FingerID Server. <br>" +
+                        " Either the CSI:FingerID server is temporary not available<br>" +
+                        " or its URL cannot be reached because of your network configuration.<br>" +
                         "</html>");
                 break;
             case 3:
-                label = new JLabel("<html>" + " ErrorCode " + state +
-                        " Could not reach https://bio.informatik.uni-jena.de <br>" +
-                        "Either our webserver is temporary not available<br>" +
-                        " or it cannot be reached because of your network configuration <br>" +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach https://bio.informatik.uni-jena.de. <br>" +
+                        "Either our web server is temporary not available<br>" +
+                        " or it cannot be reached because of your network configuration.<br>" +
                         "</html>");
                 break;
             case 2:
-                label = new JLabel("<html>" + " ErrorCode " + state +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not reach uni-jena.de. <br>" +
                         "Either the whole uni-jena.de domain is temporary not available<br>" +
-                        " or it cannot be reached because of your network configuration <br>" +
+                        " or it cannot be reached because of your network configuration. <br>" +
                         "</html>");
                 break;
             case 1:
-                label = new JLabel("<html>" + " ErrorCode " + state +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
                         " Could not establish an internet connection.<br>" +
                         "Please check if your computer is connected to the internet.<br>" +
                         "All features depending on the database won't work without internet connection.<br>" +
