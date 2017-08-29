@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.SinglethreadedTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import gnu.trove.list.array.TIntArrayList;
@@ -51,7 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * TODO: global lower bound?
  * Created by xentrics on 04.03.15.
  */
-public class GLPKSolver implements TreeBuilder {
+public class GLPKSolver implements TreeBuilder, SinglethreadedTreeBuilder {
     //private static boolean isLoaded=false;
 
 
