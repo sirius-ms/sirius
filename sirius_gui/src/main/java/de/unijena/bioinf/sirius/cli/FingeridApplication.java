@@ -13,10 +13,7 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
-import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
-import de.unijena.bioinf.sirius.fingerid.FingerIdResultReader;
-import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
-import de.unijena.bioinf.sirius.fingerid.SearchableDbOnDisc;
+import de.unijena.bioinf.sirius.fingerid.*;
 import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.CanopusResult;
@@ -236,12 +233,12 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     private void handleCanopus(IdentificationResult identificationResult, ProbabilityFingerprint fp) {
         if (canopus==null) return;
-        println("Predict compound categories: \nid\tname\tprobability");
+        println("Predict compound categories for " + identificationResult.getMolecularFormula() + ": \nid\tname\tprobability");
         final ProbabilityFingerprint fingerprint = canopus.predictClassificationFingerprint(identificationResult.getMolecularFormula(), fp);
         for (FPIter category : fingerprint.iterator()) {
             if (category.getProbability()>=0.333) {
                 ClassyfireProperty prop = ((ClassyfireProperty)category.getMolecularProperty());
-                println(prop.getChemontIdentifier() + "\t"  + prop.getName() + "\t" + category.getProbability());
+                println(prop.getChemontIdentifier() + "\t"  + prop.getName() + "\t" + ((int)Math.round(100d*category.getProbability())) + " %");
             }
         }
         println("");
@@ -251,6 +248,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private String escape(String name) {
         if (name == null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
+    }
+
+    private BioFilter getBioFilter(String option) {
+        final BioFilter bioFilter;
+        if (option.equalsIgnoreCase("pubchem") || option.equalsIgnoreCase("all")) {
+            bioFilter = BioFilter.ALL;
+        } else bioFilter = BioFilter.ONLY_BIO;
+        return bioFilter;
     }
 
     private BioFilter getBioFilter() {
@@ -280,22 +285,29 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     private SearchableDatabase getDatabase(String name) {
         final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
-        if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
-            try {
-                final CustomDatabase db = new CustomDatabase(new File(name).getName(), new File(name));
-                db.readSettings();
-                if (db.needsUpgrade()) {
-                    System.err.println("Database '" + name + "' is outdated and have to be upgraded or reimported.");
-                    System.exit(1);
+        if (!aliasMap.containsKey(name.toLowerCase())) {
+            if (new File(name).exists()) {
+                try {
+                    final CustomDatabase db = new CustomDatabase(new File(name).getName(), new File(name));
+                    db.readSettings();
+                    if (db.needsUpgrade()) {
+                        System.err.println("Database '" + name + "' is outdated and have to be upgraded or reimported.");
+                        System.exit(1);
+                    }
+                    return db;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                return db;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } else if (customDatabases.containsKey(name)) {
+                return customDatabases.get(name);
+            } else {
+                unknownDatabaseError(name, aliasMap);
+                return null;
             }
         } else {
             if (customDatabases.containsKey(name)) return customDatabases.get(name);
 
-            final BioFilter filter = getBioFilter();
+            final BioFilter filter = getBioFilter(name);
             if (filter == BioFilter.ALL) return pubchemDatabase;
             else return bioDatabase;
         }
@@ -326,10 +338,13 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     }
 
     private SearchableDatabase getFingerIdDatabase() {
+        return getDatabase(getFingerIdDatabaseOption());
+    }
+    private String getFingerIdDatabaseOption() {
         if (options.getFingerIdDb() != null) {
-            return getDatabase(options.getFingerIdDb());
+            return options.getFingerIdDb();
         } else {
-            return getDatabase(options.getDatabase());
+            return options.getDatabase();
         }
     }
 
@@ -342,9 +357,8 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 System.exit(1);
             }
             final TIntArrayList indizes = new TIntArrayList();
-            final BioFilter bioFilter = getBioFilter();
+            final BioFilter bioFilter = getBioFilter(getFingerIdDatabaseOption());
             final PredictionPerformance[] performances = webAPI.getStatistics(indizes);
-            this.fingerblast = new Fingerblast(getFingerIdDatabaseWrapper());
 //            this.fingerblast.setScoring(new CSIFingerIdScoring(performances));
             this.confidence = webAPI.getConfidenceScore(bioFilter != BioFilter.ALL);
             this.bioConfidence = bioFilter != BioFilter.ALL ? confidence : webAPI.getConfidenceScore(true);
@@ -354,6 +368,13 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 b.enable(index);
             }
             this.fingerprintVersion = b.toMask();
+
+            {
+                CachedRESTDB db = new CachedRESTDB(needsUpdate, fingerprintVersion, CachedRESTDB.getDefaultDirectory());
+                db.checkCache();
+            }
+
+            this.fingerblast = new Fingerblast(getFingerIdDatabaseWrapper());
             this.fingerblast.setScoring(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()).getScoring());
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de", e);
@@ -448,21 +469,48 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             };
         } else {
             final BioFilter bf = getBioFilter();
-            return new RESTDatabase(bf);
+            return new RESTDatabase(pubchemDatabase.getDatabasePath(), bf) {
+                @Override
+                public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws DatabaseException {
+                    return filterByFlag(super.lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates), getFingerIdDatabaseOption());
+                }
+            };
         }
 
     }
 
+    private <T extends Collection<FingerprintCandidate>> T filterByFlag(T fingerprintCandidates, String fingerIdDatabaseOption) {
+        final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
+        final long flag;
+        final String dbOptName = fingerIdDatabaseOption.toLowerCase();
+        if (aliasMap.containsKey(dbOptName)) {
+            flag = aliasMap.get(dbOptName).longValue()==DatasourceService.Sources.BIO.flag ? 0 : aliasMap.get(dbOptName);
+        } else {
+            flag = 0L;
+        }
+        if (flag==0) return fingerprintCandidates;
+        final List<FingerprintCandidate> filtered = new ArrayList<>();
+        for (FingerprintCandidate fc : fingerprintCandidates) {
+            if ((flag & fc.getBitset()) != 0) {
+                filtered.add(fc);
+            }
+        }
+        fingerprintCandidates.clear();
+        fingerprintCandidates.addAll(filtered);
+        return fingerprintCandidates;
+    }
+
     @Override
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
-        if (options.getDatabase().equalsIgnoreCase("all")) return super.getFormulaWhiteset(i, whitelist);
+        final String dbOptName = options.getDatabase().toLowerCase();
+        if (dbOptName.equals("all")) return super.getFormulaWhiteset(i, whitelist);
         else {
             final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
             final SearchableDatabase searchableDatabase = getDatabase();
             final long flag;
 
-            if (aliasMap.containsKey(options.getDatabase().toLowerCase())) {
-                flag = aliasMap.get(options.getDatabase().toLowerCase());
+            if (aliasMap.containsKey(dbOptName)) {
+                flag = aliasMap.get(dbOptName).longValue()==DatasourceService.Sources.BIO.flag ? 0 : aliasMap.get(dbOptName);
             } else {
                 flag = 0L;
             }
@@ -527,19 +575,24 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private HashMap<String, Long> getDatabaseAliasMap() {
         final HashMap<String, Long> aliasMap = new HashMap<>();
         for (DatasourceService.Sources source : DatasourceService.Sources.values()) {
-            aliasMap.put(source.name.toLowerCase(), source.flag);
+            aliasMap.put(source.name.toLowerCase(), source.searchFlag);
         }
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
-        aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
+        aliasMap.put("bio", DatasourceService.Sources.BIO.searchFlag);
+        aliasMap.put("undp", DatasourceService.Sources.UNDP.flag);
         aliasMap.put("all", 0L);
         if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists() && !customDatabases.containsKey(options.getDatabase())) {
-            final List<String> knownDatabases = new ArrayList<>();
-            knownDatabases.addAll(aliasMap.keySet());
-            knownDatabases.addAll(customDatabases.keySet());
-            LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + options.getDatabase().toLowerCase() + "'. Available are: " + Joiner.on(", ").join(knownDatabases));
-            System.exit(1);
+            unknownDatabaseError(options.getDatabase().toLowerCase(), aliasMap);
         }
         return aliasMap;
+    }
+
+    private void unknownDatabaseError(String name, HashMap<String, Long> aliasMap) {
+        final List<String> knownDatabases = new ArrayList<>();
+        knownDatabases.addAll(aliasMap.keySet());
+        knownDatabases.addAll(customDatabases.keySet());
+        LoggerFactory.getLogger(this.getClass()).error("Unknown database '" + name + "'. Available are: " + Joiner.on(", ").join(knownDatabases));
+        System.exit(1);
     }
 
     @Override

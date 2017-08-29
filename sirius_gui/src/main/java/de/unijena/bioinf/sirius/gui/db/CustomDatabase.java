@@ -24,6 +24,8 @@ import org.openscience.cdk.interfaces.IChemModel;
 import org.openscience.cdk.interfaces.IChemSequence;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
+import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
+import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -558,6 +560,12 @@ public class CustomDatabase implements SearchableDatabase {
                 fc.setLinks(new DBLink[0]);
             }
             fc.setBitset(DatasourceService.Sources.CUSTOM.flag);
+            {
+                // compute XLOGP
+                final XLogPDescriptor descriptor = new XLogPDescriptor();
+                descriptor.setParameters(new Object[]{true, true});
+                fc.setXlogp(((DoubleResult)descriptor.calculate(molecule).getValue()).doubleValue());
+            }
             synchronized (buffer){
                 buffer.add(fc);
                 if (buffer.size() > 10000)

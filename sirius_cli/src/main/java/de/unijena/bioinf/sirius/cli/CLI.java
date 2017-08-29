@@ -29,8 +29,6 @@ import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -467,6 +465,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setFormulaConstraints(constraints);
             final MutableMs2Experiment exp = new MutableMs2Experiment();
+            exp.setSource(options.getMs2().get(0));
             final PrecursorIonType ionType = getIonFromOptions(options, 0);
             exp.setPrecursorIonType(ionType);
             exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
