@@ -35,6 +35,7 @@ import de.unijena.bioinf.fingerid.utils.PROPERTIES;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
+import de.unijena.bioinf.utils.systemInfo.SystemInformation;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import net.iharder.Base64;
@@ -74,6 +75,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
+    private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
 
     public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(System.getProperty("de.unijena.bioinf.sirius.version"));
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
@@ -332,7 +334,7 @@ public class WebAPI implements Closeable {
         final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
         final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
 
-        final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree));
+        final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, UID));
         post.setEntity(params);
 
         final String securityToken;
