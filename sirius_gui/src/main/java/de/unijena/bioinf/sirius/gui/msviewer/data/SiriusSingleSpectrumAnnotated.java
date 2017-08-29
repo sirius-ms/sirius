@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.msviewer.data;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -16,6 +17,25 @@ public class SiriusSingleSpectrumAnnotated extends SiriusSingleSpectrumModel {
 
     protected Fragment[] annotatedFormulas;
     protected BitSet isIsotopicPeak;
+
+    static Range<Double> getVisibleRange(Spectrum<? extends Peak> spec) {
+        final double maxIntensity = Spectrums.getMaximalIntensity(spec);
+        double minMz = Double.POSITIVE_INFINITY, maxMz = 0d;
+        for (int i=0; i < spec.size(); ++i) {
+            if (spec.getIntensityAt(i)/maxIntensity>=0.005) {
+                minMz = Math.min(spec.getMzAt(i), minMz);
+                maxMz = Math.max(spec.getMzAt(i), maxMz);
+            }
+        }
+        return Range.closed(minMz, maxMz);
+    }
+
+    public SiriusSingleSpectrumAnnotated(FTree tree, Spectrum<? extends Peak> spectrum, double minMz, double maxMz) {
+        super(spectrum, minMz, maxMz);
+        this.annotatedFormulas = new Fragment[spectrum.size()];
+        this.isIsotopicPeak = new BitSet(spectrum.size());
+        annotate(tree);
+    }
 
     public SiriusSingleSpectrumAnnotated(FTree tree, Spectrum<? extends Peak> spectrum) {
         super(spectrum);
@@ -67,7 +87,7 @@ public class SiriusSingleSpectrumAnnotated extends SiriusSingleSpectrumModel {
                 }
             }
             for (Peak p : peak.getOriginalPeaks()) {
-                int i = Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, peak.getMass()-1e-6);
+                int i = Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, p.getMass()-1e-6);
                 for (int j=i; j < spectrum.size(); ++j) {
                     if (dev.inErrorWindow(p.getMass(), spectrum.getMzAt(j))) {
                         annotatedFormulas[j] = f;

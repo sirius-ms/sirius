@@ -3,9 +3,9 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
+import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
@@ -26,7 +26,9 @@ import java.awt.dnd.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
 
@@ -140,39 +142,41 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //finger id observer
-        final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
+        final SwingWorker w = new SwingWorker<VersionsInfo, Object>() {
             @Override
             protected VersionsInfo doInBackground() {
-                VersionsInfo result = null;
+                VersionsInfo versionsNumber = null;
                 try (WebAPI api = WebAPI.newInstance()) {
-                    if (api.isConnected())
-                        result = api.needsUpdate();
-                    LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (result != null ? String.valueOf(result.toString()) : "NULL"));
+                    int errorState = api.checkConnection();
+                    versionsNumber = api.getVersionInfo();
+                    publish(versionsNumber, errorState);
+                    LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
-
-                publish(result);
-                return result;
+                return versionsNumber;
             }
 
             @Override
-            protected void process(List<VersionsInfo> chunks) {
+            protected void process(List<Object> chunks) {
                 super.process(chunks);
-                final VersionsInfo versionsNumber = chunks.get(0);
+                final VersionsInfo versionsNumber = (VersionsInfo) chunks.get(0);
+                final int errorState = (int) chunks.get(1);
+
                 if (versionsNumber != null) {
-                    mf.csiFingerId.setVersionNumber(versionsNumber);
-                    if (versionsNumber.outdated()) {
-                        new UpdateDialog(mf, versionsNumber.siriusGuiVersion.toString());
+                    if (errorState != 0)
+                        mf.csiFingerId.setVersionNumber(versionsNumber);
+                    if (versionsNumber.expired()) {
+                        new UpdateDialog(mf, versionsNumber);
                     } else {
                         mf.csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {
                         new NewsDialog(mf, versionsNumber.getNews());
                     }
-                } else {
-                    SiriusActions.CHECK_CONNECTION.getInstance().actionPerformed(null);
                 }
+                if (errorState != 0)
+                    new ConnectionDialog(mf, errorState);
             }
 
             @Override
@@ -190,6 +194,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         } catch (Exception e) {
             LoggerFactory.getLogger(mf.getClass()).error("Error during connection test", e);
         }
+
 
         mf.setVisible(true);
     }
@@ -238,14 +243,22 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
     }
 
-    private void importDragAndDropFiles(List<File> rawFiles) {
+    protected static Pattern CANOPUS_PATTERN = Pattern.compile("canopus[^.]*\\.data(?:\\.gz)?", Pattern.CASE_INSENSITIVE);
 
+    private void importDragAndDropFiles(List<File> rawFiles) {
+        rawFiles = new ArrayList<>(rawFiles);
         // entferne nicht unterstuetzte Files und suche nach CSVs
         // suche nach Sirius files
         final List<File> siriusFiles = new ArrayList<>();
-        for (File f : rawFiles) {
+        final Iterator<File> rawFileIterator = rawFiles.iterator();
+        while (rawFileIterator.hasNext()) {
+            final File f = rawFileIterator.next();
             if (f.getName().toLowerCase().endsWith(".sirius")) {
                 siriusFiles.add(f);
+                rawFileIterator.remove();
+            } else if (CANOPUS_PATTERN.matcher(f.getName()).matches()) {
+                importCanopus(f);
+                rawFileIterator.remove();
             }
         }
         if (siriusFiles.size() > 0) {
@@ -297,6 +310,34 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 Workspace.importOneExperimentPerFile(msFiles, mgfFiles);
             }
         }
+    }
+
+    private void importCanopus(final File f) {
+        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
+            @Override
+            protected Object doInBackground() throws Exception {
+                final JobLog.Job j = JobLog.getInstance().submit("Load CANOPUS", "Load CANOPUS prediction model");
+                try {
+                    getCsiFingerId().loadCanopus(f);
+                } catch (Exception e) {
+                    j.error(e.getMessage(), e);
+                    return null;
+                }
+                j.done();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                activateCanopus();
+            }
+        };
+        worker.execute();
+    }
+
+    private void activateCanopus() {
+        resultsPanel.enableCanopus();
     }
 
 

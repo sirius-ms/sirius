@@ -59,10 +59,12 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.stream.JsonParser;
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -107,10 +109,10 @@ public class WebAPI implements Closeable {
     }
 
     public boolean isConnected() {
-        if (client == null || !ProxyManager.hasInternetConnection(client)) {
+        if (client == null || checkConnection() == 0) {
             LoggerFactory.getLogger(this.getClass()).warn("No Connection, try to reconnect");
             reconnect();
-            return ProxyManager.hasInternetConnection(client);
+            return checkConnection() == 0;
         }
         return true;
     }
@@ -127,52 +129,148 @@ public class WebAPI implements Closeable {
     }
 
 
-    public VersionsInfo needsUpdate() {
-        final HttpGet get;
+    private boolean checkFingerIDConnection() {
+        return getRESTDb(BioFilter.ALL, null).testConnection();
+    }
+
+    //6 csi web api for this version is not reachable because it is outdated
+    //5 csi web api for this version is not reachable
+    //4 csi server not reachable
+    //3 no connection to bioinf web site
+    //2 no connection to uni jena
+    //1 no connection to internet (google/microft/ubuntu????)
+    //0 everything is fine
+    public static final int MAX_STATE = 6;
+
+    public int checkConnection() {
+        VersionsInfo v = getVersionInfo();
+        if (v == null) {
+            int error = ProxyManager.checkInternetConnection(client);
+            if (error > 0) return error;
+            else return 4;
+        } else if (v.outdated()) {
+            return MAX_STATE;
+        } else if (checkFingerIDConnection()) {
+            return 0;
+        } else {
+            return 5;
+        }
+    }
+
+    public static int checkFingerIDConnectionStatic() {
+        int errorcode = 1;
+        try (final WebAPI web = WebAPI.newInstance()) {
+            errorcode = web.checkConnection();
+        } catch (IOException e) {
+            LoggerFactory.getLogger(WebAPI.class).error("Unexpected WebAPI error during connection check", e);
+        }
+        return errorcode;
+    }
+
+    public static boolean canConnect() {
+        return checkFingerIDConnectionStatic() == ProxyManager.OK_STATE;
+    }
+
+    public VersionsInfo getVersionInfo() {
+        VersionsInfo v = null;
         try {
-            get = new HttpGet(getFingerIdURI("/webapi/version.json").build());
-            try (CloseableHttpResponse response = client.execute(get)) {
-                try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
-                    JsonObject o = r.readObject();
-                    JsonObject gui = o.getJsonObject("SIRIUS GUI");
-
-                    final String version = gui.getString("version");
-//                    final String date = gui.getString("date");
-                    String database = o.getJsonObject("database").getString("version");
-
-                    List<News> newsList = Collections.emptyList();
-                    if (o.containsKey("news")) {
-                        final String newsJson = o.getJsonArray("news").toString();
-                        newsList = News.parseJsonNews(newsJson);
-                    }
-                    return new VersionsInfo(version, database, newsList);
-                }
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).build()));
+            if (v == null) {
+                LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
+                v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
             }
         } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+        }
+        if (v != null)
+            LoggerFactory.getLogger(this.getClass()).debug(v.toString());
+        return v;
+    }
+
+    private VersionsInfo getVersionInfo(final HttpGet get) {
+        try (CloseableHttpResponse response = client.execute(get)) {
+            try (final JsonReader r = Json.createReader(new InputStreamReader(response.getEntity().getContent()))) {
+                JsonObject o = r.readObject();
+                JsonObject gui = o.getJsonObject("SIRIUS GUI");
+
+                final String version = gui.getString("version");
+//                    final String date = gui.getString("date");
+                String database = o.getJsonObject("database").getString("version");
+
+                boolean expired = true;
+                Timestamp accept = null;
+                Timestamp finish = null;
+
+                if (o.containsKey("expiry dates")) {
+                    JsonObject expiryInfo = o.getJsonObject("expiry dates");
+                    expired = expiryInfo.getBoolean("isExpired");
+                    if (expiryInfo.getBoolean("isAvailable")) {
+                        accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
+                        finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                    }
+                }
+
+                List<News> newsList = Collections.emptyList();
+                if (o.containsKey("news")) {
+                    final String newsJson = o.getJsonArray("news").toString();
+                    newsList = News.parseJsonNews(newsJson);
+                }
+                return new VersionsInfo(version, database, expired, accept, finish, newsList);
+            }
+        } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
         return null;
     }
 
-    public static URIBuilder getFingerIdURI(String path) throws URISyntaxException {
+    public static URIBuilder getFingerIdURI(String path) {
         if (path == null)
             path = "";
+        URIBuilder b = null;
+        try {
+            b = getFingerIdBaseURI();
+            if (ProxyManager.DEBUG) {
+                b = b.setPath("/frontend" + path);
+            } else {
+                b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path);
+            }
+        } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);
+        }
+        return b;
+    }
+
+    private static URIBuilder getFingerIdVersionURI(URIBuilder baseBuilder) {
+        if (ProxyManager.DEBUG) {
+            baseBuilder = baseBuilder.setPath("/frontend/webapi/version.json");
+        } else {
+            baseBuilder = baseBuilder.setPath("/webapi/version.json");
+        }
+        return baseBuilder;
+    }
+
+    private static URIBuilder getFingerIdBaseURI() throws URISyntaxException {
         URIBuilder b;
         if (ProxyManager.DEBUG) {
             b = new URIBuilder().setScheme(ProxyManager.HTTP_SCHEME).setHost("localhost");
-            b = b.setPort(80).setPath("/frontend" + path);
+            b = b.setPort(8080);
         } else {
             b = new URIBuilder(FINGERID_WEB_API);
-            b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path);
         }
         return b;
     }
 
     public RESTDatabase getRESTDb(BioFilter bioFilter, File cacheDir) {
-        return new RESTDatabase(cacheDir, bioFilter, ProxyManager.DEBUG ? "http://localhost:8080/frontend" : null, client);
+        URI host = null;
+        try {
+            host = getFingerIdURI(null).build();
+        } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(this.getClass()).warn("Illegal fingerid URI -> Fallback to RestDB Default URI", e);
+        }
+        return new RESTDatabase(cacheDir, bioFilter, host, client);
     }
+
+
     /*
     public List<Compound> getCompounds(List<String> inchikeys) {
         final URIBuilder b = getFingerIdURI("/webapi/compounds.json");

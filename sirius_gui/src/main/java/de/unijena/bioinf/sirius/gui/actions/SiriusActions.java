@@ -17,6 +17,8 @@ public enum SiriusActions {
     CANCEL_COMPUTE(CancelComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
 //    CANCEL_ALL(CancelComputeAllAction.class),
+    ORDER_BY_MASS(OrderByMass.class),
+    ORDER_BY_NAME(OrderByName.class),
 
     COMPUTE_CSI(ComputeCSIAction.class),
     COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),

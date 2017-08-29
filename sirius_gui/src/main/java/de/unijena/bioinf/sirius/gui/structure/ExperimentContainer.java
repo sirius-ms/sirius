@@ -1,12 +1,10 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
-import ca.odell.glazedlists.EventList;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jdesktop.beans.AbstractBean;
 
-import javax.swing.event.SwingPropertyChangeSupport;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +13,8 @@ import java.util.List;
 public class ExperimentContainer extends AbstractBean {
 
     private List<CompactSpectrum> ms1Spectra, ms2Spectra;
+    // TODO: dirty hack
+    private CompactSpectrum correlatedSpectrum;
 
     //private Ionization ionization;
     private PrecursorIonType ionization;
@@ -44,6 +44,14 @@ public class ExperimentContainer extends AbstractBean {
         results = Collections.emptyList();
         originalResults = Collections.emptyList();
         this.computeState = ComputingStatus.UNCOMPUTED;
+    }
+
+    public void setCorrelatedSpectrum(CompactSpectrum spectrum) {
+        this.correlatedSpectrum = spectrum;
+    }
+
+    public CompactSpectrum getCorrelatedSpectrum() {
+        return correlatedSpectrum;
     }
 
     public SiriusResultElement getBestHit() {

@@ -3,14 +3,12 @@ package de.unijena.bioinf.sirius.cli;
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
+import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -21,6 +19,7 @@ import de.unijena.bioinf.sirius.fingerid.FingerIdResultWriter;
 import de.unijena.bioinf.sirius.fingerid.SearchableDbOnDisc;
 import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
+import de.unijena.bioinf.sirius.gui.fingerid.CanopusResult;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
@@ -81,7 +80,11 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             return;
         }
         fingeridEnabled = options.isFingerid();
-        if (fingeridEnabled) initFingerBlast();
+        if (fingeridEnabled) {
+            initFingerBlast();
+            initCanopus();
+        }
+
         try {
             super.compute();
         } finally {
@@ -131,13 +134,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion));
                 }
                 final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
-                final HashMap<String, Integer> dbMap = getDatabaseAliasMap();
-                Integer flagW = dbMap.get(options.getDatabase());
-                if (flagW == null) flagW = 0;
-                final int flag = flagW;
+                final HashMap<String, Long> dbMap = getDatabaseAliasMap();
+                Long flagW = dbMap.get(options.getDatabase());
+                if (flagW == null) flagW = 0L;
+                final long flag = flagW;
                 final HashMap<MolecularFormula, ProbabilityFingerprint> predictedFingerprints = new HashMap<>();
                 for (int k = 0; k < filteredResults.size(); ++k) {
                     final ProbabilityFingerprint fp = futures.get(k).get();
+                    if (canopus != null) handleCanopus(filteredResults.get(k), fp);
                     final List<Scored<FingerprintCandidate>> cds = fingerblast.search(filteredResults.get(k).getMolecularFormula(), fp);
                     if (bioFilter != BioFilter.ALL) {
                         final Iterator<Scored<FingerprintCandidate>> iter = cds.iterator();
@@ -234,6 +238,20 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         }
     }
 
+    private void handleCanopus(IdentificationResult identificationResult, ProbabilityFingerprint fp) {
+        if (canopus==null) return;
+        println("Predict compound categories: \nid\tname\tprobability");
+        final ProbabilityFingerprint fingerprint = canopus.predictClassificationFingerprint(identificationResult.getMolecularFormula(), fp);
+        for (FPIter category : fingerprint.iterator()) {
+            if (category.getProbability()>=0.333) {
+                ClassyfireProperty prop = ((ClassyfireProperty)category.getMolecularProperty());
+                println(prop.getChemontIdentifier() + "\t"  + prop.getName() + "\t" + category.getProbability());
+            }
+        }
+        println("");
+        identificationResult.setAnnotation(CanopusResult.class, new CanopusResult(fingerprint));
+    }
+
     private String escape(String name) {
         if (name == null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
@@ -254,6 +272,10 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             LoggerFactory.getLogger(this.getClass()).error("--fingerid_db defines the database CSI:FingerId should search in. This option makes only sense when used together with --fingerid. Use --db for setting up the database in which SIRIUS should search for molecular formulas.");
             System.exit(1);
         }
+        if (options.getExperimentalCanopus() != null && !options.isFingerid()) {
+            LoggerFactory.getLogger(this.getClass()).error("Cannot predict compound categories with CSI:FingerID is disabled. Please enable CSI:FingerID with --fingerid option.");
+            System.exit(1);
+        }
     }
 
     private SearchableDatabase getDatabase() {
@@ -261,7 +283,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     }
 
     private SearchableDatabase getDatabase(String name) {
-        final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
+        final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
         if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
             try {
                 final CustomDatabase db = new CustomDatabase(new File(name).getName(), new File(name));
@@ -318,7 +340,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     private void initFingerBlast() {
         progress.info("Initialize CSI:FingerId...");
         try (WebAPI webAPI = WebAPI.newInstance()) {
-            final VersionsInfo needsUpdate = webAPI.needsUpdate();
+            final VersionsInfo needsUpdate = webAPI.getVersionInfo();
             if (needsUpdate != null && needsUpdate.outdated()) {
                 progress.info("Your current SIRIUS+CSI:FingerID version is outdated. Please download the latest software version if you want to use CSI:FingerId search. Current version: " + WebAPI.VERSION + ". New version is " + needsUpdate.siriusGuiVersion + ". You can download the last version here: " + WebAPI.SIRIUS_DOWNLOAD);
                 System.exit(1);
@@ -342,6 +364,17 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
             System.exit(1);
         }
         progress.info("CSI:FingerId initialization done.");
+    }
+
+    protected Canopus canopus = null;
+    public void initCanopus() {
+        if (options.getExperimentalCanopus()!=null) {
+            try {
+                this.canopus = Canopus.loadFromFile(options.getExperimentalCanopus());
+            } catch (IOException e) {
+                System.err.println("Cannot load given canopus model: " + e.getMessage());
+            }
+        }
     }
 
     // bad hack
@@ -428,14 +461,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
         if (options.getDatabase().equalsIgnoreCase("all")) return super.getFormulaWhiteset(i, whitelist);
         else {
-            final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
+            final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
             final SearchableDatabase searchableDatabase = getDatabase();
-            final int flag;
+            final long flag;
 
             if (aliasMap.containsKey(options.getDatabase().toLowerCase())) {
                 flag = aliasMap.get(options.getDatabase().toLowerCase());
             } else {
-                flag = 0;
+                flag = 0L;
             }
             final Deviation dev;
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
@@ -478,7 +511,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final HashSet<MolecularFormula> allowedSet = new HashSet<>();
                 for (List<FormulaCandidate> fc : candidates) {
                     for (FormulaCandidate f : fc) {
-                        final int bitset = f.getBitset();
+                        final long bitset = f.getBitset();
                         if (flag == 0 || (bitset & flag) != 0)
                             if (allowedAlphabet.isSatisfied(f.getFormula()))
                                 allowedSet.add(f.getFormula());
@@ -495,14 +528,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     }
 
-    private HashMap<String, Integer> getDatabaseAliasMap() {
-        final HashMap<String, Integer> aliasMap = new HashMap<>();
+    private HashMap<String, Long> getDatabaseAliasMap() {
+        final HashMap<String, Long> aliasMap = new HashMap<>();
         for (DatasourceService.Sources source : DatasourceService.Sources.values()) {
             aliasMap.put(source.name.toLowerCase(), source.flag);
         }
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
         aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
-        aliasMap.put("all", 0);
+        aliasMap.put("all", 0L);
         if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists() && !customDatabases.containsKey(options.getDatabase())) {
             final List<String> knownDatabases = new ArrayList<>();
             knownDatabases.addAll(aliasMap.keySet());

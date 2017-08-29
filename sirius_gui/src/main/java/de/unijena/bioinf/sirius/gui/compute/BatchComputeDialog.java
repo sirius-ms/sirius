@@ -251,7 +251,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         } else if (e.getSource() == elementAutoDetect) {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             ExperimentContainer ec = compoundsToProcess.get(0);
-            if (!ec.getMs1Spectra().isEmpty()) {
+            if (!ec.getMs1Spectra().isEmpty() || ec.getCorrelatedSpectrum()!=null) {
                 MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
@@ -401,26 +401,35 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         Vector<Peak> masses = new Vector<>();
         double maxInt = -1;
         Object maxObj = null;
-        List<CompactSpectrum> ms1Spectra = ec.getMs1Spectra();
+        List<CompactSpectrum> ms1Spectra = new ArrayList<>(ec.getMs1Spectra());
+        if (ec.getCorrelatedSpectrum()!=null)
+            ms1Spectra.add(ec.getCorrelatedSpectrum());
+        final SimpleMutableSpectrum massBuffer = new SimpleMutableSpectrum();
         // falls MS1 verfügbar biete MS1 Peaks an, ansonsten nehme MS2 und normalisiere global
         boolean useMS1;
         Peak bestDataIon = null;
-        final Deviation dev = new Deviation(10);
+        final Deviation dev = new Deviation(20);
         final double focusedMass = ec.getDataFocusedMass();
         if (!ms1Spectra.isEmpty()) {
             useMS1 = true;
-            CompactSpectrum sp = ms1Spectra.get(0);
-            for (int i = 0; i < sp.getSize(); i++) {
-                if (sp.getPeakAt(i).getIntensity() > maxInt) {
-                    maxInt = sp.getPeakAt(i).getIntensity();
-                    maxObj = sp.getPeakAt(i);
+
+            for (CompactSpectrum cms1 : ms1Spectra) {
+                if (focusedMass > 0) {
+                    final int i = Spectrums.mostIntensivePeakWithin(cms1, focusedMass, dev);
+                    if (i>=0) {
+                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getRelativeIntensity(i));
+                        bestDataIon = cms1.getPeakAt(i);
+                    }
                 }
-                if (focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) {
-                    if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
-                        bestDataIon = sp.getPeakAt(i);
+                // for each isotope pattern add starting peak with at least 2% intensity
+                for (int i=0; i < cms1.size(); ++i) {
+                    int j = Spectrums.mostIntensivePeakWithin(cms1, cms1.getMzAt(i) - 1.0033, dev);
+                    if (j < 0 || cms1.getIntensityAt(j)<0.02) {
+                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getRelativeIntensity(i));
+                    }
                 }
-                masses.add(sp.getPeakAt(i));
             }
+
         } else {
             useMS1 = false;
             // take the highest peak with at least 5% intensity that is not preceeded by
@@ -447,9 +456,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 for (int i = 0; i < sp.getSize(); i++) {
                     if (sp.getPeakAt(i).getIntensity() > maxInt) {
                         maxInt = sp.getPeakAt(i).getIntensity();
-                        maxObj = sp.getPeakAt(i);
                     }
-                    masses.add(sp.getPeakAt(i));
+                    massBuffer.addPeak(sp.getMzAt(i), sp.getRelativeIntensity(i));
                     if ((focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) || (expectedParentMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), expectedParentMass))) {
                         if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
                             bestDataIon = sp.getPeakAt(i);
@@ -457,8 +465,21 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
             }
         }
-        if (bestDataIon != null) masses.add(bestDataIon);
+        Spectrums.mergePeaksWithinSpectrum(massBuffer, dev, false);
+        Peak defaultIon = null;
+        for (Peak p : massBuffer) {
+            masses.add(p);
+            if (bestDataIon != null && dev.inErrorWindow(p.getMass(), bestDataIon.getMass())) {
+                defaultIon = p;
+            }
+            if (bestDataIon==null && (defaultIon==null || p.getMass()>defaultIon.getMass())) {
+                defaultIon = p;
+            }
+        }
+
         box = new JComboBox<>(masses);
+        if (defaultIon!=null)
+            box.setSelectedItem(defaultIon);
 
         box.setEditable(true);
         MyListCellRenderer renderer = new MyListCellRenderer(masses);
@@ -502,7 +523,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (masses.isEmpty()) autoDetectFM.setEnabled(false);
         JButton expFM = new JButton("File value");
         expFM.addActionListener(this);
-        if (bestDataIon == null) {
+        if (defaultIon!=null) {
+            box.setSelectedItem(defaultIon);
+        } else if (bestDataIon == null) {
             expFM.setEnabled(false);
             if (masses.isEmpty()) {
                 box.setSelectedItem("");
