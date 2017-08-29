@@ -25,9 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
@@ -469,18 +467,30 @@ public class Compound {
 
 
     public boolean canBeNeutralCharged(){
-        return (hasChargeState(pLayer, CompoundCandidate.NEUTRAL_CHARGE) || hasChargeState(qLayer, CompoundCandidate.NEUTRAL_CHARGE));
+        return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
     }
 
     public boolean canBePositivelyCharged(){
-        return (hasChargeState(pLayer, CompoundCandidate.POSITIVE_CHARGE) || hasChargeState(qLayer, CompoundCandidate.POSITIVE_CHARGE));
+        return hasChargeState(CompoundCandidateChargeState.POSITIVE_CHARGE);
     }
 
     public boolean canBeNegativelyCharged(){
-        return (hasChargeState(pLayer, CompoundCandidate.NEGATIVE_CHARGE) || hasChargeState(qLayer, CompoundCandidate.NEGATIVE_CHARGE));
+        return hasChargeState(CompoundCandidateChargeState.NEGATIVE_CHARGE);
+    }
+
+    public boolean hasChargeState(CompoundCandidateChargeState chargeState){
+        return (hasChargeState(pLayer, chargeState.getValue()) || hasChargeState(qLayer, chargeState.getValue()));
+    }
+
+    public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState){
+        return (chargeLayer==CompoundCandidateChargeLayer.P_LAYER ?
+                hasChargeState(pLayer, chargeState.getValue()) :
+                hasChargeState(qLayer, chargeState.getValue())
+        );
     }
 
     private boolean hasChargeState(int chargeLayer, int chargeState){
         return ((chargeLayer & chargeState) == chargeState);
     }
+
 }
