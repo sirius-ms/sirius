@@ -458,6 +458,7 @@ public class CSIFingerIdComputation {
                 logger.error(e.getMessage(),e);
             }
             c.calculateXlogP();
+            c.generateInchiIfNull();
             synchronized (this.compounds) {
                 this.compounds.put(c.inchi.key2D(), c);
             }
