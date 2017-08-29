@@ -23,12 +23,12 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
-import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.DoubleEndWeightedQueue;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
@@ -64,13 +64,41 @@ public class Sirius {
     protected boolean autoIonMode;
 
     public static void main(String[] args) {
-        System.out.println(new ParetoDistribution.EstimateByMedian(0.0025).extimateByMedian(0.005));System.exit(0);
-
-        final File F = new File("/home/kaidu/data/ms/demo-data/ms/Bicuculline.ms");
+        final File F = new File("/home/kaidu/Documents/temp/foo/myxo_359.ms");
         try {
-            Sirius s = new Sirius("qtof_fixed");
+            /*
+            Sirius s = new Sirius("qtof");
+            //s.getMs2Analyzer().setIsotopeHandling(FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS);
             Ms2Experiment exp = s.parseExperiment(F).next();
-            final List<IdentificationResult> results = s.identify(exp, 100, true, IsotopePatternHandling.omit);
+
+            final ExecutorService service = Executors.newFixedThreadPool(4);
+            TreeComputationInstance i = new TreeComputationInstance(service, 4, s.getMs2Analyzer(), exp, 10, null);
+            i.startComputingMultithreaded();
+
+            for (FTree tree : i.getTrees()) {
+            //for (IdentificationResult ir : s.identify(exp, 10,false,IsotopePatternHandling.omit)) {
+                //FTree tree = ir.getRawTree();
+                System.out.println(tree.getRoot().getFormula() + ": " + tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+            }
+            //service.shutdown();
+            */
+
+
+            // TEST IONIZATIONS
+            final Sirius sirius = new Sirius("qtof");
+            for (File f : new File("/home/kaidu/Documents/temp/test").listFiles()) {
+                final MutableMs2Experiment exp = new MutableMs2Experiment(sirius.parseExperiment(f).next());
+
+                exp.setPrecursorIonType(PrecursorIonType.unknown(1));
+                // compute formula
+                final IdentificationResult result = sirius.compute(exp, exp.getMolecularFormula());
+                System.out.println(exp.getPrecursorIonType() + " => " + exp.getMolecularFormula());
+                System.out.println("Computed is: " + result.getRawTree().getRoot().getFormula() + " with " + result.getRawTree().getAnnotationOrThrow(PrecursorIonType.class));
+
+
+
+
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -323,6 +351,7 @@ public class Sirius {
         double modifiedTreeSizeScore = originalTreeSize;
         final double MAX_TREESIZE_SCORE = originalTreeSize + MAX_TREESIZE_INCREASE;
         int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS=MIN_NUMBER_OF_EXPLAINED_PEAKS;
+        int numberOfPossibleCandidates = 0;
         try {
             final ArrayList<FTree> computedTrees = new ArrayList<FTree>();
             final FeedbackFlag feedback = new FeedbackFlag();
@@ -330,7 +359,9 @@ public class Sirius {
             while (true) {
                 progress.init(whiteList.size());
                 int counter = 0;
+                numberOfPossibleCandidates = 0;
                 for (IonWhitelist wl : subsets) {
+                    numberOfPossibleCandidates += wl.whitelist.size();
                     final MutableMs2Experiment specificExp = exp.clone();
                     specificExp.setPrecursorIonType(wl.ionization);
                     final FormulaConstraints constraints = FormulaConstraints.allSubsetsOf(wl.whitelist);
@@ -415,10 +446,28 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k + 1));
             }
-
+            addScoreThresholdOnUnconsideredCandidates(list, numberOfPossibleCandidates);
             return list;
         } finally {
             treeSizeScorer.setTreeSizeScore(originalTreeSize);
+        }
+    }
+
+    private void addScoreThresholdOnUnconsideredCandidates(List<IdentificationResult> identificationResults, int numberOfCandidates){
+        double lowestConsideredCandidatesScore = Double.POSITIVE_INFINITY;
+        int numberOfUnconsideredCandidates = numberOfCandidates - identificationResults.size();
+        for (IdentificationResult identificationResult : identificationResults) {
+            final double score = identificationResult.getScore();
+            if (score<lowestConsideredCandidatesScore) lowestConsideredCandidatesScore = score;
+        }
+
+        for (IdentificationResult identificationResult : identificationResults) {
+            FTree tree = identificationResult.getStandardTree();
+            FTree beautifulTree = identificationResult.getBeautifulTree();
+            UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = new UnregardedCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
+
+            tree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+            if (beautifulTree!=null) beautifulTree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
         }
     }
 
@@ -538,7 +587,7 @@ public class Sirius {
             final TreeScoring scoring = new TreeScoring();
             scoring.setOverallScore(0);
             scoring.addAdditionalScore(ISOTOPE_SCORE, pattern.getScore());
-            final FTree dummyTree = new FTree(pattern.getCandidate());
+            final FTree dummyTree = new FTree(experiment.getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(pattern.getCandidate()));
             dummyTree.setAnnotation(TreeScoring.class, scoring);
             dummyTree.getOrCreateLossAnnotation(Score.class);
             dummyTree.getOrCreateFragmentAnnotation(Score.class);
@@ -782,6 +831,7 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k + 1));
             }
+            addScoreThresholdOnUnconsideredCandidates(list, maxNumberOfFormulas);
 
             return list;
         } finally {
@@ -829,6 +879,7 @@ public class Sirius {
         final DoubleEndWeightedQueue treeSet = new DoubleEndWeightedQueue(numberOfCandidates);
         final FeedbackFlag feedback = new FeedbackFlag();
         int SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS=MIN_NUMBER_OF_EXPLAINED_PEAKS;
+        int allPossibleFormulas = 0;
         try {
             outerLoop:
             while (true) {
@@ -841,6 +892,8 @@ public class Sirius {
                     assert experiment.getMolecularFormula() == null;
                     experiment.setMoleculeNeutralMass(0d); // previous neutral mass is not correct anymore
                     final ProcessedInput pinput = profile.fragmentationPatternAnalysis.preprocessing(experiment.clone());
+                    maxNumberOfFormulas = pinput.getPeakAnnotationOrThrow(DecompositionList.class).get(pinput.getParentPeak()).getDecompositions().size();
+                    allPossibleFormulas += maxNumberOfFormulas;
                     SPECIFIC_MIN_NUMBER_OF_EXPLAINED_PEAKS = Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
                     MultipleTreeComputation trees = profile.fragmentationPatternAnalysis.computeTrees(pinput);
                     trees = trees.inParallel(3);
@@ -924,6 +977,7 @@ public class Sirius {
                 profile.fragmentationPatternAnalysis.recalculateScores(tree);
                 list.add(new IdentificationResult(tree, k + 1));
             }
+            addScoreThresholdOnUnconsideredCandidates(list, allPossibleFormulas);
 
             return list;
         } finally {
@@ -960,14 +1014,25 @@ public class Sirius {
                 throw new RuntimeException("Please provide the parentmass of the measured compound");
             List<IsotopePattern> candidates = profile.isotopePatternAnalysis.deisotope(experiment, pinput.getMeasurementProfile());
             experiment.setIonMass(candidates.get(0).getMonoisotopicMass());
-            return deisotope ? candidates : Collections.<IsotopePattern>emptyList();
+            return deisotope ? filterIsotopes(candidates) : Collections.<IsotopePattern>emptyList();
         }
-        return deisotope ? profile.isotopePatternAnalysis.deisotope(experiment,pinput.getMeasurementProfile()) : Collections.<IsotopePattern>emptyList();
+        return deisotope ? filterIsotopes(profile.isotopePatternAnalysis.deisotope(experiment,pinput.getMeasurementProfile())) : Collections.<IsotopePattern>emptyList();
+    }
+
+    /**
+     * check if at least one isotope pattern contains more than one peak and has a score above zero. Otherwise,
+     * omit isotopes.
+     */
+    private List<IsotopePattern> filterIsotopes(List<IsotopePattern> deisotope) {
+        for (IsotopePattern pattern : deisotope) {
+            if (pattern.getPattern().size()>1 && pattern.getScore()>0) return deisotope;
+        }
+        return Collections.emptyList();
     }
 
     protected void addIsoScore(HashMap<MolecularFormula, IsotopePattern> isoFormulas, FTree tree) {
         final TreeScoring sc = tree.getAnnotationOrThrow(TreeScoring.class);
-        final IsotopePattern pat = isoFormulas.get(tree.getRoot().getFormula());
+        final IsotopePattern pat = isoFormulas.get(tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()));
         if (pat != null) {
             sc.addAdditionalScore(ISOTOPE_SCORE, pat.getScore());
             tree.setAnnotation(IsotopePattern.class, pat);
