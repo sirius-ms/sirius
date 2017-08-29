@@ -130,10 +130,10 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                     futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion));
                 }
                 final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
-                final HashMap<String, Integer> dbMap = getDatabaseAliasMap();
-                Integer flagW = dbMap.get(options.getDatabase());
-                if (flagW == null) flagW = 0;
-                final int flag = flagW;
+                final HashMap<String, Long> dbMap = getDatabaseAliasMap();
+                Long flagW = dbMap.get(options.getDatabase());
+                if (flagW == null) flagW = 0L;
+                final long flag = flagW;
                 final HashMap<MolecularFormula, ProbabilityFingerprint> predictedFingerprints = new HashMap<>();
                 for (int k = 0; k < filteredResults.size(); ++k) {
                     final ProbabilityFingerprint fp = futures.get(k).get();
@@ -279,7 +279,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     }
 
     private SearchableDatabase getDatabase(String name) {
-        final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
+        final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
         if (!aliasMap.containsKey(name.toLowerCase()) && new File(name).exists()) {
             try {
                 final CustomDatabase db = new CustomDatabase(new File(name).getName(), new File(name));
@@ -457,14 +457,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
         if (options.getDatabase().equalsIgnoreCase("all")) return super.getFormulaWhiteset(i, whitelist);
         else {
-            final HashMap<String, Integer> aliasMap = getDatabaseAliasMap();
+            final HashMap<String, Long> aliasMap = getDatabaseAliasMap();
             final SearchableDatabase searchableDatabase = getDatabase();
-            final int flag;
+            final long flag;
 
             if (aliasMap.containsKey(options.getDatabase().toLowerCase())) {
                 flag = aliasMap.get(options.getDatabase().toLowerCase());
             } else {
-                flag = 0;
+                flag = 0L;
             }
             final Deviation dev;
             if (options.getPPMMax() != null) dev = new Deviation(options.getPPMMax());
@@ -507,7 +507,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 final HashSet<MolecularFormula> allowedSet = new HashSet<>();
                 for (List<FormulaCandidate> fc : candidates) {
                     for (FormulaCandidate f : fc) {
-                        final int bitset = f.getBitset();
+                        final long bitset = f.getBitset();
                         if (flag == 0 || (bitset & flag) != 0)
                             if (allowedAlphabet.isSatisfied(f.getFormula()))
                                 allowedSet.add(f.getFormula());
@@ -524,14 +524,14 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
     }
 
-    private HashMap<String, Integer> getDatabaseAliasMap() {
-        final HashMap<String, Integer> aliasMap = new HashMap<>();
+    private HashMap<String, Long> getDatabaseAliasMap() {
+        final HashMap<String, Long> aliasMap = new HashMap<>();
         for (DatasourceService.Sources source : DatasourceService.Sources.values()) {
             aliasMap.put(source.name.toLowerCase(), source.flag);
         }
         aliasMap.put("biocyc", DatasourceService.Sources.METACYC.flag);
         aliasMap.put("bio", DatasourceService.Sources.BIO.flag);
-        aliasMap.put("all", 0);
+        aliasMap.put("all", 0L);
         if (!aliasMap.containsKey(options.getDatabase().toLowerCase()) && !new File(options.getDatabase()).exists() && !customDatabases.containsKey(options.getDatabase())) {
             final List<String> knownDatabases = new ArrayList<>();
             knownDatabases.addAll(aliasMap.keySet());
