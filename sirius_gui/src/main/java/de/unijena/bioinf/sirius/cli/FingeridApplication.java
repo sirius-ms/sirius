@@ -117,6 +117,10 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
                 for (int k = 1; k < results.size(); ++k) {
                     IdentificationResult e = results.get(k);
                     if (e.getScore() < threshold) break;
+                    if (e.getResolvedTree().numberOfVertices()<=1){
+                        progress.info("Cannot estimate structure for "+e.getMolecularFormula()+". Fragmentation Tree is empty.");
+                        continue;
+                    }
                     filteredResults.add(e);
                 }
                 final List<Future<ProbabilityFingerprint>> futures = new ArrayList<>();

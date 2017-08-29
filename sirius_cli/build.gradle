@@ -3,6 +3,8 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
+    compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
+    compile group: 'com.github.dblock', name: 'oshi-core', version: "3.2"
 }
 
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
