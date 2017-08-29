@@ -1,13 +1,5 @@
 package de.unijena.bioinf.sirius.net;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 21.02.17.
- */
 
-import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.sirius.core.ApplicationCore;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -29,7 +21,7 @@ public class ProxyManager {
     public final static boolean DEBUG = false;
     public static final String HTTPS_SCHEME = "https";
     public static final String HTTP_SCHEME = "http";
-    public static final int MAX_STATE = 4;
+    //    public static final int MAX_STATE = 4;
     public static final int OK_STATE = 0;
     public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
 
@@ -45,7 +37,7 @@ public class ProxyManager {
     }
 
     public static ProxyStrategy getProxyStrategy() {
-        return getStrategyByName(System.getProperty("de.unijena.bioinf.sirius.proxy",ProxyStrategy.SYSTEM.name()));
+        return getStrategyByName(System.getProperty("de.unijena.bioinf.sirius.proxy", ProxyStrategy.SYSTEM.name()));
     }
 
     public static boolean useSystemProxyConfig() {
@@ -87,12 +79,12 @@ public class ProxyManager {
         return client;
     }
 
-    public static CloseableHttpClient getTestedSirirusHttpClient() {
-        return getTestedSirirusHttpClient(true);
+    public static CloseableHttpClient getTestedHttpClient() {
+        return getTestedHttpClient(true);
     }
 
 
-    public static CloseableHttpClient getTestedSirirusHttpClient(final boolean failover) {
+    public static CloseableHttpClient getTestedHttpClient(final boolean failover) {
         CloseableHttpClient client = getSirirusHttpClient();
         if (hasInternetConnection(client)) {
             return client;
@@ -106,17 +98,29 @@ public class ProxyManager {
                 }
             }
         }
-//        registerClient(client);
         return client;
     }
 
-
     //0 everything is fine
-    //1 no push to csi fingerid possible
-    //2 no connection to fingerid web site
-    //3 no connection to bioinf web site
-    //4 no connection to uni jena
-    //5 no connection to internet (google/microft/ubuntu????)
+    //1 no connection to bioinf web site
+    //2 no connection to uni jena
+    //3 no connection to internet (google/microft/ubuntu????)
+    public static int checkInternetConnection(final CloseableHttpClient client) {
+        if (!checkBioinf(client)) {
+            if (!checkJena(client)) {
+                if (!checkExternal(client)) {
+                    return 1;
+                } else {
+                    return 2;
+                }
+            } else {
+                return 3;
+            }
+        } else {
+            return 0;
+        }
+    }
+
     public static int checkInternetConnection() {
         CloseableHttpClient client = getSirirusHttpClient();
         int val = checkInternetConnection(client);
@@ -129,26 +133,6 @@ public class ProxyManager {
 
     public static boolean hasInternetConnection() {
         return checkInternetConnection() == OK_STATE;
-    }
-
-    public static int checkInternetConnection(final CloseableHttpClient client) {
-        if (!checkFingerID(client)) {
-            if (!checkBioinf(client)) {
-                if (!checkJena(client)) {
-                    if (!checkExternal(client)) {
-                        return 4;
-                    } else {
-                        return 3;
-                    }
-                } else {
-                    return 2;
-                }
-            } else {
-                return 1;
-            }
-        } else {
-            return 0;
-        }
     }
 
 
@@ -208,7 +192,7 @@ public class ProxyManager {
     }
 
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         String versionString = ApplicationCore.VERSION_STRING;
         System.out.println("System settings");
         System.out.println("use system proxy? " + System.getProperty("java.net.useSystemProxies"));
@@ -229,7 +213,7 @@ public class ProxyManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     public static boolean checkExternal(CloseableHttpClient proxy) {
         return checkConnectionToUrl(proxy, "http://www.google.de");
@@ -241,12 +225,6 @@ public class ProxyManager {
 
     public static boolean checkBioinf(CloseableHttpClient proxy) {
         return checkConnectionToUrl(proxy, "https://bio.informatik.uni-jena.de");
-    }
-
-
-    public static boolean checkFingerID(CloseableHttpClient proxy) {
-        return new RESTDatabase(null, BioFilter.ALL, DEBUG ? "http://localhost:8080/frontend" : null, proxy).testConnection();
-        //todo this test should be in the webapi -> move api to cli?
     }
 
     public static boolean checkConnectionToUrl(final CloseableHttpClient proxy, String url) {

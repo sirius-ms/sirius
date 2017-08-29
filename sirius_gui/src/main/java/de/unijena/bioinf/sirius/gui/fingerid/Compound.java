@@ -25,14 +25,13 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import net.sf.jniinchi.INCHI_RET;
+import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -43,6 +42,8 @@ import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
 import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,7 +218,7 @@ public class Compound {
                         case "qLayer":
                             qLayer = expectInt(parser); break;
                         case "xlogp":
-                            xlogp = expectInt(parser); break;
+                            xlogp = expectDouble(parser); break;
                     }
                     break;
                 case END_OBJECT:
@@ -266,6 +267,12 @@ public class Compound {
         final JsonParser.Event event = parser.next();
         if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
         return parser.getLong();
+    }
+
+    private static double expectDouble(JsonParser parser) {
+        final JsonParser.Event event = parser.next();
+        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        return parser.getBigDecimal().doubleValue();
     }
 
     private static void parseLinks(Compound compound, JsonParser parser) {
@@ -331,10 +338,19 @@ public class Compound {
     }
 
     public void calculateXlogP() {
+        if (Double.isNaN(xlogP)){
+            try {
+                XLogPDescriptor logPDescriptor = new XLogPDescriptor();
+                logPDescriptor.setParameters(new Object[]{true,true});
+                this.xlogP = ((DoubleResult)logPDescriptor.calculate(getMolecule()).getValue()).doubleValue();
+            } catch (CDKException e) {
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            }
+        }
+    }
+
+    public void generateInchiIfNull() {
         try {
-            XLogPDescriptor logPDescriptor = new XLogPDescriptor();
-            logPDescriptor.setParameters(new Object[]{true,true});
-            this.xlogP = ((DoubleResult)logPDescriptor.calculate(getMolecule()).getValue()).doubleValue();
             if (inchi==null) {
                 final InChIGenerator gen = InChIGeneratorFactory.getInstance().getInChIGenerator(getMolecule());
                 this.inchi = new InChI(gen.getInchiKey(), gen.getInchi());
@@ -451,18 +467,30 @@ public class Compound {
 
 
     public boolean canBeNeutralCharged(){
-        return (hasChargeState(pLayer, CompoundCandidate.NEUTRAL_CHARGE) || hasChargeState(qLayer, CompoundCandidate.NEUTRAL_CHARGE));
+        return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
     }
 
     public boolean canBePositivelyCharged(){
-        return (hasChargeState(pLayer, CompoundCandidate.POSITIVE_CHARGE) || hasChargeState(qLayer, CompoundCandidate.POSITIVE_CHARGE));
+        return hasChargeState(CompoundCandidateChargeState.POSITIVE_CHARGE);
     }
 
     public boolean canBeNegativelyCharged(){
-        return (hasChargeState(pLayer, CompoundCandidate.NEGATIVE_CHARGE) || hasChargeState(qLayer, CompoundCandidate.NEGATIVE_CHARGE));
+        return hasChargeState(CompoundCandidateChargeState.NEGATIVE_CHARGE);
+    }
+
+    public boolean hasChargeState(CompoundCandidateChargeState chargeState){
+        return (hasChargeState(pLayer, chargeState.getValue()) || hasChargeState(qLayer, chargeState.getValue()));
+    }
+
+    public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState){
+        return (chargeLayer==CompoundCandidateChargeLayer.P_LAYER ?
+                hasChargeState(pLayer, chargeState.getValue()) :
+                hasChargeState(qLayer, chargeState.getValue())
+        );
     }
 
     private boolean hasChargeState(int chargeLayer, int chargeState){
         return ((chargeLayer & chargeState) == chargeState);
     }
+
 }
