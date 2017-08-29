@@ -105,6 +105,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     Options options;
     List<String> inputs, formulas;
     PrecursorIonType[] ionTypes;
+    PrecursorIonType[] ionTypesWithoutAdducts;
 
     public void compute() {
         try {
@@ -118,7 +119,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     final List<IdentificationResult> results;
 
                     //todo hack to include guessing of ionization. If appreciate include in a better way
-                    if (options.getPossibleIonizations()!=null) {
+                    if (options.getPossibleIonizations()!=null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                         PrecursorIonType[] specificIontypes = guessIonization(i);
 
                         Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
@@ -203,8 +204,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             }
 
         }
+        if (specificIontypes.length==ionTypes.length){
+            specificIontypes = ionTypesWithoutAdducts;
+        }
         if (specificIontypes.length==0){
-            specificIontypes = ionTypes;
+            specificIontypes = ionTypesWithoutAdducts;
             //todo: do something better: this is  a don't use M+ and M+H+ hack
             PrecursorIonType m_plus  = PrecursorIonType.getPrecursorIonType("[M]+");
             PrecursorIonType m_plus_h = PrecursorIonType.getPrecursorIonType("[M+H]+");
@@ -513,10 +517,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     LoggerFactory.getLogger(CLI.class).error("Cannot guess ionization when only one ionization/adduct is provided");
                 }
                 ionTypes = new PrecursorIonType[ionList.size()];
+                Set<PrecursorIonType> set = new HashSet<>();
                 for (int i = 0; i < ionTypes.length; i++) {
                     String ion = ionList.get(i);
                     ionTypes[i] = PrecursorIonType.getPrecursorIonType(ion);
+                    set.add(ionTypes[i].withoutAdduct());
                 }
+                ionTypesWithoutAdducts = set.toArray(new PrecursorIonType[0]);
+
             }
         } catch (IOException e) {
             LoggerFactory.getLogger(CLI.class).error("Cannot load profile '" + options.getProfile() + "':\n",e);
@@ -737,7 +745,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             else throw new IllegalArgumentException("SIRIUS does not support multiple charges");
         } else {
             final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon());
-            if (ionType.isIonizationUnknown() && !opt.isAutoCharge()) {
+            if (ionType.isIonizationUnknown() && !opt.isAutoCharge() && opt.getPossibleIonizations()==null) {
                 if (ionType.getCharge()>0) return PrecursorIonType.getPrecursorIonType("[M+H]+");
                 else return PrecursorIonType.getPrecursorIonType("[M-H]-");
             } else return ionType;
