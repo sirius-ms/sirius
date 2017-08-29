@@ -39,7 +39,7 @@ ext {
 //    commons_email_version = '1.4'
 //    oshi_version = '3.2'
 
-    error_reporter_version = "0.9"
+    error_reporter_version = "0.9.1"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()

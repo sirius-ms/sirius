@@ -164,11 +164,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 final int errorState = (int) chunks.get(1);
 
                 if (versionsNumber != null) {
-                    if (errorState != 0)
-                        mf.csiFingerId.setVersionNumber(versionsNumber);
+                    mf.csiFingerId.setVersionNumber(versionsNumber);
                     if (versionsNumber.expired()) {
                         new UpdateDialog(mf, versionsNumber);
-                    } else {
+                    }
+                    if(!versionsNumber.outdated()){
                         mf.csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {

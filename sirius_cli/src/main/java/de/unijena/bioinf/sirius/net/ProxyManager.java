@@ -1,9 +1,4 @@
 package de.unijena.bioinf.sirius.net;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 21.02.17.
- */
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
