@@ -19,16 +19,12 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.canopus.Canopus;
-import de.unijena.bioinf.chemdb.DatabaseException;
-import de.unijena.bioinf.chemdb.FilebasedDatabase;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
@@ -88,7 +84,7 @@ public class CSIFingerIdComputation {
     protected final HashMap<String, Compound> compounds;
     protected final HashMap<MolecularFormula, List<Compound>> compoundsPerFormulaBio, compoundsPerFormulaNonBio;
     private File directory;
-    private boolean enabled;
+    private boolean enabled = false;
     protected List<Runnable> enabledListeners = new ArrayList<>();
 
     protected Canopus canopus;
@@ -284,7 +280,7 @@ public class CSIFingerIdComputation {
         return formulas;
     }
 
-    private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, SearchableDatabase db) throws IOException {
+    private List<Compound> loadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, SearchableDatabase db, Ionization ionization) throws IOException {
         final List<Compound> compounds = new ArrayList<>();
         try {
             globalLock.lock();
@@ -294,9 +290,9 @@ public class CSIFingerIdComputation {
         }
 
         if (db.searchInBio())
-            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, true));
+            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, true, ionization));
         if (db.searchInPubchem())
-            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, false));
+            compounds.addAll(internalLoadCompoundsForGivenMolecularFormula(webAPI, formula, false, ionization));
         if (db.isCustomDb())
             compounds.addAll(internalLoadCompoundsFromCustomDb(db, formula));
         return mergeCompounds(compounds);
@@ -397,8 +393,8 @@ public class CSIFingerIdComputation {
         compoundsPerFormulaNonBio.clear();
     }
 
-    private List<Compound> internalLoadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio) throws IOException {
-
+    private List<Compound> internalLoadCompoundsForGivenMolecularFormula(WebAPI webAPI, MolecularFormula formula, boolean bio, Ionization ionization) throws IOException {
+        //TODO shift toward using filtering -> see internalLoadCompoundsForGivenMolecularFormulaNew(...)
         if (bio) {
             synchronized (compoundsPerFormulaBio) {
                 if (compoundsPerFormulaBio.containsKey(formula)) return compoundsPerFormulaBio.get(formula);
@@ -442,6 +438,91 @@ public class CSIFingerIdComputation {
         return compounds;
     }
 
+    private List<Compound> internalLoadCompoundsForGivenMolecularFormulaNew(WebAPI webAPI, MolecularFormula formula, boolean bio, Ionization ionization) throws IOException {
+//        MolecularFormulaWithIonization molecularFormulaWithIonization = new MolecularFormulaWithIonization(formula, ionization);
+        return null;
+//        if (bio) {
+//            synchronized (compoundsPerFormulaBio) {
+//                if (compoundsPerFormulaBio.containsKey(molecularFormulaWithIonization)) return compoundsPerFormulaBio.get(formula);
+//            }
+//        } else {
+//            synchronized (compoundsPerFormulaNonBio) {
+//                if (compoundsPerFormulaNonBio.containsKey(molecularFormulaWithIonization)) return compoundsPerFormulaNonBio.get(formula);
+//            }
+//        }
+//        final File dir = new File(directory, bio ? "bio" : "not-bio");
+//        if (!dir.exists()) dir.mkdirs();
+//        List<Compound> compounds = new ArrayList<>();
+//        //filter: check if ionization and charge in strucutre db fit
+//        if (molecularFormulaWithIonization.ionizationState==IonizationState.Protonation){
+//            MolecularFormula searchFormula = formula;
+//            List<Compound> compoundsUnfiltered = retrieveCompounds(webAPI, dir, searchFormula, bio);
+//            compounds.addAll(filterCompounds(compoundsUnfiltered, CompoundCandidateChargeState.NEUTRAL_CHARGE, CompoundCandidateChargeLayer.P_LAYER));
+//            searchFormula = formula.add(MolecularFormula.parse("H"));
+//            compoundsUnfiltered = retrieveCompounds(webAPI, dir, searchFormula, bio);
+//            compounds.addAll(filterCompounds(compoundsUnfiltered, CompoundCandidateChargeState.POSITIVE_CHARGE, CompoundCandidateChargeLayer.P_LAYER));
+//        } else if (molecularFormulaWithIonization.ionizationState==IonizationState.Intrinsically){
+//            MolecularFormula searchFormula = formula;
+//            List<Compound> compoundsUnfiltered = retrieveCompounds(webAPI, dir, searchFormula, bio);
+//            compounds = filterCompounds(compoundsUnfiltered, CompoundCandidateChargeState.POSITIVE_CHARGE, CompoundCandidateChargeLayer.P_LAYER, CompoundCandidateChargeLayer.Q_LAYER);
+//        } else {
+//            //IonizationState.DifferentPositiveIonMode
+//            MolecularFormula searchFormula = formula;
+//            List<Compound> compoundsUnfiltered = retrieveCompounds(webAPI, dir, searchFormula, bio);
+//            compounds = filterCompounds(compoundsUnfiltered, CompoundCandidateChargeState.NEUTRAL_CHARGE);
+//        }
+//
+//        postProcessCompounds(compounds);
+//        if (bio) {
+//            synchronized (compoundsPerFormulaBio) {
+//                compoundsPerFormulaBio.put(molecularFormulaWithIonization, compounds);
+//            }
+//        } else {
+//            synchronized (compoundsPerFormulaNonBio) {
+//                compoundsPerFormulaNonBio.put(molecularFormulaWithIonization, compounds);
+//            }
+//        }
+//        return compounds;
+    }
+
+    private List<Compound> filterCompounds(List<Compound> compounds, CompoundCandidateChargeState chargeState, CompoundCandidateChargeLayer... chargeLayers) {
+        List<Compound> compoundList = new ArrayList<>();
+        for (Compound compound : compounds) {
+            for (CompoundCandidateChargeLayer chargeLayer : chargeLayers) {
+                if (compound.hasChargeState(chargeLayer, chargeState)){
+                    compoundList.add(compound);
+                    break;
+                }
+            }
+
+        }
+        return compoundList;
+    }
+
+    private List<Compound> retrieveCompounds(WebAPI webAPI, File dir, MolecularFormula formula, boolean bio) throws IOException {
+        final File mfile = new File(dir, formula.toString() + ".json.gz");
+
+        List<Compound> compounds = null;
+        if (mfile.exists()) {
+            try (final JsonParser parser = Json.createParser(new GZIPInputStream(new FileInputStream(mfile)))) {
+                compounds = new ArrayList<>();
+                Compound.parseCompounds(fingerprintVersion, compounds, parser);
+            } catch (IOException | JsonException e) {
+                logger.error("Error while reading cached formula file for \"" + formula.toString() + "\". Reload file via webservice.", e);
+            }
+        }
+        if (compounds == null) {
+            if (webAPI == null) {
+                try (final WebAPI webAPI2 = WebAPI.newInstance()) {
+                    compounds = webAPI2.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
+                }
+            } else {
+                compounds = webAPI.getCompoundsFor(formula, mfile, fingerprintVersion, bio);
+            }
+        }
+        return compounds;
+    }
+
     protected void postProcessCompounds(List<Compound> compounds) {
         ECFPFingerprinter fingerprinter = null;
         for (int index = 0; index < compounds.size(); ++index) {
@@ -458,6 +539,7 @@ public class CSIFingerIdComputation {
                 logger.error(e.getMessage(),e);
             }
             c.calculateXlogP();
+            c.generateInchiIfNull();
             synchronized (this.compounds) {
                 this.compounds.put(c.inchi.key2D(), c);
             }
@@ -608,18 +690,20 @@ public class CSIFingerIdComputation {
     }
 
     public void waitForInitialization() {
-        try {
-            globalLock.lock();
-            if (performances == null) {
-                final WebAPI webAPI = WebAPI.newInstance();
-                loadStatistics(webAPI);
-                webAPI.close();
+        if (isEnabled()) {
+            try {
+                globalLock.lock();
+                if (performances == null) {
+                    final WebAPI webAPI = WebAPI.newInstance();
+                    loadStatistics(webAPI);
+                    webAPI.close();
+                }
+            } catch (IOException e) {
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
+                return;
+            } finally {
+                globalLock.unlock();
             }
-        } catch (IOException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            return;
-        } finally {
-            globalLock.unlock();
         }
     }
 
@@ -703,7 +787,7 @@ public class CSIFingerIdComputation {
                         final MolecularFormula formula = container.result.getMolecularFormula();
                         final JobLog.Job job = JobLog.getInstance().submitRunning(container.experiment.getGUIName(), "Download " + formula.toString());
                         try {
-                            final List<Compound> compounds = loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.db);
+                            final List<Compound> compounds = loadCompoundsForGivenMolecularFormula(webAPI, container.result.getMolecularFormula(), container.db, container.experiment.getIonization().getIonization());
                             container.candidateList = compounds;
                             container.structuresDownloaded = true;
                             synchronized (blastWorker) {
@@ -882,5 +966,24 @@ public class CSIFingerIdComputation {
     }
     public SearchableDatabase getPubchemDb() {
         return pubchem;
+    }
+
+    protected final static Ionization PROTONATION = PeriodicTable.getInstance().getProtonation();
+    protected final static Ionization INTRINSICALLY_CHARGED_POSITIVE = new IonMode(1, "[M]+", MolecularFormula.emptyFormula());
+    protected class MolecularFormulaWithIonization {
+        protected final MolecularFormula molecularFormula;
+        protected final IonizationState ionizationState;
+
+        public MolecularFormulaWithIonization(MolecularFormula molecularFormula, Ionization ionization) {
+            this.molecularFormula = molecularFormula;
+            if (ionization.equals(PROTONATION)) ionizationState = IonizationState.Protonation;
+            else if (ionization.equals(INTRINSICALLY_CHARGED_POSITIVE)) ionizationState = IonizationState.Intrinsically;
+            else if (ionization.getCharge()>0) ionizationState = IonizationState.DifferentPositiveIonMode;
+            else throw new IllegalArgumentException("Ionization must be positive");
+        }
+    }
+
+    protected enum  IonizationState {
+        Intrinsically, Protonation, DifferentPositiveIonMode
     }
 }

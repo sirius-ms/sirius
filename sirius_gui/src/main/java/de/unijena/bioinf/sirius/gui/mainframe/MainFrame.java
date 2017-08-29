@@ -3,14 +3,10 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
-import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.DragAndDropOpenDialogReturnValue;
-import de.unijena.bioinf.sirius.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.sirius.gui.dialogs.UpdateDialog;
+import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
 import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
@@ -146,39 +142,41 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //finger id observer
-        final SwingWorker w = new SwingWorker<VersionsInfo, VersionsInfo>() {
+        final SwingWorker w = new SwingWorker<VersionsInfo, Object>() {
             @Override
             protected VersionsInfo doInBackground() {
-                VersionsInfo result = null;
+                VersionsInfo versionsNumber = null;
                 try (WebAPI api = WebAPI.newInstance()) {
-                    if (api.isConnected())
-                        result = api.needsUpdate();
-                    LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (result != null ? String.valueOf(result.toString()) : "NULL"));
+                    int errorState = api.checkConnection();
+                    versionsNumber = api.getVersionInfo();
+                    publish(versionsNumber, errorState);
+                    LoggerFactory.getLogger(mf.getClass()).debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
-
-                publish(result);
-                return result;
+                return versionsNumber;
             }
 
             @Override
-            protected void process(List<VersionsInfo> chunks) {
+            protected void process(List<Object> chunks) {
                 super.process(chunks);
-                final VersionsInfo versionsNumber = chunks.get(0);
+                final VersionsInfo versionsNumber = (VersionsInfo) chunks.get(0);
+                final int errorState = (int) chunks.get(1);
+
                 if (versionsNumber != null) {
                     mf.csiFingerId.setVersionNumber(versionsNumber);
-                    if (versionsNumber.outdated()) {
-                        new UpdateDialog(mf, versionsNumber.siriusGuiVersion.toString());
-                    } else {
+                    if (versionsNumber.expired()) {
+                        new UpdateDialog(mf, versionsNumber);
+                    }
+                    if(!versionsNumber.outdated()){
                         mf.csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {
                         new NewsDialog(mf, versionsNumber.getNews());
                     }
-                } else {
-                    SiriusActions.CHECK_CONNECTION.getInstance().actionPerformed(null);
                 }
+                if (errorState != 0)
+                    new ConnectionDialog(mf, errorState);
             }
 
             @Override
@@ -196,6 +194,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         } catch (Exception e) {
             LoggerFactory.getLogger(mf.getClass()).error("Error during connection test", e);
         }
+
 
         mf.setVisible(true);
     }
@@ -245,6 +244,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     protected static Pattern CANOPUS_PATTERN = Pattern.compile("canopus[^.]*\\.data(?:\\.gz)?", Pattern.CASE_INSENSITIVE);
+
     private void importDragAndDropFiles(List<File> rawFiles) {
         rawFiles = new ArrayList<>(rawFiles);
         // entferne nicht unterstuetzte Files und suche nach CSVs
@@ -313,7 +313,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     private void importCanopus(final File f) {
-        final SwingWorker<Object,Object> worker = new SwingWorker<Object, Object>() {
+        final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
             @Override
             protected Object doInBackground() throws Exception {
                 final JobLog.Job j = JobLog.getInstance().submit("Load CANOPUS", "Load CANOPUS prediction model");

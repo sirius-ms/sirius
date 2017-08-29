@@ -7,7 +7,6 @@ package de.unijena.bioinf.sirius.gui.settings;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.PasswordCrypter;
-import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.net.ProxyManager;

@@ -1,11 +1,8 @@
 package de.unijena.bioinf.sirius.gui.net;
 
-import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
 import de.unijena.bioinf.sirius.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
-import org.apache.http.impl.client.CloseableHttpClient;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +20,7 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
     final BooleanJlabel jena = new BooleanJlabel();
     final BooleanJlabel bioinf = new BooleanJlabel();
     final BooleanJlabel fingerID = new BooleanJlabel();
+    final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
 
     JPanel resultPanel = null;
 
@@ -33,7 +31,8 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
         add(new JLabel("Connection to the internet (google.com)"), internet, 15, false);
         add(new JLabel("Connection to uni-jena.de"), jena, 5, false);
         add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
-        add(new JLabel("Connection to CSI:FingerID REST API"),fingerID, 5, false);
+        add(new JLabel("Connection to www.csi-fingerid.uni-jena.de"),fingerID, 5, false);
+        add(new JLabel("Check CSI:FingerID REST API"),fingerID_WebAPI, 5, false);
 
 
         addVerticalGlue();
@@ -43,10 +42,11 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
     }
 
     public void refreshPanel(final int state) {
-        internet.setState(state < 4);
-        jena.setState(state < 3);
-        bioinf.setState(state < 2);
-        fingerID.setState(state < 1);
+        internet.setState(state > 1 || state == 0);
+        jena.setState(state > 2 || state == 0);
+        bioinf.setState(state > 3 || state == 0);
+        fingerID.setState(state > 4 || state == 0);
+        fingerID_WebAPI.setState(state == 0);
 
 
         if (resultPanel != null)
@@ -66,32 +66,48 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
         final JLabel label;
         switch (state) {
             case 0:
-                label = new JLabel("<html>Connection to CSI:FingerID Server successfully established <br>" +
+                label = new JLabel("<html>Connection to CSI:FingerID Server successfully established!<br>" +
                         "</html>");
                 break;
-            case 1:
-                label = new JLabel("<html>" +
-                        "Could not connect to the CSI:FingerID Server <br>" + //todo temporary not availlable message from server???
-                        " Either our the CSI:FingerID service is temporary not available<br>" +
-                        " or its URL cannot be reached because of your network configuration <br>" +
+            case 6:
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach the CSI:FingerID WebAPI. <br>" +
+                        "Our Service is no longer available for your current Sirius version. <br>" +
+                        "Please <a href=https://bio.informatik.uni-jena.de/software/sirius/>download</a> the current version of Sirius<br>" +
                         "</html>");
                 break;
-            case 2:
-                label = new JLabel("<html>" +
-                        "Could not reach https://bio.informatik.uni-jena.de <br>" +
-                        "Either our webserver is temporary not available<br>" +
-                        " or it cannot be reached because of your network configuration <br>" +
-                        "</html>");
-                break;
-            case 3:
-                label = new JLabel("<html>" +
-                        "Could not reach uni-jena.de. <br>" +
-                        "Either the whole uni-jena.de domain is temporary not available<br>" +
-                        " or it cannot be reached because of your network configuration <br>" +
+            case 5:
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach the CSI:FingerID WebAPI. <br>" +
+                        "Your Sirius version is still supported but the Service <br>" +
+                        "is unfortunately not available.<br>" +
+                        "Please <a href=mailto:sirius@uni-jena.de>contact</a> the developer for help.<br>" +
                         "</html>");
                 break;
             case 4:
-                label = new JLabel("<html>Could not establish an internet connection.<br>" +
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not connect to the CSI:FingerID Server. <br>" +
+                        " Either the CSI:FingerID server is temporary not available<br>" +
+                        " or its URL cannot be reached because of your network configuration.<br>" +
+                        "</html>");
+                break;
+            case 3:
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach https://bio.informatik.uni-jena.de. <br>" +
+                        "Either our web server is temporary not available<br>" +
+                        " or it cannot be reached because of your network configuration.<br>" +
+                        "</html>");
+                break;
+            case 2:
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not reach uni-jena.de. <br>" +
+                        "Either the whole uni-jena.de domain is temporary not available<br>" +
+                        " or it cannot be reached because of your network configuration. <br>" +
+                        "</html>");
+                break;
+            case 1:
+                label = new JLabel("<html>" + " ErrorCode " + state + ": " +
+                        " Could not establish an internet connection.<br>" +
                         "Please check if your computer is connected to the internet.<br>" +
                         "All features depending on the database won't work without internet connection.<br>" +
                         "If you use a proxy, please check the proxy settings.<br>" +
