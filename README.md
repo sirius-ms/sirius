@@ -56,7 +56,7 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.5.1-SNAPSHOT (Build 0 from 2017-08-11)
+### Sirius+CSI:FingerID GUI and CLI - Version 3.5.1-SNAPSHOT (Build 0 from 2017-08-29)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.1-SNAPSHOT/sirius-3.5.1-SNAPSHOT-osx64.zip)
