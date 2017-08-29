@@ -358,7 +358,7 @@ public class WalkerTreePositionCalculator extends AbstractTreePositionCalculator
 	/**
 	 * 
 	 * @param vIMinus
-	 * @param v
+	 * @param parentOfV
 	 * @param parentOfV
 	 * @param defaultAncestor
 	 * @return the greatest distinct ancestor of vIMinus and its right neighbor
