@@ -5,6 +5,11 @@ public class Tanimoto {
     public interface ProbabilisticTanimoto {
         double expectationValue();
         double variance();
+        double standardDeviation();
+    }
+
+    public static ProbabilisticTanimoto probabilisticTanimotoFixedLength(ProbabilityFingerprint left, Fingerprint right) {
+        return new ExactDP(left, right, true);
     }
 
     public static ProbabilisticTanimoto probabilisticTanimoto(AbstractFingerprint left, AbstractFingerprint right) {
@@ -27,6 +32,11 @@ public class Tanimoto {
 
                     @Override
                     public double variance() {
+                        return 0;
+                    }
+
+                    @Override
+                    public double standardDeviation() {
                         return 0;
                     }
                 };
@@ -86,6 +96,10 @@ public class Tanimoto {
         protected double exp, var;
 
         public ExactDP(ProbabilityFingerprint left, Fingerprint right) {
+            this(left, right, false);
+        }
+
+        public ExactDP(ProbabilityFingerprint left, Fingerprint right, boolean fixedLength) {
             final int N = right.getFingerprintVersion().size();
             final int NPOS = right.cardinality();
             final int NNEG = right.getFingerprintVersion().size() - NPOS;
@@ -93,10 +107,45 @@ public class Tanimoto {
             final double[] m = new double[NNEG+1];
             final double[] p = new double[NPOS+1];
             m[0] = 1d; p[0] = 1d;
-            FPIter l = left.iterator(), r = right.iterator();
 
+            computeDP(m, p, left.iterator(), right.iterator());
+
+            // calculate expectation value
+            var = 0d;
+            exp = 0;
+            if (fixedLength) {
+                double norm = 0d;
+                for (int Q=0; Q <= NPOS; ++Q) {
+                    final int R = 2*NPOS - Q;
+                    if (R < NPOS) break;
+                    norm += m[R-NPOS]*p[Q];
+                    exp += (m[R-NPOS] * p[Q] * ((double)Q)/R);
+                }
+                if (norm > 0) exp /= norm;
+                for (int Q=0; Q <= NPOS; ++Q) {
+                    final int R = 2*NPOS - Q;
+                    if(R < NPOS) break;
+                    var += (m[R-NPOS] * p[Q] * ((double)Q*Q)/((double)R*R));
+                }
+                if (norm > 0)  var /= norm;
+            } else {
+                for (int Q=0; Q <= NPOS; ++Q) {
+                    for (int R=NPOS; R <= N; ++R) {
+                        exp += (m[R-NPOS] * p[Q] * ((double)Q)/R);
+                    }
+                }
+                for (int Q=0; Q <= NPOS; ++Q) {
+                    for (int R=NPOS; R <= N; ++R) {
+                        var += (m[R-NPOS] * p[Q] * ((double)Q*Q)/((double)R*R));
+                    }
+                }
+            }
+
+            var -= exp*exp;
+        }
+
+        private void computeDP(double[] m, double[] p, FPIter l, FPIter r) {
             int psize=1, msize=1;
-
             while (l.hasNext()) {
                 l = l.next();
                 r = r.next();
@@ -119,23 +168,6 @@ public class Tanimoto {
                     ++msize;
                 }
             }
-
-            // calculate expectation value
-
-            exp = 0;
-            for (int Q=1; Q <= NPOS; ++Q) {
-                for (int R=NPOS; R <= N; ++R) {
-                    exp += (m[R-NPOS] * p[Q] * ((double)Q)/R);
-                }
-            }
-
-            var = 0d;
-            for (int Q=1; Q <= NPOS; ++Q) {
-                for (int R=NPOS; R <= N; ++R) {
-                    var += (m[R-NPOS] * p[Q] * ((double)Q*Q)/((double)R*R));
-                }
-            }
-            var -= exp*exp;
         }
 
         @Override
@@ -146,6 +178,11 @@ public class Tanimoto {
         @Override
         public double variance() {
             return var;
+        }
+
+        @Override
+        public double standardDeviation() {
+            return Math.sqrt(var);
         }
 
         @Override
@@ -209,6 +246,11 @@ public class Tanimoto {
         @Override
         public double variance() {
             return var;
+        }
+
+        @Override
+        public double standardDeviation() {
+            return Math.sqrt(var);
         }
 
         @Override

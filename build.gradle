@@ -26,7 +26,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = '3.5'
+    version = '3.5.1'
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -47,6 +47,7 @@ allprojects {
     dependencies {
         compile 'net.sf.trove4j:trove4j:3.0.3'
         compile 'com.google.guava:guava:18.0'
+        compile 'de.unijena.bioinf.utils:jjobs-core:0.9-SNAPSHOT'
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
@@ -111,13 +112,13 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
             Properties properties = new Properties()
-            File propertiesFile = Paths.get(System.properties['user.home'], 'artifactory.properties').toFile()
+            File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
             propertiesFile.withInputStream {
                 properties.load(it)
             }
 
-            username = properties['username']
-            password = properties['password']
+            username = properties['de.unijena.bioinf.build.artifactory.username']
+            password = properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             publications('mavenJava')

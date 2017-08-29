@@ -128,13 +128,13 @@ public class Spectrums {
 
     private static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum performPeakMerging(SimpleSpectrum merged, Deviation massWindow, boolean sumIntenstities, boolean mergeMasses) {
+        assert isMassOrderedSpectrum(merged);
         final Spectrum<Peak> intensityOrdered = getIntensityOrderedSpectrum(merged);
         final BitSet alreadyMerged = new BitSet(merged.size());
         final SimpleMutableSpectrum mergedSpectrum = new SimpleMutableSpectrum();
         for (int k=0; k < intensityOrdered.size(); ++k) {
             final double mz = intensityOrdered.getMzAt(k);
             final int index = binarySearch(merged, mz);
-            assert intensityOrdered.getIntensityAt(k)==merged.getIntensityAt(index);
 
             if (alreadyMerged.get(index)) continue;
             // merge all surrounding peaks
@@ -153,15 +153,15 @@ public class Spectrums {
                     intensitySum += merged.getIntensityAt(j);
                 }
             }
-            final double intensity, mergedMz;
+            final double mergedIntensity, mergedMz;
             if (sumIntenstities) {
-                intensity = intensitySum;
-            } else intensity = intensityOrdered.getIntensityAt(k);
+                mergedIntensity = intensitySum;
+            } else mergedIntensity = intensityOrdered.getIntensityAt(k);
             if (mergeMasses) {
                 mergedMz = mzSum / intensitySum;
             } else mergedMz = mz;
 
-            mergedSpectrum.addPeak(mergedMz, intensity);
+            mergedSpectrum.addPeak(mergedMz, mergedIntensity);
         }
         return new SimpleSpectrum(mergedSpectrum);
     }
@@ -179,7 +179,7 @@ public class Spectrums {
             int bestIndex = spec.size();
             for (int k=0; k < spec.size(); ++k) {
                 double dist = spec.getMzAt(k)-mass;
-                if (dist >= 0 && dist < smallestDist) {
+                if (dist >= 1e-12 && dist < smallestDist) {
                     smallestDist = dist;
                     bestIndex = k;
                 }
@@ -222,6 +222,8 @@ public class Spectrums {
         int i=0, j=0;
         final int nl=left.size(), nr=right.size();
         double score=0d;
+        while (i < nl && left.getMzAt(i) < 0.5d) ++i;
+        while (j < nr && right.getMzAt(j) < 0.5d) ++j;
         while (i < nl && j < nr) {
             final double difference = left.getMzAt(i)- right.getMzAt(j);
             final double allowedDifference = deviation.absoluteFor(Math.min(left.getMzAt(i), right.getMzAt(j)));
@@ -475,6 +477,66 @@ public class Spectrums {
             }
         }
     }
+
+    /**
+     * extract hypothetical isotope pattern for a given mass
+     * @param ms1Spec
+     * @param profile
+     * @param targetMz
+     * @return
+     */
+    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
+        return extractIsotopePattern(ms1Spec, profile, targetMz, 1);
+    }
+
+    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge) {
+        return extractIsotopePattern(ms1Spec, profile, targetMz, absCharge, true);
+    }
+
+    public static SimpleMutableSpectrum extractIsotopePattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz, int absCharge, boolean mergePeaks) {
+        // extract all isotope peaks starting from the given target mz
+        final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
+        final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
+        final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
+        if (index < 0) return null;
+        final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
+        spec.addPeak(massOrderedSpectrum.getPeakAt(index));
+        // add additional peaks
+        final double monoMass = spec.getMzAt(0);
+        for (int k=1; k <= 5; ++k) {
+            final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, profile.getAllowedMassDeviation(), monoMass, k);
+
+            final double a = (nextMz.lowerEndpoint()-monoMass)/absCharge+monoMass;
+            final double b = (nextMz.upperEndpoint()-monoMass)/absCharge+monoMass;
+            final double m = a+(b-a)/2d;
+            final double startPoint = a - profile.getStandardMassDifferenceDeviation().absoluteFor(a);
+            final double endPoint = b + profile.getStandardMassDifferenceDeviation().absoluteFor(b);
+            final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);
+            if (nextIndex < 0) break;
+            double mzBuffer = 0d;
+            double intensityBuffer = 0d;
+            for (int i=nextIndex; i < massOrderedSpectrum.size(); ++i) {
+                final double mz = massOrderedSpectrum.getMzAt(i);
+                if (mz > endPoint) break;
+                final double intensity = massOrderedSpectrum.getIntensityAt(i);
+                if (mergePeaks) {
+                    mzBuffer += mz*intensity;
+                    intensityBuffer += intensity;
+                } else if (intensity>intensityBuffer){
+                    //don't merge. just take most intense peak within window
+                    mzBuffer = mz;
+                    intensityBuffer = intensity;
+                }
+            }
+            if (mergePeaks){
+                mzBuffer /= intensityBuffer;
+            }
+            spec.addPeak(mzBuffer, intensityBuffer);
+
+        }
+        return spec;
+    }
+
 
     /**
      * try to guess the ionization by looking for mass differences to other peaks which might be the same compound ionized with a different adduct.
@@ -911,6 +973,46 @@ public class Spectrums {
         return -1;
     }
 
+    /**
+     * Search for an exact mz and intensity value. spectrum sorted by mz.
+     *
+     * @see Spectrums#binarySearch(Spectrum, double, Deviation)
+     */
+    public static <S extends Spectrum<P>, P extends Peak> int binarySearch(S spectrum, double mz, double intensity) {
+        if (spectrum.size() > 0) {
+            int low = 0;
+            int high = spectrum.size() - 1;
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                int c = Double.compare(spectrum.getMzAt(mid), mz);
+                if (c < 0)
+                    low = mid + 1;
+                else if (c > 0)
+                    high = mid - 1;
+                else {
+                    // key found
+                    if (spectrum.getIntensityAt(mid)==intensity) return mid;
+                    int mid2 = mid;
+                    while (mid2>0){
+                        --mid2;
+                        if (spectrum.getMzAt(mid2)!=mz) break;
+                        if (spectrum.getIntensityAt(mid2)==intensity) return mid;
+                    }
+                    mid2 = mid;
+                    while (mid2<spectrum.size()-2){
+                        ++mid2;
+                        if (spectrum.getMzAt(mid2)!=mz) break;
+                        if (spectrum.getIntensityAt(mid2)==intensity) return mid;
+                    }
+                    return -mid-1;
+                }
+
+            }
+            return -(low + 1);
+        }
+        return -1;
+    }
+
     // TODO: Might want to use an more efficient algorithm, e.g. median of medians
     static double __getMedianIntensity(Spectrum<? extends Peak> spec) {
         final int N = spec.size();
@@ -936,6 +1038,16 @@ public class Spectrums {
         if (spectrum instanceof OrderedSpectrum) return (Spectrum<Peak>) spectrum;
         return new SimpleSpectrum(spectrum);
 
+    }
+
+    public static boolean isMassOrderedSpectrum(Spectrum<? extends Peak> spectrum){
+        double mz = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < spectrum.size(); i++) {
+            final double mz2 = spectrum.getMzAt(i);
+            if (mz2<mz) return false;
+            mz = mz2;
+        }
+        return true;
     }
 
     /**

@@ -7,6 +7,7 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
     protected final FingerprintVersion fingerprintVersion;
 
     public AbstractFingerprint(FingerprintVersion fingerprintVersion) {
+        if (fingerprintVersion == null) throw new NullPointerException();
         this.fingerprintVersion = fingerprintVersion;
     }
 

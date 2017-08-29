@@ -18,10 +18,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.graphUtils.tree.BackrefTreeAdapter;
-import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
-import de.unijena.bioinf.graphUtils.tree.PreOrderTraversal;
-import de.unijena.bioinf.graphUtils.tree.TreeCursor;
+import de.unijena.bioinf.graphUtils.tree.*;
 
 import java.util.*;
 
@@ -100,7 +97,7 @@ public class FTree extends AbstractFragmentationGraph {
     }
     */
 
-    public static BackrefTreeAdapter<Fragment> treeAdapter() {
+    public TreeAdapter<Fragment> treeAdapter() {
         return new BackrefTreeAdapter<Fragment>() {
             @Override
             public Fragment getParent(Fragment node) {
@@ -185,13 +182,13 @@ public class FTree extends AbstractFragmentationGraph {
     }
 
     @Override
-    public Iterator<Fragment> postOrderIterator(Fragment startingRoot) {
-        return PostOrderTraversal.createSubtreeTraversal(startingRoot, FTree.treeAdapter()).iterator();
+    public final Iterator<Fragment> postOrderIterator(Fragment startingRoot) {
+        return PostOrderTraversal.createSubtreeTraversal(startingRoot, treeAdapter()).iterator();
     }
 
     @Override
-    public Iterator<Fragment> preOrderIterator(Fragment startingRoot) {
-        return new PreOrderTraversal.TreeIterator<Fragment>(TreeCursor.getCursor(startingRoot, FTree.treeAdapter()));
+    public final Iterator<Fragment> preOrderIterator(Fragment startingRoot) {
+        return new PreOrderTraversal.TreeIterator<Fragment>(TreeCursor.getCursor(startingRoot, treeAdapter()));
     }
 
     @Override
@@ -250,13 +247,13 @@ public class FTree extends AbstractFragmentationGraph {
     }
 
     public final TreeCursor<Fragment> getCursor() {
-        return TreeCursor.getCursor(root, FTree.treeAdapter());
+        return TreeCursor.getCursor(root, treeAdapter());
     }
 
     public final TreeCursor getCursor(Fragment f) {
         if (fragments.get(f.vertexId) != f)
             throw new IllegalArgumentException("vertex " + f + " does not belong to this graph");
-        return TreeCursor.getCursor(f, FTree.treeAdapter());
+        return TreeCursor.getCursor(f, treeAdapter());
     }
 
     @Override
