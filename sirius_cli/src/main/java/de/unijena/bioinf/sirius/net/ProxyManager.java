@@ -21,7 +21,6 @@ public class ProxyManager {
     public final static boolean DEBUG = false;
     public static final String HTTPS_SCHEME = "https";
     public static final String HTTP_SCHEME = "http";
-    //    public static final int MAX_STATE = 4;
     public static final int OK_STATE = 0;
     public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
 
