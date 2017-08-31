@@ -5,14 +5,19 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.ClassPath;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyLoader;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.fingerid.utils.PROPERTIES;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,11 +40,11 @@ public abstract class ApplicationCore {
     public final static String CITATION;
     public final static String CITATION_BIBTEX;
 
+
     //creating
     static {
-
-        //intit build properties
-        PROPERTIES.sirius_guiVersion();
+        //search and load build property files
+        PropertyLoader.load();
         //init workspace
         String home = System.getProperty("user.home");
         System.out.println(home);
@@ -219,3 +224,4 @@ public abstract class ApplicationCore {
 
 
 }
+

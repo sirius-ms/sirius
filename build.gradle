@@ -53,13 +53,13 @@ ext {
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/build.properties")
+    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius_frontend.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
     System.properties.putAll(props)
 
-    // edit all these verions in sirius_cli/src/main/resources/build.properties
+    // edit all these verions in sirius_cli/src/main/resources/....build.properties
     appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
     buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
