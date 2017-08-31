@@ -5,6 +5,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
  * 28.09.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyLoader;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
@@ -26,16 +27,9 @@ public final class TreeBuilderFactory {
 
 
     static {
-        try (InputStream input = TreeBuilderFactory.class.getResourceAsStream("/ilp.properties")) {
-            Properties ILP_PROPERTIES = new Properties();
-            ILP_PROPERTIES.load(input);
-            System.getProperties().putAll(ILP_PROPERTIES);
-        } catch (IOException | NullPointerException e) {
-            LoggerFactory.getLogger(TreeBuilderFactory.class).warn("Could not load Build Properties",e);
-
-        }
-        GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version");
-        GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version");
+        PropertyLoader.load();
+        GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
+        GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
         ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or similar)";
     }
 
@@ -120,5 +114,10 @@ public final class TreeBuilderFactory {
                 return b;
         }
         return null;
+    }
+
+    public static void main(String[] args){
+        System.out.println();
+        System.out.println();
     }
 }
