@@ -4,6 +4,8 @@ plugins {
     id "com.jfrog.artifactory" version "4.3.0"
 }
 
+
+
 //Global Properties
 ext {
     logger.lifecycle('reading gradle properties file...')
@@ -21,8 +23,11 @@ ext {
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
+    println props
     System.properties.putAll(props)
 
+
+    sirius_version = System.getProperty('de.unijena.bioinf.sirius.build.sirius_version')
     //version for external libraries
     slf4j_version = '1.7.21'
     gson_version = '2.6.2'
@@ -45,7 +50,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = System.getProperty('de.unijena.bioinf.sirius.build.sirius_version')
+    version = project.sirius_version
     group = 'de.unijena.bioinf.ms'
 
     repositories {
