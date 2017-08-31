@@ -7,7 +7,7 @@ dependencies {
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
     //todo workaround until cli codebase contains fingerid functionality
     compile group: "de.unijena.bioinf.ms", name: "fingerid_kernel", version: "$fingeridVersion"
-
+    compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
 }
 
 mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
