@@ -21,7 +21,7 @@ public abstract class HeuristicSolver {
 	 * Array with all vertices of the graph.
 	 * </p>
 	 * <p>
-	 * vertices[x] = true -> vertex with the graph ID x is used in the tree.
+	 * vertices[x] = true: vertex with the graph ID x is used in the tree.
 	 * </p>
 	 */
 	protected boolean[] treeVertexUsed;
@@ -37,7 +37,7 @@ public abstract class HeuristicSolver {
 	 * Array with the color for each vertex of the graph.
 	 * </p>
 	 * <p>
-	 * colorForEachVertex[x] = c -> vertex with ID x has the color c.
+	 * colorForEachVertex[x] = c: vertex with ID x has the color c.
 	 * </p>
 	 */
 	protected final int[] colorForEachVertex;
