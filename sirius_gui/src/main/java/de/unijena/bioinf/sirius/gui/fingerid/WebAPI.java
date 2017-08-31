@@ -305,6 +305,9 @@ public class WebAPI implements Closeable {
                 } else {
                     job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
                 }
+                if (obj.containsKey("errors")) {
+                    job.errorMessage = obj.getString("errors");
+                }
             }
         } catch (Throwable t) {
             LoggerFactory.getLogger(this.getClass()).error("Error when updating job #" + job.jobId, t);
@@ -368,7 +371,7 @@ public class WebAPI implements Closeable {
                     if (updateJobStatus(job)) {
                         return job.prediction;
                     } else if (Objects.equals(job.state, "CRASHED")) {
-                        throw new RuntimeException("Job crashed");
+                        throw new RuntimeException("Job crashed: "+(job.errorMessage!=null?job.errorMessage:""));
                     }
                 }
                 throw new TimeoutException("Reached timeout");

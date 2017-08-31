@@ -44,27 +44,9 @@ public class Zodiac {
     private int maxCandidates;
 
 
-    //--zodiac --spectral-hits /home/ge28quv/@data/gibbsTestData/METABOLOMICS-SNETS-ANNOTATED-PAIRS-66d88580-view_all_annotations_DB-main.tsv --spectra /home/ge28quv/@data/gibbsTestData/spectral_data_ms1-2.mgf -o /home/ge28quv/@data/gibbsTestData/zodiac_output --sirius /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.workspace --processors 2
-
-
-    //todo changed maxCandidates!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //todo changed maxCandidates!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //todo changed maxCandidates!!!!!!!!!!!!!!!!!!!!!!!!!!//todo changed maxCandidates!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-//--zodiac --spectral-hits /home/ge28quv/@data/gibbsTestData/METABOLOMICS-SNETS-ANNOTATED-PAIRS-66d88580-view_all_annotations_DB-main.tsv --spectra /home/ge28quv/@data/gibbsTestData/spectral_data_ms1-2.mgf -o /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/gibbsOutput.csv --sirius /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.workspace --processors 2
-//    --zodiac --spectral-hits /home/ge28quv/@data/gibbsTestData/METABOLOMICS-SNETS-ANNOTATED-PAIRS-66d88580-view_all_annotations_DB-main.tsv --spectra /home/ge28quv/@data/gibbsTestData/spectral_data_ms1-2.mgf -o /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/gibbsOutput.csv --sirius /home/ge28quv/Downloads/sirius3-linux64-3.4.1/bin/newSirius/part.workspace --processors 2 --minLocalConnections 5 --localFilter 10
-
-//
-//    public Zodiac(String workSpacePath, String libraryHitsFile, String outputPath, ){
-//        this.workSpacePath = Paths.get(workSpacePath);
-//        this.libraryHitsFile = Paths.get(libraryHitsFile);
-//        this.outputPath = Paths.get(outputPath);
-//    }
-
-
     public Zodiac(ZodiacOptions options){
         this.workSpacePath = Paths.get(options.getInput());
-        this.libraryHitsFile = Paths.get(options.getLibraryHitsFile());
+        this.libraryHitsFile = (options.getLibraryHitsFile()==null ? null : Paths.get(options.getLibraryHitsFile()));
         this.outputPath = Paths.get(options.getOutputPath());
         this.options = options;
     }
