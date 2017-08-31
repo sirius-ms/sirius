@@ -142,7 +142,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                         } else if (whiteset == null || whiteset.size() != 1) {
                             results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
                         } else {
-                            results = Arrays.asList(sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating()));
+                            IdentificationResult result = sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating());
+                            if (result!=null && result.getRawTree()!=null) {
+                                results = Arrays.asList(result);
+                            } else {
+                                results = new ArrayList<>();
+                            }
+
                         }
                     }
 
