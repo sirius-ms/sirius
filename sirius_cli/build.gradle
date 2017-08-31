@@ -5,6 +5,8 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
+    //todo workaround until cli codebase contains fingerid functionality
+    compile group: "de.unijena.bioinf.ms", name: "fingerid_kernel", version: "$fingeridVersion"
 
 }
 
