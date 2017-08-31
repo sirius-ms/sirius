@@ -23,7 +23,6 @@ ext {
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
-    println props
     System.properties.putAll(props)
 
 
