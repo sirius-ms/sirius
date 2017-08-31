@@ -26,7 +26,7 @@ ext {
     System.properties.putAll(props)
 
 
-    siriusVersion = System.getProperty('de.unijena.bioinf.sirius.build.siriusVersion')
+    siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
     //version for external libraries
     slf4j_version = '1.7.21'
     gson_version = '2.6.2'
