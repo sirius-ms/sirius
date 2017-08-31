@@ -6,18 +6,18 @@ package de.unijena.bioinf.sirius.core;
  */
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.fingerid.utils.PROPERTIES;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -37,19 +37,15 @@ public abstract class ApplicationCore {
 
     //creating
     static {
-        //intit build properties
-        final Properties BUILD_PROPERTIES = new Properties();
-        try (InputStream input = ApplicationCore.class.getResourceAsStream("/build.properties")) {
-            // load a properties file
-            BUILD_PROPERTIES.load(new InputStreamReader(input, Charset.forName("UTF-8")));
-            System.getProperties().putAll(BUILD_PROPERTIES);
-        } catch (IOException | NullPointerException e) {
-            System.err.println("WARNING: could not load Build Properties");
-            e.printStackTrace();
-        }
 
+        //intit build properties
+        PROPERTIES.sirius_guiVersion();
         //init workspace
-        final Path DEFAULT_WORKSPACE = Paths.get(System.getProperty("user.home")).resolve(BUILD_PROPERTIES.getProperty("de.unijena.bioinf.sirius.ws"));
+        String home = System.getProperty("user.home");
+        System.out.println(home);
+        String path = System.getProperty("de.unijena.bioinf.sirius.ws");
+        System.out.println(path);
+        final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(path);
         final Map<String, String> env = System.getenv();
         String ws = env.get("SIRIUS_WORKSPACE");
 
@@ -112,7 +108,7 @@ public abstract class ApplicationCore {
         final String version = System.getProperty("de.unijena.bioinf.sirius.version");
         final String build = System.getProperty("de.unijena.bioinf.sirius.build");
 
-        VERSION_STRING = (version != null && build != null) ? "Sirius " + version + " (build " + build +")" : "Sirius";
+        VERSION_STRING = (version != null && build != null) ? "Sirius " + version + " (build " + build + ")" : "Sirius";
         DEFAULT_LOGGER.debug(VERSION_STRING);
 
         String prop = System.getProperty("de.unijena.bioinf.sirius.cite");
@@ -162,7 +158,6 @@ public abstract class ApplicationCore {
     }
 
 
-
     public static void addDefaultPropteries(File properties) throws IOException {
         addDefaultPropteries(properties.toPath());
     }
@@ -205,7 +200,7 @@ public abstract class ApplicationCore {
         storeUserProperties();
     }
 
-    public static Properties getUserCopyOfUserProperties(){
+    public static Properties getUserCopyOfUserProperties() {
         return new Properties(USER_PROPERTIES);
     }
 
@@ -221,4 +216,6 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.error("Could not remove old Properties file! Changes not saved!", e);
         }
     }
+
+
 }

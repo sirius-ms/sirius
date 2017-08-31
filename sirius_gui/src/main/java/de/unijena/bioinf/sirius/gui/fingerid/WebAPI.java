@@ -176,7 +176,7 @@ public class WebAPI implements Closeable {
     public VersionsInfo getVersionInfo() {
         VersionsInfo v = null;
         try {
-            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).build()));
+            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion",PROPERTIES.fingeridVersion()).setParameter("sirius_guiVersion",PROPERTIES.sirius_guiVersion()).build()));
             if (v == null) {
                 LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
                 v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
