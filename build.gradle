@@ -26,7 +26,7 @@ ext {
     System.properties.putAll(props)
 
 
-    sirius_version = System.getProperty('de.unijena.bioinf.sirius.build.sirius_version')
+    siriusVersion = System.getProperty('de.unijena.bioinf.sirius.build.siriusVersion')
     //version for external libraries
     slf4j_version = '1.7.21'
     gson_version = '2.6.2'
@@ -49,7 +49,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = project.sirius_version
+    version = project.siriusVersion
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -134,14 +134,9 @@ artifactory {
                 repoKey = 'libs-snapshot-local'
             else
                 repoKey = 'libs-release-local'
-            Properties properties = new Properties()
-            File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-            propertiesFile.withInputStream {
-                properties.load(it)
-            }
 
-            username = properties['de.unijena.bioinf.build.artifactory.username']
-            password = properties['de.unijena.bioinf.build.artifactory.password']
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             publications('mavenJava')
