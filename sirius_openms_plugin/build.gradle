@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 dependencies {
 //project
     compile project(':sirius_gui')
@@ -21,32 +23,50 @@ launch4j {
     jreRuntimeBits = "$project.arch"
     outfile = "${project.appName}.exe"
     jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
-    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}","../../../All/Sirius/lib/*"]
+    classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}", "../../../All/Sirius/lib/*"]
 }
 
 startScripts {
     applicationName = "${project.appName}"
 
     doLast {
-//            def siriusLibPath = '\\"$GUROBI_HOME/lib\\":\\"$APP_HOME/lib\\"'
         def openMSLibPath = '$APP_HOME/../../../All/Sirius/lib'
         String[] lines = unixScript.text.split(System.lineSeparator())
 
+        int insert = -1;
         for (int i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith('APP_HOME="`pwd -P`"')){
-                lines[i] = lines[i].replace('APP_HOME="`pwd -P`"','APP_HOME=$SAVED')
+            if (lines[i].startsWith('APP_HOME="`pwd -P`"')) {
+                insert = i + 1;
             }
             if (lines[i].startsWith('CLASSPATH=')) {
                 lines[i] = "CLASSPATH=\"${openMSLibPath}/*:${runtimeClasspath}\""
             }
-            /*if (lines[i].startsWith("DEFAULT_JVM_OPTS=\"-Djava.library.path=")) {
-                lines[i] = lines[i].replace("-Djava.library.path=\\\"", "-Djava.library.path=\\\"${openMSLibPath}:")
-            }
-            if (lines[i].startsWith("export LD_LIBRARY_PATH=")) {
-                lines[i] = lines[i].replace("export LD_LIBRARY_PATH=\"", "export LD_LIBRARY_PATH=\"${openMSLibPath}:")
-            }*/
         }
+        if (insert >= 0)
+            lines = (lines as List).plus(insert, 'APP_HOME="$APP_HOME/Sirius"')
         unixScript.text = lines.join(System.lineSeparator())
+    }
+}
+
+
+task downloadOpenmsScript {
+    project.ext.set("openmsScript", getBuildDir().toPath().resolve('tmp/openmsScript/').toFile())
+} << {
+    def scriptURL = new URL("https://raw.githubusercontent.com/OpenMS/THIRDPARTY/master/Linux/64bit/Sirius/sirius")
+
+    java.nio.file.Path dir = project.openmsScript.toPath()
+    dir.toFile().deleteDir()
+    Files.createDirectories(dir)
+
+    java.nio.file.Path f = dir.resolve('sirius')
+    if (Files.notExists(f)) {
+        def file = f.newOutputStream()
+        file << scriptURL.openStream()
+        file.close()
+        exec {
+            executable 'chmod'
+            args '755', f.toAbsolutePath().toString()
+        }
     }
 }
 
@@ -67,7 +87,7 @@ distributions {
 
             project.arch.split(',').each { ar ->
                 into("Linux/${ar}bit/Sirius/lib") {
-                    from("${project.glpkPath}/l${ar}/"){
+                    from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
                     }
@@ -75,10 +95,11 @@ distributions {
                 }
 
                 into("Linux/${ar}bit/Sirius") {
-                    from("build/install/${project.name}/bin") {
+                    from project.openmsScript
+                    /*from("build/install/${project.name}/bin") {
                         exclude("*.bat")
-                    }
-                    from("${project.distPath}"){
+                    }*/
+                    from("${project.distPath}") {
                         include('COPYING.txt')
                     }
                     from("${getRootDir()}/LICENSE.txt")
@@ -86,7 +107,7 @@ distributions {
 
                 into("Windows/${ar}bit/Sirius") {
                     from { "${project.glpkPath}/w${ar}/" }
-                    from("${project.distPath}"){
+                    from("${project.distPath}") {
                         include('COPYING.txt')
                     }
                     from { "${getRootDir()}/LICENSE.txt" }
@@ -102,16 +123,18 @@ distributions {
             }
 
             into('MacOS/64bit/Sirius') {
-                from("build/install/${project.name}/bin") {
+                from project.openmsScript
+                /*from("build/install/${project.name}/bin") {
                     exclude("*.bat")
-                }
-                from("${project.distPath}"){
+                }*/
+                from("${project.distPath}") {
                     include('COPYING.txt')
                 }
                 from("${getRootDir()}/LICENSE.txt")
             }
         }
     })
+    distribute.dependsOn 'downloadOpenmsScript'
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
@@ -138,10 +161,3 @@ publishing {
         }
     }
 }
-
-//artifactoryPublish.dependsOn 'distribute'
-
-/*task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
-    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
-    commandLine([command.absolutePath])
-}*/
