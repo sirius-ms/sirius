@@ -232,9 +232,9 @@ public class WebAPI implements Closeable {
         try {
             b = getFingerIdBaseURI();
             if (ProxyManager.DEBUG) {
-                b = b.setPath("/frontend" + path).setPort(8080);
+                b = b.setPath("/frontend" + path);
             } else {
-                b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path).setPort(8443);
+                b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path);
             }
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);
