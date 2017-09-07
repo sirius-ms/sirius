@@ -1,6 +1,9 @@
+import org.gradle.api.internal.file.copy.CopyAction
+import org.gradle.api.internal.file.copy.FileCopyAction
+
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 
 buildscript {
@@ -121,7 +124,7 @@ task downloadGLPK(type: Copy) {
     def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
 
-    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
+    Path dir = project.glpkPath.toPath().getParent()
 
     copy {
         println(dir.toString())
@@ -138,8 +141,6 @@ task downloadGLPK(type: Copy) {
     }
 
 }
-
-
 
 /*################### Building the Documentation ################### */
 
@@ -168,35 +169,41 @@ task htmlDoku(type: Exec) {
 htmlDoku.mustRunAfter cleanDoku
 
 
-
-/*task pdfLatex(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    commandLine(['pdflatex', '-output-directory', '../build', './SIRIUS'])
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-task biber(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    commandLine(['biber', '-output-directory', '../build', 'SIRIUS'])
-}*/
-
-
-
 task createVersion {
     doFirst {
-        Files.write(Paths.get("${project.manualPath}", "/source/version.txt"), Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
+        Path out = Paths.get("${project.manualPath}", "/source/version.txt")
+        if (Files.isReadable(out)) {
+            if (project.version.toString().equals(Files.readAllLines(out).first().toString())) {
+                getLogger().lifecycle("Version file already up to date")
+                return
+            }
+        }
+        getLogger().lifecycle("Updating version file")
+        Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
     }
 }
-task pdfDoku(type: Exec){
+task pdfDoku(type: Exec) {
     group = 'documentation'
     workingDir = file("${project.manualPath}/source")
-    outputs.upToDateWhen { return false }
-    outputs.file(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
-//    outputs.file(file(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf")))
+    outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
+
+    outputs.upToDateWhen {
+        File out = outputs.files.singleFile
+        if (Files.notExists(out.toPath()))
+            return false;
+        long time = out.lastModified()
+
+        boolean uptodate = true;
+        workingDir.eachFileRecurse { file ->
+            if (file.lastModified() >= time) {
+                getLogger().lifecycle("${file.getName()} - ${file.lastModified()} is newer than the pdf -> rebuild needed")
+                println()
+                uptodate = false
+            }
+        }
+        return uptodate
+    }
+
     doFirst {
         Files.createDirectories(Paths.get("${project.manualPath}/build"))
     }
@@ -207,22 +214,49 @@ task pdfDoku(type: Exec){
         pdflatex -output-directory ../build ./SIRIUS
         pdflatex -output-directory ../build ./SIRIUS
     """
-
-    doLast {
-        Files.copy(file("${project.manualPath}/build/SIRIUS.pdf").toPath(), outputs.files.singleFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-    }
-
 }
 pdfDoku.dependsOn createVersion
 pdfDoku.mustRunAfter cleanDoku
 
+class Pdf extends AbstractArchiveTask {
+    public static final String PDF_EXTENSION = "pdf";
+
+    Pdf() {
+        setExtension(PDF_EXTENSION);
+    }
+
+    void source(File sourceFile) {
+        from(sourceFile.toPath().getParent().toFile())
+        include(sourceFile.getName())
+        rename(sourceFile.getName(), getArchiveName())
+    }
+
+    @Override
+    protected CopyAction createCopyAction() {
+        return new FileCopyAction(getFileLookup().getFileResolver(getArchivePath().toPath().getParent().toFile()))
+    }
+}
+
+task pdfDokuArtifact(type: Pdf) {
+    group = 'documentation'
+    File input = pdfDoku.outputs.files.singleFile;
+
+    outputs.upToDateWhen {
+        File out = outputs.files.singleFile
+        return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
+    }
+    source input
+}
+
+pdfDokuArtifact.dependsOn pdfDoku
+
 task buildDoku {
     group = 'documentation'
-    outputs.files(file("${project.manualPath}/build/${project.appName}-${project.version}.pdf"))
+    outputs.file("${project.manualPath}/build/${project.appName}-${project.version}.pdf")
 }
 
 buildDoku.mustRunAfter cleanDoku
-buildDoku.dependsOn /*htmlDoku,*/ pdfDoku //todo solve problem and re enable
+buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact //todo solve problem and re enable
 
 
 subprojects {
@@ -265,13 +299,14 @@ subprojects {
                 }
             }
             lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
-            lines = (lines as List).plus(insertIndex+1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
+            lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
             unixScript.text = lines.join(System.lineSeparator())
         }
     }
 }
 
 task prepareChangelog(type: Exec) {
+    group = 'publishing'
     inputs.file("${project.manualPath}/source/changelog.tex")
     outputs.file("${project.manualPath}/build/changelog.md")
     commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "markdown", "-o", "${outputs.files.singleFile}"])
@@ -305,7 +340,7 @@ task refreshDownloadLinks {
                 "- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
                 "",
                 "### Manual",
-                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}.pdf)",
+                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}-manual.pdf)",
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
                 "### Sources on GitHub",
@@ -322,7 +357,7 @@ task refreshDownloadLinks {
 task refreshReadMe {
     inputs.files(refreshDownloadLinks.outputs.files.singleFile, prepareChangelog.outputs.files.singleFile)
     outputs.file("${getRootDir()}/README.md")
-
+    group = 'publishing'
 
     doFirst {
         File dld = inputs.files.getAt(0)
@@ -368,6 +403,18 @@ task refreshReadMe {
 refreshReadMe.dependsOn prepareChangelog
 refreshReadMe.dependsOn refreshDownloadLinks
 
+publishing {
+    publications {
+        sirius(MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+
+            pom.withXml {}
+            artifact source: pdfDokuArtifact, classifier: 'manual'
+        }
+    }
+}
+
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
@@ -380,7 +427,7 @@ artifactory {
         defaults {
             //Publish every distribution to Artifactory
             publications("sirius")
-            publications("manual")
+//            publications("manual")
         }
     }
 }

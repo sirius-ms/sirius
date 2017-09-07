@@ -195,6 +195,7 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
 
+            pom.withXml {}
             artifact source: win64DistZip, classifier: 'win64', extension: 'zip'
             artifact source: win32DistZip, classifier: 'win32', extension: 'zip'
             artifact source: linux32DistZip, classifier: 'linux32', extension: 'zip'

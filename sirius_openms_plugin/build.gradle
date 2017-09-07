@@ -156,7 +156,7 @@ publishing {
         sirius(MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-
+            pom.withXml {}
             artifact source: openMSDistZip, classifier: 'openMS', extension: 'zip'
         }
     }

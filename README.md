@@ -56,7 +56,7 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.5.2-SNAPSHOT (Build 0 from 2017-09-06)
+### Sirius+CSI:FingerID GUI and CLI - Version 3.5.2-SNAPSHOT (Build 0 from 2017-09-07)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64.zip)
@@ -67,7 +67,7 @@ command-line tool.
 - for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64-headless.zip)
 
 ### Manual
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 ### Sources on GitHub
