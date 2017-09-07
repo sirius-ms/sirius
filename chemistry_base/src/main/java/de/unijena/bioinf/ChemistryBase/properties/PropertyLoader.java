@@ -28,7 +28,7 @@ public class PropertyLoader {
     protected static void loadProperties() {
         try {
             List<URL> resources = new LinkedList<>();
-            for (ClassPath.ResourceInfo resourceInfo : ClassPath.from(ClassLoader.getSystemClassLoader()).getResources()) {
+            for (ClassPath.ResourceInfo resourceInfo : ClassPath.from(PropertyLoader.class.getClassLoader()).getResources()) {
                 if (resourceInfo.getResourceName().endsWith(".build.properties"))
                     resources.add(resourceInfo.url());
             }
