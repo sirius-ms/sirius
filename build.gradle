@@ -114,12 +114,6 @@ allprojects {
     }
 }
 
-subprojects {
-    sourceSets.main.resources {
-        srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
-    }
-}
-
 task downloadGLPK(type: Copy) {
     def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
@@ -139,7 +133,6 @@ task downloadGLPK(type: Copy) {
         from zipTree(dir.resolve(glpkZipFile).toFile())
         into dir.toFile()
     }
-
 }
 
 /*################### Building the Documentation ################### */
@@ -179,6 +172,7 @@ task createVersion {
             }
         }
         getLogger().lifecycle("Updating version file")
+        Files.deleteIfExists(out)
         Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
     }
 }
@@ -239,20 +233,27 @@ class Pdf extends AbstractArchiveTask {
 
 task pdfDokuArtifact(type: Pdf) {
     group = 'documentation'
+    baseName = project.appName
+    classifier = 'manual'
+
     File input = pdfDoku.outputs.files.singleFile;
 
     outputs.upToDateWhen {
         File out = outputs.files.singleFile
         return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
     }
+
     source input
+
+    project.ext.set("pdfManualPath", outputs.files.singleFile)
 }
 
 pdfDokuArtifact.dependsOn pdfDoku
 
 task buildDoku {
     group = 'documentation'
-    outputs.file("${project.manualPath}/build/${project.appName}-${project.version}.pdf")
+    outputs.files(pdfDokuArtifact.outputs.files)
+//    outputs.files(singleFile,htmlDoku.outputs.files)
 }
 
 buildDoku.mustRunAfter cleanDoku
@@ -280,6 +281,9 @@ subprojects {
 
         classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
 
+        sourceSets.main.resources {
+            srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
+        }
     }
 
     /*################### Linux release Stuff ################### */
@@ -410,7 +414,7 @@ publishing {
             groupId = "$group"
 
             pom.withXml {}
-            artifact source: pdfDokuArtifact, classifier: 'manual'
+            artifact source: pdfDokuArtifact
         }
     }
 }
