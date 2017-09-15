@@ -1253,11 +1253,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
+        ////// bug in reduction code for isotopes
+        if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
+        /////
         if (reduction == null) return fragments;
         return reduction.reduce(fragments, lowerbound);
     }
 
     public FGraph performGraphReduction(FGraph fragments) {
+        ////// bug in reduction code for isotopes
+        if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
+        /////
         if (reduction == null) return fragments;
         return reduction.reduce(fragments, 0d);
     }

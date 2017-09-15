@@ -77,7 +77,7 @@ public class IsotopePatternInMs2Scorer {
         final double sigmaAbs; // absolute error depending relatively on the base peak
         {
             double abs = 0d;
-            double sig = 0.03;
+            double sig = 0.01;
             for (int k=0; k < input.getMergedPeaks().size(); ++k) {
                 final ProcessedPeak p = input.getMergedPeaks().get(k);
                 if (p.isSynthetic()) continue;
@@ -308,7 +308,8 @@ public class IsotopePatternInMs2Scorer {
         for (int k=1, n = simulated.size(); k < n; ++k) {
             if (foundIndex >= foundPattern.size()) break;
             if (k < simulated.size() && foundPattern.getMzAt(foundIndex) > (0.25+simulated.getMzAt(k))) {
-                final double intensScore = scoreLogOddIntensity(0d, simulated.getIntensityAt(k), 0.1, sigmaAbs)*MULTIPLIER;
+                final double p = simulated.getIntensityAt(k);
+                final double intensScore = Math.exp((-p*p)/(2*sigmaAbs*sigmaAbs))/Math.sqrt(2d*Math.PI * sigmaAbs*sigmaAbs)*MULTIPLIER;
                 final double penalty = MULTIPLIER*Math.log(Erf.erfc((intensityLeft)/(Math.sqrt(2)*sigmaAbs)));
                 score += intensScore ;//+ 3*Math.min(1,relativeIntensityOfMono)*(foundPattern.getIntensityAt(k)/foundPattern.getIntensityAt(0));
                 if (score+penalty > bestScore) bestScore = (score+penalty);
@@ -375,11 +376,12 @@ public class IsotopePatternInMs2Scorer {
     private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
     private double scoreIntensity(double measuredIntensity, double theoreticalIntensity, double sigmaR, double sigmaA) {
         final double delta = measuredIntensity-theoreticalIntensity;
-        return Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA);
+        final double probability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA);
+        return Math.log(probability);
     }
 
     private double scoreLogOddIntensity(double measuredIntensity, double theoreticalIntensity, double sigmaR, double sigmaA) {
-        return scoreIntensity(measuredIntensity, theoreticalIntensity, sigmaR, sigmaA) - scoreIntensity(theoreticalIntensity+1.5*sigmaA + 1.5*theoreticalIntensity*sigmaR, theoreticalIntensity, sigmaR, sigmaA);
+        return scoreIntensity(measuredIntensity, theoreticalIntensity, sigmaR, sigmaA)/* - scoreIntensity(theoreticalIntensity+1.5*sigmaA + 1.5*theoreticalIntensity*sigmaR, theoreticalIntensity, sigmaR, sigmaA)*/;
     }
 
     public void scoreFromMs1(ProcessedInput input, FGraph graph) {
