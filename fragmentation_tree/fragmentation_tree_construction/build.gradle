@@ -1,17 +1,3 @@
-processResources.doFirst{
-    logger.lifecycle('writing ilp properties file...')
-    Properties properties = new Properties()
-    File propertiesFile = new File("$projectDir/src/main/resources/ilp.properties")
-    propertiesFile.withReader ("UTF8",{
-        properties.load(it)
-    })
-    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.gurobi_version", "$gurobi_version")
-    properties.setProperty("de.unijena.bioinf.sirius.treebuilder.glpk_version", "$glpk_version")
-    propertiesFile.withWriter("UTF8",{
-        properties.store(it,"")
-    })
-}
-
 dependencies {
 //project
     compile project(':chemistry_base')
@@ -23,8 +9,6 @@ dependencies {
 //external
     compile "org.apache.commons:commons-math3:$math3_version"
     compile group: 'org.gnu.glpk', name: 'glpk-java', version:"$glpk_version"
-
-
     compile group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
 //test
     testCompile project(':io')

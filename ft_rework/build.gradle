@@ -43,7 +43,6 @@ ext{
     graphUtils_version = '1.1'
     ftalign_version = "2.1"
     math3_version = '3.+'
-    fingerid_version = '1.0.9-SNAPSHOT'
 }
 
 
@@ -150,7 +149,7 @@ distributions {
         }
 
     }
-    linux64DistZip.dependsOn ':downloadGLPK'
+    linux64DistZip.dependsOn 'downloadGLPK'
 
     getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
     getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}

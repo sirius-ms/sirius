@@ -19,9 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * ProcessedInput is the intermediate data structure for an MSMS experiment belonging to one compound. It contains a list of merged peaks, the
@@ -109,6 +107,13 @@ public class ProcessedInput {
         final PeakAnnotation<T> ano = peakAnnotations.get(klass);
         if (ano == null) throw new NullPointerException("No peak annotation '" + klass.getName() + "' in ProcessedInput");
         return ano;
+    }
+
+    public Map<Class,Object> getAnnotations() {
+        return Collections.unmodifiableMap(annotations);
+    }
+    public Map<Class,PeakAnnotation> getPeakAnnotations() {
+        return Collections.unmodifiableMap(peakAnnotations);
     }
 
     @SuppressWarnings("unchecked cast")

@@ -4,17 +4,40 @@ plugins {
     id "com.jfrog.artifactory" version "4.3.0"
 }
 
+
+
 //Global Properties
 ext {
+    logger.lifecycle('reading gradle properties file...')
+    File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
+    getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
+    Properties props = new Properties()
+
+    propertiesFile.withReader("UTF8", {
+        props.load(it)
+    })
+    System.properties.putAll(props)
+    logger.lifecycle('reading build properties file...')
+    props = new Properties()
+    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius.build.properties")
+    propertiesFileIn.withReader("UTF8", {
+        props.load(it)
+    })
+    System.properties.putAll(props)
+
+
+    siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
     //version for external libraries
     slf4j_version = '1.7.21'
     gson_version = '2.6.2'
     math3_version = '3.+'
-    glpk_version = '1.7.0'
-    gurobi_version = '7.0.1'
+    glpk_version = System.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
+    gurobi_version = System.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     graphUtils_version = '1.1'
 
     jewelcli_version = '0.8.+' //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
+
+
 }
 
 allprojects {
@@ -26,7 +49,7 @@ allprojects {
     targetCompatibility = 1.7
 
 
-    version = '3.5.1'
+    version = project.siriusVersion
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -111,14 +134,9 @@ artifactory {
                 repoKey = 'libs-snapshot-local'
             else
                 repoKey = 'libs-release-local'
-            Properties properties = new Properties()
-            File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-            propertiesFile.withInputStream {
-                properties.load(it)
-            }
 
-            username = properties['de.unijena.bioinf.build.artifactory.username']
-            password = properties['de.unijena.bioinf.build.artifactory.password']
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             publications('mavenJava')
