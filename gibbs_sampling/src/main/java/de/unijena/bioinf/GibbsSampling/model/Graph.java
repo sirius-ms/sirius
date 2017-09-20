@@ -11,6 +11,8 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.procedure.TDoubleProcedure;
+import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.lang.reflect.Array;
@@ -28,10 +30,10 @@ public class Graph<C extends Candidate<?>> {
     int[][] connections;
     int[] boundaries;
     private int[] formulaIdxToPeakIdx;
-    protected final int size;
+    protected int size;
     final String[] ids;
-    final Scored<C>[][] possibleFormulas;
-    final Scored<C>[] possibleFormulas1D;
+    Scored<C>[][] possibleFormulas;
+    Scored<C>[] possibleFormulas1D;
     private EdgeScorer<C>[] edgeScorers;
     private EdgeFilter edgeFilter;
 
@@ -209,32 +211,31 @@ public class Graph<C extends Candidate<?>> {
         System.out.println("initialize");
         int length = 0;
 
-        for(int possibleFormulas1D = 0; possibleFormulas1D < possibleFormulas.length; ++possibleFormulas1D) {
-            length += possibleFormulas[possibleFormulas1D].length;
+        for(int i = 0; i < possibleFormulas.length; ++i) {
+            length += possibleFormulas[i].length;
         }
 
         Scored[] var9 = new Scored[length];
         this.formulaIdxToPeakIdx = new int[length];
         int z = 0;
 
-        int sum;
-        for(sum = 0; sum < possibleFormulas.length; ++sum) {
-            Scored[] i = possibleFormulas[sum];
+        for(int i = 0; i < possibleFormulas.length; ++i) {
+            Scored[] scoredFormulas = possibleFormulas[i];
 
-            for(int j = 0; j < i.length; ++j) {
-                Scored smf = i[j];
+            for(int j = 0; j < scoredFormulas.length; ++j) {
+                Scored smf = scoredFormulas[j];
                 var9[z] = smf;
-                this.formulaIdxToPeakIdx[z] = sum;
+                this.formulaIdxToPeakIdx[z] = i;
                 ++z;
             }
         }
 
         this.boundaries = new int[possibleFormulas.length];
-        sum = -1;
+        int sum = -1;
 
-        for(int var10 = 0; var10 < possibleFormulas.length; ++var10) {
-            sum += possibleFormulas[var10].length;
-            this.boundaries[var10] = sum;
+        for(int i = 0; i < possibleFormulas.length; ++i) {
+            sum += possibleFormulas[i].length;
+            this.boundaries[i] = sum;
         }
 
         return var9;
@@ -486,36 +487,12 @@ public class Graph<C extends Candidate<?>> {
 
 
     private void thinOutGraph() {
-//        this.ids = ids;
-//        Scored<C>[][] this.possibleFormulas = possibleFormulas;
-//        this.possibleFormulas1D = this.setUp(possibleFormulas);
-//        this.size = this.possibleFormulas1D.length;
-//        this.indexMap = new TIntIntHashMap[this.size];
-//        this.weights = new TDoubleArrayList[this.size];
-//        this.edgeThresholds = new double[this.size];
-
-
-        //still todo ....
-        if (true) return;
-
-        for(int i = 0; i < this.indexMap.length; ++i) {
-            this.indexMap[i] = new TIntIntHashMap(this.size / 100, 0.75F, -1, -1);
-            this.weights[i] = new TDoubleArrayList(this.size / 100);
-        }
-
-
-        int[] boundaries = new int[possibleFormulas.length];
-        int idx = -1;
-
-        for(int i = 0; i < possibleFormulas.length; ++i) {
-            idx += possibleFormulas[i].length;
-            this.boundaries[i] = idx;
-        }
-
-
+        final double probToKeep = Math.log(1e-6);
         int numberOfDeleted = 0;
         boolean changed = true;
+        TIntHashSet candidatesToRemove = new TIntHashSet();
         while (changed) {
+            System.out.println("another round");
             changed = false;
 
             for (int i = 0; i < numberOfCompounds(); i++) {
@@ -525,28 +502,112 @@ public class Graph<C extends Candidate<?>> {
                 double candidateScoreSum = 0;
                 double[] maxPossibleScore = new double[right-left+1];
                 for (int j = left; j <= right; j++) {
-                    maxPossibleScore[j] = getCandidateScore(j);
-                    candidateScoreSum += Math.exp(getCandidateScore(j));
+                    if (candidatesToRemove.contains(j)) continue;
+                    final int absIdx = j-left;
+                    final double cScore = getCandidateScore(j);
+                    maxPossibleScore[absIdx] = cScore;
+                    candidateScoreSum += Math.exp(cScore);
 
                     for (int k = 0; k < numberOfCompounds(); k++) {
                         if (i==k) continue;
-                        maxPossibleScore[j] += Math.max(0, getMaxEdgeScore(j, k));
+                        maxPossibleScore[absIdx] += Math.max(0, getMaxEdgeScore(j, k, candidatesToRemove));
                     }
                 }
 
                 candidateScoreSum = Math.log(candidateScoreSum);
 
                 for (int j = left; j <= right; j++) {
-                    if (maxPossibleScore[j]-candidateScoreSum<1e-6){
+                    if (candidatesToRemove.contains(j)) continue;
+                    final int absIdx = j-left;
+                    if (maxPossibleScore[absIdx]-candidateScoreSum<probToKeep){
                         //remove candidate from net
-//                        changed = true;
+                        changed = true;
                         ++numberOfDeleted;
+                        candidatesToRemove.add(j);
                     }
 
                 }
 
             }
+
+
         }
+
+        if (candidatesToRemove.size()>0){
+            //remove and update
+
+            int[] candidatesToRemoveArray = candidatesToRemove.toArray();
+            Arrays.sort(candidatesToRemoveArray);
+            Scored<C>[][] possibleFormulasNew = new Scored[this.possibleFormulas.length][];
+
+            int previousStartIdx = 0;
+            for (int i = 0; i < possibleFormulas.length; i++) {
+                Scored<C>[] candidates = possibleFormulas[i];
+                List<Scored<C>> candidatesNew = new ArrayList<>(candidates.length);
+                for (int j = 0; j < candidates.length; j++) {
+                    final Scored<C> candidate = candidates[j];
+                    final int abs  =  previousStartIdx+j;
+                    if (!candidatesToRemove.contains(abs)) candidatesNew.add(candidate);
+                }
+                possibleFormulasNew[i] = candidatesNew.toArray(new Scored[0]);
+                previousStartIdx+=candidates.length;
+
+            }
+            this.possibleFormulas = possibleFormulasNew;
+            this.possibleFormulas1D = this.setUp(possibleFormulasNew);
+            this.size = this.possibleFormulas1D.length;
+
+            int removedCount = 0;
+            int[][] connectionsNew = new int[this.size][];
+            for (int i = 0; i < connections.length; i++) {
+                int[] connection = connections[i];
+                if (candidatesToRemove.contains(i)){
+                    ++removedCount;
+                    continue;
+                }
+                int newIdx = i-removedCount;
+
+                TIntArrayList connectionNew = new TIntArrayList(connection.length);
+                for (int j = 0; j < connection.length; j++) {
+                    int c = connection[j];
+                    if (candidatesToRemove.contains(c)) continue;
+                    final int newC = c-numberOfLowerElements(candidatesToRemoveArray, c);
+                    connectionNew.add(newC);
+                }
+                connectionsNew[newIdx] = connectionNew.toArray();
+            }
+            this.connections = connectionsNew;
+
+            TIntIntHashMap[] indexMapNew = new TIntIntHashMap[this.size];
+            TDoubleArrayList[] weightsNew = new TDoubleArrayList[this.size];
+
+            for(int i = 0; i < indexMapNew.length; ++i) {
+                indexMapNew[i] = new TIntIntHashMap(this.size / 100, 0.75F, -1, -1);
+                weightsNew[i] = new TDoubleArrayList(this.size / 100);
+            }
+
+            removedCount = 0;
+            for(int i = 0; i < indexMap.length; ++i) {
+                if (candidatesToRemove.contains(i)){
+                    ++removedCount;
+                    continue;
+                }
+                int newIdx = i-removedCount;
+                final int final_i = i;
+                indexMap[i].forEach(new TIntProcedure() {
+                    @Override
+                    public boolean execute(int j) {
+                        final int newJ = j-numberOfLowerElements(candidatesToRemoveArray, j);
+                        indexMapNew[newIdx].put(newJ, weightsNew[newIdx].size());
+                        weightsNew[newIdx].add(weights[final_i].get(indexMap[final_i].get(j)));
+                        return true;
+                    }
+                });
+            }
+
+        }
+
+
         if (DEBUG) System.out.println("remove "+numberOfDeleted);
     }
 
@@ -556,17 +617,32 @@ public class Graph<C extends Candidate<?>> {
      * @param peakIndex
      * @return
      */
-    private double getMaxEdgeScore(int absCandidateIdx, int peakIndex) {
+    private double getMaxEdgeScore(int absCandidateIdx, int peakIndex, TIntHashSet removedCandidates) {
         int left = getPeakLeftBoundary(peakIndex);
         int right = getPeakRightBoundary(peakIndex);
         int[] conns = getConnections(absCandidateIdx);
         double max = Double.NEGATIVE_INFINITY;
         for (int conn : conns) {
+            if (removedCandidates.contains(conn)) continue;
             if (conn>=left && conn<=right){
                 max = Math.max(max, getLogWeight(absCandidateIdx, conn));
             }
         }
         return max;
+    }
+
+    /**
+     *
+     * @param array sorted!
+     * @param item
+     * @return
+     */
+    private int numberOfLowerElements(int[] array, int item) {
+        int idx = Arrays.binarySearch(array, item);
+        if (idx<0){
+            idx = -(idx+1);
+        }
+        return idx;
     }
 
     public int getPeakIdx(int formulaIdx) {

@@ -28,10 +28,10 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         ArrayList<WeightedEdge> weightedEdges = new ArrayList<>();
         int peakIdx = graph.getPeakIdx(candidateIdx);
 
-        for(int threshold = 0; threshold < logEdgeScores.length; ++threshold) {
-            if(peakIdx != graph.getPeakIdx(threshold)) {
-                double score = logEdgeScores[threshold];
-                weightedEdges.add(new WeightedEdge(candidateIdx, threshold, score));
+        for(int i = 0; i < logEdgeScores.length; ++i) {
+            if(peakIdx != graph.getPeakIdx(i)) {
+                double score = logEdgeScores[i];
+                weightedEdges.add(new WeightedEdge(candidateIdx, i, score));
             }
         }
 
@@ -39,14 +39,14 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 //        System.out.println("weights " + weightedEdges.size() + " " + ((WeightedEdge)weightedEdges.get(0)).weight + " " + ((WeightedEdge)weightedEdges.get(weightedEdges.size() - 1)).weight);
         double currentThreshold;
         if(this.minimumConnectionCount >= weightedEdges.size()) {
-            currentThreshold = ((WeightedEdge)weightedEdges.get(weightedEdges.size() - 1)).weight;
+            currentThreshold = weightedEdges.get(weightedEdges.size() - 1).weight;
         } else {
-            currentThreshold = ((WeightedEdge)weightedEdges.get(this.minimumConnectionCount)).weight;
+            currentThreshold = weightedEdges.get(this.minimumConnectionCount).weight;
         }
 
         if(Double.isInfinite(currentThreshold)) {
             for(int i = Math.min(this.minimumConnectionCount, weightedEdges.size()) - 1; i >= 0; --i) {
-                double weightedEdge = ((WeightedEdge)weightedEdges.get(i)).weight;
+                double weightedEdge = weightedEdges.get(i).weight;
                 if(isFinite(weightedEdge)) {
                     currentThreshold = weightedEdge;
                     break;
@@ -60,7 +60,6 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             currentThreshold = this.basicThreshold;
         }
 
-//        System.out.println("thres2 " + currentThreshold + " " + this.basicThreshold);
 
         for (WeightedEdge weightedEdge : weightedEdges) {
             if(weightedEdge.weight <= currentThreshold) {
