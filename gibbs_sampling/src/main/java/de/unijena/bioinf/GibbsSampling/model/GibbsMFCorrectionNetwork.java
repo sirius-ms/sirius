@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     private static final boolean DEBUG = false;
     private static final double DEFAULT_CORRELATION_STEPSIZE = 10.0D;
-    private static final boolean OUTPUT_SAMPLE_PROBABILITY = false;
+    private static final boolean OUTPUT_SAMPLE_PROBABILITY = true;
     protected Graph<C> graph;
     private static final boolean iniAssignMostLikely = true;
     private int burnInRounds;
@@ -40,9 +40,9 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
     public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
 //        this.pseudo = 0.01D;
-//        this.logPseudo = Math.log(0.01D);
+        this.logPseudo = Math.log(0.01D);
         this.pseudo = Double.NaN;
-        this.logPseudo = -0.2d;
+//        this.logPseudo = -0.2d;
 //        this.logPseudo = 0.0;
 
 
@@ -63,10 +63,10 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
     public GibbsMFCorrectionNetwork(Graph graph, int threads) {
 //        this.pseudo = 0.01D;
-//        this.logPseudo = Math.log(0.01D);
+        this.logPseudo = Math.log(0.01D);
 
         this.pseudo = Double.NaN;
-        this.logPseudo = -0.2d;
+//        this.logPseudo = -0.2d;
 //        this.logPseudo = 0.0;
 
 
@@ -237,8 +237,20 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                             ++isCorrect;
                         }
                         double score = this.graph.getCandidateScore(j);
-                        score += this.priorProb[j]/2; //just count every edge ones
+
+
+                        //include pseudo?
+                        score += (double)(this.graph.numberOfCompounds() - 1) * this.logPseudo;
+                        for (int k = 0; k < active.length; k++) {
+                            if (j==k || !active[k]) continue;
+                            score += Math.max(this.graph.getLogWeight(k, j), logPseudo);
+                            score -= this.logPseudo;
+                        }
                         //todo what about pseudo counts???!?!?!?
+
+
+//                        this.priorProb[incoming] += Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
+
 
                         overallProb += score;
                     }
