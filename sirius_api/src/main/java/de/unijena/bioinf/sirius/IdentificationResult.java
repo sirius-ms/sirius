@@ -73,20 +73,24 @@ public class IdentificationResult implements Cloneable {
 
     public IdentificationResult(FTree tree, int rank) {
         this.tree = tree;
-        tree.normalizeStructure();
         this.score = tree==null ? 0d : tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-        this.formula = tree.getRoot().getFormula();
         this.rank = rank;
-
-        final IonTreeUtils.Type type =tree.getAnnotationOrNull(IonTreeUtils.Type.class);
-        if (type == IonTreeUtils.Type.RESOLVED) {
-            this.formula = tree.getRoot().getFormula();
-        } else if (type == IonTreeUtils.Type.IONIZED) {
-            this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).precursorIonToNeutralMolecule(tree.getRoot().getFormula());
-        } else {
-            this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
-        }
         this.annotations = new HashMap<>();
+
+        if (tree!=null){
+            tree.normalizeStructure();
+            this.formula = tree.getRoot().getFormula();
+
+            final IonTreeUtils.Type type =tree.getAnnotationOrNull(IonTreeUtils.Type.class);
+            if (type == IonTreeUtils.Type.RESOLVED) {
+                this.formula = tree.getRoot().getFormula();
+            } else if (type == IonTreeUtils.Type.IONIZED) {
+                this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).precursorIonToNeutralMolecule(tree.getRoot().getFormula());
+            } else {
+                this.formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+            }
+
+        }
     }
 
     public int getRank() {
