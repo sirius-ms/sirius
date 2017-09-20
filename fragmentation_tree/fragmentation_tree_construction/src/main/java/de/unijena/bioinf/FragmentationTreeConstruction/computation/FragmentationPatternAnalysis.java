@@ -49,6 +49,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import gnu.trove.map.hash.TLongObjectHashMap;
@@ -1119,12 +1120,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else msIsoAno = null;
 
         final FragmentAnnotation<ProcessedPeak> graphPeakAno = originalGraph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+        final FragmentAnnotation<IsotopePattern> isoPatG = originalGraph.getFragmentAnnotationOrNull(IsotopePattern.class);
+        FragmentAnnotation<IsotopePattern> isoPat = isoPatG==null ? null : tree.getOrCreateFragmentAnnotation(IsotopePattern.class);
         for (Fragment treeFragment : tree) {
             final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
             final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
             peakAno.set(treeFragment, graphPeak);
             simplePeakAnnotation.set(treeFragment, graphPeak);
             peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula()));
+            if (isoPat!=null && isoPatG.get(graphFragment)!=null) {
+                isoPat.set(treeFragment, isoPatG.get(graphFragment));
+            }
+
         }
 
         // add statistics
@@ -1246,11 +1253,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     public FGraph performGraphReduction(FGraph fragments, double lowerbound) {
+        ////// bug in reduction code for isotopes
+        if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
+        /////
         if (reduction == null) return fragments;
         return reduction.reduce(fragments, lowerbound);
     }
 
     public FGraph performGraphReduction(FGraph fragments) {
+        ////// bug in reduction code for isotopes
+        if (fragments.getAnnotationOrNull(IsotopicMarker.class)!=null) return fragments;
+        /////
         if (reduction == null) return fragments;
         return reduction.reduce(fragments, 0d);
     }
@@ -1321,6 +1334,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final Object[] preparedLoss = new Object[lossScorers.size()];
         final Object[] preparedFrag = new Object[decompositionScorers.size()];
         final FragmentAnnotation<Ms2IsotopePattern> msIso = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
+        final FragmentAnnotation<IsotopePattern> msIso1 = tree.getFragmentAnnotationOrNull(IsotopePattern.class);
         final String[] fragmentScores;
         final String[] lossScores;
         final String[] rootScores;
@@ -1334,7 +1348,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fragScores.add(getScoringMethodName(peakScorer));
                 preparedFrag[i++] = peakScorer.prepare(input);
             }
-            if (msIso!=null) fragScores.add("isotopes");
+            if (msIso!=null || msIso1!=null) fragScores.add("isotopes");
             fragmentScores = fragScores.toArray(new String[fragScores.size()]);
         }
         {
@@ -1392,10 +1406,15 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 fscore.set(k++, ((DecompositionScorer<Object>) decompositionScorers.get(i)).score(v.getFormula(), peakAno.get(v), input, preparedFrag[i]));
             }
 
+            double isoScore = 0d;
             if (msIso!=null && msIso.get(v)!=null) {
-                final double score = msIso.get(v).getScore();
-                fscore.set("isotopes", score);
+                isoScore += msIso.get(v).getScore();
             }
+            if (msIso1!=null && msIso1.get(v)!=null) {
+                isoScore += msIso1.get(v).getScore();
+            }
+            if (isoScore>0)
+                fscore.set("isotopes", isoScore);
 
             fAno.set(v, fscore);
         }
@@ -1486,6 +1505,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     private void scoreIsotopesInMs2(ProcessedInput input, FGraph graph) {
+        isoInMs2Scorer.scoreFromMs1(input, graph);
         if (isScoringIsotopes(input))
             isoInMs2Scorer.score(input, graph);
     }

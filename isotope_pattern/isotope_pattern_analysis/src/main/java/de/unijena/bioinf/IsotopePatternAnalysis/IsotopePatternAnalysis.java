@@ -178,7 +178,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public SimpleSpectrum extractPattern(Ms2Experiment experiment, double targetMz) {
-        return extractPattern(experiment, getDefaultProfile(), targetMz);
+        return extractPattern(experiment, getDefaultProfile(experiment), targetMz);
     }
 
     public SimpleSpectrum extractPattern(Ms2Experiment experiment, MeasurementProfile profile, double targetMz) {
@@ -191,7 +191,7 @@ public class IsotopePatternAnalysis implements Parameterized {
 
     public SimpleSpectrum extractPattern(Spectrum<Peak> ms1Spec, MeasurementProfile profile, double targetMz) {
         // extract all isotope peaks starting from the given target mz
-        final ChemicalAlphabet stdalphabet = ChemicalAlphabet.getExtendedAlphabet();
+        final ChemicalAlphabet stdalphabet = profile.getFormulaConstraints().getExtendedConstraints(new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet())).getChemicalAlphabet();
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
         final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, profile.getAllowedMassDeviation());
@@ -315,6 +315,15 @@ public class IsotopePatternAnalysis implements Parameterized {
     }
 
     public MutableMeasurementProfile getDefaultProfile() {
+        return defaultProfile;
+    }
+
+    public MutableMeasurementProfile getDefaultProfile(Ms2Experiment exp) {
+        if (exp.getMolecularFormula()!=null) {
+            final MutableMeasurementProfile prof = new MutableMeasurementProfile(defaultProfile);
+            prof.setFormulaConstraints(prof.getFormulaConstraints().getExtendedConstraints(FormulaConstraints.allSubsetsOf(exp.getMolecularFormula())));
+            return prof;
+        }
         return defaultProfile;
     }
 
