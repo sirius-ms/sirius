@@ -59,7 +59,7 @@ public class LocalEdgeFilter implements EdgeFilter {
     }
 
     public int[][] postprocessCompleteGraph(Graph graph) {
-        return (int[][])null;
+        throw new NoSuchMethodError("not implemented");
     }
 
     protected class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
@@ -74,7 +74,7 @@ public class LocalEdgeFilter implements EdgeFilter {
         }
 
         public int compareTo(LocalEdgeFilter.WeightedEdge o) {
-            return Double.compare(o.weight, this.weight);
+            return Double.compare(this.weight, o.weight);
         }
 
         public boolean equals(Object o) {

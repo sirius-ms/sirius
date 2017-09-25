@@ -100,7 +100,6 @@ public class GibbsSamplerMain {
 
             iterationSteps = opts.getIterationSteps();
             burnInIterations = opts.getBurnInSteps();
-            normalize = opts.isNormalize();
             if(opts.getThresholdFilter() > 0.0D && opts.getLocalFilter() > 0.0D) {
                 edgeFilter = new EdgeThresholdMinConnectionsFilter(opts.getThresholdFilter(), opts.getLocalFilter(), opts.getMinLocalConnections());
             } else if(opts.getThresholdFilter() > 0.0D) {
@@ -122,11 +121,6 @@ public class GibbsSamplerMain {
             }
 
             System.out.println("arguments " + Arrays.toString(args));
-            if(normalize) {
-                System.out.println("do normalize");
-            } else {
-                System.out.println("don\'t normalize");
-            }
 
             is2Phase = opts.isTwoPhase();
 
@@ -143,20 +137,20 @@ public class GibbsSamplerMain {
                     commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(opts.getThresholdFilter());
                 }
 
-                ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution);
+                ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
                 edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
             } else {
                 if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
-                    probabilityDistribution = new ExponentialDistribution(0.0D, opts.getThresholdFilter(), opts.isMedian());
+                    probabilityDistribution = new ExponentialDistribution(opts.isMedian());
                 } else if(opts.getProbabilityDistribution().toLowerCase().equals("pareto")) {
-                    probabilityDistribution = new ParetoDistribution(opts.getThresholdFilter(), opts.isMedian());
+                    probabilityDistribution = new ParetoDistribution(0.01, opts.isMedian());
                 } else {
                     if(!opts.getProbabilityDistribution().toLowerCase().equals("lognormal") && !opts.getProbabilityDistribution().toLowerCase().equals("log-normal")) {
                         System.out.println("unkown distribution function");
                         return;
                     }
 
-                    probabilityDistribution = new LogNormalDistribution(opts.getThresholdFilter(), opts.isMedian());
+                    probabilityDistribution = new LogNormalDistribution(opts.isMedian());
                 }
 
                 //todo changed !!!?!?!??!?!?!
@@ -171,10 +165,10 @@ public class GibbsSamplerMain {
 
                 EdgeScorer scoreProbabilityDistributionEstimator;
                 if (opts.getLambda()<0){
-                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution);
+                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
                 } else {
                     ((ExponentialDistribution)probabilityDistribution).setLambda(opts.getLambda());
-                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionFix(commonFragmentAndLossScorer, probabilityDistribution);
+                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionFix(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
                 }
 
                 edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
@@ -198,20 +192,20 @@ public class GibbsSamplerMain {
     private static ScoreProbabilityDistribution readPCP(String pathString) throws IOException {
         Path path = Paths.get(pathString, new String[0]);
         TDoubleArrayList scores = new TDoubleArrayList();
-        TDoubleArrayList probabilities = new TDoubleArrayList();
+        TDoubleArrayList pValues = new TDoubleArrayList();
         List<String> lines = Files.readAllLines(path);
         String header = (String)lines.remove(0);
-        if(!header.equals("score\tpcp")) {
-            throw new RuntimeException("incorrect pcp header");
+        if(!header.equals("score\tpValue")) {
+            throw new RuntimeException("incorrect pValue header");
         } else {
 
             for (String l : lines) {
                 String[] col = l.split("\t");
                 scores.add(Double.parseDouble(col[0]));
-                probabilities.add(Double.parseDouble(col[1]));
+                pValues.add(Double.parseDouble(col[1]));
             }
 
-            return new EmpiricalScoreProbabilityDistribution(scores.toArray(), probabilities.toArray());
+            return new EmpiricalScoreProbabilityDistribution(scores.toArray(), pValues.toArray());
         }
     }
 
@@ -225,19 +219,26 @@ public class GibbsSamplerMain {
         Set netSingleReactionDiffs = (Set)Arrays.stream(parseReactions(1)).map((r) -> {
             return r.netChange();
         }).collect(Collectors.toSet());
-        Map<String, List<FragmentsCandidate>> candidatesMap = this.parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
-        PrecursorIonType[] ionTypes = (PrecursorIonType[])Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map((s) -> {
-            return PrecursorIonType.getPrecursorIonType(s);
-        }).toArray((l) -> {
-            return new PrecursorIonType[l];
-        });
+//        Map<String, List<FragmentsCandidate>> candidatesMap = this.parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
+//        PrecursorIonType[] ionTypes = (PrecursorIonType[])Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map((s) -> {
+//            return PrecursorIonType.getPrecursorIonType(s);
+//        }).toArray((l) -> {
+//            return new PrecursorIonType[l];
+//        });
 
         //do before all that
 //        this.guessIonizationAndRemove(candidatesMap, ionTypes);
 
 
-        this.parseLibraryHits(libraryHitsPath, candidatesMap);
-        Map correctHits = this.identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount); //remove candidates later when adding dummy
+        parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
+        Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+        System.out.println("adding dummy node");
+        addNotExplainableDummy(candidatesMap, maxCandidates);
+
+//        this.parseLibraryHits(libraryHitsPath, candidatesMap);
+//        Map correctHits = this.identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+
         double useFreq = 0.0D;
         this.extractEvaluationIds(candidatesMap, correctHits, useFreq, netSingleReactionDiffs);
         String[] ids = (String[])candidatesMap.keySet().stream().filter((key) -> {
@@ -256,8 +257,8 @@ public class GibbsSamplerMain {
         CommonFragmentScorer commonFragmentScorer = new CommonFragmentScorer(1.0D);
         CommonRootLossScorer commonLossScorer = new CommonRootLossScorer();
         commonFragmentAndLossScorer.prepare(candidatesArray);
-        commonFragmentScorer.prepare(candidatesArray);
-        commonLossScorer.prepare(candidatesArray);
+//        commonFragmentScorer.prepare(candidatesArray);
+//        commonLossScorer.prepare(candidatesArray);
         int numberOfCandidates = 0;
 
         for(int i = 0; i < candidatesArray.length; ++i) {
@@ -268,11 +269,13 @@ public class GibbsSamplerMain {
         long numberOfEdgesBound = (long)(numberOfCandidates * (numberOfCandidates - maxCandidates));
         System.out.println("numberOfEdgesBound " + numberOfEdgesBound);
         double samplingProb = 1000000.0D / (double)numberOfEdgesBound;
-        Path outpath = Paths.get("sampled_scoresAndMatches.csv", new String[0]);
+//        Path outpath = Paths.get("sampled_scoresAndMatches.csv", new String[0]);
+        Path outpath = outputFile;
         HighQualityRandom rando = new HighQualityRandom();
         BufferedWriter writer = Files.newBufferedWriter(outpath, new OpenOption[0]);
 
-        writer.write("MF1\tMF2\ttreeSize1\ttreeSize2\tmass1\tmass2\tcommonF\tcommonL\tCommonFragmentAndLossScorer");
+//        writer.write("MF1\tMF2\ttreeSize1\ttreeSize2\tmass1\tmass2\tcommonF\tcommonL\tCommonFragmentAndLossScorer");
+        writer.write("MF1\tMF2\ttreeSize1\ttreeSize2\tmass1\tmass2\tCommonFragmentAndLossScorer");
 
         for(int i = 0; i < candidatesArray.length; ++i) {
             FragmentsCandidate[] candidates1 = candidatesArray[i];
@@ -291,10 +294,10 @@ public class GibbsSamplerMain {
                             int treesize2 = c2.getFragments().length;
                             writer.write("\t" + treesize1 + "\t" + treesize2);
                             writer.write("\t" + c1.getFormula().getMass() + "\t" + c2.getFormula().getMass());
-                            int commonF = commonFragmentScorer.getNumberOfCommon(c1, c2);
-                            int commonL = commonLossScorer.getNumberOfCommon(c1, c2);
-                            writer.write("\t" + commonF + "\t" + commonL);
-                            double score = commonFragmentAndLossScorer.score(c1, c2);
+//                            int commonF = commonFragmentScorer.getNumberOfCommon(c1, c2);
+//                            int commonL = commonLossScorer.getNumberOfCommon(c1, c2);
+//                            writer.write("\t" + commonF + "\t" + commonL);
+                            double score = commonFragmentAndLossScorer.scoreWithoutThreshold(c1, c2);
                             writer.write("\t" + String.valueOf(score));
                         }
                     }

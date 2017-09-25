@@ -42,7 +42,7 @@ public class GibbsParallel<C extends Candidate<?>> {
 
         int i = 0;
         while(i++ < this.repetitions) {
-            this.gibbsNetworks.add(new GibbsMFCorrectionNetwork(graph, 1));
+            this.gibbsNetworks.add(new GibbsMFCorrectionNetwork(graph));
         }
 
         return graph;

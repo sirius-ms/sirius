@@ -3,6 +3,8 @@ package de.unijena.bioinf.GibbsSampling.model.distributions;
 import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 
+import java.util.Arrays;
+
 public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends ScoreProbabilityDistributionEstimator<C> {
 
     /**
@@ -10,35 +12,16 @@ public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends Sco
      * @param edgeScorer
      * @param distribution has to be estimated beforehand!!!!
      */
-    public ScoreProbabilityDistributionFix(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution) {
-        super(edgeScorer, distribution);
+    public ScoreProbabilityDistributionFix(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution, double percentageOfEdgesToUse) {
+        super(edgeScorer, distribution, percentageOfEdgesToUse);
     }
 
 
     @Override
-    public void setThreshold(double threshold) {
-        throw new NoSuchMethodError();
+    protected void estimateDistribution(double[] sampledScores) {
+        //do nothing
     }
 
-    @Override
-    public void prepare(C[][] candidates) {
-        edgeScorer.setThreshold(scoreProbabilityDistribution.getThreshold());
-        edgeScorer.prepare(candidates);
-    }
-
-    @Override
-    public double score(C candidate1, C candidate2) {
-        double score = this.edgeScorer.score(candidate1, candidate2);
-        double prob = this.scoreProbabilityDistribution.toPvalue(score);
-        return prob;
-    }
-
-    @Override
-    public double scoreWithoutThreshold(C candidate1, C candidate2) {
-        double score = this.edgeScorer.scoreWithoutThreshold(candidate1, candidate2);
-        double prob = this.scoreProbabilityDistribution.toPvalue(score);
-        return prob;
-    }
 
     @Override
     public void clean() {

@@ -13,11 +13,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final double DEFAULT_CORRELATION_STEPSIZE = 10.0D;
     private static final boolean OUTPUT_SAMPLE_PROBABILITY = true;
     protected Graph<C> graph;
-    private static final boolean iniAssignMostLikely = true;
+    private static final boolean iniAssignMostLikely = false;
     private int burnInRounds;
     private int currentRound;
     double[] priorProb;
@@ -30,8 +30,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     double[] posteriorProbs;
     double[] posteriorProbSums;
     private Random random;
-    private final int numOfThreads;
-    private final double pseudo;
     private final double logPseudo;
 
 
@@ -40,8 +38,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
     public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
 //        this.pseudo = 0.01D;
-        this.logPseudo = Math.log(0.01D);
-        this.pseudo = Double.NaN;
+        this.logPseudo = Math.log(0.01D);//todo changed!!!
 //        this.logPseudo = -0.2d;
 //        this.logPseudo = 0.0;
 
@@ -52,7 +49,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
         this.graph = buildGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, threads);
         this.random = new Random();
-        this.numOfThreads = threads;
         this.setActive();
 
     }
@@ -61,18 +57,15 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         this(ids, possibleFormulas, new NodeScorer[]{new StandardNodeScorer()}, new EdgeScorer[]{new ReactionScorer(reactions, new ConstantReactionStepSizeScorer())}, new EdgeThresholdFilter(1.0D), 1);
     }
 
-    public GibbsMFCorrectionNetwork(Graph graph, int threads) {
+    public GibbsMFCorrectionNetwork(Graph graph) {
 //        this.pseudo = 0.01D;
         this.logPseudo = Math.log(0.01D);
-
-        this.pseudo = Double.NaN;
 //        this.logPseudo = -0.2d;
 //        this.logPseudo = 0.0;
 
 
         this.graph = graph;
         this.random = new Random();
-        this.numOfThreads = threads;
         this.setActive();
     }
 
@@ -189,7 +182,9 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 }
             }
 
-            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - 1) * this.logPseudo;
+//            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - 1) * this.logPseudo;
+//            todo changed!1!
+//            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - this.activeEdgeCounter[i] - 1) * this.logPseudo;
 
         }
 
@@ -449,25 +444,53 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         }
     }
 
-    private void removeActiveEdge(int outgoing, int incoming) {
-//        this.priorProb[incoming] -= this.graph.getLogWeight(outgoing, incoming);
+//    private void removeActiveEdge(int outgoing, int incoming) {
+////        this.priorProb[incoming] -= this.graph.getLogWeight(outgoing, incoming);
+////        //todo //changed using logPseudo for all
+////        this.priorProb[incoming] += this.logPseudo;
+//
+//        this.priorProb[incoming] -= Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
 //        //todo //changed using logPseudo for all
 //        this.priorProb[incoming] += this.logPseudo;
+//    }
+//
+//    private void addActiveEdge(int outgoing, int incoming) {
+////        this.priorProb[incoming] += this.graph.getLogWeight(outgoing, incoming);
+////        //todo //changed using logPseudo for all
+////        this.priorProb[incoming] -= this.logPseudo;
+//
+//        this.priorProb[incoming] += Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
+//        //todo //changed using logPseudo for all
+//        this.priorProb[incoming] -= this.logPseudo;
+//    }
 
-        this.priorProb[incoming] -= Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
+
+    private void removeActiveEdge(int outgoing, int incoming) {
+        this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming)-logPseudo);
         //todo //changed using logPseudo for all
-        this.priorProb[incoming] += this.logPseudo;
+//        this.priorProb[incoming] += this.logPseudo;
     }
 
     private void addActiveEdge(int outgoing, int incoming) {
-//        this.priorProb[incoming] += this.graph.getLogWeight(outgoing, incoming);
+        this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming)-logPseudo);
 //        //todo //changed using logPseudo for all
 //        this.priorProb[incoming] -= this.logPseudo;
-
-        this.priorProb[incoming] += Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
-        //todo //changed using logPseudo for all
-        this.priorProb[incoming] -= this.logPseudo;
     }
+
+
+
+//
+////todo changed!!
+//    private void removeActiveEdge(int outgoing, int incoming) {
+//        this.priorProb[incoming] -= this.graph.getLogWeight(outgoing, incoming);
+//        this.priorProb[incoming] += this.logPseudo;
+//    }
+//
+//    private void addActiveEdge(int outgoing, int incoming) {
+//        this.priorProb[incoming] += this.graph.getLogWeight(outgoing, incoming);
+//        this.priorProb[incoming] -= this.logPseudo;
+//    }
+
 
 
 //    private void removeActiveEdge(int outgoing, int incoming) {

@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Graph<C extends Candidate<?>> {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     final TIntIntHashMap[] indexMap;
     final TDoubleArrayList[] weights;
     double[] edgeThresholds;
@@ -245,7 +245,9 @@ public class Graph<C extends Candidate<?>> {
         this.connections = this.edgeFilter.postprocessCompleteGraph(this);
         TDoubleArrayList someScores = new TDoubleArrayList();
         HighQualityRandom random = new HighQualityRandom();
-
+        System.out.println("connections");
+        System.out.println(connections.length);
+        System.out.println(connections[0].length);
         int sum;
         int b;
         for(sum = 0; sum < 1000; ++sum) {
@@ -375,26 +377,50 @@ public class Graph<C extends Candidate<?>> {
             }
         }
 
-        double minV = 1.0D;
-
+//        double minV = 1.0D;
+//
+////        for (EdgeScorer<C> edgeScorer : edgeScorers) {
+////            edgeScorer.prepare(allCandidates);
+////            minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
+////            System.out.println("minV " + minV);
+////        }
+//
+//
+//
+//        //todo this is a big hack!!!!
 //        for (EdgeScorer<C> edgeScorer : edgeScorers) {
-//            edgeScorer.prepare(allCandidates);
-//            minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
-//            System.out.println("minV " + minV);
+//            if (edgeScorer instanceof ScoreProbabilityDistributionFix){
+//                edgeScorer.prepare(allCandidates);
+//                minV *= ((ScoreProbabilityDistributionFix)edgeScorer).getProbabilityDistribution().getMinProbability();
+//            } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
+//                if (edgeFilter instanceof EdgeThresholdFilter){
+//                    ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
+//                } else {
+//                    edgeScorer.prepare(allCandidates);
+//                }
+//                minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
+////                System.out.println("minV " + minV);
+//            } else {
+//                edgeScorer.prepare(allCandidates);
+//            }
+//
 //        }
+//        minV = Math.log(minV);
 
+
+        double minV = 0.0D;
         //todo this is a big hack!!!!
         for (EdgeScorer<C> edgeScorer : edgeScorers) {
             if (edgeScorer instanceof ScoreProbabilityDistributionFix){
-                edgeScorer.prepare(allCandidates);
-                minV *= ((ScoreProbabilityDistributionFix)edgeScorer).getProbabilityDistribution().getMinProbability();
+                ((ScoreProbabilityDistributionFix)edgeScorer).setThresholdAndPrepare(allCandidates);
+                minV += (edgeScorer).getThreshold();
             } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
                     edgeScorer.prepare(allCandidates);
                 }
-                minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
+                minV += edgeScorer.getThreshold();
 //                System.out.println("minV " + minV);
             } else {
                 edgeScorer.prepare(allCandidates);
@@ -404,7 +430,7 @@ public class Graph<C extends Candidate<?>> {
 
 
         
-        minV = Math.log(minV);
+
 
 //        //todo changed
 //        minV = ((ExponentialDistribution)((ScoreProbabilityDistributionEstimator)edgeScorers[0]).getProbabilityDistribution()).getMinProbability2();
@@ -424,7 +450,7 @@ public class Graph<C extends Candidate<?>> {
             }
             
             final int final_i = i;
-            final C var16 = this.getPossibleFormulas1D(i).getCandidate();
+            final C candidate = this.getPossibleFormulas1D(i).getCandidate();
             futures.add(executorService.submit(new Runnable() {
                 public void run() {
                     TDoubleArrayList scores = new TDoubleArrayList(Graph.this.getSize());
@@ -435,22 +461,27 @@ public class Graph<C extends Candidate<?>> {
                         } else {
                             C candidate2 = Graph.this.getPossibleFormulas1D(j).getCandidate();
                             double score = 0.0D;
-                            EdgeScorer[] var6 = Graph.this.edgeScorers;
-                            int var7 = var6.length;
 
-                            for(int var8 = 0; var8 < var7; ++var8) {
-                                EdgeScorer edgeScorer = var6[var8];
-                                score += Math.log(edgeScorer.score(var16, candidate2));//todo changed
-//                                score += edgeScorer.score(var16, candidate2);
+                            for(int k = 0; k < edgeScorers.length; ++k) {
+                                EdgeScorer edgeScorer = edgeScorers[k];
+//                                score += Math.log(edgeScorer.score(candidate, candidate2));//todo changed
+////                                score += edgeScorer.score(candidate, candidate2);
+
+//                                if (edgeFilter instanceof EdgeThresholdFilter){
+//                                    score += edgeScorer.score(candidate, candidate2);
+//                                } else {
+//                                    score += edgeScorer.scoreWithoutThreshold(candidate, candidate2);
+//                                }
+                                score += edgeScorer.scoreWithoutThreshold(candidate, candidate2);
                             }
 
                             scores.add(score);
                         }
                     }
 
-//                    if(final_i == 0) {
-//                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
-//                    }
+                    if(final_i == 0) {
+                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
+                    }
 
                     edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
                 }
@@ -492,7 +523,7 @@ public class Graph<C extends Candidate<?>> {
         boolean changed = true;
         TIntHashSet candidatesToRemove = new TIntHashSet();
         while (changed) {
-            System.out.println("another round");
+            if (DEBUG) System.out.println("another round "+candidatesToRemove.size());
             changed = false;
 
             for (int i = 0; i < numberOfCompounds(); i++) {

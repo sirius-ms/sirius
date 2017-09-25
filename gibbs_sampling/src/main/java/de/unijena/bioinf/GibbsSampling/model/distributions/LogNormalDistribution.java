@@ -4,23 +4,15 @@ import de.unijena.bioinf.ChemistryBase.math.MathUtils;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 
 public class LogNormalDistribution implements ScoreProbabilityDistribution {
-    private double threshold;
-    private double thresholdFreq;
     private double logMean;
     private double logVar;
-    private double normalizationForThreshold;
     private boolean estimateByMedian;
 
-    public LogNormalDistribution(double thresholdFreq, boolean estimateByMedian) {
-        this.thresholdFreq = thresholdFreq;
+    public LogNormalDistribution(boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
         if(estimateByMedian) {
             throw new NoSuchMethodError("median estimation for log-normal not supported");
         }
-    }
-
-    public LogNormalDistribution(double threshold) {
-        this(threshold, false);
     }
 
     public void estimateDistribution(double[] exampleValues) {
@@ -56,33 +48,15 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         System.out.println("logmean " + logMean + " logvar " + logVar);
         this.logMean = logMean;
         this.logVar = logVar;
-        this.threshold = this.tryThreshold();
-        this.normalizationForThreshold = MathUtils.cdf(Math.log(this.threshold), logMean, logVar);
-        System.out.println("norm " + this.normalizationForThreshold);
-    }
-
-    private double tryThreshold() {
-        double t = 0.0D;
-
-        for(double step = 0.001D; MathUtils.cdf(Math.log(t), this.logMean, this.logVar) < this.thresholdFreq; t += step) {
-            ;
-        }
-
-        System.out.println("change threshold " + this.thresholdFreq + " to " + t);
-        return t;
     }
 
     public double toPvalue(double score) {
-        return this.cdf(score);
-    }
-
-    public double getMinProbability() {
-        return this.normalizationForThreshold;
+        return 1-this.cdf(score);
     }
 
     @Override
-    public double getThreshold() {
-        return threshold;
+    public double toLogPvalue(double score) {
+        return Math.log(toPvalue(score));
     }
 
     public double cdf(double value) {
@@ -90,6 +64,6 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     }
 
     public LogNormalDistribution clone() {
-        return new LogNormalDistribution(this.threshold, this.estimateByMedian);
+        return new LogNormalDistribution(this.estimateByMedian);
     }
 }
