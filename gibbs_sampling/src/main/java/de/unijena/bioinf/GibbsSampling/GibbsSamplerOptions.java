@@ -85,12 +85,6 @@ public interface GibbsSamplerOptions {
     int getMaxCandidates();
 
     @Option(
-            longName = {"normalize"},
-            description = "normalize edge scores"
-    )
-    boolean isNormalize();
-
-    @Option(
             longName = {"librarySearch"},
             description = "use spectral library hits for scoring",
             defaultValue = {"-1"}
@@ -137,7 +131,7 @@ public interface GibbsSamplerOptions {
 
     @Option(
             longName = {"distribution"},
-            description = "which probability distribution to assume: exponential, pareto",
+            description = "which probability distribution to assume: exponential, lognormal. default is exponential",
             defaultValue = {"exponential"}
     )
     String getProbabilityDistribution();

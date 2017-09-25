@@ -30,7 +30,7 @@ public class ReactionScorer implements EdgeScorer {
                 this.reactionNetChangeMap.put(netChange, new ArrayList());
             }
 
-            ((List)this.reactionNetChangeMap.get(netChange)).add(reaction);
+            this.reactionNetChangeMap.get(netChange).add(reaction);
         }
 
     }
@@ -79,6 +79,11 @@ public class ReactionScorer implements EdgeScorer {
 
     @Override
     public void setThreshold(double threshold) {
+        throw new NoSuchMethodError("has to be debugged");
+    }
+
+    @Override
+    public double getThreshold() {
         throw new NoSuchMethodError("has to be debugged");
     }
 

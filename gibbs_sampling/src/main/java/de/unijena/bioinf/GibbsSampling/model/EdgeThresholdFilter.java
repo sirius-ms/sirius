@@ -16,14 +16,21 @@ public class EdgeThresholdFilter extends AbstractEdgeFilter {
         graph.setEdgeThreshold(candidateIdx, this.logThres);
         int peakIdx = graph.getPeakIdx(candidateIdx);
 
+        int counter = 0;
         for(int i = 0; i < logEdgeScores.length; ++i) {
             if(peakIdx != graph.getPeakIdx(i)) {
                 double score = logEdgeScores[i];
-                if(score > this.logThres) {
-                    graph.setLogWeight(candidateIdx, i, score - this.logThres);
+//                if(score > this.logThres) {
+//                    ++counter;
+//                    graph.setLogWeight(candidateIdx, i, score - this.logThres);
+//                }
+                if(score < this.logThres) {
+                    ++counter;
+                    graph.setLogWeight(candidateIdx, i, this.logThres - score);
                 }
             }
         }
+        System.out.println("added edges: "+counter);
 
     }
 
