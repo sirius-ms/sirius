@@ -45,6 +45,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         }
 
         if(Double.isInfinite(currentThreshold)) {
+            //should not happen anymore?
             for(int i = Math.min(this.minimumConnectionCount, weightedEdges.size()) - 1; i >= 0; --i) {
                 double weightedEdge = weightedEdges.get(i).weight;
                 if(isFinite(weightedEdge)) {
@@ -56,16 +57,16 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             if(Double.isInfinite(currentThreshold)) {
                 currentThreshold = this.basicThreshold;
             }
-        } else if(currentThreshold > this.basicThreshold) {
+        } else if(currentThreshold < this.basicThreshold) {
             currentThreshold = this.basicThreshold;
         }
 
 
         for (WeightedEdge weightedEdge : weightedEdges) {
-            if(weightedEdge.weight <= currentThreshold) {
+            if(weightedEdge.weight >= currentThreshold) {
                 break;
             }
-            graph.setLogWeight(weightedEdge.index1, weightedEdge.index2, weightedEdge.weight - currentThreshold);
+            graph.setLogWeight(weightedEdge.index1, weightedEdge.index2, currentThreshold - weightedEdge.weight);
         }
         graph.setEdgeThreshold(candidateIdx, currentThreshold);
     }
@@ -94,8 +95,8 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             Arrays.sort(thresholds);
 //            w2 = (int)(this.numberOfCandidatesWithMinConnCount * (double)thresholds.length);
             w2 = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length); //changed
-            double t = w2 == 0?thresholds[thresholds.length - 1]:thresholds[thresholds.length - w2];
-            if(t > this.basicThreshold) {
+            double t = w2 == 0?thresholds[0]:thresholds[w2-1];
+            if(t < this.basicThreshold) {
                 t = this.basicThreshold;
             }
 
@@ -117,7 +118,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
                     for(int k = 0; k < connections1.length; ++k) {
                         int c = connections1[k];
                         double w = graph.getLogWeight(j, c);
-                        graph.setLogWeight(j, c, Math.max(0.0D, w - diff));
+                        graph.setLogWeight(j, c, Math.max(0.0D, w + diff));
                     }
                 }
             }

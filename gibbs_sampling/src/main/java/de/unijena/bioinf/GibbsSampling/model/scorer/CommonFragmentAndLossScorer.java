@@ -9,13 +9,13 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import java.util.*;
 
 public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidate> {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     protected TObjectIntHashMap<Ms2Experiment> idxMap;
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
     protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3;//10; //3; //changed from 5
-
+    //todo changed
     public CommonFragmentAndLossScorer(double threshold) {
         this.threshold = threshold;
     }
@@ -214,13 +214,13 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
     @Override
     public double scoreWithoutThreshold(FragmentsCandidate candidate1, FragmentsCandidate candidate2) {
-        int i = this.idxMap.get(candidate1.getExperiment());
-        int j = this.idxMap.get(candidate2.getExperiment());
-
         final double commonF = this.scoreCommons(candidate1.getFragments(), candidate2.getFragments());
         final double commonL = this.scoreCommons(candidate1.getLosses(), candidate2.getLosses());
         final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
         final double norm2 = this.normalizationMap.get(candidate2.getExperiment());
+
+        if (commonF+commonL<MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES) return 0;//todo changed!!!!!!!!!!
+
         final double score =  ((commonF + commonL) / norm1) + ((commonF + commonL) / norm2);
 
         return score;
@@ -231,6 +231,10 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         this.threshold = threshold;
     }
 
+    @Override
+    public double getThreshold() {
+        return threshold;
+    }
 
     public void clean() {
         this.idxMap.clear();
