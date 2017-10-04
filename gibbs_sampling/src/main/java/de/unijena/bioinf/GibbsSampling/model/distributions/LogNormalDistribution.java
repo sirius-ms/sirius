@@ -1,31 +1,42 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.procedure.TDoubleProcedure;
+
+import java.util.Arrays;
 
 public class LogNormalDistribution implements ScoreProbabilityDistribution {
     private double logMean;
     private double logVar;
-    private boolean estimateByMedian;
+    private boolean robustEstimator;
+    private static final double MAD_SCALE_FACTOR = 1.482602218505602;
 
-    public LogNormalDistribution(boolean estimateByMedian) {
-        this.estimateByMedian = estimateByMedian;
-        if(estimateByMedian) {
-            throw new NoSuchMethodError("median estimation for log-normal not supported");
-        }
+    public LogNormalDistribution(double logMean, double logVar) {
+        this.logMean = logMean;
+        this.logVar = logVar;
+    }
+
+    public LogNormalDistribution(boolean robustEstimator) {
+        this.robustEstimator = robustEstimator;
     }
 
     public void estimateDistribution(double[] exampleValues) {
+        if (robustEstimator) estimateParametersRobust(exampleValues);
+        else estimateParameters(exampleValues);
+        System.out.println("logmean " + logMean + " logvar " + logVar);
+//        logMean = -5;
+//        logVar = 0.5;
+//        System.out.println("don't care for estimates but use: logmean " + logMean + " logvar " + logVar);
+    }
+
+    private void estimateParameters(double[] exampleValues){
         int l = 0;
         double logMean = 0.0D;
         double logVar = 0.0D;
-        double[] var7 = exampleValues;
-        int var8 = exampleValues.length;
 
-        int var9;
-        double v;
-        for(var9 = 0; var9 < var8; ++var9) {
-            v = var7[var9];
+        for(int i = 0; i < exampleValues.length; ++i) {
+            double v = exampleValues[i];
             if(v > 0.0D) {
                 logMean += Math.log(v);
                 ++l;
@@ -33,11 +44,9 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         }
 
         logMean /= (double)l;
-        var7 = exampleValues;
-        var8 = exampleValues.length;
 
-        for(var9 = 0; var9 < var8; ++var9) {
-            v = var7[var9];
+        for(int i = 0; i < exampleValues.length; ++i) {
+            double v = exampleValues[i];
             if(v > 0.0D) {
                 double s = Math.log(v) - logMean;
                 logVar += s * s;
@@ -45,9 +54,34 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         }
 
         logVar /= (double)(l - 1);
-        System.out.println("logmean " + logMean + " logvar " + logVar);
         this.logMean = logMean;
         this.logVar = logVar;
+    }
+
+    private void estimateParametersRobust(double[] exampleValues){
+        TDoubleArrayList nonZeroSampleValues = new TDoubleArrayList();
+        for (double exampleValue : exampleValues) {
+            if (exampleValue>0d) nonZeroSampleValues.add(Math.log(exampleValue));
+        }
+        nonZeroSampleValues.sort();
+
+
+        double logMedian = nonZeroSampleValues.get((int)(nonZeroSampleValues.size()/2));
+        double[] distanceFromMedian = new double[nonZeroSampleValues.size()];
+        int[] counter = new int[]{0};
+        nonZeroSampleValues.forEach(new TDoubleProcedure() {
+            @Override
+            public boolean execute(double v) {
+                distanceFromMedian[counter[0]++] = Math.abs(v - logMedian);
+                return true;
+            }
+        });
+
+        Arrays.sort(distanceFromMedian);
+        double logMAD = distanceFromMedian[(int)(nonZeroSampleValues.size()/2)];
+
+        this.logMean = logMedian;
+        this.logVar = Math.pow(MAD_SCALE_FACTOR*logMAD,2);
     }
 
     public double toPvalue(double score) {
@@ -64,6 +98,6 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     }
 
     public LogNormalDistribution clone() {
-        return new LogNormalDistribution(this.estimateByMedian);
+        return new LogNormalDistribution(this.robustEstimator);
     }
 }

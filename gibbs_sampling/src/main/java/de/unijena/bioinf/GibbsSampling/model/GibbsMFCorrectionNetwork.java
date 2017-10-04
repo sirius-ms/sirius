@@ -13,11 +13,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
-    private static final boolean DEBUG = true;
-    private static final double DEFAULT_CORRELATION_STEPSIZE = 10.0D;
-    private static final boolean OUTPUT_SAMPLE_PROBABILITY = true;
+    private static final boolean DEBUG = false;
+    public static final int DEFAULT_CORRELATION_STEPSIZE = 10;
+    private static final boolean OUTPUT_SAMPLE_PROBABILITY = false;
     protected Graph<C> graph;
-    private static final boolean iniAssignMostLikely = false;
+    public static final boolean iniAssignMostLikely = true;
     private int burnInRounds;
     private int currentRound;
     double[] priorProb;
@@ -30,19 +30,12 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     double[] posteriorProbs;
     double[] posteriorProbSums;
     private Random random;
-    private final double logPseudo;
 
 
     private TIntArrayList[] activeConnections;
     private double[] bestActive;
 
     public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
-//        this.pseudo = 0.01D;
-        this.logPseudo = Math.log(0.01D);//todo changed!!!
-//        this.logPseudo = -0.2d;
-//        this.logPseudo = 0.0;
-
-
         for (Candidate[] pF : possibleFormulas) {
             if (pF==null || pF.length==0) throw new RuntimeException("some peaks don\'t have any explanation");
         }
@@ -58,12 +51,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     }
 
     public GibbsMFCorrectionNetwork(Graph graph) {
-//        this.pseudo = 0.01D;
-        this.logPseudo = Math.log(0.01D);
-//        this.logPseudo = -0.2d;
-//        this.logPseudo = 0.0;
-
-
         this.graph = graph;
         this.random = new Random();
         this.setActive();
@@ -121,17 +108,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                     }
                 }
             } else {
-                //sample
-//                double[] scores = new double[possibleFormulasArray.length];
-//                double sum = 0;
-//                for (int j = 0; j < possibleFormulasArray.length; j++) {
-//                    double score = possibleFormulasArray[j].getScore();
-//                    scores[j] = score;
-//                    sum += score;
-//                }
-//                idx = getRandomIdx(0, scores.length-1, sum, scores);
-//
-
                 double[] scores = new double[possibleFormulasArray.length];
                 double sum = 0;
                 double maxLog = Double.NEGATIVE_INFINITY;
@@ -149,26 +125,12 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
 //                idx = getRandomIdx(0, scores.length-1, sum, scores);
                 idx = getRandomOrdering(0, scores.length)[0];//changed!!!!
-                System.out.println("random best idx "+idx);
             }
 
             activeIdx[i] = idx;
             active[idx+z] = true;
             z+=possibleFormulasArray.length;
         }
-
-
-//
-//        ////changed
-//
-//        activeConnections = new TIntArrayList[this.active.length];
-//        bestActive = new double[this.active.length];
-//        for (int i = 0; i < priorProb.length; i++) {
-//            activeConnections[i] = new TIntArrayList();
-//        }
-//
-//
-//        ////changed
 
 
         ///set priorProb and maxPriorProb
@@ -181,10 +143,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                     ++this.activeEdgeCounter[i];
                 }
             }
-
-//            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - 1) * this.logPseudo;
-//            todo changed!1!
-//            this.priorProb[i] += (double)(this.graph.numberOfCompounds() - this.activeEdgeCounter[i] - 1) * this.logPseudo;
 
         }
 
@@ -210,6 +168,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     }
 
     public void iteration(int maxSteps, int burnIn) {
+        setActive();
         this.burnInRounds = burnIn;
         int iterationStepLength = this.graph.numberOfCompounds();
         double sampleProbability;
@@ -234,18 +193,10 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                         double score = this.graph.getCandidateScore(j);
 
 
-                        //include pseudo?
-                        score += (double)(this.graph.numberOfCompounds() - 1) * this.logPseudo;
                         for (int k = 0; k < active.length; k++) {
                             if (j==k || !active[k]) continue;
-                            score += Math.max(this.graph.getLogWeight(k, j), logPseudo);
-                            score -= this.logPseudo;
+                            score += this.graph.getLogWeight(k, j)/2;
                         }
-                        //todo what about pseudo counts???!?!?!?
-
-
-//                        this.priorProb[incoming] += Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
-
 
                         overallProb += score;
                     }
@@ -444,86 +395,16 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         }
     }
 
-//    private void removeActiveEdge(int outgoing, int incoming) {
-////        this.priorProb[incoming] -= this.graph.getLogWeight(outgoing, incoming);
-////        //todo //changed using logPseudo for all
-////        this.priorProb[incoming] += this.logPseudo;
-//
-//        this.priorProb[incoming] -= Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
-//        //todo //changed using logPseudo for all
-//        this.priorProb[incoming] += this.logPseudo;
-//    }
-//
-//    private void addActiveEdge(int outgoing, int incoming) {
-////        this.priorProb[incoming] += this.graph.getLogWeight(outgoing, incoming);
-////        //todo //changed using logPseudo for all
-////        this.priorProb[incoming] -= this.logPseudo;
-//
-//        this.priorProb[incoming] += Math.max(this.graph.getLogWeight(outgoing, incoming), logPseudo);
-//        //todo //changed using logPseudo for all
-//        this.priorProb[incoming] -= this.logPseudo;
-//    }
-
 
     private void removeActiveEdge(int outgoing, int incoming) {
-        this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming)-logPseudo);
-        //todo //changed using logPseudo for all
-//        this.priorProb[incoming] += this.logPseudo;
+        this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
     }
 
     private void addActiveEdge(int outgoing, int incoming) {
-        this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming)-logPseudo);
-//        //todo //changed using logPseudo for all
-//        this.priorProb[incoming] -= this.logPseudo;
+        this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
     }
 
 
-
-//
-////todo changed!!
-//    private void removeActiveEdge(int outgoing, int incoming) {
-//        this.priorProb[incoming] -= this.graph.getLogWeight(outgoing, incoming);
-//        this.priorProb[incoming] += this.logPseudo;
-//    }
-//
-//    private void addActiveEdge(int outgoing, int incoming) {
-//        this.priorProb[incoming] += this.graph.getLogWeight(outgoing, incoming);
-//        this.priorProb[incoming] -= this.logPseudo;
-//    }
-
-
-
-//    private void removeActiveEdge(int outgoing, int incoming) {
-//        activeConnections[incoming].remove(outgoing);
-//        double weight = this.graph.getLogWeight(outgoing, incoming);
-//        if (bestActive[incoming]==weight){
-//            weight = 0;
-//            for (int i = 0; i < activeConnections[incoming].size(); i++) {
-//                weight = Math.max(weight, graph.getLogWeight(activeConnections[incoming].get(i), incoming));
-//
-//            }
-//            bestActive[incoming] = weight;
-//        }
-//
-//        this.priorProb[incoming] = bestActive[incoming];
-//
-//    }
-//
-//    private void addActiveEdge(int outgoing, int incoming) {
-//        activeConnections[incoming].add(outgoing);
-//        double weight = this.graph.getLogWeight(outgoing, incoming);
-//        bestActive[incoming] = Math.max(weight, bestActive[incoming]);
-//        this.priorProb[incoming] = bestActive[incoming];
-//
-//
-//
-//        if (currentRound%10==0) {
-//            FragmentsCandidate candidate = (FragmentsCandidate)graph.getPossibleFormulas1D(incoming).getCandidate();
-//            if (candidate.getExperiment().getName().equals("719")){
-//                System.out.println("new prior "+this.priorProb[incoming]    );
-//            }
-//        }
-//    }
 
 
     /**

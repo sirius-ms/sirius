@@ -8,6 +8,11 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
     private boolean estimateByMedian;
 //    private double normalizationForThreshold;
 
+
+    public ExponentialDistribution(double lambda) {
+        this.lambda = lambda;
+    }
+
     public ExponentialDistribution(boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
     }

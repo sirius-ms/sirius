@@ -4,6 +4,7 @@ import de.unijena.bioinf.GibbsSampling.model.EdgeFilter;
 import de.unijena.bioinf.GibbsSampling.model.Graph;
 
 public class EdgeThresholdFilter extends AbstractEdgeFilter {
+    private static final boolean DEBUG = false;
     private double threshold;
     private double logThres;
 
@@ -20,17 +21,13 @@ public class EdgeThresholdFilter extends AbstractEdgeFilter {
         for(int i = 0; i < logEdgeScores.length; ++i) {
             if(peakIdx != graph.getPeakIdx(i)) {
                 double score = logEdgeScores[i];
-//                if(score > this.logThres) {
-//                    ++counter;
-//                    graph.setLogWeight(candidateIdx, i, score - this.logThres);
-//                }
                 if(score < this.logThres) {
                     ++counter;
                     graph.setLogWeight(candidateIdx, i, this.logThres - score);
                 }
             }
         }
-        System.out.println("added edges: "+counter);
+        if (DEBUG) System.out.println("added edges: "+counter);
 
     }
 

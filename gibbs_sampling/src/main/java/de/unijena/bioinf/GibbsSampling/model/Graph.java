@@ -24,6 +24,7 @@ import java.util.concurrent.Future;
 
 public class Graph<C extends Candidate<?>> {
     private static final boolean DEBUG = true;
+    private static final boolean THIN_OUT_GRAPH = false;
     final TIntIntHashMap[] indexMap;
     final TDoubleArrayList[] weights;
     double[] edgeThresholds;
@@ -192,7 +193,11 @@ public class Graph<C extends Candidate<?>> {
             this.calculateWeight(threads);
             this.setConnections();
 
-            thinOutGraph();
+            if (THIN_OUT_GRAPH){
+                long time = System.currentTimeMillis();
+                thinOutGraph();
+                if (DEBUG) System.out.println("thinning out graph in "+(System.currentTimeMillis()-time)+" ms");
+            }
         }
     }
 
@@ -242,7 +247,11 @@ public class Graph<C extends Candidate<?>> {
     }
 
     private void setConnections() {
+        long time = System.currentTimeMillis();
         this.connections = this.edgeFilter.postprocessCompleteGraph(this);
+        if (DEBUG){
+            System.out.println("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
+        }
         TDoubleArrayList someScores = new TDoubleArrayList();
         HighQualityRandom random = new HighQualityRandom();
         System.out.println("connections");
@@ -369,7 +378,6 @@ public class Graph<C extends Candidate<?>> {
 
         for(int minValue = 0; minValue < allCandidates.length; ++minValue) {
             Scored<C>[] scored = this.getPossibleFormulas(minValue);
-//            allCandidates[minValue] = (C[])new Candidate[scored.length];
             allCandidates[minValue] = (C[])Array.newInstance(cClass, scored.length);
 
             for(int final_this = 0; final_this < scored.length; ++final_this) {
@@ -377,67 +385,40 @@ public class Graph<C extends Candidate<?>> {
             }
         }
 
-//        double minV = 1.0D;
-//
-////        for (EdgeScorer<C> edgeScorer : edgeScorers) {
-////            edgeScorer.prepare(allCandidates);
-////            minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
-////            System.out.println("minV " + minV);
-////        }
-//
-//
-//
-//        //todo this is a big hack!!!!
-//        for (EdgeScorer<C> edgeScorer : edgeScorers) {
-//            if (edgeScorer instanceof ScoreProbabilityDistributionFix){
-//                edgeScorer.prepare(allCandidates);
-//                minV *= ((ScoreProbabilityDistributionFix)edgeScorer).getProbabilityDistribution().getMinProbability();
-//            } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
-//                if (edgeFilter instanceof EdgeThresholdFilter){
-//                    ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
-//                } else {
-//                    edgeScorer.prepare(allCandidates);
-//                }
-//                minV *= ((ScoreProbabilityDistributionEstimator)edgeScorer).getProbabilityDistribution().getMinProbability();
-////                System.out.println("minV " + minV);
-//            } else {
-//                edgeScorer.prepare(allCandidates);
-//            }
-//
-//        }
-//        minV = Math.log(minV);
 
 
         double minV = 0.0D;
         //todo this is a big hack!!!!
         for (EdgeScorer<C> edgeScorer : edgeScorers) {
             if (edgeScorer instanceof ScoreProbabilityDistributionFix){
-                ((ScoreProbabilityDistributionFix)edgeScorer).setThresholdAndPrepare(allCandidates);
-                minV += (edgeScorer).getThreshold();
+                if (edgeFilter instanceof EdgeThresholdFilter){
+                    ((ScoreProbabilityDistributionFix)edgeScorer).setThresholdAndPrepare(allCandidates);
+                } else {
+                    ((ScoreProbabilityDistributionFix)edgeScorer).prepare(allCandidates);
+                }
+
             } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
-                    edgeScorer.prepare(allCandidates);
+                    ((ScoreProbabilityDistributionEstimator)edgeScorer).prepare(allCandidates);
                 }
-                minV += edgeScorer.getThreshold();
-//                System.out.println("minV " + minV);
             } else {
                 edgeScorer.prepare(allCandidates);
             }
 
+            minV += edgeScorer.getThreshold();
         }
-
+//
+//        ...can we use setThresholdAndPrepare also for EdgeThresholdMinConnectionsFilter?
+//                ...
 
         
 
 
-//        //todo changed
-//        minV = ((ExponentialDistribution)((ScoreProbabilityDistributionEstimator)edgeScorers[0]).getProbabilityDistribution()).getMinProbability2();
         if (DEBUG) System.out.println("minV "+minV);
 
         this.edgeFilter.setThreshold(minV);
-//        System.out.println("min value " + minV);
         final Graph final_graph = this;
         long time = System.currentTimeMillis();
 
@@ -464,24 +445,22 @@ public class Graph<C extends Candidate<?>> {
 
                             for(int k = 0; k < edgeScorers.length; ++k) {
                                 EdgeScorer edgeScorer = edgeScorers[k];
-//                                score += Math.log(edgeScorer.score(candidate, candidate2));//todo changed
-////                                score += edgeScorer.score(candidate, candidate2);
-
-//                                if (edgeFilter instanceof EdgeThresholdFilter){
-//                                    score += edgeScorer.score(candidate, candidate2);
-//                                } else {
-//                                    score += edgeScorer.scoreWithoutThreshold(candidate, candidate2);
-//                                }
-                                score += edgeScorer.scoreWithoutThreshold(candidate, candidate2);
+                                if (edgeFilter instanceof EdgeThresholdFilter){
+                                    score += edgeScorer.score(candidate, candidate2);
+                                } else {
+                                    score += edgeScorer.scoreWithoutThreshold(candidate, candidate2);
+                                }
+                                //todo why does this seem to make a difference?????
+//                                score += edgeScorer.score(candidate, candidate2);
                             }
 
                             scores.add(score);
                         }
                     }
 
-                    if(final_i == 0) {
-                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
-                    }
+//                    if(final_i == 0) {
+//                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
+//                    }
 
                     edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
                 }

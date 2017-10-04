@@ -50,28 +50,6 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
     protected double[] sampleScores(C[][] candidates){
         edgeScorer.prepare(candidates);
-        int numberOfSamples = 100000;
-        HighQualityRandom random = new HighQualityRandom();
-        double[] sampledScores = new double[numberOfSamples];
-
-        for(int i = 0; i < numberOfSamples; ++i) {
-            int color1 = random.nextInt(candidates.length);
-            int color2 = random.nextInt(candidates.length - 1);
-            if(color2 >= color1) {
-                ++color2;
-            }
-
-            int mf1 = random.nextInt(candidates[color1].length);
-            int mf2 = random.nextInt(candidates[color2].length);
-            sampledScores[i] = this.edgeScorer.scoreWithoutThreshold(candidates[color1][mf1], candidates[color2][mf2]);
-        }
-        return sampledScores;
-    }
-
-
-
-    public void setThresholdAndPrepare(C[][] candidates) {
-        edgeScorer.prepare(candidates);
 
         double[] sampledScores;
         if (DEBUG){
@@ -92,8 +70,51 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
             }
             sampledScores = sampledScoresList.toArray();
         } else {
-            sampledScores = sampleScores(candidates);
+            int numberOfSamples = 100000;
+            HighQualityRandom random = new HighQualityRandom();
+
+            for(int i = 0; i < numberOfSamples; ++i) {
+                int color1 = random.nextInt(candidates.length);
+                int color2 = random.nextInt(candidates.length - 1);
+                if(color2 >= color1) {
+                    ++color2;
+                }
+
+                int mf1 = random.nextInt(candidates[color1].length);
+                int mf2 = random.nextInt(candidates[color2].length);
+                sampledScores[i] = this.edgeScorer.scoreWithoutThreshold(candidates[color1][mf1], candidates[color2][mf2]);
+            }
         }
+        return sampledScores;
+    }
+
+
+
+    public void setThresholdAndPrepare(C[][] candidates) {
+//        edgeScorer.prepare(candidates);
+//
+//        double[] sampledScores;
+//        if (DEBUG){
+//            System.out.println("use all scores");
+//            TDoubleArrayList sampledScoresList = new TDoubleArrayList();
+//            for (int i = 0; i < candidates.length; i++) {
+//                C[] c1 = candidates[i];
+//                for (int j = i+1; j < candidates.length; j++) {
+//                    C[] c2 = candidates[j];
+//                    for (int k = 0; k < c1.length; k++) {
+//                        C cc1 = c1[k];
+//                        for (int l = 0; l < c2.length; l++) {
+//                            C cc2 = c2[l];
+//                            sampledScoresList.add(this.edgeScorer.scoreWithoutThreshold(cc1, cc2));
+//                        }
+//                    }
+//                }
+//            }
+//            sampledScores = sampledScoresList.toArray();
+//        } else {
+//            sampledScores = sampleScores(candidates);
+//        }
+        double[] sampledScores = sampleScores(candidates);
         estimateDistribution(sampledScores);
 
         if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);

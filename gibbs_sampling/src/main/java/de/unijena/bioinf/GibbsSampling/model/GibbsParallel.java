@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsParallel<C extends Candidate<?>> {
+    private static final boolean DEBUG = true;
     private String[] ids;
     private C[][] possibleFormulas;
     private NodeScorer<C>[] nodeScorers;
@@ -128,7 +129,11 @@ public class GibbsParallel<C extends Candidate<?>> {
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
             futures.add(executorService.submit(new Runnable() {
                 public void run() {
+
+                    final long time = System.currentTimeMillis();
                     gibbsNetwork.iteration(maxStepProportioned, burnIn);
+                    if (DEBUG) System.out.println("running gibbs with "+(maxStepProportioned+burnIn)+" steps took "+(System.currentTimeMillis()-time)+" ms");
+
                 }
             }));
         }
