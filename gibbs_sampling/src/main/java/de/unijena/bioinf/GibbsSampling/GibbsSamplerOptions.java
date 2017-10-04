@@ -2,6 +2,8 @@ package de.unijena.bioinf.GibbsSampling;
 
 import com.lexicalscope.jewel.cli.Option;
 
+import java.util.List;
+
 public interface GibbsSamplerOptions {
 
     @Option(
@@ -98,6 +100,12 @@ public interface GibbsSamplerOptions {
     boolean isCrossvalidation();
 
     @Option(
+            longName = {"robustnesstest"},
+            description = "robustness test"
+    )
+    boolean isRobustnessTest();
+
+    @Option(
             longName = {"align"},
             description = "align fragmentation trees"
     )
@@ -131,17 +139,17 @@ public interface GibbsSamplerOptions {
 
     @Option(
             longName = {"distribution"},
-            description = "which probability distribution to assume: exponential, lognormal. default is exponential",
+            description = "which probability distribution to assume: exponential, lognormal, pareto. default is lognormal",
             defaultValue = {"exponential"}
     )
     String getProbabilityDistribution();
 
     @Option(
-            longName = {"lambda"},
-            description = "lambda for exponential distribution. If not set, it is estimated from the distribution",
-            defaultValue = {"-1"}
+            longName = {"parameters"},
+            description = "parameter for distribution, comma separated. If not set, it is estimated from the distribution. For lognormal give mean and variance. For exponential give lambda.",
+            defaultToNull = true
     )
-    double getLambda();
+    String getParameters();
 
 
 
