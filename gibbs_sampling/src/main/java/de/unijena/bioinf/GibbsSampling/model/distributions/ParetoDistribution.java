@@ -12,6 +12,7 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
     public ParetoDistribution(double xmin, boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
         this.xmin = Math.max(xmin,0.001);
+        if (DEBUG) System.out.println("pareto xmin "+xmin);
     }
 
     public ParetoDistribution(double xmin) {

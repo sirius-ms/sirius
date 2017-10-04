@@ -36,28 +36,14 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         }
 
         Collections.sort(weightedEdges);
-//        System.out.println("weights " + weightedEdges.size() + " " + ((WeightedEdge)weightedEdges.get(0)).weight + " " + ((WeightedEdge)weightedEdges.get(weightedEdges.size() - 1)).weight);
         double currentThreshold;
         if(this.minimumConnectionCount >= weightedEdges.size()) {
-            currentThreshold = weightedEdges.get(weightedEdges.size() - 1).weight;
+            currentThreshold = weightedEdges.get(weightedEdges.size() - 1).weight;//todo add pseudo???
         } else {
             currentThreshold = weightedEdges.get(this.minimumConnectionCount).weight;
         }
 
-        if(Double.isInfinite(currentThreshold)) {
-            //should not happen anymore?
-            for(int i = Math.min(this.minimumConnectionCount, weightedEdges.size()) - 1; i >= 0; --i) {
-                double weightedEdge = weightedEdges.get(i).weight;
-                if(isFinite(weightedEdge)) {
-                    currentThreshold = weightedEdge;
-                    break;
-                }
-            }
-
-            if(Double.isInfinite(currentThreshold)) {
-                currentThreshold = this.basicThreshold;
-            }
-        } else if(currentThreshold < this.basicThreshold) {
+        if(currentThreshold < this.basicThreshold) {
             currentThreshold = this.basicThreshold;
         }
 
@@ -66,7 +52,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             if(weightedEdge.weight >= currentThreshold) {
                 break;
             }
-            graph.setLogWeight(weightedEdge.index1, weightedEdge.index2, currentThreshold - weightedEdge.weight);
+            graph.setLogWeight(weightedEdge.index1, weightedEdge.index2, currentThreshold - weightedEdge.weight); //todo correct ordering?
         }
         graph.setEdgeThreshold(candidateIdx, currentThreshold);
     }
@@ -87,39 +73,30 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
             int right = graph.getPeakRightBoundary(i);
             double[] thresholds = new double[right - left + 1];
 
-            int w2;
-            for(w2 = left; w2 <= right; ++w2) {
-                thresholds[w2 - left] = graph.getEdgeThreshold(w2);
+            for(int j = left; j <= right; ++j) {
+                thresholds[j - left] = graph.getEdgeThreshold(j);
             }
 
             Arrays.sort(thresholds);
-//            w2 = (int)(this.numberOfCandidatesWithMinConnCount * (double)thresholds.length);
-            w2 = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length); //changed
-            double t = w2 == 0?thresholds[0]:thresholds[w2-1];
+            int pos = Math.min(this.numberOfCandidatesWithMinConnCount, thresholds.length); //changed
+            double t = pos == 0?thresholds[0]:thresholds[thresholds.length-pos];
             if(t < this.basicThreshold) {
                 t = this.basicThreshold;
             }
 
             for(int j = left; j <= right; ++j) {
                 double current_t = graph.getEdgeThreshold(j);
-                if(left == j) {
-//                    System.out.println("before " + current_t + " " + t);
-                }
-
                 if(current_t != t) {
                     double diff = t - current_t;
                     int[] connections1 = graph.getLogWeightConnections(j);
-//                    System.out.println("connection size " + connections1.length);
-//                    if(connections1.length < 10) {
-//                        System.out.println(((StandardCandidate)graph.getPossibleFormulas1D(j).getCandidate()).getFormula().formatByHill() + " is connected to " + Arrays.toString(connections1));
-//                    }
-
 
                     for(int k = 0; k < connections1.length; ++k) {
                         int c = connections1[k];
                         double w = graph.getLogWeight(j, c);
                         graph.setLogWeight(j, c, Math.max(0.0D, w + diff));
                     }
+
+                    graph.setEdgeThreshold(j, t);
                 }
             }
         }
@@ -150,16 +127,9 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 
         for(int i = 0; i < graph.getSize(); ++i) {
             connections[i] = connectionsList[i].toArray();
-//            if(connections[i].length == 0) {
-//                System.out.println("no connections at all for "+ ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getExperiment().getName() +" with " + ((StandardCandidate)graph.getPossibleFormulas1D(i).getCandidate()).getFormula().formatByHill());
-//            }
         }
 
         return connections;
     }
 
-
-    private boolean isFinite(double d) {
-        return Math.abs(d) <= Double.MAX_VALUE;
-    }
 }
