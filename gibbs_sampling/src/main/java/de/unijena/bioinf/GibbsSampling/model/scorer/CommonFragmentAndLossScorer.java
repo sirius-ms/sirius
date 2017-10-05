@@ -9,13 +9,11 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import java.util.*;
 
 public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidate> {
-    private static final boolean DEBUG = true;
     protected TObjectIntHashMap<Ms2Experiment> idxMap;
     protected BitSet[] maybeSimilar;
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
     protected double threshold;
-    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3;//10; //3; //changed from 5
-    //todo changed
+    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3;//changed from 5
     public CommonFragmentAndLossScorer(double threshold) {
         this.threshold = threshold;
     }
@@ -72,7 +70,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         for (BitSet bitSet : this.maybeSimilar) {
             sum += bitSet.cardinality();
         }
-        if (DEBUG) System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
     }
 
 //    private void prepareData(){
@@ -205,6 +203,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
         final double commonF = this.scoreCommons(candidate1.getFragments(), candidate2.getFragments());
         final double commonL = this.scoreCommons(candidate1.getLosses(), candidate2.getLosses());
+
+        if (commonF+commonL<MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES) return 0;
+
         final double norm1 = this.normalizationMap.get(candidate1.getExperiment());
         final double norm2 = this.normalizationMap.get(candidate2.getExperiment());
         final double score =  ((commonF + commonL) / norm1) + ((commonF + commonL) / norm2);

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
+import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.procedure.TDoubleProcedure;
 
@@ -24,10 +25,8 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     public void estimateDistribution(double[] exampleValues) {
         if (robustEstimator) estimateParametersRobust(exampleValues);
         else estimateParameters(exampleValues);
-        System.out.println("logmean " + logMean + " logvar " + logVar);
-//        logMean = -5;
-//        logVar = 0.5;
-//        System.out.println("don't care for estimates but use: logmean " + logMean + " logvar " + logVar);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("logmean " + logMean + " logvar " + logVar);
+
     }
 
     private void estimateParameters(double[] exampleValues){

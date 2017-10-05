@@ -21,9 +21,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Graph<C extends Candidate<?>> {
-    private static final boolean DEBUG = true;
     private static final boolean THIN_OUT_GRAPH = false;
     final TIntIntHashMap[] indexMap;
     final TDoubleArrayList[] weights;
@@ -196,7 +196,7 @@ public class Graph<C extends Candidate<?>> {
             if (THIN_OUT_GRAPH){
                 long time = System.currentTimeMillis();
                 thinOutGraph();
-                if (DEBUG) System.out.println("thinning out graph in "+(System.currentTimeMillis()-time)+" ms");
+                if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("thinning out graph in "+(System.currentTimeMillis()-time)+" ms");
             }
         }
     }
@@ -249,7 +249,7 @@ public class Graph<C extends Candidate<?>> {
     private void setConnections() {
         long time = System.currentTimeMillis();
         this.connections = this.edgeFilter.postprocessCompleteGraph(this);
-        if (DEBUG){
+        if (GibbsMFCorrectionNetwork.DEBUG){
             System.out.println("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
         }
         TDoubleArrayList someScores = new TDoubleArrayList();
@@ -287,7 +287,7 @@ public class Graph<C extends Candidate<?>> {
 
         System.out.println("number of connections " + sum / 2);
 
-        if (DEBUG) {
+        if (GibbsMFCorrectionNetwork.DEBUG) {
             final TDoubleArrayList samples = new TDoubleArrayList();
             for (TDoubleArrayList weight : weights) {
                 weight.forEach(new TDoubleProcedure() {
@@ -409,14 +409,9 @@ public class Graph<C extends Candidate<?>> {
 
             minV += edgeScorer.getThreshold();
         }
-//
-//        ...can we use setThresholdAndPrepare also for EdgeThresholdMinConnectionsFilter?
-//                ...
-
-        
 
 
-        if (DEBUG) System.out.println("minV "+minV);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("minV "+minV);
 
         this.edgeFilter.setThreshold(minV);
         final Graph final_graph = this;
@@ -425,11 +420,9 @@ public class Graph<C extends Candidate<?>> {
         System.out.println("start computing edges");
         int step = Math.max(this.getSize()/20, 1);
 
+        AtomicInteger counter = new AtomicInteger(0);
+        int size = this.getSize();
         for(int i = 0; i < this.getSize(); ++i) {
-            if(i % step == 0 || i==(this.getSize()-1)) {
-                System.out.println((100*(i+1)/this.getSize())+"%");
-            }
-            
             final int final_i = i;
             final C candidate = this.getPossibleFormulas1D(i).getCandidate();
             futures.add(executorService.submit(new Runnable() {
@@ -445,24 +438,20 @@ public class Graph<C extends Candidate<?>> {
 
                             for(int k = 0; k < edgeScorers.length; ++k) {
                                 EdgeScorer edgeScorer = edgeScorers[k];
-                                if (edgeFilter instanceof EdgeThresholdFilter){
-                                    score += edgeScorer.score(candidate, candidate2);
-                                } else {
-                                    score += edgeScorer.scoreWithoutThreshold(candidate, candidate2);
-                                }
-                                //todo why does this seem to make a difference?????
-//                                score += edgeScorer.score(candidate, candidate2);
+                                score += edgeScorer.score(candidate, candidate2);
                             }
 
                             scores.add(score);
                         }
                     }
 
-//                    if(final_i == 0) {
-//                        System.out.println("xscores " + scores.size() + ": " + Arrays.toString(scores.subList(0, 1000).toArray()));
-//                    }
-
                     edgeFilter.filterEdgesAndSetThreshold(final_graph, final_i, scores.toArray());
+
+                    //progess
+                    int progress = counter.incrementAndGet();
+                    if((progress-1) % step == 0 || (progress)==(size)) {
+                        System.out.println((100*(progress)/size)+"%");
+                    }
                 }
             }));
         }
@@ -470,7 +459,7 @@ public class Graph<C extends Candidate<?>> {
         this.futuresGet(futures);
         executorService.shutdown();
 
-        if (DEBUG) System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("computing edges in ms: "+(System.currentTimeMillis()-time));
 
         for (EdgeScorer edgeScorer : edgeScorers) {
             edgeScorer.clean();
@@ -502,7 +491,7 @@ public class Graph<C extends Candidate<?>> {
         boolean changed = true;
         TIntHashSet candidatesToRemove = new TIntHashSet();
         while (changed) {
-            if (DEBUG) System.out.println("another round "+candidatesToRemove.size());
+            if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("another round "+candidatesToRemove.size());
             changed = false;
 
             for (int i = 0; i < numberOfCompounds(); i++) {
@@ -618,7 +607,7 @@ public class Graph<C extends Candidate<?>> {
         }
 
 
-        if (DEBUG) System.out.println("remove "+numberOfDeleted);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("remove "+numberOfDeleted);
     }
 
     /**
