@@ -3,12 +3,12 @@ package de.unijena.bioinf.GibbsSampling.model.distributions;
 import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
+import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Arrays;
 
 public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> implements EdgeScorer<C> {
-    private static final boolean DEBUG = true;
     protected final EdgeScorer<C> edgeScorer;
     protected ScoreProbabilityDistribution scoreProbabilityDistribution;
     protected final double percentageOfEdgesToUse;
@@ -33,11 +33,6 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         int idx = (int)(percentageOfEdgesToUse*sampledScores.length);
         threshold = scoreProbabilityDistribution.toLogPvalue(sampledScores[idx]);
 
-
-        //todo just if EdgeThresholdMinConnectionsFilter not used!!!!!!!!!!!!!!!
-        //set adjusted threshold for scorer
-//        edgeScorer.setThreshold(scoreProbabilityDistribution.getThreshold());
-//        edgeScorer.prepare(candidates);
     }
 
     private double[] excludeZeros(double[] sampledScores){
@@ -52,7 +47,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         edgeScorer.prepare(candidates);
 
         double[] sampledScores;
-        if (DEBUG){
+        if (GibbsMFCorrectionNetwork.DEBUG){
             System.out.println("use all scores");
             TDoubleArrayList sampledScoresList = new TDoubleArrayList();
             for (int i = 0; i < candidates.length; i++) {
@@ -72,7 +67,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         } else {
             int numberOfSamples = 100000;
             HighQualityRandom random = new HighQualityRandom();
-
+            sampledScores = new double[numberOfSamples];
             for(int i = 0; i < numberOfSamples; ++i) {
                 int color1 = random.nextInt(candidates.length);
                 int color2 = random.nextInt(candidates.length - 1);
@@ -91,29 +86,6 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
 
     public void setThresholdAndPrepare(C[][] candidates) {
-//        edgeScorer.prepare(candidates);
-//
-//        double[] sampledScores;
-//        if (DEBUG){
-//            System.out.println("use all scores");
-//            TDoubleArrayList sampledScoresList = new TDoubleArrayList();
-//            for (int i = 0; i < candidates.length; i++) {
-//                C[] c1 = candidates[i];
-//                for (int j = i+1; j < candidates.length; j++) {
-//                    C[] c2 = candidates[j];
-//                    for (int k = 0; k < c1.length; k++) {
-//                        C cc1 = c1[k];
-//                        for (int l = 0; l < c2.length; l++) {
-//                            C cc2 = c2[l];
-//                            sampledScoresList.add(this.edgeScorer.scoreWithoutThreshold(cc1, cc2));
-//                        }
-//                    }
-//                }
-//            }
-//            sampledScores = sampledScoresList.toArray();
-//        } else {
-//            sampledScores = sampleScores(candidates);
-//        }
         double[] sampledScores = sampleScores(candidates);
         estimateDistribution(sampledScores);
 
@@ -122,8 +94,6 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         int idx = (int)(percentageOfEdgesToUse*sampledScores.length);
         threshold = sampledScores[idx];
 
-
-        //todo just if EdgeThresholdMinConnectionsFilter not used!!!!!!!!!!!!!!!
         //set adjusted threshold for scorer
         edgeScorer.setThreshold(threshold);
         edgeScorer.prepare(candidates);
@@ -133,7 +103,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
         threshold = scoreProbabilityDistribution.toLogPvalue(threshold);
 
-        if (DEBUG) System.out.println("true log p value is "+threshold);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("true log p value is "+threshold);
 
     }
 
@@ -155,7 +125,6 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
     public double score(C candidate1, C candidate2) {
         double score = this.edgeScorer.score(candidate1, candidate2);
         double prob = this.scoreProbabilityDistribution.toLogPvalue(score);
-//        double prob = ((ExponentialDistribution)this.scoreProbabilityDistribution).toPvalue2(score);
         return prob;
     }
 

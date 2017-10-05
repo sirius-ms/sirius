@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
-    private static final boolean DEBUG = false;
+    public static final boolean DEBUG = false;
     public static final int DEFAULT_CORRELATION_STEPSIZE = 10;
     private static final boolean OUTPUT_SAMPLE_PROBABILITY = false;
     protected Graph<C> graph;
@@ -123,8 +123,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 }
                 assert sum > 0.0D;
 
-//                idx = getRandomIdx(0, scores.length-1, sum, scores);
-                idx = getRandomOrdering(0, scores.length)[0];//changed!!!!
+                idx = getRandomOrdering(0, scores.length)[0];
             }
 
             activeIdx[i] = idx;
@@ -420,25 +419,30 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         int absIdx = minIdx-1;
         double sum = 0;
 
-        try {
-            do {
-                absIdx++;
-                sum += probs[absIdx];
-            } while (sum<r);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("sum "+sum);
-            System.err.println("min "+maxIdx+" max "+maxIdx+" absIdx "+absIdx+" "+Arrays.toString(Arrays.copyOfRange(probs, minIdx, maxIdx+1)));
-            System.err.println("probsum "+probSum+" sum "+sum+" r "+r);
-        }
-
         if (DEBUG) {
+            try {
+                do {
+                    absIdx++;
+                    sum += probs[absIdx];
+                } while (sum<r);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("sum "+sum);
+                System.err.println("min "+maxIdx+" max "+maxIdx+" absIdx "+absIdx+" "+Arrays.toString(Arrays.copyOfRange(probs, minIdx, maxIdx+1)));
+                System.err.println("probsum "+probSum+" sum "+sum+" r "+r);
+            }
+
             if (currentRound%10==0) {
                 FragmentsCandidate candidate = (FragmentsCandidate)graph.getPossibleFormulas1D(minIdx).getCandidate();
                 if (candidate.getExperiment().getName().equals("719")){
                     System.out.println("sampled "+(absIdx-minIdx));
                 }
             }
+        } else {
+            do {
+                absIdx++;
+                sum += probs[absIdx];
+            } while (sum<r);
         }
 
         if (absIdx>maxIdx) throw new RuntimeException("sampling by probability produced error");

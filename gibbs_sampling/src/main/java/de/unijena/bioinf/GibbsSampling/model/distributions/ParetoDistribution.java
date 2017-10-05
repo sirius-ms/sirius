@@ -1,10 +1,10 @@
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
+import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import gnu.trove.list.array.TDoubleArrayList;
 
 public class ParetoDistribution implements ScoreProbabilityDistribution {
-    private static final boolean DEBUG = true;
     private double xmin;
     private double alpha;
     private boolean estimateByMedian;
@@ -12,7 +12,7 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
     public ParetoDistribution(double xmin, boolean estimateByMedian) {
         this.estimateByMedian = estimateByMedian;
         this.xmin = Math.max(xmin,0.001);
-        if (DEBUG) System.out.println("pareto xmin "+xmin);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("pareto xmin "+xmin);
     }
 
     public ParetoDistribution(double xmin) {
@@ -39,7 +39,7 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
         this.alpha = (double)l / sum;
         values.sort();
         double var14 = values.get(values.size() / 2);
-        if (DEBUG) {
+        if (GibbsMFCorrectionNetwork.DEBUG) {
             System.out.println("mean: " + values.sum() / (double)l + " | estimate: " + this.alpha);
             System.out.println("median: " + var14 + " | estimate: " + Math.log(2.0D) / Math.log(var14 / this.xmin));
         }
@@ -53,7 +53,7 @@ public class ParetoDistribution implements ScoreProbabilityDistribution {
             }
         }
 
-        System.out.println("alpha estimate " + this.alpha);
+        if (GibbsMFCorrectionNetwork.DEBUG) System.out.println("alpha estimate " + this.alpha);
     }
 
     public double toPvalue(double score) {

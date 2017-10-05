@@ -11,6 +11,7 @@ public class CombinedReaction implements Reaction {
     MolecularFormula simpleReactionGroup;
     MolecularFormula transformationRemovedGroup;
     MolecularFormula transformationAddedGroup;
+    private String reactionString;
 
     public CombinedReaction(Reaction... reactions) {
         if(reactions.length < 1) {
@@ -21,10 +22,15 @@ public class CombinedReaction implements Reaction {
             this.transformationAddedGroup = MolecularFormula.emptyFormula();
             this.stepSize = 0;
 
-            for(int reactionList = 0; reactionList < reactions.length; ++reactionList) {
-                Reaction transformation = reactions[reactionList];
+            StringBuilder builder = new StringBuilder();
+            for(int i = 0; i < reactions.length; ++i) {
+                Reaction transformation = reactions[i];
+                builder.append(transformation.toString());
+                if (i<reactions.length-1) builder.append(", ");
                 this.parseReaction(transformation);
             }
+
+            this.reactionString = builder.toString();
 
             ArrayList var4 = new ArrayList();
             if(!this.simpleReactionGroup.isEmpty()) {
@@ -113,11 +119,12 @@ public class CombinedReaction implements Reaction {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer("CombinedReaction{");
-        sb.append("netChange=").append(this.netChange);
-        sb.append(", reactions=").append(this.reactions == null?"null":Arrays.asList(this.reactions).toString());
-        sb.append('}');
-        return sb.toString();
+        return reactionString;
+//        StringBuffer sb = new StringBuffer("CombinedReaction{");
+//        sb.append("netChange=").append(this.netChange);
+//        sb.append(", reactions=").append(this.reactions == null?"null":Arrays.asList(this.reactions).toString());
+//        sb.append('}');
+//        return sb.toString();
     }
 
     public boolean equals(Object o) {

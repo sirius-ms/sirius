@@ -116,9 +116,12 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
                     max = a;
                 }
 
-                if(max != 0.0D) {
+//                if(max != 0.0D) { //changed
+                if(max > 0.0D) {
                     connectionsList[i].add(j);
                     connectionsList[j].add(i);
+                } else if (max < 0d) {
+                    System.err.println("Edge has a negative weight");
                 }
             }
         }

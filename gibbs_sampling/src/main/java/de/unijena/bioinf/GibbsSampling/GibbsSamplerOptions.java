@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface GibbsSamplerOptions {
 
+
+
     @Option(
             shortName = {"mgf"},
             longName = {"mgf"},
@@ -111,12 +113,12 @@ public interface GibbsSamplerOptions {
     )
     boolean isFTAlign();
 
-    @Option(
-            longName = {"pcp"},
-            description = "file with score and 1-PEP for CommonFragmentAndLossScorer",
-            defaultToNull = true
-    )
-    String getPCPScoreFile();
+//    @Option(
+//            longName = {"pcp"},
+//            description = "file with score and 1-PEP for CommonFragmentAndLossScorer",
+//            defaultToNull = true
+//    )
+//    String getPCPScoreFile();
 
     @Option(
             longName = {"correct"},
@@ -169,5 +171,8 @@ public interface GibbsSamplerOptions {
 //    )
 //    boolean useFTScoring();
 
+
+    @Option(longName = "test", description = "do some tests on graph generation", defaultToNull = true)
+    boolean isTestGraphGeneration();
 
 }
