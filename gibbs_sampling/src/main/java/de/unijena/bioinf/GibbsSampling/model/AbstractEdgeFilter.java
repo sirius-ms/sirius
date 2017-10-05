@@ -31,10 +31,13 @@ public abstract class AbstractEdgeFilter implements EdgeFilter {
                     max = w1;
                 }
 
-                if(max != 0.0D) {
+//                if(max != 0.0D) { //changed
+                if(max > 0.0D) {
                     connectionsList[connections].add(i);
                     connectionsList[i].add(connections);
-                }
+                } else if (max < 0d) {
+                System.err.println("Edge has a negative weight");
+            }
             }
         }
 

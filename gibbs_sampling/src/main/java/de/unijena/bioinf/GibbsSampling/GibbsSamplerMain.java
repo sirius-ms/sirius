@@ -24,7 +24,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.procedure.TIntIntProcedure;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
-import org.apache.commons.math3.analysis.function.Exp;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -86,7 +85,7 @@ public class GibbsSamplerMain {
     public static void main(String[] args) throws IOException {
         GibbsSamplerMain main = new GibbsSamplerMain();
         if(args.length != 0 && !args[0].equals("--help") && !args[0].equals("-h")) {
-            GibbsSamplerOptions opts = (GibbsSamplerOptions)CliFactory.createCli(GibbsSamplerOptions.class).parseArguments(args);
+            GibbsSamplerOptions opts = CliFactory.createCli(GibbsSamplerOptions.class).parseArguments(args);
             mgfFile = Paths.get(opts.getSpectrumsFile(), new String[0]);
             libraryHits = Paths.get(opts.getCorrectHitsFile(), new String[0]);
             outputFile = Paths.get(opts.getOutputPath(), new String[0]);
@@ -127,60 +126,47 @@ public class GibbsSamplerMain {
 //            Reaction[] reactions = parseReactions(stepsize);
 //            new ReactionScorer(reactions, new ExponentialReactionStepSizeScorer(4.0D));
             EdgeScorer[] edgeScorers;
-            if(opts.getPCPScoreFile() != null) {
-                probabilityDistribution = readPCP(opts.getPCPScoreFile());
-                CommonFragmentAndLossScorer commonFragmentAndLossScorer;
-                if (false) {
-                    commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(opts.getThresholdFilter());
-                } else {
-                    commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(opts.getThresholdFilter());
-                }
-
-                ScoreProbabilityDistributionEstimator scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
-                edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
+            if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
+                probabilityDistribution = new ExponentialDistribution(opts.isMedian());
+            } else if(opts.getProbabilityDistribution().toLowerCase().equals("pareto")) {
+                probabilityDistribution = new ParetoDistribution(0.134, opts.isMedian());
             } else {
-                if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
-                    probabilityDistribution = new ExponentialDistribution(opts.isMedian());
-                } else if(opts.getProbabilityDistribution().toLowerCase().equals("pareto")) {
-                    probabilityDistribution = new ParetoDistribution(0.134, opts.isMedian());
-                } else {
-                    if(!opts.getProbabilityDistribution().toLowerCase().equals("lognormal") && !opts.getProbabilityDistribution().toLowerCase().equals("log-normal")) {
-                        System.out.println("unkown distribution function");
-                        return;
-                    }
-
-                    probabilityDistribution = new LogNormalDistribution(opts.isMedian());
+                if(!opts.getProbabilityDistribution().toLowerCase().equals("lognormal") && !opts.getProbabilityDistribution().toLowerCase().equals("log-normal")) {
+                    System.out.println("unkown distribution function");
+                    return;
                 }
 
-                //todo changed !!!?!?!??!?!?!
-                double minimumOverlap = 0.00D; //changed from 0.1
-
-                CommonFragmentAndLossScorer commonFragmentAndLossScorer;
-                if (false) {
-                    commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(minimumOverlap);
-                } else {
-                    commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
-                }
-
-                EdgeScorer scoreProbabilityDistributionEstimator;
-                if (opts.getParameters()==null || opts.getParameters().length()<=0){
-                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
-                } else {
-                    double[] parameters = Arrays.stream(opts.getParameters().replace("\"", "").replace("'", "").split(",")).mapToDouble(s->Double.parseDouble(s)).toArray();
-                    System.out.println("parameters: "+Arrays.toString(parameters));
-                    if (probabilityDistribution instanceof ExponentialDistribution){
-                        probabilityDistribution = new ExponentialDistribution(parameters[0]);
-                    } else if (probabilityDistribution instanceof LogNormalDistribution){
-                        probabilityDistribution = new LogNormalDistribution(parameters[0], parameters[1]);
-                    } else {
-                        throw new RuntimeException("cannot set parameters for given distribution");
-                    }
-
-                    scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionFix(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
-                }
-
-                edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
+                probabilityDistribution = new LogNormalDistribution(opts.isMedian());
             }
+
+            //todo changed !!!?!?!??!?!?!
+            double minimumOverlap = 0.00D; //changed from 0.1
+
+            CommonFragmentAndLossScorer commonFragmentAndLossScorer;
+            if (false) {
+                commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(minimumOverlap);
+            } else {
+                commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
+            }
+
+            EdgeScorer scoreProbabilityDistributionEstimator;
+            if (opts.getParameters()==null || opts.getParameters().length()<=0){
+                scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
+            } else {
+                double[] parameters = Arrays.stream(opts.getParameters().replace("\"", "").replace("'", "").split(",")).mapToDouble(s->Double.parseDouble(s)).toArray();
+                System.out.println("parameters: "+Arrays.toString(parameters));
+                if (probabilityDistribution instanceof ExponentialDistribution){
+                    probabilityDistribution = new ExponentialDistribution(parameters[0]);
+                } else if (probabilityDistribution instanceof LogNormalDistribution){
+                    probabilityDistribution = new LogNormalDistribution(parameters[0], parameters[1]);
+                } else {
+                    throw new RuntimeException("cannot set parameters for given distribution");
+                }
+
+                scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionFix(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
+            }
+
+            edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
 
             if (opts.isMakeStats()) {
                 main.makeStats(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
@@ -190,7 +176,11 @@ public class GibbsSamplerMain {
                 main.doCVEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
             } else if(opts.isRobustnessTest()) {
                 main.testRobustness(treeDir, mgfFile, libraryHits, outputFile, edgeScorers, opts);
+            } else if (opts.isTestGraphGeneration()){
+                System.out.println("test graph");
+                main.testGraphGeneration(treeDir, mgfFile, libraryHits, edgeScorers, opts);
             } else {
+                System.out.println("do evaluation");
                 main.doEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
             }
 
@@ -567,6 +557,315 @@ public class GibbsSamplerMain {
     }
 
 
+    protected void testGraphGeneration(Path treeDir, Path mgfFile, Path libraryHitsPath, EdgeScorer[] edgeScorers, GibbsSamplerOptions opts) throws IOException {
+//        if (GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("don't initialize MF candidates by most likely");
+        int workerCount = Runtime.getRuntime().availableProcessors();
+//            workerCount = 6;
+        //Zloty
+        if (Runtime.getRuntime().availableProcessors()>20){
+            workerCount /= 2;
+        }
+
+
+        //all possible netto changes of MolecularFormulas using on of the reactions.
+        Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
+
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
+
+        parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
+
+        Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+
+
+        double useFreq = 0.0; //use x*100 percent of knowledge
+        //todo don't use as strict information
+        Set<String> evaluationIds = extractEvaluationIds(candidatesMap, correctHits, useFreq, netSingleReactionDiffs);
+
+
+
+
+        System.out.println("adding dummy node");
+        addNotExplainableDummy(candidatesMap, maxCandidates);
+
+
+
+
+        String[] ids = candidatesMap.keySet().stream().filter(key -> candidatesMap.get(key).size()>0).toArray(s -> new String[s]);
+        FragmentsCandidate[][] candidatesArray = new FragmentsCandidate[ids.length][];
+
+        for (int i = 0; i < ids.length; i++) {
+            String id = ids[i];
+            candidatesArray[i] = candidatesMap.get(id).toArray(new FragmentsCandidate[0]);
+        }
+
+
+        System.out.println("before");
+        statisticsOfKnownCompounds(candidatesArray, ids, evaluationIds, correctHits);
+
+        NodeScorer[] nodeScorers;
+        if (useLibraryHits){
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1), new LibraryHitScorer(libraryScore, 0.5, netSingleReactionDiffs)};
+            System.out.println("use LibraryHitScorer");
+        } else {
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1)};
+            System.out.println("ignore Library Hits");
+        }
+
+
+
+        //1. are their any changes after running gibbs?
+        {
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            System.out.println("number of candidates: "+gibbsParallel.getGraph().getSize());
+
+            Graph graphBefore = gibbsParallel.getGraph();
+
+            System.out.println("start");
+            gibbsParallel.iteration(iterationSteps, burnInIterations);
+
+            Graph graphAfter = gibbsParallel.getGraph();
+
+            compare(graphBefore, graphAfter);
+        }
+
+
+
+        //2. differences for different EdgeFilter
+        {
+            edgeFilter = new EdgeThresholdFilter(0.9);
+            GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            System.out.println("number of candidates: "+gibbsParallel.getGraph().getSize());
+
+
+            Graph graphSimpleThres = gibbsParallel.getGraph();
+
+            if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
+                probabilityDistribution = new ExponentialDistribution(opts.isMedian());
+            } else if(opts.getProbabilityDistribution().toLowerCase().equals("pareto")) {
+                probabilityDistribution = new ParetoDistribution(0.134, opts.isMedian());
+            } else {
+                if(!opts.getProbabilityDistribution().toLowerCase().equals("lognormal") && !opts.getProbabilityDistribution().toLowerCase().equals("log-normal")) {
+                    System.out.println("unkown distribution function");
+                    return;
+                }
+
+                probabilityDistribution = new LogNormalDistribution(opts.isMedian());
+            }
+
+            //todo changed !!!?!?!??!?!?!
+            double minimumOverlap = 0.00D; //changed from 0.1
+
+            CommonFragmentAndLossScorer commonFragmentAndLossScorer;
+            if (false) {
+                commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(minimumOverlap);
+            } else {
+                commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
+            }
+
+            EdgeScorer scoreProbabilityDistributionEstimator;
+            if (opts.getParameters()==null || opts.getParameters().length()<=0){
+                scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
+            } else {
+                double[] parameters = Arrays.stream(opts.getParameters().replace("\"", "").replace("'", "").split(",")).mapToDouble(s->Double.parseDouble(s)).toArray();
+                System.out.println("parameters: "+Arrays.toString(parameters));
+                if (probabilityDistribution instanceof ExponentialDistribution){
+                    probabilityDistribution = new ExponentialDistribution(parameters[0]);
+                } else if (probabilityDistribution instanceof LogNormalDistribution){
+                    probabilityDistribution = new LogNormalDistribution(parameters[0], parameters[1]);
+                } else {
+                    throw new RuntimeException("cannot set parameters for given distribution");
+                }
+
+                scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionFix(commonFragmentAndLossScorer, probabilityDistribution, opts.getThresholdFilter());
+            }
+
+            edgeScorers = new EdgeScorer[]{scoreProbabilityDistributionEstimator};
+
+
+            edgeFilter = new EdgeThresholdMinConnectionsFilter(0.9, 1, 10);
+            gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            System.out.println("number of candidates: "+gibbsParallel.getGraph().getSize());
+
+            Graph graphComplexThres = gibbsParallel.getGraph();
+
+            compare(graphSimpleThres, graphComplexThres);
+
+
+        }
+
+
+
+    }
+
+    /*
+    doing some nice comparison report of 2 Graphs
+     */
+    protected void compare(Graph<FragmentsCandidate> graph1, Graph<FragmentsCandidate> graph2){
+        //assert same node set?
+        //number of edges
+        //edges subset in both directions
+
+
+        //edge scores different?
+        // especially. Are their different scores for unused edges?
+        // compare thresholds
+
+        System.out.printf("number of compounds:\t%d\t%d%n", graph1.numberOfCompounds(), graph2.numberOfCompounds());
+        System.out.printf("number of mf candidates:\t%d\t%d%n", graph1.getPossibleFormulas1D().length, graph2.getPossibleFormulas1D().length);
+        System.out.printf("number of mf candidates:\t%d\t%d%n", graph1.getSize(), graph2.getSize());
+
+        int numberOfEdges1 = numberOfEdges(graph1);
+        int numberOfEdges2 = numberOfEdges(graph2);
+        System.out.printf("number of edges:\t%d\t%d%n", numberOfEdges1, numberOfEdges2);
+
+        int[][] connections1 = graph1.getConnections();
+        int[][] connections2 = graph2.getConnections();
+        int numberOfCommons = 0;
+        for (int i = 0; i < connections1.length; i++) {
+            int[] c1 = connections1[i];
+            int[] c2 = connections2[i];
+            numberOfCommons += numberOfCommon(c1, c2);
+        }
+        numberOfCommons /=2; //both directions
+        System.out.printf("number of common edges:\t%d%n", numberOfCommons);
+        System.out.printf("number of common unique edges:\t%d\t%d%n", (numberOfEdges1-numberOfCommons), (numberOfEdges2-numberOfCommons));
+
+
+
+
+        //same nodes?
+        Scored<FragmentsCandidate>[] candidates1 = graph1.getPossibleFormulas1D();
+        Scored<FragmentsCandidate>[] candidates2 = graph2.getPossibleFormulas1D();
+        int differentScore = 0;
+        int differentMF = 0;
+        int differentCandiate = 0;
+        for (int i = 0; i < candidates1.length; i++) {
+            Scored<FragmentsCandidate> c1 = candidates1[i];
+            Scored<FragmentsCandidate> c2 = candidates2[i];
+            if (Math.abs(c1.getScore()-c2.getScore())>1e-16) ++differentScore;
+            if (!c1.getCandidate().getFormula().equals(c2.getCandidate().getFormula())) ++differentMF;
+            if (!c1.getCandidate().getFragments().equals(c2.getCandidate().getFragments())) ++differentCandiate;
+        }
+
+        System.out.println("nodes");
+        System.out.printf("different mf:%d%n", differentMF);
+        System.out.printf("different candidates:%d%n", differentCandiate);
+        System.out.printf("different score:%d%n", differentScore);
+
+
+
+        //edge scores
+        System.out.println("used edge scores");
+        int sameScores = 0;
+        int biggerScores1 = 0;
+        int biggerScores2 = 0;
+        for (int i = 0; i < connections1.length; i++) {
+            int[] c1 = connections1[i];
+            int[] c2 = connections2[i];
+            int[] commons = extractCommons(c1, c2);
+            for (int c : commons) {
+                double score1 = graph1.getLogWeight(i, c);
+                double score2 = graph2.getLogWeight(i, c);
+                if (Math.abs(score1-score2)<1e-16) ++sameScores;
+                else if (score1>score2) ++biggerScores1;
+                else ++biggerScores2;
+            }
+        }
+        System.out.printf("edges with same scores:\t%d%n", sameScores);
+        System.out.printf("edges with larger scores:\t%d\t%d%n", biggerScores1, biggerScores2);
+
+
+        //all same edge weights!?? just for equal graphs
+        System.out.println("all edge scores");
+        sameScores = 0;
+        biggerScores1 = 0;
+        biggerScores2 = 0;
+
+        for (int i = 0; i < graph1.getSize(); i++) {
+            int[] c1 = graph1.getLogWeightConnections(i);
+            int[] c2 = graph2.getLogWeightConnections(i);
+            int[] commons = extractCommons(c1, c2);
+            for (int c : commons) {
+                double score1 = graph1.getLogWeight(i, c);
+                double score2 = graph2.getLogWeight(i, c);
+                if (Math.abs(score1-score2)<1e-16) ++sameScores;
+                else if (score1>score2) ++biggerScores1;
+                else ++biggerScores2;
+            }
+        }
+        System.out.printf("(non-)edges with same scores:\t%d%n", sameScores);
+        System.out.printf("(non-)edges with larger scores:\t%d\t%d%n", biggerScores1, biggerScores2);
+        
+        //threshold
+        System.out.println("thresholds");
+        int sameThresholds = 0;
+        int biggerThresholds1 = 0;
+        int biggerThresholds2 = 0;
+        double[] thresholds1 = IntStream.range(0, graph1.getSize()).mapToDouble(i->graph1.getEdgeThreshold(i)).toArray();
+        double[] thresholds2 = IntStream.range(0, graph2.getSize()).mapToDouble(i->graph2.getEdgeThreshold(i)).toArray();
+        for (int i = 0; i < thresholds1.length; i++) {
+            double t1 = thresholds1[i];
+            double t2 = thresholds2[i];
+            if (Math.abs(t1-t2)<1e-16) ++sameThresholds;
+            else if (t1>t2) ++biggerThresholds1;
+            else ++biggerThresholds2;
+
+        }
+
+        System.out.printf("same thresolds:\t%d%n", sameThresholds);
+        System.out.printf("larger thresolds:\t%d\t%d%n", biggerThresholds1, biggerThresholds2);
+
+    }
+
+    private int numberOfEdges(Graph graph) {
+        int[][] connections = graph.getConnections();
+        int numberOfConnections = Arrays.stream(connections).mapToInt(c -> c.length).sum()/2;
+
+        int numberOfConnections2 = IntStream.range(0,graph.getSize()).map(i -> graph.getNumberOfConnections(i)).sum()/2;
+
+        assert numberOfConnections==numberOfConnections2;
+
+        return numberOfConnections;
+    }
+
+    private int numberOfCommon(int[] c1, int[] c2) {
+        int[] C1 = Arrays.copyOf(c1, c1.length);
+        int[] C2 = Arrays.copyOf(c2, c2.length);
+        Arrays.sort(C1);
+        Arrays.sort(C2);
+
+        int i=0, j=0;
+        int common = 0;
+        while (i<C1.length && j<C2.length) {
+            if (C1[i]<C2[j]) ++i;
+            else if (C1[i]>C2[j]) ++j;
+            else {
+                ++common;
+                ++i;++j;
+            }
+        }
+        return common;
+    }
+
+    private int[] extractCommons(int[] c1, int[] c2) {
+        int[] C1 = Arrays.copyOf(c1, c1.length);
+        int[] C2 = Arrays.copyOf(c2, c2.length);
+        Arrays.sort(C1);
+        Arrays.sort(C2);
+
+        int i=0, j=0;
+        TIntArrayList list = new TIntArrayList();
+        while (i<C1.length && j<C2.length) {
+            if (C1[i]<C2[j]) ++i;
+            else if (C1[i]>C2[j]) ++j;
+            else {
+                list.add(C1[i]);
+                ++i;++j;
+            }
+        }
+        return list.toArray();
+    }
+
     protected void doEvaluation(Path treeDir, Path mgfFile, Path libraryHitsPath, Path outputFile, EdgeScorer[] edgeScorers) throws IOException {
         if (!GibbsMFCorrectionNetwork.iniAssignMostLikely) throw new RuntimeException("initialize MF candidates by most likely");
         int workerCount = Runtime.getRuntime().availableProcessors();
@@ -647,6 +946,8 @@ public class GibbsSamplerMain {
             Scored<FragmentsCandidate>[][] result = twoPhaseGibbsSampling.getChosenFormulas();
             System.out.println("standard");
             statisticsOfKnownCompounds(result, twoPhaseGibbsSampling.getIds(), evaluationIds, correctHits);
+
+            if (outputFile!=null) writeBestFormulas(twoPhaseGibbsSampling.getChosenFormulas(), twoPhaseGibbsSampling.getGraph(), outputFile);
         } else {
             //GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 20);
             //changed
@@ -672,6 +973,8 @@ public class GibbsSamplerMain {
             result = gibbsParallel.getChosenFormulasByMaxPosterior();
             System.out.println("maxPosterior");
             statisticsOfKnownCompounds(result, ids, evaluationIds, correctHits);
+
+            if (outputFile!=null) writeBestFormulas(gibbsParallel.getChosenFormulasBySampling(), gibbsParallel.getGraph(), outputFile);
         }
     }
 
@@ -818,6 +1121,22 @@ public class GibbsSamplerMain {
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset(), new OpenOption[0]);
         String SEP = "\t";
 
+        //adding biotransformations very likely makes it slow
+        System.out.println("parsing reactions");
+        Reaction[] reactions = parseReactions(3);
+        Map<MolecularFormula, List<Reaction>> netSingleReactionDiffs = new HashMap<>();
+        for (Reaction reaction : reactions) {
+            MolecularFormula net = reaction.netChange();
+            List<Reaction> list = netSingleReactionDiffs.get(net);
+            if (list==null){
+                list = new ArrayList<>();
+                netSingleReactionDiffs.put(net, list);
+            }
+            list.add(reaction);
+        }
+        System.out.println("number of transformations: "+reactions.length);
+        System.out.println("number of unique mf: "+netSingleReactionDiffs.size());
+
         for(int i = 0; i < results.length; ++i) {
             Scored<FragmentsCandidate>[] result = results[i];
             Scored<FragmentsCandidate> best = result[0];
@@ -826,13 +1145,56 @@ public class GibbsSamplerMain {
             String formula = best.getCandidate().getFormula().formatByHill();
             String iniFormula = initalBest.getFormula().formatByHill();
             int numberOfEdges = graph.getConnections(graph.getAbsoluteFormulaIdx(i, 0)).length;
-            double score = (double)result.length / best.getScore();
-            writer.write(id + SEP + iniFormula + SEP + formula + SEP + score + SEP + numberOfEdges + "\n");
+            int numberOfCandidates = result.length;
+            boolean isCorrect = best.getCandidate().isCorrect();
+            double score = best.getScore();
+            String libraryHit = best.getCandidate().hasLibraryHit()?best.getCandidate().getLibraryHit().getMolecularFormula().formatByHill():null;
+            double cosine = best.getCandidate().hasLibraryHit()?best.getCandidate().getLibraryHit().getCosine():-1;
+            StringJoiner joiner = new StringJoiner(SEP);
+            joiner.add(id); joiner.add(iniFormula); joiner.add(formula); joiner.add(String.valueOf(score)); joiner.add(String.valueOf(numberOfCandidates)); joiner.add(String.valueOf(numberOfEdges)); joiner.add(String.valueOf(isCorrect));
+            if (libraryHit!=null){
+                int pos = -1;
+                String correctMF = null;
+                String correctStruct = best.getCandidate().getLibraryHit().getStructure();
+                for (int j = 0; j < result.length; j++) {
+                    if (result[j].getCandidate().isCorrect){
+                        pos = j+1;
+                        correctMF = result[j].getCandidate().getFormula().formatByHill();
+                        break;
+                    };
+
+                }
+                joiner.add(libraryHit);
+                joiner.add(String.valueOf(cosine));
+                joiner.add(correctStruct);
+                joiner.add(String.valueOf(pos));
+                if (pos>=0){
+                    joiner.add(correctMF);
+
+                }
+
+                List<Reaction> possibleReactions = matchingReactions(best.getCandidate().getFormula(), best.getCandidate().getLibraryHit().getMolecularFormula(), netSingleReactionDiffs);
+
+                if (possibleReactions!=null){
+                    for (Reaction possibleReaction : possibleReactions) {
+                        joiner.add(possibleReaction.toString());
+                    }
+                }
+
+            }
+            writer.write(joiner.toString()); writer.write("\n");
+//            writer.write(id + SEP + iniFormula + SEP + formula + SEP + score + SEP + numberOfEdges + SEP + isCorrect + (libraryHit!=null?SEP+libraryHit:"") + "\n");
         }
 
         writer.close();
     }
 
+
+    private List<Reaction> matchingReactions(MolecularFormula candidate, MolecularFormula libraryHit, Map<MolecularFormula, List<Reaction>> netSingleReactionDiffs) {
+        MolecularFormula net = candidate.subtract(libraryHit);
+        if (net.getMass()<0) net = net.negate();
+        return netSingleReactionDiffs.get(net);
+    }
 
     private void writeBestFormulas(Scored<FragmentsCandidate>[][] results, FragmentsCandidate[][] initialAssignment, Graph graph, Path outputFile) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset(), new OpenOption[0]);
