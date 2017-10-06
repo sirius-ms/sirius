@@ -86,8 +86,8 @@ public interface ZodiacOptions {
 
     @Option(
             longName = {"distribution"},
-            description = "which probability distribution to assume: exponential, lognormal",
-            defaultValue = {"exponential"}
+            description = "which probability distribution to assume: lognormal, exponential",
+            defaultValue = {"lognormal"}
     )
     EdgeScorings getProbabilityDistribution();
 
