@@ -165,14 +165,8 @@ public interface GibbsSamplerOptions {
     @Option(longName = "twophase", description = "do 2 rounds of gibbs sampling. First one with good quality compounds, second one with all.")
     boolean isTwoPhase();
 
-//    @Option(
-//            longName = {"treescoring"},
-//            description = ""
-//    )
-//    boolean useFTScoring();
 
-
-    @Option(longName = "test", description = "do some tests on graph generation", defaultToNull = true)
-    boolean isTestGraphGeneration();
+//    @Option(longName = "test", description = "do some tests on graph generation", defaultToNull = true)
+//    boolean isTestGraphGeneration();
 
 }

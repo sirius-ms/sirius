@@ -122,9 +122,6 @@ public class GibbsSamplerMain {
 
             is2Phase = opts.isTwoPhase();
 
-            byte stepsize = 2;
-//            Reaction[] reactions = parseReactions(stepsize);
-//            new ReactionScorer(reactions, new ExponentialReactionStepSizeScorer(4.0D));
             EdgeScorer[] edgeScorers;
             if(opts.getProbabilityDistribution().toLowerCase().equals("exponential")) {
                 probabilityDistribution = new ExponentialDistribution(opts.isMedian());
@@ -142,12 +139,7 @@ public class GibbsSamplerMain {
             //todo changed !!!?!?!??!?!?!
             double minimumOverlap = 0.00D; //changed from 0.1
 
-            CommonFragmentAndLossScorer commonFragmentAndLossScorer;
-            if (false) {
-                commonFragmentAndLossScorer = new CommonFragmentAndLossWithTreeScoresScorer(minimumOverlap);
-            } else {
-                commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
-            }
+            CommonFragmentAndLossScorer commonFragmentAndLossScorer = new CommonFragmentAndLossScorer(minimumOverlap);
 
             EdgeScorer scoreProbabilityDistributionEstimator;
             if (opts.getParameters()==null || opts.getParameters().length()<=0){
@@ -176,9 +168,9 @@ public class GibbsSamplerMain {
                 main.doCVEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
             } else if(opts.isRobustnessTest()) {
                 main.testRobustness(treeDir, mgfFile, libraryHits, outputFile, edgeScorers, opts);
-            } else if (opts.isTestGraphGeneration()){
-                System.out.println("test graph");
-                main.testGraphGeneration(treeDir, mgfFile, libraryHits, edgeScorers, opts);
+//            } else if (opts.isTestGraphGeneration()){
+//                System.out.println("test graph");
+//                main.testGraphGeneration(treeDir, mgfFile, libraryHits, edgeScorers, opts);
             } else {
                 System.out.println("do evaluation");
                 main.doEvaluation(treeDir, mgfFile, libraryHits, outputFile, edgeScorers);
@@ -256,8 +248,7 @@ public class GibbsSamplerMain {
 
         long numberOfEdgesBound = (long)(numberOfCandidates * (numberOfCandidates - maxCandidates));
         System.out.println("numberOfEdgesBound " + numberOfEdgesBound);
-        double samplingProb = 1000000.0D / (double)numberOfEdgesBound;
-//        Path outpath = Paths.get("sampled_scoresAndMatches.csv", new String[0]);
+        double samplingProb = 1000000.0D / numberOfEdgesBound;
         Path outpath = outputFile;
         HighQualityRandom rando = new HighQualityRandom();
         BufferedWriter writer = Files.newBufferedWriter(outpath, new OpenOption[0]);
@@ -265,33 +256,57 @@ public class GibbsSamplerMain {
 //        writer.write("MF1\tMF2\ttreeSize1\ttreeSize2\tmass1\tmass2\tcommonF\tcommonL\tCommonFragmentAndLossScorer");
         writer.write("MF1\tMF2\ttreeSize1\ttreeSize2\tmass1\tmass2\tCommonFragmentAndLossScorer");
 
-        for(int i = 0; i < candidatesArray.length; ++i) {
-            FragmentsCandidate[] candidates1 = candidatesArray[i];
+        if (numberOfEdgesBound>0){
+            for(int i = 0; i < candidatesArray.length; ++i) {
+                FragmentsCandidate[] candidates1 = candidatesArray[i];
 
-            for(int j = i + 1; j < candidatesArray.length; ++j) {
-                FragmentsCandidate[] candidates2 = candidatesArray[j];
+                for(int j = i + 1; j < candidatesArray.length; ++j) {
+                    FragmentsCandidate[] candidates2 = candidatesArray[j];
 
-                for(int k = 0; k < candidates1.length; ++k) {
-                    FragmentsCandidate c1 = candidates1[k];
+                    for(int k = 0; k < candidates1.length; ++k) {
+                        FragmentsCandidate c1 = candidates1[k];
 
-                    for(int l = 0; l < candidates2.length; ++l) {
-                        FragmentsCandidate c2 = candidates2[l];
-                        if(rando.nextDouble() < samplingProb) {
-                            writer.write("\n" + c1.getFormula().formatByHill() + "\t" + c2.getFormula().formatByHill());
-                            int treesize1 = c1.getFragments().length;
-                            int treesize2 = c2.getFragments().length;
-                            writer.write("\t" + treesize1 + "\t" + treesize2);
-                            writer.write("\t" + c1.getFormula().getMass() + "\t" + c2.getFormula().getMass());
+                        for(int l = 0; l < candidates2.length; ++l) {
+                            FragmentsCandidate c2 = candidates2[l];
+                            if(rando.nextDouble() < samplingProb) {
+                                writer.write("\n" + c1.getFormula().formatByHill() + "\t" + c2.getFormula().formatByHill());
+                                int treesize1 = c1.getFragments().length;
+                                int treesize2 = c2.getFragments().length;
+                                writer.write("\t" + treesize1 + "\t" + treesize2);
+                                writer.write("\t" + c1.getFormula().getMass() + "\t" + c2.getFormula().getMass());
 //                            int commonF = commonFragmentScorer.getNumberOfCommon(c1, c2);
 //                            int commonL = commonLossScorer.getNumberOfCommon(c1, c2);
-//                            writer.write("\t" + commonF + "\t" + commonL);
-                            double score = commonFragmentAndLossScorer.scoreWithoutThreshold(c1, c2);
-                            writer.write("\t" + String.valueOf(score));
+//                            writer.write("\t" + commonF + "\t" + commonL);            HighQualityRandom random = new HighQualityRandom();
+                                double score = commonFragmentAndLossScorer.scoreWithoutThreshold(c1, c2);
+                                writer.write("\t" + String.valueOf(score));
+                            }
                         }
                     }
                 }
             }
+        } else {
+            int numberOfSamples = 500000;
+            for (int i = 0; i < numberOfSamples; i++) {
+                int color1 = rando.nextInt(candidatesArray.length);
+                int color2 = rando.nextInt(candidatesArray.length - 1);
+                if(color2 >= color1) {
+                    ++color2;
+                }
+                
+                int mf1 = rando.nextInt(candidatesArray[color1].length);
+                int mf2 = rando.nextInt(candidatesArray[color2].length);
+
+                writer.write("\n" + candidatesArray[color1][mf1].getFormula().formatByHill() + "\t" + candidatesArray[color2][mf2].getFormula().formatByHill());
+                int treesize1 = candidatesArray[color1][mf1].getFragments().length;
+                int treesize2 = candidatesArray[color2][mf2].getFragments().length;
+                writer.write("\t" + treesize1 + "\t" + treesize2);
+                writer.write("\t" + candidatesArray[color1][mf1].getFormula().getMass() + "\t" + candidatesArray[color2][mf2].getFormula().getMass());
+                
+                double score = commonFragmentAndLossScorer.scoreWithoutThreshold(candidatesArray[color1][mf1], candidatesArray[color2][mf2]);;
+                writer.write("\t" + String.valueOf(score));
+            }
         }
+
         writer.close();
 
     }
