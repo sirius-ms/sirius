@@ -58,12 +58,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class GibbsSamplerMain {
-    private static Path formulaFile = Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/computedTrees/self-training-output_louis_trees_all.csv", new String[0]);
-    private static Path outputFile = Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/computedTrees/gibbs_sample_X.csv", new String[0]);
-    private static Path treeDir = Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/computedTrees/louis_trees_all", new String[0]);
-    private static Path mgfFile = Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/spectral_data_ms1-2.mgf", new String[0]);
-    private static Path libraryHits = Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/libraryHitParsing/cleanHitsTable.csv", new String[0]);
-    private static Path graphOutputDir = Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/gibbsNetAll2", new String[0]);
+    private static Path formulaFile;
+    private static Path outputFile;
+    private static Path treeDir;
+    private static Path mgfFile;
+    private static Path libraryHits;
+    private static Path graphOutputDir;
     private static int iterationSteps = 100000;
     private static int burnInIterations = 10000;
     private static EdgeFilter edgeFilter = new EdgeThresholdFilter(1.0D);
@@ -1453,17 +1453,6 @@ public class GibbsSamplerMain {
 
     public static  <C extends Candidate & HasLibraryHit> void parseLibraryHits(Path libraryHitsPath, Path mgfFile, Map<String, List<C>> candidatesMap) throws IOException {
         try {
-            //todo test missing values !!!!
-//            final MsExperimentParser parser = new MsExperimentParser();
-//            List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
-
-//            //assumption "#Scan#" is the number of the ms2 scan starting with 1
-//            String[] featureIDs = new String[allExperiments.size()];
-//            int j = 0;
-//            for (Ms2Experiment experiment : allExperiments) {
-//                featureIDs[j++] = experiment.getName();
-//            }
-
             List<String> featureIDs = new ArrayList<>();
             try(BufferedReader reader = Files.newBufferedReader(mgfFile)){
                 String line;
@@ -1566,33 +1555,6 @@ public class GibbsSamplerMain {
         return false;
     }
 
-
-//    public Map<String, List<Scored<Candidate>>> getScoredCandidatesByTreeScore(Map<String, List<Candidate>> candidatesMap) {
-//        //convert and remove negative scores
-////        System.out.println("just CHO");
-////        FormulaConstraints constraints = new FormulaConstraints("CHO");
-//        Map<String, List<Scored<Candidate>>> scoredCandidateMap  = new HashMap<>();
-//        for (Map.Entry<String, List<Candidate>> entry : candidatesMap.entrySet()) {
-//            final String id = entry.getKey();
-//            final List<Candidate> list = entry.getValue();
-//            final List<Scored<Candidate>> scoredList = new ArrayList<>(list.size());
-//            for (Candidate candidate : list) {
-//                final double score = candidate.getTree().getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-////                if (score>0 && constraints.isSatisfied(candidate.getFormula())) {
-//                if (score>0) {
-//                    scoredList.add(new Scored<>(candidate, score));
-//                }
-//
-//            }
-//            if (scoredList.size()==0){
-//                System.out.println("no candidates anymore");
-//            } else {
-//                Collections.sort(scoredList, Scored.desc());
-//                scoredCandidateMap.put(id, scoredList);
-//            }
-//        }
-//        return scoredCandidateMap;
-//    }
 
     public <C extends Candidate>  void guessIonizationAndRemove(Map<String, List<C>> candidateMap, PrecursorIonType[] ionTypes){
         List<String> idList = new ArrayList<>(candidateMap.keySet());
@@ -1938,8 +1900,6 @@ public class GibbsSamplerMain {
                         final String id = name.split("_")[0];
                         assert id.length()>0;
 
-//                        Ms2Experiment experiment = experimentMap.get(id);
-//                        if (experiment.getIonMass()<500 || experiment.getIonMass()>750) continue; //changed
 
                         FTree tree = null;
                         try {
@@ -1951,9 +1911,7 @@ public class GibbsSamplerMain {
                             throw new RuntimeException(e);
                         }
 
-                        //todo changed
-//                        if(tree.numberOfVertices() >= 3) {
-                        //hier nochmal schauen....
+
                         if(tree.numberOfVertices() >= 1) {
                             tree = new IonTreeUtils().treeToNeutralTree(tree);
 
@@ -2025,8 +1983,6 @@ public class GibbsSamplerMain {
     }
 
     public static Map<String, List<FragmentsCandidate>> parseMFCandidates(Path[] treesPaths, List<Ms2Experiment> experiments, int maxCandidates, int workercount, boolean ignoreSilicon) throws IOException {
-//        final SpectralPreprocessor preprocessor = new SpectralPreprocessor((new Sirius()).getMs2Analyzer());
-//        final Map<String, PriorityBlockingQueue<FragmentsCandidate>> explanationsMap = new HashMap<>();
         final Map<String, Ms2Experiment> experimentMap = new HashMap<>();
         for (Ms2Experiment experiment : experiments) {
             String name = cleanString(experiment.getName());
@@ -2057,8 +2013,6 @@ public class GibbsSamplerMain {
                         final String id = name.split("_")[0];
                         assert id.length()>0;
 
-//                        Ms2Experiment experiment = experimentMap.get(id);
-//                        if (experiment==null) throw new RuntimeException("cannot find experiment");
 
                         FTree tree = null;
                         try {
@@ -2070,9 +2024,7 @@ public class GibbsSamplerMain {
                             throw new RuntimeException(e);
                         }
 
-                        //todo changed
-//                        if(tree.numberOfVertices() >= 3) {
-                        //hier nochmal schauen....
+
                         if(tree.numberOfVertices() >= 1) {
                             tree = new IonTreeUtils().treeToNeutralTree(tree);
 
@@ -2138,9 +2090,9 @@ public class GibbsSamplerMain {
             if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
             listMap.put(key, candidates);
         }
-
-        System.out.println("keys size "+keys.size());
-        System.out.println("all compounds: "+experiments.size()+" | used compounds: "+listMap.size());
+//
+//        System.out.println("keys size "+keys.size());
+//        System.out.println("all compounds: "+experiments.size()+" | used compounds: "+listMap.size());
 
         return listMap;
     }
@@ -2252,117 +2204,6 @@ public class GibbsSamplerMain {
 
     }
 
-    private void computeNet(int iterationSteps, int burnInIterations, double edgeWeight, int multipleTransformationCount) throws IOException {
-        BufferedReader reader = Files.newBufferedReader(formulaFile);
-
-        String[] header = reader.readLine().split(SEP);
-
-//        Arrays.stream(header).filter(s -> s.toLowerCase().equals("score")).findFirst().
-        int scoreIdx = IntStream.range(0, header.length).filter(i -> header[i].equals("score")).findFirst().getAsInt();
-        int formulaIdx = IntStream.range(0, header.length).filter(i -> header[i].contains("formula")).findFirst().getAsInt();
-        Map<String, List<Candidate>> explanationsMap = new HashMap<>();
-
-        String line;
-        while ((line=reader.readLine())!=null){
-            try {
-                String[] row = line.split(SEP);
-                final String id = row[0];
-                if (!explanationsMap.containsKey(id)){
-                    explanationsMap.put(id, new ArrayList<>());
-                }
-                MolecularFormula mf = MolecularFormula.parse(row[formulaIdx]);
-                double score = transformScore(Double.parseDouble(row[scoreIdx]));
-
-                if (score<0) continue;
-
-                explanationsMap.get(id).add(new Candidate(mf, score));
-            } catch (Exception e){
-                e.printStackTrace();
-                System.out.println("line: " + line);
-                System.exit(0);
-            }
-
-
-        }
-
-        computeNet(explanationsMap, iterationSteps, burnInIterations, edgeWeight, multipleTransformationCount);
-    }
-
-    /**
-     * remove formulas with negative score!!!!!!
-     * @throws IOException
-     */
-    private void computeNet(Map<String, List<Candidate>> explanationsMap, int iterationSteps, int burnInIterations, double edgeWeight, int multipleTransformationCount) throws IOException {
-        //todo Use weight of formulas as (directed) edge weight?????
-
-
-        //todo use tree scores als "log logodds" and add weights or normalize sum(scores)=1 und use them as probabilities and multiply them
-
-
-        int workerCount = Runtime.getRuntime().availableProcessors();
-        //Zloty
-        if (Runtime.getRuntime().availableProcessors()>20){
-            workerCount /= 2;
-        }
-
-
-        String[] ids = explanationsMap.keySet().stream().filter(key -> explanationsMap.get(key).size()>0).toArray(s -> new String[s]);
-        Candidate[][] explanations = new Candidate[ids.length][];
-
-        for (int i = 0; i < ids.length; i++) {
-            String id = ids[i];
-            explanations[i] = explanationsMap.get(id).toArray(new Candidate[0]);
-        }
-
-        Reaction[] reactions = parseReactions(multipleTransformationCount);
-
-
-        System.out.println("reactions: "+reactions.length);
-//        for (Reaction reaction : reactions) {
-//            System.out.println(reaction);
-//        }
-
-        EdgeScorer[] edgeScorers = new EdgeScorer[]{new ReactionScorer(reactions, new ReactionStepSizeScorer.ConstantReactionStepSizeScorer(edgeWeight))};
-        NodeScorer[] nodeScorers = new NodeScorer[]{new StandardNodeScorer(false, 1d)};
-        GibbsMFCorrectionNetwork gibbsMFCorrectionNetwork = new GibbsMFCorrectionNetwork(ids, explanations, nodeScorers, edgeScorers, new EdgeThresholdFilter(edgeWeight), workerCount);
-
-
-        TIntIntHashMap map = new TIntIntHashMap();
-        for (int i = 0; i < explanations.length; i++) {
-            int length = explanations[i].length;
-            map.adjustOrPutValue(length, 1, 1);
-        }
-        map.forEachEntry(new TIntIntProcedure() {
-            @Override
-            public boolean execute(int i, int i1) {
-                System.out.println(i+": "+i1);
-                return true;
-            }
-        });
-
-
-        writeMFNetwork(Paths.get("/home/ge28quv/Data/gibbsSample/gnpsData/computedTrees/mfNetwork.csv"), gibbsMFCorrectionNetwork);
-        if (true) return;
-
-        gibbsMFCorrectionNetwork.iteration(iterationSteps, burnInIterations);
-
-        Scored<Candidate>[][] result = gibbsMFCorrectionNetwork.getChosenFormulas();
-
-
-
-        //"probability/ relative score" tree score
-        Scored<Candidate>[][]initialExplanations = getBestInitialAssignments(ids, explanationsMap);
-
-        Scored<Candidate>[][] samplingMFs = gibbsMFCorrectionNetwork.getChosenFormulasBySampling();
-        Scored<Candidate>[][] addedPosteriorProbsMFs = gibbsMFCorrectionNetwork.getChosenFormulasByAddedUpPosterior();
-        Scored<Candidate>[][] maxPosteriorProbMFs = gibbsMFCorrectionNetwork.getChosenFormulasByMaxPosterior();
-
-
-        writeOutput(outputFile, ids, new Scored[][][]{initialExplanations, samplingMFs, addedPosteriorProbsMFs, maxPosteriorProbMFs},
-                new String[]{"initial", "sampling", "addedPosterior", "maxPosterior"}, SEP);
-
-
-    }
 
     private void writeOutput(Path path, String[] ids, Scored<FragmentsCandidate>[][][] formulaCandidates, String[] methodNames, String sep) throws IOException {
         BufferedWriter writer = Files.newBufferedWriter(path);
@@ -2385,42 +2226,6 @@ public class GibbsSamplerMain {
             writer.write("\n"+ids[idx]+SEP+row);
         }
         writer.close();
-    }
-
-    /**
-     *
-     * @param ids
-     * @param explanationsMap
-     * @return best initial formulas with RELATIVE SCORE!!
-     */
-    private Scored<Candidate>[][] getBestInitialAssignments(String[] ids, Map<String, List<Candidate>> explanationsMap){
-        Scored<Candidate>[][] array = new Scored[ids.length][];
-        for (int i = 0; i < ids.length; i++) {
-            List<Candidate> smfList = explanationsMap.get(ids[i]);
-            Scored<Candidate>[] smfarray = new Scored[smfList.size()];
-            double sum = 0d;
-            for (Candidate candidateScored : smfList) {
-                sum += candidateScored.getScore();
-            }
-            for (int j = 0; j < smfarray.length; j++) {
-                smfarray[j] = new Scored<Candidate>(smfList.get(j), smfList.get(j).getScore()/sum);
-            }
-            Arrays.sort(smfarray);
-            array[i] = smfarray;
-        }
-        return array;
-    }
-
-    private Scored<Candidate>[][] oldVsNewFormulaAssignment(String[] ids, Map<String, List<Scored<Candidate>>> explanationsMap, Scored<Candidate>[] newAssignments){
-        Scored<Candidate>[][] array = new Scored[ids.length][];
-        for (int i = 0; i < ids.length; i++) {
-            String id = ids[i];
-            List<Scored<Candidate>> smfList = explanationsMap.get(id);
-            Scored<Candidate> best = smfList.stream().max((s1, s2) -> Double.compare(s1.getScore(), s2.getScore())).get();
-            Scored<Candidate> newA = newAssignments[i];
-            array[i] = new Scored[]{best, newA};
-        }
-        return array;
     }
 
     public void writeMFNetwork(Path outputPath, GibbsMFCorrectionNetwork<FragmentsCandidate> gibbsMFCorrectionNetwork) throws IOException {

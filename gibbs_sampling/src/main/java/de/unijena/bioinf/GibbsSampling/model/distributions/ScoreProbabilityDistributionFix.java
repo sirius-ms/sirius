@@ -12,8 +12,8 @@ public class ScoreProbabilityDistributionFix<C extends Candidate<?>> extends Sco
      * @param edgeScorer
      * @param distribution has to be estimated beforehand!!!!
      */
-    public ScoreProbabilityDistributionFix(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution, double percentageOfEdgesToUse) {
-        super(edgeScorer, distribution, percentageOfEdgesToUse);
+    public ScoreProbabilityDistributionFix(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution, double percentageOfEdgesBelowThreshold) {
+        super(edgeScorer, distribution, percentageOfEdgesBelowThreshold);
     }
 
 
