@@ -32,9 +32,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     private Random random;
 
 
-    private TIntArrayList[] activeConnections;
-    private double[] bestActive;
-
     public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
         for (Candidate[] pF : possibleFormulas) {
             if (pF==null || pF.length==0) throw new RuntimeException("some peaks don\'t have any explanation");
@@ -87,7 +84,6 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     }
 
     private void setActive() {
-//        System.out.println("setActive");
         this.priorProb = new double[this.graph.getSize()];
         this.activeEdgeCounter = new int[this.graph.getSize()];
         this.activeIdx = new int[this.graph.numberOfCompounds()];

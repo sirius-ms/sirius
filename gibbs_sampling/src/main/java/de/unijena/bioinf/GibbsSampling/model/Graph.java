@@ -249,25 +249,23 @@ public class Graph<C extends Candidate<?>> {
     private void setConnections() {
         long time = System.currentTimeMillis();
         this.connections = this.edgeFilter.postprocessCompleteGraph(this);
+        HighQualityRandom random = new HighQualityRandom();
+
         if (GibbsMFCorrectionNetwork.DEBUG){
             System.out.println("setting connections in: "+(System.currentTimeMillis()-time)+" ms");
-        }
-        TDoubleArrayList someScores = new TDoubleArrayList();
-        HighQualityRandom random = new HighQualityRandom();
-        System.out.println("connections");
-        System.out.println(connections.length);
-        System.out.println(connections[0].length);
-        int sum;
-        int b;
-        for(sum = 0; sum < 1000; ++sum) {
-            int a = random.nextInt(this.numberOfCompounds());
-            if(this.connections[a].length != 0) {
-                b = random.nextInt(this.connections[a].length);
-                someScores.add(this.getLogWeight(a, this.connections[a][b]));
+            TDoubleArrayList someScores = new TDoubleArrayList();
+
+            for(int i = 0; i < 1000; ++i) {
+                int a = random.nextInt(this.numberOfCompounds());
+                if(this.connections[a].length != 0) {
+                    int b = random.nextInt(this.connections[a].length);
+                    someScores.add(this.getLogWeight(a, this.connections[a][b]));
+                }
             }
+
+//        System.out.println("some scores: " + Arrays.toString(someScores.toArray()));
         }
 
-//        System.out.println("some scores1: " + Arrays.toString(someScores.toArray()));
 
         assert this.isSymmetricSparse(this.connections);
 
@@ -276,12 +274,10 @@ public class Graph<C extends Candidate<?>> {
 //            System.out.println("warning: graph is not well connected. consider using less stringent EdgeFilters");
         }
 
-        sum = 0;
-        int[][] var8 = this.connections;
-        b = var8.length;
+        long sum = 0;
 
-        for(int var6 = 0; var6 < b; ++var6) {
-            int[] connection = var8[var6];
+        for(int i = 0; i < connections.length; ++i) {
+            int[] connection = connections[i];
             sum += connection.length;
         }
 
