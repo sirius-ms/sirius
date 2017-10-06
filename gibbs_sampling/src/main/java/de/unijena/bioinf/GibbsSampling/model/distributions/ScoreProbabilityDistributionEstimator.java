@@ -11,14 +11,14 @@ import java.util.Arrays;
 public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> implements EdgeScorer<C> {
     protected final EdgeScorer<C> edgeScorer;
     protected ScoreProbabilityDistribution scoreProbabilityDistribution;
-    protected final double percentageOfEdgesToUse;
+    protected final double percentageOfEdgesBelowThreshold;
     protected double threshold;
     private static final boolean percentageWithoutZeroScores = true;
 
-    public ScoreProbabilityDistributionEstimator(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution, double percentageOfEdgesToUse) {
+    public ScoreProbabilityDistributionEstimator(EdgeScorer<C> edgeScorer, ScoreProbabilityDistribution distribution, double percentageOfEdgesBelowThreshold) {
         this.edgeScorer = edgeScorer;
         this.scoreProbabilityDistribution = distribution;
-        this.percentageOfEdgesToUse = percentageOfEdgesToUse;
+        this.percentageOfEdgesBelowThreshold = percentageOfEdgesBelowThreshold;
     }
 
     public void prepare(C[][] candidates) {
@@ -30,7 +30,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
         if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
         Arrays.sort(sampledScores);
-        int idx = (int)(percentageOfEdgesToUse*sampledScores.length);
+        int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
         threshold = scoreProbabilityDistribution.toLogPvalue(sampledScores[idx]);
 
     }
@@ -91,7 +91,7 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
         if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
         Arrays.sort(sampledScores);
-        int idx = (int)(percentageOfEdgesToUse*sampledScores.length);
+        int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
         threshold = sampledScores[idx];
 
         //set adjusted threshold for scorer
