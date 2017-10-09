@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.canopus.Canopus;
@@ -27,6 +28,7 @@ import de.unijena.bioinf.sirius.projectspace.ProjectWriter;
 import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -392,6 +394,16 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
         if (options.getExperimentalCanopus()!=null) {
             try {
                 this.canopus = Canopus.loadFromFile(options.getExperimentalCanopus());
+                try (final BufferedWriter bw = FileUtils.getWriter(new File("canopus.csv"))) {
+                    bw.write("relativeIndex\tabsoluteIndex\tid\tname\tdescription\n");
+                    final ClassyFireFingerprintVersion cv = canopus.getClassyFireFingerprintVersion();
+                    final MaskedFingerprintVersion mask = canopus.getCanopusMask();
+                    int k=0;
+                    for (int index : mask.allowedIndizes()) {
+                        final ClassyfireProperty prop = cv.getMolecularProperty(index);
+                        bw.write(String.format(Locale.US, "%d\t%d\t%s\t%s\t%s\n", k++, index, prop.getChemontIdentifier(), prop.getName(), prop.getDescription()));
+                    }
+                }
             } catch (IOException e) {
                 System.err.println("Cannot load given canopus model: " + e.getMessage());
             }

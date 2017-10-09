@@ -38,7 +38,6 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.IsotopePatternHandling;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -621,6 +620,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                         exp.getMs1Spectra().add(new SimpleSpectrum(spiter.next()));
                     }
                 }
+                exp.setMergedMs1Spectrum(exp.getMs1Spectra().get(0));
             }
 
             final double expPrecursor;

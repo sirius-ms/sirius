@@ -53,14 +53,11 @@ public class Zodiac {
 
 
     public void run(){
-        //todo test path..
-
         maxCandidates = (options.getMaxNumOfCandidates()<=0 ? Integer.MAX_VALUE : options.getMaxNumOfCandidates());
 
         try {
 
 
-            //todo or rather use option
             int workerCount = options.processors()>0 ? options.processors() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
 
 
@@ -76,15 +73,6 @@ public class Zodiac {
 
             System.out.println("Read sirius input");
             List<ExperimentResult> input = newLoad(workSpacePath.toFile());
-
-
-//            //// TODO: 24/05/17
-            boolean ignoreSilicon = true;
-//            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidates(workSpacePath, Paths.get(options.getSpectraFile()), Integer.MAX_VALUE, workerCount, ignoreSilicon);
-            //changed
-//            Map<String, List<FragmentsCandidate>> candidatesMap = GibbsSamplerMain.parseMFCandidatesEval(workSpacePath, Paths.get(options.getSpectraFile()), Integer.MAX_VALUE, workerCount, ignoreSilicon);
-
-
 
             //changed
             Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(input, maxCandidates);
@@ -109,11 +97,9 @@ public class Zodiac {
 
 
             NodeScorer[] nodeScorers;
-            //todo useful score
             boolean useLibraryHits = (libraryHitsFile!=null);
-            double libraryScore = 1d;//todo which bias!?
+            double libraryScore = 1d;//todo which lambda to use!?
             if (useLibraryHits){
-                //todo fix LibraryHitScorer!!!!!!!!!!!
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
 //                System.out.println("use LibraryHitScorer");
             } else {
@@ -142,15 +128,17 @@ public class Zodiac {
             boolean estimateByMedian = true;
             ScoreProbabilityDistribution probabilityDistribution = null;
             if(options.getProbabilityDistribution().equals(EdgeScorings.exponential)) {
-                probabilityDistribution = new ExponentialDistribution(0.0D, options.getThresholdFilter(), estimateByMedian);
+                probabilityDistribution = new ExponentialDistribution(estimateByMedian);
             } else if (options.getProbabilityDistribution().equals(EdgeScorings.lognormal)) {
-                probabilityDistribution = new LogNormalDistribution(options.getThresholdFilter(), estimateByMedian);
+                probabilityDistribution = new LogNormalDistribution(estimateByMedian);
+            } else {
+                System.err.println("probability distribution is unknwown. Use 'lognormal' or 'exponential'.");
             }
 
 
-            //todo changed !!!?!?!??!?!?!
-            double minimumOverlap = 0.01D;
-            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution);
+            //changed: increased value for speedup
+            double minimumOverlap = 0.1D;
+            ScoreProbabilityDistributionEstimator commonFragmentAndLossScorer = new ScoreProbabilityDistributionEstimator(new CommonFragmentAndLossScorer(minimumOverlap), probabilityDistribution, options.getThresholdFilter());
             EdgeScorer[] edgeScorers = new EdgeScorer[]{commonFragmentAndLossScorer};
 
 
@@ -275,125 +263,6 @@ public class Zodiac {
 
     }
 
-//    private <C extends Candidate & HasLibraryHit> void parseLibraryHits(Path libraryHitsPath, Path mgfFile, Map<String, List<C>> candidatesMap) throws IOException {
-//        final MsExperimentParser parser = new MsExperimentParser();
-//        List<Ms2Experiment> allExperiments = parser.getParser(mgfFile.toFile()).parseFromFile(mgfFile.toFile());
-//
-//        //assumption "#Scan#" is the number of the ms2 scan starting with 1
-//        String[] featureIDs = new String[allExperiments.size()];
-//        int j = 0;
-//        for (Ms2Experiment experiment : allExperiments) {
-//            featureIDs[j++] = experiment.getName();
-//        }
-//
-//
-//        List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
-//        String[] header = lines.remove(0).split("\t");
-////        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
-//        String[] ofInterest = new String[]{"#Scan#", "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
-//        int[] indices = new int[ofInterest.length];
-//        for (int i = 0; i < ofInterest.length; i++) {
-//            int idx = arrayFind(header, ofInterest[i]);
-//            if (idx<0) throw new RuntimeException("Cannot parse spectral library hits file. Column "+ofInterest[i]+" not found.");
-//            indices[i] = idx;
-//        }
-//        for (String line : lines) {
-//            String[] cols = line.split("\t");
-//            final int scanNumber = Integer.parseInt(cols[indices[0]]);
-//            final String featureId = featureIDs[scanNumber-1]; //starting with 1!
-//
-//            List<C> candidatesList = candidatesMap.get(featureId);
-//            if (candidatesList == null) {
-//                System.err.println("corresponding query (FEATURE_ID: " +featureId+ ", #SCAN# "+scanNumber+") to library hit not found");
-//                continue;
-//            }
-//
-//            final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
-//            final MolecularFormula formula = getFormulaFromStructure(cols[indices[1]], cols[indices[2]]);
-//
-//            if (formula==null){
-//                System.err.println("cannot compute molecular formula of library hit #SCAN# "+scanNumber);
-//                continue;
-//            }
-//
-//            final String structure = cols[indices[2]]; ...test
-//            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
-//            final double cosine = Double.parseDouble(cols[indices[4]]);
-//            final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
-//            final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
-//            LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
-//            for (C candidate : candidatesList) {
-//                candidate.setLibraryHit(libraryHit);
-//            }
-//        }
-//    }
-//
-//
-//    private MolecularFormula getFormulaFromStructure(String inchi, String smiles){
-//
-//        MolecularFormula formula = null;
-//        if (inchi!=null && isInchi(inchi)){
-//            formula = new InChI(null, inchi).extractFormula();
-//        }
-//
-//        if (formula==null){
-//            try {
-//                final SmilesParser parser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-//                final IAtomContainer c = parser.parseSmiles(smiles);
-//                experiment.setAnnotation(InChI.class, mol2inchi(c));
-//                return;
-//            } catch (CDKException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//    }
-//
-//    private boolean isInchi(String inchi) {
-//        if (!inchi.toLowerCase().startsWith("inchi=")) return false;
-//        int idx1 = inchi.indexOf("/");
-//        int idx2 = inchi.indexOf("/", idx1);
-//        if (idx1>0 && idx2>0 && (idx2-idx1)>1) return true;
-//        return false;
-//    }
-
-//    private <C extends Candidate & HasLibraryHit> void parseLibraryHits(Path libraryHitsPath, Map<String, List<C>> candidatesMap) throws IOException {
-//        List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
-//        String[] header = lines.remove(0).split("\t");
-//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
-//        int[] indices = new int[ofInterest.length];
-//        for (int i = 0; i < ofInterest.length; i++) {
-//            int idx = arrayFind(header, ofInterest[i]);
-//            if (idx<0) throw new RuntimeException("Column "+ofInterest[i]+" not found");
-//            indices[i] = idx;
-//        }
-//        for (String line : lines) {
-//            String[] cols = line.split("\t");
-//            final String featureId = cols[indices[0]];
-//
-//            List<C> candidatesList = candidatesMap.get(featureId);
-//            if (candidatesList == null) {
-//                System.out.println("corresponding query (" +featureId+ ") to library hit not found");
-//                System.err.println("corresponding query (" +featureId+ ") to library hit not found");
-////                System.err.println("all candidates have been removed: "+id);
-//                continue;
-//            }
-//
-//            final Ms2Experiment experiment = candidatesList.get(0).getExperiment();
-//            final MolecularFormula formula = MolecularFormula.parse(cols[indices[1]]);
-//            final String structure = cols[indices[2]];
-//            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(cols[indices[3]]);
-//            final double cosine = Double.parseDouble(cols[indices[4]]);
-//            final int sharedPeaks = Integer.parseInt(cols[indices[5]]);
-//            final LibraryHitQuality quality = LibraryHitQuality.valueOf(cols[indices[6]]);
-//            LibraryHit libraryHit = new LibraryHit(experiment, formula, structure, ionType, cosine, sharedPeaks, quality);
-//            for (C candidate : candidatesList) {
-//                candidate.setLibraryHit(libraryHit);
-//            }
-//        }
-//    }
-
-
     public static Map<String, List<FragmentsCandidate>> parseMFCandidates(List<ExperimentResult> experimentResults, int maxCandidates) throws IOException {
         final Map<String, List<FragmentsCandidate>> listMap = new HashMap<>();
         for (ExperimentResult experimentResult : experimentResults) {
@@ -416,62 +285,6 @@ public class Zodiac {
 
         return listMap;
     }
-
-//    private Map<String, LibraryHit> identifyCorrectLibraryHits(Map<String, List<FragmentsCandidate>> candidatesMap, Set<MolecularFormula> allowedDifferences) {
-//        Map<String, LibraryHit> correctHits = new HashMap<>();
-//        Deviation deviation = new Deviation(20);
-//        for (String id : candidatesMap.keySet()) {
-//            final List<FragmentsCandidate> candidateList = candidatesMap.get(id);
-//            if (!candidateList.get(0).hasLibraryHit()) continue;
-//
-//            final LibraryHit libraryHit = candidateList.get(0).getLibraryHit();
-//
-//            System.out.println("using lower threshold for references: Bronze, cos 0.66, shared 5 peaks");
-//            if (libraryHit.getCosine()<0.66 || libraryHit.getSharedPeaks()<5) continue;
-//
-//            final double theoreticalMass = libraryHit.getIonType().neutralMassToPrecursorMass(libraryHit.getMolecularFormula().getMass());
-//            final double measuredMass = libraryHit.getQueryExperiment().getIonMass();
-//
-//            //todo compare without aduct!?
-//            PrecursorIonType hitIonization = libraryHit.getIonType().withoutAdduct().withoutInsource();
-//
-//            boolean sameIonization = false;
-//            for (FragmentsCandidate candidate : candidateList) {
-//                if (candidate.getIonType().equals(hitIonization)){
-//                    sameIonization = true;
-//                    break;
-//                }
-//            }
-//
-//            //same mass?
-//            boolean matches = deviation.inErrorWindow(theoreticalMass, measuredMass);
-//            //changed --> disadvantage: just 'correct' if Sirius has found it as well
-//            if (!matches){
-//                //any know MF diff?
-//                for (FragmentsCandidate candidate : candidateList) {
-//                    if (!candidate.getIonType().equals(libraryHit.getIonType())) continue;
-//                    MolecularFormula mFDiff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
-//                    if (mFDiff.getMass()<0) mFDiff = mFDiff.negate();
-//                    if (allowedDifferences.contains(mFDiff)){
-//                        matches = true;
-//                        break;
-//                    }
-//                }
-//            }
-//
-//
-//            if (matches){
-//                if (sameIonization){
-//                    correctHits.put(id, libraryHit);
-//                } else {
-//                    System.out.println("warning: different ionizations for library hit "+id);
-//                }
-//            }
-//        }
-//
-//        return correctHits;
-//    }
-
 
     private void setKnownCompounds(Map<String, List<FragmentsCandidate>> candidatesMap, Set<MolecularFormula> allowedDifferences) {
         Set<String> ids = candidatesMap.keySet();
