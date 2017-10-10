@@ -171,8 +171,13 @@ public class GurobiSolver implements TreeBuilder {
 
     @Override
     public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
-        if (graph.numberOfVertices() <= 2)
-            return new FTree(graph.getRoot().getChildren(0).getFormula());
+        if (graph.numberOfVertices() <= 2) {
+            final FTree tree = new FTree(graph.getRoot().getChildren(0).getFormula());
+            if (graph.getRoot().getOutDegree()>0) {
+                tree.setTreeWeight(graph.getRoot().getOutgoingEdge(0).getWeight());
+            }
+            return tree;
+        }
         if (!(prepared instanceof Solver))
             throw new IllegalArgumentException("Expected solver to be instance of Solver, but " + prepared.getClass() + " given.");
         final Solver solver = (Solver) prepared;
@@ -551,6 +556,7 @@ public class GurobiSolver implements TreeBuilder {
             if (graphRoot == null) return null;
 
             final FTree tree = new FTree(graphRoot.getFormula());
+            tree.setTreeWeight(rootScore);
             final ArrayDeque<AbstractSolver.Stackitem> stack = new ArrayDeque<AbstractSolver.Stackitem>();
             stack.push(new AbstractSolver.Stackitem(tree.getRoot(), graphRoot));
             while (!stack.isEmpty()) {
@@ -562,6 +568,7 @@ public class GurobiSolver implements TreeBuilder {
                         final Loss l = losses.get(edgeIds[offset]);
                         final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
                         child.getIncomingEdge().setWeight(l.getWeight());
+                        tree.setTreeWeight(tree.getTreeWeight()+l.getWeight());
                         stack.push(new AbstractSolver.Stackitem(child, l.getTarget()));
                     }
                     ++offset;

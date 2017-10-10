@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TIntIntHashMap;
 
 import java.util.*;
 
@@ -61,9 +62,20 @@ public class FGraph extends AbstractFragmentationGraph {
         };
     }
 
+    // - for non-isotopes we have: xi,xi+1 -> mz(xi) > mz(xi+1)
+    // - for isotope peaks we have:
+
+
+    public void ensureTopologicalOrder() {
+
+    }
+
     public void sortTopological() {
         final FragmentAnnotation<Peak> peak = getFragmentAnnotationOrThrow(Peak.class);
-        Collections.sort(fragments, new Comparator<Fragment>() {
+        final FragmentAnnotation<IsotopicMarker> marker = getFragmentAnnotationOrNull(IsotopicMarker.class);
+
+        final Fragment[] fs = fragments.toArray(new Fragment[fragments.size()]);
+        Arrays.sort(fs, new Comparator<Fragment>() {
             @Override
             public int compare(Fragment fragment, Fragment fragment2) {
                 if (fragment == pseudoRoot) return -1;
@@ -71,16 +83,57 @@ public class FGraph extends AbstractFragmentationGraph {
                 else return Double.compare(peak.get(fragment2).getMass(), peak.get(fragment).getMass());
             }
         });
-        int id = 0;
+
+        fragments.clear();
+        // now assign colors to all fragments based on their mass
         int color = 0;
         int previousColor = -2;
-        for (Fragment f : fragments) {
-            f.setVertexId(id++);
+        for (Fragment f : fs) {
             if (f.color != previousColor) {
                 previousColor = f.color;
                 ++color;
             }
             f.setColor(color);
+        }
+        // now reinsert fragments into the fragment list. But be careful that isotope peaks are inserted in reverse
+        // order
+        if (marker == null) {
+            fragments.addAll(Arrays.asList(fs));
+        } else {
+            final TIntIntHashMap isoBuf = new TIntIntHashMap(16,0.75f,-1,-1);
+            for (int i=0; i < fs.length; ++i) {
+                final boolean isIsotope = marker.get(fs[i])!=null;
+                if (isIsotope) {
+                    // ensure linear chain structure of isotopes
+                    if (fs[i].getOutDegree() > 1 || fs[i].getInDegree() != 1){
+                        throw new RuntimeException("Bug in MSMS isotope analysis: Isotope peak should form a chain, but has in degree of " + fs[i].getInDegree() + " and out degree of " + fs[i].getOutDegree());
+                    }
+                    final Fragment g = fs[i].getParent();
+                    if (marker.get(g)==null) {
+                        // we found monoisotopic peak
+                        isoBuf.put(g.vertexId, i);
+                    }
+                } else {
+                    fragments.add(fs[i]);
+                    if (!isoBuf.isEmpty()) {
+                        final int fi = isoBuf.get(fs[i].vertexId);
+                        if (fi >= 0) {
+                            // add isotopes below this fragment
+                            Fragment chain = fs[fi];
+                            while (true) {
+                                fragments.add(chain);
+                                if (chain.outDegree==0) break;
+                                else chain = chain.getChildren(0);
+                            }
+                            isoBuf.remove(fs[i].vertexId);
+                        }
+                    }
+                }
+            }
+        }
+        int id=0;
+        for (Fragment f : fragments) {
+            f.setVertexId(id++);
         }
     }
 
