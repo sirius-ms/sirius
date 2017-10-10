@@ -28,10 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.DoubleEndWeightedQueue;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
@@ -48,6 +45,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Sirius {
 
@@ -66,9 +65,9 @@ public class Sirius {
     public static void main(String[] args) {
         final File F = new File("/home/kaidu/Documents/temp/foo/myxo_359.ms");
         try {
-            /*
+
             Sirius s = new Sirius("qtof");
-            //s.getMs2Analyzer().setIsotopeHandling(FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS);
+            s.getMs2Analyzer().setIsotopeHandling(FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS);
             Ms2Experiment exp = s.parseExperiment(F).next();
 
             final ExecutorService service = Executors.newFixedThreadPool(4);
@@ -80,25 +79,9 @@ public class Sirius {
                 //FTree tree = ir.getRawTree();
                 System.out.println(tree.getRoot().getFormula() + ": " + tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
             }
-            //service.shutdown();
-            */
+            System.out.println("Done");
+            service.shutdown();
 
-
-            // TEST IONIZATIONS
-            final Sirius sirius = new Sirius("qtof");
-            for (File f : new File("/home/kaidu/Documents/temp/test").listFiles()) {
-                final MutableMs2Experiment exp = new MutableMs2Experiment(sirius.parseExperiment(f).next());
-
-                exp.setPrecursorIonType(PrecursorIonType.unknown(1));
-                // compute formula
-                final IdentificationResult result = sirius.compute(exp, exp.getMolecularFormula());
-                System.out.println(exp.getPrecursorIonType() + " => " + exp.getMolecularFormula());
-                System.out.println("Computed is: " + result.getRawTree().getRoot().getFormula() + " with " + result.getRawTree().getAnnotationOrThrow(PrecursorIonType.class));
-
-
-
-
-            }
 
         } catch (IOException e) {
             e.printStackTrace();
