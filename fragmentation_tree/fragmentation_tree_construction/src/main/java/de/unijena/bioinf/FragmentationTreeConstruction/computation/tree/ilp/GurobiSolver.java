@@ -273,7 +273,7 @@ public class GurobiSolver implements TreeBuilder {
                 }
                 computeOffsets();
                 setConstraints();
-                //setLowerbound();
+                setLowerbound();
                 assert model.get(GRB.IntAttr.IsMIP) != 0;
                 built = true;
             } catch (GRBException e) {
@@ -473,8 +473,8 @@ public class GurobiSolver implements TreeBuilder {
                 model.addConstr(lowerboundExpression, GRB.LESS_EQUAL, -lowerbound, null);//String.valueOf(++identifier));
             }
             */
-            if (lowerbound != 0) {
-                model.getEnv().set(GRB.DoubleParam.Cutoff, 0);
+            if (lowerbound > 0) {
+                model.getEnv().set(GRB.DoubleParam.Cutoff, -lowerbound);
             }
         }
 
