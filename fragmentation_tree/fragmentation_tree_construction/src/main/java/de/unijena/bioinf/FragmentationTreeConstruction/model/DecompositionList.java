@@ -20,22 +20,24 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.util.*;
 
 public class DecompositionList {
 
-    private final List<Scored<MolecularFormula>> decompositions;
+    private final List<Decomposition> decompositions;
 
-    public static DecompositionList fromFormulas(Iterable<MolecularFormula> formulas) {
-        final ArrayList<Scored<MolecularFormula>> decompositions = new ArrayList<Scored<MolecularFormula>>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
-        for (MolecularFormula f : formulas) decompositions.add(new Scored<MolecularFormula>(f,0d));
+
+    public static DecompositionList fromFormulas(Iterable<MolecularFormula> formulas, Ionization ion) {
+        final ArrayList<Decomposition> decompositions = new ArrayList<>(formulas instanceof Collection ? ((Collection) formulas).size() : 10);
+        for (MolecularFormula f : formulas) decompositions.add(new Decomposition(f,ion,0d));
         return new DecompositionList(decompositions);
-
     }
 
-    public DecompositionList(List<Scored<MolecularFormula>> decompositions) {
+
+    public DecompositionList(List<Decomposition> decompositions) {
         this.decompositions = decompositions;
     }
 
@@ -58,7 +60,7 @@ public class DecompositionList {
         };
     }
 
-    public List<Scored<MolecularFormula>> getDecompositions() {
+    public List<Decomposition> getDecompositions() {
         return decompositions;
     }
 }

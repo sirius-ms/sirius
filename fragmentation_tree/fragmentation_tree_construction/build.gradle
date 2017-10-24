@@ -10,6 +10,7 @@ dependencies {
     compile "org.apache.commons:commons-math3:$math3_version"
     compile group: 'org.gnu.glpk', name: 'glpk-java', version:"$glpk_version"
     compile group: 'gurobi', name: 'gurobi-linux64', version:"$gurobi_version"
+    compile(group: 'cplex', name: 'cplex', version: '12.7.1')
 //test
     testCompile project(':io')
 }
