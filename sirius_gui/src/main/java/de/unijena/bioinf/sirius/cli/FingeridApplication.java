@@ -12,6 +12,7 @@ import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
+import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.dbgen.DatabaseImporter;
 import de.unijena.bioinf.sirius.fingerid.*;
@@ -130,7 +131,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
                     // workaround... we should think about that carefully
                     final FTree tree = result.getResolvedTree();
-                    futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion));
+                    futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion, (PredictorType[]) options.getPredictors().toArray()));
                 }
                 final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
                 final HashMap<String, Long> dbMap = getDatabaseAliasMap();

@@ -28,8 +28,10 @@ public class FingerIdJob {
 
     protected String state;
     protected ProbabilityFingerprint prediction;
+    protected double[] iokrVerctor;
     protected MaskedFingerprintVersion version;
     protected String errorMessage;
+
 
     public FingerIdJob(long jobId, String securityToken, MaskedFingerprintVersion version) {
         this.securityToken = securityToken;

@@ -32,6 +32,7 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.utils.PROPERTIES;
+import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
@@ -176,7 +177,7 @@ public class WebAPI implements Closeable {
     public VersionsInfo getVersionInfo() {
         VersionsInfo v = null;
         try {
-            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion",PROPERTIES.fingeridVersion()).setParameter("sirius_guiVersion",PROPERTIES.sirius_guiVersion()).build()));
+            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", PROPERTIES.fingeridVersion()).setParameter("sirius_guiVersion", PROPERTIES.sirius_guiVersion()).build()));
             if (v == null) {
                 LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
                 v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
@@ -293,14 +294,15 @@ public class WebAPI implements Closeable {
             try (final JsonReader json = Json.createReader(new BufferedReader(new InputStreamReader(response.getEntity().getContent(), ContentType.getOrDefault(response.getEntity()).getCharset())))) {
                 final JsonObject obj = json.readObject();
                 if (obj.containsKey("prediction")) {
-                    final byte[] bytes = Base64.decode(obj.getString("prediction"));
-                    final TDoubleArrayList platts = new TDoubleArrayList(2000);
-                    final ByteBuffer buf = ByteBuffer.wrap(bytes);
-                    buf.order(ByteOrder.LITTLE_ENDIAN);
-                    while (buf.position() < buf.limit()) {
-                        platts.add(buf.getDouble());
+                    final byte[] plattBytes = Base64.decode(obj.getString("prediction"));
+                    final double[] platts = parseBinaryToDoubles(plattBytes);
+                    job.prediction = new ProbabilityFingerprint(job.version, platts);
+
+                    if (obj.containsKey("iokrVector")) {
+                        final byte[] iokrBytes = Base64.decode(obj.getString("iokrVector"));
+                        job.iokrVerctor = parseBinaryToDoubles(iokrBytes);
                     }
-                    job.prediction = new ProbabilityFingerprint(job.version, platts.toArray());
+
                     return true;
                 } else {
                     job.state = obj.containsKey("state") ? obj.getString("state") : "SUBMITTED";
@@ -316,7 +318,20 @@ public class WebAPI implements Closeable {
         return false;
     }
 
-    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version) throws IOException, URISyntaxException {
+    double[] parseBinaryToDoubles(byte[] bytes){
+        final TDoubleArrayList data = new TDoubleArrayList(2000);
+        final ByteBuffer buf = ByteBuffer.wrap(bytes);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        while (buf.position() < buf.limit()) {
+            data.add(buf.getDouble());
+        }
+        return data.toArray();
+    }
+
+    /*public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version) throws IOException, URISyntaxException {
+        return submitJob(experiment,ftree,version,PredictorType.CSI_FINGERID);
+    }*/
+    public FingerIdJob submitJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, PredictorType... types) throws IOException, URISyntaxException {
         final HttpPost post = new HttpPost(getFingerIdURI("/webapi/predict.json").build());
         final String stringMs, jsonTree;
         {
@@ -337,7 +352,10 @@ public class WebAPI implements Closeable {
         final NameValuePair ms = new BasicNameValuePair("ms", stringMs);
         final NameValuePair tree = new BasicNameValuePair("ft", jsonTree);
 
-        final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, UID));
+        if (types == null || types.length == 0) types = new PredictorType[]{PredictorType.CSI_FINGERID};
+        final NameValuePair predictor = new BasicNameValuePair("predictors", PredictorType.getBitsAsString(types));
+
+        final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(ms, tree, predictor, UID));
         post.setEntity(params);
 
         final String securityToken;
@@ -359,11 +377,11 @@ public class WebAPI implements Closeable {
         }
     }
 
-    public Future<ProbabilityFingerprint> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version) {
+    public Future<ProbabilityFingerprint> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
         return service.submit(new Callable<ProbabilityFingerprint>() {
             @Override
             public ProbabilityFingerprint call() throws Exception {
-                final FingerIdJob job = submitJob(experiment, tree, version);
+                final FingerIdJob job = submitJob(experiment, tree, version, predicors);
                 // RECEIVE RESULTS
                 final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
                 for (int k = 0; k < 600; ++k) {
@@ -371,7 +389,7 @@ public class WebAPI implements Closeable {
                     if (updateJobStatus(job)) {
                         return job.prediction;
                     } else if (Objects.equals(job.state, "CRASHED")) {
-                        throw new RuntimeException("Job crashed: "+(job.errorMessage!=null?job.errorMessage:""));
+                        throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
                     }
                 }
                 throw new TimeoutException("Reached timeout");
