@@ -7,7 +7,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.List;
 
-public class CplexTreeBuilder implements TreeBuilder{
+public class CPLEXTreeBuilder implements TreeBuilder{
     @Override
     public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
         return null;
