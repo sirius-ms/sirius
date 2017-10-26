@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.solver.CriticalPathSolver;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
@@ -152,9 +153,25 @@ public class Sirius {
         //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_1015.ms"});
         //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_1423.ms"});
         //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_1605.ms"});
-        mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_2206.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_2206.ms"});
         //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_3003.ms"});
         //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_3574.ms"});
+        test();
+    }
+
+    private static void test() {
+        final File testFile = new File("/home/kaidu/data/ms/metlin/mpos85097.ms");
+        final Sirius sirius = new Sirius();
+        sirius.getMs2Analyzer().setTreeBuilder(new CPLEXTreeBuilder());
+        try {
+            final Ms2Experiment exp = sirius.parseExperiment(testFile).next();
+            final long time1 = System.nanoTime();
+            System.out.println(sirius.identify(exp).get(0).score);
+            final long time2 = System.nanoTime();
+            System.out.println((time2-time1)/1000000d);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void mainx(String[] args) throws ExecutionException, InterruptedException {

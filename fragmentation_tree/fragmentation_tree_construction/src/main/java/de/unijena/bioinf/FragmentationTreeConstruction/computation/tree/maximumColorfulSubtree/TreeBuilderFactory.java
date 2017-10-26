@@ -11,10 +11,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -24,18 +21,20 @@ public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
     public final static String ILP_VERSIONS_STRING;
+    public final static String CPLEX_VERSION;
 
 
     static {
         PropertyLoader.load();
         GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
         GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
-        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or similar)";
+        CPLEX_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
+        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or CPLEX with version " + CPLEX_VERSION + " or similar)";
     }
 
     private static TreeBuilderFactory INSTANCE = null;
 
-    public enum DefaultBuilder {GUROBI, /*GUROBI_JNI,*/ /*CPLEX,*/ GLPK, DP}
+    public enum DefaultBuilder {GUROBI, /*GUROBI_JNI,*/ CPLEX, GLPK, DP}
 
     private static DefaultBuilder[] builderPriorities = DefaultBuilder.values();
 
@@ -99,6 +98,8 @@ public final class TreeBuilderFactory {
                 return getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
             case GLPK:
                 return getTreeBuilderFromClass(GLPKSolver.class); //we deliver the jar file so we can be sure that th class exists
+            case CPLEX:
+                return getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXTreeBuilder");
             case DP:
                 return getTreeBuilderFromClass(DPTreeBuilder.class);
             default:

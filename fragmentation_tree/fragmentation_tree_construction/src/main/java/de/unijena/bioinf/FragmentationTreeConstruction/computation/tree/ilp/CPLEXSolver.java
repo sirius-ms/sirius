@@ -58,6 +58,8 @@ public class CPLEXSolver extends AbstractSolver {
 
         try {
             model = new IloCplex();
+            model.setOut(null);
+            model.setParam(IloCplex.IntParam.Threads, 2);
             constraints = model.addLPMatrix();
         } catch (IloException e) {
             throw new RuntimeException(e);
@@ -115,7 +117,7 @@ public class CPLEXSolver extends AbstractSolver {
             row2[n] = -1d;
             for (int l = 0; l < fragment.getOutDegree(); ++l) {
                 indizes2[n] = edgeIds[j];
-                constraints.addRow(-1, 0, indizes2, row2);
+                constraints.addRow(0, 1, indizes2, row2);
                 assert losses.get(edgeIds[j]).getSource() == fragment;
                 ++j;
             }
@@ -138,7 +140,7 @@ public class CPLEXSolver extends AbstractSolver {
         int k = 0;
         for (Loss l : losses) {
             final int C = l.getTarget().getColor();
-            indizesPerColor[C][colorSizes[C]--] = k;
+            indizesPerColor[C][--colorSizes[C]] = k;
             ++k;
         }
         for (int i = 0; i < indizesPerColor.length; ++i) {
@@ -152,6 +154,7 @@ public class CPLEXSolver extends AbstractSolver {
 
     @Override
     protected void setMinimalTreeSizeConstraint() throws Exception {
+
         final int[] subroots = new int[graph.getRoot().getOutDegree()];
         final double[] ones = new double[subroots.length];
         Arrays.fill(ones, 1d);
@@ -175,8 +178,8 @@ public class CPLEXSolver extends AbstractSolver {
 
     @Override
     protected SolverState solveMIP() throws Exception {
-        model.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.MIP);
-        model.setParam(IloCplex.IntParam.NodeAlg, IloCplex.Algorithm.MIP);
+        model.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
+        model.setParam(IloCplex.IntParam.NodeAlg, IloCplex.Algorithm.Auto);
         final boolean done = model.solve();
         if (done) return SolverState.SHALL_BUILD_SOLUTION;
         else return SolverState.SHALL_RETURN_NULL;
