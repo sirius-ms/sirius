@@ -72,7 +72,7 @@ public class ConfidenceScorePrediction {
             }
 
 
-            final TrainedCSIFingerId fingerid = TrainedCSIFingerId.load(fingeridFile.toFile());
+            final TrainedCSIFingerId fingerid = TrainedCSIFingerId.load(fingeridFile.toFile(),false);
             PredictionPerformance[] statistics = fingerid.getPredictionPerformances();
             MaskedFingerprintVersion maskedFingerprintVersion = fingerid.getMaskedFingerprintVersion();
 
@@ -88,7 +88,7 @@ public class ConfidenceScorePrediction {
             Path outputFile = Paths.get(args[4]);
             BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset());
 
-            final TrainedCSIFingerId fingerid = TrainedCSIFingerId.load(fingeridFile.toFile());
+            final TrainedCSIFingerId fingerid = TrainedCSIFingerId.load(fingeridFile.toFile(),false);
             MaskedFingerprintVersion maskedFingerprintVersion = fingerid.getMaskedFingerprintVersion();
 
             QueryPredictor queryPredictor = QueryPredictor.loadFromFile(confidenceModel);
