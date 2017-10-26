@@ -53,7 +53,7 @@ public class GurobiSolver implements TreeBuilder {
         this.secondsPerDecomposition = 18 * 60 * 60; // maximal 5 hours per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
-        setNumberOfCPUs(Math.min(4,Runtime.getRuntime().availableProcessors()));
+        setNumberOfCPUs(Math.min(2,Runtime.getRuntime().availableProcessors()));
     }
 
     public GurobiSolver() {
