@@ -6,6 +6,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 public class ExponentialDistribution implements ScoreProbabilityDistribution {
     private double lambda;
     private boolean estimateByMedian;
+    private final double DEFAULT_LAMBDA = 7d;
 
 
     public ExponentialDistribution(double lambda) {
@@ -28,16 +29,16 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
 
         for(int lambdaByMedian = 0; lambdaByMedian < exampleValues.length; ++lambdaByMedian) {
             double v = exampleValues[lambdaByMedian];
-            //todo changed add all values !!!!
-//            if(v > 0.0D) {
+            if(v > 0.0D) {
                 sum += v;
                 values.add(v);
                 ++l;
-//            }
+            }
         }
 
-        if (values.size()==0){
-            this.lambda = 1;
+        if (values.size()<10){
+            System.out.println("warning: Problem estimating score distribution. Too few examples. Using default values.");
+            this.lambda = DEFAULT_LAMBDA;
         }else {
             this.lambda = (double)l / sum;
             values.sort();
@@ -51,6 +52,11 @@ public class ExponentialDistribution implements ScoreProbabilityDistribution {
             if(this.estimateByMedian) {
                 this.lambda = Math.log(2.0D) / median;
             }
+        }
+
+        if (Double.isNaN(lambda) || Double.isInfinite(lambda)){
+            System.out.println("warning: Problem estimating score distribution. Using default values.");
+            lambda = DEFAULT_LAMBDA;
         }
 
 
