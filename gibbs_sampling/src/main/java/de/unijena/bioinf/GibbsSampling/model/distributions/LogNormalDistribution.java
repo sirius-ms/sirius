@@ -12,6 +12,9 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     private double logVar;
     private boolean robustEstimator;
     private static final double MAD_SCALE_FACTOR = 1.482602218505602;
+    private static final double DEFAULT_LOGMEAN = -1.8184825393688084;
+    private static final double DEFAULT_LOGVAR = 0.1640657366079353;
+
 
     public LogNormalDistribution(double logMean, double logVar) {
         this.logMean = logMean;
@@ -63,6 +66,15 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
             if (exampleValue>0d) nonZeroSampleValues.add(Math.log(exampleValue));
         }
         nonZeroSampleValues.sort();
+
+        if (nonZeroSampleValues.size()<10){
+            System.out.println("warning: cannot estimate score distribution. Too few examples. Using default values.");
+            if (logMean==0 || logVar==0){
+                logMean = DEFAULT_LOGMEAN;
+                logVar = DEFAULT_LOGVAR;
+            }
+            return;
+        }
 
 
         double logMedian = nonZeroSampleValues.get((int)(nonZeroSampleValues.size()/2));

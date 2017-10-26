@@ -69,7 +69,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             peakToIdx.put(peak, i++);
         }
 
-        assert peakToFragments.size()<=experiment.getMs2Spectra().get(0).size();
+        assert peakToFragments.size()<=numberOfPeaks(experiment.getMs2Spectra());
 
         List<FragmentsCandidate> candidates = new ArrayList<>();
         for (FTree tree : trees) {
@@ -97,6 +97,14 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
 
 
         return candidates;
+    }
+
+    private static int numberOfPeaks(List<? extends Spectrum<Peak>> spectra){
+        int sum = 0;
+        for (Spectrum<Peak> spectrum : spectra) {
+            sum += spectrum.size();
+        }
+        return sum;
     }
 
     private static Peak getPeak(AnnotatedPeak annotatedPeak){
