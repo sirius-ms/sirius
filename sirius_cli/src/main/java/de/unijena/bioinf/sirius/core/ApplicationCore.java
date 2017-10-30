@@ -162,11 +162,18 @@ public abstract class ApplicationCore {
 
         DEFAULT_LOGGER.debug(TreeBuilderFactory.ILP_VERSIONS_STRING);
 
-        jobManager = new JobManager(1);
+
 
         HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
-        addDefaultProptery("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(hardware.getProcessor().getPhysicalProcessorCount()));
+        int cores = hardware.getProcessor().getPhysicalProcessorCount();
+        addDefaultProptery("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
         addDefaultProptery("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
+        DEFAULT_LOGGER.info("CPU check done. " + System.getProperty("de.unijena.bioinf.sirius.cpu.cores") +" cores that handle " + System.getProperty("de.unijena.bioinf.sirius.cpu.threads") + " threads were found.");
+
+
+        jobManager = new JobManager(cores);
+        DEFAULT_LOGGER.info("Job manager initialized!");
+
     }
 
 
