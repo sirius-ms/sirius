@@ -33,10 +33,14 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         this.numberOfResultsToKeep = numberOfResultsToKeep;
     }
 
+    public void precompute() {
+        this.pinput = analyzer.preprocessing(experiment);
+    }
+
     @Override
     protected FinalResult compute() throws Exception {
+        if (pinput == null) precompute();
         // preprocess input
-        this.pinput = analyzer.preprocessing(experiment);
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
         if (tss!=null) {
