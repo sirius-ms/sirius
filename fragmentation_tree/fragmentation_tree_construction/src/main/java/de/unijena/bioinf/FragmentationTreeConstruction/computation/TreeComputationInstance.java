@@ -1,321 +1,355 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import com.google.common.collect.Iterables;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.SinglethreadedTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.solver.CriticalPathSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Whiteset;
-import gnu.trove.list.array.TDoubleArrayList;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobManager;
 
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 
-public class TreeComputationInstance {
+public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.FinalResult> {
 
-    protected final ExecutorService service;
-    protected final int numberOfWorkers;
-    protected final Ms2Experiment input;
+    protected final JobManager jobManager;
     protected final FragmentationPatternAnalysis analyzer;
-    protected final int numberOfResultsToKeep, capacity;
+    protected final Ms2Experiment experiment;
+    protected final int numberOfResultsToKeep;
+    protected ProcessedInput pinput;
 
-    protected volatile boolean canceled;
-
-    // whiteset
-    protected final Set<MolecularFormula> neutralFormulaWhiteset;
-
-    // intermediate results
-    protected final Ionization[] ionizations;
-    protected final ProcessedInput[] processedInputs;
-
-    // Multithreading queues
-    protected final HashMap<MolecularFormula, WeakReference<FGraph>> graphCache;
-    protected final ConcurrentLinkedQueue<TreeJob> jobsToCompute;
-
-    protected ReentrantLock resultLock = new ReentrantLock();
-
-    // results
-    protected final ConcurrentLinkedQueue<TreeJob> intermediates;
-    protected final TreeSet<TreeJob> resultList;
-
-    public TreeComputationInstance(ExecutorService service, int numberOfWorkers, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep, Set<MolecularFormula> set) {
-        this.service = service;
-        this.numberOfWorkers = numberOfWorkers;
+    public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
+        super(JJob.JobType.CPU);
+        this.jobManager = manager;
         this.analyzer = analyzer;
-        this.input = input;
+        this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
-        this.canceled = false;
-        this.heuristicGap = Double.NEGATIVE_INFINITY;
+    }
 
-        this.neutralFormulaWhiteset = new HashSet<>();
-        if (set != null) {
-            neutralFormulaWhiteset.addAll(set);
-        }
-
-        ProcessedInput pinput = analyzer.performValidation(input);
-        final PrecursorIonType ionType = pinput.getExperimentInformation().getPrecursorIonType();
-        if (ionType.isIonizationUnknown()) {
-            this.ionizations = Iterables.toArray(PeriodicTable.getInstance().getKnownIonModes(ionType.getCharge()), Ionization.class);
+    @Override
+    protected FinalResult compute() throws Exception {
+        // preprocess input
+        this.pinput = analyzer.preprocessing(experiment);
+        TreeSizeScorer.TreeSizeBonus treeSizeBonus;
+        final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
+        if (tss!=null) {
+            treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore());
+            pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, treeSizeBonus);
         } else {
-            this.ionizations = new Ionization[]{ionType.getIonization()};
+            treeSizeBonus = null;
         }
-        this.processedInputs = new ProcessedInput[ionizations.length];
-        if (ionizations.length==1 && !ionType.isIonizationUnknown()) {
-            processedInputs[0] = pinput;
-        } else {
-            for (int k=0; k < ionizations.length; ++k) {
-                final Ms2ExperimentShallowCopy shallowCopy = new Ms2ExperimentShallowCopy(input, PrecursorIonType.getPrecursorIonType(ionizations[k]));
-                processedInputs[k] = analyzer.performValidation(shallowCopy);
-            }
-        }
-        for (ProcessedInput pr : processedInputs) {
-            if (!neutralFormulaWhiteset.isEmpty()) {
-                pr.setAnnotation(Whiteset.class, new Whiteset(neutralFormulaWhiteset));
-            }
-        }
-        this.capacity = this.numberOfResultsToKeep+10;
-        this.jobsToCompute = new ConcurrentLinkedQueue<>();
-        this.graphCache = new HashMap<>(Math.min(20, numberOfResultsToKeep));
-        this.intermediates = new ConcurrentLinkedQueue<>();
-        this.resultList = new TreeSet<>(new Comparator<TreeJob>() {
-            @Override
-            public int compare(TreeJob o1, TreeJob o2) {
-                return Double.compare(o1.exactScore, o2.exactScore);
-            }
-        });
+        double inc=0d;
 
-        final Thread gcWatch = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Reference<? extends FGraph> ref;
+        // as long as we do not find good quality results
+        while (true) {
+            final boolean retryWithHigherScore = inc < MAX_TREESIZE_INCREASE;
+            // compute heuristics
+            final List<HeuristicJob> heuristics = new ArrayList<>();
+            for (final Decomposition formula : pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
+                final HeuristicJob heuristicJob = new HeuristicJob(formula);
+                jobManager.submitSubJob(heuristicJob);
+                heuristics.add(heuristicJob);
+            }
+            // collect results
+            final List<IntermediateResult> intermediateResults = new ArrayList<>();
+            int k=0;
+            for (HeuristicJob job : heuristics) {
                 try {
-                    while ((ref=referenceQueue.remove())!=null) {
-                        System.out.println("Reference is garbage collected!");
-                    }
-                } catch (InterruptedException e) {
+                    intermediateResults.add(job.awaitResult());
+                } catch (ExecutionException e) {
                     e.printStackTrace();
+                    throw e;
                 }
             }
-        });
+            // sort by score
+            Collections.sort(intermediateResults, Collections.reverseOrder());
+            // now compute from best scoring compound to lowest scoring compound
+            final FinalResult fr;
+            if (analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder) {
+                fr = computeExactTreesSinglethreaded(intermediateResults, retryWithHigherScore);
+            } else {
+                fr = computeExactTreesInParallel(intermediateResults, retryWithHigherScore);
+            }
+            if (tss!=null && retryWithHigherScore && fr.canceledDueToLowScore) {
+                inc += TREE_SIZE_INCREASE;
+                treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
+                tss.fastReplace(pinput, treeSizeBonus);
+                /*
+                //pinput.setAnnotation(Scoring.class,null);
+                pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class,treeSizeBonus);
+                analyzer.performPeakScoring(pinput);
+                */
+            } else return fr;
+            //
+        }
 
-        gcWatch.start();
-
-
-
+        //return null;
     }
 
-    public List<FTree> getTrees() {
-        final ArrayList<FTree> trees = new ArrayList<>();
-        int k=0;
-        final Iterator<TreeJob> iter = resultList.descendingIterator();
-        while (iter.hasNext()) {
-            trees.add(iter.next().tree);
-            if (++k >= numberOfResultsToKeep) break;
-        }
-        return trees;
+    private FinalResult computeExactTreesInParallel(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
+        return computeExactTreesSinglethreaded(intermediateResults,earlyStopping);
     }
 
-    public void startComputingMultithreaded() {
-        System.out.println("Start  computing");
-        // first estimate number of all decompositions
-        final List<Future<?>> futures = new ArrayList<>();
-        for (int k=0; k < processedInputs.length; ++k) {
-            final int K = k;
-            futures.add(service.submit(new Runnable() {
-                @Override
-                public void run() {
-                    initializeInputFor(K);
-                }
-            }));
-        }
-        for (Future f : futures) {
-            try {
-                f.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-
-        System.out.println("Heuristics and Graphs (" + jobsToCompute.size() + ")");
-        // now compute all formulas in parallel
-        futures.clear();
-        for (final TreeJob job : jobsToCompute) {
-            futures.add(service.submit(new Runnable() {
-                @Override
-                public void run() {
-                    computeHeuristicTree(job, computeGraph(job));
-                }
-            }));
-        }
-        for (Future<?> f : futures) {
-            try {
-                f.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("Exact Trees");
-        final TreeJob[] jobs = jobsToCompute.toArray(new TreeJob[0]);
-        Arrays.sort(jobs, Collections.<TreeJob>reverseOrder());
-        futures.clear();
-        heuristicGap = Double.NEGATIVE_INFINITY;
-        lowerbound = Double.NEGATIVE_INFINITY;
-        // now compute exact solutions until lowerbound reached
-        if (analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder) {
-            throw new UnsupportedOperationException();
+    private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
+        // compute in batches
+        double threshold = Double.NEGATIVE_INFINITY;
+        final int BATCH_SIZE = 10;
+        final List<FTree> results = new ArrayList<>();
+        final int n = numberOfResultsToKeep;
+        double maximumGap = 0d;
+        final DoubleEndWeightedQueue2<ExactResult> queue = new DoubleEndWeightedQueue2<>(Math.max(20,n+10),new ExactResultComparator());
+        final DoubleEndWeightedQueue2<ExactResult> graphCache;
+        // store at maximum 30 graphs
+        if (queue.capacity > 30){
+            graphCache = new DoubleEndWeightedQueue2<>(30, new ExactResultComparator());
         } else {
-            for (final TreeJob job : jobs) {
-                futures.add(service.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        final double hgap = heuristicGap;
-                        final int capa = Double.isInfinite(hgap) ? capacity : numberOfResultsToKeep;
-                        if (job.heuristicScore + hgap < lowerbound) {
-                            System.out.println("Skip " + job);
-                            return;
-                        }
-                        computeExactTree(job, computeGraph(job));
-                        resultLock.lock();
-                        if (resultList.size() >= capa) {
-                            if (Double.isInfinite(hgap)) {
-                                resultList.add(job);
-                                calculateLowerbound();
-                                final Iterator<TreeJob> jiter = resultList.iterator();
-                                for (int i=numberOfResultsToKeep; i < capa && jiter.hasNext(); ++i) {
-                                    jiter.next();
-                                    jiter.remove();
-                                }
-                                lowerbound = resultList.first().exactScore;
-                            } else {
-                                final TreeJob worstJob = resultList.last();
-                                if (worstJob.exactScore < job.score) {
-                                    resultList.add(job);
-                                    resultList.pollFirst();
-                                    lowerbound = resultList.first().exactScore;
-                                }
-                            }
-                        } else {
-                            resultList.add(job);
-                        }
-                        resultLock.unlock();
-                    }
-                }));
+            graphCache = null;
+        }
+
+        outerLoop:
+        for (int i=0; i < intermediateResults.size(); i += BATCH_SIZE) {
+            final List<IntermediateResult> batch = intermediateResults.subList(i, Math.min(intermediateResults.size(),i+BATCH_SIZE));
+            final List<GraphBuildingJob> graphs = computeGraphBatches(batch);
+            for (int j=0; j < graphs.size(); ++j) {
+                final FGraph graph = graphs.get(j).takeResult();
+                final IntermediateResult intermediateResult = batch.get(j);
+                if (intermediateResult.heuristicScore < threshold) {
+                    System.err.println("BREAK AFTER " + (j + i)  + " / " + intermediateResults.size() + " steps! Max GAP IS " + maximumGap);
+                    break outerLoop;
+                }
+                final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore-1e-3);
+                if (tree==null) continue ;
+                maximumGap = Math.max(maximumGap, tree.getTreeWeight() - intermediateResult.heuristicScore);
+                ExactResult r = new ExactResult(graphs.get(j).decomposition, graph, tree, tree.getTreeWeight());
+                if (graphCache!=null) {
+                    graphCache.add(r,r.score);
+                    r = new ExactResult(r.decomposition,null,r.tree,r.score);
+                }
+                if (! queue.add(r, r.score) ) {
+                    // we have computed enough trees. Let's calculate lowerbound threshold
+                    threshold = queue.lowerbound - maximumGap;
+                } else if (graphCache!=null) {
+                    // we have to annotate the tree
+                    analyzer.addTreeAnnotations(r.graph,r.tree);
+                }
             }
         }
+        if (graphCache!=null) {
+            for (ExactResult r : graphCache) {
+                queue.replace(r,r.score);
+            }
+            graphCache.clear();
+        }
 
-        for (Future<?> f : futures) {
-            try {
-                f.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+        boolean CHECK_FOR_TREESIZE = earlyStopping;
+        final ArrayList<ExactResult> exactResults = new ArrayList<>();
+        for (ExactResult r : queue) {
+            exactResults.add(new ExactResult(r.decomposition,r.graph,r.tree,r.score));
+            if (CHECK_FOR_TREESIZE && exactResults.size() >= MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY) {
+                if (!checkForTreeQuality(exactResults)) return new FinalResult();
+                CHECK_FOR_TREESIZE = false;
             }
         }
-    }
+        // now recalibrate trees
+        int k=0;
+        double maxRecalibrationBonus = 0d;
+        final ListIterator<ExactResult> riter = exactResults.listIterator();
+        while (riter.hasNext()) {
+            final ExactResult r = riter.next();
+            final FGraph graph;
+            if (r.graph==null) {
+                graph = analyzer.buildGraph(pinput,r.decomposition);
+            } else graph = r.graph;
+            analyzer.addTreeAnnotations(graph,r.tree);
+            FTree newTree = analyzer.recalibrate(r.tree,true);
+            final TreeScoring sc = newTree.getAnnotationOrThrow(TreeScoring.class);
+            if (k++ <= 10) {
+                maxRecalibrationBonus = Math.max(maxRecalibrationBonus, sc.getRecalibrationBonus());
+            } else {
+                sc.setRecalibrationPenalty(Math.max(0,sc.getRecalibrationBonus() - maxRecalibrationBonus));
+                sc.setOverallScore(sc.getOverallScore()-sc.getRecalibrationPenalty());
+            }
+            r.tree = newTree;
+            riter.set(new ExactResult(r.decomposition,null,r.tree,sc.getOverallScore()));
 
-    private void initializeInputFor(int k) {
-        processedInputs[k] = analyzer.preprocessInputForGraphBuilding(processedInputs[k]);
-        for (Scored<MolecularFormula> formula : processedInputs[k].getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
-            jobsToCompute.add(new TreeJob(formula, k));
         }
-    }
-
-    private final ReferenceQueue<FGraph> referenceQueue = new ReferenceQueue<>();
-    protected FGraph computeGraph(TreeJob job) {
-        WeakReference<FGraph> ref = graphCache.get(job.candidate.getCandidate());
-        if (ref != null) {
-            FGraph g = ref.get();
-            if (g != null) {
-                return g;
-            } else System.out.println("Recompute graph " + job.candidate);
+        Collections.sort(exactResults, Collections.reverseOrder());
+        final int nl = Math.min(numberOfResultsToKeep,exactResults.size());
+        final ArrayList<FTree> finalResults = new ArrayList<>(nl);
+        for (int m=0; m < nl; ++m) {
+            final boolean correct = analyzer.recalculateScores(exactResults.get(m).tree);
+            finalResults.add(exactResults.get(m).tree);
         }
-        final long time1 = System.nanoTime();
-        final FGraph graph = analyzer.buildGraph(processedInputs[job.ionType], job.candidate);
-        synchronized (graphCache){
-            final WeakReference<FGraph> reference =  new WeakReference<FGraph>(graph,   referenceQueue);
-            graphCache.put(job.candidate.getCandidate(), reference);
+
+
+        return new FinalResult(finalResults);
+    }
+
+
+    private static final double MAX_TREESIZE_INCREASE = 3d;
+    private static final double TREE_SIZE_INCREASE = 1d;
+    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
+    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
+    private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
+
+    private boolean checkForTreeQuality(List<ExactResult> results) {
+        for (ExactResult r : results) {
+            final FTree tree = r.tree;
+            if (analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput,tree, r.decomposition.getIon()) >= MIN_EXPLAINED_INTENSITY && tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS)) {
+                return true;
+            }
         }
-        final long time2 = System.nanoTime();
-        System.out.println("Build graph " + job.candidate + " + in (" + (time2-time1)/1000000d + "ms");
-        return graph;
+        return false;
     }
 
-    protected void computeHeuristicTree(TreeJob job, FGraph graph) {
-        final long time1 = System.nanoTime();
-        final CriticalPathSolver solver = new CriticalPathSolver(graph);
-        final FTree tree = solver.solve();
-        final long time2 = System.nanoTime();
-        analyzer.addTreeAnnotations(graph, tree);
-        job.heuristicScore = job.score = tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-        System.out.println("Heuristicaly solve graph " + job.candidate + " + in (" + (time2-time1)/1000000d + "ms");
-    }
+    /*
 
-    protected void computeExactTree(TreeJob job, FGraph graph) {
-        job.tree = analyzer.computeTree(graph, Double.isNaN(job.heuristicScore) ? Double.NEGATIVE_INFINITY : job.heuristicScore - 1e-16);
-        job.exactScore = job.score = job.tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
-    }
-
-    protected volatile double heuristicGap, lowerbound;
+    - jeder Kandidat besteht aus Molekülformel + Ionisierung (nicht PrecursorIonType!)
+    - erstmal berechnen wir alle Bäume heuristisch und ranken die Candidaten nach Score.
+    - danach berechnen wir exakte Lösungen für die ersten K Bäume und bestimmen einen Threshold
+    - danach berechnen wir Schrittweise neue Bäume und passen den Threshold jedes Mal an bis wir abbrechen können
+    - danach rekalibrieren wir das resultierende Set und sortieren neu
 
 
-    private void calculateLowerbound() {
-        TDoubleArrayList values = new TDoubleArrayList(resultList.size());
-        for (TreeJob job : new ArrayList<>(resultList)) {
-            values.add(job.exactScore - job.heuristicScore);
+     */
+
+    private List<GraphBuildingJob> computeGraphBatches(List<IntermediateResult> results) {
+        final List<GraphBuildingJob> graphs = new ArrayList<>(results.size());
+        for (IntermediateResult r : results) {
+            GraphBuildingJob job = new GraphBuildingJob(r.candidate);
+            graphs.add(job);
+            jobManager.submitSubJob(job);
         }
-        values.sort();
-        heuristicGap = Math.max(heuristicGap, values.get(values.size()-5));
-        System.out.println("SET GAP TO " + heuristicGap);
+        return graphs;
     }
+
 
     // 1. Multithreaded: Berechne ProcessedInput für alle Ionisierungen
     // 2. Multithreaded: Berechne Graphen für alle Ionisierungen, berechne Bäume via Heuristik
     // 3. evtl. Multithreaded: Berechne exakte Lösung für jeden Baum
     // 4. Breche ab, wenn ausreichend gute exakte Lösungen gefunden wurden
 
-    protected static class TreeJob implements Comparable<TreeJob> {
+    protected class HeuristicJob extends BasicJJob<IntermediateResult> {
 
-        protected final Scored<MolecularFormula> candidate;
-        protected final int ionType;
-        protected double heuristicScore, exactScore, score;
-        protected FTree tree;
+        protected Decomposition decomposition;
 
-        public TreeJob(Scored<MolecularFormula> formula, int ionType) {
-            this.candidate = formula;
-            this.ionType = ionType;
-            this.heuristicScore = Double.NaN;
-            this.exactScore = Double.NaN;
-            this.tree = null;
+        protected HeuristicJob(Decomposition formula) {
+            super(JobType.CPU);
+            this.decomposition = formula;
         }
 
-        public String toString() {
-            return candidate.getCandidate() + ": " + score;
+
+        @Override
+        protected IntermediateResult compute() throws Exception {
+            final FGraph graph = analyzer.buildGraph(pinput, decomposition);
+            // compute heuristic
+
+            //final FTree heuristic = new CriticalPathSolver(graph).solve();
+            final FTree heuristic = new ExtendedCriticalPathHeuristic(graph).solve();
+
+
+            IntermediateResult result = new IntermediateResult(decomposition, heuristic.getTreeWeight());
+            return result;
+        }
+    }
+
+    protected class GraphBuildingJob extends BasicJJob<FGraph> {
+        private final Decomposition decomposition;
+
+        public GraphBuildingJob(Decomposition decomposition) {
+            super(JobType.CPU);
+            this.decomposition = decomposition;
         }
 
         @Override
-        public int compareTo(TreeJob o) {
-            return Double.compare(score, o.score);
+        protected FGraph compute() throws Exception {
+            return analyzer.buildGraph(pinput, decomposition);
+        }
+    }
+
+    protected final static class IntermediateResult implements Comparable<IntermediateResult> {
+
+        protected final Decomposition candidate;
+        protected double heuristicScore;
+
+        public IntermediateResult(Decomposition formula, double heuristicScore) {
+            this.candidate = formula;
+            this.heuristicScore = heuristicScore;
+
+        }
+
+        public String toString() {
+            return candidate.getCandidate() + ": " + heuristicScore;
+        }
+
+        @Override
+        public int compareTo(IntermediateResult o) {
+            return Double.compare(heuristicScore, o.heuristicScore);
+        }
+    }
+
+    public final static class FinalResult {
+        protected final boolean canceledDueToLowScore;
+        protected final List<FTree> results;
+
+        public FinalResult(List<FTree> results) {
+            this.canceledDueToLowScore = false;
+            this.results = results;
+        }
+        public FinalResult() {
+            this.canceledDueToLowScore = true;
+            this.results = null;
+        }
+
+        public List<FTree> getResults() {
+            return results;
+        }
+    }
+
+    protected final static class ExactResult implements Comparable<ExactResult> {
+
+        protected final Decomposition decomposition;
+        protected final double score;
+        protected final FGraph graph;
+        protected FTree tree;
+
+        public ExactResult(Decomposition decomposition, FGraph graph, FTree tree, double score) {
+            this.decomposition = decomposition;
+            this.score = score;
+            this.tree = tree;
+            this.graph = graph;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof ExactResult) return equals((ExactResult)o);
+            else return false;
+        }
+
+        public boolean equals(ExactResult o) {
+            return score == o.score && decomposition.getCandidate().equals(o.decomposition.getCandidate());
+        }
+
+        @Override
+        public int compareTo(ExactResult o) {
+            final int a = Double.compare(score, o.score);
+            if (a!=0) return a;
+            return decomposition.getCandidate().compareTo(o.decomposition.getCandidate());
+        }
+    }
+
+    protected static class ExactResultComparator implements Comparator<ExactResult> {
+
+        @Override
+        public int compare(ExactResult o1, ExactResult o2) {
+            return o1.decomposition.getCandidate().compareTo(o2.decomposition.getCandidate());
         }
     }
 }

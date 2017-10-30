@@ -70,8 +70,6 @@ allprojects {
     dependencies {
         compile 'net.sf.trove4j:trove4j:3.0.3'
         compile 'com.google.guava:guava:18.0'
-        compile 'de.unijena.bioinf.utils:jjobs-core:0.9-SNAPSHOT'
-
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 

@@ -53,7 +53,7 @@ public class GurobiSolver implements TreeBuilder {
         this.secondsPerDecomposition = 18 * 60 * 60; // maximal 5 hours per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
-        setNumberOfCPUs(Math.min(4,Runtime.getRuntime().availableProcessors()));
+        setNumberOfCPUs(Math.min(2,Runtime.getRuntime().availableProcessors()));
     }
 
     public GurobiSolver() {
@@ -171,8 +171,13 @@ public class GurobiSolver implements TreeBuilder {
 
     @Override
     public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
-        if (graph.numberOfVertices() <= 2)
-            return new FTree(graph.getRoot().getChildren(0).getFormula());
+        if (graph.numberOfVertices() <= 2) {
+            final FTree tree = new FTree(graph.getRoot().getChildren(0).getFormula());
+            if (graph.getRoot().getOutDegree()>0) {
+                tree.setTreeWeight(graph.getRoot().getOutgoingEdge(0).getWeight());
+            }
+            return tree;
+        }
         if (!(prepared instanceof Solver))
             throw new IllegalArgumentException("Expected solver to be instance of Solver, but " + prepared.getClass() + " given.");
         final Solver solver = (Solver) prepared;
@@ -268,7 +273,7 @@ public class GurobiSolver implements TreeBuilder {
                 }
                 computeOffsets();
                 setConstraints();
-                //setLowerbound();
+                setLowerbound();
                 assert model.get(GRB.IntAttr.IsMIP) != 0;
                 built = true;
             } catch (GRBException e) {
@@ -468,8 +473,8 @@ public class GurobiSolver implements TreeBuilder {
                 model.addConstr(lowerboundExpression, GRB.LESS_EQUAL, -lowerbound, null);//String.valueOf(++identifier));
             }
             */
-            if (lowerbound != 0) {
-                model.getEnv().set(GRB.DoubleParam.Cutoff, 0);
+            if (lowerbound > 0) {
+                model.getEnv().set(GRB.DoubleParam.Cutoff, -lowerbound);
             }
         }
 
@@ -551,6 +556,7 @@ public class GurobiSolver implements TreeBuilder {
             if (graphRoot == null) return null;
 
             final FTree tree = new FTree(graphRoot.getFormula());
+            tree.setTreeWeight(rootScore);
             final ArrayDeque<AbstractSolver.Stackitem> stack = new ArrayDeque<AbstractSolver.Stackitem>();
             stack.push(new AbstractSolver.Stackitem(tree.getRoot(), graphRoot));
             while (!stack.isEmpty()) {
@@ -562,6 +568,7 @@ public class GurobiSolver implements TreeBuilder {
                         final Loss l = losses.get(edgeIds[offset]);
                         final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
                         child.getIncomingEdge().setWeight(l.getWeight());
+                        tree.setTreeWeight(tree.getTreeWeight()+l.getWeight());
                         stack.push(new AbstractSolver.Stackitem(child, l.getTarget()));
                     }
                     ++offset;

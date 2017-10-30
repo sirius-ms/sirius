@@ -28,11 +28,12 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.DoubleEndWeightedQueue;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.TreeIterator;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXTreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
+import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.solver.CriticalPathSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
@@ -42,12 +43,16 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredicto
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.jjobs.JobManager;
+import gnu.trove.list.array.TDoubleArrayList;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 public class Sirius {
 
@@ -63,41 +68,171 @@ public class Sirius {
     protected PeriodicTable table;
     protected boolean autoIonMode;
 
-    public static void main(String[] args) {
-        final File F = new File("/home/kaidu/Documents/temp/foo/myxo_359.ms");
+    public static void mainy(String[] args) throws ExecutionException, InterruptedException {
+        LoggerFactory.getILoggerFactory().getLogger("").debug("");
+        final File F = new File("/home/kaidu/data/ms/agilent_data/fixed");
+        final List<File> totalDaneben = new ArrayList<>();
+        int K=0;
         try {
-            /*
+
             Sirius s = new Sirius("qtof");
-            //s.getMs2Analyzer().setIsotopeHandling(FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS);
-            Ms2Experiment exp = s.parseExperiment(F).next();
-
-            final ExecutorService service = Executors.newFixedThreadPool(4);
-            TreeComputationInstance i = new TreeComputationInstance(service, 4, s.getMs2Analyzer(), exp, 10, null);
-            i.startComputingMultithreaded();
-
-            for (FTree tree : i.getTrees()) {
-            //for (IdentificationResult ir : s.identify(exp, 10,false,IsotopePatternHandling.omit)) {
-                //FTree tree = ir.getRawTree();
-                System.out.println(tree.getRoot().getFormula() + ": " + tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+            s.getMs2Analyzer().setIsotopeHandling(FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
+            final TDoubleArrayList gaps1 = new TDoubleArrayList(), gaps2 = new TDoubleArrayList(), time1 = new TDoubleArrayList(), time2 = new TDoubleArrayList();
+            for (File f : Arrays.asList(new File("/home/kaidu/data/ms/agilent_data/fixed/agilent_2206.ms"))){//F.listFiles()) {
+                if (!f.getName().endsWith(".ms"))
+                    continue;
+                Ms2Experiment exp = s.parseExperiment(f).next();
+                final ProcessedInput pinp = s.getMs2Analyzer().preprocessing(exp);
+                Decomposition d = null;
+                final DecompositionList list = pinp.getAnnotation(DecompositionList.class,null);
+                for (Decomposition x : list.getDecompositions()) {
+                    if (x.getCandidate().equals(exp.getMolecularFormula())) {
+                        d = x;
+                        break;
+                    }
+                }
+                if (d==null) continue;
+                final FGraph graph = s.getMs2Analyzer().buildGraph(pinp,d);
+                final long T1 = System.nanoTime();
+                final double h1 = new CriticalPathSolver(graph).solve().getTreeWeight();
+                final long T2 = System.nanoTime();
+                final double h2 = new ExtendedCriticalPathHeuristic(graph).solve().getTreeWeight();
+                final long T3 = System.nanoTime();
+                final double exact = s.getMs2Analyzer().getTreeBuilder().buildTree(pinp,graph,0d,s.getMs2Analyzer().getTreeBuilder().prepareTreeBuilding(pinp,graph,0d)).getTreeWeight();//s.compute(exp, exp.getMolecularFormula(), false).tree.getTreeWeight();
+                final long T4 = System.nanoTime();
+                final double h1t = (T2-T1)/1000000d, h2t = (T3-T2)/1000000d, h3t = (T4-T3)/1000000d;
+                System.out.println(h1 + " x " + h2 + " x "+ exact + " || " + h1t + " vs " + h2t + " vs " + h3t);
+                time1.add(h1t);
+                time2.add(h2t);
+                gaps1.add(exact-h1);
+                gaps2.add(exact-h2);
+                if ((exact-h2)>10) {
+                    System.err.println(f.getName() + ": " + exact + " vs " + h2);
+                    totalDaneben.add(f);
+                }
+                if ((++K % 200) == 0) {
+                    System.out.println("#######################");
+                    System.out.println("Average Time H1: " + time1.sum()/time1.size());
+                    System.out.println("Average Time H2: " + time2.sum()/time2.size());
+                    System.out.println("Average Gap H1: " + gaps1.sum()/gaps1.size());
+                    System.out.println("Average Gap H2: " + gaps2.sum()/gaps2.size());
+                    double[] buf = gaps1.toArray();
+                    Arrays.sort(buf);
+                    System.out.println("Median Gap H1: " + buf[buf.length/2]);
+                    buf = gaps2.toArray();
+                    Arrays.sort(buf);
+                    System.out.println("Median Gap H2: " + buf[buf.length/2]);
+                    System.out.println("#######################");
+                    for (File g : totalDaneben) System.out.println(g.getName());
+                    System.out.println("#######################");
+                }
             }
-            //service.shutdown();
-            */
+            System.out.println("#######################");
+            System.out.println("Average Time H1: " + time1.sum()/time1.size());
+            System.out.println("Average Time H2: " + time2.sum()/time2.size());
+            System.out.println("Average Gap H1: " + gaps1.sum()/gaps1.size());
+            System.out.println("Average Gap H2: " + gaps2.sum()/gaps2.size());
+            double[] buf = gaps1.toArray();
+            Arrays.sort(buf);
+            System.out.println("Median Gap H1: " + buf[buf.length/2]);
+            buf = gaps2.toArray();
+            Arrays.sort(buf);
+            System.out.println("Median Gap H2: " + buf[buf.length/2]);
+            System.out.println("#######################");
+            for (File g : totalDaneben) System.out.println(g.getName());
+            System.out.println("#######################");
+        } catch (IOException e) {
+
+        }
+    }
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_160.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_163.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_315.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_1015.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_1423.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_1605.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_2206.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_3003.ms"});
+        //mainx(new String[]{"/home/kaidu/data/ms/agilent_data/fixed/agilent_3574.ms"});
+        test();
+    }
+
+    private static void test() {
+        final File testFile = new File("/home/kaidu/data/ms/metlin/mpos85097.ms");
+        final Sirius sirius = new Sirius();
+        sirius.getMs2Analyzer().setTreeBuilder(new CPLEXTreeBuilder());
+        try {
+            final Ms2Experiment exp = sirius.parseExperiment(testFile).next();
+            final long time1 = System.nanoTime();
+            System.out.println(sirius.identify(exp).get(0).score);
+            final long time2 = System.nanoTime();
+            System.out.println((time2-time1)/1000000d);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void mainx(String[] args) throws ExecutionException, InterruptedException {
+        final File F = new File(args[0]);
+        System.out.println(F.getName() + " ##############");
+        try {
+
+            Sirius s = new Sirius("qtof");
+            s.getMs2Analyzer().setIsotopeHandling(FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
+            Ms2Experiment exp = s.parseExperiment(F).next();
+            System.out.println(exp.getMolecularFormula() + " with mass " + exp.getMolecularFormula().getMass());
 
 
-            // TEST IONIZATIONS
-            final Sirius sirius = new Sirius("qtof");
-            for (File f : new File("/home/kaidu/Documents/temp/test").listFiles()) {
-                final MutableMs2Experiment exp = new MutableMs2Experiment(sirius.parseExperiment(f).next());
+            final JobManager manager = new JobManager(Runtime.getRuntime().availableProcessors());
 
-                exp.setPrecursorIonType(PrecursorIonType.unknown(1));
-                // compute formula
-                final IdentificationResult result = sirius.compute(exp, exp.getMolecularFormula());
-                System.out.println(exp.getPrecursorIonType() + " => " + exp.getMolecularFormula());
-                System.out.println("Computed is: " + result.getRawTree().getRoot().getFormula() + " with " + result.getRawTree().getAnnotationOrThrow(PrecursorIonType.class));
+            final TreeComputationInstance instance = new TreeComputationInstance(manager, s.getMs2Analyzer(), exp, 10);
+            {
+                final long T1 = System.currentTimeMillis();
+                manager.submitSubJob(instance);
+                for (FTree tree : instance.awaitResult().getResults()) {
+                    System.out.println(tree.getRoot().getFormula() + ": " + tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
+                }
+                final long T2 = System.currentTimeMillis();
+                System.out.println("\nTIME: " + (T2-T1)/1000 + " s");
+            }
+            System.out.println("#########################");
+            s.setProgress(new Progress() {
+                @Override
+                public void init(double maxProgress) {
+
+                }
+
+                @Override
+                public void update(double currentProgress, double maxProgress, String value, Feedback feedback) {
+
+                }
+
+                @Override
+                public void finished() {
+
+                }
+
+                @Override
+                public void info(String message) {
+                    System.out.println(message);
+                }
+            });
+            final long T1 = System.currentTimeMillis();
+            for (IdentificationResult r : Arrays.asList(s.compute(exp,exp.getMolecularFormula(),true))) {
+                final FTree tree = r.getRawTree();
+                System.out.println(tree.getRoot().getFormula() + ": " + tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() + " ( " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(1)).get("TreeSizeScorer") );
+            }
+            final long T2 = System.currentTimeMillis();
+            System.out.println("\nTIME: " + (T2-T1)/1000 + " s");
 
 
 
-
+            try {
+                manager.shutdown();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
         } catch (IOException e) {
@@ -812,8 +947,11 @@ public class Sirius {
                 progress.info("recalibrate trees");
                 progress.init(computedTrees.size());
                 for (int k = 0; k < computedTrees.size(); ++k) {
+                    //double beforeScore = computedTrees.get(k).getAnnotationOrThrow(TreeScoring.class).getOverallScore();
                     final FTree recalibratedTree = profile.fragmentationPatternAnalysis.recalibrate(computedTrees.get(k), true);
                     maximalPossibleScoreByRecalibration = addRecalibrationPenalty(computedTrees.get(k), k+1, maximalPossibleScoreByRecalibration);
+                    //double newScore = recalibratedTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore();
+                    //System.out.println(recalibratedTree.getRoot().getFormula() + ": " + beforeScore + " -> " + newScore);
                     if (deisotope.isScoring()) addIsoScore(isoFormulas, recalibratedTree);
                     computedTrees.set(k, recalibratedTree);
                     progress.update(k + 1, computedTrees.size(), "recalibrate " + recalibratedTree.getRoot().getFormula().toString(), feedback);
