@@ -5,24 +5,25 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.ClassPath;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyLoader;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
-import de.unijena.bioinf.fingerid.utils.PROPERTIES;
+import de.unijena.bioinf.jjobs.JobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import oshi.SystemInfo;
+import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -165,7 +166,7 @@ public abstract class ApplicationCore {
 
         HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
         addDefaultProptery("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(hardware.getProcessor().getPhysicalProcessorCount()));
-        addDefaultProptery("de.unijena.bioinf.sirius.cpu.threads",String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
+        addDefaultProptery("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
     }
 
 
