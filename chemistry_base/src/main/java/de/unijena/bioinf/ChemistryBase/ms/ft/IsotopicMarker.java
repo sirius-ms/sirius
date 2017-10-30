@@ -1,4 +1,4 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.model;
+package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 

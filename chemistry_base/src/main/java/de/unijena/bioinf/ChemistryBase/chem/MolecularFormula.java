@@ -783,7 +783,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         final short[] buffer = buffer();
         final TableSelection sel = getTableSelection();
         for (int i = 0; i < buffer.length; ++i) {
-            if (buffer[i] > 0) visitor.visit(sel.get(i), buffer[i]);
+            if (buffer[i] != 0) visitor.visit(sel.get(i), buffer[i]);
         }
     }
 
@@ -798,7 +798,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             @Override
             public boolean hasNext() {
                 for (; index < buffer.length; index++) {
-                    if (buffer[index] > 0)
+                    if (buffer[index] != 0)
                         return true;
                 }
                 return false;
@@ -807,7 +807,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             @Override
             public Element next() {
                 for (; index < buffer.length; index++) {
-                    if (buffer[index] > 0)
+                    if (buffer[index] != 0)
                         return selection.get(index++);
                 }
                 throw new NoSuchElementException();

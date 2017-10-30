@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.MultipleTreeComputation;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.MassDeviationVertexScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import org.apache.commons.math3.analysis.UnivariateFunction;
@@ -151,7 +152,16 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 final TreeScoring treeScoring = tree.getAnnotationOrThrow(TreeScoring.class);
                 // TODO: Check if this is working correct
                 ProcessedInput pinp = analyzer.preprocessing(originalInput.getOriginalInput(), prof, toPolynomial(f));
-                MultipleTreeComputation mtc = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : treeScoring.getOverallScore()).withoutRecalibration();
+                // dirty hack: take over the tree size scorer.... =/
+
+                {
+                    final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
+                    if (tss!=null) {
+                        final TreeSizeScorer.TreeSizeBonus tb = originalInput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore()));
+                        tss.fastReplace(pinp, tb);
+                    }
+                }
+                 MultipleTreeComputation mtc = analyzer.computeTrees(pinp).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(force ? 0 : treeScoring.getOverallScore()).withoutRecalibration();
                 if (oldTree != null) mtc = mtc.withBackbones(oldTree);
                 correctedTree = mtc.optimalTree();
                 if (correctedTree == null) {
@@ -161,12 +171,14 @@ public class HypothesenDrivenRecalibration implements RecalibrationMethod {
                 if (deviationScale == 1) {
                     if (correctedTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() >= oldTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore()) return correctedTree;
                     else return oldTree;
-                }
-                final FTree ft2 = analyzer.computeTrees(analyzer.preprocessing(originalInput.getOriginalInput(), prof)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0/*correctedTree.getScore()*/).withoutRecalibration().withBackbones(correctedTree).optimalTree();
+                } else throw new RuntimeException("Feature not longer supported!");
+                /*
+                final FTree ft2 = analyzer.computeTrees(analyzer.preprocessing(originalInput.getOriginalInput(), prof)).onlyWith(Arrays.asList(tree.getRoot().getFormula())).withLowerbound(0).withoutRecalibration().withBackbones(correctedTree).optimalTree();
                 if (ft2 == null) return correctedTree;
                 else if (ft2.getAnnotationOrThrow(TreeScoring.class).getOverallScore() > correctedTree.getAnnotationOrThrow(TreeScoring.class).getOverallScore())
                     return ft2;
                 return correctedTree;
+                */
             }
 
             private void calculateScoreBonus() {
