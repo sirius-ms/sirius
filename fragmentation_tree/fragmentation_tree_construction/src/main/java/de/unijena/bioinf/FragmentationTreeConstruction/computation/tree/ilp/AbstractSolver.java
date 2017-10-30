@@ -216,21 +216,18 @@ abstract public class AbstractSolver {
 
             // get optimal solution (score) if existing
             AbstractSolver.SolverState signal = solveMIP();
-            if (signal == SolverState.SHALL_RETURN_NULL)
-                return null;
+            FTree TREE = null;
+            if (signal != SolverState.SHALL_RETURN_NULL) {
+                // reconstruct tree after having determined the (possible) optimal solution
+                final double score = getSolverScore();
+                TREE = buildSolution();
+                if (TREE != null && !isComputationCorrect(TREE, this.graph, score))
+                    throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
 
-            // reconstruct tree after having determined the (possible) optimal solution
-            final double score = getSolverScore();
-            final FTree TREE = buildSolution();
-            if (TREE != null && !isComputationCorrect(TREE, this.graph, score))
-                throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
-
+            }
             // free any memory, if necessary
             signal = pastBuildSolution();
-            if (signal == SolverState.SHALL_RETURN_NULL)
-                return null;
-
-            return TREE;
+            return signal==SolverState.SHALL_RETURN_NULL ? null : TREE;
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
         }
@@ -344,6 +341,7 @@ abstract public class AbstractSolver {
         if (graphRoot == null) return null;
 
         final FTree tree = new FTree(graphRoot.getFormula());
+        tree.setTreeWeight(rootScore);
         final ArrayDeque<Stackitem> stack = new ArrayDeque<Stackitem>();
         stack.push(new Stackitem(tree.getRoot(), graphRoot));
         while (!stack.isEmpty()) {
@@ -355,6 +353,7 @@ abstract public class AbstractSolver {
                     final Loss l = losses.get(edgeIds[offset]);
                     final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
                     child.getIncomingEdge().setWeight(l.getWeight());
+                    tree.setTreeWeight(tree.getTreeWeight()+l.getWeight());
                     stack.push(new Stackitem(child, l.getTarget()));
                 }
                 ++offset;

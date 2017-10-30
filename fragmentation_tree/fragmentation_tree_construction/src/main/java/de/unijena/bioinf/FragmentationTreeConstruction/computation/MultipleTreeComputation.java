@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
 import java.util.*;
@@ -37,13 +38,13 @@ public class MultipleTreeComputation {
     private final double lowerbound;
     private final int maximalNumber;
     private final int numberOfThreads;
-    private final List<Scored<MolecularFormula>> formulas;
+    private final List<Decomposition> formulas;
     private final FragmentationPatternAnalysis analyzer;
     private final ProcessedInput input;
     private final boolean recalibration;
     private final HashMap<MolecularFormula, FTree> backbones;
 
-    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<Scored<MolecularFormula>> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration, HashMap<MolecularFormula, FTree> backbones) {
+    MultipleTreeComputation(FragmentationPatternAnalysis analyzer, ProcessedInput input, List<Decomposition> formulas, double lowerbound, int maximalNumber, int numberOfThreads, boolean recalibration, HashMap<MolecularFormula, FTree> backbones) {
         this.analyzer = analyzer;
         this.input = input;
         this.formulas = formulas;
@@ -77,8 +78,8 @@ public class MultipleTreeComputation {
         final HashSet<MolecularFormula> whitelist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) whitelist.add(iter.next());
-        final List<Scored<MolecularFormula>> pmds = new ArrayList<Scored<MolecularFormula>>(whitelist.size());
-        for (Scored<MolecularFormula> f : this.formulas) {
+        final List<Decomposition> pmds = new ArrayList<Decomposition>(whitelist.size());
+        for (Decomposition f : this.formulas) {
             if (whitelist.contains(f.getCandidate())) {
                 pmds.add(f);
             }
@@ -90,8 +91,8 @@ public class MultipleTreeComputation {
         final HashSet<MolecularFormula> whitelist = new HashSet<MolecularFormula>();
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) whitelist.add(input.getExperimentInformation().getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(iter.next()));
-        final List<Scored<MolecularFormula>> pmds = new ArrayList<Scored<MolecularFormula>>(whitelist.size());
-        for (Scored<MolecularFormula> f : this.formulas) {
+        final List<Decomposition> pmds = new ArrayList<Decomposition>(whitelist.size());
+        for (Decomposition f : this.formulas) {
             if (whitelist.contains(f.getCandidate())) {
                 pmds.add(f);
             }
@@ -99,8 +100,8 @@ public class MultipleTreeComputation {
         return new MultipleTreeComputation(analyzer, input, pmds, lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
-    public MultipleTreeComputation withRoots(Collection<Scored<MolecularFormula>> formulas) {
-        return new MultipleTreeComputation(analyzer, input, new ArrayList<Scored<MolecularFormula>>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
+    public MultipleTreeComputation withRoots(Collection<Decomposition> formulas) {
+        return new MultipleTreeComputation(analyzer, input, new ArrayList<Decomposition>(formulas), lowerbound, maximalNumber, numberOfThreads, recalibration, backbones);
     }
 
     public MultipleTreeComputation without(Iterable<MolecularFormula> formulas) {
@@ -108,8 +109,8 @@ public class MultipleTreeComputation {
         final Iterator<MolecularFormula> iter = formulas.iterator();
         while (iter.hasNext()) blacklist.add(input.getExperimentInformation().getPrecursorIonType().neutralMoleculeToMeasuredNeutralMolecule(iter.next()));
         if (blacklist.isEmpty()) return this;
-        final List<Scored<MolecularFormula>> pmds = new ArrayList<Scored<MolecularFormula>>(Math.max(0, this.formulas.size() - blacklist.size()));
-        for (Scored<MolecularFormula> f : this.formulas) {
+        final List<Decomposition> pmds = new ArrayList<Decomposition>(Math.max(0, this.formulas.size() - blacklist.size()));
+        for (Decomposition f : this.formulas) {
             if (!blacklist.contains(f.getCandidate())) {
                 pmds.add(f);
             }
@@ -128,7 +129,7 @@ public class MultipleTreeComputation {
         try {
             while (queue.hasNext()) {
                 final FGraph graph = queue.next();
-                final FTree tree = computeTree(graph, lb, recalibration);
+                final FTree tree = computeTree(graph, /*lb*/0d, recalibration);
                 if (tree != null && (opt == null || tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() > opt.getAnnotationOrThrow(TreeScoring.class).getOverallScore())) {
                     opt = tree;
                 }
@@ -175,7 +176,7 @@ public class MultipleTreeComputation {
                 try {
                     while (hasNext()) {
                         lastGraph = queue.next();
-                        FTree tree = computeTree(lastGraph, lb, recalibration);
+                        FTree tree = computeTree(lastGraph, /*lb*/0d, recalibration);
                         if (tree != null) {
                             if (scores != null) {
                                 scores.add(tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore());
@@ -229,7 +230,7 @@ public class MultipleTreeComputation {
         try {
             while (queue.hasNext()) {
                 final FGraph graph = queue.next();
-                final FTree tree = computeTree(graph, lb, recalibration);
+                final FTree tree = computeTree(graph, /*lb*/0d, recalibration);
                 if (tree != null) {
                     trees.add(tree);
                     if (trees.size() > maximalNumber) {
@@ -256,13 +257,13 @@ public class MultipleTreeComputation {
             final GurobiSolver gb = (GurobiSolver) tb;
             try {
                 gb.setFeasibleSolver(new BackboneTreeBuilder(backbone));
-                return analyzer.computeTree(graph, lb, recalibration);
+                return analyzer.computeTree(graph, /*lb*/0d, recalibration);
             } finally {
                 gb.setFeasibleSolver(null);
             }
         } else {
             // does not support backbones
-            return analyzer.computeTree(graph, lb, recalibration);
+            return analyzer.computeTree(graph, /*lb*/0d, recalibration);
         }
     }
 
@@ -359,11 +360,11 @@ public class MultipleTreeComputation {
         }
     }
 
-    class MultithreadedGraphBuildingQueue extends MultithreadedWorkingQueue<Scored<MolecularFormula>, FGraph> {
+    class MultithreadedGraphBuildingQueue extends MultithreadedWorkingQueue<Decomposition, FGraph> {
         MultithreadedGraphBuildingQueue() {
-            super(formulas, new Function<Scored<MolecularFormula>, FGraph>() {
+            super(formulas, new Function<Decomposition, FGraph>() {
                 @Override
-                public FGraph apply(Scored<MolecularFormula> mf) {
+                public FGraph apply(Decomposition mf) {
                     return analyzer.buildGraph(input, mf);
                 }
             }, numberOfThreads, 1); // TODO: better documentation. in general it doesn't make sense to use more than one thread for graph building
