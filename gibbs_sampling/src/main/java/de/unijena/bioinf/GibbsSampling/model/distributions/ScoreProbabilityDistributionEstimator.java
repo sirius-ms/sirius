@@ -31,8 +31,11 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
         Arrays.sort(sampledScores);
         int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
-        threshold = scoreProbabilityDistribution.toLogPvalue(sampledScores[idx]);
-
+        if (idx>=sampledScores.length){
+            threshold = scoreProbabilityDistribution.toLogPvalue(0);
+        } else {
+            threshold = scoreProbabilityDistribution.toLogPvalue(sampledScores[idx]);
+        }
     }
 
     private double[] excludeZeros(double[] sampledScores){
@@ -92,7 +95,11 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
         if (percentageWithoutZeroScores) sampledScores = excludeZeros(sampledScores);
         Arrays.sort(sampledScores);
         int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
-        threshold = sampledScores[idx];
+        if (idx>=sampledScores.length){
+            threshold = 0d;
+        } else {
+            threshold = sampledScores[idx];
+        }
 
         //set adjusted threshold for scorer
         edgeScorer.setThreshold(threshold);
