@@ -12,8 +12,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumC
 import de.unijena.bioinf.fingerid.utils.PROPERTIES;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
-import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +39,8 @@ public abstract class ApplicationCore {
     public final static String VERSION_STRING;
     public final static String CITATION;
     public final static String CITATION_BIBTEX;
+
+    protected final static JobManager jobManager;
 
 
     //creating
@@ -160,6 +160,8 @@ public abstract class ApplicationCore {
         }
 
         DEFAULT_LOGGER.debug(TreeBuilderFactory.ILP_VERSIONS_STRING);
+
+        jobManager = new JobManager(1);
 
         HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
         addDefaultProptery("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(hardware.getProcessor().getPhysicalProcessorCount()));
