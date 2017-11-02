@@ -131,7 +131,7 @@ public class FingeridApplication extends CLI<FingerIdOptions> {
 
                     // workaround... we should think about that carefully
                     final FTree tree = result.getResolvedTree();
-                    futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion, (PredictorType[]) options.getPredictors().toArray()));
+                    futures.add(webAPI.predictFingerprint(executorService, i.experiment, tree, fingerprintVersion, (PredictorType[]) options.getPredictors().toArray(new PredictorType[0])));
                 }
                 final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
                 final HashMap<String, Long> dbMap = getDatabaseAliasMap();
