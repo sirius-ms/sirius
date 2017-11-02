@@ -17,20 +17,19 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
+import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -141,6 +140,55 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
             }
         }
         if (repair && input.getPrecursorIonType().isIonizationUnknown() && (input.getMolecularFormula() != null)) {
+            if (input.getIonMass()==0 || Double.isNaN(input.getIonMass())) {
+                // find matching ion mass
+                final ArrayList<PrecursorIonType> ionTypes = new ArrayList<>();
+                for (PrecursorIonType i : PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(input.getPrecursorIonType().getCharge())) {
+                    ionTypes.add(i);
+                }
+                final List<Scored<PrecursorIonType>> scoredIonTypes = new ArrayList<>();
+                final List<SimpleSpectrum> specs = new ArrayList<>();
+                if (input.getMergedMs1Spectrum()!=null && input.getMergedMs1Spectrum().size()>0) {
+                    specs.add(input.getMergedMs1Spectrum());
+                } else {
+                    for (SimpleSpectrum s : input.getMs1Spectra()) specs.add(s);
+                }
+                for (PrecursorIonType ionType : ionTypes) {
+                    // search in MS1
+                    final Deviation dev = new Deviation(10);
+                    final double peak = ionType.neutralMassToPrecursorMass(input.getMolecularFormula().getMass());
+                    for (SimpleSpectrum s : specs) {
+                        int i = Spectrums.mostIntensivePeakWithin(s, peak, dev);
+                        if (i>=0) {
+                            scoredIonTypes.add(new Scored<PrecursorIonType>(ionType, s.getIntensityAt(i)));
+                        }
+                    }
+                }
+                if (scoredIonTypes.size()==0) {
+                    // repeat with MS2 spectrum
+                    for (PrecursorIonType ionType : ionTypes) {
+                        // search in MS1
+                        final Deviation dev = new Deviation(10);
+                        final double peak = ionType.neutralMassToPrecursorMass(input.getMolecularFormula().getMass());
+                        for (Spectrum s : input.getMs2Spectra()) {
+                            int i = Spectrums.mostIntensivePeakWithin(s, peak, dev);
+                            if (i>=0) {
+                                scoredIonTypes.add(new Scored<PrecursorIonType>(ionType, s.getIntensityAt(i)));
+                            }
+                        }
+                    }
+                }
+                Collections.sort(scoredIonTypes,Scored.<PrecursorIonType>desc());
+                if (scoredIonTypes.size()>0) {
+                    final PrecursorIonType ion = scoredIonTypes.get(0).getCandidate();
+                    input.setPrecursorIonType(ion);
+                    input.setIonMass(ion.neutralMassToPrecursorMass(input.getMolecularFormula().getMass()));
+                    warn.warn("Set ion to " + ion.toString());
+                    return;
+                }
+            }
+
+
             double modificationMass = input.getIonMass() - (input.getMolecularFormula() != null ? input.getMolecularFormula().getMass() : input.getMoleculeNeutralMass());
             PrecursorIonType ion = PeriodicTable.getInstance().ionByMass(modificationMass, 1e-2, input.getPrecursorIonType().getCharge());
             if (ion != null) {
