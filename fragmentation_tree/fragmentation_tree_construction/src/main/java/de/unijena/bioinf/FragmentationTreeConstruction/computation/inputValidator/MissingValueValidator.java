@@ -65,7 +65,7 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
 
     private void checkInchi(Warning warn, boolean repair, MutableMs2Experiment input) {
         final InChI inchi = input.getAnnotation(InChI.class);
-        if (inchi==null) return;
+        if (inchi==null || inchi.in3D == null) return;
         final MolecularFormula formula = inchi.extractFormula();
         if (input.getMolecularFormula() != null && !input.getMolecularFormula().equals(formula)) {
             warn.warn("InChI has different molecular formula than input formula (" + inchi.extractFormula() + " vs. " + input.getMolecularFormula() + ")");

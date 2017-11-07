@@ -22,11 +22,16 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import java.util.*;
 
 /**
- * Basic class for molecular formulas. All algorithm should use this abstract class instead of
- * it's concrete implementations.
+ * Basic class for molecular formulas.
+ * The concrete implementation is handled by its subclass. User should use the factory methods
+ * instead of accessing the subclasses directly.
+ * <pre>
+ *     MolecularFormula f = MolecularFormula.parse("C6H12O6");
+ * </pre>
  * <p>
  * A molecular formula describes a sum formula, which is a multiset or compomere containing
  * elements and their amount.
+ * @author Kai Dührkop
  */
 public abstract class MolecularFormula implements Cloneable, Iterable<Element>, Comparable<MolecularFormula> {
 
@@ -641,7 +646,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
 
     /**
      * returns a new molecular formula by subtracting for each element the number in self with
-     * the number in other. If both formulas are {{@link #isSubtractable(MolecularFormula)}},
+     * the number in other.
+     * If both formulas are {{@link #isSubtractable(MolecularFormula)}},
      * the result is a subformula which appears after other is cut of from self.
      */
     public MolecularFormula subtract(MolecularFormula other) {
@@ -881,4 +887,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             this.amount = amount;
         }
     }
+
+
 }
