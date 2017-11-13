@@ -50,7 +50,7 @@ public abstract class ApplicationCore {
         PropertyLoader.load();
         //init workspace
         String home = System.getProperty("user.home");
-        String path = System.getProperty("de.unijena.bioinf.sirius.ws");
+        String path = System.getProperty("de.unijena.bioinf.sirius.ws", ".sirius");
         final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(path);
         final Map<String, String> env = System.getenv();
         String ws = env.get("SIRIUS_WORKSPACE");
