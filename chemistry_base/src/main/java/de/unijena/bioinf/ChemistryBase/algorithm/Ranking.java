@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
 import com.google.common.base.Equivalence;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Range;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -47,6 +48,10 @@ public class Ranking {
         }
     }
 
+    public int size() {
+        return fromRank.length;
+    }
+
     public Range<Integer> getRanking(int index) {
         return Range.closed(fromRank[index], toRank[index]);
     }
@@ -83,6 +88,7 @@ public class Ranking {
             this.mx = mx;
         }
 
+
         public Builder update(int from, int to, int max) {
             this.from.add(from);
             this.to.add(to);
@@ -96,6 +102,36 @@ public class Ranking {
 
         public <T> Builder update(List<Scored<T>> orderedList, T candidate, Equivalence<T> equiv) {
             if (orderedList.isEmpty()) return this;
+            final Range<Integer> ranks = getRankFor(orderedList,candidate,equiv);
+            update(ranks.lowerEndpoint(), ranks.upperEndpoint(), orderedList.size());
+            return this;
+        }
+
+        public <T> Builder update(List<Scored<T>> orderedList, Predicate<T> search) {
+            if (orderedList.isEmpty()) return this;
+            final Range<Integer> ranks = getRankFor(orderedList,search);
+            update(ranks.lowerEndpoint(), ranks.upperEndpoint(), orderedList.size());
+            return this;
+        }
+
+        public <T> Range<Integer> getRankFor(List<Scored<T>> orderedList, Predicate<T> search) {
+            for (int k=0; k < orderedList.size(); ++k) {
+                if (search.apply(orderedList.get(k).getCandidate())) {
+                    // search for other candidates which are equivalent
+                    final double optScore = orderedList.get(k).getScore();
+                    int before=k-1, next=k+1;
+                    while (before >= 0 && (Math.abs(orderedList.get(before).getScore()-optScore)<1e-12)) --before;
+                    ++before;
+                    while (next < orderedList.size() && (Math.abs(orderedList.get(next).getScore()-optScore)<1e-12)) ++next;
+                    --next;
+                    //update(before, next, orderedList.size());
+                    return Range.closed(before, next);
+                }
+            }
+            return Range.closed(1, orderedList.size());
+        }
+
+        public <T> Range<Integer> getRankFor(List<Scored<T>> orderedList, T candidate, Equivalence<T> equiv) {
             for (int k=0; k < orderedList.size(); ++k) {
                 if (equiv.equivalent(candidate, orderedList.get(k).getCandidate())) {
                     // search for other candidates which are equivalent
@@ -105,12 +141,11 @@ public class Ranking {
                     ++before;
                     while (next < orderedList.size() && (Math.abs(orderedList.get(next).getScore()-optScore)<1e-12)) ++next;
                     --next;
-                    update(before, next, orderedList.size());
-                    return this;
+                    //update(before, next, orderedList.size());
+                    return Range.closed(before, next);
                 }
             }
-            update(0, orderedList.size(), orderedList.size());
-            return this;
+            return Range.closed(1, orderedList.size());
         }
 
         public Ranking done() {
