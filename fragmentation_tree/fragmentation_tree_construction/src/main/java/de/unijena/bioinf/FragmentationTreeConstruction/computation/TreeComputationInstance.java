@@ -33,7 +33,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         this.numberOfResultsToKeep = numberOfResultsToKeep;
     }
 
-    public void precompute() {
+    protected void precompute() {
         this.pinput = analyzer.preprocessing(experiment);
     }
 

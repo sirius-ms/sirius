@@ -60,6 +60,53 @@ public class DecompositionList {
         };
     }
 
+    public void disjoin(DecompositionList other, double mzOwn, double mzOther) {
+        final HashMap<Ionization, HashSet<MolecularFormula>> ownMap = new HashMap<>(), otherMap = new HashMap<>();
+
+        for (Decomposition d : decompositions) {
+            Ionization i = d.ion;
+            if (!ownMap.containsKey(i)) {
+                ownMap.put(i, new HashSet<MolecularFormula>());
+                otherMap.put(i, new HashSet<MolecularFormula>());
+            }
+            ownMap.get(i).add(d.getCandidate());
+        }
+        for (Decomposition d : other.decompositions) {
+            Ionization i = d.ion;
+            if (otherMap.containsKey(i))
+                otherMap.get(i).add(d.getCandidate());
+        }
+        final HashSet<MolecularFormula> deleteLeft = new HashSet<>(), deleteRight = new HashSet<>();
+        for (Ionization ion : ownMap.keySet()) {
+            final double l = ion.subtractFromMass(mzOwn), r = ion.subtractFromMass(mzOther);
+            final HashSet<MolecularFormula> left = ownMap.get(ion), right = otherMap.get(ion);
+            for (MolecularFormula f : left) {
+                if (right.contains(f)) {
+                    if (Math.abs(l-f.getMass()) < Math.abs(r-f.getMass())) {
+                        deleteRight.add(f);
+                    } else deleteLeft.add(f);
+                }
+            }
+            if (deleteLeft.size()>0) {
+                Iterator<Decomposition> i = decompositions.iterator();
+                while (i.hasNext()) {
+                    final Decomposition d = i.next();
+                    if (d.ion.equals(ion) && deleteLeft.contains(d.getCandidate()))
+                        i.remove();
+                }
+            }
+            if (deleteRight.size()>0) {
+                Iterator<Decomposition> i = other.decompositions.iterator();
+                while (i.hasNext()) {
+                    final Decomposition d = i.next();
+                    if (d.ion.equals(ion) && deleteRight.contains(d.getCandidate()))
+                        i.remove();
+                }
+            }
+        }
+
+    }
+
     public List<Decomposition> getDecompositions() {
         return decompositions;
     }

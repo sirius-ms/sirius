@@ -17,6 +17,7 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.inspection;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -72,6 +73,7 @@ public class TreeAnnotation {
 
     protected void annotate(FTree pathway, FragmentationPatternAnalysis analysis, ProcessedInput input) {
         // initialize scorers
+        final PrecursorIonType ionType = pathway.getAnnotationOrThrow(PrecursorIonType.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = pathway.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         final Object[] decompositionInits, lossInits;
         decompositionInits = new Object[analysis.getDecompositionScorers().size()];
@@ -110,7 +112,7 @@ public class TreeAnnotation {
         final ScoreReportMap rootAnnotation = new ScoreReportMap(rootClasses);
         final Fragment root = pathway.getRoot();
         for (DecompositionScorer s : analysis.getRootScorers()) {
-            rootAnnotation.put(s.getClass(), s.score(root.getFormula(), peakAno.get(root), input, s.prepare(input)));
+            rootAnnotation.put(s.getClass(), s.score(root.getFormula(), ionType.getIonization(), peakAno.get(root), input, s.prepare(input)));
         }
         vertexAnnotations.put(root, rootAnnotation);
         annotateFragmentsAndEdges(pathway, analysis, decompositionInits, lossInits, peakScores, peakPairScores, vertexClasses, lossClasses, input);
@@ -119,10 +121,11 @@ public class TreeAnnotation {
     protected void annotateFragmentsAndEdges(FTree pathway, FragmentationPatternAnalysis analysis,
                                              Object[] decompositionInits, Object[] lossInits, double[][] peakScores,
                                              double[][][] peakPairScores, Class[] vertexClasses, Class[] lossClasses, ProcessedInput input) {
+        final PrecursorIonType ionType = pathway.getAnnotationOrThrow(PrecursorIonType.class);
         // iterate tree in post-order
         final FragmentAnnotation<ProcessedPeak> peakAno = pathway.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         for (Fragment vertex : pathway.getFragmentsWithoutRoot()) {
-            annotateFragment(analysis, peakAno.get(vertex), decompositionInits, peakScores, vertexClasses, vertex, input);
+            annotateFragment(analysis, peakAno.get(vertex), decompositionInits, peakScores, vertexClasses, vertex, ionType, input);
             annotateLoss(analysis, peakAno, lossClasses, lossInits, peakPairScores, vertex, input);
             additionalAnnotationsForFragments(analysis, vertex, peakAno.get(vertex), input);
         }
@@ -138,12 +141,12 @@ public class TreeAnnotation {
         if (!annotations.isEmpty()) additionalProperties.put(vertex, annotations);
     }
 
-    protected void annotateFragment(FragmentationPatternAnalysis analysis, ProcessedPeak peak, Object[] decompositionInits, double[][] peakScores, Class[] vertexClasses, Fragment vertex, ProcessedInput input) {
+    protected void annotateFragment(FragmentationPatternAnalysis analysis, ProcessedPeak peak, Object[] decompositionInits, double[][] peakScores, Class[] vertexClasses, Fragment vertex, PrecursorIonType ionType, ProcessedInput input) {
         final ScoreReportMap vertexAnnotation = new ScoreReportMap(vertexClasses);
         // Formula Scorer
         int j = 0;
         for (DecompositionScorer scorer : analysis.getDecompositionScorers()) {
-            final double score = scorer.score(vertex.getFormula(), peak, input, decompositionInits[j++]);
+            final double score = scorer.score(vertex.getFormula(),ionType.getIonization(), peak, input, decompositionInits[j++]);
             vertexAnnotation.put(scorer.getClass(), score);
         }
         // Peak Scorer
