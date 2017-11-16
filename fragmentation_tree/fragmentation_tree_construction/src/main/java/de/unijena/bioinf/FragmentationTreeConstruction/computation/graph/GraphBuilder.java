@@ -17,8 +17,8 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
@@ -28,7 +28,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 public interface GraphBuilder {
     FGraph initializeEmptyGraph(ProcessedInput input);
 
-    FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<Scored<de.unijena.bioinf.ChemistryBase.chem.MolecularFormula>> pmds);
+    FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<Decomposition> pmds);
 
     FGraph fillGraph(FGraph graph);
 }

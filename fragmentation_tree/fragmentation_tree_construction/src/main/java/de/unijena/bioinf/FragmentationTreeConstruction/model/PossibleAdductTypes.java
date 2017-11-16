@@ -15,6 +15,12 @@ import java.util.Set;
  */
 public class PossibleAdductTypes {
 
+    public static PossibleAdductTypes deterministic(PrecursorIonType precursorIonType) {
+        final PossibleAdductTypes a = new PossibleAdductTypes();
+        a.add(precursorIonType,1);
+        return a;
+    }
+
     public static class Adduct {
         protected PrecursorIonType ionType;
         protected double probability;
