@@ -2,6 +2,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -55,7 +56,7 @@ public class StrangeElementFragmentScorer implements DecompositionScorer<Element
     }
 
     @Override
-    public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Element[] precomputed) {
+    public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Element[] precomputed) {
         if (knownFragments.contains(formula)) return bonus;
         else if (formula.getMass() >= minMass){
             for (Element e : precomputed) {

@@ -19,6 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
@@ -47,7 +48,7 @@ public class PhosphorScorer implements DecompositionScorer<Element[]>, LossScore
     }
 
     @Override
-    public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Element[] phosphorAndSulfur) {
+    public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Element[] phosphorAndSulfur) {
         final int pnum = formula.numberOf(phosphorAndSulfur[0]);
         if (peak == input.getParentPeak()) {
             // expect 2 oxygen/sulfur for each phosphor losses

@@ -19,6 +19,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
@@ -55,10 +56,10 @@ public class MassDeviationVertexScorer implements DecompositionScorer<Object> {
     }
 
     @Override
-    public double score(MolecularFormula formula, ProcessedPeak peak, ProcessedInput input, Object x_) {
+    public double score(MolecularFormula formula, Ionization ion,ProcessedPeak peak, ProcessedInput input, Object x_) {
         if (peak.getOriginalPeaks().isEmpty())
             return 0d; // don't score synthetic peaks
-        final double theoreticalMass = input.getExperimentInformation().getPrecursorIonType().getIonization().addToMass(formula.getMass());
+        final double theoreticalMass = ion.addToMass(formula.getMass());
         final double realMass = useOriginalMz ? peak.getOriginalMz() : peak.getMz();
         final MeasurementProfile profile = input.getMeasurementProfile();
         final Deviation dev = standardDeviation != null ? standardDeviation : profile.getStandardMs2MassDeviation();

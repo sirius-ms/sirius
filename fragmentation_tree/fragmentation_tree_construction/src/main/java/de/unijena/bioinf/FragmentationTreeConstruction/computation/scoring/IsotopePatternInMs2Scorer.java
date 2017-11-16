@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -388,6 +389,7 @@ public class IsotopePatternInMs2Scorer {
     }
 
     public void scoreFromMs1(ProcessedInput input, FGraph graph) {
+        final PrecursorIonType ion = graph.getAnnotationOrThrow(PrecursorIonType.class);
         final Deviation dev = input.getMeasurementProfile().getAllowedMassDeviation();
         final SimpleSpectrum mergedMs1 = input.getExperimentInformation().getMergedMs1Spectrum();
         if (mergedMs1 == null) return;
@@ -426,13 +428,12 @@ public class IsotopePatternInMs2Scorer {
         final PeakAnnotation<IsotopePatternAssignment> ano = input.getOrCreatePeakAnnotation(IsotopePatternAssignment.class);
         final FragmentAnnotation<IsotopePattern> isoPat = graph.getOrCreateFragmentAnnotation(IsotopePattern.class);
         for (Fragment f : graph.getFragmentsWithoutRoot()) {
-
             final ProcessedPeak peak = input.getMergedPeaks().get(f.getColor());
             final IsotopePatternAssignment assignment = ano.get(peak);
             if (assignment != null) {
                 SimpleSpectrum spec = assignment.pattern;
                 gen.setMaximalNumberOfPeaks(spec.size());
-                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), peak.getIon()), 0, assignment.pattern.size());
+                final SimpleSpectrum simulated = Spectrums.subspectrum(gen.simulatePattern(f.getFormula(), ion.getIonization()), 0, assignment.pattern.size());
                 spec = Spectrums.subspectrum(spec, 0, simulated.size());
                 // shorten pattern
 
