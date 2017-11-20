@@ -161,6 +161,10 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
                 CHECK_FOR_TREESIZE = false;
             }
         }
+        if (CHECK_FOR_TREESIZE && exactResults.size() < MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY) {
+            if (!checkForTreeQuality(exactResults)) return new FinalResult();
+            CHECK_FOR_TREESIZE = false;
+        }
         // now recalibrate trees
         int k=0;
         double maxRecalibrationBonus = 0d;
@@ -276,6 +280,10 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         protected FGraph compute() throws Exception {
             return analyzer.buildGraph(pinput, decomposition);
         }
+    }
+
+    protected void recalibrate(ProcessedInput) {
+
     }
 
     protected final static class IntermediateResult implements Comparable<IntermediateResult> {
