@@ -218,6 +218,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             pinput.addAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
         }
 
+        // set whiteset
+        if (input.getAnnotation(Whiteset.class, null)!=null) {
+            pinput.addAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class));
+        }
+
         return pinput;
     }
 
