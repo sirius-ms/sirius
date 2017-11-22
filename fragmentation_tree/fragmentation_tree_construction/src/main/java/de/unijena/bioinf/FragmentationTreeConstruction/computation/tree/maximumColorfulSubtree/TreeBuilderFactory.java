@@ -5,7 +5,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
  * 28.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyLoader;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
@@ -25,10 +25,10 @@ public final class TreeBuilderFactory {
 
 
     static {
-        PropertyLoader.load();
-        GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
-        GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
-        CPLEX_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
+        PropertyManager.init();
+        GLPK_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
+        GUROBI_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
+        CPLEX_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
         ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or CPLEX with version " + CPLEX_VERSION + " or similar)";
     }
 

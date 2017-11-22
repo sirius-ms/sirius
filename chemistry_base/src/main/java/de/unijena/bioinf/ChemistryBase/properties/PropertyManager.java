@@ -17,36 +17,43 @@ import java.util.Properties;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class PropertyLoader {
+public class PropertyManager {
+    public static final Properties PROPERTIES;
 
     static {
-            loadProperties();
+        PROPERTIES = loadDefaultProperties();
     }
 
-    public static void load() {}
+    public static void init() {
+    }
 
-    protected static void loadProperties() {
+    private static Properties loadDefaultProperties() {
+        Properties global = new Properties();
         try {
             List<URL> resources = new LinkedList<>();
-            for (ClassPath.ResourceInfo resourceInfo : ClassPath.from(PropertyLoader.class.getClassLoader()).getResources()) {
+            for (ClassPath.ResourceInfo resourceInfo : ClassPath.from(PropertyManager.class.getClassLoader()).getResources()) {
                 if (resourceInfo.getResourceName().endsWith(".build.properties"))
                     resources.add(resourceInfo.url());
             }
+
 
             for (URL resource : resources) {
                 try (InputStream input = resource.openStream()) {
                     Properties props = new Properties();
                     props.load(input);
-                    System.getProperties().putAll(props);
+                    global.putAll(props);
                 } catch (IOException e) {
                     System.err.println("Could not load properties from " + resource.toString());
                     e.printStackTrace();
                 }
             }
+            return global;
+
         } catch (IOException e) {
             System.err.println("Error while searching for properties files to load!");
             e.printStackTrace();
         }
+        return global;
     }
 
 }
