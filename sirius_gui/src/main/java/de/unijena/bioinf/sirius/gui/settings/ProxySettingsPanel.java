@@ -142,10 +142,9 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
                     ex.printStackTrace();
                 }
 
-                String s = ApplicationCore.VERSION_STRING;
                 JFrame frame = new JFrame("Testing");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ProxySettingsPanel(ApplicationCore.getUserCopyOfUserProperties()));
+                frame.add(new ProxySettingsPanel(ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties()));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);

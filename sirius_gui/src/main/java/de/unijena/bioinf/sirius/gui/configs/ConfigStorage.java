@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.gui.configs;
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.structure.FileFormat;
 
@@ -39,7 +40,7 @@ public class ConfigStorage {
     }
 
     public File getDefaultDatabaseDirectory() {
-		final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
+		final String val = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         return Paths.get(val).toFile();
     }
 

@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
@@ -43,7 +44,7 @@ public class CachedRESTDB {
     }
 
     public static File getDefaultDirectory() {
-        final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
+        final String val = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         return Paths.get(val).toFile();
     }
 

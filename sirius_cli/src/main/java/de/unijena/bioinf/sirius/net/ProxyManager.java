@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.net;
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -18,7 +19,7 @@ import java.net.HttpURLConnection;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-    public final static boolean DEBUG = false;
+    public final static boolean DEBUG = true;
     public static final String HTTPS_SCHEME = "https";
     public static final String HTTP_SCHEME = "http";
     public static final int OK_STATE = 0;
@@ -36,7 +37,7 @@ public class ProxyManager {
     }
 
     public static ProxyStrategy getProxyStrategy() {
-        return getStrategyByName(System.getProperty("de.unijena.bioinf.sirius.proxy", ProxyStrategy.SYSTEM.name()));
+        return getStrategyByName(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy", ProxyStrategy.SYSTEM.name()));
     }
 
     public static boolean useSystemProxyConfig() {
@@ -144,17 +145,17 @@ public class ProxyManager {
     }
 
     private static CloseableHttpClient getSiriusProxyClient() {
-        final String hostName = System.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
-        final int port = Integer.valueOf(System.getProperty("de.unijena.bioinf.sirius.proxy.port"));
-        final String scheme = System.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
+        final String hostName = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
+        final int port = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy.port"));
+        final String scheme = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
 
-        if (Boolean.getBoolean(System.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
+        if (Boolean.getBoolean(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
             return getClientBuilderWithProxySettings(
                     hostName,
                     port,
                     scheme,
-                    System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"),
-                    System.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw")
+                    PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"),
+                    PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw")
             ).build();
         } else {
             return getClientBuilderWithProxySettings(
@@ -194,10 +195,10 @@ public class ProxyManager {
     /*public static void main(String[] args) {
         String versionString = ApplicationCore.VERSION_STRING;
         System.out.println("System settings");
-        System.out.println("use system proxy? " + System.getProperty("java.net.useSystemProxies"));
-        String port = System.getProperty("http.proxyPort");
+        System.out.println("use system proxy? " + PropertyManager.PROPERTIES.getProperty("java.net.useSystemProxies"));
+        String port = PropertyManager.PROPERTIES.getProperty("http.proxyPort");
         System.out.println("http port: " + port);
-        String host = System.getProperty("http.proxyHost");
+        String host = PropertyManager.PROPERTIES.getProperty("http.proxyHost");
         System.out.println("http host: " + host);
         System.out.println();
 

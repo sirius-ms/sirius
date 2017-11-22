@@ -39,7 +39,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         super(owner, true);
         setTitle("Settings");
         setLayout(new BorderLayout());
-        nuProps = ApplicationCore.getUserCopyOfUserProperties();
+        nuProps = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
 
 //=============NORTH =================
         JPanel header = new DialogHaeder(Icons.GEAR_64);
@@ -101,7 +101,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 @Override
                 protected Integer doInBackground() throws Exception {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
-                    ApplicationCore.changeDefaultProptertiesPersistent(nuProps);
+                    ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertiesPersistent(nuProps);
                     new CheckConnectionAction().actionPerformed(null); //todo maybe some run check function for the settings panels
                     return 1;
 

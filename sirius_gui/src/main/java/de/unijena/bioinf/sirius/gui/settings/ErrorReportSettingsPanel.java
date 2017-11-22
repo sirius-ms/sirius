@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.settings;
  * 07.10.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.utils.mailService.Mail;
 import org.slf4j.LoggerFactory;
@@ -25,15 +26,15 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
         super();
         this.props = properties;
 
-        String email = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+        String email = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
         if (email != null && !email.isEmpty())
             emailField = new JTextField(email);
         else
             emailField = new JTextField();
         add(new JLabel("Contact email adress: "), emailField);
 
-        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
-        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
+        hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
+        uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
         add(hardwareInfo,SMALL_GAP,false);
         add(uesrCopy);
     }

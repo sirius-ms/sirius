@@ -49,7 +49,7 @@ public class VersionsInfo {
     private List<News> filterNews(List<News> newsList) {
         List<News> filteredNews = new ArrayList<>();
         final String property = News.PROPERTY_KEY;
-        Properties properties = ApplicationCore.getUserCopyOfUserProperties();
+        Properties properties = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
         final String propertyValue = properties.getProperty(property, "");
         Set<String> knownNews = new HashSet<>(Arrays.asList(propertyValue.split(",")));
         for (News news : newsList) {
