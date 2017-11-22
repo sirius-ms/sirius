@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
  * 30.09.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.core.errorReport.FinngerIDWebErrorReporter;
 import de.unijena.bioinf.sirius.core.errorReport.SiriusDefaultErrorReport;
@@ -38,7 +39,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     private JButton close, send;
 
     private ErrorReportSettingsPanel expandPanel;
-    private final Properties props = ApplicationCore.getUserCopyOfUserProperties();
+    private final Properties props = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
 
     public ErrorReportDialog(Frame owner, String errorMessage) {
         super(owner, true, ExtentionPos.SOUTH);
@@ -120,11 +121,11 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
                 @Override
                 protected String doInBackground() throws Exception {
                     expandPanel.saveProperties();
-                    ApplicationCore.changeDefaultProptertiesPersistent(props);
+                    ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertiesPersistent(props);
 
-                    boolean senMail = Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
-                    String mail = System.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
-                    boolean systemInfo = Boolean.valueOf(System.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
+                    boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
+                    String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
+                    boolean systemInfo = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
                     ErrorReporter repoter = new FinngerIDWebErrorReporter(new SiriusDefaultErrorReport(subject, textarea.getText(), mail, systemInfo));
                     repoter.getReport().setSendReportToUser(senMail);
                     repoter.call();

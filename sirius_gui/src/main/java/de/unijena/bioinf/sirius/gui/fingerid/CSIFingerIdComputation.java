@@ -21,6 +21,7 @@ package de.unijena.bioinf.sirius.gui.fingerid;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.canopus.Canopus;
@@ -258,7 +259,7 @@ public class CSIFingerIdComputation {
     }
 
     public File getDefaultDirectory() {
-        final String val = System.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
+        final String val = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         return Paths.get(val).toFile();
     }
 

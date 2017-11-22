@@ -58,12 +58,12 @@ public class NewsDialog extends JDialog implements ActionListener {
         if (e.getSource()==ok){
             //remember displayed news
             final String property = News.PROPERTY_KEY;
-            Properties properties = ApplicationCore.getUserCopyOfUserProperties();
+            Properties properties = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
             StringBuilder knownNews = new StringBuilder(properties.getProperty(property, ""));
             for (News news : newsList) {
                 knownNews.append(","+news.getId());
             }
-            ApplicationCore.changeDefaultProptertyPersistent(property, knownNews.toString());
+            ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertyPersistent(property, knownNews.toString());
 
             this.dispose();
         }

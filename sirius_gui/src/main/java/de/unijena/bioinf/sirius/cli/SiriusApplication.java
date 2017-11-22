@@ -39,7 +39,7 @@ public class SiriusApplication extends ApplicationCore {
             zodiac.run();
         } else if (cli.options.isGUI()) {
             if (ProxyManager.getProxyStrategy() == null) {
-                ApplicationCore.changeDefaultProptertyPersistent("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
+                ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertyPersistent("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
             }
 
             SwingUtils.initUI();

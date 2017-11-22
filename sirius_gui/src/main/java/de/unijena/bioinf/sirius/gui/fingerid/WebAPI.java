@@ -25,13 +25,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
-import de.unijena.bioinf.fingerid.utils.PROPERTIES;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.sirius.gui.dialogs.News;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -78,9 +79,9 @@ public class WebAPI implements Closeable {
     private static final LinkedHashSet<WebAPI> INSTANCES = new LinkedHashSet<>();
     private static final BasicNameValuePair UID = new BasicNameValuePair("uid", SystemInformation.generateSystemKey());
 
-    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(System.getProperty("de.unijena.bioinf.sirius.version"));
+    public static final DefaultArtifactVersion VERSION = new DefaultArtifactVersion(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version"));
     public static final String SIRIUS_DOWNLOAD = "https://bio.informatik.uni-jena.de/software/sirius/";
-    public static final String FINGERID_WEB_API = PROPERTIES.fingeridWebHost();
+    public static final String FINGERID_WEB_API = FingerIDProperties.fingeridWebHost();
 //    public static final String FINGERID_WEBSITE = "http://www.csi-fingerid.org";
 
     public static PrecursorIonType[] positiveIons = Iterables.toArray(PeriodicTable.getInstance().getKnownLikelyPrecursorIonizations(1), PrecursorIonType.class);
@@ -177,7 +178,7 @@ public class WebAPI implements Closeable {
     public VersionsInfo getVersionInfo() {
         VersionsInfo v = null;
         try {
-            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", PROPERTIES.fingeridVersion()).setParameter("sirius_guiVersion", PROPERTIES.sirius_guiVersion()).build()));
+            v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdBaseURI()).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("sirius_guiVersion", FingerIDProperties.sirius_guiVersion()).build()));
             if (v == null) {
                 LoggerFactory.getLogger(this.getClass()).warn("Could not reach fingerid root url for version verification. Try to reach version specific url");
                 v = getVersionInfo(new HttpGet(getFingerIdVersionURI(getFingerIdURI(null)).build()));
@@ -235,7 +236,7 @@ public class WebAPI implements Closeable {
             if (ProxyManager.DEBUG) {
                 b = b.setPath("/frontend" + path);
             } else {
-                b = b.setPath("/csi_fingerid-" + PROPERTIES.fingeridVersion() + path);
+                b = b.setPath("/csi_fingerid-" + FingerIDProperties.fingeridVersion() + path);
             }
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(WebAPI.class).error("Unacceptable URI for CSI:FingerID", e);

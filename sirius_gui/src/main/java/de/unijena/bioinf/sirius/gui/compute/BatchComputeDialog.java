@@ -291,7 +291,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private void startComputing() {
         if (recompute.isSelected()) {
             final String dontAskProperty = "de.unijena.bioinf.sirius.dontAsk.recompute";
-            Properties properties = ApplicationCore.getUserCopyOfUserProperties();
+            Properties properties = ApplicationCore.SIRIUS_PROPERTIES_FILE.getCopyOfPersistentProperties();
 
             ReturnValue value;
             if (Boolean.parseBoolean(properties.getProperty(dontAskProperty, "false")) || this.compoundsToProcess.size() == 1) {
