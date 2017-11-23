@@ -18,11 +18,12 @@ public class PropertyFileWatcher extends Thread {
     public PropertyFileWatcher(Path file, Properties propertiesToKeepUpToDate) {
         this.file = file;
         props = propertiesToKeepUpToDate;
+        PropertyManager.PROPERTIES.putAll(props);
     }
 
     //these constructors create ab instance that adds changes to System.properties
     public PropertyFileWatcher(Path file) {
-        this(file, PropertyManager.PROPERTIES);
+        this(file, new Properties());
     }
 
     public PropertyFileWatcher(String file) {
@@ -43,8 +44,10 @@ public class PropertyFileWatcher extends Thread {
         for (String key : properties.stringPropertyNames()) {
             Object nu = properties.getProperty(key);
             Object old = props.put(key, nu);
-            if (old == null || !old.equals(nu))
+            if (old == null || !old.equals(nu)) {
+                PropertyManager.PROPERTIES.put(key, nu);
                 putted = true;
+            }
         }
         return putted;
     }
