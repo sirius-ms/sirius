@@ -6,10 +6,15 @@ package de.unijena.bioinf.ChemistryBase.properties;
  */
 
 import com.google.common.reflect.ClassPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -18,13 +23,28 @@ import java.util.Properties;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class PropertyManager {
+    public static final Logger LOGGER = LoggerFactory.getLogger(PropertyManager.class);
     public static final Properties PROPERTIES;
 
     static {
         PROPERTIES = loadDefaultProperties();
     }
 
-    public static void init() {
+    public static void addPropertiesFromStream(InputStream stream) throws IOException {
+        Properties props = new Properties();
+        props.load(stream);
+        PropertyManager.PROPERTIES.putAll(props);
+    }
+
+    public static void addPropertiesFromFile(Path files) {
+        try {
+            if (Files.exists(files)) {
+                addPropertiesFromStream(Files.newInputStream(files, StandardOpenOption.READ));
+            }
+        } catch (IOException e) {
+            System.err.println("WARNING: could not load Properties from: " + files.toString());
+            e.printStackTrace();
+        }
     }
 
     private static Properties loadDefaultProperties() {
@@ -38,6 +58,7 @@ public class PropertyManager {
 
 
             for (URL resource : resources) {
+                System.out.println("Try loading properties from: " + resource.getPath());
                 try (InputStream input = resource.openStream()) {
                     Properties props = new Properties();
                     props.load(input);

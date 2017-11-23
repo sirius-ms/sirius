@@ -25,7 +25,6 @@ public final class TreeBuilderFactory {
 
 
     static {
-        PropertyManager.init();
         GLPK_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
         GUROBI_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
         CPLEX_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
