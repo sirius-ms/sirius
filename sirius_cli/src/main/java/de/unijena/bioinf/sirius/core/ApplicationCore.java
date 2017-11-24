@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.LogManager;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -89,7 +91,6 @@ public abstract class ApplicationCore {
             try (InputStream input = ApplicationCore.class.getResourceAsStream("/logging.properties")) {
                 // move default properties file
                 Files.copy(input, loggingPropFile);
-
             } catch (IOException | NullPointerException e) {
                 System.err.println("Could not set logging properties, using default java logging properties and directories");
                 e.printStackTrace();
@@ -98,6 +99,12 @@ public abstract class ApplicationCore {
 
         if (Files.exists(loggingPropFile)) {
             System.setProperty("java.util.logging.config.file", loggingPropFile.toString());
+            try {
+                LogManager.getLogManager().readConfiguration();
+            } catch (IOException e) {
+                System.err.println("Could not read logging configuration.");
+                e.printStackTrace();
+            }
         }
 
         DEFAULT_LOGGER = LoggerFactory.getLogger(ApplicationCore.class);
@@ -109,6 +116,7 @@ public abstract class ApplicationCore {
 
         final String version = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.version");
         final String build = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build");
+
 
         VERSION_STRING = (version != null && build != null) ? "Sirius " + version + " (build " + build + ")" : "Sirius";
         DEFAULT_LOGGER.debug(VERSION_STRING);
@@ -155,6 +163,9 @@ public abstract class ApplicationCore {
 
         jobManager = new JobManager(cores);
         DEFAULT_LOGGER.info("Job manager initialized!");
+
+        ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
+        DEFAULT_LOGGER.info("Bug reporter initialized!");
 
     }
 

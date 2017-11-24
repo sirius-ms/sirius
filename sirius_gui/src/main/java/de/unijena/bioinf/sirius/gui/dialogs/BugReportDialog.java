@@ -87,7 +87,7 @@ public class BugReportDialog extends JDialog {
         send.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new SwingWorker<String,String>() {
+                SwingWorker<String, String> worker = new SwingWorker<String, String>() {
                     @Override
                     protected String doInBackground() throws Exception {
                         reportSettings.saveProperties();
@@ -96,14 +96,16 @@ public class BugReportDialog extends JDialog {
                         boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
                         String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");
                         boolean systemInfo = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo"));
-                        ErrorReporter repoter = new FinngerIDWebErrorReporter(new SiriusDefaultErrorReport(subjectField.getText(), textarea.getText(), mail, systemInfo));
+                        SiriusDefaultErrorReport r = new SiriusDefaultErrorReport(subjectField.getText(), textarea.getText(), mail, systemInfo);
+                        ErrorReporter repoter = new FinngerIDWebErrorReporter(r);
                         repoter.getReport().setSendReportToUser(senMail);
                         repoter.getReport().setType((String) report.getSelectedItem());
                         repoter.call();
                         return "SUCCESS";
                     }
-                }.execute();
+                };
 
+                worker.execute();
                 dispose();
             }
         });
