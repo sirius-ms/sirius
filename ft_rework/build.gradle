@@ -22,7 +22,7 @@ shadowJar {
 //Global Properties
 ext{
     //version for external libraries
-    slf4j_version = '1.7.13'
+    slf4j_version = '1.7.25'
     json_version = '1.0'
     json_impl_version = "1.0.4"
     jewelcli_version = '0.8.+'
