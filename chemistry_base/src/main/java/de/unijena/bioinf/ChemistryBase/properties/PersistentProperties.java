@@ -1,5 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +14,7 @@ import java.util.Properties;
 
 //todo this should be combineable with Property FileWatcherService
 public class PersistentProperties {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistentProperties.class);
     private final String fileheader;
     private final Path propsSourceFile;
     private final Properties props;
@@ -31,7 +35,7 @@ public class PersistentProperties {
                 tmp.load(stream);
                 props.putAll(tmp);
             } catch (IOException e) {
-                PropertyManager.LOGGER.warn("Could NOT load Properties from given properties file, falling back to default properties", e);
+                LOGGER.error("Could NOT load Properties from given properties file, falling back to default properties", e);
             }
         }
 
@@ -103,10 +107,10 @@ public class PersistentProperties {
             try (OutputStream stream = Files.newOutputStream(propsSourceFile, StandardOpenOption.CREATE_NEW)) {
                 props.store(stream, fileheader);
             } catch (IOException e) {
-                PropertyManager.LOGGER.error("Could not save new Properties file! Changes not saved!", e);
+                LOGGER.error("Could not save new Properties file! Changes not saved!", e);
             }
         } catch (IOException e) {
-            PropertyManager.LOGGER.error("Could not remove old Properties file! Changes not saved!", e);
+            LOGGER.error("Could not remove old Properties file! Changes not saved!", e);
         }
     }
 }
