@@ -28,7 +28,7 @@ ext {
 
     siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
     //version for external libraries
-    slf4j_version = '1.7.21'
+    slf4j_version = '1.7.25'
     gson_version = '2.6.2'
     math3_version = '3.+'
     glpk_version = System.getProperty('de.unijena.bioinf.sirius.build.glpk_version')

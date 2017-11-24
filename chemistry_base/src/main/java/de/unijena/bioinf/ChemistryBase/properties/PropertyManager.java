@@ -6,8 +6,6 @@ package de.unijena.bioinf.ChemistryBase.properties;
  */
 
 import com.google.common.reflect.ClassPath;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +21,6 @@ import java.util.Properties;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class PropertyManager {
-    public static final Logger LOGGER = LoggerFactory.getLogger(PropertyManager.class);
     public static final Properties PROPERTIES;
 
     static {
@@ -58,7 +55,6 @@ public class PropertyManager {
 
 
             for (URL resource : resources) {
-                System.out.println("Try loading properties from: " + resource.getPath());
                 try (InputStream input = resource.openStream()) {
                     Properties props = new Properties();
                     props.load(input);
