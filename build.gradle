@@ -25,7 +25,7 @@ plugins {
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '1.7.21'
+    slf4j_version = '1.7.25'
 
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
@@ -42,7 +42,7 @@ ext {
 //    commons_email_version = '1.4'
 //    oshi_version = '3.2'
 
-    error_reporter_version = "0.9.1"
+    error_reporter_version = "0.9.2"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
