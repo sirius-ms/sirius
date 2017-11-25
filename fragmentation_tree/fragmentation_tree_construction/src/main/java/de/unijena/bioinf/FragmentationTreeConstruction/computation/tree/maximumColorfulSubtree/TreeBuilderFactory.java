@@ -28,7 +28,7 @@ public final class TreeBuilderFactory {
         GLPK_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
         GUROBI_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
         CPLEX_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
-        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or CPLEX with version " + CPLEX_VERSION + " or similar)";
+        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION;
     }
 
     private static TreeBuilderFactory INSTANCE = null;
@@ -72,7 +72,7 @@ public final class TreeBuilderFactory {
         try {
             return getTreeBuilderFromClass(((Class<T>) ClassLoader.getSystemClassLoader().loadClass(className)));
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
 
@@ -82,7 +82,7 @@ public final class TreeBuilderFactory {
         try {
             return builderClass.getConstructor().newInstance();
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
