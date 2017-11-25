@@ -20,8 +20,9 @@ import java.util.Arrays;
 public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
-    public final static String ILP_VERSIONS_STRING;
     public final static String CPLEX_VERSION;
+
+    public final static String ILP_VERSIONS_STRING;
 
 
     static {
@@ -35,7 +36,7 @@ public final class TreeBuilderFactory {
 
     public enum DefaultBuilder {GUROBI, /*GUROBI_JNI,*/ CPLEX, GLPK, DP}
 
-    private static DefaultBuilder[] builderPriorities = DefaultBuilder.values();
+    private static DefaultBuilder[] builderPriorities = null;
 
     private TreeBuilderFactory() {
     }
@@ -50,22 +51,41 @@ public final class TreeBuilderFactory {
         builderPriorities = builders;
     }
 
-    public static boolean setBuilderPriorities(String... builders) {
+
+    private static DefaultBuilder[] parseBuilderPriority(String builders) {
+        String[] builderArray = builders.replaceAll("\\s", "").split(",");
+        return parseBuilderPriority(builderArray);
+    }
+
+    private static DefaultBuilder[] parseBuilderPriority(String[] builders) {
         DefaultBuilder[] b = new DefaultBuilder[builders.length];
         try {
             for (int i = 0; i < b.length; i++) {
                 b[i] = DefaultBuilder.valueOf(builders[i].toUpperCase());
             }
-            builderPriorities = b;
-            return true;
+
+            return b;
         } catch (IllegalArgumentException e) {
             LoggerFactory.getLogger(TreeBuilderFactory.class).warn("Illegal TreeBuilder name. Nothing changed!", e);
-            return false;
+            return null;
         }
     }
 
+    public static boolean setBuilderPriorities(String... builders) {
+        DefaultBuilder[] b = parseBuilderPriority(builders);
+        if (b != null) {
+            builderPriorities = b;
+            return true;
+        }
+
+        return false;
+    }
+
     public static DefaultBuilder[] getBuilderPriorities() {
-        return builderPriorities.clone();
+        if (builderPriorities != null) return builderPriorities.clone();
+        DefaultBuilder[] b = parseBuilderPriority(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder"));
+        if (b != null) return b;
+        return DefaultBuilder.values();
     }
 
     public <T extends TreeBuilder> T getTreeBuilderFromClass(String className) {
@@ -108,7 +128,7 @@ public final class TreeBuilderFactory {
     }
 
     public TreeBuilder getTreeBuilder() {
-        for (DefaultBuilder builder : builderPriorities) {
+        for (DefaultBuilder builder : getBuilderPriorities()) {
             TreeBuilder b = getTreeBuilder(builder);
             if (b != null)
                 return b;
