@@ -41,7 +41,7 @@ distributions {
             contents {
                 into('lib') {
                     from("build/install/${project.name}/lib") {
-                        exclude("$gurobiExclude")
+                        exclude libExclude
                     }
                     from("${project.glpkPath}/l${ar}/")
                 }
@@ -77,7 +77,7 @@ distributions {
             contents {
                 into('lib') {
                     from('build/launch4j/lib') {
-                        exclude("$gurobiExclude")
+                        exclude libExclude
                     }
                 }
                 from { "${project.glpkPath}/w${ar}/" }
@@ -108,7 +108,7 @@ distributions {
         contents {
             into('lib') {
                 from("build/install/${project.name}/lib") {
-                    exclude("$gurobiExclude")
+                    exclude libExclude
                 }
                 from("${project.glpkPath}/osx/")
                 exclude('*.zip')
