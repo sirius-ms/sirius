@@ -15,7 +15,9 @@ import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.Vector;
 
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 
@@ -33,8 +35,12 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
 
 
         add(new JXTitledSeparator("ILP solver"));
-        solver = new JComboBox<>(new String[]{"gurobi,glpk", "glpk,gurobi", "gurobi", "glpk"}); //todo change setting without restart
-        solver.setSelectedItem(props.getProperty("de.unijena.bioinf.sirius.treebuilder"));
+        Vector<String> items = new Vector<>(Arrays.asList("gurobi,cplex,glpk", "gurobi,glpk", "glpk,gurobi", "gurobi", "cplex", "glpk"));
+        String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder");
+        if (!items.contains(selected))
+            items.add(selected);
+        solver = new JComboBox<>(items);
+        solver.setSelectedItem(selected);
         solver.setToolTipText("Choose the allowed solvers and in which order they should be checked. Note that glpk is part of Sirius whereas the others not");
         add(new JLabel("Allowed solvers:"), solver);
 
@@ -51,9 +57,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
 
     @Override
     public void saveProperties() {
-
         props.setProperty("de.unijena.bioinf.sirius.treebuilder", (String) solver.getSelectedItem());
-        TreeBuilderFactory.setBuilderPriorities(((String)solver.getSelectedItem()).replaceAll("\\s", "").split(","));
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
@@ -64,7 +68,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
                     return 1;
                 }
             }.execute();
-        }else {
+        } else {
             LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory (" + dir.toString() + "). Directory not Changed!");
         }
     }

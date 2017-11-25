@@ -143,15 +143,8 @@ public abstract class ApplicationCore {
         DEFAULT_LOGGER.debug("application properties initialized!");
 
 
-        String p = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder");
-        if (p != null && !p.isEmpty()) {
-            if (TreeBuilderFactory.setBuilderPriorities(p.replaceAll("\\s", "").split(",")))
-                DEFAULT_LOGGER.debug("Treebuilder priorities are set to: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
-            else
-                DEFAULT_LOGGER.debug("Could not parse Treebuilder priorities, falling back to default!" + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
-        }
-
-        DEFAULT_LOGGER.debug(TreeBuilderFactory.ILP_VERSIONS_STRING);
+        DEFAULT_LOGGER.info(TreeBuilderFactory.ILP_VERSIONS_STRING);
+        DEFAULT_LOGGER.info("Treebuilder priorities are: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
 
 
         HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
