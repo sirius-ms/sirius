@@ -24,6 +24,10 @@ public class SpectralRecalibration {
         this.originalSpectra = originalSpectra;
     }
 
+    public UnivariateFunction getRecalibrationFunction() {
+        return mergedFunc;
+    }
+
     public UnivariateFunction getRecalibrationFunctionFor(MutableMs2Spectrum spec) {
         final UnivariateFunction f = recalibrationFunctions[spec.getScanNumber()];
         if (f==null) return mergedFunc;
