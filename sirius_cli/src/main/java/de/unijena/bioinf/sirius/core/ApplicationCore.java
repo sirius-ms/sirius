@@ -5,11 +5,9 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,6 +149,7 @@ public abstract class ApplicationCore {
         SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
         DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores") + " cores that handle " + PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads") + " threads were found.");
 
+        //bug reporting
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
 

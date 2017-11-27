@@ -44,7 +44,7 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
         solver.setToolTipText("Choose the allowed solvers and in which order they should be checked. Note that glpk is part of Sirius whereas the others not");
         add(new JLabel("Allowed solvers:"), solver);
 
-        add(new JXTitledSeparator("CSI:fingerID"));
+        add(new JXTitledSeparator("CSI:FingerID"));
         String p = props.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         db = new FileChooserPanel(p, JFileChooser.DIRECTORIES_ONLY);
         db.setToolTipText("Specify the directory where CSI:FingerId should store the compound candidates.");
