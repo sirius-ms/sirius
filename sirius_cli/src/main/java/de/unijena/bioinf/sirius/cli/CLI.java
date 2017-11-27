@@ -24,10 +24,12 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
@@ -52,7 +54,7 @@ import java.util.logging.Handler;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-public class CLI<Options extends SiriusOptions> extends ApplicationCore{
+public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     protected Sirius sirius;
     protected final boolean shellMode;
     protected ShellProgress progress;
@@ -66,17 +68,22 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     public void print(String s) {
         if (!shellOutputSurpressed) System.out.print(s);
     }
+
     public void println(String s) {
         if (!shellOutputSurpressed) System.out.println(s);
     }
+
     protected void printf(String msg, Object... args) {
         if (!shellOutputSurpressed)
             System.out.printf(Locale.US, msg, args);
     }
 
     public static void main(String[] args) {
+        SiriusJobs.setGlobalJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1")));
+        DEFAULT_LOGGER.info("Job manager initialized!");
+
         final CLI cli = new CLI();
-        if (args.length>0 && args[0].toLowerCase().equals("zodiac")){
+        if (args.length > 0 && args[0].toLowerCase().equals("zodiac")) {
             ZodiacOptions options = null;
             try {
                 options = CliFactory.createCli(ZodiacOptions.class).parseArguments(Arrays.copyOfRange(args, 1, args.length));
@@ -95,7 +102,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     }
 
     public CLI() {
-        this.shellMode = System.console()!=null;
+        this.shellMode = System.console() != null;
         this.progress = new ShellProgress(System.out, shellMode);
     }
 
@@ -116,7 +123,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     final List<IdentificationResult> results;
 
                     //todo hack to include guessing of ionization. If appreciate include in a better way
-                    if (options.getPossibleIonizations()!=null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                    if (options.getPossibleIonizations() != null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                         PrecursorIonType[] specificIontypes = guessIonization(i);
 
                         Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
@@ -142,7 +149,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                             results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
                         } else {
                             IdentificationResult result = sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating());
-                            if (result!=null && result.getRawTree()!=null) {
+                            if (result != null && result.getRawTree() != null) {
                                 results = Arrays.asList(result);
                             } else {
                                 results = new ArrayList<>();
@@ -152,9 +159,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     }
 
 
-
                     //beautify tree (try to explain more peaks)
-                    if (options.isBeautifyTrees()){
+                    if (options.isBeautifyTrees()) {
                         for (IdentificationResult result : results) {
                             sirius.beautifyTree(result, i.experiment, !options.isNotRecalibrating());
                         }
@@ -165,23 +171,24 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     for (IdentificationResult result : results) {
                         {
                             final ProcessedInput processedInput = result.getStandardTree().getAnnotationOrNull(ProcessedInput.class);
-                            if (processedInput!=null) result.setAnnotation(Ms2Experiment.class, processedInput.getExperimentInformation());
+                            if (processedInput != null)
+                                result.setAnnotation(Ms2Experiment.class, processedInput.getExperimentInformation());
                             else result.setAnnotation(Ms2Experiment.class, i.experiment);
                         }
                         final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
-                        final int isoPeaks = pat==null ? 0 : pat.getPattern().size()-1;
+                        final int isoPeaks = pat == null ? 0 : pat.getPattern().size() - 1;
                         printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
                     }
                     handleResults(i, results);
                     output(i, results);
                 } catch (InvalidException e) {
-                    LoggerFactory.getLogger(CLI.class).error("Invalid input: " + e.getMessage(),e);
+                    LoggerFactory.getLogger(CLI.class).error("Invalid input: " + e.getMessage(), e);
                 } catch (RuntimeException e) {
-                    LoggerFactory.getLogger(CLI.class).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(CLI.class).error(e.getMessage(), e);
                 }
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(CLI.class).error(e.getMessage(),e);
+            LoggerFactory.getLogger(CLI.class).error(e.getMessage(), e);
         } finally {
             if (projectWriter != null) try {
                 projectWriter.close();
@@ -191,33 +198,33 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         }
     }
 
-    private PrecursorIonType[] guessIonization(Instance instance){
+    private PrecursorIonType[] guessIonization(Instance instance) {
         final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(instance.experiment);
         experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(instance.experiment.getPrecursorIonType().getCharge()));
 
         PrecursorIonType[] specificIontypes = sirius.guessIonization(experimentMutable, ionTypes);
         PrecursorIonType priorIonType = instance.experiment.getPrecursorIonType();
         PrecursorIonType priorIonization = priorIonType.withoutAdduct().withoutInsource();
-        if (!priorIonization.isIonizationUnknown()){
-            if (!arrayContains(specificIontypes, priorIonization)){
-                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length+1);
-                specificIontypes[specificIontypes.length-1] = priorIonization;
+        if (!priorIonization.isIonizationUnknown()) {
+            if (!arrayContains(specificIontypes, priorIonization)) {
+                specificIontypes = Arrays.copyOf(specificIontypes, specificIontypes.length + 1);
+                specificIontypes[specificIontypes.length - 1] = priorIonization;
             } else {
                 specificIontypes = new PrecursorIonType[]{priorIonization};
             }
 
         }
-        if (specificIontypes.length==ionTypes.length){
+        if (specificIontypes.length == ionTypes.length) {
             specificIontypes = ionTypesWithoutAdducts;
         }
-        if (specificIontypes.length==0){
+        if (specificIontypes.length == 0) {
             specificIontypes = ionTypesWithoutAdducts;
             //todo: do something better: this is  a don't use M+ and M+H+ hack
-            PrecursorIonType m_plus  = PrecursorIonType.getPrecursorIonType("[M]+");
+            PrecursorIonType m_plus = PrecursorIonType.getPrecursorIonType("[M]+");
             PrecursorIonType m_plus_h = PrecursorIonType.getPrecursorIonType("[M+H]+");
 
-            if (arrayContains(specificIontypes, m_plus) && arrayContains(specificIontypes, m_plus_h)){
-                PrecursorIonType[] copy = new PrecursorIonType[specificIontypes.length-1];
+            if (arrayContains(specificIontypes, m_plus) && arrayContains(specificIontypes, m_plus_h)) {
+                PrecursorIonType[] copy = new PrecursorIonType[specificIontypes.length - 1];
 
                 int i = 0;
                 for (PrecursorIonType specificIontype : specificIontypes) {
@@ -229,13 +236,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         }
 
 
-
-
         return specificIontypes;
     }
 
     protected void handleResults(Instance i, List<IdentificationResult> results) {
-        if (results==null || results.isEmpty()) {
+        if (results == null || results.isEmpty()) {
             logger.error("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         }
@@ -243,18 +248,18 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
         final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
-        if (whitelist==null && (options.getNumberOfCandidates()==null) && i.experiment.getMolecularFormula()!=null) {
+        if (whitelist == null && (options.getNumberOfCandidates() == null) && i.experiment.getMolecularFormula() != null) {
             whiteset.add(i.experiment.getMolecularFormula());
-        } else if (whitelist!=null) for (String s :whitelist) whiteset.add(MolecularFormula.parse(s));
+        } else if (whitelist != null) for (String s : whitelist) whiteset.add(MolecularFormula.parse(s));
         return whiteset.isEmpty() ? null : whiteset;
     }
 
     private Integer getNumberOfCandidates() {
-        return options.getNumberOfCandidates()!=null ? options.getNumberOfCandidates() : 5;
+        return options.getNumberOfCandidates() != null ? options.getNumberOfCandidates() : 5;
     }
 
     private void output(Instance instance, List<IdentificationResult> results) throws IOException {
-        if (projectWriter!=null) {
+        if (projectWriter != null) {
             projectWriter.writeExperiment(new ExperimentResult(instance.experiment, results));
         }
     }
@@ -278,8 +283,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         parseArgs(args, (Class<Options>) SiriusOptions.class);
     }
 
-    public void parseArgs(String[] args, Class<Options> optionsClass ) {
-        if (args.length==0) {
+    public void parseArgs(String[] args, Class<Options> optionsClass) {
+        if (args.length == 0) {
             println(ApplicationCore.VERSION_STRING);
             println(CliFactory.createCli(optionsClass).getHelpMessage());
             System.exit(0);
@@ -361,7 +366,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
         if (writers.size() > 1) {
             this.projectWriter = new MultipleProjectWriter(writers.toArray(new ProjectWriter[writers.size()]));
-        } else if (writers.size() > 0){
+        } else if (writers.size() > 0) {
             this.projectWriter = writers.get(0);
         } else {
             this.projectWriter = new ProjectWriter() {
@@ -447,7 +452,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         try {
             return new SiriusWorkspaceReader(new File(value));
         } catch (IOException e) {
-            System.err.println("Cannot read " + value + ":\n" + e.getMessage() );
+            System.err.println("Cannot read " + value + ":\n" + e.getMessage());
             System.exit(1);
             return null;
         }
@@ -480,7 +485,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     Logger.getLogger(outerClassName).warning(message);
                 }
             });
-            if (options.getElements()==null) {
+            if (options.getElements() == null) {
                 // autodetect and use default set
                 ms1Prof.setFormulaConstraints(getDefaultElementSet(options));
                 ms2Prof.setFormulaConstraints(getDefaultElementSet(options));
@@ -493,7 +498,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 sirius.setAutoIonMode(true);
             }
 
-            if (options.getMedianNoise()!=null) {
+            if (options.getMedianNoise() != null) {
                 ms2Prof.setMedianNoiseIntensity(options.getMedianNoise());
             }
             if (options.getPPMMax() != null) {
@@ -511,12 +516,12 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
 
-            if (options.getPossibleIonizations()!=null){
+            if (options.getPossibleIonizations() != null) {
                 List<String> ionList = options.getPossibleIonizations();
-                if (ionList.size()==1){
+                if (ionList.size() == 1) {
                     ionList = Arrays.asList(ionList.get(0).split(","));
                 }
-                if (ionList.size()==1){
+                if (ionList.size() == 1) {
                     LoggerFactory.getLogger(CLI.class).error("Cannot guess ionization when only one ionization/adduct is provided");
                 }
                 ionTypes = new PrecursorIonType[ionList.size()];
@@ -530,29 +535,30 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(CLI.class).error("Cannot load profile '" + options.getProfile() + "':\n",e);
+            LoggerFactory.getLogger(CLI.class).error("Cannot load profile '" + options.getProfile() + "':\n", e);
             System.exit(1);
         }
     }
 
     protected Instance setupInstance(Instance inst) {
-        final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment)inst.experiment : new MutableMs2Experiment(inst.experiment);
-        if (exp.getPrecursorIonType()==null || exp.getPrecursorIonType().isIonizationUnknown()) exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType()==null ? 0 : exp.getPrecursorIonType().getCharge()));
-        if (formulas!=null && formulas.size()==1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
-        if (options.getParentMz()!=null) exp.setIonMass(options.getParentMz());
+        final MutableMs2Experiment exp = inst.experiment instanceof MutableMs2Experiment ? (MutableMs2Experiment) inst.experiment : new MutableMs2Experiment(inst.experiment);
+        if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isIonizationUnknown())
+            exp.setPrecursorIonType(getIonFromOptions(options, exp.getPrecursorIonType() == null ? 0 : exp.getPrecursorIonType().getCharge()));
+        if (formulas != null && formulas.size() == 1) exp.setMolecularFormula(MolecularFormula.parse(formulas.get(0)));
+        if (options.getParentMz() != null) exp.setIonMass(options.getParentMz());
         return new Instance(exp, inst.file);
     }
 
     public Iterator<Instance> handleInput(final SiriusOptions options) throws IOException {
         final ArrayDeque<Instance> instances = new ArrayDeque<Instance>();
 
-        inputs = options.getInput()==null ? new ArrayList<String>() : options.getInput();
+        inputs = options.getInput() == null ? new ArrayList<String>() : options.getInput();
         formulas = options.getFormula();
         // WARNING: if you run sirius --formula C6H12O6 C2H2 bla.ms
         // JewelCli will put the bla.ms into the formulas list
         // however, we can simply check if the entries in the formula list
         // are filenames and, if so, move them back into the input list
-        if (formulas!=null) {
+        if (formulas != null) {
             formulas = new ArrayList<>(formulas);
             final ListIterator<String> iter = formulas.listIterator(formulas.size());
             while (iter.hasPrevious()) {
@@ -572,7 +578,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
         final Double defaultParentMass = options.getParentMz();
         final FormulaConstraints constraints = options.getElements() == null ? null/*getDefaultElementSet(options, ion)*/ : options.getElements();
         // direct input: --ms1 and --ms2 command line options are given
-        if (options.getMs2()!=null && !options.getMs2().isEmpty()) {
+        if (options.getMs2() != null && !options.getMs2().isEmpty()) {
             final MutableMeasurementProfile profile = new MutableMeasurementProfile();
             profile.setFormulaConstraints(constraints);
             final MutableMs2Experiment exp = new MutableMs2Experiment();
@@ -584,20 +590,22 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
                 while (spiter.hasNext()) {
                     final Ms2Spectrum<Peak> spec = spiter.next();
-                    if (spec.getIonization()==null || spec.getPrecursorMz()==0 || spec.getMsLevel()==0) {
+                    if (spec.getIonization() == null || spec.getPrecursorMz() == 0 || spec.getMsLevel() == 0) {
                         final MutableMs2Spectrum ms;
-                        if (spec instanceof MutableMs2Spectrum) ms = (MutableMs2Spectrum)spec;
+                        if (spec instanceof MutableMs2Spectrum) ms = (MutableMs2Spectrum) spec;
                         else ms = new MutableMs2Spectrum(spec);
-                        if (ms.getIonization()==null) ms.setIonization(ionType.getIonization());
-                        if (ms.getMsLevel()==0) ms.setMsLevel(2);
-                        if (ms.getPrecursorMz()==0) {
-                            if (defaultParentMass==null) {
-                                if (exp.getMs2Spectra().size()>0) {
+                        if (ms.getIonization() == null) ms.setIonization(ionType.getIonization());
+                        if (ms.getMsLevel() == 0) ms.setMsLevel(2);
+                        if (ms.getPrecursorMz() == 0) {
+                            if (defaultParentMass == null) {
+                                if (exp.getMs2Spectra().size() > 0) {
                                     ms.setPrecursorMz(exp.getMs2Spectra().get(0).getPrecursorMz());
                                 } else {
                                     final MolecularFormula formula;
-                                    if (exp.getMolecularFormula()!=null) formula = exp.getMolecularFormula();
-                                    else if (formulas!=null && formulas.size()==1) formula = MolecularFormula.parse(formulas.get(0)); else formula=null;
+                                    if (exp.getMolecularFormula() != null) formula = exp.getMolecularFormula();
+                                    else if (formulas != null && formulas.size() == 1)
+                                        formula = MolecularFormula.parse(formulas.get(0));
+                                    else formula = null;
                                     if (formula != null) {
                                         ms.setPrecursorMz(ms.getIonization().addToMass(formula.getMass()));
                                     } else ms.setPrecursorMz(0);
@@ -610,9 +618,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                     exp.getMs2Spectra().add(new MutableMs2Spectrum(spec));
                 }
             }
-            if (exp.getMs2Spectra().size() <= 0) throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
+            if (exp.getMs2Spectra().size() <= 0)
+                throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
 
-            if (options.getMs2()!=null &&  options.getMs1() != null && !options.getMs1().isEmpty()) {
+            if (options.getMs2() != null && options.getMs1() != null && !options.getMs1().isEmpty()) {
                 exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
                 for (File f : options.getMs1()) {
                     final Iterator<Ms2Spectrum<Peak>> spiter = SpectralParser.getParserFor(f).parseSpectra(f);
@@ -624,36 +633,37 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             }
 
             final double expPrecursor;
-            if (options.getParentMz()!=null) {
+            if (options.getParentMz() != null) {
                 expPrecursor = options.getParentMz();
-            }else if (exp.getMolecularFormula()!=null) {
+            } else if (exp.getMolecularFormula() != null) {
                 expPrecursor = exp.getPrecursorIonType().neutralMassToPrecursorMass(exp.getMolecularFormula().getMass());
             } else {
-                double prec=0d;
-                for (int k=1; k < exp.getMs2Spectra().size(); ++k) {
+                double prec = 0d;
+                for (int k = 1; k < exp.getMs2Spectra().size(); ++k) {
                     final double pmz = exp.getMs2Spectra().get(k).getPrecursorMz();
-                    if (pmz!=0 && Math.abs(pmz - exp.getMs2Spectra().get(0).getPrecursorMz()) > 1e-3) {
+                    if (pmz != 0 && Math.abs(pmz - exp.getMs2Spectra().get(0).getPrecursorMz()) > 1e-3) {
                         throw new IllegalArgumentException("The given MS/MS spectra have different precursor mass and cannot belong to the same compound");
                     } else if (pmz != 0) prec = pmz;
                 }
                 if (prec == 0) {
-                    if (exp.getMs1Spectra().size()>0) {
+                    if (exp.getMs1Spectra().size() > 0) {
                         final SimpleSpectrum patterns = sirius.getMs1Analyzer().extractPattern(exp, exp.getMergedMs1Spectrum().getMzAt(0));
                         if (patterns.size() < exp.getMergedMs1Spectrum().size()) {
                             throw new IllegalArgumentException("SIRIUS cannot infer the parentmass of the measured compound from MS1 spectrum. Please provide it via the -z option.");
                         }
                         expPrecursor = patterns.getMzAt(0);
-                    } else throw new IllegalArgumentException("SIRIUS expects the parentmass of the measured compound as parameter. Please provide it via the -z option.");
+                    } else
+                        throw new IllegalArgumentException("SIRIUS expects the parentmass of the measured compound as parameter. Please provide it via the -z option.");
                 } else expPrecursor = prec;
             }
 
 
             exp.setIonMass(expPrecursor);
-            if (exp.getName()==null) {
+            if (exp.getName() == null) {
                 exp.setName("unknown");
             }
             instances.add(new Instance(exp, options.getMs2().get(0)));
-        } else if (options.getMs1()!=null && !options.getMs1().isEmpty()) {
+        } else if (options.getMs1() != null && !options.getMs1().isEmpty()) {
             throw new IllegalArgumentException("SIRIUS expect at least one MS/MS spectrum. Please add a MS/MS spectrum via --ms2 option");
         }
         // batch input: files containing ms1 and ms2 data are given
@@ -662,19 +672,22 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
             final ArrayList<File> infiles = new ArrayList<File>();
             for (String f : inputs) {
                 final File g = new File(f);
-                if (g.isDirectory()) {infiles.addAll(Arrays.asList(g.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File pathname) {
-                        return pathname.isFile();
-                    }
-                })));} else {
+                if (g.isDirectory()) {
+                    infiles.addAll(Arrays.asList(g.listFiles(new FileFilter() {
+                        @Override
+                        public boolean accept(File pathname) {
+                            return pathname.isFile();
+                        }
+                    })));
+                } else {
                     infiles.add(g);
                 }
             }
-            fileIter=infiles.iterator();
+            fileIter = infiles.iterator();
             return new Iterator<Instance>() {
                 Iterator<Ms2Experiment> experimentIterator = fetchNext();
                 File currentFile;
+
                 @Override
                 public boolean hasNext() {
                     return !instances.isEmpty();
@@ -690,23 +703,23 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
                 private Iterator<Ms2Experiment> fetchNext() {
                     start:
                     while (true) {
-                        if (experimentIterator==null || !experimentIterator.hasNext()) {
+                        if (experimentIterator == null || !experimentIterator.hasNext()) {
                             if (fileIter.hasNext()) {
                                 currentFile = fileIter.next();
                                 try {
                                     GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
-                                    if (p==null) {
+                                    if (p == null) {
                                         LoggerFactory.getLogger(CLI.class).error("Unknown file format: '" + currentFile + "'");
                                     } else experimentIterator = p.parseFromFileIterator(currentFile);
                                 } catch (IOException e) {
-                                    LoggerFactory.getLogger(CLI.class).error("Cannot parse file '" + currentFile + "':\n",e);
+                                    LoggerFactory.getLogger(CLI.class).error("Cannot parse file '" + currentFile + "':\n", e);
                                 }
                             } else return null;
                         } else {
                             Ms2Experiment experiment = experimentIterator.next();
-                            if (options.getMaxMz()!=null){
+                            if (options.getMaxMz() != null) {
                                 //skip high-mass compounds
-                                if (experiment.getIonMass()>options.getMaxMz()) continue start;
+                                if (experiment.getIonMass() > options.getMaxMz()) continue start;
                             }
                             instances.add(new Instance(experiment, currentFile));
                             return experimentIterator;
@@ -742,33 +755,34 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
 
     protected static PrecursorIonType getIonFromOptions(SiriusOptions opt, int charge) {
         String ionStr = opt.getIon();
-        if (ionStr==null) {
-            if (opt.isAutoCharge() || opt.getPossibleIonizations()!=null) return PrecursorIonType.unknown(charge);
-            else if (charge==0) throw new IllegalArgumentException("Please specify the charge");
+        if (ionStr == null) {
+            if (opt.isAutoCharge() || opt.getPossibleIonizations() != null) return PrecursorIonType.unknown(charge);
+            else if (charge == 0) throw new IllegalArgumentException("Please specify the charge");
             else if (charge == 1) return PrecursorIonType.getPrecursorIonType("[M+H]+");
             else if (charge == -1) return PrecursorIonType.getPrecursorIonType("[M-H]-");
             else throw new IllegalArgumentException("SIRIUS does not support multiple charges");
         } else {
             final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon());
-            if (ionType.isIonizationUnknown() && !opt.isAutoCharge() && opt.getPossibleIonizations()==null) {
-                if (ionType.getCharge()>0) return PrecursorIonType.getPrecursorIonType("[M+H]+");
+            if (ionType.isIonizationUnknown() && !opt.isAutoCharge() && opt.getPossibleIonizations() == null) {
+                if (ionType.getCharge() > 0) return PrecursorIonType.getPrecursorIonType("[M+H]+");
                 else return PrecursorIonType.getPrecursorIonType("[M-H]-");
             } else return ionType;
         }
     }
+
     private final static FormulaConstraints DEFAULT_ELEMENTS = new FormulaConstraints("CHNOP[5]S");
+
     public FormulaConstraints getDefaultElementSet(SiriusOptions opts) {
-        final FormulaConstraints cf = (opts.getElements()!=null) ? opts.getElements() : DEFAULT_ELEMENTS;
+        final FormulaConstraints cf = (opts.getElements() != null) ? opts.getElements() : DEFAULT_ELEMENTS;
         return cf;
     }
 
     protected static String fileNameWithoutExtension(File file) {
         final String name = file.getName();
         final int i = name.lastIndexOf('.');
-        if (i>=0) return name.substring(0, i);
+        if (i >= 0) return name.substring(0, i);
         else return name;
     }
-
 
 
     private <T> boolean arrayContains(T[] array, T object) {
@@ -776,9 +790,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     }
 
     private <T> int arrayFind(T[] array, T object) {
-        for(int i = 0; i < array.length; ++i) {
+        for (int i = 0; i < array.length; ++i) {
             Object t = array[i];
-            if(t.equals(object)) {
+            if (t.equals(object)) {
                 return i;
             }
         }
@@ -787,7 +801,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore{
     }
 
 
-    private int countMatches(String string, String sub){
+    private int countMatches(String string, String sub) {
         int lastIndex = 0;
         int count = 0;
 
