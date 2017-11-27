@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
@@ -40,9 +41,6 @@ public abstract class ApplicationCore {
     public final static String CITATION_BIBTEX;
 
     public static final PersistentProperties SIRIUS_PROPERTIES_FILE;
-
-    protected final static JobManager jobManager;
-
 
     //creating
     static {
@@ -152,10 +150,6 @@ public abstract class ApplicationCore {
         SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
         SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
         DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores") + " cores that handle " + PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads") + " threads were found.");
-
-
-        jobManager = new JobManager(cores);
-        DEFAULT_LOGGER.info("Job manager initialized!");
 
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
