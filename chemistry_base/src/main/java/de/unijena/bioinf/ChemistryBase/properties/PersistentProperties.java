@@ -101,7 +101,7 @@ public class PersistentProperties {
         return new Properties(props);
     }
 
-    private void storeProperties() {
+    public void storeProperties() {
         try {
             Files.deleteIfExists(propsSourceFile);
             try (OutputStream stream = Files.newOutputStream(propsSourceFile, StandardOpenOption.CREATE_NEW)) {
