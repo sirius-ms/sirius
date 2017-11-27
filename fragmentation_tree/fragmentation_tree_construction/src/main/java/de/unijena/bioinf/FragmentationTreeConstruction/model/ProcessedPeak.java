@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 
 import java.util.*;
 
@@ -47,6 +48,13 @@ public class ProcessedPeak extends Peak {
         this.originalPeaks = Collections.emptyList();
         this.globalRelativeIntensity = relativeIntensity = localRelativeIntensity = 0d;
         this.originalMz = getMz();
+    }
+
+    protected ProcessedPeak recalibrate(SpectralRecalibration rec) {
+        final ProcessedPeak p = new ProcessedPeak(this);
+        p.annotations = annotations.clone();
+        p.setMz(rec.recalibrate(p));
+        return p;
     }
 
     public AnnotatedPeak toAnnotatedPeak(MolecularFormula formulaAnnotation, PrecursorIonType ionType) {

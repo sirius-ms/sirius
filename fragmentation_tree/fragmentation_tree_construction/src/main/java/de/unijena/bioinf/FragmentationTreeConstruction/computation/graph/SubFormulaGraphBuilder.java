@@ -51,6 +51,7 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
         final FragmentAnnotation<Ionization> ion = graph.addFragmentAnnotation(Ionization.class);
         final ScoredFormulaMap scoring = graph.getOrCreateAnnotation(ScoredFormulaMap.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
+
         for (Decomposition m : pmds) {
             final Fragment f = graph.addRootVertex(m.getCandidate());
             peakAno.set(f, peak);

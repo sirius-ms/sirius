@@ -35,7 +35,7 @@ public class HypothesenDrivenRecalibration2 {
         this.method = method;
     }
 
-    public SpectralRecalibration collectPeaksFromMs2(MutableMs2Experiment exp, FTree tree, AbstractRecalibrationStrategy method) {
+    public SpectralRecalibration collectPeaksFromMs2(MutableMs2Experiment exp, FTree tree) {
         final int N = exp.getMs2Spectra().size(), M = tree.numberOfVertices();
         final MutableMs2Spectrum[] spectras = new MutableMs2Spectrum[N];
         final SimpleMutableSpectrum[] refs = new SimpleMutableSpectrum[N], collected = new SimpleMutableSpectrum[N];
@@ -56,15 +56,15 @@ public class HypothesenDrivenRecalibration2 {
             final double mz = ionMode.addToMass(f.getFormula().getMass());
             for (MS2Peak pk : peak.getOriginalPeaks()) {
                 final int sc = ((MutableMs2Spectrum)pk.getSpectrum()).getScanNumber();
-                collected[k].addPeak(pk.getMz(), pk.getIntensity());
-                refs[k].addPeak(mz, peak.getRelativeIntensity());
+                collected[sc].addPeak(pk.getMz(), pk.getIntensity());
+                refs[sc].addPeak(mz, peak.getRelativeIntensity());
             }
             mergedRef.addPeak(mz, peak.getRelativeIntensity());
             merged.addPeak(peak.getOriginalMz(), peak.getRelativeIntensity());
         }
         UnivariateFunction[] recalibrationFunctions = new UnivariateFunction[spectras.length];
         for (int i=0; i < spectras.length; ++i) {
-            if (spectras[i].size() >= method.getMinNumberOfPeaks()) {
+            if (refs[i].size() >= method.getMinNumberOfPeaks()) {
                 recalibrationFunctions[i] = method.recalibrate(collected[i], refs[i]);
             }
         }
