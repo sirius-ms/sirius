@@ -161,6 +161,10 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * Step 1-9: Preprocessing
      * Allows to use different values for decomposition
      */
+    public ProcessedInput preprocessingAfterValidation(ProcessedInput input) {
+        return performPeakScoring(performDecomposition(performParentPeakDetection(performPeakMerging(performNormalization(performPreprocessing(input))))));
+    }
+
     public ProcessedInput preprocessing(Ms2Experiment experiment, MeasurementProfile profile) {
         ProcessedInput input = performValidation(experiment);
         input.setMeasurementProfile(MutableMeasurementProfile.merge(input.getMeasurementProfile(), profile));
@@ -461,8 +465,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     fiter.remove();
                 }
             }
+            final PrecursorIonType ionType = input.getExperimentInformation().getPrecursorIonType();
             for (MolecularFormula w : whiteset.getFormulas()) {
-                final PrecursorIonType ion = PT.ionByMass(input.getExperimentInformation().getIonMass()-w.getMass(), 0.01, input.getExperimentInformation().getPrecursorIonType().getCharge());
+                // check ion mass
+                final PrecursorIonType ion;
+                if ((ionType.neutralMassToPrecursorMass(w.getMass())-input.getExperimentInformation().getIonMass() ) < 0.02) {
+                    ion = ionType;
+                } else {
+                    ion = PT.ionByMass(input.getExperimentInformation().getIonMass()-w.getMass(), 0.02, input.getExperimentInformation().getPrecursorIonType().getCharge());
+                }
+
+
                 final MolecularFormula neutral = ion.neutralMoleculeToMeasuredNeutralMolecule(w);
                 decomps.add(new Decomposition(neutral, ion.getIonization(), 0d));
             }
@@ -520,7 +533,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 decompositionList.get(processedPeaks.get(i-1)).disjoin(decompositionList.get(processedPeaks.get(i)), processedPeaks.get(i-1).getMz(), processedPeaks.get(i).getMz());
             }
         }
-
+        input.setAnnotation(DecompositionList.class, decompositionList.get(parentPeak));
         return postProcess(PostProcessor.Stage.AFTER_DECOMPOSING, input);
     }
 
@@ -642,13 +655,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         return input;
     }
 
-    ProcessedInput preprocessInputForGraphBuilding(ProcessedInput input) {
+    ProcessedInput preprocessInputBeforeScoring(ProcessedInput input) {
         input = performPreprocessing(input);
         input = performNormalization(input);
         input = performPeakMerging(input);
         input = performParentPeakDetection(input);
         input = performDecomposition(input);
-        input = performPeakScoring(input);
+        return input;
+    }
+
+    ProcessedInput preprocessInputForGraphBuilding(ProcessedInput input) {
+        input = performPeakScoring(preprocessInputBeforeScoring(input));
         return input;
     }
 
@@ -1078,7 +1095,16 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      */
     protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
         tree.addAnnotation(ProcessedInput.class, originalGraph.getAnnotationOrNull(ProcessedInput.class));
-        final PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
+        PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
+        if (ionType.isIonizationUnknown()) {
+            // use ionization instead
+            for (Fragment root : originalGraph.getRoot().getChildren()) {
+                if (root.getFormula().equals(tree.getRoot().getFormula())) {
+                    Ionization ionMode = originalGraph.getFragmentAnnotationOrThrow(Ionization.class).get(root);
+                    ionType = PrecursorIonType.getPrecursorIonType(ionMode);
+                }
+            }
+        }
         // tree annotations
         tree.addAnnotation(PrecursorIonType.class, ionType);
         final TreeScoring treeScoring = new TreeScoring();

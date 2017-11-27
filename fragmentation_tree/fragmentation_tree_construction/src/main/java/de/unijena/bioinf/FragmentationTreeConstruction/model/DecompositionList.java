@@ -36,6 +36,17 @@ public class DecompositionList {
         return new DecompositionList(decompositions);
     }
 
+    public void replace(Decomposition... decs) {
+        this.decompositions.clear();
+        this.decompositions.addAll(Arrays.asList(decs));
+    }
+
+    public Decomposition find(MolecularFormula formula) {
+        for (Decomposition d : decompositions)
+            if (d.getCandidate().equals(formula)) return d;
+        return null;
+    }
+
 
     public DecompositionList(List<Decomposition> decompositions) {
         this.decompositions = decompositions;
@@ -105,6 +116,16 @@ public class DecompositionList {
             }
         }
 
+    }
+
+    public HashMap<Ionization, List<MolecularFormula>> getFormulasPerIonMode() {
+        final HashMap<Ionization, List<MolecularFormula>> map = new HashMap<>();
+        for (Decomposition d : decompositions) {
+            if (!map.containsKey(d.getIon()))
+                map.put(d.getIon(), new ArrayList<MolecularFormula>());
+            map.get(d.getIon()).add(d.getCandidate());
+        }
+        return map;
     }
 
     public List<Decomposition> getDecompositions() {
