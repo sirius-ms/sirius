@@ -7,10 +7,7 @@ package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.sirius.gui.settings.ErrorReportSettingsPanel;
-import de.unijena.bioinf.sirius.gui.settings.GerneralSettingsPanel;
-import de.unijena.bioinf.sirius.gui.settings.ProxySettingsPanel;
-import de.unijena.bioinf.sirius.gui.settings.SettingsPanel;
+import de.unijena.bioinf.sirius.gui.settings.*;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +26,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private ProxySettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
     private ErrorReportSettingsPanel errorSettings;
+//    private ILPSettings ilpSettings;
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
@@ -51,12 +49,16 @@ public class SettingsDialog extends JDialog implements ActionListener {
         genSettings.addVerticalGlue();
         settingsPane.add(genSettings.name(), genSettings);
 
+        /*ilpSettings = new ILPSettings(nuProps);
+        settingsPane.add(ilpSettings.name(),ilpSettings);*/
+
         proxSettings = new ProxySettingsPanel(nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
         errorSettings = new ErrorReportSettingsPanel(nuProps);
         errorSettings.addVerticalGlue();
         settingsPane.add(errorSettings.name(), errorSettings);
+
 
         if (activeTab >= 0 && activeTab < settingsPane.getTabCount())
             settingsPane.setSelectedIndex(activeTab);
