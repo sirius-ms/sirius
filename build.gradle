@@ -37,7 +37,7 @@ ext {
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
-    libExclude = ['gurobi-*.jar','cplex-*.jar']
+    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
 //    commons_email_version = '1.4'
 //    oshi_version = '3.2'
@@ -279,7 +279,8 @@ subprojects {
         dontWrapJar = true
         jdkPreference = "preferJre"
 
-        classPath = ["${runtimeClasspath.replace('${', '%').replace('}', '%')}"]
+
+        classPath = runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')
 
         sourceSets.main.resources {
             srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
@@ -290,7 +291,7 @@ subprojects {
     startScripts {
         applicationName = "${project.appName}"
         doLast {
-            def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/lib/x86-64_linux/static_pic:$APP_HOME/lib'
+            def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
             def lines = unixScript.text.split(System.lineSeparator())
             int insertIndex = -1
             for (int i = 0; i < lines.length; i++) {
