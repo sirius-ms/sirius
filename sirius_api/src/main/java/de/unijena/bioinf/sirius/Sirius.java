@@ -45,7 +45,6 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JobManager;
 import gnu.trove.list.array.TDoubleArrayList;
-import ilog.concert.IloException;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -165,7 +164,7 @@ public class Sirius {
         final Sirius sirius = new Sirius();
         try {
             sirius.getMs2Analyzer().setTreeBuilder(new CPLEXTreeBuilder());
-        } catch (IloException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
