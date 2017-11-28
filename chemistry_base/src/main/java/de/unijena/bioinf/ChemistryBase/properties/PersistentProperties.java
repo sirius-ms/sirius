@@ -27,7 +27,8 @@ public class PersistentProperties {
     public PersistentProperties(Path propertiesFile, Properties defaultProps, String fileheader) {
         this.fileheader = fileheader;
         this.propsSourceFile = propertiesFile;
-        this.props = new Properties(defaultProps);
+        this.props = new Properties();
+        this.props.putAll(defaultProps);
 
         if (Files.exists(propsSourceFile)) {
             try (InputStream stream = Files.newInputStream(propsSourceFile)) {
