@@ -53,6 +53,7 @@ public final class TreeBuilderFactory {
 
 
     private static DefaultBuilder[] parseBuilderPriority(String builders) {
+        if (builders == null) return null;
         String[] builderArray = builders.replaceAll("\\s", "").split(",");
         return parseBuilderPriority(builderArray);
     }
@@ -91,6 +92,9 @@ public final class TreeBuilderFactory {
     public <T extends TreeBuilder> T getTreeBuilderFromClass(String className) {
         try {
             return getTreeBuilderFromClass(((Class<T>) ClassLoader.getSystemClassLoader().loadClass(className)));
+        } catch (Exception e) {
+            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
+            return null;
         } catch (Throwable e) {
             LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
