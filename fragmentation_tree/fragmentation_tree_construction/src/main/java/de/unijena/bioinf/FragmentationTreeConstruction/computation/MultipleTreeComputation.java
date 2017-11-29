@@ -19,7 +19,6 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.algorithm.BoundedDoubleQueue;
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -332,10 +331,10 @@ public class MultipleTreeComputation {
 
     abstract class GraphBuildingQueue implements Iterator<FGraph> {
 
-        protected final List<Scored<MolecularFormula>> stack;
+        protected final List<Decomposition> stack;
 
         protected GraphBuildingQueue() {
-            stack = new ArrayList<Scored<MolecularFormula>>(formulas);
+            stack = new ArrayList<>(formulas);
             Collections.reverse(stack);
         }
 

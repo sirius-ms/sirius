@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.graph;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -28,6 +27,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 
 /**
@@ -47,13 +47,16 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
     }
 
     @Override
-    public FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<Scored<MolecularFormula>> pmds) {
+    public FGraph addRoot(FGraph graph, ProcessedPeak peak, Iterable<Decomposition> pmds) {
+        final FragmentAnnotation<Ionization> ion = graph.addFragmentAnnotation(Ionization.class);
         final ScoredFormulaMap scoring = graph.getOrCreateAnnotation(ScoredFormulaMap.class);
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-        for (Scored<MolecularFormula> m : pmds) {
+
+        for (Decomposition m : pmds) {
             final Fragment f = graph.addRootVertex(m.getCandidate());
             peakAno.set(f, peak);
             f.setColor(peak.getIndex());
+            ion.set(f, m.getIon());
             scoring.put(f.getFormula(), m.getScore());
         }
         return graph;
@@ -61,6 +64,10 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
 
     @Override
     public FGraph fillGraph(FGraph graph) {
+        final FragmentAnnotation<Ionization> ion = graph.getFragmentAnnotationOrThrow(Ionization.class);
+        final HashSet<Ionization> allIons = new HashSet<>();
+        for (Fragment f : graph.getRoot().getChildren())
+            allIons.add(ion.get(f));
         final FragmentAnnotation<ProcessedPeak> peakAno = graph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
         final ScoredFormulaMap scoring = graph.getAnnotationOrThrow(ScoredFormulaMap.class);
 
@@ -81,18 +88,20 @@ public class SubFormulaGraphBuilder implements GraphBuilder {
         for (int i = peaks.size() - 1; i >= 0; --i) {
             final ProcessedPeak peak = peaks.get(i);
             final int pi = peak.getIndex();
-            for (Scored<MolecularFormula> decomposition : decompList.get(peak).getDecompositions()) {
+            for (Decomposition decomposition : decompList.get(peak).getDecompositions()) {
+                if (!allIons.contains(decomposition.getIon())) continue;
                 final MolecularFormula formula = decomposition.getCandidate();
                 final boolean hasEdge = formula.getMass() < pmd.getMass() && pmd.isSubtractable(formula);
                 if (hasEdge) {
                     Fragment newFragment = null;
                     for (Fragment f : graph) {
-                        if (f.isRoot() || peakAno.get(f).getIndex() == pi) continue;
+                        if (f.isRoot() || peakAno.get(f).getIndex() == pi || !ion.get(f).equals(decomposition.getIon())) continue;
                         final MolecularFormula fragmentFormula = f.getFormula();
                         assert (peakAno.get(f).getMz() > peak.getMz());
                         if (fragmentFormula.getMass() > formula.getMass() && fragmentFormula.isSubtractable(formula)) {
                             if (newFragment == null) {
                                 newFragment = graph.addFragment(decomposition.getCandidate());
+                                ion.set(newFragment, decomposition.getIon());
                                 peakAno.set(newFragment, peak);
                                 newFragment.setColor(peak.getIndex());
                                 scoring.put(decomposition.getCandidate(), decomposition.getScore());
