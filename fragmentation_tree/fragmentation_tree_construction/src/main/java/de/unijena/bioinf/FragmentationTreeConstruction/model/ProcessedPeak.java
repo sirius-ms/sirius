@@ -19,12 +19,13 @@ package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 
 import java.util.*;
 
@@ -36,7 +37,6 @@ public class ProcessedPeak extends Peak {
     private List<MS2Peak> originalPeaks;
     private double localRelativeIntensity, relativeIntensity, globalRelativeIntensity;
     private CollisionEnergy collisionEnergy;
-    private Ionization ion;
     private double originalMz;
 
     private Object[] annotations;
@@ -47,11 +47,17 @@ public class ProcessedPeak extends Peak {
         this.index = 0;
         this.originalPeaks = Collections.emptyList();
         this.globalRelativeIntensity = relativeIntensity = localRelativeIntensity = 0d;
-        this.ion = null;
         this.originalMz = getMz();
     }
 
-    public AnnotatedPeak toAnnotatedPeak(MolecularFormula formulaAnnotation) {
+    protected ProcessedPeak recalibrate(SpectralRecalibration rec) {
+        final ProcessedPeak p = new ProcessedPeak(this);
+        p.annotations = annotations.clone();
+        p.setMz(rec.recalibrate(p));
+        return p;
+    }
+
+    public AnnotatedPeak toAnnotatedPeak(MolecularFormula formulaAnnotation, PrecursorIonType ionType) {
         final CollisionEnergy[] energies = new CollisionEnergy[originalPeaks.size()];
         final Peak[] opeaks = new Peak[originalPeaks.size()];
         int k=0;
@@ -61,7 +67,7 @@ public class ProcessedPeak extends Peak {
             opeaks[k] = new Peak(peak);
             ++k;
         }
-        return new AnnotatedPeak(formulaAnnotation, originalMz, mass, relativeIntensity,ion, opeaks, energies);
+        return new AnnotatedPeak(formulaAnnotation, originalMz, mass, relativeIntensity,ionType.getIonization(), opeaks, energies);
     }
 
     public ProcessedPeak(MS2Peak peak) {
@@ -82,7 +88,6 @@ public class ProcessedPeak extends Peak {
         this.localRelativeIntensity = peak.getLocalRelativeIntensity();
         this.globalRelativeIntensity = peak.getGlobalRelativeIntensity();
         this.relativeIntensity = peak.getRelativeIntensity();
-        this.ion = peak.getIon();
         this.collisionEnergy = peak.getCollisionEnergy();
         this.originalMz = peak.getOriginalMz();
     }
@@ -135,10 +140,6 @@ public class ProcessedPeak extends Peak {
         this.globalRelativeIntensity = globalRelativeIntensity;
     }
 
-    public void setIon(Ionization ion) {
-        this.ion = ion;
-    }
-
     public Iterator<Ms2Spectrum> originalSpectraIterator() {
         return Iterators.transform(originalPeaks.iterator(), new Function<MS2Peak, Ms2Spectrum>() {
             @Override
@@ -156,10 +157,6 @@ public class ProcessedPeak extends Peak {
         final List<Ms2Spectrum> spectrum =  new ArrayList<Ms2Spectrum>(originalPeaks.size());
         Iterators.addAll(spectrum, originalSpectraIterator());
         return spectrum;
-    }
-
-    public double getUnmodifiedMass() {
-        return ion.subtractFromMass(mass);
     }
 
     public List<MS2Peak> getOriginalPeaks() {
@@ -182,10 +179,6 @@ public class ProcessedPeak extends Peak {
         return globalRelativeIntensity;
     }
 
-    public Ionization getIon() {
-        return ion;
-    }
-
     public boolean isSynthetic() {
         return originalPeaks.isEmpty();
     }
@@ -196,10 +189,6 @@ public class ProcessedPeak extends Peak {
 
     public String toString() {
         return globalRelativeIntensity + "@" + mass + " Da";
-    }
-
-    public double getUnmodifiedOriginalMass() {
-        return ion.subtractFromMass(originalMz);
     }
 
     Object getAnnotation(int id) {

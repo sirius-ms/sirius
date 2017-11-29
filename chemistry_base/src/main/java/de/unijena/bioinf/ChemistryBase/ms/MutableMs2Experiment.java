@@ -37,8 +37,12 @@ public class MutableMs2Experiment implements Ms2Experiment {
             ms1Spectra.add(new SimpleSpectrum(spec));
         this.mergedMs1Spectrum = experiment.getMergedMs1Spectrum() == null ? null : new SimpleSpectrum(experiment.getMergedMs1Spectrum());
         this.ms2Spectra = new ArrayList<>();
+        int id = 0;
         for (Ms2Spectrum<Peak> ms2spec : experiment.getMs2Spectra()) {
-            this.ms2Spectra.add(new MutableMs2Spectrum(ms2spec));
+            final MutableMs2Spectrum ms2 = new MutableMs2Spectrum(ms2spec);
+            ms2.setScanNumber(id++);
+            this.ms2Spectra.add(ms2);
+
         }
         this.annotations = new HashMap<>();
         final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();

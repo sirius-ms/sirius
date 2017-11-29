@@ -1,6 +1,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import java.util.ArrayList;
@@ -14,6 +15,27 @@ import java.util.Set;
  * If probability is unknown, you can assign a constant to each ion type.
  */
 public class PossibleAdductTypes {
+
+    public static PossibleAdductTypes deterministic(PrecursorIonType precursorIonType) {
+        final PossibleAdductTypes a = new PossibleAdductTypes();
+        a.add(precursorIonType,1);
+        return a;
+    }
+
+    public static PossibleAdductTypes defaultFor(int charge) {
+        final PossibleAdductTypes a = new PossibleAdductTypes();
+        final PeriodicTable T = PeriodicTable.getInstance();
+        if(charge>0) {
+            a.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 0.95);
+            a.add(PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization(), 0.03);
+            a.add(PrecursorIonType.getPrecursorIonType("[M+K]+").getIonization(), 0.02);
+        } else {
+            a.add(PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 0.95);
+            a.add(PrecursorIonType.getPrecursorIonType("[M+Cl]-").getIonization(), 0.03);
+            a.add(PrecursorIonType.getPrecursorIonType("[M+Br]-").getIonization(), 0.02);
+        }
+        return a;
+    }
 
     public static class Adduct {
         protected PrecursorIonType ionType;
