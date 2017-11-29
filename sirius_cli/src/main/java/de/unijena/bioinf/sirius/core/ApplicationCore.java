@@ -153,6 +153,7 @@ public abstract class ApplicationCore {
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
 
+
     }
 
 

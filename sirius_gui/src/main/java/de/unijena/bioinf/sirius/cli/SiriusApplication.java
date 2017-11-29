@@ -11,6 +11,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
+import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
@@ -26,6 +27,9 @@ public class SiriusApplication extends ApplicationCore {
         //todo this is copy paste from CLI class -> make nice
         SiriusJobs.setGlobalJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1")));
         DEFAULT_LOGGER.info("Job manager initialized!");
+
+        CustomDatabase.customDatabases(true);
+        DEFAULT_LOGGER.info("Custom DBs initialized!");
 
         final ZodiacCLI cli = new ZodiacCLI();
         cli.parseArgs(args, FingerIdOptions.class);

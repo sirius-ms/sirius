@@ -115,8 +115,8 @@ public class CSIFingerIdComputation {
         this.compoundsPerFormulaBio = new HashMap<>(128);
         this.compoundsPerFormulaNonBio = new HashMap<>(128);
         setDirectory(getDefaultDirectory());
-        this.bio = new SearchableDbOnDisc("biological database", getBioDirectory(), false,true,false);
-        this.pubchem = new SearchableDbOnDisc("PubChem", getNonBioDirectory(), true,true,false);
+        this.bio = new SearchableDbOnDisc("biological database", getBioDirectory(), false, true, false);
+        this.pubchem = new SearchableDbOnDisc("PubChem", getNonBioDirectory(), true, true, false);
 
         this.formulaQueue = new ConcurrentLinkedQueue<>();
         this.blastQueue = new ConcurrentLinkedQueue<>();
@@ -144,6 +144,7 @@ public class CSIFingerIdComputation {
     }
 
     protected ReentrantLock readCanopusLock = new ReentrantLock();
+
     public void loadCanopus(InputStream stream) throws IOException {
         final Canopus canopus;
         readCanopusLock.lock();
@@ -154,6 +155,7 @@ public class CSIFingerIdComputation {
         }
         this.canopus = canopus;
     }
+
     public void loadCanopus(File file) throws IOException {
         final Canopus canopus;
         readCanopusLock.lock();
@@ -177,7 +179,7 @@ public class CSIFingerIdComputation {
         return enabled;
     }
 
-       public void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         for (Runnable r : enabledListeners) r.run();
     }
@@ -214,8 +216,8 @@ public class CSIFingerIdComputation {
             fscores[k] = performances[k].getF();
 
         try {
-            this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d/performances[0].withPseudoCount(0.25).numberOfSamples());
-        } catch (IOException e){
+            this.scoringMethod = webAPI.getCovarianceScoring(fingerprintVersion, 1d / performances[0].withPseudoCount(0.25).numberOfSamples());
+        } catch (IOException e) {
             //fallback
             logger.warn("Cannot load covariance scoring. Fallback to CSIFingerIdScoring.");
             this.scoringMethod = new ScoringMethodFactory().getCSIFingerIdScoringMethod();
@@ -247,7 +249,7 @@ public class CSIFingerIdComputation {
                 }
                 ++k;
             }
-            return new FingerIdData(db, comps, scores,tanimotos, plattScores);
+            return new FingerIdData(db, comps, scores, tanimotos, plattScores);
         } catch (DatabaseException e) {
             throw new RuntimeException(e); // TODO: handle
         }
@@ -361,9 +363,11 @@ public class CSIFingerIdComputation {
     protected File getBioDirectory() {
         return new File(directory, "bio");
     }
+
     protected File getNonBioDirectory() {
         return new File(directory, "not-bio");
     }
+
     protected File getCustomDirectory(String name) {
         return new File(new File(directory, "custom"), name);
     }
@@ -490,7 +494,7 @@ public class CSIFingerIdComputation {
         List<Compound> compoundList = new ArrayList<>();
         for (Compound compound : compounds) {
             for (CompoundCandidateChargeLayer chargeLayer : chargeLayers) {
-                if (compound.hasChargeState(chargeLayer, chargeState)){
+                if (compound.hasChargeState(chargeLayer, chargeState)) {
                     compoundList.add(compound);
                     break;
                 }
@@ -529,7 +533,7 @@ public class CSIFingerIdComputation {
         for (int index = 0; index < compounds.size(); ++index) {
             final Compound c = compounds.get(index);
             if (this.compounds.containsKey(c.getInchi().key2D())) {
-                synchronized (this.compounds){
+                synchronized (this.compounds) {
                     compounds.set(index, this.compounds.get(c.getInchi().key2D()));
                 }
                 continue;
@@ -537,7 +541,7 @@ public class CSIFingerIdComputation {
             try {
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(c.getMolecule());
             } catch (CDKException e) {
-                logger.error(e.getMessage(),e);
+                logger.error(e.getMessage(), e);
             }
             c.calculateXlogP();
             c.generateInchiIfNull();
@@ -629,7 +633,7 @@ public class CSIFingerIdComputation {
                 task.result.setFingerIdComputeState(ComputingStatus.COMPUTING);
                 if (task.result.getFingerIdData() != null && task.result.getFingerIdData().platts != null) {
                     task.prediction = task.result.getFingerIdData().platts;
-                    task.fingerprintPredicted=true;
+                    task.fingerprintPredicted = true;
                     formulaQueue.add(task);
                     blastQueue.add(task);
                 } else {
@@ -962,15 +966,18 @@ public class CSIFingerIdComputation {
         db.addAll(CustomDatabase.customDatabases(true));
         return db;
     }
+
     public SearchableDatabase getBioDb() {
         return bio;
     }
+
     public SearchableDatabase getPubchemDb() {
         return pubchem;
     }
 
     protected final static Ionization PROTONATION = PeriodicTable.getInstance().getProtonation();
     protected final static Ionization INTRINSICALLY_CHARGED_POSITIVE = new IonMode(1, "[M]+", MolecularFormula.emptyFormula());
+
     protected class MolecularFormulaWithIonization {
         protected final MolecularFormula molecularFormula;
         protected final IonizationState ionizationState;
@@ -979,12 +986,12 @@ public class CSIFingerIdComputation {
             this.molecularFormula = molecularFormula;
             if (ionization.equals(PROTONATION)) ionizationState = IonizationState.Protonation;
             else if (ionization.equals(INTRINSICALLY_CHARGED_POSITIVE)) ionizationState = IonizationState.Intrinsically;
-            else if (ionization.getCharge()>0) ionizationState = IonizationState.DifferentPositiveIonMode;
+            else if (ionization.getCharge() > 0) ionizationState = IonizationState.DifferentPositiveIonMode;
             else throw new IllegalArgumentException("Ionization must be positive");
         }
     }
 
-    protected enum  IonizationState {
+    protected enum IonizationState {
         Intrinsically, Protonation, DifferentPositiveIonMode
     }
 }

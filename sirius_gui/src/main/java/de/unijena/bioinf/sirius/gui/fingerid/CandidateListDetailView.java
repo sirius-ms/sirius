@@ -135,13 +135,11 @@ public class CandidateListDetailView extends CandidateListView implements Active
 
                 @Override
                 protected Object doInBackground() throws Exception {
-                    System.out.println("START HIGHLIGHTING!");
                     try {
                         c.highlightInBackground();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    System.out.println("Highlighted ^^");
                     return c;
                 }
 

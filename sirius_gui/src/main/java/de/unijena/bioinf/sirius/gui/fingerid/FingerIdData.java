@@ -37,8 +37,6 @@ public class FingerIdData extends AbstractBean {
     private double confidence;
     private double topScore;
     public final SearchableDatabase db;
-//    protected double minLogPFilter = Double.NEGATIVE_INFINITY, maxLogPFilter = Double.POSITIVE_INFINITY;
-    public EnumSet<DatasourceService.Sources> dbSelection;
 
     public FingerIdData(SearchableDatabase db, Compound[] compounds, double[] scores, double[] tanimotoScores, ProbabilityFingerprint platts) {
         this.db = db;
@@ -48,7 +46,6 @@ public class FingerIdData extends AbstractBean {
         this.platts = platts;
         this.topScore = scores.length == 0 ? Double.NEGATIVE_INFINITY : scores[0];
         this.confidence = Double.NaN;
-        this.dbSelection = EnumSet.of(DatasourceService.Sources.PUBCHEM);
     }
 
     public ProbabilityFingerprint getCanopusFingerprint() {

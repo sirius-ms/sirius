@@ -4,9 +4,9 @@ import java.awt.*;
 
 public class DatabaseLabel implements Comparable<DatabaseLabel> {
 
-    protected String name;
-    protected String[] values;
-    protected Rectangle rect;
+    protected final String name;
+    protected final String[] values;
+    protected final Rectangle rect;
 
     public DatabaseLabel(String name, String[] values, Rectangle rect) {
         this.name = name;

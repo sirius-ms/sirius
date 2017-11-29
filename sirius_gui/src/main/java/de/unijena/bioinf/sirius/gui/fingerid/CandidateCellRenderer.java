@@ -1,7 +1,9 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.sirius.gui.configs.Colors;
 import de.unijena.bioinf.sirius.gui.configs.Fonts;
+import de.unijena.bioinf.sirius.gui.db.CustomDataSourceService;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
@@ -27,7 +29,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
     private final static Color ODD = Colors.LIST_UNEVEN_BACKGROUND;
 
 
-    protected final Font nameFont, propertyFont, rankFont,  matchFont;
+    protected final Font nameFont, propertyFont, rankFont, matchFont;
 
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
@@ -37,6 +39,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
     private final DoubleListStats stats;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
+
     public CandidateCellRenderer(CSIFingerIdComputation computation, DoubleListStats stats, CandidateListDetailView candidateJList) {
         this.candidateJList = candidateJList;
         this.computation = computation;
@@ -45,12 +48,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
 
         //init fonts
         final Font tempFont = Fonts.FONT_BOLD;
-        if (tempFont != null){
+        if (tempFont != null) {
             nameFont = tempFont.deriveFont(13f);
             propertyFont = tempFont.deriveFont(16f);
             matchFont = tempFont.deriveFont(18f);
             rankFont = tempFont.deriveFont(32f);
-        }else {
+        } else {
             nameFont = propertyFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
 
         }
@@ -170,54 +173,57 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
     private static final int DB_LABEL_PADDING = 4;
 
     public class DatabasePanel extends JPanel {
-        private Font ownFont;
-        private Color linkedColor = new Color(155, 166, 219);
-        private Color unlinkedColor = Color.GRAY;
+        private final Font dbPanelFont = getFont().deriveFont(Font.BOLD, 12);
 
         public DatabasePanel() {
             setOpaque(false);
             setLayout(new FlowLayout(FlowLayout.LEFT));
             setBorder(new EmptyBorder(5, 2, 2, 2));
-            ownFont = getFont().deriveFont(Font.BOLD, 12);
         }
 
         public void setCompound(CompoundCandidate candidate) {
             removeAll();
             if (candidate == null || candidate.compound == null || candidate.compound.databases == null) return;
-            for (de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label : candidate.labels) {
-                final TextLayout tlayout = new TextLayout(label.name, ownFont, new FontRenderContext(null, false, false));
+
+            for (DatabaseLabel label : candidate.labels) {
+                final TextLayout tlayout = new TextLayout(label.name, dbPanelFont, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
                 final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
                 final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
 
-
-
-                add(new DatabaseLabel(label, X, Y, (label.values.length == 0 ? unlinkedColor : linkedColor), ownFont));
-
+                add(new DatabaseLabelPanel(label, X, Y, dbPanelFont));
             }
         }
     }
 
-    private static class DatabaseLabel extends JPanel {
-        private String name;
-        private Color color;
-        private de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label;
+    private static class DatabaseLabelPanel extends JPanel {
+        private final Color color;
+        private final DatabaseLabel label;
 
-        public DatabaseLabel(de.unijena.bioinf.sirius.gui.fingerid.DatabaseLabel label, int width, int height, Color color, Font font) {
-            this.name = label.name;
-            this.color = color;
+        public DatabaseLabelPanel(DatabaseLabel label, int width, int height, Font font) {
+            this.label = label;
+            this.color = color();
             setFont(font);
             setOpaque(false);
             setPreferredSize(new Dimension(width, height));
-            this.label = label;
+
+
         }
+
+        private Color color() {
+            CustomDataSourceService.Source s = CustomDataSourceService.getSourceFromName(label.name);
+            if (s.isCustomSource()) return Colors.DB_CUSTOM;
+            if (s.name().equals(DatasourceService.Sources.TRAIN.name)) return Colors.DB_TRAINING;
+            return label.values.length == 0 ? Colors.DB_UNLINKED : Colors.DB_LINKED;
+        }
+
 
         @Override
         public void paint(Graphics graphics) {
             super.paint(graphics);
             final Graphics2D g = (Graphics2D) graphics;
             final FontMetrics m = getFontMetrics(getFont());
-            final int tw = m.stringWidth(name);
+            final int tw = m.stringWidth(label.name);
             final int th = m.getHeight();
             final int w = tw + DB_LABEL_PADDING;
             final int h = th + DB_LABEL_PADDING;
@@ -235,7 +241,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Co
             g.setColor(Color.BLACK);
             g.drawRoundRect(2, 2, w, h, 4, 4);
             g.setColor(Color.WHITE);
-            g.drawString(name, 2 + (w - tw) / 2, h - (h - th) / 2);
+            g.drawString(label.name, 2 + (w - tw) / 2, h - (h - th) / 2);
         }
     }
 

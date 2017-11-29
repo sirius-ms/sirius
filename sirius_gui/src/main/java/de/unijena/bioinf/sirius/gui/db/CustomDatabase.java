@@ -46,6 +46,7 @@ public class CustomDatabase implements SearchableDatabase {
     protected String name;
     protected File path;
 
+
     // statistics
     protected long numberOfCompounds, numberOfFormulas, megabytes;
 
@@ -56,6 +57,7 @@ public class CustomDatabase implements SearchableDatabase {
                     f.delete();
                 }
                 path.delete();
+                CustomDataSourceService.removeCustomSource(name);
             }
         }
     }
@@ -76,7 +78,7 @@ public class CustomDatabase implements SearchableDatabase {
                         databases.add(db);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    logger.error(e.getMessage(),e);
+                    logger.error(e.getMessage(), e);
                 }
             }
         }
@@ -97,6 +99,7 @@ public class CustomDatabase implements SearchableDatabase {
     public CustomDatabase(String name, File path) {
         this.name = name;
         this.path = path;
+        CustomDataSourceService.addCustomSourceIfAbsent(this.name);
     }
 
     public void buildDatabase(List<File> files, ImporterListener listener) throws IOException, CDKException {
@@ -145,7 +148,7 @@ public class CustomDatabase implements SearchableDatabase {
         this.deriveFromBioDb = deriveFromBioDb;
     }
 
-    public  void readSettings() throws IOException {
+    public void readSettings() throws IOException {
         synchronized (this) {
             if (settingsFile().exists()) {
                 deriveFromPubchem = false;
@@ -156,7 +159,7 @@ public class CustomDatabase implements SearchableDatabase {
                     if (ary != null) {
                         for (JsonValue v : ary) {
                             if (v instanceof JsonString) {
-                                final String s = ((JsonString)v).getString();
+                                final String s = ((JsonString) v).getString();
                                 if (s.equals(DatasourceService.Sources.PUBCHEM.name))
                                     deriveFromPubchem = true;
                                 if (s.equals(DatasourceService.Sources.BIO.name))
@@ -178,10 +181,10 @@ public class CustomDatabase implements SearchableDatabase {
                                 }
                             }
                         }
-                        this.version  = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
+                        this.version = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
                     }
                     JsonNumber num = o.getJsonNumber("schemaVersion");
-                    if (num==null) {
+                    if (num == null) {
                         this.databaseVersion = 0;
                     } else {
                         this.databaseVersion = num.intValue();
@@ -189,7 +192,7 @@ public class CustomDatabase implements SearchableDatabase {
                     JsonObject stats = o.getJsonObject("statistics");
                     if (stats != null) {
                         JsonNumber nc = stats.getJsonNumber("compounds");
-                        if (nc!=null)
+                        if (nc != null)
                             this.numberOfCompounds = nc.intValue();
                     }
                 }
@@ -203,7 +206,7 @@ public class CustomDatabase implements SearchableDatabase {
                     }
                     --ncompounds;
                 }
-                this.megabytes = Math.round((filesize/1024d)/1024d);
+                this.megabytes = Math.round((filesize / 1024d) / 1024d);
                 this.numberOfFormulas = ncompounds;
             }
         }
@@ -249,8 +252,10 @@ public class CustomDatabase implements SearchableDatabase {
     public interface ImporterListener {
         // informs about fingerprints that have to be computed
         void newFingerprintBufferSize(int size);
+
         // informs about molecules that have to be parsed
         void newMoleculeBufferSize(int size);
+
         // informs about imported molecule
         void newInChI(InChI inchi);
     }
@@ -260,10 +265,12 @@ public class CustomDatabase implements SearchableDatabase {
         public void newFingerprintBufferSize(int size) {
 
         }
+
         // informs about molecules that have to be parsed
         public void newMoleculeBufferSize(int size) {
 
         }
+
         // informs about imported molecule
         public void newInChI(InChI inchi) {
 
@@ -294,7 +301,7 @@ public class CustomDatabase implements SearchableDatabase {
             this.buffer = new ArrayList<>();
             this.moleculeBuffer = new ArrayList<>();
             currentPath = database.path;
-            if (currentPath==null) throw new NullPointerException();
+            if (currentPath == null) throw new NullPointerException();
             try {
                 inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
                 smilesGen = SmilesGenerator.generic().aromatic();
@@ -309,6 +316,7 @@ public class CustomDatabase implements SearchableDatabase {
         public void addListener(ImporterListener listener) {
             listeners.add(listener);
         }
+
         public void removeListener(ImporterListener listener) {
             listeners.remove(listener);
         }
@@ -317,16 +325,16 @@ public class CustomDatabase implements SearchableDatabase {
         public void collect(ImporterListener listener) {
             for (File f : currentPath.listFiles()) {
                 if (!f.getName().endsWith("json.gz")) continue;
-                synchronized(this) {
+                synchronized (this) {
                     try {
                         try (final JsonReader parser = Json.createReader(new GZIPInputStream(new FileInputStream(f)))) {
                             final JsonArray ary = parser.readObject().getJsonArray("compounds");
-                            for (int k=0; k < ary.size(); ++k) {
+                            for (int k = 0; k < ary.size(); ++k) {
                                 listener.newInChI(CompoundCandidate.fromJSON(ary.getJsonObject(k)).getInchi());
                             }
                         }
                     } catch (IOException e) {
-                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                        LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                     }
                 }
             }
@@ -338,13 +346,13 @@ public class CustomDatabase implements SearchableDatabase {
                 try {
                     writeSettings();
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
             } else {
                 try {
                     database.readSettings();
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 }
             }
         }
@@ -358,7 +366,7 @@ public class CustomDatabase implements SearchableDatabase {
                 // try InChI parser
                 try {
                     final IAtomContainer molecule = inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer();
-                    if (id!=null) molecule.setID(id);
+                    if (id != null) molecule.setID(id);
                     addMolecule(molecule);
                 } catch (CDKException e) {
                     throw new IOException(e);
@@ -367,7 +375,7 @@ public class CustomDatabase implements SearchableDatabase {
                 // try SMILES parser
                 try {
                     final IAtomContainer molecule = smilesParser.parseSmiles(str);
-                    if (id!=null) molecule.setID(id);
+                    if (id != null) molecule.setID(id);
                     addMolecule(molecule);
                 } catch (CDKException e) {
                     throw new IOException(e);
@@ -385,7 +393,7 @@ public class CustomDatabase implements SearchableDatabase {
                 try (InputStream stream = new FileInputStream(file)) {
                     try {
                         reader.setReader(stream);
-                        IChemFile chemFile =SilentChemObjectBuilder.getInstance().newInstance(IChemFile.class);
+                        IChemFile chemFile = SilentChemObjectBuilder.getInstance().newInstance(IChemFile.class);
                         chemFile = reader.read(chemFile);
                         for (IChemSequence s : chemFile.chemSequences()) {
                             for (IChemModel m : s.chemModels()) {
@@ -404,7 +412,7 @@ public class CustomDatabase implements SearchableDatabase {
                 String line = br.readLine();
                 br.close();
                 final List<IAtomContainer> mols = new ArrayList<>();
-                if (line==null) {
+                if (line == null) {
                     throw new IOException("Unknown file format: " + file.getName());
                 } else if (line.contains("InChI")) {
                     for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {
@@ -419,10 +427,10 @@ public class CustomDatabase implements SearchableDatabase {
                         }
                         try {
                             final IAtomContainer mol = (inChIGeneratorFactory.getInChIToStructure(aline, SilentChemObjectBuilder.getInstance()).getAtomContainer());
-                            if (id!=null) mol.setID(id);
+                            if (id != null) mol.setID(id);
                             addMolecule(mol);
                         } catch (CDKException e) {
-                            logger.error(e.getMessage(),e);
+                            logger.error(e.getMessage(), e);
                         }
 
 
@@ -430,7 +438,8 @@ public class CustomDatabase implements SearchableDatabase {
                 } else {
                     try {
                         smilesParser.parseSmiles(line);
-                        for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {aline = aline.trim();
+                        for (String aline : Files.readAllLines(file.toPath(), Charset.forName("UTF-8"))) {
+                            aline = aline.trim();
                             if (aline.isEmpty()) continue;
                             String id = null;
                             final int index = aline.indexOf('\t');
@@ -439,10 +448,12 @@ public class CustomDatabase implements SearchableDatabase {
                                 aline = parts[0];
                                 id = parts[1];
                             }
-                            try {final IAtomContainer mol = smilesParser.parseSmiles(aline);
-                                if (id!=null) mol.setID(id);
-                                addMolecule(mol);} catch (CDKException e) {
-                                logger.error(e.getMessage(),e);
+                            try {
+                                final IAtomContainer mol = smilesParser.parseSmiles(aline);
+                                if (id != null) mol.setID(id);
+                                addMolecule(mol);
+                            } catch (CDKException e) {
+                                logger.error(e.getMessage(), e);
                             }
                         }
                     } catch (InvalidSmilesException e) {
@@ -456,7 +467,7 @@ public class CustomDatabase implements SearchableDatabase {
             synchronized (moleculeBuffer) {
                 moleculeBuffer.add(mol);
                 for (ImporterListener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
-                if (moleculeBuffer.size()> 1000) {
+                if (moleculeBuffer.size() > 1000) {
                     flushMoleculeBuffer();
                 }
             }
@@ -483,7 +494,7 @@ public class CustomDatabase implements SearchableDatabase {
             }
             moleculeBuffer.clear();
             logger.info("Try downloading compounds");
-            try (final WebAPI webAPI = WebAPI.newInstance()){
+            try (final WebAPI webAPI = WebAPI.newInstance()) {
                 try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ALL, new File("."))) {
                     try {
                         for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
@@ -501,7 +512,7 @@ public class CustomDatabase implements SearchableDatabase {
                 try {
                     addToBuffer(computeCompound(c.molecule, c.molecule.getID(), c.candidate));
                 } catch (CDKException | IllegalArgumentException e) {
-                    logger.error(e.getMessage(),e);
+                    logger.error(e.getMessage(), e);
                 }
             }
             for (ImporterListener l : listeners) l.newMoleculeBufferSize(0);
@@ -520,21 +531,21 @@ public class CustomDatabase implements SearchableDatabase {
         }
 
         protected FingerprintCandidate computeCompound(IAtomContainer molecule, String optionalName, FingerprintCandidate fc) throws CDKException, IOException {
-            if (fc==null) return computeCompound(molecule,optionalName);
+            if (fc == null) return computeCompound(molecule, optionalName);
             logger.info("download fingerprint " + fc.getInchiKey2D());
-            if (fc.getLinks()==null) fc.setLinks(new DBLink[0]);
-            if (optionalName!=null) {
+            if (fc.getLinks() == null) fc.setLinks(new DBLink[0]);
+            if (optionalName != null) {
                 fc.setName(optionalName);
-                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length+1);
-                ls[ls.length-1] = new DBLink(database.name, optionalName);
+                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
+                ls[ls.length - 1] = new DBLink(database.name, optionalName);
                 fc.setLinks(ls);
             } else {
-                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length+1);
-                ls[ls.length-1] = new DBLink(database.name, "");
+                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
+                ls[ls.length - 1] = new DBLink(database.name, "");
                 fc.setLinks(ls);
             }
-            fc.setBitset(fc.getBitset() | DatasourceService.Sources.CUSTOM.flag);
-            synchronized (buffer){
+            fc.setBitset(fc.getBitset() | CustomDataSourceService.getSourceFromName(database.name).flag());
+            synchronized (buffer) {
                 buffer.add(fc);
                 if (buffer.size() > 10000)
                     flushBuffer();
@@ -553,20 +564,20 @@ public class CustomDatabase implements SearchableDatabase {
 
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fp);
             fc.setSmiles(smiles);
-            if (optionalName!=null) {
+            if (optionalName != null) {
                 fc.setName(optionalName);
                 fc.setLinks(new DBLink[]{new DBLink(database.name, optionalName)});
             } else {
                 fc.setLinks(new DBLink[0]);
             }
-            fc.setBitset(DatasourceService.Sources.CUSTOM.flag);
+            fc.setBitset(CustomDataSourceService.getSourceFromName(database.name).flag());
             {
                 // compute XLOGP
                 final XLogPDescriptor descriptor = new XLogPDescriptor();
                 descriptor.setParameters(new Object[]{true, true});
-                fc.setXlogp(((DoubleResult)descriptor.calculate(molecule).getValue()).doubleValue());
+                fc.setXlogp(((DoubleResult) descriptor.calculate(molecule).getValue()).doubleValue());
             }
-            synchronized (buffer){
+            synchronized (buffer) {
                 buffer.add(fc);
                 if (buffer.size() > 10000)
                     flushBuffer();
@@ -598,11 +609,11 @@ public class CustomDatabase implements SearchableDatabase {
         private void mergeCompounds(MolecularFormula key, Collection<FingerprintCandidate> value) throws IOException {
             final File file = new File(database.path, key.toString() + ".json.gz");
             try {
-            List<FingerprintCandidate> candidates = new ArrayList<>();
-            candidates.addAll(value);
-            synchronized (database) {
-                database.numberOfCompounds += Compound.merge(fingerprintVersion, candidates, file);
-            }
+                List<FingerprintCandidate> candidates = new ArrayList<>();
+                candidates.addAll(value);
+                synchronized (database) {
+                    database.numberOfCompounds += Compound.merge(fingerprintVersion, candidates, file);
+                }
             } catch (IOException | JsonException e) {
                 throw new IOException("Error while merging into " + file, e);
             }
@@ -620,7 +631,7 @@ public class CustomDatabase implements SearchableDatabase {
                     writer.endArray();
                     writer.name("fingerprintVersion");
                     writer.beginArray();
-                    for (int t=0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
+                    for (int t = 0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
                         writer.value(fingerprintVersion.getFingerprintTypeAt(t).name());
                     }
                     writer.endArray();
@@ -637,7 +648,7 @@ public class CustomDatabase implements SearchableDatabase {
             }
         }
 
-        public void deleteDatabase() {
+        /*public void deleteDatabase() {
             synchronized (database) {
                 if (currentPath.exists()) {
                     for (File f : currentPath.listFiles()) {
@@ -646,7 +657,7 @@ public class CustomDatabase implements SearchableDatabase {
                     currentPath.delete();
                 }
             }
-        }
+        }*/
     }
 
     @Override
