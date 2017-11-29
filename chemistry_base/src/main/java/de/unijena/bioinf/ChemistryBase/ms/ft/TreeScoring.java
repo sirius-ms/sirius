@@ -37,6 +37,9 @@ public class TreeScoring {
     private double explainedIntensityOfExplainablePeaks;
     private double ratioOfExplainedPeaks;
 
+    // legacy
+    private double isotopeMs1Score;
+
 
     public TreeScoring() {
         this.additionalScores = null;
@@ -107,6 +110,14 @@ public class TreeScoring {
 
     public void setRatioOfExplainedPeaks(double ratioOfExplainedPeaks) {
         this.ratioOfExplainedPeaks = ratioOfExplainedPeaks;
+    }
+
+    public double getIsotopeMs1Score() {
+        return isotopeMs1Score;
+    }
+
+    public void setIsotopeMs1Score(double isotopeMs1Score) {
+        this.isotopeMs1Score = isotopeMs1Score;
     }
 
     public double getRootScore() {

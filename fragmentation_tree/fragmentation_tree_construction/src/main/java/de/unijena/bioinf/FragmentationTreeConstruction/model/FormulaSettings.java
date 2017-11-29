@@ -58,10 +58,17 @@ public class FormulaSettings {
     public FormulaSettings withAdditionalConstraints(FormulaConstraints constraints) {
         return new FormulaSettings(this.constraints.getExtendedConstraints(constraints), automaticDetectionEnabled, allowIsotopeElementFiltering);
     }
+    public FormulaSettings withConstraints(FormulaConstraints constraints) {
+        return new FormulaSettings(constraints, automaticDetectionEnabled, allowIsotopeElementFiltering);
+    }
     public FormulaSettings autoDetect(Element... elems) {
         final HashSet<Element> set = (HashSet<Element>) automaticDetectionEnabled.clone();
         set.addAll(Arrays.asList(elems));
         return new FormulaSettings(constraints, set, allowIsotopeElementFiltering);
+    }
+
+    public FormulaSettings withoutAutoDetect() {
+        return new FormulaSettings(constraints, new HashSet<Element>(), allowIsotopeElementFiltering);
     }
 
     public FormulaSettings withIsotopeFormulaFiltering() {

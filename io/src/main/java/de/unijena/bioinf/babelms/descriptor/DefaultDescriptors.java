@@ -262,6 +262,8 @@ class DefaultDescriptors {
             if (document.hasKeyInDictionary(dictionary, "explainedIntensityOfExplainablePeaks")) {
                 scoring.setExplainedIntensityOfExplainablePeaks(document.getDoubleFromDictionary(dictionary, "explainedIntensityOfExplainablePeaks"));
             }
+            if (document.hasKeyInDictionary(dictionary,"isotope"))
+                scoring.setIsotopeMs1Score(document.getDoubleFromDictionary(dictionary, "isotope"));
 
 
             return scoring;
@@ -286,6 +288,7 @@ class DefaultDescriptors {
             document.addToDictionary(dictionary, "ratioOfExplainedPeaks", annotation.getRatioOfExplainedPeaks());
             document.addToDictionary(dictionary, "explainedIntensity", annotation.getExplainedIntensity());
             document.addToDictionary(dictionary, "explainedIntensityOfExplainablePeaks", annotation.getExplainedIntensityOfExplainablePeaks());
+            document.addToDictionary(dictionary, "isotope", annotation.getIsotopeMs1Score());
         }
     }
 
