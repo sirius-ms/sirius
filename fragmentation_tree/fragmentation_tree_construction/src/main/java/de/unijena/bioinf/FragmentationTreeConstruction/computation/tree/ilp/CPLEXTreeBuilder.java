@@ -4,10 +4,17 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
 
 import java.util.List;
 
-public class CPLEXTreeBuilder implements TreeBuilder{
+public class CPLEXTreeBuilder implements TreeBuilder {
+
+    public CPLEXTreeBuilder() throws IloException {
+        new IloCplex(); //this is to check if the lib is available
+    }
+
     @Override
     public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
         return null;
