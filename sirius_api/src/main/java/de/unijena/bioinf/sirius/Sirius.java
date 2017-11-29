@@ -198,7 +198,7 @@ public class Sirius {
     }
 
     public ElementPredictor getElementPrediction() {
-        if (elementPrediction==null) {
+        if (elementPrediction == null) {
             /*
             DNNElementPredictor defaultPredictor = new DNNElementPredictor();
             defaultPredictor.setThreshold(0.05);
@@ -227,13 +227,14 @@ public class Sirius {
 
     /**
      * try to guess ionization from MS1. multiple  suggestions possible. In doubt [M]+ is ignored (cannot distinguish from isotope pattern)!
+     *
      * @param experiment
      * @param candidateIonizations array of possible ionizations (lots of different adducts very likely make no sense!)
      * @return
      */
-    public PrecursorIonType[] guessIonization(Ms2Experiment experiment, PrecursorIonType[] candidateIonizations){
+    public PrecursorIonType[] guessIonization(Ms2Experiment experiment, PrecursorIonType[] candidateIonizations) {
         Spectrum<Peak> spec = experiment.getMergedMs1Spectrum();
-        if (spec==null) spec = experiment.getMs1Spectra().get(0);
+        if (spec == null) spec = experiment.getMs1Spectra().get(0);
 
         SimpleMutableSpectrum mutableSpectrum = new SimpleMutableSpectrum(spec);
         Spectrums.normalizeToMax(mutableSpectrum, 100d);
@@ -300,12 +301,12 @@ public class Sirius {
         return irs;
     }
 
-    private void addScoreThresholdOnUnconsideredCandidates(List<IdentificationResult> identificationResults, int numberOfCandidates){
+    private void addScoreThresholdOnUnconsideredCandidates(List<IdentificationResult> identificationResults, int numberOfCandidates) {
         double lowestConsideredCandidatesScore = Double.POSITIVE_INFINITY;
         int numberOfUnconsideredCandidates = numberOfCandidates - identificationResults.size();
         for (IdentificationResult identificationResult : identificationResults) {
             final double score = identificationResult.getScore();
-            if (score<lowestConsideredCandidatesScore) lowestConsideredCandidatesScore = score;
+            if (score < lowestConsideredCandidatesScore) lowestConsideredCandidatesScore = score;
         }
 
         for (IdentificationResult identificationResult : identificationResults) {
@@ -314,7 +315,8 @@ public class Sirius {
             UnregardedCandidatesUpperBound unregardedCandidatesUpperBound = new UnregardedCandidatesUpperBound(numberOfUnconsideredCandidates, lowestConsideredCandidatesScore);
 
             tree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
-            if (beautifulTree!=null) beautifulTree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
+            if (beautifulTree != null)
+                beautifulTree.addAnnotation(UnregardedCandidatesUpperBound.class, unregardedCandidatesUpperBound);
         }
     }
 

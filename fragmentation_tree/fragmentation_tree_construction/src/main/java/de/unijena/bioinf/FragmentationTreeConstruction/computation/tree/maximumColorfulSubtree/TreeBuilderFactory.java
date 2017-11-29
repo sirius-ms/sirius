@@ -5,7 +5,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
  * 28.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyLoader;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
@@ -20,23 +20,23 @@ import java.util.Arrays;
 public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
-    public final static String ILP_VERSIONS_STRING;
     public final static String CPLEX_VERSION;
+
+    public final static String ILP_VERSIONS_STRING;
 
 
     static {
-        PropertyLoader.load();
-        GLPK_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
-        GUROBI_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
-        CPLEX_VERSION = System.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
-        ILP_VERSIONS_STRING = "Compatible ILP solvers are: GLPK with version " + GLPK_VERSION + " or " + "Gurobi (with version " + GUROBI_VERSION + " or CPLEX with version " + CPLEX_VERSION + " or similar)";
+        GLPK_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
+        GUROBI_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
+        CPLEX_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
+        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION;
     }
 
     private static TreeBuilderFactory INSTANCE = null;
 
     public enum DefaultBuilder {GUROBI, /*GUROBI_JNI,*/ CPLEX, GLPK, DP}
 
-    private static DefaultBuilder[] builderPriorities = DefaultBuilder.values();
+    private static DefaultBuilder[] builderPriorities = null;
 
     private TreeBuilderFactory() {
     }
@@ -51,29 +51,52 @@ public final class TreeBuilderFactory {
         builderPriorities = builders;
     }
 
-    public static boolean setBuilderPriorities(String... builders) {
+
+    private static DefaultBuilder[] parseBuilderPriority(String builders) {
+        if (builders == null) return null;
+        String[] builderArray = builders.replaceAll("\\s", "").split(",");
+        return parseBuilderPriority(builderArray);
+    }
+
+    private static DefaultBuilder[] parseBuilderPriority(String[] builders) {
         DefaultBuilder[] b = new DefaultBuilder[builders.length];
         try {
             for (int i = 0; i < b.length; i++) {
                 b[i] = DefaultBuilder.valueOf(builders[i].toUpperCase());
             }
-            builderPriorities = b;
-            return true;
+
+            return b;
         } catch (IllegalArgumentException e) {
             LoggerFactory.getLogger(TreeBuilderFactory.class).warn("Illegal TreeBuilder name. Nothing changed!", e);
-            return false;
+            return null;
         }
     }
 
+    public static boolean setBuilderPriorities(String... builders) {
+        DefaultBuilder[] b = parseBuilderPriority(builders);
+        if (b != null) {
+            builderPriorities = b;
+            return true;
+        }
+
+        return false;
+    }
+
     public static DefaultBuilder[] getBuilderPriorities() {
-        return builderPriorities.clone();
+        if (builderPriorities != null) return builderPriorities.clone();
+        DefaultBuilder[] b = parseBuilderPriority(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder"));
+        if (b != null) return b;
+        return DefaultBuilder.values();
     }
 
     public <T extends TreeBuilder> T getTreeBuilderFromClass(String className) {
         try {
             return getTreeBuilderFromClass(((Class<T>) ClassLoader.getSystemClassLoader().loadClass(className)));
+        } catch (Exception e) {
+            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
+            return null;
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
 
@@ -83,7 +106,7 @@ public final class TreeBuilderFactory {
         try {
             return builderClass.getConstructor().newInstance();
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
@@ -109,7 +132,7 @@ public final class TreeBuilderFactory {
     }
 
     public TreeBuilder getTreeBuilder() {
-        for (DefaultBuilder builder : builderPriorities) {
+        for (DefaultBuilder builder : getBuilderPriorities()) {
             TreeBuilder b = getTreeBuilder(builder);
             if (b != null)
                 return b;
