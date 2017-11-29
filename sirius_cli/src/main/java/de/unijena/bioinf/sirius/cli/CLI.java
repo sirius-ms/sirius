@@ -33,6 +33,7 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.PossibleAdductTypes;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -142,7 +143,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                         final List<String> whitelist = formulas;
                         final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
                         if ((whiteset == null) && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                            results = sirius.identifyPrecursorAndIonization(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
+                            i.experiment.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
+                            results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
                         } else if (whiteset != null && whiteset.isEmpty()) {
                             results = new ArrayList<>();
                         } else if (whiteset == null || whiteset.size() != 1) {
