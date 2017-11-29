@@ -163,6 +163,9 @@
         "prior": {
           "$name": "SupportVectorMolecularFormulaScorer"
         }
+      },
+      {
+        "$name": "IsotopeMs1Scorer"
       }
     ],
     "isotopesInMs2": {

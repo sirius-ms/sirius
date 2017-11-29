@@ -18,13 +18,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
-import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 
 import java.util.*;
 
@@ -82,7 +80,7 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
     public ProcessedInput process(ProcessedInput input) {
         final int limit = getLimit(input.getExperimentInformation().getIonMass());
         // remove peaks without decomposition
-        {
+        /*{
             final MassToFormulaDecomposer decomposer = getCache().getDecomposer(input.getMeasurementProfile().getFormulaConstraints().getChemicalAlphabet());
             final ListIterator<ProcessedPeak> iter = input.getMergedPeaks().listIterator();
             eachPeak:
@@ -92,6 +90,7 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
                 iter.remove();
             }
         }
+        */
         final BitSet keepPeaks = new BitSet(input.getMergedPeaks().size());
         // divide spectrum in four parts
         // 2/3 - 1

@@ -18,6 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.model;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 
 import java.util.*;
 
@@ -59,7 +60,7 @@ import java.util.*;
  *
  *
  */
-public class ProcessedInput {
+public class ProcessedInput implements Cloneable {
 
     private final Ms2Experiment originalExperiment;
     private MutableMs2Experiment experiment;
@@ -76,6 +77,11 @@ public class ProcessedInput {
         this.annotations = new HashMap<Class, Object>();
         this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
+        final Iterator<Map.Entry<Class<Object>,Object>> anos = experiment.forEachAnnotation();
+        while (anos.hasNext()) {
+            final Map.Entry<Class<Object>,Object> entry = anos.next();
+            annotations.put(entry.getKey(), entry.getValue());
+        }
         this.measurementProfile = new MutableMeasurementProfile(measurementProfile);    }
 
     public ProcessedInput(MutableMs2Experiment experiment, Ms2Experiment originalExperiment, MeasurementProfile measurementProfile,
@@ -88,6 +94,29 @@ public class ProcessedInput {
         this.annotations.put(MsInstrumentation.class, experiment.getAnnotation(MsInstrumentation.class, MsInstrumentation.Unknown));
         this.peakAnnotations = new HashMap<Class, PeakAnnotation>();
         this.measurementProfile = new MutableMeasurementProfile(measurementProfile);
+    }
+
+    public ProcessedInput getRecalibratedVersion(SpectralRecalibration rec) {
+        final ProcessedInput p = clone();
+        // at this point we do not copy the MS experiment data. HOWEVER; this is somewhat dangerous as
+        // it might introduce side effects. I just hope that nobody access this object at this stage of computation
+        p.mergedPeaks = new ArrayList<>(mergedPeaks.size());
+        p.peakAnnotations = (HashMap<Class, PeakAnnotation>) peakAnnotations.clone();
+        p.annotations = (HashMap<Class, Object>) annotations.clone();
+        for (ProcessedPeak peak : mergedPeaks) {
+            p.mergedPeaks.add(peak.recalibrate(rec));
+        }
+        p.addAnnotation(SpectralRecalibration.class, rec);
+        return p;
+    }
+
+    @Override
+    protected ProcessedInput clone() {
+        try {
+            return (ProcessedInput) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public MutableMeasurementProfile getMeasurementProfile() {
