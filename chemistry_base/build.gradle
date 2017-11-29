@@ -6,6 +6,7 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
     compile group: 'org.slf4j', name: 'slf4j-api', version:"$slf4j_version"
     compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+    testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
 }
 
 sourceSets.main.resources {

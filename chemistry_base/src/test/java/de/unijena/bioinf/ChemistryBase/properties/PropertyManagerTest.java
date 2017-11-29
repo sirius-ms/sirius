@@ -8,7 +8,6 @@ public class PropertyManagerTest {
 
     @Test
     public void testManager() {
-        PropertyManager.init();
         assertEquals("SUCCESSFUL",
                 PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.test"));
     }
