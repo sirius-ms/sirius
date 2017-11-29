@@ -183,7 +183,7 @@ public class IdentificationResult implements Cloneable {
 
     public double getTreeScore() {
         final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
-        return treeScore.getOverallScore() - treeScore.getAdditionalScore(Sirius.ISOTOPE_SCORE);
+        return treeScore.getOverallScore() - treeScore.getIsotopeMs1Score();
     }
 
     public void writeTreeToFile(File target) throws IOException {
@@ -219,7 +219,7 @@ public class IdentificationResult implements Cloneable {
 
     public double getIsotopeScore() {
         final TreeScoring treeScore = tree.getAnnotationOrThrow(TreeScoring.class);
-        return treeScore.getAdditionalScore(Sirius.ISOTOPE_SCORE);
+        return treeScore.getIsotopeMs1Score();
     }
 
     public IdentificationResult clone() {
@@ -250,5 +250,8 @@ public class IdentificationResult implements Cloneable {
         return annotations.put(klass, annotation) == annotation;
     }
 
+    public String toString() {
+        return formula + " with score " + getScore() + " at rank " + rank;
+    }
 
 }

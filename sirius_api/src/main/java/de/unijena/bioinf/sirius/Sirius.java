@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.scoring.SupportVectorMolecularFormulaScorer;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
@@ -63,12 +64,30 @@ public class Sirius {
     protected boolean autoIonMode;
     protected JobManager jobManager;
 
+
+    public static void main(String[] args) {
+        final Sirius sirius = new Sirius();
+
+        try {
+            Ms2Experiment experiment = sirius.parseExperiment(new File("/home/kaidu/data/ms/demo-data/ms/bicculine_ms1only.ms")).next();
+
+            System.out.println(sirius.identify(experiment).getRawJSONTree());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
     //public final static String ISOTOPE_SCORE = "isotope";
 
     public Sirius(String profileName) throws IOException {
         profile = new Profile(profileName);
         loadMeasurementProfile();
         this.progress = new Progress.Quiet();
+        this.jobManager = SiriusJobs.getGlobalJobManager();
     }
 
     public Sirius() {
@@ -76,6 +95,7 @@ public class Sirius {
             profile = new Profile("default");
             loadMeasurementProfile();
             this.progress = new Progress.Quiet();
+            this.jobManager = SiriusJobs.getGlobalJobManager();
         } catch (IOException e) { // should be in classpath
             throw new RuntimeException(e);
         }
@@ -274,6 +294,14 @@ public class Sirius {
         }
         return irs;
     }
+
+    @Deprecated
+    public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, IsotopePatternHandling iso) {
+        final MutableMs2Experiment exp = new MutableMs2Experiment(uexperiment);
+        exp.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.defaultFor(uexperiment.getPrecursorIonType().getCharge()));
+        return identify(exp, numberOfCandidates, true, iso);
+    }
+
     /**
      * Identify the molecular formula of the measured compound by combining an isotope pattern analysis on MS data with a fragmentation pattern analysis on MS/MS data
      *
@@ -289,7 +317,7 @@ public class Sirius {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
+        if (whiteList!=null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
@@ -372,7 +400,7 @@ public class Sirius {
     public IdentificationResult compute(Ms2Experiment experiment, MolecularFormula formula, boolean recalibrating) {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), experiment, 1);
         final ProcessedInput pinput = instance.validateInput();
-        pinput.setAnnotation(Whiteset.class, new Whiteset(new HashSet<MolecularFormula>(Arrays.asList(formula))));
+        pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         return new IdentificationResult(instance.takeResult().getResults().get(0), 1);
 
@@ -799,9 +827,12 @@ public class Sirius {
         // step 3: apply filtering and/or scoring
         if (maxScore >= MINIMAL_SCORE_FOR_APPLY_FILTER) {
             if (handling.isFiltering()) {
-                final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
+                //final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
+                final Iterator<Decomposition> iter = decompositions.getDecompositions().iterator();
                 while (iter.hasNext()) {
-                    if (iter.next().getValue().getScore() < ((isoPeaks*ISOTOPE_SCORE_FILTER_THRESHOLD))) {
+                    final Decomposition d = iter.next();
+                    final IsotopePattern p = pattern.getExplanations().get(d.getCandidate());
+                    if (p.getScore() < ((isoPeaks*ISOTOPE_SCORE_FILTER_THRESHOLD))) {
                         iter.remove();
                     }
                 }
@@ -812,6 +843,7 @@ public class Sirius {
             final Map.Entry<MolecularFormula, IsotopePattern> val = iter.next();
             val.setValue(val.getValue().withScore(handling.isScoring() ? Math.max(val.getValue().getScore(),0d) : 0d));
         }
+
         return true;
     }
 

@@ -1094,7 +1094,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @param tree
      */
     protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
-        tree.addAnnotation(ProcessedInput.class, originalGraph.getAnnotationOrNull(ProcessedInput.class));
+        final ProcessedInput pinput = originalGraph.getAnnotationOrNull(ProcessedInput.class);
+        tree.addAnnotation(ProcessedInput.class, pinput);
         PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
         if (ionType.isIonizationUnknown()) {
             // use ionization instead
@@ -1108,7 +1109,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         // tree annotations
         tree.addAnnotation(PrecursorIonType.class, ionType);
         final TreeScoring treeScoring = new TreeScoring();
-        treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight());
 
         // calculate overall score
         double overallScore = 0d;
@@ -1117,20 +1117,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
 
-        // check for MS1 isotope scores
-        treeScoring.setIsotopeMs1Score(0d);
-        final FragmentAnnotation<ExtractedIsotopePattern> pattern = tree.getFragmentAnnotationOrNull(ExtractedIsotopePattern.class);
-        if (pattern!=null) {
-            for (Fragment f : tree) {
-                final ExtractedIsotopePattern p = pattern.get(f);
-                final IsotopePattern iso = p!=null ? p.getExplanations().get(f.getFormula()) : null;
-                if (iso!=null) treeScoring.setIsotopeMs1Score(treeScoring.getIsotopeMs1Score() + iso.getScore());
-            }
-        }
-
         tree.addAnnotation(TreeScoring.class, treeScoring);
 
-        final FragmentAnnotation<Ms2IsotopePattern> msIsoAno;
+        final FragmentAnnotation<Ms2IsotopePattern> msIsoAno = tree.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
 
         // fragment annotations
         final FragmentAnnotation<AnnotatedPeak> peakAnnotation = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
@@ -1149,9 +1138,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
 
         // remove pseudo nodes
+
         if (originalGraph.getFragmentAnnotationOrNull(IsotopicMarker.class)!=null) {
             final FragmentAnnotation<IsotopicMarker> marker = tree.getOrCreateFragmentAnnotation(IsotopicMarker.class);
-            msIsoAno = tree.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
             final FragmentAnnotation<Ms2IsotopePattern> msIsoAnoG = originalGraph.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
             final ArrayList<Fragment> subtreesToDelete = new ArrayList<Fragment>();
             for (Fragment f : tree) {
@@ -1182,22 +1171,39 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 }
             }
             for (Fragment f : subtreesToDelete) tree.deleteSubtree(f);
-        } else msIsoAno = null;
+        }
+
+
 
         final FragmentAnnotation<ProcessedPeak> graphPeakAno = originalGraph.getFragmentAnnotationOrThrow(ProcessedPeak.class);
-        final FragmentAnnotation<IsotopePattern> isoPatG = originalGraph.getFragmentAnnotationOrNull(IsotopePattern.class);
-        FragmentAnnotation<IsotopePattern> isoPat = isoPatG==null ? null : tree.getOrCreateFragmentAnnotation(IsotopePattern.class);
+        // check for MS1 isotope scores
+        treeScoring.setIsotopeMs1Score(0d);
         for (Fragment treeFragment : tree) {
             final Fragment graphFragment = formula2graphFragment.get(treeFragment.getFormula());
             final ProcessedPeak graphPeak = graphPeakAno.get(graphFragment);
             peakAno.set(treeFragment, graphPeak);
             simplePeakAnnotation.set(treeFragment, graphPeak);
             peakAnnotation.set(treeFragment, graphPeak.toAnnotatedPeak(treeFragment.getFormula(), ionType));
-            if (isoPat!=null && isoPatG.get(graphFragment)!=null) {
-                isoPat.set(treeFragment, isoPatG.get(graphFragment));
-            }
-
         }
+
+        // add isotopes
+        ExtractedIsotopePattern extr = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
+        double rootIso = 0d;
+        if (extr!=null) {
+            for (Fragment f : tree) {
+                final IsotopePattern p = extr.getExplanations().get(f.getFormula());
+                if (p!=null) {
+                    msIsoAno.set(f, new Ms2IsotopePattern(Spectrums.extractPeakList(p.getPattern()).toArray(new Peak[0]), p.getScore()));
+                    treeScoring.setIsotopeMs1Score(treeScoring.getIsotopeMs1Score() + p.getScore());
+                    if (f.isRoot()) {
+                        rootIso = p.getScore();
+                        tree.setAnnotation(IsotopePattern.class, p);
+                    }
+                }
+            }
+        }
+
+        treeScoring.setRootScore(originalGraph.getLoss(originalGraph.getRoot(), tree.getRoot().getFormula()).getWeight() - rootIso);
 
         // add statistics
         treeScoring.setExplainedIntensity(getIntensityRatioOfExplainedPeaks(tree));
