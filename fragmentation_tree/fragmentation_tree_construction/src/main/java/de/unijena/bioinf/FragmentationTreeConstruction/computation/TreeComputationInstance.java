@@ -11,10 +11,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.SinglethreadedTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Decomposition;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.DecompositionList;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.Whiteset;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -274,44 +271,46 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             CHECK_FOR_TREESIZE = false;
         }
         // now recalibrate trees
-        int k=0;
-        double maxRecalibrationBonus = Double.POSITIVE_INFINITY;
-        final ListIterator<ExactResult> riter = exactResults.listIterator();
-        while (riter.hasNext()) {
-            ExactResult r = riter.next();
-            if (k > numberOfResultsToKeep) {
-                riter.remove();
-                continue;
+        if (pinput.getAnnotation(ForbidRecalibration.class,ForbidRecalibration.ALLOWED).isAllowed()) {
+            int k=0;
+            double maxRecalibrationBonus = Double.POSITIVE_INFINITY;
+            final ListIterator<ExactResult> riter = exactResults.listIterator();
+            while (riter.hasNext()) {
+                ExactResult r = riter.next();
+                if (k > numberOfResultsToKeep) {
+                    riter.remove();
+                    continue;
+                }
+                FGraph graph;
+                if (r.graph==null) {
+                    graph = analyzer.buildGraph(pinput,r.decomposition);
+                } else graph = r.graph;
+                if (r.tree.getAnnotationOrNull(ProcessedInput.class)==null)
+                    analyzer.addTreeAnnotations(graph,r.tree);
+                final FTree tree = r.tree;
+                ExactResult recalibratedResult = recalibrate(pinput, tree);
+                final FTree recalibrated;
+                final double recalibrationBonus = recalibratedResult.tree.getTreeWeight() - tree.getTreeWeight();
+                double recalibrationPenalty = 0d;
+                if (recalibrationBonus<=0) {
+                    recalibrated = tree;
+                } else {
+                    graph = recalibratedResult.graph;
+                    recalibrated = recalibratedResult.tree;
+                }
+                if (k <= 10) {
+                    maxRecalibrationBonus = Math.min(recalibrated.getTreeWeight(), maxRecalibrationBonus);
+                } else {
+                    recalibrationPenalty = Math.min(recalibrationBonus, Math.max(0, recalibrated.getTreeWeight() - maxRecalibrationBonus));
+                }
+                final TreeScoring sc = recalibrated.getAnnotationOrThrow(TreeScoring.class);
+                sc.setRecalibrationBonus(recalibrationBonus);
+                sc.setRecalibrationPenalty(recalibrationPenalty);
+                sc.setOverallScore(sc.getOverallScore() - sc.getRecalibrationPenalty());
+                recalibrated.setTreeWeight(recalibrated.getTreeWeight()-recalibrationPenalty);
+                riter.set(new ExactResult(r.decomposition, null, recalibrated, recalibrated.getTreeWeight()));
+                ++k;
             }
-            FGraph graph;
-            if (r.graph==null) {
-                graph = analyzer.buildGraph(pinput,r.decomposition);
-            } else graph = r.graph;
-            if (r.tree.getAnnotationOrNull(ProcessedInput.class)==null)
-                analyzer.addTreeAnnotations(graph,r.tree);
-            final FTree tree = r.tree;
-            ExactResult recalibratedResult = recalibrate(pinput, tree);
-            final FTree recalibrated;
-            final double recalibrationBonus = recalibratedResult.tree.getTreeWeight() - tree.getTreeWeight();
-            double recalibrationPenalty = 0d;
-            if (recalibrationBonus<=0) {
-                recalibrated = tree;
-            } else {
-                graph = recalibratedResult.graph;
-                recalibrated = recalibratedResult.tree;
-            }
-            if (k <= 10) {
-                maxRecalibrationBonus = Math.min(recalibrated.getTreeWeight(), maxRecalibrationBonus);
-            } else {
-                recalibrationPenalty = Math.min(recalibrationBonus, Math.max(0, recalibrated.getTreeWeight() - maxRecalibrationBonus));
-            }
-            final TreeScoring sc = recalibrated.getAnnotationOrThrow(TreeScoring.class);
-            sc.setRecalibrationBonus(recalibrationBonus);
-            sc.setRecalibrationPenalty(recalibrationPenalty);
-            sc.setOverallScore(sc.getOverallScore() - sc.getRecalibrationPenalty());
-            recalibrated.setTreeWeight(recalibrated.getTreeWeight()-recalibrationPenalty);
-            riter.set(new ExactResult(r.decomposition, null, recalibrated, recalibrated.getTreeWeight()));
-            ++k;
         }
         Collections.sort(exactResults, Collections.reverseOrder());
         final int nl = Math.min(numberOfResultsToKeep,exactResults.size());
