@@ -52,8 +52,8 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
         if (input.getMs2Spectra() == null)
             throw new InvalidException("Missing MS2 spectra");
         removeEmptySpectra(warn, input);
-        if (input.getMs2Spectra().isEmpty())
-            throw new InvalidException("Missing MS2 spectra");
+        if (input.getMs2Spectra().isEmpty() && input.getMs1Spectra().isEmpty() && input.getMergedMs1Spectrum()==null)
+            throw new InvalidException("Missing MS2 and MS1 spectra");
         if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<SimpleSpectrum>());
 
         checkIonization(warn, repair, input);
