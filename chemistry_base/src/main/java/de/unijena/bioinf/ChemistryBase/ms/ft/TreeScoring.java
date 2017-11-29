@@ -116,6 +116,10 @@ public class TreeScoring {
         return isotopeMs1Score;
     }
 
+    public double getTreeScore() {
+        return overallScore - rootScore - isotopeMs1Score;
+    }
+
     public void setIsotopeMs1Score(double isotopeMs1Score) {
         this.isotopeMs1Score = isotopeMs1Score;
     }
