@@ -1047,7 +1047,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound) {
-        return computeTree(graph, lowerbound, recalibrationMethod != null);
+        return computeTree(graph, lowerbound, recalibrationMethod != null && graph.getAnnotation(ForbidRecalibration.class,ForbidRecalibration.ALLOWED).isAllowed());
     }
 
 
@@ -1116,6 +1116,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             overallScore += l.getWeight();
         }
         treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
+
+        // check for MS1 isotope scores
+        treeScoring.setIsotopeMs1Score(0d);
+        final FragmentAnnotation<ExtractedIsotopePattern> pattern = tree.getFragmentAnnotationOrNull(ExtractedIsotopePattern.class);
+        if (pattern!=null) {
+            for (Fragment f : tree) {
+                final ExtractedIsotopePattern p = pattern.get(f);
+                final IsotopePattern iso = p!=null ? p.getExplanations().get(f.getFormula()) : null;
+                if (iso!=null) treeScoring.setIsotopeMs1Score(treeScoring.getIsotopeMs1Score() + iso.getScore());
+            }
+        }
 
         tree.addAnnotation(TreeScoring.class, treeScoring);
 
