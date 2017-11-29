@@ -18,20 +18,21 @@
 package de.unijena.bioinf.sirius.cli;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 import java.io.File;
 
 public class Instance {
 
-    final Ms2Experiment experiment;
+    final MutableMs2Experiment experiment;
     final File file;
     boolean isMultipleInstancesPerFile;
 
     FTree optTree;
 
     public Instance(Ms2Experiment experiment, File file) {
-        this.experiment = experiment;
+        this.experiment = new MutableMs2Experiment(experiment);
         this.file = file;
     }
 

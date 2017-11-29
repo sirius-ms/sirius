@@ -270,13 +270,13 @@ public class BackgroundComputation extends AbstractBean {
                     if (hasMS2){
                         if (experiment.getPrecursorIonType().isIonizationUnknown()) {
                             results = sirius.identifyPrecursorAndIonization(experiment,
-                                    container.numberOfCandidates, true, IsotopePatternHandling.score);
+                                    container.numberOfCandidates, IsotopePatternHandling.score);
                         } else {
                             results = sirius.identify(experiment,
                                     container.numberOfCandidates, true, IsotopePatternHandling.score);
                         }
                     } else {
-                        results = sirius.identifyByIsotopePattern(experiment, container.numberOfCandidates);
+                        results = sirius.identify(experiment, container.numberOfCandidates);
                     }
 
                 } else {
@@ -328,7 +328,7 @@ public class BackgroundComputation extends AbstractBean {
                     }
                     results = hasMS2 ? sirius.identify(experiment,
                             container.numberOfCandidates, true, IsotopePatternHandling.score, formulas) :
-                            sirius.identifyByIsotopePattern(experiment, container.numberOfCandidates, formulas);
+                            sirius.identify(experiment, container.numberOfCandidates, true, IsotopePatternHandling.both, formulas);
                     for (IdentificationResult ir : results)
                         sirius.beautifyTree(ir, experiment, true);
                 }
