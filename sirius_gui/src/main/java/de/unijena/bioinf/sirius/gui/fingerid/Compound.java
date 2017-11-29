@@ -19,19 +19,16 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.sirius.gui.db.CustomDataSourceService;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import net.sf.jniinchi.INCHI_RET;
-import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -42,8 +39,6 @@ import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
 import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.CDKHydrogenAdder;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,14 +61,14 @@ public class Compound {
     private static Logger logger = LoggerFactory.getLogger(Compound.class);
 
     protected static Compound getPrototypeCompound() {
-        if (PrototypeCompound!=null) return PrototypeCompound;
+        if (PrototypeCompound != null) return PrototypeCompound;
         PrototypeCompound = new Compound();
         PrototypeCompound.inchi = new InChI("WQZGKKKJIJFFOK-GASJEMHNSA-N", "InChI=1S/C6H12O6/c7-1-2-3(8)4(9)5(10)6(11)12-2/h2-11H,1H2/t2-,3-,4+,5-,6?/m1/s1");
         PrototypeCompound.smiles = new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O");
         PrototypeCompound.name = "Glucose";
         PrototypeCompound.pubchemIds = new int[]{5793};
         PrototypeCompound.fingerprint = new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[]{
-            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,34,35,38,80,120
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 34, 35, 38, 80, 120
         });
         return PrototypeCompound;
     }
@@ -99,9 +94,8 @@ public class Compound {
         this.bitset = candidate.getBitset();
         this.fingerprint = candidate.getFingerprint();
         final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(candidate.getBitset());
-        names.remove(DatasourceService.Sources.PUBCHEM.name);
         this.databases = ArrayListMultimap.create(names.size(), 1);
-        for (String aname : names) this.databases.put(aname,null);
+        for (String aname : names) this.databases.put(aname, null);
         this.pLayer = candidate.getpLayer();
         this.qLayer = candidate.getqLayer();
         this.xlogP = candidate.getXlogp();
@@ -127,11 +121,11 @@ public class Compound {
         final FingerprintCandidate fc = new FingerprintCandidate(inchi, fingerprint);
         fc.setBitset(bitset);
         final ArrayList<DBLink> links = new ArrayList<>();
-        if (pubchemIds!=null)
+        if (pubchemIds != null)
             for (int i : pubchemIds)
                 links.add(new DBLink(DatasourceService.Sources.PUBCHEM.name(), String.valueOf(i)));
-        if (databases!=null) {
-            for (Map.Entry<String,String> entry : databases.entries()) {
+        if (databases != null) {
+            for (Map.Entry<String, String> entry : databases.entries()) {
                 links.add(new DBLink(entry.getKey(), entry.getValue()));
             }
         }
@@ -145,11 +139,11 @@ public class Compound {
     }
 
 
-
     public static List<Compound> parseCompounds(MaskedFingerprintVersion version, List<Compound> compounds, JsonParser parser) {
-        if (parser.next()!= JsonParser.Event.START_OBJECT) throw new JsonException("Expect json object");
-        if (!findTopLevelKey(parser, "compounds")) throw new JsonException("Do not find any compounds for given molecular formula");
-        if (parser.next()!=JsonParser.Event.START_ARRAY) throw new JsonException("Expect array of compounds");
+        if (parser.next() != JsonParser.Event.START_OBJECT) throw new JsonException("Expect json object");
+        if (!findTopLevelKey(parser, "compounds"))
+            throw new JsonException("Do not find any compounds for given molecular formula");
+        if (parser.next() != JsonParser.Event.START_ARRAY) throw new JsonException("Expect array of compounds");
         outer:
         while (parser.hasNext()) {
             final JsonParser.Event event = parser.next();
@@ -172,13 +166,14 @@ public class Compound {
             switch (event) {
                 case START_ARRAY:
                 case START_OBJECT:
-                    ++intendation; break;
+                    ++intendation;
+                    break;
                 case END_ARRAY:
                 case END_OBJECT:
                     if (--intendation < 0) return false;
                     break;
                 case KEY_NAME:
-                    if (intendation==0 && parser.getString().equals(keyname)) return true;
+                    if (intendation == 0 && parser.getString().equals(keyname)) return true;
             }
         }
     }
@@ -186,8 +181,9 @@ public class Compound {
     public static Compound parseFromJSON(JsonParser parser, MaskedFingerprintVersion version) {
         final Compound compound = new Compound();
         String inchi = null, inchikey = null;
-        long flags=0;
-        int pLayer=0; int qLayer=0;
+        long flags = 0;
+        int pLayer = 0;
+        int qLayer = 0;
         double xlogp = Double.NaN;
         while (true) {
             final JsonParser.Event event = parser.next();
@@ -196,29 +192,39 @@ public class Compound {
                     final String name = parser.getString();
                     switch (name) {
                         case "inchi":
-                            inchi = expectString(parser); break;
+                            inchi = expectString(parser);
+                            break;
                         case "inchikey":
-                            inchikey = expectString(parser); break;
+                            inchikey = expectString(parser);
+                            break;
                         case "name":
-                            compound.name = expectString(parser); break;
+                            compound.name = expectString(parser);
+                            break;
                         case "smiles":
-                            compound.smiles = new Smiles(expectString(parser)); break;
+                            compound.smiles = new Smiles(expectString(parser));
+                            break;
                         case "fingerprint":
                             expectArray(parser);
                             final TShortArrayList values = new TShortArrayList(100);
-                            while (consumeShorts(parser, values)) {}
-                            compound.fingerprint = version==null ? new ArrayFingerprint(CdkFingerprintVersion.getDefault(), values.toArray()) : version.mask(values.toArray());
+                            while (consumeShorts(parser, values)) {
+                            }
+                            compound.fingerprint = version == null ? new ArrayFingerprint(CdkFingerprintVersion.getDefault(), values.toArray()) : version.mask(values.toArray());
                             break;
                         case "bitset":
-                            flags = expectLong(parser); break;
+                            flags = expectLong(parser);
+                            break;
                         case "links":
-                            parseLinks(compound, parser); break;
+                            parseLinks(compound, parser);
+                            break;
                         case "pLayer":
-                            pLayer = expectInt(parser); break;
+                            pLayer = expectInt(parser);
+                            break;
                         case "qLayer":
-                            qLayer = expectInt(parser); break;
+                            qLayer = expectInt(parser);
+                            break;
                         case "xlogp":
-                            xlogp = expectDouble(parser); break;
+                            xlogp = expectDouble(parser);
+                            break;
                     }
                     break;
                 case END_OBJECT:
@@ -226,16 +232,16 @@ public class Compound {
                     // add databases without links
                     compound.bitset = flags;
                     final Set<String> names = DatasourceService.getDataSourcesFromBitFlags(flags);
-                    names.remove(DatasourceService.Sources.PUBCHEM.name);
-                    names.remove(DatasourceService.Sources.CUSTOM.name);
-                    if (compound.databases!=null) {
+                    if (compound.databases != null) {
                         for (String aname : names) {
                             if (!compound.databases.containsKey(aname))
-                                compound.databases.put(aname, null);
+                                compound.addDatabase(aname, null);
+//                                compound.databases.put(aname, null);
                         }
                     } else {
                         compound.databases = ArrayListMultimap.create(names.size(), 1);
-                        for (String aname : names) compound.databases.put(aname,null);
+                        for (String aname : names)
+                            compound.addDatabase(aname, null);//compound.databases.put(aname, null);
                     }
                     compound.pLayer = pLayer;
                     compound.qLayer = qLayer;
@@ -247,31 +253,37 @@ public class Compound {
 
     private static void expectArray(JsonParser parser) {
         final JsonParser.Event event = parser.next();
-        if (event != JsonParser.Event.START_ARRAY) throw new JsonException("expected array value but '" + event.name() + "' is given." );
+        if (event != JsonParser.Event.START_ARRAY)
+            throw new JsonException("expected array value but '" + event.name() + "' is given.");
     }
+
     private static boolean consumeShorts(JsonParser parser, TShortArrayList values) {
         final JsonParser.Event event = parser.next();
         if (event == JsonParser.Event.END_ARRAY) return false;
-        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
-        values.add((short)parser.getInt());
+        if (event != JsonParser.Event.VALUE_NUMBER)
+            throw new JsonException("expected number value but '" + event.name() + "' is given.");
+        values.add((short) parser.getInt());
         return true;
     }
 
     private static int expectInt(JsonParser parser) {
         final JsonParser.Event event = parser.next();
-        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        if (event != JsonParser.Event.VALUE_NUMBER)
+            throw new JsonException("expected number value but '" + event.name() + "' is given.");
         return parser.getInt();
     }
 
     private static long expectLong(JsonParser parser) {
         final JsonParser.Event event = parser.next();
-        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        if (event != JsonParser.Event.VALUE_NUMBER)
+            throw new JsonException("expected number value but '" + event.name() + "' is given.");
         return parser.getLong();
     }
 
     private static double expectDouble(JsonParser parser) {
         final JsonParser.Event event = parser.next();
-        if (event != JsonParser.Event.VALUE_NUMBER) throw new JsonException("expected number value but '" + event.name() + "' is given." );
+        if (event != JsonParser.Event.VALUE_NUMBER)
+            throw new JsonException("expected number value but '" + event.name() + "' is given.");
         return parser.getBigDecimal().doubleValue();
     }
 
@@ -283,9 +295,10 @@ public class Compound {
             switch (event) {
                 case KEY_NAME:
                     final String dbname = parser.getString();
-                    final boolean pubchem = dbname.equals("PubChem");
-                    if (!pubchem && compound.databases==null) compound.databases = ArrayListMultimap.create(5, 1);
-                    if (parser.next() != JsonParser.Event.START_ARRAY) throw new JsonException("expected start of array");
+                    final boolean pubchem = dbname.equals(DatasourceService.Sources.PUBCHEM.name);
+                    if (compound.databases == null) compound.databases = ArrayListMultimap.create(5, 1);
+                    if (parser.next() != JsonParser.Event.START_ARRAY)
+                        throw new JsonException("expected start of array");
 
                     while (true) {
                         final JsonParser.Event anevent = parser.next();
@@ -295,9 +308,8 @@ public class Compound {
                             final String id = parser.getString();
                             if (pubchem) {
                                 pubchemIds.add(Integer.parseInt(id));
-                            } else {
-                                compound.databases.put(dbname, id);
                             }
+                            compound.databases.put(dbname, id);
                         }
                     }
                     break;
@@ -310,12 +322,13 @@ public class Compound {
 
     private static String expectString(JsonParser parser) {
         final JsonParser.Event event = parser.next();
-        if (event != JsonParser.Event.VALUE_STRING) throw new JsonException("expected string value but '" + event.name() + "' is given." );
+        if (event != JsonParser.Event.VALUE_STRING)
+            throw new JsonException("expected string value but '" + event.name() + "' is given.");
         return parser.getString();
     }
 
     public IAtomContainer getMolecule() {
-        if (molecule==null) molecule = parseMoleculeFromInChi();
+        if (molecule == null) molecule = parseMoleculeFromInChi();
         return molecule;
     }
 
@@ -332,31 +345,31 @@ public class Compound {
             }
             // calculate xlogP
         } catch (CDKException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             return parseMoleculeFromSmiles();
         }
     }
 
     public void calculateXlogP() {
-        if (Double.isNaN(xlogP)){
+        if (Double.isNaN(xlogP)) {
             try {
                 XLogPDescriptor logPDescriptor = new XLogPDescriptor();
-                logPDescriptor.setParameters(new Object[]{true,true});
-                this.xlogP = ((DoubleResult)logPDescriptor.calculate(getMolecule()).getValue()).doubleValue();
+                logPDescriptor.setParameters(new Object[]{true, true});
+                this.xlogP = ((DoubleResult) logPDescriptor.calculate(getMolecule()).getValue()).doubleValue();
             } catch (CDKException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
     }
 
     public void generateInchiIfNull() {
         try {
-            if (inchi==null) {
+            if (inchi == null) {
                 final InChIGenerator gen = InChIGeneratorFactory.getInstance().getInChIGenerator(getMolecule());
                 this.inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             }
         } catch (CDKException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
     }
 
@@ -367,19 +380,20 @@ public class Compound {
             throw new RuntimeException(e.getMessage());
         }
     }
+
     public static boolean[] stringToBoolean(String fingerprint, int[] fingerprintIndizes) {
         final boolean[] values = new boolean[fingerprintIndizes.length];
-        for (int k=0; k < fingerprintIndizes.length; ++k)
-            if (fingerprint.charAt(fingerprintIndizes[k])=='1')
+        for (int k = 0; k < fingerprintIndizes.length; ++k)
+            if (fingerprint.charAt(fingerprintIndizes[k]) == '1')
                 values[k] = true;
         return values;
     }
 
     public static void merge(List<FingerprintCandidate> candidates, File file) throws IOException {
         MaskedFingerprintVersion mv = null;
-        if (candidates.size()>0) {
+        if (candidates.size() > 0) {
             FingerprintVersion v = candidates.get(0).getFingerprint().getFingerprintVersion();
-            if (v instanceof MaskedFingerprintVersion) mv = (MaskedFingerprintVersion)v;
+            if (v instanceof MaskedFingerprintVersion) mv = (MaskedFingerprintVersion) v;
             else {
                 mv = MaskedFingerprintVersion.buildMaskFor(v).enableAll().toMask();
             }
@@ -389,11 +403,12 @@ public class Compound {
 
     /**
      * merges a given list of fingerprint candidates into the given file. Ignore duplicates
+     *
      * @return number of newly added candidates
      */
     public static int merge(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
-        int sizeDiff=0;
-        final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion)version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
+        int sizeDiff = 0;
+        final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
         final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
         for (FingerprintCandidate fc : candidates) compoundPerInchiKey.put(fc.getInchiKey2D(), fc);
         sizeDiff = compoundPerInchiKey.size();
@@ -441,7 +456,7 @@ public class Compound {
         return fingerprint;
     }
 
-    public void mergeMetaData(Compound meta) {
+    /*public void mergeMetaData(Compound meta) {
         if (name==null) name = meta.name;
         if (smiles==null) smiles = meta.smiles;
         if (inchi==null) inchi = meta.inchi;
@@ -459,37 +474,43 @@ public class Compound {
             databases.putAll(meta.databases);
             databases = ArrayListMultimap.create(databases);
         }
-    }
+    }*/
 
     public void addDatabase(String name, String id) {
+        CustomDataSourceService.Source c = CustomDataSourceService.getSourceFromName(name);
+        if (c == null) {
+            System.out.println("SCHOULD NOT BE ADDED");
+        }
+        long bit = c.flag();
         databases.put(name, id);
+        bitset |= bit;
     }
 
 
-    public boolean canBeNeutralCharged(){
+    public boolean canBeNeutralCharged() {
         return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
     }
 
-    public boolean canBePositivelyCharged(){
+    public boolean canBePositivelyCharged() {
         return hasChargeState(CompoundCandidateChargeState.POSITIVE_CHARGE);
     }
 
-    public boolean canBeNegativelyCharged(){
+    public boolean canBeNegativelyCharged() {
         return hasChargeState(CompoundCandidateChargeState.NEGATIVE_CHARGE);
     }
 
-    public boolean hasChargeState(CompoundCandidateChargeState chargeState){
+    public boolean hasChargeState(CompoundCandidateChargeState chargeState) {
         return (hasChargeState(pLayer, chargeState.getValue()) || hasChargeState(qLayer, chargeState.getValue()));
     }
 
-    public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState){
-        return (chargeLayer==CompoundCandidateChargeLayer.P_LAYER ?
+    public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState) {
+        return (chargeLayer == CompoundCandidateChargeLayer.P_LAYER ?
                 hasChargeState(pLayer, chargeState.getValue()) :
                 hasChargeState(qLayer, chargeState.getValue())
         );
     }
 
-    private boolean hasChargeState(int chargeLayer, int chargeState){
+    private boolean hasChargeState(int chargeLayer, int chargeState) {
         return ((chargeLayer & chargeState) == chargeState);
     }
 

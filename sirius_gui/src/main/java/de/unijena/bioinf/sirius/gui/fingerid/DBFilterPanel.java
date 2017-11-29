@@ -1,7 +1,8 @@
 package de.unijena.bioinf.sirius.gui.fingerid;
 
-import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.sirius.gui.db.CustomDataSourceService;
 import de.unijena.bioinf.sirius.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.sirius.gui.utils.WrapLayout;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -9,51 +10,23 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<CompoundCandidate, Set<FingerIdData>> {
+public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<CompoundCandidate, Set<FingerIdData>>, CustomDataSourceService.DataSourceChangeListener {
     private final List<FilterChangeListener> listeners = new LinkedList<>();
 
-    protected DatasourceService.Sources[] sources;
-    protected JCheckBox[] checkboxes;
-
-    private boolean isRefreshing = false;
-    private EnumSet<DatasourceService.Sources> dbs = EnumSet.of(DatasourceService.Sources.PUBCHEM);
+    protected long bitSet;
+    protected List<JCheckBox> checkboxes;
+    private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
     public DBFilterPanel(CandidateList sourceList) {
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
-
-        final DatasourceService.Sources[] names = DatasourceService.Sources.values();
-        Arrays.sort(names, new Comparator<DatasourceService.Sources>() {
-            @Override
-            public int compare(DatasourceService.Sources o1, DatasourceService.Sources o2) {
-                return o1.name.toLowerCase().compareTo(o2.name.toLowerCase());
-            }
-        });
-
-        this.sources = names;
-        this.checkboxes = new JCheckBox[names.length];
-
-        for (int k = 0; k < sources.length; ++k) {
-            final JCheckBox box = new JCheckBox(sources[k].name);
-            final DatasourceService.Sources source = sources[k];
-            checkboxes[k] = box;
-            add(box);
-            if (source == DatasourceService.Sources.PUBCHEM) box.setSelected(true);
-
-            box.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    if (!isRefreshing) {
-                        if (box.isSelected())
-                            dbs.add(source);
-                        else
-                            dbs.remove(source);
-                        fireFilterChangeEvent();
-                    }
-                }
-            });
+        setLayout(new WrapLayout(FlowLayout.LEFT, 5, 1));
+        this.checkboxes = new ArrayList<>(CustomDataSourceService.size());
+        for (CustomDataSourceService.Source source : CustomDataSourceService.sources()) {
+            checkboxes.add(new JCheckBox(source.name()));
         }
-
+        addBoxes();
+        CustomDataSourceService.addListener(this);
         sourceList.addActiveResultChangedListener(this);
     }
 
@@ -63,21 +36,48 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     public void fireFilterChangeEvent() {
         for (FilterChangeListener listener : listeners) {
-            listener.fireFilterChanged(dbs);
+            listener.fireFilterChanged(bitSet);
         }
     }
 
-    protected void refreshSelection(EnumSet<DatasourceService.Sources> sel) {
-        isRefreshing = true;
-        dbs = sel;
-        try {
-            for (int k = 0; k < sources.length; ++k) {
-                checkboxes[k].setSelected(dbs.contains(sources[k]));
+    protected void addBoxes() {
+        Collections.sort(checkboxes, new Comparator<JCheckBox>() {
+            @Override
+            public int compare(JCheckBox o1, JCheckBox o2) {
+                return o1.getText().toUpperCase().compareTo(o2.getText().toUpperCase());
             }
+        });
 
+        this.bitSet = 0L;
+        for (final JCheckBox box : checkboxes) {
+            if (box.isSelected())
+                this.bitSet |= CustomDataSourceService.getSourceFromName(box.getText()).flag();
+            add(box);
+            box.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if (!isRefreshing.get()) {
+                        if (box.isSelected())
+                            bitSet |= CustomDataSourceService.getSourceFromName(box.getText()).flag();
+                        else
+                            bitSet &= ~CustomDataSourceService.getSourceFromName(box.getText()).flag();
+                        fireFilterChangeEvent();
+                    }
+                }
+            });
+        }
+    }
+
+    protected void reset() {
+        isRefreshing.set(true);
+        bitSet = 0;
+        try {
+            for (JCheckBox checkbox : checkboxes) {
+                checkbox.setSelected(false);
+            }
         } finally {
             fireFilterChangeEvent();
-            isRefreshing = false;
+            isRefreshing.set(false);
         }
     }
 
@@ -88,10 +88,42 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     @Override
     public void resultsChanged(Set<FingerIdData> datas, CompoundCandidate sre, List<CompoundCandidate> resultElements, ListSelectionModel selections) {
-        refreshSelection(EnumSet.of(DatasourceService.Sources.PUBCHEM));
+        reset();
+    }
+
+    @Override
+    public void fireDataSourceChanged(Collection<String> changes) {
+        HashSet<String> changed = new HashSet<>(changes);
+        isRefreshing.set(true);
+        boolean c = false;
+        Iterator<JCheckBox> it = checkboxes.iterator();
+
+        while (it.hasNext()) {
+            JCheckBox checkbox = it.next();
+            if (changed.remove(checkbox.getText())) {
+                it.remove();
+                c = true;
+            }
+        }
+
+        for (String name : changed) {
+            checkboxes.add(new JCheckBox(name));
+            c = true;
+        }
+
+        if (c) {
+            removeAll();
+            addBoxes();
+            revalidate();
+            repaint();
+            fireFilterChangeEvent();
+        }
+
+
+        isRefreshing.set(false);
     }
 
     public interface FilterChangeListener extends EventListener {
-        void fireFilterChanged(EnumSet<DatasourceService.Sources> filterSet);
+        void fireFilterChanged(long filterSet);
     }
 }

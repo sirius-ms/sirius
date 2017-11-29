@@ -20,6 +20,7 @@ import de.unijena.bioinf.sirius.gui.table.MinMaxMatcherEditor;
 import de.unijena.bioinf.sirius.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.sirius.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.sirius.gui.utils.WrapLayout;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -60,6 +61,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
         JToolBar tb =  new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
+        tb.setLayout(new WrapLayout(FlowLayout.LEFT,0,0));
 
         logPSlider = new FilterRangeSlider(source) {
             @Override
@@ -101,6 +103,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
             }
         });
         tb.add(filter);
+        filter.doClick();
 
 
         final JButton exportToCSV = Buttons.getExportButton24("export candidate list");

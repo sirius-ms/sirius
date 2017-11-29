@@ -119,6 +119,7 @@ public class CompoundCandidate extends AbstractBean implements Comparable<Compou
         this.molecularFormulaString = formula;
         this.relevantFps = null;
 
+
         if (this.compound == null || this.compound.databases == null) {
             this.labels = new DatabaseLabel[0];
         } else {
