@@ -18,28 +18,39 @@ import de.unijena.bioinf.jjobs.JobManager;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.FinalResult> {
 
+    private static final double MAX_TREESIZE_INCREASE = 3d;
+    private static final double TREE_SIZE_INCREASE = 1d;
+    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
+    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
+    private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
     protected final JobManager jobManager;
     protected final FragmentationPatternAnalysis analyzer;
+
+
+    ////////////////
     protected final Ms2Experiment experiment;
     protected final int numberOfResultsToKeep;
+
+    /////////////////
     protected ProcessedInput pinput;
     // yet another workaround =/
     // 0 = unprocessed, 1 = validated, 2 =  preprocessed, 3 = scored
-    protected int state=0;
-
+    protected int state = 0;
+    protected AtomicInteger ticks;
+    protected volatile int nextProgress;
+    protected int ticksPerProgress, progressPerTick;
     public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
         super(JJob.JobType.CPU);
         this.jobManager = manager;
         this.analyzer = analyzer;
         this.experiment = input;
         this.numberOfResultsToKeep = numberOfResultsToKeep;
+        setProgress(0);
     }
-
-
-    ////////////////
 
     public String testHeuristics() {
 
@@ -81,16 +92,16 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
                 p2,
                 n1,
                 n2,
-                stats1[0],stats1[1],(int)stats1[2],
+                stats1[0], stats1[1], (int) stats1[2],
                 heuristic2.getTreeWeight(),
                 exact2.getTreeWeight(),
                 p3,
                 p4,
                 n3,
                 n4,
-                stats2[0], stats2[1], (int)stats2[2]
+                stats2[0], stats2[1], (int) stats2[2]
 
-                );
+        );
 
     }
 
@@ -111,12 +122,9 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             } else ++union;
         }
 
-        return new double[]{intersection/union, intersection/fs.size(), intersection };
+        return new double[]{intersection / union, intersection / fs.size(), intersection};
 
     }
-
-    /////////////////
-
 
     public ProcessedInput validateInput() {
         if (state <= 0) {
@@ -135,75 +143,129 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
     }
 
     private ProcessedInput score() {
-        if (state <= 2)  {
+        if (state <= 2) {
             this.pinput = analyzer.performPeakScoring(precompute());
             state = 3;
         }
         return pinput;
     }
 
+    protected void tick() {
+        tick(100);
+    }
+
+    protected void tick(int max) {
+        final int t = ticks.incrementAndGet();
+        System.out.println(t);
+        if (t == nextProgress) {
+            final int incrementation = (t*progressPerTick) / ticksPerProgress;
+            setProgress(Math.min(incrementation, max));
+            while (true) {
+                int x = ticks.get();
+                nextProgress = (x*progressPerTick) + ticksPerProgress;
+                if (ticks.get() == x) break;
+            }
+        }
+    }
+
+    protected void configureProgress(int from, int to, int numberOfTicks) {
+        int span = to - from;
+        if (numberOfTicks > span) {
+            ticksPerProgress = numberOfTicks / span;
+            progressPerTick = 1;
+        } else {
+            ticksPerProgress = 1;
+            progressPerTick = span / numberOfTicks;
+        }
+        ticks.set(from * ticksPerProgress);
+        nextProgress = (from + 1) * ticksPerProgress;
+        setProgress(from);
+    }
+
     @Override
     protected FinalResult compute() throws Exception {
         score();
+
+        this.ticks = new AtomicInteger(0);
+
+        final int numberOfInstancesToCompute = pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size();
+
+        // heuristic: 10%
+        // exact: 60%
+        // recalibration: 30%
+
         // preprocess input
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
-        if (tss!=null) {
+        if (tss != null) {
             treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(tss.getTreeSizeScore());
             pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, treeSizeBonus);
         } else {
             treeSizeBonus = null;
         }
-        double inc=0d;
-
+        double inc = 0d;
+        int iteration = 0;
         // as long as we do not find good quality results
-        while (true) {
-            final boolean retryWithHigherScore = inc < MAX_TREESIZE_INCREASE;
-            // compute heuristics
-            final List<HeuristicJob> heuristics = new ArrayList<>();
-            for (final Decomposition formula : pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
-                final HeuristicJob heuristicJob = new HeuristicJob(formula);
-                jobManager.submitSubJob(heuristicJob);
-                heuristics.add(heuristicJob);
-            }
-            // collect results
-            final List<IntermediateResult> intermediateResults = new ArrayList<>();
-            int k=0;
-            for (HeuristicJob job : heuristics) {
-                try {
-                    intermediateResults.add(job.awaitResult());
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                    throw e;
+        try {
+            while (true) {
+                final boolean retryWithHigherScore = inc < MAX_TREESIZE_INCREASE;
+                // compute heuristics
+                configureProgress(0, 10, numberOfInstancesToCompute);
+                final List<HeuristicJob> heuristics = new ArrayList<>();
+                for (final Decomposition formula : pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
+                    final HeuristicJob heuristicJob = new HeuristicJob(formula);
+                    jobManager.submitSubJob(heuristicJob);
+                    heuristics.add(heuristicJob);
                 }
-            }
-            // sort by score
-            Collections.sort(intermediateResults, Collections.reverseOrder());
-            // now compute from best scoring compound to lowest scoring compound
-            final FinalResult fr;
-            if (analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder) {
-                fr = computeExactTreesSinglethreaded(intermediateResults, retryWithHigherScore);
-            } else {
-                fr = computeExactTreesInParallel(intermediateResults, retryWithHigherScore);
-            }
-            if (tss!=null && retryWithHigherScore && fr.canceledDueToLowScore) {
-                inc += TREE_SIZE_INCREASE;
-                treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
-                tss.fastReplace(pinput, treeSizeBonus);
+                // collect results
+                final List<IntermediateResult> intermediateResults = new ArrayList<>();
+                int k = 0;
+                for (HeuristicJob job : heuristics) {
+                    try {
+                        intermediateResults.add(job.awaitResult());
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                        throw e;
+                    }
+                }
+                // sort by score
+                Collections.sort(intermediateResults, Collections.reverseOrder());
+                if (iteration == 0) {
+                    configureProgress(10, 70, intermediateResults.size());
+                } else {
+                    configureProgress(70, 100, intermediateResults.size());
+                }
+                // now compute from best scoring compound to lowest scoring compound
+                final FinalResult fr;
+                if (analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder) {
+                    fr = computeExactTreesSinglethreaded(intermediateResults, retryWithHigherScore);
+                } else {
+                    fr = computeExactTreesInParallel(intermediateResults, retryWithHigherScore);
+                }
+                if (tss != null && retryWithHigherScore && fr.canceledDueToLowScore) {
+                    inc += TREE_SIZE_INCREASE;
+                    treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
+                    tss.fastReplace(pinput, treeSizeBonus);
                 /*
                 //pinput.setAnnotation(Scoring.class,null);
                 pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class,treeSizeBonus);
                 analyzer.performPeakScoring(pinput);
                 */
-            } else return fr;
-            //
+                } else return fr;
+                //
+                ++iteration;
+
+            }
+        } finally {
+            setProgress(100);
         }
+
 
         //return null;
     }
 
     private FinalResult computeExactTreesInParallel(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
-        return computeExactTreesSinglethreaded(intermediateResults,earlyStopping);
+        return computeExactTreesSinglethreaded(intermediateResults, earlyStopping);
     }
 
     private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
@@ -213,46 +275,48 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         final List<FTree> results = new ArrayList<>();
         final int n = numberOfResultsToKeep;
         double maximumGap = 0d;
-        final DoubleEndWeightedQueue2<ExactResult> queue = new DoubleEndWeightedQueue2<>(Math.max(20,n+10),new ExactResultComparator());
+        final DoubleEndWeightedQueue2<ExactResult> queue = new DoubleEndWeightedQueue2<>(Math.max(20, n + 10), new ExactResultComparator());
         final DoubleEndWeightedQueue2<ExactResult> graphCache;
         // store at maximum 30 graphs
-        if (queue.capacity > 30){
+        if (queue.capacity > 30) {
             graphCache = new DoubleEndWeightedQueue2<>(30, new ExactResultComparator());
         } else {
             graphCache = null;
         }
 
+
         outerLoop:
-        for (int i=0; i < intermediateResults.size(); i += BATCH_SIZE) {
-            final List<IntermediateResult> batch = intermediateResults.subList(i, Math.min(intermediateResults.size(),i+BATCH_SIZE));
+        for (int i = 0; i < intermediateResults.size(); i += BATCH_SIZE) {
+            final List<IntermediateResult> batch = intermediateResults.subList(i, Math.min(intermediateResults.size(), i + BATCH_SIZE));
             final List<GraphBuildingJob> graphs = computeGraphBatches(batch);
-            for (int j=0; j < graphs.size(); ++j) {
+            for (int j = 0; j < graphs.size(); ++j) {
                 final FGraph graph = graphs.get(j).takeResult();
+                tick();
                 final IntermediateResult intermediateResult = batch.get(j);
                 if (intermediateResult.heuristicScore < threshold) {
-                    System.err.println("BREAK AFTER " + (j + i)  + " / " + intermediateResults.size() + " steps! Max GAP IS " + maximumGap);
+                    System.err.println("BREAK AFTER " + (j + i) + " / " + intermediateResults.size() + " steps! Max GAP IS " + maximumGap);
                     break outerLoop;
                 }
-                final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore-1e-3);
-                if (tree==null) continue ;
+                final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore - 1e-3);
+                if (tree == null) continue;
                 maximumGap = Math.max(maximumGap, tree.getTreeWeight() - intermediateResult.heuristicScore);
                 ExactResult r = new ExactResult(graphs.get(j).decomposition, graph, tree, tree.getTreeWeight());
-                if (graphCache!=null) {
-                    graphCache.add(r,r.score);
-                    r = new ExactResult(r.decomposition,null,r.tree,r.score);
+                if (graphCache != null) {
+                    graphCache.add(r, r.score);
+                    r = new ExactResult(r.decomposition, null, r.tree, r.score);
                 }
-                if (! queue.add(r, r.score) ) {
+                if (!queue.add(r, r.score)) {
                     // we have computed enough trees. Let's calculate lowerbound threshold
                     threshold = queue.lowerbound - maximumGap;
-                } else if (graphCache!=null) {
+                } else if (graphCache != null) {
                     // we have to annotate the tree
-                    analyzer.addTreeAnnotations(graph,r.tree);
+                    analyzer.addTreeAnnotations(graph, r.tree);
                 }
             }
         }
-        if (graphCache!=null) {
+        if (graphCache != null) {
             for (ExactResult r : graphCache) {
-                queue.replace(r,r.score);
+                queue.replace(r, r.score);
             }
             graphCache.clear();
         }
@@ -260,7 +324,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         boolean CHECK_FOR_TREESIZE = earlyStopping;
         final ArrayList<ExactResult> exactResults = new ArrayList<>();
         for (ExactResult r : queue) {
-            exactResults.add(new ExactResult(r.decomposition,r.graph,r.tree,r.score));
+            exactResults.add(new ExactResult(r.decomposition, r.graph, r.tree, r.score));
             if (CHECK_FOR_TREESIZE && exactResults.size() >= MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY) {
                 if (!checkForTreeQuality(exactResults)) return new FinalResult();
                 CHECK_FOR_TREESIZE = false;
@@ -271,8 +335,8 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             CHECK_FOR_TREESIZE = false;
         }
         // now recalibrate trees
-        if (pinput.getAnnotation(ForbidRecalibration.class,ForbidRecalibration.ALLOWED).isAllowed()) {
-            int k=0;
+        if (pinput.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED).isAllowed()) {
+            int k = 0;
             double maxRecalibrationBonus = Double.POSITIVE_INFINITY;
             final ListIterator<ExactResult> riter = exactResults.listIterator();
             while (riter.hasNext()) {
@@ -282,17 +346,18 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
                     continue;
                 }
                 FGraph graph;
-                if (r.graph==null) {
-                    graph = analyzer.buildGraph(pinput,r.decomposition);
+                if (r.graph == null) {
+                    graph = analyzer.buildGraph(pinput, r.decomposition);
                 } else graph = r.graph;
-                if (r.tree.getAnnotationOrNull(ProcessedInput.class)==null)
-                    analyzer.addTreeAnnotations(graph,r.tree);
+                if (r.tree.getAnnotationOrNull(ProcessedInput.class) == null)
+                    analyzer.addTreeAnnotations(graph, r.tree);
                 final FTree tree = r.tree;
                 ExactResult recalibratedResult = recalibrate(pinput, tree);
+                tick(95);
                 final FTree recalibrated;
                 final double recalibrationBonus = recalibratedResult.tree.getTreeWeight() - tree.getTreeWeight();
                 double recalibrationPenalty = 0d;
-                if (recalibrationBonus<=0) {
+                if (recalibrationBonus <= 0) {
                     recalibrated = tree;
                 } else {
                     graph = recalibratedResult.graph;
@@ -307,15 +372,15 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
                 sc.setRecalibrationBonus(recalibrationBonus);
                 sc.setRecalibrationPenalty(recalibrationPenalty);
                 sc.setOverallScore(sc.getOverallScore() - sc.getRecalibrationPenalty());
-                recalibrated.setTreeWeight(recalibrated.getTreeWeight()-recalibrationPenalty);
+                recalibrated.setTreeWeight(recalibrated.getTreeWeight() - recalibrationPenalty);
                 riter.set(new ExactResult(r.decomposition, null, recalibrated, recalibrated.getTreeWeight()));
                 ++k;
             }
         }
         Collections.sort(exactResults, Collections.reverseOrder());
-        final int nl = Math.min(numberOfResultsToKeep,exactResults.size());
+        final int nl = Math.min(numberOfResultsToKeep, exactResults.size());
         final ArrayList<FTree> finalResults = new ArrayList<>(nl);
-        for (int m=0; m < nl; ++m) {
+        for (int m = 0; m < nl; ++m) {
             final boolean correct = analyzer.recalculateScores(exactResults.get(m).tree);
             finalResults.add(exactResults.get(m).tree);
         }
@@ -324,17 +389,10 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         return new FinalResult(finalResults);
     }
 
-
-    private static final double MAX_TREESIZE_INCREASE = 3d;
-    private static final double TREE_SIZE_INCREASE = 1d;
-    private static final int MIN_NUMBER_OF_EXPLAINED_PEAKS = 15;
-    private static final double MIN_EXPLAINED_INTENSITY = 0.7d;
-    private static final int MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY = 5;
-
     private boolean checkForTreeQuality(List<ExactResult> results) {
         for (ExactResult r : results) {
             final FTree tree = r.tree;
-            if (analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput,tree, r.decomposition.getIon()) >= MIN_EXPLAINED_INTENSITY && tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size()-2, MIN_NUMBER_OF_EXPLAINED_PEAKS)) {
+            if (analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, tree, r.decomposition.getIon()) >= MIN_EXPLAINED_INTENSITY && tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS)) {
                 return true;
             }
         }
@@ -367,44 +425,6 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
     // 2. Multithreaded: Berechne Graphen für alle Ionisierungen, berechne Bäume via Heuristik
     // 3. evtl. Multithreaded: Berechne exakte Lösung für jeden Baum
     // 4. Breche ab, wenn ausreichend gute exakte Lösungen gefunden wurden
-
-    protected class HeuristicJob extends BasicJJob<IntermediateResult> {
-
-        protected Decomposition decomposition;
-
-        protected HeuristicJob(Decomposition formula) {
-            super(JobType.CPU);
-            this.decomposition = formula;
-        }
-
-
-        @Override
-        protected IntermediateResult compute() throws Exception {
-            final FGraph graph = analyzer.buildGraph(pinput, decomposition);
-            // compute heuristic
-
-            //final FTree heuristic = new CriticalPathSolver(graph).solve();
-            final FTree heuristic = new ExtendedCriticalPathHeuristic(graph).solve();
-
-
-            IntermediateResult result = new IntermediateResult(decomposition, heuristic.getTreeWeight());
-            return result;
-        }
-    }
-
-    protected class GraphBuildingJob extends BasicJJob<FGraph> {
-        private final Decomposition decomposition;
-
-        public GraphBuildingJob(Decomposition decomposition) {
-            super(JobType.CPU);
-            this.decomposition = decomposition;
-        }
-
-        @Override
-        protected FGraph compute() throws Exception {
-            return analyzer.buildGraph(pinput, decomposition);
-        }
-    }
 
     protected ExactResult recalibrate(ProcessedInput input, FTree tree) {
         final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input.getExperimentInformation(), tree);
@@ -450,6 +470,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             this.canceledDueToLowScore = false;
             this.results = results;
         }
+
         public FinalResult() {
             this.canceledDueToLowScore = true;
             this.results = null;
@@ -476,7 +497,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
 
         @Override
         public boolean equals(Object o) {
-            if (o instanceof ExactResult) return equals((ExactResult)o);
+            if (o instanceof ExactResult) return equals((ExactResult) o);
             else return false;
         }
 
@@ -487,7 +508,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         @Override
         public int compareTo(ExactResult o) {
             final int a = Double.compare(score, o.score);
-            if (a!=0) return a;
+            if (a != 0) return a;
             return decomposition.getCandidate().compareTo(o.decomposition.getCandidate());
         }
     }
@@ -497,6 +518,46 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         @Override
         public int compare(ExactResult o1, ExactResult o2) {
             return o1.decomposition.getCandidate().compareTo(o2.decomposition.getCandidate());
+        }
+    }
+
+    protected class HeuristicJob extends BasicJJob<IntermediateResult> {
+
+        protected Decomposition decomposition;
+
+        protected HeuristicJob(Decomposition formula) {
+            super(JobType.CPU);
+            this.decomposition = formula;
+        }
+
+
+        @Override
+        protected IntermediateResult compute() throws Exception {
+            System.out.println("COMPUTE HEURISTIC");
+            final FGraph graph = analyzer.buildGraph(pinput, decomposition);
+            // compute heuristic
+
+            //final FTree heuristic = new CriticalPathSolver(graph).solve();
+            final FTree heuristic = new ExtendedCriticalPathHeuristic(graph).solve();
+
+
+            IntermediateResult result = new IntermediateResult(decomposition, heuristic.getTreeWeight());
+            tick();
+            return result;
+        }
+    }
+
+    protected class GraphBuildingJob extends BasicJJob<FGraph> {
+        private final Decomposition decomposition;
+
+        public GraphBuildingJob(Decomposition decomposition) {
+            super(JobType.CPU);
+            this.decomposition = decomposition;
+        }
+
+        @Override
+        protected FGraph compute() throws Exception {
+            return analyzer.buildGraph(pinput, decomposition);
         }
     }
 }

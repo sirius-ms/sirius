@@ -5,19 +5,31 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ExtractedIsotopePattern;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.IsotopeScoring;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
 
-public class IsotopeMs1Scorer implements DecompositionScorer<ExtractedIsotopePattern> {
-    @Override
-    public ExtractedIsotopePattern prepare(ProcessedInput input) {
-        return input.getAnnotation(ExtractedIsotopePattern.class, null);
+public class IsotopeMs1Scorer implements DecompositionScorer<IsotopeMs1Scorer.Prepared> {
+
+    protected static class Prepared {
+        private final IsotopeScoring weight;
+        private final ExtractedIsotopePattern pattern;
+
+        public Prepared(IsotopeScoring weight, ExtractedIsotopePattern pattern) {
+            this.weight = weight;
+            this.pattern = pattern;
+        }
     }
 
     @Override
-    public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, ExtractedIsotopePattern precomputed) {
-        if (precomputed!=null && precomputed.getExplanations().get(formula)!=null) {
-            return precomputed.getExplanations().get(formula).getScore();
+    public Prepared prepare(ProcessedInput input) {
+        return new Prepared(input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT), input.getAnnotation(ExtractedIsotopePattern.class, null));
+    }
+
+    @Override
+    public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Prepared precomputed) {
+        if (precomputed.pattern!=null && precomputed.pattern.getExplanations().get(formula)!=null) {
+            return precomputed.weight.getIsotopeScoreWeighting() * precomputed.pattern.getExplanations().get(formula).getScore();
         } else return 0d;
     }
 
