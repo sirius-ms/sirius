@@ -285,7 +285,7 @@ public class Sirius {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         performMs1Analysis(instance, IsotopePatternHandling.both);
-        jobManager.submitSubJob(instance);
+        jobManager.submitJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
         int k=0;
