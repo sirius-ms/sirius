@@ -450,7 +450,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
             }
         }
-        Spectrums.mergePeaksWithinSpectrum(massBuffer, dev, false);
+        Spectrums.mergePeaksWithinSpectrum(massBuffer, dev, false, true);
         Peak defaultIon = null;
         for (Peak p : massBuffer) {
             masses.add(p);
