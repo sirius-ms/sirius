@@ -160,25 +160,31 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         while (true) {
             final boolean retryWithHigherScore = inc < MAX_TREESIZE_INCREASE;
             // compute heuristics
-            final List<HeuristicJob> heuristics = new ArrayList<>();
-            for (final Decomposition formula : pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions()) {
-                final HeuristicJob heuristicJob = new HeuristicJob(formula);
-                jobManager.submitSubJob(heuristicJob);
-                heuristics.add(heuristicJob);
-            }
-            // collect results
             final List<IntermediateResult> intermediateResults = new ArrayList<>();
-            int k=0;
-            for (HeuristicJob job : heuristics) {
-                try {
-                    intermediateResults.add(job.awaitResult());
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                    throw e;
+            final DecompositionList dlist = pinput.getAnnotationOrThrow(DecompositionList.class);
+            if (dlist.getDecompositions().size()>20) {
+                final List<HeuristicJob> heuristics = new ArrayList<>();
+                for (final Decomposition formula : dlist.getDecompositions()) {
+                    final HeuristicJob heuristicJob = new HeuristicJob(formula);
+                    jobManager.submitSubJob(heuristicJob);
+                    heuristics.add(heuristicJob);
+                }
+                // collect results
+                for (HeuristicJob job : heuristics) {
+                    try {
+                        intermediateResults.add(job.awaitResult());
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                        throw e;
+                    }
+                }
+                // sort by score
+                Collections.sort(intermediateResults, Collections.reverseOrder());
+            } else {
+                for (final Decomposition formula : dlist.getDecompositions()) {
+                    intermediateResults.add(new IntermediateResult(formula, 0d));
                 }
             }
-            // sort by score
-            Collections.sort(intermediateResults, Collections.reverseOrder());
             // now compute from best scoring compound to lowest scoring compound
             final FinalResult fr;
             if (analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder) {
