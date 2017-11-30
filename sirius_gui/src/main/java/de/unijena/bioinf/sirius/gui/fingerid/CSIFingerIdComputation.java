@@ -624,7 +624,7 @@ public class CSIFingerIdComputation {
         task.job.error("Canceled", null);
     }
 
-    // this is really the conputation mehtod everything should use in die end
+    // this is really the computation method everything should use in the end
     public void computeAll(Collection<FingerIdTask> compounds) {
         for (FingerIdTask task : compounds) {
             final ComputingStatus status = task.result.getFingerIdComputeState();

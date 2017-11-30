@@ -23,9 +23,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.filtering.LimitNumberOfPeaksFilter;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FilebasedDatabase;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
@@ -51,23 +52,22 @@ public class BackgroundComputation extends AbstractBean {
     private final CSIFingerIdComputation csiFingerID;
     private final ConcurrentLinkedQueue<Task> queue;
     private final Worker[] workers;
-    private final int nworkers;
     private final ConcurrentLinkedQueue<ExperimentContainer> cancel;
 
     public BackgroundComputation(CSIFingerIdComputation csi) {
-        this.csiFingerID =  csi;
+        this.csiFingerID = csi;
         this.queue = new ConcurrentLinkedQueue<>();
         this.cancel = new ConcurrentLinkedQueue<>();
         int nw;
         try {
-            if (new Sirius().getMs2Analyzer().getTreeBuilder() instanceof GurobiSolver) { //todo should we really create a new treebuilder just to check which is used?
-                nw = Math.max(1, Runtime.getRuntime().availableProcessors()/2);
+            if (!(new Sirius().getMs2Analyzer().getTreeBuilder() instanceof GLPKSolver)) { //todo should we really create a new treebuilder just to check which is used?
+                nw = Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"));
             } else {
                 nw = 1;
-            }} catch (Throwable t) {
+            }
+        } catch (Throwable t) {
             nw = 1;
         }
-        this.nworkers = nw;
         this.workers = new Worker[nw];
     }
 
@@ -75,7 +75,7 @@ public class BackgroundComputation extends AbstractBean {
         final Iterator<Task> iter = queue.iterator();
         while (iter.hasNext()) {
             final Task t = iter.next();
-            if (t.exp==container) {
+            if (t.exp == container) {
                 iter.remove();
                 t.job.error("Canceled", null);
                 break;
@@ -99,7 +99,7 @@ public class BackgroundComputation extends AbstractBean {
             for (Worker w : workers) {
                 if (w != null && !w.isDone()) {
                     final ExperimentContainer currentComputation = w.currentComputation;
-                    if (currentComputation!=null)
+                    if (currentComputation != null)
                         cancel(currentComputation);
                 }
             }
@@ -122,8 +122,8 @@ public class BackgroundComputation extends AbstractBean {
     }
 
     private void wakeup() {
-        synchronized(this) {
-            for (int w=0; w < workers.length; ++w) {
+        synchronized (this) {
+            for (int w = 0; w < workers.length; ++w) {
                 final Worker worker = workers[w];
                 if (worker == null || worker.isDone()) {
                     workers[w] = new Worker();
@@ -177,7 +177,7 @@ public class BackgroundComputation extends AbstractBean {
             super.process(chunks);
             for (Task c : chunks) {
                 c.exp.setComputeState(c.state);
-                if (c.state==ComputingStatus.COMPUTED || c.state==ComputingStatus.FAILED) {
+                if (c.state == ComputingStatus.COMPUTED || c.state == ComputingStatus.FAILED) {
                     c.exp.setRawResults(c.results);
                     c.exp.setComputeState(c.state);
                     if (c.csiFingerIdSearch) {
@@ -219,7 +219,7 @@ public class BackgroundComputation extends AbstractBean {
 
         protected void compute(final Task container) {
             checkProfile(container);
-            final Sirius sirius= siriusPerProfile.get(container.profile);
+            final Sirius sirius = siriusPerProfile.get(container.profile);
             final SearchableDatabase searchableDatabase = container.searchableDatabase;
             sirius.getMs2Analyzer().setIsotopeHandling(container.enableIsotopesInMs2 ? FragmentationPatternAnalysis.IsotopeInMs2Handling.ALWAYS : FragmentationPatternAnalysis.IsotopeInMs2Handling.IGNORE);
             if (container.enableIsotopesInMs2) {
@@ -237,10 +237,10 @@ public class BackgroundComputation extends AbstractBean {
                     final Iterator<ExperimentContainer> iter = cancel.iterator();
                     while (iter.hasNext()) {
                         final ExperimentContainer canceled = iter.next();
-                        if (canceled==container.exp) {
+                        if (canceled == container.exp) {
                             feedback.cancelComputation();
                             container.state = ComputingStatus.UNCOMPUTED;
-                            container.job.error("canceled",null);
+                            container.job.error("canceled", null);
                         }
                         iter.remove();
                     }
@@ -258,16 +258,16 @@ public class BackgroundComputation extends AbstractBean {
             });
             sirius.setFormulaConstraints(container.constraints);
 
-            if ((int)(10*sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation().getPpm()) != (int)(10*container.ppm)) {
+            if ((int) (10 * sirius.getMs2Analyzer().getDefaultProfile().getAllowedMassDeviation().getPpm()) != (int) (10 * container.ppm)) {
                 sirius.getMs2Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
                 sirius.getMs1Analyzer().getDefaultProfile().setAllowedMassDeviation(new Deviation(container.ppm));
             }
             try {
                 final List<IdentificationResult> results;
                 final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp);
-                boolean hasMS2 = experiment.getMs2Spectra().size()!=0;
-                if (searchableDatabase==null) {
-                    if (hasMS2){
+                boolean hasMS2 = experiment.getMs2Spectra().size() != 0;
+                if (searchableDatabase == null) {
+                    if (hasMS2) {
                         if (experiment.getPrecursorIonType().isIonizationUnknown()) {
                             results = sirius.identifyPrecursorAndIonization(experiment,
                                     container.numberOfCandidates, true, IsotopePatternHandling.score);
@@ -284,7 +284,7 @@ public class BackgroundComputation extends AbstractBean {
                     PrecursorIonType ionType = experiment.getPrecursorIonType();
                     PrecursorIonType[] allowedIons;
                     if (ionType.isIonizationUnknown()) {
-                        allowedIons = ionType.getCharge()>0 ? WebAPI.positiveIons : WebAPI.negativeIons;
+                        allowedIons = ionType.getCharge() > 0 ? WebAPI.positiveIons : WebAPI.negativeIons;
                     } else {
                         allowedIons = new PrecursorIonType[]{ionType};
                     }
@@ -301,7 +301,7 @@ public class BackgroundComputation extends AbstractBean {
                         }
                     }
                     if (searchableDatabase.searchInBio()) {
-                        try (final RESTDatabase db = WebAPI.newInstance().getRESTDb(BioFilter.ONLY_BIO,null)) {
+                        try (final RESTDatabase db = WebAPI.newInstance().getRESTDb(BioFilter.ONLY_BIO, null)) {
                             for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
                                 for (FormulaCandidate f : fc) {
                                     if (container.onlyOrganic) {
@@ -314,7 +314,7 @@ public class BackgroundComputation extends AbstractBean {
                         }
                     }
                     if (searchableDatabase.searchInPubchem()) {
-                        try (final RESTDatabase db = WebAPI.newInstance().getRESTDb(searchableDatabase.searchInBio() ? BioFilter.ONLY_NONBIO : BioFilter.ALL,null)) {
+                        try (final RESTDatabase db = WebAPI.newInstance().getRESTDb(searchableDatabase.searchInBio() ? BioFilter.ONLY_NONBIO : BioFilter.ALL, null)) {
                             for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), new Deviation(container.ppm), allowedIons)) {
                                 for (FormulaCandidate f : fc) {
                                     if (container.onlyOrganic) {
@@ -334,15 +334,15 @@ public class BackgroundComputation extends AbstractBean {
                 }
 
                 container.results = results;
-                if (results==null || results.size()==0){
+                if (results == null || results.size() == 0) {
                     container.state = ComputingStatus.FAILED;
                     container.job.done();
                 }
             } catch (Exception e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                 container.state = ComputingStatus.FAILED;
                 container.job.error(e.getMessage(), e);
-                container.results=new ArrayList<>();
+                container.results = new ArrayList<>();
             }
         }
     }
