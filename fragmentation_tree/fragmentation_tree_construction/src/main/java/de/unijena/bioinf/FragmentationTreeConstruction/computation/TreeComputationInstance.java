@@ -162,7 +162,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             // compute heuristics
             final List<IntermediateResult> intermediateResults = new ArrayList<>();
             final DecompositionList dlist = pinput.getAnnotationOrThrow(DecompositionList.class);
-            if (dlist.getDecompositions().size()>20) {
+            if (dlist.getDecompositions().size()>100) {
                 final List<HeuristicJob> heuristics = new ArrayList<>();
                 for (final Decomposition formula : dlist.getDecompositions()) {
                     final HeuristicJob heuristicJob = new HeuristicJob(formula);
@@ -212,50 +212,102 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         return computeExactTreesSinglethreaded(intermediateResults,earlyStopping);
     }
 
+    private final class ExactComputationWithThreshold extends BasicJJob<ExactResult> {
+
+        private final double[] sharedVariable;
+        private final JJob<FGraph> graphJJob;
+        private final IntermediateResult intermediateResult;
+
+        public ExactComputationWithThreshold(double[] sharedVariable, JJob<FGraph> graphJJob, IntermediateResult intermediateResult) {
+            this.sharedVariable = sharedVariable;
+            this.graphJJob = graphJJob;
+            this.intermediateResult = intermediateResult;
+        }
+
+        protected ExactResult computeExact() {
+            //System.err.println("COMPUTE " + intermediateResult.candidate + " in thread " + Thread.currentThread().toString());
+            final double threshold = sharedVariable[0];
+            if (intermediateResult.heuristicScore < threshold) {
+                graphJJob.cancel(true);
+                return null; // early stopping
+            }
+            final FGraph graph = graphJJob.takeResult();
+            final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore-1e-3);
+            if (tree==null) return null ;
+            return new ExactResult(intermediateResult.candidate, graph, tree, tree.getTreeWeight());
+        }
+
+        @Override
+        protected ExactResult compute() throws Exception {
+            return computeExact();
+        }
+    }
+
     private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
         // compute in batches
-        double threshold = Double.NEGATIVE_INFINITY;
-        final int BATCH_SIZE = 10;
-        final List<FTree> results = new ArrayList<>();
+
+        final int NCPUS = jobManager.getCPUThreads();
+        final int BATCH_SIZE = Math.min(4*NCPUS,Math.max(30,NCPUS));
+        final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
+
         final int n = numberOfResultsToKeep;
-        double maximumGap = 0d;
         final DoubleEndWeightedQueue2<ExactResult> queue = new DoubleEndWeightedQueue2<>(Math.max(20,n+10),new ExactResultComparator());
         final DoubleEndWeightedQueue2<ExactResult> graphCache;
         // store at maximum 30 graphs
-        if (queue.capacity > 30){
-            graphCache = new DoubleEndWeightedQueue2<>(30, new ExactResultComparator());
+        if (queue.capacity > MAX_GRAPH_CACHE_SIZE){
+            graphCache = new DoubleEndWeightedQueue2<>(MAX_GRAPH_CACHE_SIZE, new ExactResultComparator());
         } else {
             graphCache = null;
         }
 
+        final double[] threshold = new double[]{Double.NEGATIVE_INFINITY, 0d};
+
+        final boolean IS_SINGLETHREADED = intermediateResults.size() < 200 && analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder;
+
+        final List<ExactComputationWithThreshold> batchJobs = new ArrayList<>(BATCH_SIZE);
+        int treesComputed = 0;
         outerLoop:
         for (int i=0; i < intermediateResults.size(); i += BATCH_SIZE) {
-            final List<IntermediateResult> batch = intermediateResults.subList(i, Math.min(intermediateResults.size(),i+BATCH_SIZE));
+            final List<IntermediateResult> batch = intermediateResults.subList(i, Math.min(intermediateResults.size(), i + BATCH_SIZE));
+            if (batch.isEmpty()) break outerLoop;
+            if (batch.get(0).heuristicScore < threshold[0]) {
+                break outerLoop;
+            }
             final List<GraphBuildingJob> graphs = computeGraphBatches(batch);
-            for (int j=0; j < graphs.size(); ++j) {
-                final FGraph graph = graphs.get(j).takeResult();
+            batchJobs.clear();
+            for (int j = 0; j < graphs.size(); ++j) {
+
+                final GraphBuildingJob graphBuildingJob = graphs.get(j);
                 final IntermediateResult intermediateResult = batch.get(j);
-                if (intermediateResult.heuristicScore < threshold) {
-                    System.err.println("BREAK AFTER " + (j + i)  + " / " + intermediateResults.size() + " steps! Max GAP IS " + maximumGap);
-                    break outerLoop;
+
+                if (intermediateResult.heuristicScore >= threshold[0]) {
+                    final ExactComputationWithThreshold exactJob = new ExactComputationWithThreshold(threshold, graphBuildingJob, intermediateResult);
+                    if (IS_SINGLETHREADED) {
+                        final ExactResult ex = exactJob.computeExact();
+                        if (ex!=null) {
+                            ++treesComputed;
+                            putIntQueue(ex, intermediateResult, queue, graphCache, threshold);
+                        }
+                    } else {
+                        batchJobs.add(exactJob);
+                    }
                 }
-                final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore-1e-3);
-                if (tree==null) continue ;
-                maximumGap = Math.max(maximumGap, tree.getTreeWeight() - intermediateResult.heuristicScore);
-                ExactResult r = new ExactResult(graphs.get(j).decomposition, graph, tree, tree.getTreeWeight());
-                if (graphCache!=null) {
-                    graphCache.add(r,r.score);
-                    r = new ExactResult(r.decomposition,null,r.tree,r.score);
-                }
-                if (! queue.add(r, r.score) ) {
-                    // we have computed enough trees. Let's calculate lowerbound threshold
-                    threshold = queue.lowerbound - maximumGap;
-                } else if (graphCache!=null) {
-                    // we have to annotate the tree
-                    analyzer.addTreeAnnotations(graph,r.tree);
+            }
+
+            if (!IS_SINGLETHREADED) {
+                for (int JJ = batchJobs.size()-1; JJ >= 0; --JJ)
+                    jobManager.submitSubJob(batchJobs.get(JJ));
+                for (ExactComputationWithThreshold job : batchJobs) {
+                    final ExactResult r = job.takeResult();
+                    if (r != null) {
+                        ++treesComputed;
+                        putIntQueue(r, job.intermediateResult, queue, graphCache, threshold);
+                    }
                 }
             }
         }
+        System.err.println("Computed "+ treesComputed + " / " + intermediateResults.size() + " trees with maximum gap is " + threshold[1]);
+
         if (graphCache!=null) {
             for (ExactResult r : graphCache) {
                 queue.replace(r,r.score);
@@ -330,6 +382,21 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         return new FinalResult(finalResults);
     }
 
+    private void putIntQueue(ExactResult r, IntermediateResult intermediateResult, DoubleEndWeightedQueue2<ExactResult> queue, DoubleEndWeightedQueue2<ExactResult> graphCache, double[] threshold) {
+        threshold[1] = Math.max(threshold[1], r.score - intermediateResult.heuristicScore);
+        final FGraph graph = r.graph;
+        if (graphCache!=null) {
+            graphCache.add(r,r.score);
+            r = new ExactResult(r.decomposition,null,r.tree,r.score);
+        }
+        if (! queue.add(r, r.score) ) {
+            // we have computed enough trees. Let's calculate lowerbound threshold
+            threshold[0] = queue.lowerbound - threshold[1];
+        } else if (graphCache!=null) {
+            // we have to annotate the tree
+            analyzer.addTreeAnnotations(graph,r.tree);
+        }
+    }
 
     private static final double MAX_TREESIZE_INCREASE = 3d;
     private static final double TREE_SIZE_INCREASE = 1d;
