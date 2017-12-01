@@ -1,7 +1,7 @@
 /*
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2015 Kai DÃ¼hrkop
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -318,7 +318,7 @@ public class Sirius {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         performMs1Analysis(instance, IsotopePatternHandling.both);
-        jobManager.submitJob(instance);
+        jobManager.submitSubJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
         int k=0;
