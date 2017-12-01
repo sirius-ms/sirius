@@ -25,7 +25,7 @@ public class SiriusApplication extends ApplicationCore {
 
     public static void main(String[] args) {
         //todo this is copy paste from CLI class -> make nice
-        SiriusJobs.setGlobalJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1")));
+        SiriusJobs.setGlobalJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1"))+1);
         DEFAULT_LOGGER.info("Job manager initialized!");
 
         CustomDatabase.customDatabases(true);
