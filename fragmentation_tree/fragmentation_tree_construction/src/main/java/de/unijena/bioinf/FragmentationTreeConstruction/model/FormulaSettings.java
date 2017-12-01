@@ -72,6 +72,10 @@ public class FormulaSettings {
     }
 
     public FormulaSettings withIsotopeFormulaFiltering() {
-        return new FormulaSettings(constraints, automaticDetectionEnabled, allowIsotopeElementFiltering);
+        return new FormulaSettings(constraints, automaticDetectionEnabled, true);
+    }
+
+    public FormulaSettings withoutIsotopeFormulaFiltering() {
+        return new FormulaSettings(constraints, automaticDetectionEnabled, false);
     }
 }
