@@ -16,7 +16,7 @@ public class SiriusJobs {
 
     public static JobManager getGlobalJobManager() {
         if (globalJobManager == null) {
-            setGlobalJobManager(Runtime.getRuntime().availableProcessors() / 2);
+            setGlobalJobManager(1 + Runtime.getRuntime().availableProcessors() / 2);
         }
         return globalJobManager;
     }
