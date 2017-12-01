@@ -42,6 +42,7 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
@@ -116,13 +117,27 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     PrecursorIonType[] ionTypes;
     PrecursorIonType[] ionTypesWithoutAdducts;
 
+    private static class DummyFeedback implements Feedback {
+
+        @Override
+        public void cancelComputation() {
+
+        }
+
+        @Override
+        public void stopComputationKeepResults() {
+
+        }
+    }
+    private static final DummyFeedback DUMMY_FEEDBACK = new DummyFeedback();
+
     protected BasicJJob<List<IdentificationResult>> configureProgress(BasicJJob<List<IdentificationResult>> job) {
 
         job.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 final int pr = (int)evt.getNewValue();
-                progress.update(pr/100d, 1d, "", null);
+                progress.update(pr/100d, 1d, "", DUMMY_FEEDBACK);
             }
         });
 
