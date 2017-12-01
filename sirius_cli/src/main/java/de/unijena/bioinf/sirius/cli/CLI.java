@@ -40,6 +40,8 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
@@ -62,6 +64,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected ProjectWriter projectWriter;
     protected boolean shellOutputSurpressed = false;
+
+    protected JobManager jobManager;
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CLI.class);
 
@@ -105,6 +109,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     public CLI() {
         this.shellMode = System.console() != null;
         this.progress = new ShellProgress(System.out, shellMode);
+        this.jobManager = SiriusJobs.getGlobalJobManager();
     }
 
     Options options;
@@ -137,6 +142,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                             }
 
                         }
+
+                        sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
+
+                        final BasicJJob<List<IdentificationResult>> identifyJob = sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates());
+
                         results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), mfCandidatesSet);
 
                     } else {
