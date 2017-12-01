@@ -18,6 +18,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.FinalResult> {
 
@@ -28,8 +29,10 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
     protected ProcessedInput pinput;
     // yet another workaround =/
     // 0 = unprocessed, 1 = validated, 2 =  preprocessed, 3 = scored
-    protected int state=0;
-
+    protected int state = 0;
+    protected AtomicInteger ticks;
+    protected volatile int nextProgress;
+    protected int ticksPerProgress, progressPerTick;
     public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
         super(JJob.JobType.CPU);
         this.jobManager = manager;
@@ -140,6 +143,38 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             state = 3;
         }
         return pinput;
+    }
+
+    protected void tick() {
+        tick(100);
+    }
+
+    protected void tick(int max) {
+        final int t = ticks.incrementAndGet();
+        System.out.println(t);
+        if (t == nextProgress) {
+            final int incrementation = (t*progressPerTick) / ticksPerProgress;
+            setProgress(Math.min(incrementation, max));
+            while (true) {
+                int x = ticks.get();
+                nextProgress = (x*progressPerTick) + ticksPerProgress;
+                if (ticks.get() == x) break;
+            }
+        }
+    }
+
+    protected void configureProgress(int from, int to, int numberOfTicks) {
+        int span = to - from;
+        if (numberOfTicks > span) {
+            ticksPerProgress = numberOfTicks / span;
+            progressPerTick = 1;
+        } else {
+            ticksPerProgress = 1;
+            progressPerTick = span / numberOfTicks;
+        }
+        ticks.set(from * ticksPerProgress);
+        nextProgress = (from + 1) * ticksPerProgress;
+        setProgress(from);
     }
 
     @Override
