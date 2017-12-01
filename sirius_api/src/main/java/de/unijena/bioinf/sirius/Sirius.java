@@ -1,7 +1,7 @@
 /*
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2015 Kai DÃ¼hrkop
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -104,23 +104,25 @@ public class Sirius {
         }
     }
 
-
     public class SiriusIdentificationJob extends BasicJJob<List<IdentificationResult>> {
         private final Ms2Experiment experiment;
         private final int numberOfResultsToKeep;
 
         public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep) {
             super(JobType.CPU, 0, 100);
+            System.out.println("DIES IST EIN TEST!");
             this.experiment = experiment;
             this.numberOfResultsToKeep = numberOfResultsToKeep;
         }
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
+            System.out.println("STAAAAART!");
             final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), experiment, numberOfResultsToKeep);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
+                    System.out.println("Property CHANGED!");
                     SiriusIdentificationJob.this.setProgress((int)evt.getNewValue());
                 }
             });
@@ -316,7 +318,7 @@ public class Sirius {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         performMs1Analysis(instance, IsotopePatternHandling.both);
-        jobManager.submitJob(instance);
+        jobManager.submitSubJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
         int k=0;
@@ -499,6 +501,18 @@ public class Sirius {
 
     public void enableRecalibration(MutableMs2Experiment experiment, boolean enabled) {
         experiment.setAnnotation(ForbidRecalibration.class, enabled ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
+    }
+
+    public void setIsotopeMode(MutableMs2Experiment experiment, IsotopePatternHandling handling) {
+        FormulaSettings current = experiment.getAnnotation(FormulaSettings.class, FormulaSettings.defaultWithMs2Only());
+        if (handling.isFiltering()) current = current.withIsotopeFormulaFiltering();
+        else current = current.withoutIsotopeFormulaFiltering();
+        experiment.setAnnotation(FormulaSettings.class, current);
+        if (handling.isScoring()) {
+            experiment.setAnnotation(IsotopeScoring.class,IsotopeScoring.DEFAULT);
+        } else {
+            experiment.setAnnotation(IsotopeScoring.class,IsotopeScoring.DISABLED);
+        }
     }
 
     public void setAutomaticElementDetectionFor(MutableMs2Experiment experiment, Element elements) {
@@ -842,6 +856,7 @@ public class Sirius {
         performAutomaticElementDetection(input, pattern.getPattern());
 
         // step 2: Isotope pattern analysis
+        if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0) return false;
         final DecompositionList decompositions = instance.precompute().getAnnotationOrThrow(DecompositionList.class);
         final IsotopePatternAnalysis an = getMs1Analyzer();
         for (Map.Entry<Ionization, List<MolecularFormula>> entry : decompositions.getFormulasPerIonMode().entrySet()) {
