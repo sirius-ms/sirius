@@ -110,19 +110,16 @@ public class Sirius {
 
         public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep) {
             super(JobType.CPU, 0, 100);
-            System.out.println("DIES IST EIN TEST!");
             this.experiment = experiment;
             this.numberOfResultsToKeep = numberOfResultsToKeep;
         }
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
-            System.out.println("STAAAAART!");
             final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), experiment, numberOfResultsToKeep);
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    System.out.println("Property CHANGED!");
                     SiriusIdentificationJob.this.setProgress((int)evt.getNewValue());
                 }
             });
@@ -435,6 +432,7 @@ public class Sirius {
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
+        jobManager.submitJob(instance);
         return new IdentificationResult(instance.takeResult().getResults().get(0), 1);
 
     }
