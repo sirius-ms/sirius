@@ -41,7 +41,8 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Progress;
 import de.unijena.bioinf.sirius.Sirius;
@@ -49,6 +50,8 @@ import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.projectspace.*;
 import org.slf4j.LoggerFactory;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -64,8 +67,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected ProjectWriter projectWriter;
     protected boolean shellOutputSurpressed = false;
-
-    protected JobManager jobManager;
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CLI.class);
 
@@ -109,13 +110,40 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     public CLI() {
         this.shellMode = System.console() != null;
         this.progress = new ShellProgress(System.out, shellMode);
-        this.jobManager = SiriusJobs.getGlobalJobManager();
     }
 
     Options options;
     List<String> inputs, formulas;
     PrecursorIonType[] ionTypes;
     PrecursorIonType[] ionTypesWithoutAdducts;
+
+    private static class DummyFeedback implements Feedback {
+
+        @Override
+        public void cancelComputation() {
+
+        }
+
+        @Override
+        public void stopComputationKeepResults() {
+
+        }
+    }
+    private static final DummyFeedback DUMMY_FEEDBACK = new DummyFeedback();
+
+    protected BasicJJob<List<IdentificationResult>> configureProgress(BasicJJob<List<IdentificationResult>> job) {
+
+        job.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                final int pr = (int)evt.getNewValue();
+                progress.update(pr/100d, 1d, "", DUMMY_FEEDBACK);
+            }
+        });
+
+        SiriusJobs.getGlobalJobManager().submitJob(job);
+        return job;
+    }
 
     public void compute() {
         try {
@@ -144,21 +172,25 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                         }
 
                         sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
-
-                        final BasicJJob<List<IdentificationResult>> identifyJob = sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates());
-
-                        results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), mfCandidatesSet);
+                        sirius.setIsotopeMode(i.experiment, options.getIsotopes());
+                        if (mfCandidatesSet!=null && !mfCandidatesSet.isEmpty()) sirius.setFormulaSearchList(i.experiment, mfCandidatesSet);
+                        results = configureProgress(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates())).takeResult();
 
                     } else {
                         final List<String> whitelist = formulas;
                         final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
                         if ((whiteset == null) && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
                             i.experiment.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
-                            results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes());
+                            sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
+                            sirius.setIsotopeMode(i.experiment, options.getIsotopes());
+                            results = configureProgress(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates())).takeResult();
                         } else if (whiteset != null && whiteset.isEmpty()) {
                             results = new ArrayList<>();
                         } else if (whiteset == null || whiteset.size() != 1) {
-                            results = sirius.identify(i.experiment, getNumberOfCandidates(), !options.isNotRecalibrating(), options.getIsotopes(), whiteset);
+                            sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
+                            sirius.setIsotopeMode(i.experiment, options.getIsotopes());
+                            if (whiteset != null) sirius.setFormulaSearchList(i.experiment, whiteset);
+                            results = configureProgress(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates())).takeResult();
                         } else {
                             IdentificationResult result = sirius.compute(i.experiment, whiteset.iterator().next(), !options.isNotRecalibrating());
                             if (result != null && result.getRawTree() != null) {
