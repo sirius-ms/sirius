@@ -1,0 +1,20 @@
+dependencies {
+    //project
+    compile project(':sirius_cli')
+
+//internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerblast", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "confidence_score", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_rest", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemdb_file", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "chemical_db", version: "$fingeridVersion"
+
+    compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
+    compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+
+    //cdk
+    compile "org.openscience.cdk:cdk-silent:$cdk_version"
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+
+}
