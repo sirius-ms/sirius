@@ -148,6 +148,28 @@ literature to cite transparent to the user.
 
 <!--begin changelog-->
 
+#### 3.6
+
+-   Fragmentation tree heuristics
+
+-   Custom adducts can be specified
+
+-   Adduct candidates from database
+
+-   CSI:FingerID results can be filtered by **Custom databases**.
+
+-   Improved parallelization and task management
+
+-   Better stability of CSI:FingerID webservice
+
+-   Better DB filter performance
+
+-   Bug fix in Database filtering view
+
+-   Error Reporter Bug fixed
+
+-   Logging Bug fixed
+
 #### 3.5
 
 -   **Custom databases** can be imported by hand or via csv file. You
