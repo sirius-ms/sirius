@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import java.util.logging.Formatter;
 import java.util.logging.Level;

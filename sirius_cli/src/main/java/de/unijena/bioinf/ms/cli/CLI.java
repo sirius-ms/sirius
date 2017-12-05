@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
@@ -84,29 +84,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             System.out.printf(Locale.US, msg, args);
     }
 
-    public static void main(String[] args) {
-        SiriusJobs.setGlobalJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1")));
-        DEFAULT_LOGGER.info("Job manager initialized!");
-
-        final CLI cli = new CLI();
-        if (args.length > 0 && args[0].toLowerCase().equals("zodiac")) {
-            ZodiacOptions options = null;
-            try {
-                options = CliFactory.createCli(ZodiacOptions.class).parseArguments(Arrays.copyOfRange(args, 1, args.length));
-            } catch (HelpRequestedException e) {
-                cli.println(e.getMessage());
-                cli.println("");
-                System.exit(0);
-            }
-
-            Zodiac zodiac = new Zodiac(options);
-            zodiac.run();
-        } else {
-            cli.parseArgsAndInit(args);
-            cli.compute();
-        }
-    }
-
     public CLI() {
         this.shellMode = System.console() != null;
         this.progress = new ShellProgress(System.out, shellMode);
@@ -129,6 +106,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
         }
     }
+
     private static final DummyFeedback DUMMY_FEEDBACK = new DummyFeedback();
 
     protected BasicJJob<List<IdentificationResult>> configureProgress(BasicJJob<List<IdentificationResult>> job) {
@@ -136,8 +114,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         job.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                final int pr = (int)evt.getNewValue();
-                progress.update(pr/100d, 1d, "", DUMMY_FEEDBACK);
+                final int pr = (int) evt.getNewValue();
+                progress.update(pr / 100d, 1d, "", DUMMY_FEEDBACK);
             }
         });
 
@@ -173,7 +151,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
                         sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
                         sirius.setIsotopeMode(i.experiment, options.getIsotopes());
-                        if (mfCandidatesSet!=null && !mfCandidatesSet.isEmpty()) sirius.setFormulaSearchList(i.experiment, mfCandidatesSet);
+                        if (mfCandidatesSet != null && !mfCandidatesSet.isEmpty())
+                            sirius.setFormulaSearchList(i.experiment, mfCandidatesSet);
                         results = configureProgress(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates())).takeResult();
 
                     } else {
@@ -313,8 +292,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         println(ApplicationCore.CITATION);
     }
 
-    protected void parseArgsAndInit(String[] args) {
-        parseArgs(args);
+    protected void parseArgsAndInit(String[] args, Class<Options> optionsClass) {
+        parseArgs(args, optionsClass);
         setup();
         validate();
     }
@@ -323,9 +302,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     }
 
-    public void parseArgs(String[] args) {
-        parseArgs(args, (Class<Options>) SiriusOptions.class);
-    }
 
     public void parseArgs(String[] args, Class<Options> optionsClass) {
         if (args.length == 0) {
@@ -354,6 +330,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     }
 
     protected void handleOutputOptions(Options options) {
+        if (options.getNumOfCores() > 0) {
+            PropertyManager.PROPERTIES.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(options.getNumOfCores()));
+        }
+
         if (options.isQuiet() || "-".equals(options.getSirius())) {
             this.shellOutputSurpressed = true;
             disableShellLogging();

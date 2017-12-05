@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.ProjectReader;

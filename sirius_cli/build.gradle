@@ -5,12 +5,10 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.1'
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
     compile group: 'de.unijena.bioinf.utils', name: 'error-reporter', version: "$error_reporter_version"
-    //todo workaround until cli codebase contains fingerid functionality
-    compile group: "de.unijena.bioinf.ms", name: "fingerid_kernel", version: "$fingeridVersion"
     compile group: 'com.google.classpath-explorer', name: 'classpath-explorer', version: '1.0'
 }
 
-mainClassName = 'de.unijena.bioinf.sirius.cli.CLI'
+/*mainClassName = 'de.unijena.bioinf.ms.cli.SiriusApplication'
 project.ext.set("type", "console")
 
 
@@ -20,7 +18,7 @@ jar {
     }
 }
 
-/*################### Windows release Stuff ################### */
+*//*################### Windows release Stuff ################### *//*
 launch4j {
     mainClassName = project.mainClassName
     headerType = "$project.type"
@@ -29,7 +27,7 @@ launch4j {
     outfile = "${project.appName}.exe"
 }
 
-/*################### Build distributions ################### */
+*//*################### Build distributions ################### *//*
 task distribute { group = 'distribution' }
 distribute.dependsOn ':buildDoku'
 
@@ -51,7 +49,7 @@ distributions {
                         exclude("*.bat")
                     }
                     from("${project.distPath}") {
-                        exclude('sirius3-gui')
+                        exclude('sirius-gui')
                     }
                     from("${getRootDir()}/LICENSE.txt")
                 }
@@ -82,7 +80,7 @@ distributions {
                 }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.distPath}") {
-                    exclude('sirius3-gui')
+                    exclude('sirius-gui')
                 }
                 from { "${getRootDir()}/LICENSE.txt" }
                 from('build/launch4j') {
@@ -175,4 +173,4 @@ distributions {
         File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()
         commandLine([command.absolutePath])
     }
-}
+}*/

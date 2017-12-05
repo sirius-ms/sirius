@@ -5,6 +5,7 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
@@ -14,11 +15,14 @@ import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
@@ -94,9 +98,39 @@ public abstract class ApplicationCore {
         }
 
         if (Files.exists(loggingPropFile)) {
-            System.setProperty("java.util.logging.config.file", loggingPropFile.toString());
+            //load user props
+            Properties logProps = new Properties();
+            try (InputStream input = Files.newInputStream(loggingPropFile, StandardOpenOption.READ)) {
+                logProps.load(input);
+            } catch (IOException | NullPointerException e) {
+                System.err.println("Could not set logging properties, using default java logging properties and directories");
+                e.printStackTrace();
+            }
+
+            //add ErrorReporter LogManager if it exists
             try {
-                LogManager.getLogManager().readConfiguration();
+                String errorReportHandlerClassName = "de.unijena.bioinf.sirius.core.errorReport.ErrorReportHandler";
+                ClassLoader.getSystemClassLoader().loadClass(errorReportHandlerClassName);
+                String handlers = logProps.getProperty("handlers");
+
+                if (handlers != null && !handlers.isEmpty())
+                    handlers += "," + errorReportHandlerClassName;
+                else
+                    handlers = errorReportHandlerClassName;
+
+                logProps.put("handlers", handlers);
+                logProps.put("de.unijena.bioinf.sirius.core.errorReport.ErrorReportHandler.level", "FINE");
+                logProps.put("de.unijena.bioinf.sirius.core.errorReport.ErrorReportHandler.formatter", "java.util.logging.SimpleFormatter");
+            } catch (ClassNotFoundException ignore) {
+                //this is just to skip the error report logger if it is no available (e.g. CLI)
+            }
+
+
+            try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                logProps.store(out, "Auto generated in memory prop file");
+                ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+                LogManager.getLogManager().readConfiguration(in);
             } catch (IOException e) {
                 System.err.println("Could not read logging configuration.");
                 e.printStackTrace();
@@ -147,13 +181,14 @@ public abstract class ApplicationCore {
         int cores = hardware.getProcessor().getPhysicalProcessorCount();
         SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
         SIRIUS_PROPERTIES_FILE.addProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
-        DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores") + " cores that handle " + PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads") + " threads were found.");
+        DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
 
         //bug reporting
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
 
-
+        SiriusJobs.setGlobalJobManager(PropertyManager.getNumberOfCores() + 1); //do we really want +1??
+        DEFAULT_LOGGER.info("Job manager initialized!");
     }
 
 

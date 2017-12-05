@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
@@ -13,12 +13,13 @@ import java.util.Arrays;
 /**
  * Created by ge28quv on 23/05/17.
  */
-public class ZodiacCLI extends FingeridCLI {
-    private ZodiacOptions zodiacOptions;
+public class ZodiacCLI<Options extends ZodiacOptions> extends CLI<Options> {
+    //todo @Marcus this should be in sirius_cli module
+    //todo @Marcus FingeridCLI should extend ZoiacCLI instead
     @Override
     public void compute() {
-        if (options.isZodiac()){
-            Zodiac zodiac = new Zodiac(zodiacOptions);
+        if (options.isZodiac()) {
+            Zodiac zodiac = new Zodiac(options);
             zodiac.run();
         } else {
             super.compute();
@@ -26,7 +27,7 @@ public class ZodiacCLI extends FingeridCLI {
 
     }
 
-    @Override
+    /*@Override
     public void parseArgs(String[] args) {
         super.parseArgs(args);
     }
@@ -34,13 +35,13 @@ public class ZodiacCLI extends FingeridCLI {
     @Override
     protected void parseArgsAndInit(String[] args) {
         super.parseArgsAndInit(args);
-    }
+    }*/
 
-    @Override
-    public void parseArgs(String[] args, Class<FingerIdOptions> optionsClass) {
+    /*@Override
+    public void parseArgs(String[] args, Class<Options> optionsClass) {
         try {
             if (isZodiac(args)) {
-                if (args.length==1){
+                if (args.length == 1) {
                     System.out.println(CliFactory.createCli(ZodiacOptions.class).getHelpMessage());
                     System.exit(0);
                 }
@@ -52,47 +53,47 @@ public class ZodiacCLI extends FingeridCLI {
         } catch (HelpRequestedException e) {
             super.parseArgs(args, optionsClass);
         }
-    }
+    }*/
 
 
-    private boolean isZodiac(String[] args){
+    /*private boolean isZodiac(String[] args) {
         for (String arg : args) {
             if (arg.toLowerCase().equals("--zodiac")) return true;
         }
         return false;
-    }
+    }*/
 
 
     @Override
     public void setup() {
-        if (!isZodiac()){
+        if (!options.isZodiac()) {
             super.setup();
             return;
         }
-        Path output = Paths.get(zodiacOptions.getOutputPath());
-        if (!Files.exists(output)){
+        Path output = Paths.get(options.getOutput());
+        if (!Files.exists(output)) {
             try {
                 Files.createDirectories(output);
             } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Cannot create output directory: "+e.getMessage());
+                LoggerFactory.getLogger(this.getClass()).error("Cannot create output directory: " + e.getMessage());
             }
         }
     }
 
     @Override
     public void validate() {
-        if (!isZodiac()){
+        if (!options.isZodiac()) {
             super.validate();
             return;
         }
-        Path output = Paths.get(zodiacOptions.getOutputPath());
-        if (!Files.isDirectory(output) && Files.exists(output)){
+        Path output = Paths.get(options.getOutput());
+        if (!Files.isDirectory(output) && Files.exists(output)) {
             LoggerFactory.getLogger(this.getClass()).error("the output must be a directory or non-existing.");
             System.exit(1);
         }
     }
 
-    private boolean isZodiac(){
-        return zodiacOptions!=null;
-    }
+    /*private boolean isZodiac() {
+        return zodiacOptions != null;
+    }*/
 }
