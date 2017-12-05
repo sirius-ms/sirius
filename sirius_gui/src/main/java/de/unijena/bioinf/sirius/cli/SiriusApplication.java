@@ -11,7 +11,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.db.CustomDatabase;
+import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;

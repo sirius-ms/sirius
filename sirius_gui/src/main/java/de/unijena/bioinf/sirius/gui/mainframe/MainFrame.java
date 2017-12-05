@@ -2,15 +2,15 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.fingerid.net.VersionsInfo;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.compute.BackgroundComputation;
 import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
-import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
-import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
+import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
 public class MainFrame extends JFrame implements DropTargetListener {
     public static final MainFrame MF = new MainFrame();
@@ -168,7 +168,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     if (versionsNumber.expired()) {
                         new UpdateDialog(mf, versionsNumber);
                     }
-                    if(!versionsNumber.outdated()){
+                    if (!versionsNumber.outdated()) {
                         mf.csiFingerId.setEnabled(true);
                     }
                     if (versionsNumber.hasNews()) {

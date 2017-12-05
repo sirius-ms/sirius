@@ -4,22 +4,17 @@ import com.google.common.base.Function;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.fingerid.FingerIdResult;
-import de.unijena.bioinf.sirius.gui.fingerid.Compound;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.Compound;
+import de.unijena.bioinf.fingerid.FingerIdData;
 import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
-import javax.swing.event.SwingPropertyChangeSupport;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 

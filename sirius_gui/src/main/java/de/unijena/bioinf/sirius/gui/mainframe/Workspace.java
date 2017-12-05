@@ -8,11 +8,11 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.sirius.gui.fingerid.CSVExporter;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.CSVExporter;
+import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -40,7 +40,6 @@ import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
  */
 public abstract class Workspace {
     //todo remove all the dialogs from here!!!
-    public static final ConfigStorage CONFIG_STORAGE = new ConfigStorage();//todo generic file path remembering
     public static final SiriusSaveFileFilter SAVE_FILE_FILTER = new SiriusSaveFileFilter();
     public static final BasicEventList<ExperimentContainer> COMPOUNT_LIST = new BasicEventList<>();
     private static final HashSet<String> NAMES = new HashSet<>();
@@ -71,7 +70,7 @@ public abstract class Workspace {
 
     public static void exportResults() {
         JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(CONFIG_STORAGE.getCsvExportPath());
+        jfc.setCurrentDirectory(ConfigStorage.CONFIG_STORAGE.getCsvExportPath());
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new SupportedExportCSVFormatsFilter());
@@ -86,7 +85,7 @@ public abstract class Workspace {
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
                 if (selFile == null) continue;
-                CONFIG_STORAGE.setCsvExportPath((selFile.exists() && selFile.isDirectory()) ? selFile : selFile.getParentFile());
+                ConfigStorage.CONFIG_STORAGE.setCsvExportPath((selFile.exists() && selFile.isDirectory()) ? selFile : selFile.getParentFile());
 
                 if (accessory.isSingleFile()) {
                     String name = selFile.getName();

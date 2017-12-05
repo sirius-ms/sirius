@@ -6,12 +6,11 @@ package de.unijena.bioinf.sirius.gui.actions;
  */
 
 import ca.odell.glazedlists.EventList;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdTask;
+import de.unijena.bioinf.fingerid.FingerIdDialog;
+import de.unijena.bioinf.fingerid.FingerIdTask;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.net.ProxyManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

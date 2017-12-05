@@ -1,8 +1,8 @@
 package de.unijena.bioinf.sirius.gui.dialogs;
 
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.sirius.gui.fingerid.VersionsInfo;
-import de.unijena.bioinf.sirius.gui.fingerid.WebAPI;
+import de.unijena.bioinf.fingerid.net.VersionsInfo;
+import de.unijena.bioinf.fingerid.net.WebAPI;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

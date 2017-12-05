@@ -7,7 +7,7 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.myxo.io.spectrum.CSVFormatReader;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
-import de.unijena.bioinf.sirius.gui.configs.ConfigStorage;
+import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorListDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedDataFormatsFilter;

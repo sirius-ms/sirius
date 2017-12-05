@@ -8,8 +8,8 @@ package de.unijena.bioinf.sirius.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
-import de.unijena.bioinf.sirius.gui.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.fingerid.FingerIdDialog;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.FingerIdDialog;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 

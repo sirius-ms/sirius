@@ -1,10 +1,7 @@
 package de.unijena.bioinf.sirius.cli;
 
-import com.lexicalscope.jewel.cli.ArgumentValidationException;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
-import com.lexicalscope.jewel.cli.InvalidOptionSpecificationException;
-import de.unijena.bioinf.sirius.cli.CLI;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -16,7 +13,7 @@ import java.util.Arrays;
 /**
  * Created by ge28quv on 23/05/17.
  */
-public class ZodiacCLI extends FingeridApplication {
+public class ZodiacCLI extends FingeridCLI {
     private ZodiacOptions zodiacOptions;
     @Override
     public void compute() {
