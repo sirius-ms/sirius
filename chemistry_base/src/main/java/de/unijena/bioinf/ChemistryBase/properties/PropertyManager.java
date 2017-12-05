@@ -73,4 +73,12 @@ public class PropertyManager {
         return global;
     }
 
+    public static int getNumberOfCores(){
+        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores","1"));
+    }
+
+    public static int getNumberOfThreads(){
+        return Integer.valueOf(PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.threads","2"));
+    }
+
 }
