@@ -20,9 +20,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.AbstractList;
 
+import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 import static de.unijena.bioinf.sirius.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.COMPOUNT_LIST;
-import static de.unijena.bioinf.sirius.gui.mainframe.Workspace.CONFIG_STORAGE;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

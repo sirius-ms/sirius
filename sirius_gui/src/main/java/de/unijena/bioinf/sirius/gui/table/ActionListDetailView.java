@@ -10,7 +10,6 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.gui.fingerid.CompoundCandidate;
 import de.unijena.bioinf.sirius.gui.utils.SearchTextField;
 import org.jdesktop.beans.AbstractBean;
 

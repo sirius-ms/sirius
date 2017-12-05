@@ -1,9 +1,8 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
-import de.unijena.bioinf.sirius.gui.fingerid.CandidateList;
-import de.unijena.bioinf.sirius.gui.fingerid.CandidateListStructureView;
-import de.unijena.bioinf.sirius.gui.fingerid.CandidateListTableView;
-import de.unijena.bioinf.sirius.gui.fingerid.CandidateListDetailViewPanel;
+import de.unijena.bioinf.fingerid.CandidateList;
+import de.unijena.bioinf.fingerid.CandidateListStructureView;
+import de.unijena.bioinf.fingerid.CandidateListTableView;
 import de.unijena.bioinf.sirius.gui.utils.PanelDescription;
 
 import javax.swing.*;

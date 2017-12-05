@@ -1,6 +1,5 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.table.list_stats.ListStats;
 
 import javax.swing.*;

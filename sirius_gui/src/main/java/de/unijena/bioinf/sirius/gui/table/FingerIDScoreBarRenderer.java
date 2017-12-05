@@ -1,6 +1,6 @@
 package de.unijena.bioinf.sirius.gui.table;
 
-import de.unijena.bioinf.sirius.gui.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.mainframe.molecular_formular.FormulaScoreListStats;
 
 import javax.swing.*;
