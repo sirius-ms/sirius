@@ -11,7 +11,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.fingerid.storage.ConfigStorage;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.fingerid.CSVExporter;
+import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
 import de.unijena.bioinf.fingerid.FingerIdData;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
@@ -182,7 +182,7 @@ public abstract class Workspace {
                     datas.add(elem.getFingerIdData());
                 }
                 final File resultFile = new File(selectedFile, name + ".csv");
-                new CSVExporter().exportToFile(resultFile, datas);
+                new FingerIdDataCSVExporter().exportToFile(resultFile, datas);
             }
         }
     }

@@ -31,6 +31,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+import de.unijena.bioinf.fingerid.db.SearchableDbOnDisc;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.fingerid.net.FingerIdJob;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import com.lexicalscope.jewel.cli.Option;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -6,7 +6,7 @@ import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import java.io.File;
 import java.util.List;
 
-public interface FingerIdOptions extends SiriusGUIOptions {
+public interface FingerIdOptions extends ZodiacOptions {
 
     @Option(shortName = "d", defaultValue = "all", description = "search formulas in given database: all, pubchem, bio, kegg, hmdb")
     String getDatabase();

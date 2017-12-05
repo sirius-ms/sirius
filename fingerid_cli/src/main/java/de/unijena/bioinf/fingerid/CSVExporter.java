@@ -28,36 +28,21 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.*;
 
 public class CSVExporter {
-
-    public void exportToFile(File file, FingerIdData data) throws IOException {
-        try (final BufferedWriter bw = Files.newBufferedWriter(file.toPath(), Charset.defaultCharset())) {
-            export(bw, data);
-        }
-    }
-    public void exportToFile(File file, List<FingerIdData> data) throws IOException {
-        try (final BufferedWriter bw = Files.newBufferedWriter(file.toPath(), Charset.defaultCharset())) {
-            export(bw, data);
-        }
-    }
 
     public void exportFingerIdResults(Writer writer, List<FingerIdResult> results) throws IOException {
         writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
         final ArrayList<Scored<FingerprintCandidate>> candidates = new ArrayList<>();
         for (FingerIdResult r : results) candidates.addAll(r.getCandidates());
         Collections.sort(candidates, Scored.<FingerprintCandidate>desc());
-        final Multimap<String,String> dbMap = HashMultimap.create();
+        final Multimap<String, String> dbMap = HashMultimap.create();
         final List<String> pubchemIds = new ArrayList<>();
         int rank = 0;
-        for (Scored<FingerprintCandidate> r : candidates)  {
+        for (Scored<FingerprintCandidate> r : candidates) {
             writer.write(r.getCandidate().getInchiKey2D());
             writer.write('\t');
             writer.write(r.getCandidate().getInchi().in2D);
@@ -92,86 +77,13 @@ public class CSVExporter {
 
     }
 
-    public void export(Writer writer, FingerIdData data) throws IOException {
-        writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
-        if (data==null) return;
-        for (int i=0; i < data.compounds.length; ++i) {
-            final Compound c = data.compounds[i];
-            final double score = data.scores[i];
-            final int rank = i+1;
-            writer.write(c.inchi.key2D());
-            writer.write('\t');
-            writer.write(c.inchi.in2D);
-            writer.write('\t');
-            writer.write(c.inchi.extractFormula().toString());
-            writer.write('\t');
-            writer.write(String.valueOf(rank));
-            writer.write('\t');
-            writer.write(String.valueOf(score));
-            writer.write('\t');
-            writer.write(escape(c.name));
-            writer.write('\t');
-            writer.write(c.smiles!=null ? escape(c.smiles.smiles) : escape(""));
-            writer.write('\t');
-            if (Double.isNaN(c.xlogP)) writer.write("\"\"");
-            else writer.write(String.valueOf(c.xlogP));
-            writer.write('\t');
-            list(writer, c.pubchemIds);
-            writer.write('\t');
-            links(writer, c);
-            writer.write('\n');
-        }
-    }
-
-    public void export(Writer writer, List<FingerIdData> data) throws IOException {
-        writer.write("inchikey2D\tinchi\tmolecularFormula\trank\tscore\tname\tsmiles\txlogp\tpubchemids\tlinks\n");
-        final List<Scored<Compound>> candidates = new ArrayList<>();
-        for (FingerIdData d : data) {
-            if (d==null) continue;
-            for (int k=0; k < d.scores.length; ++k) {
-                final Compound c = d.compounds[k];
-                final Scored<Compound> sc = new Scored<>(c, d.scores[k]);
-                candidates.add(sc);
-            }
-        }
-
-        Collections.sort(candidates, Scored.<Compound>desc());
-
-        if (data==null) return;
-        for (int i=0; i < candidates.size(); ++i) {
-            final Compound c = candidates.get(i).getCandidate();
-            final double score = candidates.get(i).getScore();
-            final int rank = i+1;
-            writer.write(c.inchi.key2D());
-            writer.write('\t');
-            writer.write(c.inchi.in2D);
-            writer.write('\t');
-            writer.write(c.inchi.extractFormula().toString());
-            writer.write('\t');
-            writer.write(String.valueOf(rank));
-            writer.write('\t');
-            writer.write(String.valueOf(score));
-            writer.write('\t');
-            writer.write(escape(c.name));
-            writer.write('\t');
-            writer.write(c.smiles!=null ? escape(c.smiles.smiles) : escape(null));
-            writer.write('\t');
-            if (Double.isNaN(c.xlogP)) writer.write("\"\"");
-            else writer.write(String.valueOf(c.xlogP));
-            writer.write('\t');
-            list(writer, c.pubchemIds);
-            writer.write('\t');
-            links(writer, c);
-            writer.write('\n');
-        }
-    }
 
     public static void list(Writer writer, int[] pubchemIds) throws IOException {
-        if (pubchemIds==null || pubchemIds.length==0) {
+        if (pubchemIds == null || pubchemIds.length == 0) {
             writer.write("\"\"");
         } else {
             writer.write(String.valueOf(pubchemIds[0]));
-            for (int i=1; i < pubchemIds.length; ++i) {
+            for (int i = 1; i < pubchemIds.length; ++i) {
                 writer.write(';');
                 writer.write(String.valueOf(pubchemIds[i]));
             }
@@ -179,13 +91,13 @@ public class CSVExporter {
     }
 
     public static void links(Writer w, Compound c) throws IOException {
-        if (c.databases==null) {
+        if (c.databases == null) {
             w.write("\"\"");
             return;
         } else links(w, c.databases);
     }
 
-    public static void links(Writer w, Multimap<String,String> databases) throws IOException {
+    public static void links(Writer w, Multimap<String, String> databases) throws IOException {
         final Iterator<Map.Entry<String, Collection<String>>> iter = databases.asMap().entrySet().iterator();
         if (!iter.hasNext()) {
             w.write("\"\"");
@@ -194,7 +106,7 @@ public class CSVExporter {
         Map.Entry<String, Collection<String>> x = iter.next();
         w.write(x.getKey());
         Collection<String> col = withoutNulls(x.getValue());
-        if (col.size()>0) {
+        if (col.size() > 0) {
             w.write(":(");
             w.write(escape(Joiner.on(' ').join(col)));
             w.write(")");
@@ -204,7 +116,7 @@ public class CSVExporter {
             x = iter.next();
             w.write(x.getKey());
             col = withoutNulls(x.getValue());
-            if (col.size()>0) {
+            if (col.size() > 0) {
                 w.write(":(");
                 w.write(escape(Joiner.on(' ').join(col)));
                 w.write(")");
@@ -213,7 +125,7 @@ public class CSVExporter {
     }
 
     public static String escape(String name) {
-        if (name==null) return "\"\"";
+        if (name == null) return "\"\"";
         return name.replace('\t', ' ').replace('"', '\'');
     }
 

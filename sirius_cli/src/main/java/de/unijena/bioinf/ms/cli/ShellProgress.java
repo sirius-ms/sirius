@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.Progress;

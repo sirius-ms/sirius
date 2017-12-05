@@ -1,8 +1,7 @@
-package de.unijena.bioinf.sirius.dbgen;
+package de.unijena.bioinf.fingerid.db;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import org.openscience.cdk.exception.CDKException;
 

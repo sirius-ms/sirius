@@ -153,7 +153,7 @@ public class CandidateListView extends ActionListDetailView<CompoundCandidate, S
             }
 
             try {
-                new CSVExporter().exportToFile(selectedFile, new ArrayList<>(datas));
+                new FingerIdDataCSVExporter().exportToFile(selectedFile, new ArrayList<>(datas));
             } catch (Exception e2) {
                 ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());
                 LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);

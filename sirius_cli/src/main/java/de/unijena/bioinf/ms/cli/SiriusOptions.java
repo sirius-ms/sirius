@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import com.lexicalscope.jewel.cli.Option;
 import com.lexicalscope.jewel.cli.Unparsed;
@@ -40,14 +40,6 @@ public interface SiriusOptions {
 
     @Option(longName = {"sirius", "workspace"}, shortName = "w", description = "store workspace into given file, such that it can be loaded by SIRIUS GUI afterwards", defaultToNull = true)
     String getSirius();
-
-    /////////////////////////////////////////////////
-    // run Zodiac
-
-    @Option(longName = {"zodiac"}, description = "run zodiac on a given sirius workspace.", hidden = true)
-    boolean isZodiac();
-
-    /////////////////////////////////////////////////
 
     @Option
     boolean isVersion();
@@ -78,22 +70,23 @@ public interface SiriusOptions {
 
     @Option
     boolean isCite();
-/*
-    @Option(shortName = "o", description = "target directory/filename for the output", defaultToNull = true)
-    public File getOutput();
 
-    @Option(shortName = "O", description = "file format of the output. Available are 'dot', 'json' and 'sirius'. 'sirius' is file format that can be read by the Sirius 3 user interface.", defaultToNull = true)
-    public String getFormat();
+    /*
+        @Option(shortName = "o", description = "target directory/filename for the output", defaultToNull = true)
+        public File getOutput();
 
-    @Option(shortName = "a", longName = "annotate", description = "if set, a csv file is  created additional to the trees. It contains all annotated peaks together with their explanation ")
-    public boolean isAnnotating();
+        @Option(shortName = "O", description = "file format of the output. Available are 'dot', 'json' and 'sirius'. 'sirius' is file format that can be read by the Sirius 3 user interface.", defaultToNull = true)
+        public String getFormat();
 
-    @Option(longName = "no-html", description = "only for DOT/graphviz output: Do not use html for node labels")
-    public boolean isNoHTML();
+        @Option(shortName = "a", longName = "annotate", description = "if set, a csv file is  created additional to the trees. It contains all annotated peaks together with their explanation ")
+        public boolean isAnnotating();
 
-    @Option(longName = "iontree", description = "Print molecular formulas and node labels with the ion formula instead of the neutral formula")
-    public boolean isIonTree();
-*/
+        @Option(longName = "no-html", description = "only for DOT/graphviz output: Do not use html for node labels")
+        public boolean isNoHTML();
+
+        @Option(longName = "iontree", description = "Print molecular formulas and node labels with the ion formula instead of the neutral formula")
+        public boolean isIonTree();
+    */
     @Option(shortName = "p", description = "name of the configuration profile. Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.", defaultValue = "default")
     String getProfile();
 
@@ -106,7 +99,7 @@ public interface SiriusOptions {
     @Option(shortName = "z", longName = {"parentmass", "precursor", "mz"}, description = "the mass of the parent ion", defaultToNull = true)
     Double getParentMz();
 
-    @Option(shortName = "i", longName = "ion", description = "the ionization/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+.", defaultToNull =true)
+    @Option(shortName = "i", longName = "ion", description = "the ionization/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+.", defaultToNull = true)
     String getIon();
 
     @Unparsed
@@ -124,5 +117,12 @@ public interface SiriusOptions {
 
     @Option(longName = "maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultToNull = true)
     Double getMaxMz();
+
+    @Option(
+            longName = {"processors, cores"},
+            description = "number of cpu cores to use. If not specified Zodiac uses all available.",
+            defaultValue = "0"
+    )
+    int getNumOfCores();
 
 }

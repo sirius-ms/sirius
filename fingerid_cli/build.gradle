@@ -11,10 +11,181 @@ dependencies {
 
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict", version: "$fingeridVersion"
     compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
 
     //cdk
     compile "org.openscience.cdk:cdk-silent:$cdk_version"
-    compile group: "net.iharder", name: "base64", version: "2.3.8"
+
+}
+
+mainClassName = 'de.unijena.bioinf.ms.cli.FingeridApplication'
+project.ext.set("type", "console")
 
 
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+/*################### Windows release Stuff ################### */
+launch4j {
+    mainClassName = project.mainClassName
+    headerType = "$project.type"
+    jreRuntimeBits = "$project.arch"
+
+    outfile = "${project.appName}.exe"
+}
+
+/*################### Build distributions ################### */
+task distribute { group = 'distribution' }
+distribute.dependsOn ':buildDoku'
+
+distributions {
+    project.arch.split(',').each { ar ->
+        def n = "${project.linSuffix}${ar}"
+        create(n, {
+            baseName = "${project.appName}-$n-headless"
+            contents {
+                into('lib') {
+                    from("build/install/${project.name}/lib") {
+                        exclude libExclude
+                    }
+                    from("${project.glpkPath}/l${ar}/") {
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
+                }
+
+                into('bin') {
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}") {
+                        exclude('sirius-gui')
+                    }
+                    from("${getRootDir()}/LICENSE.txt")
+                }
+                into('doc') {
+                    from(project.pdfManualPath)
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+    }
+
+    //crete win32And64 zip tasks
+    project.arch.split(',').each { ar ->
+        def n = "${project.winSuffix}${ar}"
+        create(n, {
+
+            baseName = "${project.appName}-$n-headless"
+            contents {
+                into('lib') {
+                    from('build/launch4j/lib') {
+                        exclude libExclude
+                    }
+                }
+                from { "${project.glpkPath}/w${ar}/" }
+                from("${project.distPath}") {
+                    exclude('sirius-gui')
+                }
+                from { "${getRootDir()}/LICENSE.txt" }
+                from('build/launch4j') {
+                    include("*-${ar}.exe")
+                }
+                into('doc') {
+                    from(project.pdfManualPath)
+                }
+                into('doc/html') {
+                    from("${project.manualPath}/build/html")
+                }
+            }
+        })
+        distribute.dependsOn "${n}DistZip"
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+    }
+
+    //create osx zip
+    def n = "${project.macSuffix}64"
+    create(n, {
+        baseName = "${project.appName}-$n-headless"
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib") {
+                    exclude libExclude
+                }
+                from("${project.glpkPath}/osx/")
+                exclude('*.zip')
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+                from("${project.distPath}") {
+                    exclude('sirius-gui')
+                }
+                from("${getRootDir()}/LICENSE.txt")
+            }
+            into('doc') {
+                from(project.pdfManualPath)
+            }
+            into('doc/html') {
+                from("${project.manualPath}/build/html")
+            }
+        }
+    })
+    distribute.dependsOn "${n}DistZip"
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
+
+    linux32DistZip.dependsOn 'installDist'
+    linux32DistTar.dependsOn 'installDist'
+    installLinux32Dist.dependsOn 'installDist'
+
+    linux64DistZip.dependsOn 'installDist'
+    linux64DistTar.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
+
+    win32DistZip.dependsOn 'createExe'
+    win32DistTar.dependsOn 'createExe'
+    installWin32Dist.dependsOn 'createExe'
+
+    win64DistZip.dependsOn 'createExe'
+    win64DistTar.dependsOn 'createExe'
+    installWin64Dist.dependsOn 'createExe'
+
+// what should be published
+    publishing {
+        publications {
+            sirius(MavenPublication) {
+                artifactId = "${project.appName}"
+                groupId = "$group"
+
+                pom.withXml {}
+                artifact source: win64DistZip, classifier: 'win64-headless', extension: 'zip'
+                artifact source: win32DistZip, classifier: 'win32-headless', extension: 'zip'
+                artifact source: linux32DistZip, classifier: 'linux32-headless', extension: 'zip'
+                artifact source: linux64DistZip, classifier: 'linux64-headless', extension: 'zip'
+                artifact source: osx64DistZip, classifier: 'osx64-headless', extension: 'zip'
+            }
+
+        }
+    }
+    artifactoryPublish.dependsOn 'distribute'
+
+    task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+        File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()
+        commandLine([command.absolutePath])
+    }
 }

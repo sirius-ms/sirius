@@ -1,4 +1,4 @@
-package de.unijena.bioinf.fingerid;
+package de.unijena.bioinf.fingerid.net;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -6,8 +6,6 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.net.VersionsInfo;
-import de.unijena.bioinf.fingerid.net.WebAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,9 +68,11 @@ public class CachedRESTDB {
     protected File getBioDirectory() {
         return new File(directory, "bio");
     }
+
     protected File getNonBioDirectory() {
         return new File(directory, "not-bio");
     }
+
     protected File getCustomDirectory(String name) {
         return new File(new File(directory, "custom"), name);
     }
@@ -149,7 +149,7 @@ public class CachedRESTDB {
     private void parseJson(File f, List<FingerprintCandidate> candidates) throws IOException {
         try (final BufferedReader reader = FileUtils.getReader(f)) {
             final JsonArray array = Json.createReader(reader).readArray();
-            for (int i=0; i < array.size(); ++i) {
+            for (int i = 0; i < array.size(); ++i) {
                 candidates.add(FingerprintCandidate.fromJSON(fingerprintVersion.getMaskedFingerprintVersion(), array.getJsonObject(i)));
             }
         }
@@ -168,11 +168,6 @@ public class CachedRESTDB {
         for (FingerprintCandidate c : compounds) cs.put(c.getInchi().key2D(), c);
         return new ArrayList<>(cs.values());
     }
-
-
-
-
-
 
 
 }

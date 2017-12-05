@@ -1,6 +1,4 @@
-package de.unijena.bioinf.fingerid;
-
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
+package de.unijena.bioinf.fingerid.db;
 
 import java.io.File;
 
@@ -42,6 +40,7 @@ public class SearchableDbOnDisc implements SearchableDatabase {
     public File getDatabasePath() {
         return path;
     }
+
     @Override
     public String toString() {
         return name;

@@ -1,17 +1,19 @@
-package de.unijena.bioinf.sirius.cli;
+package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.GibbsSampling.GibbsSamplerMain;
-import de.unijena.bioinf.GibbsSampling.LibraryHitQuality;
 import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.GibbsSampling.model.distributions.*;
+import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
+import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
+import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
+import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.EdgeScorings;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
@@ -19,7 +21,6 @@ import de.unijena.bioinf.sirius.projectspace.ExperimentResult;
 import de.unijena.bioinf.sirius.projectspace.SiriusFileReader;
 import de.unijena.bioinf.sirius.projectspace.SiriusWorkspaceReader;
 import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -29,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Logger;
 
 
 /**
@@ -44,24 +44,20 @@ public class Zodiac {
     private int maxCandidates;
 
 
-    public Zodiac(ZodiacOptions options){
-        this.workSpacePath = Paths.get(options.getInput());
-        this.libraryHitsFile = (options.getLibraryHitsFile()==null ? null : Paths.get(options.getLibraryHitsFile()));
-        this.outputPath = Paths.get(options.getOutputPath());
+    public Zodiac(ZodiacOptions options) {
+        this.workSpacePath = Paths.get(options.getSirius());
+        this.libraryHitsFile = (options.getLibraryHitsFile() == null ? null : Paths.get(options.getLibraryHitsFile()));
+        this.outputPath = Paths.get(options.getOutput());
         this.options = options;
     }
 
 
-    public void run(){
-        maxCandidates = (options.getMaxNumOfCandidates()<=0 ? Integer.MAX_VALUE : options.getMaxNumOfCandidates());
+    public void run() {
+        maxCandidates = (options.getMaxNumOfCandidates() <= 0 ? Integer.MAX_VALUE : options.getMaxNumOfCandidates());
 
         try {
-
-
-            int workerCount = options.processors()>0 ? options.processors() : (new SystemInfo()).getHardware().getProcessor().getPhysicalProcessorCount()-1;
-
-
-
+            //todo For the official relese zodiac should become a job an create subjobs for multithreading
+            int workerCount = PropertyManager.getNumberOfCores();
 
 //        //reactions
             Reaction[] reactions = GibbsSamplerMain.parseReactions(1);
@@ -77,11 +73,11 @@ public class Zodiac {
             //changed
             Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(input, maxCandidates);
 
-            System.out.println("number of compounds: "+candidatesMap.size());
+            System.out.println("number of compounds: " + candidatesMap.size());
 
 
-
-            if (libraryHitsFile!=null) GibbsSamplerMain.parseLibraryHits(libraryHitsFile, Paths.get(options.getSpectraFile()),  candidatesMap);
+            if (libraryHitsFile != null)
+                GibbsSamplerMain.parseLibraryHits(libraryHitsFile, Paths.get(options.getSpectraFile()), candidatesMap);
             setKnownCompounds(candidatesMap, netSingleReactionDiffs);
 
             GibbsSamplerMain.addNotExplainableDummy(candidatesMap, maxCandidates);
@@ -97,9 +93,9 @@ public class Zodiac {
 
 
             NodeScorer[] nodeScorers;
-            boolean useLibraryHits = (libraryHitsFile!=null);
+            boolean useLibraryHits = (libraryHitsFile != null);
             double libraryScore = 1d;//todo which lambda to use!?
-            if (useLibraryHits){
+            if (useLibraryHits) {
                 nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(libraryScore, 0.3, netSingleReactionDiffs)};
 //                System.out.println("use LibraryHitScorer");
             } else {
@@ -108,26 +104,23 @@ public class Zodiac {
             }
 
 
-
             EdgeFilter edgeFilter = null;
 
-            if(options.getThresholdFilter() > 0.0D && options.getLocalFilter() > 0.0D) {
+            if (options.getThresholdFilter() > 0.0D && options.getLocalFilter() > 0.0D) {
                 edgeFilter = new EdgeThresholdMinConnectionsFilter(options.getThresholdFilter(), options.getLocalFilter(), options.getMinLocalConnections());
-            } else if(options.getThresholdFilter() > 0.0D) {
+            } else if (options.getThresholdFilter() > 0.0D) {
                 edgeFilter = new EdgeThresholdFilter(options.getThresholdFilter());
-            } else if(options.getLocalFilter() > 0.0D) {
+            } else if (options.getLocalFilter() > 0.0D) {
                 edgeFilter = new LocalEdgeFilter(options.getLocalFilter());
             }
-            if(edgeFilter == null) {
+            if (edgeFilter == null) {
                 edgeFilter = new EdgeThresholdFilter(0);
             }
-            
-
 
 
             boolean estimateByMedian = true;
             ScoreProbabilityDistribution probabilityDistribution = null;
-            if(options.getProbabilityDistribution().equals(EdgeScorings.exponential)) {
+            if (options.getProbabilityDistribution().equals(EdgeScorings.exponential)) {
                 probabilityDistribution = new ExponentialDistribution(estimateByMedian);
             } else if (options.getProbabilityDistribution().equals(EdgeScorings.lognormal)) {
                 probabilityDistribution = new LogNormalDistribution(estimateByMedian);
@@ -149,7 +142,7 @@ public class Zodiac {
 
             GraphValidationMessage validationMessage = graph.validate();
 
-            if (validationMessage.isError()){
+            if (validationMessage.isError()) {
                 LoggerFactory.getLogger(this.getClass()).error(validationMessage.getMessage());
                 return;
             } else if (validationMessage.isWarning()) {
@@ -197,7 +190,8 @@ public class Zodiac {
 
             final String id = ids[i];
 
-            buffer.append(id); buffer.append(SEP);
+            buffer.append(id);
+            buffer.append(SEP);
 
             final Scored<FragmentsCandidate>[] currentResults = result[i];
             final Scored<FragmentsCandidate> bestResult = currentResults[0];
@@ -207,7 +201,7 @@ public class Zodiac {
             MutableMs2Experiment experiment = new MutableMs2Experiment(bestResult.getCandidate().getExperiment());
             experiment.setMolecularFormula(bestResult.getCandidate().getFormula());
             experiment.setPrecursorIonType(bestResult.getCandidate().getIonType());
-            Path file = outputPath.resolve(Integer.toString(i+1)+"_"+id+".ms");
+            Path file = outputPath.resolve(Integer.toString(i + 1) + "_" + id + ".ms");
             final BufferedWriter writer = Files.newBufferedWriter(file, Charset.defaultCharset());
             new JenaMsWriter().write(writer, experiment);
             writer.close();
@@ -218,12 +212,13 @@ public class Zodiac {
 
     private final static String SEP = "\t";
     private final static int NUMBER_OF_HITS = 5;
+
     private static void writeOutput(String[] ids, Scored<FragmentsCandidate>[][] initial, Scored<FragmentsCandidate>[][] result, Graph<FragmentsCandidate> graph, Path outputPath) throws IOException {
         int[] connectingPeaks = graph.getMaxConnectionCounts();
         String[] ids2 = graph.getIds();
 
         BufferedWriter writer = Files.newBufferedWriter(outputPath, Charset.defaultCharset());
-        writer.write("id"+SEP+"SiriusMF"+SEP+"SiriusScore"+SEP+"connectingPeaks"+SEP+"ZodiacMF"+SEP+"ZodiacScore");
+        writer.write("id" + SEP + "SiriusMF" + SEP + "SiriusScore" + SEP + "connectingPeaks" + SEP + "ZodiacMF" + SEP + "ZodiacScore");
         for (int i = 0; i < ids.length; i++) {
             final StringBuffer buffer = new StringBuffer();
 
@@ -235,9 +230,12 @@ public class Zodiac {
             if (!id.equals(ids2[i])) throw new RuntimeException("different ids");
 
 
-            buffer.append(id); buffer.append(SEP);
-            buffer.append(siriusMF); buffer.append(SEP);
-            buffer.append(Double.toString(siriusScore)); buffer.append(SEP);
+            buffer.append(id);
+            buffer.append(SEP);
+            buffer.append(siriusMF);
+            buffer.append(SEP);
+            buffer.append(Double.toString(siriusScore));
+            buffer.append(SEP);
             buffer.append(connections);
 
             final Scored<FragmentsCandidate>[] currentResults = result[i];
@@ -246,7 +244,7 @@ public class Zodiac {
                 final String mf = currentResult.getCandidate().getFormula().formatByHill();
                 final double score = currentResult.getScore();
 
-                if (score<=0) break; //don't write MF with 0 probability
+                if (score <= 0) break; //don't write MF with 0 probability
 
                 buffer.append(SEP);
                 buffer.append(mf);
@@ -275,9 +273,9 @@ public class Zodiac {
             }
             List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
             Collections.sort(candidates);
-            if (candidates.size()>maxCandidates) candidates = candidates.subList(0, maxCandidates);
+            if (candidates.size() > maxCandidates) candidates = candidates.subList(0, maxCandidates);
 
-            if (candidates.size()>0) listMap.put(experiment.getName(), candidates);
+            if (candidates.size() > 0) listMap.put(experiment.getName(), candidates);
 
 
         }
@@ -295,7 +293,7 @@ public class Zodiac {
             final LibraryHit libraryHit = candidateList.get(0).getLibraryHit();
 
             //todo at least 5 peaks match, no cosine threshold?
-            if (libraryHit.getSharedPeaks()<5) continue;
+            if (libraryHit.getSharedPeaks() < 5) continue;
 
             MolecularFormula correctMF = libraryHit.getMolecularFormula();
             List<FragmentsCandidate> candidates = candidatesMap.get(id);
@@ -303,14 +301,14 @@ public class Zodiac {
             //todo does the ionization of library hit and compound have to match!?
             for (FragmentsCandidate candidate : candidates) {
                 boolean matches = candidate.getFormula().equals(correctMF);
-                if (!matches){
+                if (!matches) {
                     MolecularFormula diff = candidate.getFormula().subtract(correctMF);
-                    if (diff.getMass()<0) diff = diff.negate();
+                    if (diff.getMass() < 0) diff = diff.negate();
                     matches = allowedDifferences.contains(diff);
                 }
-                if (matches){
+                if (matches) {
                     candidate.setCorrect(true);
-                    System.out.println("Compound "+id+" has library hit. candidate MF is "+candidate.getFormula()+". Library hit is "+correctMF);
+                    System.out.println("Compound " + id + " has library hit. candidate MF is " + candidate.getFormula() + ". Library hit is " + correctMF);
                 }
                 candidate.setInTrainingSet(true);
 
@@ -319,7 +317,7 @@ public class Zodiac {
         }
     }
 
-    private <C> String[] getIdsOfKnownEmptyCompounds(Map<String, List<C>> candidatesMap, List<ExperimentResult> input){
+    private <C> String[] getIdsOfKnownEmptyCompounds(Map<String, List<C>> candidatesMap, List<ExperimentResult> input) {
         List<String> ids = new ArrayList<>();
 //        for (ExperimentResult experimentResult : input) {
 //            if (experimentResult.getExperiment()==null) continue;
@@ -328,11 +326,10 @@ public class Zodiac {
 //        }
         //changed
         for (String key : candidatesMap.keySet()) {
-            if (candidatesMap.get(key).size()>0) ids.add(key);
+            if (candidatesMap.get(key).size() > 0) ids.add(key);
         }
         return ids.toArray(new String[0]);
     }
-
 
 
     private <T> boolean arrayContains(T[] array, T object) {
@@ -340,9 +337,9 @@ public class Zodiac {
     }
 
     private <T> int arrayFind(T[] array, T object) {
-        for(int i = 0; i < array.length; ++i) {
+        for (int i = 0; i < array.length; ++i) {
             Object t = array[i];
-            if(t.equals(object)) {
+            if (t.equals(object)) {
                 return i;
             }
         }
@@ -352,24 +349,23 @@ public class Zodiac {
 
 
     /**
-     *
      * @param ids
      * @param explanationsMap
      * @return best initial formulas with RELATIVE SCORE!!
      */
-    private static Scored<FragmentsCandidate>[][] getBestInitialAssignments(String[] ids, Map<String, List<FragmentsCandidate>> explanationsMap){
+    private static Scored<FragmentsCandidate>[][] getBestInitialAssignments(String[] ids, Map<String, List<FragmentsCandidate>> explanationsMap) {
         Scored<FragmentsCandidate>[][] array = new Scored[ids.length][];
         for (int i = 0; i < ids.length; i++) {
             List<FragmentsCandidate> smfList = explanationsMap.get(ids[i]);
             Scored<FragmentsCandidate>[] smfarray = new Scored[smfList.size()];
 
-            if (true){
+            if (true) {
                 //normalize
                 double max = Double.NEGATIVE_INFINITY;
-                for(int j = 0; j < smfList.size(); ++j) {
+                for (int j = 0; j < smfList.size(); ++j) {
                     final Candidate candidate = smfList.get(j);
                     double score = candidate.getScore();
-                    if(score > max) {
+                    if (score > max) {
                         max = score;
                     }
                 }
@@ -377,14 +373,14 @@ public class Zodiac {
                 double sum = 0.0D;
                 double[] scores = new double[smfList.size()];
 
-                for(int j = 0; j < smfList.size(); ++j) {
+                for (int j = 0; j < smfList.size(); ++j) {
                     final Candidate candidate = smfList.get(j);
                     double expS = Math.exp(1d * (candidate.getScore() - max));
                     sum += expS;
                     scores[j] = expS;
                 }
 
-                for(int j = 0; j < smfList.size(); ++j) {
+                for (int j = 0; j < smfList.size(); ++j) {
                     smfarray[j] = new Scored<FragmentsCandidate>(smfList.get(j), scores[j] / sum);
                 }
 
