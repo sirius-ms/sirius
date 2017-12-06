@@ -79,8 +79,6 @@ public class Sirius {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
 
@@ -120,7 +118,7 @@ public class Sirius {
             instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
-                    SiriusIdentificationJob.this.setProgress((int)evt.getNewValue());
+                    SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
                 }
             });
             final ProcessedInput pinput = instance.validateInput();
@@ -128,20 +126,26 @@ public class Sirius {
             jobManager.submitSubJob(instance);
             TreeComputationInstance.FinalResult fr = instance.takeResult();
             final List<IdentificationResult> irs = new ArrayList<>();
-            int k=0;
+            int k = 0;
             for (FTree tree : fr.getResults()) {
                 irs.add(new IdentificationResult(tree, ++k));
             }
             return irs;
         }
+
+        public Ms2Experiment getExperiment() {
+            return experiment;
+        }
+
+        public int getNumberOfResultsToKeep() {
+            return numberOfResultsToKeep;
+        }
     }
 
-    // TODO: add progress bar
     public BasicJJob<List<IdentificationResult>> makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport) {
         return new SiriusIdentificationJob(experiment, numberOfResultsToReport);
     }
 
-    // TODO: add progress bar
     public BasicJJob<IdentificationResult> makeTreeComputationJob(final Ms2Experiment experiment, final MolecularFormula formula) {
         return new BasicJJob<IdentificationResult>() {
             @Override
@@ -160,8 +164,8 @@ public class Sirius {
      * The elemens CHNOPS will always be contained in the element set. However, you can change their upperbound which
      * is unbounded by default.
      *
-     *@Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(MutableMs2Experiment, FormulaConstraints)}
      * @param newConstraints
+     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(MutableMs2Experiment, FormulaConstraints)}
      */
     @Deprecated
     public void setFormulaConstraints(String newConstraints) {
@@ -175,8 +179,8 @@ public class Sirius {
      * The elemens CHNOPS will always be contained in the element set. However, you can change their upperbound which
      * is unbounded by default.
      *
-     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(MutableMs2Experiment, FormulaConstraints)}
      * @param constraints
+     * @Deprecated Formula Constraits are now set per input instance via {@link #setFormulaConstraints(MutableMs2Experiment, FormulaConstraints)}
      */
     @Deprecated
     public void setFormulaConstraints(FormulaConstraints constraints) {
@@ -307,7 +311,7 @@ public class Sirius {
     /**
      * Identify the molecular formula of the measured compound using the provided MS and MSMS data
      *
-     * @param uexperiment input data
+     * @param uexperiment        input data
      * @param numberOfCandidates number of top candidates to return
      * @return a list of identified molecular formulas together with their tree
      */
@@ -318,7 +322,7 @@ public class Sirius {
         jobManager.submitSubJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
-        int k=0;
+        int k = 0;
         for (FTree tree : fr.getResults()) {
             irs.add(new IdentificationResult(tree, ++k));
         }
@@ -347,12 +351,12 @@ public class Sirius {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        if (whiteList!=null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
+        if (whiteList != null) pinput.setAnnotation(Whiteset.class, new Whiteset(whiteList));
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
-        int k=0;
+        int k = 0;
         for (FTree tree : fr.getResults()) {
             irs.add(new IdentificationResult(tree, ++k));
         }
@@ -379,7 +383,7 @@ public class Sirius {
     }
 
     public List<IdentificationResult> identify(Ms2Experiment uexperiment, int numberOfCandidates, boolean recalibrating, IsotopePatternHandling deisotope) {
-        return identify(uexperiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints)null);
+        return identify(uexperiment, numberOfCandidates, recalibrating, deisotope, (FormulaConstraints) null);
     }
 
 
@@ -397,12 +401,12 @@ public class Sirius {
         final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), uexperiment, numberOfCandidates);
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        if (formulaConstraints!=null) pinput.getMeasurementProfile().setFormulaConstraints(formulaConstraints);
+        if (formulaConstraints != null) pinput.getMeasurementProfile().setFormulaConstraints(formulaConstraints);
         performMs1Analysis(instance, deisotope);
         jobManager.submitSubJob(instance);
         TreeComputationInstance.FinalResult fr = instance.takeResult();
         final List<IdentificationResult> irs = new ArrayList<>();
-        int k=0;
+        int k = 0;
         for (FTree tree : fr.getResults()) {
             irs.add(new IdentificationResult(tree, ++k));
         }
@@ -411,7 +415,7 @@ public class Sirius {
 
     public FormulaConstraints predictElementsFromMs1(Ms2Experiment experiment) {
         final SimpleSpectrum pattern = getMs1Analyzer().extractPattern(experiment, experiment.getIonMass());
-        if (pattern==null) return null;
+        if (pattern == null) return null;
         return getElementPrediction().predictConstraints(pattern);
     }
 
@@ -438,28 +442,29 @@ public class Sirius {
     }
 
 
-    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment){
+    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment) {
         return beautifyTree(result, experiment, true);
     }
 
     /**
      * compute and set the beautiful version of the {@link IdentificationResult}s {@link FTree}.
      * Aka: try to find a {@link FTree} with the same root molecular formula which explains the desired amount of the spectrum - if necessary by increasing the tree size scorer.
+     *
      * @param result
      * @param experiment
      * @return true if a beautiful tree was found
      */
-    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment, boolean recalibrating){
-        if (result.getBeautifulTree()!=null) return true;
+    public boolean beautifyTree(IdentificationResult result, Ms2Experiment experiment, boolean recalibrating) {
+        if (result.getBeautifulTree() != null) return true;
         FTree beautifulTree = beautifyTree(result.getStandardTree(), experiment, recalibrating);
-        if (beautifulTree!=null){
+        if (beautifulTree != null) {
             result.setBeautifulTree(beautifulTree);
             return true;
         }
         return false;
     }
 
-    public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating){
+    public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating) {
         final IdentificationResult ir = compute(experiment, tree.getRoot().getFormula(), recalibrating);
         return ir.getRawTree();
     }
@@ -507,9 +512,9 @@ public class Sirius {
         else current = current.withoutIsotopeFormulaFiltering();
         experiment.setAnnotation(FormulaSettings.class, current);
         if (handling.isScoring()) {
-            experiment.setAnnotation(IsotopeScoring.class,IsotopeScoring.DEFAULT);
+            experiment.setAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT);
         } else {
-            experiment.setAnnotation(IsotopeScoring.class,IsotopeScoring.DISABLED);
+            experiment.setAnnotation(IsotopeScoring.class, IsotopeScoring.DISABLED);
         }
     }
 
@@ -528,10 +533,9 @@ public class Sirius {
         if (enabled) {
             experiment.setAnnotation(FormulaSettings.class, current.autoDetect(getElementPrediction().getChemicalAlphabet().getElements().toArray(new Element[0])));
         } else {
-            experiment.setAnnotation(FormulaSettings.class,current.withoutAutoDetect());
+            experiment.setAnnotation(FormulaSettings.class, current.withoutAutoDetect());
         }
     }
-
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -731,19 +735,19 @@ public class Sirius {
     /**
      * Applies a given biotransformation on a given Molecular formular and return the transformed formula(s)
      *
-     * @param source   source formula for transformation
+     * @param source         source formula for transformation
      * @param transformation to that will be applied to given Formula    ionization mode (might be a Charge, in which case the decomposer will enumerate the ion formulas instead of the neutral formulas)
      * @return transformed MolecularFormulas
      */
     public List<MolecularFormula> bioTransform(MolecularFormula source, BioTransformation transformation) {
-        return BioTransformer.transform(source,transformation);
+        return BioTransformer.transform(source, transformation);
     }
 
 
     /**
      * Applies all known biotransformation on a given Molecular formular and returns the transformed formula(s)
      *
-     * @param source   source formula for transformation
+     * @param source source formula for transformation
      * @return transformed MolecularFormulas
      */
     public List<MolecularFormula> bioTransform(MolecularFormula source) {
@@ -780,35 +784,37 @@ public class Sirius {
      * - omit: doing nothing
      * - scoring: adds all isotope pattern candidates with their score into the hashmap
      * - filtering: adds only a subset of isotope pattern candidates with good scores into the hashmap
+     *
      * @return score of the best isotope candidate
      */
     private double filterCandidateList(List<IsotopePattern> candidates, HashMap<MolecularFormula, IsotopePattern> formulas, IsotopePatternHandling handling) {
-        if (handling==IsotopePatternHandling.omit) {
+        if (handling == IsotopePatternHandling.omit) {
             return 0d;
         }
         if (candidates.size() == 0) return 0d;
         {
-            double opt=Double.NEGATIVE_INFINITY;
+            double opt = Double.NEGATIVE_INFINITY;
             final SupportVectorMolecularFormulaScorer formulaScorer = new SupportVectorMolecularFormulaScorer();
             for (IsotopePattern p : candidates) {
                 opt = Math.max(opt, p.getScore() + formulaScorer.score(p.getCandidate()));
             }
             if (opt < 0) {
-                for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), new IsotopePattern(p.getCandidate(), 0d, p.getPattern()));
-                return  candidates.get(0).getScore();
+                for (IsotopePattern p : candidates)
+                    formulas.put(p.getCandidate(), new IsotopePattern(p.getCandidate(), 0d, p.getPattern()));
+                return candidates.get(0).getScore();
             }
         }
         final double optscore = candidates.get(0).getScore();
         if (!handling.isFiltering()) {
             for (IsotopePattern p : candidates) formulas.put(p.getCandidate(), p);
-            return  candidates.get(0).getScore();
+            return candidates.get(0).getScore();
         }
         formulas.put(candidates.get(0).getCandidate(), candidates.get(0));
         int n = 1;
         for (; n < candidates.size(); ++n) {
             final double score = candidates.get(n).getScore();
             final double prev = candidates.get(n - 1).getScore();
-            if (((optscore-score) > 5) && (score <= 0 || score / optscore < 0.5 || score / prev < 0.5)) break;
+            if (((optscore - score) > 5) && (score <= 0 || score / optscore < 0.5 || score / prev < 0.5)) break;
         }
         for (int i = 0; i < n; ++i) formulas.put(candidates.get(i).getCandidate(), candidates.get(i));
         return optscore;
@@ -824,7 +830,7 @@ public class Sirius {
 
     private ExtractedIsotopePattern extractedIsotopePattern(ProcessedInput pinput) {
         ExtractedIsotopePattern pat = pinput.getAnnotation(ExtractedIsotopePattern.class, null);
-        if (pat==null){
+        if (pat == null) {
             final SimpleSpectrum spectrum = getMs1Analyzer().extractPattern(mergeMs1Spec(pinput), pinput.getMeasurementProfile(), pinput.getExperimentInformation().getIonMass());
             pat = new ExtractedIsotopePattern(spectrum);
             pinput.setAnnotation(ExtractedIsotopePattern.class, pat);
@@ -834,9 +840,9 @@ public class Sirius {
 
     private SimpleSpectrum mergeMs1Spec(ProcessedInput pinput) {
         final MutableMs2Experiment experiment = pinput.getExperimentInformation();
-        if (experiment.getMergedMs1Spectrum()!=null) return experiment.getMergedMs1Spectrum();
-        else if (experiment.getMs1Spectra().size()>0) {
-            experiment.setMergedMs1Spectrum( Spectrums.mergeSpectra(experiment.<Spectrum<Peak>>getMs1Spectra()));
+        if (experiment.getMergedMs1Spectrum() != null) return experiment.getMergedMs1Spectrum();
+        else if (experiment.getMs1Spectra().size() > 0) {
+            experiment.setMergedMs1Spectrum(Spectrums.mergeSpectra(experiment.<Spectrum<Peak>>getMs1Spectra()));
             return experiment.getMergedMs1Spectrum();
         } else return new SimpleSpectrum(new double[0], new double[0]);
     }
@@ -854,7 +860,8 @@ public class Sirius {
         performAutomaticElementDetection(input, pattern.getPattern());
 
         // step 2: Isotope pattern analysis
-        if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0) return false;
+        if (input.getAnnotation(IsotopeScoring.class, IsotopeScoring.DEFAULT).getIsotopeScoreWeighting() <= 0)
+            return false;
         final DecompositionList decompositions = instance.precompute().getAnnotationOrThrow(DecompositionList.class);
         final IsotopePatternAnalysis an = getMs1Analyzer();
         for (Map.Entry<Ionization, List<MolecularFormula>> entry : decompositions.getFormulasPerIonMode().entrySet()) {
@@ -876,16 +883,16 @@ public class Sirius {
                 while (iter.hasNext()) {
                     final Decomposition d = iter.next();
                     final IsotopePattern p = pattern.getExplanations().get(d.getCandidate());
-                    if (p.getScore() < ((isoPeaks*ISOTOPE_SCORE_FILTER_THRESHOLD))) {
+                    if (p.getScore() < ((isoPeaks * ISOTOPE_SCORE_FILTER_THRESHOLD))) {
                         iter.remove();
                     }
                 }
             }
         }
         final Iterator<Map.Entry<MolecularFormula, IsotopePattern>> iter = pattern.getExplanations().entrySet().iterator();
-        while (iter.hasNext())  {
+        while (iter.hasNext()) {
             final Map.Entry<MolecularFormula, IsotopePattern> val = iter.next();
-            val.setValue(val.getValue().withScore(handling.isScoring() ? Math.max(val.getValue().getScore(),0d) : 0d));
+            val.setValue(val.getValue().withScore(handling.isScoring() ? Math.max(val.getValue().getScore(), 0d) : 0d));
         }
 
         return true;
