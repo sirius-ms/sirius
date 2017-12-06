@@ -1,21 +1,16 @@
 package de.unijena.bioinf.ms.cli;
 
-import com.lexicalscope.jewel.cli.CliFactory;
-import com.lexicalscope.jewel.cli.HelpRequestedException;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 
 /**
  * Created by ge28quv on 23/05/17.
  */
 public class ZodiacCLI<Options extends ZodiacOptions> extends CLI<Options> {
-    //todo @Marcus this should be in sirius_cli module
-    //todo @Marcus FingeridCLI should extend ZoiacCLI instead
     @Override
     public void compute() {
         if (options.isZodiac()) {
@@ -25,6 +20,12 @@ public class ZodiacCLI<Options extends ZodiacOptions> extends CLI<Options> {
             super.compute();
         }
 
+    }
+
+    @Override
+    protected void handleOutputOptions(Options options) {
+        //todo zodiac output handling should be here at some time
+        if (!options.isZodiac()) super.handleOutputOptions(options);
     }
 
     /*@Override

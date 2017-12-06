@@ -47,7 +47,7 @@ public interface SiriusOptions {
     @Option(shortName = "s", longName = "isotope", defaultValue = "both", description = "how to handle isotope pattern data. Use 'score' to use them for ranking or 'filter' if you just want to remove candidates with bad isotope pattern. With 'both' you can use isotopes for filtering and scoring (default). Use 'omit' to ignore isotope pattern.")
     IsotopePatternHandling getIsotopes();
 
-    @Option(shortName = "c", longName = "candidates", description = "number of candidates in the output", defaultToNull = true)
+    @Option(shortName = "c", longName = "candidates", description = "Number of candidates in the output", defaultToNull = true)
     Integer getNumberOfCandidates();
 
     @Option(shortName = "f", longName = {"formula", "formulas"}, description = "specify the neutral molecular formula of the measured compound to compute its tree or a list of candidate formulas the method should discriminate. Omit this option if you want to consider all possible molecular formulas", defaultToNull = true)
