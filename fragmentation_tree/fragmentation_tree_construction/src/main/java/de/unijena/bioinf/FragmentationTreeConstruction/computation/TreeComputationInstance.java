@@ -154,7 +154,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         final int t = ticks.incrementAndGet();
         if (t == nextProgress) {
             final int incrementation = (t*progressPerTick) / ticksPerProgress;
-            setProgress(Math.min(incrementation, max));
+            updateProgress(Math.min(incrementation, max));
             while (true) {
                 int x = ticks.get();
                 nextProgress = (x*progressPerTick) + ticksPerProgress;
@@ -174,7 +174,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
         }
         ticks.set(from * ticksPerProgress);
         nextProgress = (from + 1) * ticksPerProgress;
-        setProgress(from);
+        updateProgress(from);
     }
 
     @Override
@@ -242,7 +242,7 @@ public class TreeComputationInstance extends BasicJJob<TreeComputationInstance.F
             } else return fr;
             //
         }} finally {
-            setProgress(100);
+            updateProgress(100);
         }
 
         //return null;
