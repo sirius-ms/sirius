@@ -53,10 +53,10 @@ public class Zodiac {
 
 
     public void run() {
-        maxCandidates = (options.getMaxNumOfCandidates() <= 0 ? Integer.MAX_VALUE : options.getMaxNumOfCandidates());
+        maxCandidates = (options.getNumberOfCandidates() == null ? Integer.MAX_VALUE : options.getNumberOfCandidates());
 
         try {
-            //todo For the official relese zodiac should become a job an create subjobs for multithreading
+            //todo For the official release zodiac should become a job an create subjobs in the jobmanager for multithreading
             int workerCount = PropertyManager.getNumberOfCores();
 
 //        //reactions

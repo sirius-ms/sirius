@@ -23,7 +23,7 @@ public interface ZodiacOptions extends SiriusOptions {
     )
     String getInput();*/
 
-    //todo @Marcus for the future this should use the sirius input property if possible
+    //todo @Marcus for the future this should ne replaced with the sirius input property if possible
     @Option(
             longName = {"spectra"},
             description = "The file of spectra (.mgf) which was used to compute the trees",
@@ -100,12 +100,12 @@ public interface ZodiacOptions extends SiriusOptions {
     )
     EdgeScorings getProbabilityDistribution();
 
-    @Option(
+    /*@Option(
             longName = {"candidates"},
             description = "maximum number of candidate molecular formulas per compound to use in Zodiac. default: all",
-            defaultValue = {"-1"}
+            defaultValue = "-1"
     )
-    int getMaxNumOfCandidates();
+    int getMaxNumOfCandidates();*/
 
 
 
