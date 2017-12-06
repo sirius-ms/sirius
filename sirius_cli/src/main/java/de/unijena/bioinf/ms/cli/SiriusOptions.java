@@ -119,7 +119,7 @@ public interface SiriusOptions {
     Double getMaxMz();
 
     @Option(
-            longName = {"processors, cores"},
+            longName = {"processors", "cores"},
             description = "number of cpu cores to use. If not specified Zodiac uses all available.",
             defaultValue = "0"
     )
