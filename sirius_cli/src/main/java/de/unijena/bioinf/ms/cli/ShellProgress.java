@@ -17,6 +17,9 @@
  */
 package de.unijena.bioinf.ms.cli;
 
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.jjobs.JobProgressInfoEvent;
 import de.unijena.bioinf.sirius.Feedback;
 import de.unijena.bioinf.sirius.Progress;
 
@@ -26,7 +29,7 @@ import java.util.Locale;
 /**
  * Created by kaidu on 20.04.2015.
  */
-public class ShellProgress implements Progress {
+public class ShellProgress implements Progress, JobProgressEventListener {
 
     private boolean shellMode;
     private PrintStream writer;
@@ -34,14 +37,14 @@ public class ShellProgress implements Progress {
     private static char FRAME = '|';
     private static char UNREACHED = '.';
     private static char REACHED = '=';
-    private static int width=20;
+    private static int width = 20;
 
     private double max;
 
     private StringBuilder buffer;
 
-    private int fillEmptySpace=0;
-    private int prevPerc=0;
+    private int fillEmptySpace = 0;
+    private int prevPerc = 0;
 
     public ShellProgress(PrintStream writer, boolean shellMode) {
         this.shellMode = shellMode;
@@ -56,7 +59,7 @@ public class ShellProgress implements Progress {
         clearBuffer();
         draw(0, maxProgress, "start computing");
         this.max = maxProgress;
-        prevPerc=0;
+        prevPerc = 0;
     }
 
     @Override
@@ -72,31 +75,31 @@ public class ShellProgress implements Progress {
     private void draw(double currentProgress, double maxProgress, String value) {
 
         final double percentage = width * currentProgress / maxProgress;
-        final int perc100 = (int)Math.max(0,Math.min(100, Math.round(percentage*5)));
+        final int perc100 = (int) Math.max(0, Math.min(100, Math.round(percentage * 5)));
 
         buffer.append(FRAME);
-        for (int k=0; k < width/2; ++k) buffer.append(k >= percentage ? UNREACHED : REACHED);
+        for (int k = 0; k < width / 2; ++k) buffer.append(k >= percentage ? UNREACHED : REACHED);
 
         buffer.append(String.format(Locale.US, "%3d %%", perc100));
-        for (int k=width/2; k < width; ++k) buffer.append(k >= percentage ? UNREACHED : REACHED);
+        for (int k = width / 2; k < width; ++k) buffer.append(k >= percentage ? UNREACHED : REACHED);
         buffer.append(FRAME);
         buffer.append('\t');
         if (value.length() < buffer.length()) {
-            final int indent = (buffer.length()-1-value.length())/2;
-            for (int i=0; i < indent; ++i) buffer.append(' ');
+            final int indent = (buffer.length() - 1 - value.length()) / 2;
+            for (int i = 0; i < indent; ++i) buffer.append(' ');
         }
         buffer.append(value);
         writer.print(buffer);
-        for (int k=buffer.length(); k < fillEmptySpace; ++k) {
+        for (int k = buffer.length(); k < fillEmptySpace; ++k) {
             writer.print(' ');
         }
-        fillEmptySpace=0;
-         writer.flush();
+        fillEmptySpace = 0;
+        writer.flush();
     }
 
     private void clearBuffer() {
         writer.print('\r');
-        fillEmptySpace=buffer.length();
+        fillEmptySpace = buffer.length();
         buffer.delete(0, buffer.length());
     }
 
@@ -114,4 +117,34 @@ public class ShellProgress implements Progress {
         writer.println(message);
         buffer.delete(0, buffer.length());
     }
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //todo this is all workaround: when everything runs on jobs we schould replace the feedback with the JJob object
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public void info(JobProgressInfoEvent infoEvent) {
+        info(infoEvent.getMessage());
+    }
+
+    @Override
+    public void update(JobProgressEvent progressEvent) {
+        update(progressEvent.getNewValue(), progressEvent.getMaxValue(), "", DUMMY_FEEDBACK);
+    }
+
+    private static class DummyFeedback implements Feedback {
+
+        @Override
+        public void cancelComputation() {
+
+        }
+
+        @Override
+        public void stopComputationKeepResults() {
+
+        }
+    }
+
+    private static final DummyFeedback DUMMY_FEEDBACK = new DummyFeedback();
+
 }
