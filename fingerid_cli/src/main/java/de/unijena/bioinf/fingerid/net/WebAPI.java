@@ -31,10 +31,13 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.Compound;
+import de.unijena.bioinf.fingerid.blast.CovarianceScoring;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.utils.systemInfo.SystemInformation;
@@ -69,7 +72,6 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
@@ -379,28 +381,68 @@ public class WebAPI implements Closeable {
     }
 
     public Future<ProbabilityFingerprint> predictFingerprint(ExecutorService service, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
-        return service.submit(new Callable<ProbabilityFingerprint>() {
-            @Override
-            public ProbabilityFingerprint call() throws Exception {
-                final FingerIdJob job = submitJob(experiment, tree, version, predicors);
-                // RECEIVE RESULTS
-                final HttpGet get = new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
-                for (int k = 0; k < 600; ++k) {
-                    Thread.sleep(3000 + 30 * k);
-                    if (updateJobStatus(job)) {
-                        return job.prediction;
-                    } else if (Objects.equals(job.state, "CRASHED")) {
-                        throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
-                    }
-                }
-                throw new TimeoutException("Reached timeout");
-            }
-        });
+        return service.submit(new PredictionJJob(experiment, null, tree, version, predicors));
+    }
+
+    public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+        return predictFingerprint(manager, experiment, tree, version, predicors);
+    }
+
+    public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+        return predictFingerprint(manager, experiment, result, result.getResolvedTree(), version, predicors);
+    }
+
+    public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+        PredictionJJob jjob = new PredictionJJob(experiment, result, tree, version, predicors);
+        manager.submitJob(jjob);
+        return jjob;
     }
 
     public static FingerprintVersion getFingerprintVersion() {
         // TODO: implement as web request
         return CdkFingerprintVersion.withECFP();
+    }
+
+    public class PredictionJJob extends BasicJJob<ProbabilityFingerprint> {
+        public final Ms2Experiment experiment;
+        public final FTree ftree;
+        public final IdentificationResult result;
+        public final MaskedFingerprintVersion version;
+        private final PredictorType[] predicors;
+
+
+        /*public PredictionJJob(final Ms2Experiment experiment, IdentificationResult result, MaskedFingerprintVersion version, PredictorType... predicors) {
+            this(experiment, result, result.getResolvedTree(), version, predicors);
+        }
+
+        public PredictionJJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, PredictorType... predicors) {
+            this(experiment, null, ftree, version, predicors);
+        }*/
+
+        public PredictionJJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree ftree, MaskedFingerprintVersion version, PredictorType... predicors) {
+            super(JobType.WEBSERVICE);
+            this.experiment = experiment;
+            this.ftree = ftree;
+            this.result = result;
+            this.version = version;
+            this.predicors = predicors;
+        }
+
+        @Override
+        public ProbabilityFingerprint compute() throws Exception {
+            final FingerIdJob job = submitJob(experiment, ftree, version, predicors);
+            // RECEIVE RESULTS
+            new HttpGet(getFingerIdURI("/webapi/job.json").setParameter("jobId", String.valueOf(job.jobId)).setParameter("securityToken", job.securityToken).build());
+            for (int k = 0; k < 600; ++k) {
+                Thread.sleep(3000 + 30 * k);
+                if (updateJobStatus(job)) {
+                    return job.prediction;
+                } else if (Objects.equals(job.state, "CRASHED")) {
+                    throw new RuntimeException("Job crashed: " + (job.errorMessage != null ? job.errorMessage : ""));
+                }
+            }
+            throw new TimeoutException("Reached timeout");
+        }
     }
 
 
