@@ -42,6 +42,7 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.MasterJJob;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -81,6 +82,68 @@ public class Sirius {
         }
     }
 
+    public class SiriusIdentificationJob extends MasterJJob<List<IdentificationResult>> {
+        private final Ms2Experiment experiment;
+        private final int numberOfResultsToKeep;
+        private final boolean beautifyTrees;
+
+        public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep, boolean beautifyTrees) {
+            super(JobType.CPU, 0, 100);
+            this.experiment = experiment;
+            this.numberOfResultsToKeep = numberOfResultsToKeep;
+            this.beautifyTrees = beautifyTrees;
+        }
+
+        @Override
+        protected List<IdentificationResult> compute() throws Exception {
+            final TreeComputationInstance instance = new TreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
+            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
+                }
+            });
+            final ProcessedInput pinput = instance.validateInput();
+            performMs1Analysis(instance, IsotopePatternHandling.both);
+            submitSubJob(instance);
+            TreeComputationInstance.FinalResult fr = instance.takeResult();
+
+            return createIdentificationResults(fr);//postprocess results
+        }
+
+        private List<IdentificationResult> createIdentificationResults(TreeComputationInstance.FinalResult fr) {
+            final List<IdentificationResult> irs = new ArrayList<>();
+            int k = 0;
+            for (FTree tree : fr.getResults()) {
+                IdentificationResult result = new IdentificationResult(tree, ++k);
+                irs.add(result);
+
+                //beautify tree (try to explain more peaks)
+                if (beautifyTrees)
+                    beautifyTree(result, experiment, experiment.getAnnotation(ForbidRecalibration.class, ForbidRecalibration.ALLOWED) == ForbidRecalibration.ALLOWED);
+                final ProcessedInput processedInput = result.getStandardTree().getAnnotationOrNull(ProcessedInput.class);
+                if (processedInput != null)
+                    result.setAnnotation(Ms2Experiment.class, processedInput.getExperimentInformation());
+                else result.setAnnotation(Ms2Experiment.class, experiment);
+            }
+            return irs;
+        }
+
+
+        public Ms2Experiment getExperiment() {
+            return experiment;
+        }
+
+        public int getNumberOfResultsToKeep() {
+            return numberOfResultsToKeep;
+        }
+
+        @Override
+        protected JobManager jobManager() {
+            return jobManager;
+        }
+    }
+
 
     //public final static String ISOTOPE_SCORE = "isotope";
 
@@ -102,58 +165,22 @@ public class Sirius {
         }
     }
 
-    public class SiriusIdentificationJob extends BasicJJob<List<IdentificationResult>> {
-        private final Ms2Experiment experiment;
-        private final int numberOfResultsToKeep;
-
-        public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep) {
-            super(JobType.CPU, 0, 100);
-            this.experiment = experiment;
-            this.numberOfResultsToKeep = numberOfResultsToKeep;
-        }
-
-        @Override
-        protected List<IdentificationResult> compute() throws Exception {
-            final TreeComputationInstance instance = new TreeComputationInstance(jobManager, getMs2Analyzer(), experiment, numberOfResultsToKeep);
-            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
-                }
-            });
-            final ProcessedInput pinput = instance.validateInput();
-            performMs1Analysis(instance, IsotopePatternHandling.both);
-            jobManager.submitSubJob(instance);
-            TreeComputationInstance.FinalResult fr = instance.takeResult();
-            final List<IdentificationResult> irs = new ArrayList<>();
-            int k = 0;
-            for (FTree tree : fr.getResults()) {
-                irs.add(new IdentificationResult(tree, ++k));
-            }
-            return irs;
-        }
-
-        public Ms2Experiment getExperiment() {
-            return experiment;
-        }
-
-        public int getNumberOfResultsToKeep() {
-            return numberOfResultsToKeep;
-        }
-    }
-
     public BasicJJob<List<IdentificationResult>> makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport) {
-        return new SiriusIdentificationJob(experiment, numberOfResultsToReport);
+        return makeIdentificationJob(experiment, numberOfResultsToReport, true);
     }
 
-    public BasicJJob<IdentificationResult> makeTreeComputationJob(final Ms2Experiment experiment, final MolecularFormula formula) {
+    public BasicJJob<List<IdentificationResult>> makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport, final boolean beautifyTrees) {
+        return new SiriusIdentificationJob(experiment, numberOfResultsToReport, beautifyTrees);
+    }
+
+    /*public BasicJJob<IdentificationResult> makeTreeComputationJob(final Ms2Experiment experiment, final MolecularFormula formula) {
         return new BasicJJob<IdentificationResult>() {
             @Override
             protected IdentificationResult compute() throws Exception {
                 return Sirius.this.compute(experiment, formula);
             }
         };
-    }
+    }*/
 
     /**
      * set new constraints for the molecular formulas that should be considered by Sirius
@@ -436,7 +463,7 @@ public class Sirius {
         final ProcessedInput pinput = instance.validateInput();
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
-        jobManager.submitJob(instance);
+        jobManager.submitSubJob(instance);
         return new IdentificationResult(instance.takeResult().getResults().get(0), 1);
 
     }
