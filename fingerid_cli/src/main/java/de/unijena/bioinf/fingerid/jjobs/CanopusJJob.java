@@ -25,19 +25,15 @@ public class CanopusJJob extends FingerprintDependentJJob<CanopusResult> {
     protected CanopusResult compute() throws Exception {
         initInput();
 
-        progressInfo("Predict compound categories for " + result.getMolecularFormula() + ": \nid\tname\tprobability");
-        final ProbabilityFingerprint fingerprint = canopus.predictClassificationFingerprint(result.getMolecularFormula(), fp);
+        progressInfo("Predict compound categories for " + identificationResult.getMolecularFormula() + ": \nid\tname\tprobability");
+        final ProbabilityFingerprint fingerprint = canopus.predictClassificationFingerprint(identificationResult.getMolecularFormula(), fp);
         for (FPIter category : fingerprint.iterator()) {
             if (category.getProbability() >= 0.333) {
                 ClassyfireProperty prop = ((ClassyfireProperty) category.getMolecularProperty());
                 progressInfo(prop.getChemontIdentifier() + "\t" + prop.getName() + "\t" + ((int) Math.round(100d * category.getProbability())) + " %");
             }
         }
-        CanopusResult canopusResult = new CanopusResult(fingerprint);
-        result.setAnnotation(CanopusResult.class, canopusResult);
 
-        return canopusResult;
-
-
+        return new CanopusResult(fingerprint);
     }
 }

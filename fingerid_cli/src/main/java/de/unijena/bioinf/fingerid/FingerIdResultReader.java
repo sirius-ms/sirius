@@ -36,7 +36,7 @@ public class FingerIdResultReader extends DirectoryReader {
         if (!new HashSet<>(env.list()).contains("csi_fingerid")) return;
         try {
             env.enterDirectory("csi_fingerid");
-            // read compound candidates result list
+            // read compound candidates identificationResult list
             final HashSet<String> files = new HashSet<>(env.list());
             for (IdentificationResult r : results) {
                 String s = DirectoryWriter.makeFileName(r) +".csv";

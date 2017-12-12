@@ -6,25 +6,25 @@ import de.unijena.bioinf.jjobs.DependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
-public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> {
-    protected IdentificationResult result;
+public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> implements AnnotationJJob<R> {
+    protected IdentificationResult identificationResult;
     protected ProbabilityFingerprint fp;
 
     protected FingerprintDependentJJob(JobType type, IdentificationResult result, ProbabilityFingerprint fp) {
         super(type);
-        this.result = result;
+        this.identificationResult = result;
         this.fp = fp;
     }
 
     protected void initInput() {
-        if (result == null || fp == null) {
-            for (JJob j : requiredJobsDone) {
+        if (identificationResult == null || fp == null) {
+            for (JJob j : requiredJobs) {
                 if (j instanceof WebAPI.PredictionJJob) {
                     WebAPI.PredictionJJob job = ((WebAPI.PredictionJJob) j);
                     if (job.result != null && job.takeResult() != null) {
-                        result = job.result;
+                        identificationResult = job.result;
                         fp = job.takeResult();
-                        break;
+                        return;
                     }
                 }
             }
@@ -32,4 +32,8 @@ public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> {
         }
     }
 
+    @Override
+    public IdentificationResult getIdentificationResult() {
+        return identificationResult;
+    }
 }

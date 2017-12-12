@@ -393,9 +393,14 @@ public class WebAPI implements Closeable {
     }
 
     public PredictionJJob predictFingerprint(JobManager manager, final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
-        PredictionJJob jjob = new PredictionJJob(experiment, result, tree, version, predicors);
+        PredictionJJob jjob = makePredictionJob(experiment, result, tree, version, predicors);
         manager.submitJob(jjob);
         return jjob;
+    }
+
+    public PredictionJJob makePredictionJob(final Ms2Experiment experiment, final IdentificationResult result, final FTree tree, final MaskedFingerprintVersion version, final PredictorType... predicors) {
+        return new PredictionJJob(experiment, result, tree, version, predicors);
+
     }
 
     public static FingerprintVersion getFingerprintVersion() {
@@ -411,8 +416,8 @@ public class WebAPI implements Closeable {
         private final PredictorType[] predicors;
 
 
-        /*public PredictionJJob(final Ms2Experiment experiment, IdentificationResult result, MaskedFingerprintVersion version, PredictorType... predicors) {
-            this(experiment, result, result.getResolvedTree(), version, predicors);
+        /*public PredictionJJob(final Ms2Experiment experiment, IdentificationResult identificationResult, MaskedFingerprintVersion version, PredictorType... predicors) {
+            this(experiment, identificationResult, identificationResult.getResolvedTree(), version, predicors);
         }
 
         public PredictionJJob(final Ms2Experiment experiment, final FTree ftree, MaskedFingerprintVersion version, PredictorType... predicors) {
@@ -454,7 +459,7 @@ public class WebAPI implements Closeable {
      * @return
      * @throws IOException
      */
-    public PredictionPerformance[] getStatistics(TIntArrayList fingerprintIndizes) throws IOException {
+    public PredictionPerformance[] getStatistics(final TIntArrayList fingerprintIndizes) throws IOException {
         fingerprintIndizes.clear();
         final HttpGet get;
         try {

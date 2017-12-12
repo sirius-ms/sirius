@@ -22,9 +22,13 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     }
 
     public FingerblastJJob(Fingerblast fingerblast, BioFilter bioFilter, long flag, IdentificationResult result, ProbabilityFingerprint fp) {
+        this(fingerblast, bioFilter != BioFilter.ALL, flag, result, fp);
+    }
+
+    public FingerblastJJob(Fingerblast fingerblast, boolean bioFilter, long flag, IdentificationResult result, ProbabilityFingerprint fp) {
         super(JobType.CPU, result, fp); //todo what do we need here??
         this.fingerblast = fingerblast;
-        this.filter = bioFilter != BioFilter.ALL;
+        this.filter = bioFilter;
         this.flag = flag;
     }
 
@@ -33,15 +37,13 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerIdResult> {
     protected FingerIdResult compute() throws Exception {
         initInput();
 
-        final List<Scored<FingerprintCandidate>> cds = fingerblast.search(result.getMolecularFormula(), fp);
+        final List<Scored<FingerprintCandidate>> cds = fingerblast.search(identificationResult.getMolecularFormula(), fp);
         if (filter) {
             cds.removeIf(c -> flag != 0 && (c.getCandidate().getBitset() & flag) == 0);
         }
 
         Collections.sort(cds);
-        final FingerIdResult fingerIdResult = new FingerIdResult(cds, 0d, fp);
-        result.setAnnotation(FingerIdResult.class, fingerIdResult);
 
-        return fingerIdResult;
+        return new FingerIdResult(cds, 0d, fp);
     }
 }
