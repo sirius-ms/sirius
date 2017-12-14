@@ -73,6 +73,7 @@ public class DecomposerCache {
 
     private MassToFormulaDecomposer addNewDecomposer(ChemicalAlphabet alphabet) {
         ++dirtyState;
+        System.err.println(alphabet);
         if (size < alphabets.length) {
             decomposers[size] = new MassToFormulaDecomposer(alphabet);
             decomposers[size].init();
