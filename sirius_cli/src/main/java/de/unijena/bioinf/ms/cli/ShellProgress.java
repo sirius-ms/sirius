@@ -65,7 +65,7 @@ public class ShellProgress implements Progress, JobProgressEventListener {
     @Override
     public void update(double currentProgress, double maxProgress, String value, Feedback feedback) {
         if (!shellMode) {
-            writer.println(value);
+            writer.println(currentProgress);
         } else {
             clearBuffer();
             draw(currentProgress, maxProgress, value);
