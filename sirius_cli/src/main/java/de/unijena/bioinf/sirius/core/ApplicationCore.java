@@ -186,10 +186,6 @@ public abstract class ApplicationCore {
         //bug reporting
         ErrorReporter.INIT_PROPS(PropertyManager.PROPERTIES);
         DEFAULT_LOGGER.info("Bug reporter initialized!");
-
-        SiriusJobs.setGlobalJobManager(PropertyManager.getNumberOfCores() + 1); //do we really want +1??
-//        SiriusJobs.setGlobalJobManager(1); //do we really want +1??
-        DEFAULT_LOGGER.info("Job manager initialized!");
     }
 
 
