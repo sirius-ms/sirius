@@ -26,6 +26,7 @@ import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
@@ -39,7 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 import static de.unijena.bioinf.fingerid.storage.ConfigStorage.CONFIG_STORAGE;
 
@@ -53,6 +53,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
     protected Fingerblast fingerblast;
     protected QueryPredictor confidence, bioConfidence;
     protected MaskedFingerprintVersion fingerprintVersion;
+    final LinkedList<FingerIDJJob> fingerIdJobs = new LinkedList<>();
 
 
     @Override
@@ -75,8 +76,11 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         return new FingerIdResultReader(env);
     }
 
-    /*@Override
-    public void compute() {
+
+    @Override
+    protected void parseArgsAndInit(String[] args, Class<Options> optionsClass) {
+        super.parseArgsAndInit(args, optionsClass);
+
         if (options.getGeneratingCompoundDatabase() != null) {
             try {
                 generateCustomDatabase(options);
@@ -91,56 +95,55 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
             initFingerBlast();
             initCanopus();
         }
+    }
 
+    @Override
+    protected void clearJobs() {
+        super.clearJobs();
+        fingerIdJobs.clear();
+    }
+
+    @Override
+    protected void submitJobs(Instance i) {
+        super.submitJobs(i); //this submits sirius job for the given instance
+        if (options.isFingerid()) {
+            fingerIdJobs.add(submitFingerIdJob(i, siriusJobs.peek()));
+        }
+    }
+
+    @Override
+    protected void handleJobs(Instance i) throws IOException {
+        super.handleJobs(i);
+        if (options.isFingerid()) {
+            progress.info("Compute CSI:FingerID for: '" + i.file.getName() + "'");
+            FingerIDJJob fingeridJob = fingerIdJobs.poll();
+            fingeridJob.addPropertyChangeListener(progress);
+            progress.update(new JobProgressEvent(fingeridJob, -1, fingeridJob.currentProgress(), fingeridJob.maxProgress));
+            handleFingerIdResults(i, fingeridJob); //handle results
+            fingeridJob.removePropertyChangeListener(progress);
+            progress.info("CSI:FingerID done for: '" + i.file.getName() + "'");
+        }
+    }
+
+    @Override
+    public void compute() {
         try {
-            final Iterator<Instance> instancesIt = handleInput(options);
-            final LinkedList<Instance> instances = new LinkedList<>();
-            final LinkedList<BasicJJob<List<IdentificationResult>>> siriusJobs = new LinkedList<>();
-            final LinkedList<BasicJJob<Map<IdentificationResult, ProbabilityFingerprint>>> fingerIdJobs = new LinkedList<>();
-
-            //submission loop
-            while (instancesIt.hasNext()) {
-                Instance i = instancesIt.next();
-                instances.add(i);
-                BasicJJob<List<IdentificationResult>> siriusJob = submitSiriusJob(i);
-                siriusJobs.add(siriusJob);
-                if (options.isFingerid()) {
-                    BasicJJob<Map<IdentificationResult, ProbabilityFingerprint>> fingerPrintJob = submitFingerIdJob(i, siriusJob);
-                    fingerIdJobs.add(fingerPrintJob);
-                }
-            }
-
-            //handle results loop
-            while (!instances.isEmpty()) {
-                Instance i = instances.poll();
-                handleSiriusResults(i, siriusJobs.poll());
-                if (options.isFingerid())
-                    handleFingerIdResults(i, fingerIdJobs.poll());
-            }
-
-
-        } catch (IOException e) {
-            LoggerFactory.getLogger(CLI.class).error(e.getMessage(), e);
+            super.compute();
         } finally {
-            if (projectWriter != null) try {
-                projectWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             try {
                 if (fingerblast != null) fingerblast.getSearchEngine().close();
             } catch (IOException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
-    }*/
+    }
 
     private void generateCustomDatabase(FingerIdOptions options) throws IOException {
         DatabaseImporter.importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
     }
 
 
-    protected BasicJJob<Map<IdentificationResult, ProbabilityFingerprint>> submitFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
+    protected FingerIDJJob submitFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
         if (siriusJob == null) return null;
         List<IdentificationResult> results = siriusJob.takeResult();
         if (results == null || results.isEmpty()) return null;
@@ -577,7 +580,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         progress.info("CSI:FingerId initialization done.");
     }
 
-    private Fingerblast newFingerblastInstance(){
+    private Fingerblast newFingerblastInstance() {
         try (WebAPI webAPI = WebAPI.newInstance()) {
             final PredictionPerformance[] performances = webAPI.getStatistics(new TIntArrayList());
             Fingerblast fingerblast = new Fingerblast(getFingerIdDatabaseWrapper());
