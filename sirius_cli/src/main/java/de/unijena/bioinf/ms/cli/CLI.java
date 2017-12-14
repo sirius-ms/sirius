@@ -164,7 +164,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
             sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
             sirius.setIsotopeMode(i.experiment, options.getIsotopes());
-            if (mfCandidatesSet != null && !mfCandidatesSet.isEmpty())
+            if (!mfCandidatesSet.isEmpty())
                 sirius.setFormulaSearchList(i.experiment, mfCandidatesSet);
             job = submit(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
 
