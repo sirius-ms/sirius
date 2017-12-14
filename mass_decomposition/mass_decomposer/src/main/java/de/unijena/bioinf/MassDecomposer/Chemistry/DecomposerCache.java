@@ -31,7 +31,7 @@ public class DecomposerCache {
     private ChemicalAlphabet[] alphabets;
     private MassToFormulaDecomposer[] decomposers;
     private AtomicInteger[] useCounter;
-    private volatile int dirtyState;
+    private int dirtyState;
     private int size;
 
     private ReentrantLock lock = new ReentrantLock();
@@ -48,11 +48,17 @@ public class DecomposerCache {
     public MassToFormulaDecomposer getDecomposer(ChemicalAlphabet alphabet) {
         while (true) {
             int state = dirtyState;
-            MassToFormulaDecomposer d = findDecomposer(alphabet);
+            MassToFormulaDecomposer d = findDecomposer(alphabet,state);
             if (d == null) {
                 lock.lock();
                 try {
-                    d = addNewDecomposer(alphabet);
+                    if (state == dirtyState) {
+                        //System.err.println(this.toString() + " will decompose " + alphabet + " from " + Thread.currentThread().getName() + " with state " + state);
+                        d = addNewDecomposer(alphabet);
+                    } else {
+                        //System.err.println(this.toString() + " STATE CHANGED " + alphabet + " from " + Thread.currentThread().getName() + " with state " + state);
+                        continue;
+                    }
                 } finally {
                     lock.unlock();
                 }
@@ -61,19 +67,20 @@ public class DecomposerCache {
         }
     }
 
-    private MassToFormulaDecomposer findDecomposer(ChemicalAlphabet alphabet) {
+    private MassToFormulaDecomposer findDecomposer(ChemicalAlphabet alphabet, int state) {
         for (int i=0; i < size; ++i) {
             if (alphabets[i].equals(alphabet)) {
                 useCounter[i].incrementAndGet();
                 return decomposers[i];
             }
         }
+        //System.err.println("Search " + alphabet + " in " + Arrays.toString(alphabets) + " without success at state " + state + " in thread " + Thread.currentThread().getName() );
         return null;
     }
 
     private MassToFormulaDecomposer addNewDecomposer(ChemicalAlphabet alphabet) {
         ++dirtyState;
-        System.err.println(alphabet);
+        try {
         if (size < alphabets.length) {
             decomposers[size] = new MassToFormulaDecomposer(alphabet);
             decomposers[size].init();
@@ -87,11 +94,14 @@ public class DecomposerCache {
             decomposers[mindex].init();
             alphabets[mindex] = alphabet;
             return decomposers[mindex];
+        } } finally {
+            ++dirtyState;
+            //System.err.println(alphabet.toString() + " IS ADDED BY " + Thread.currentThread().getName() + " with state " + dirtyState);
         }
     }
 
     public DecomposerCache() {
-        this(5);
+        this(10);
     }
 
 }
