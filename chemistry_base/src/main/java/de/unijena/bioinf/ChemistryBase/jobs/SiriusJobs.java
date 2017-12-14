@@ -19,7 +19,7 @@ public class SiriusJobs {
     public static JobManager getGlobalJobManager() {
         if (globalJobManager == null) {
             setGlobalJobManager(PropertyManager.getNumberOfCores());
-            LoggerFactory.getLogger(SiriusJobs.class).info("Job manager initialized with " + globalJobManager.getCPUThreads() + "CPU threads and " + globalJobManager.getIOThreads() + " IO threads");
+            LoggerFactory.getLogger(SiriusJobs.class).info("Job manager successful initialized with " + globalJobManager.getCPUThreads() + " CPU thread(s) and " + globalJobManager.getIOThreads() + " IO thread(s).");
         }
         return globalJobManager;
     }
