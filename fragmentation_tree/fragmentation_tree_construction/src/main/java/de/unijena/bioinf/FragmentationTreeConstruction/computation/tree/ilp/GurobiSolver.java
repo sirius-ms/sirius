@@ -53,7 +53,7 @@ public class GurobiSolver implements TreeBuilder {
         this.secondsPerDecomposition = 18 * 60 * 60; // maximal 5 hours per decomposition
         this.lastInput = 0;
         this.timeout = System.currentTimeMillis();
-        setNumberOfCPUs(Math.min(2,Runtime.getRuntime().availableProcessors()));
+        setNumberOfCPUs(/*Math.min(2,Runtime.getRuntime().availableProcessors())*/1);
     }
 
     public GurobiSolver() {
@@ -138,7 +138,7 @@ public class GurobiSolver implements TreeBuilder {
             solver.model.getTuneResult(0);
             solver.model.write(file.getName());
         } catch (GRBException e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
+            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
 
     }
@@ -173,7 +173,7 @@ public class GurobiSolver implements TreeBuilder {
     public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object prepared) {
         if (graph.numberOfVertices() <= 2) {
             final FTree tree = new FTree(graph.getRoot().getChildren(0).getFormula());
-            if (graph.getRoot().getOutDegree()>0) {
+            if (graph.getRoot().getOutDegree() > 0) {
                 tree.setTreeWeight(graph.getRoot().getOutgoingEdge(0).getWeight());
             }
             return tree;
@@ -242,27 +242,28 @@ public class GurobiSolver implements TreeBuilder {
             model.getEnv().set(GRB.DoubleParam.TimeLimit, timeLimit);
             built = false;
         }
-/*
-        protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
-            final Fragment pseudoRoot = graph.getRoot();
-            final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
-            for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
-                final Fragment t = e.getKey();
-                final Fragment g = e.getValue();
-                if (g.getParent() == pseudoRoot) {
-                    score -= g.getIncomingEdge().getWeight();
-                } else {
-                    final Loss in = e.getKey().getIncomingEdge();
-                    for (int k = 0; k < g.getInDegree(); ++k)
-                        if (in.getSource().getCandidate().equals(g.getIncomingEdge(k).getSource().getCandidate())) {
-                            score -= g.getIncomingEdge(k).getWeight();
-                            break;
+
+        /*
+                protected static boolean isComputationCorrect(FTree tree, FGraph graph, double score) {
+                    final Fragment pseudoRoot = graph.getRoot();
+                    final BiMap<Fragment, Fragment> fragmentMap = FTree.createFragmentMapping(tree, graph);
+                    for (Map.Entry<Fragment, Fragment> e : fragmentMap.entrySet()) {
+                        final Fragment t = e.getKey();
+                        final Fragment g = e.getValue();
+                        if (g.getParent() == pseudoRoot) {
+                            score -= g.getIncomingEdge().getWeight();
+                        } else {
+                            final Loss in = e.getKey().getIncomingEdge();
+                            for (int k = 0; k < g.getInDegree(); ++k)
+                                if (in.getSource().getCandidate().equals(g.getIncomingEdge(k).getSource().getCandidate())) {
+                                    score -= g.getIncomingEdge(k).getWeight();
+                                    break;
+                                }
                         }
+                    }
+                    return Math.abs(score) < 1e-9d;
                 }
-            }
-            return Math.abs(score) < 1e-9d;
-        }
-*/
+        */
         public void build() {
             try {
                 defineVariables();
@@ -568,7 +569,7 @@ public class GurobiSolver implements TreeBuilder {
                         final Loss l = losses.get(edgeIds[offset]);
                         final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
                         child.getIncomingEdge().setWeight(l.getWeight());
-                        tree.setTreeWeight(tree.getTreeWeight()+l.getWeight());
+                        tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
                         stack.push(new AbstractSolver.Stackitem(child, l.getTarget()));
                     }
                     ++offset;

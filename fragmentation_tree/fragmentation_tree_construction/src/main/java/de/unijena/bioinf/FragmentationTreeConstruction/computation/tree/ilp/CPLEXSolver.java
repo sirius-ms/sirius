@@ -59,7 +59,7 @@ public class CPLEXSolver extends AbstractSolver {
         try {
             model = new IloCplex();
             model.setOut(null);
-            model.setParam(IloCplex.IntParam.Threads, 2);
+            model.setParam(IloCplex.IntParam.Threads, 1);
             constraints = model.addLPMatrix();
         } catch (IloException e) {
             throw new RuntimeException(e);
