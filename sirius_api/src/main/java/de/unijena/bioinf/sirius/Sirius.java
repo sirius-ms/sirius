@@ -165,11 +165,11 @@ public class Sirius {
         }
     }
 
-    public BasicJJob<List<IdentificationResult>> makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport) {
+    public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport) {
         return makeIdentificationJob(experiment, numberOfResultsToReport, true);
     }
 
-    public BasicJJob<List<IdentificationResult>> makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport, final boolean beautifyTrees) {
+    public Sirius.SiriusIdentificationJob makeIdentificationJob(final Ms2Experiment experiment, final int numberOfResultsToReport, final boolean beautifyTrees) {
         return new SiriusIdentificationJob(experiment, numberOfResultsToReport, beautifyTrees);
     }
 
