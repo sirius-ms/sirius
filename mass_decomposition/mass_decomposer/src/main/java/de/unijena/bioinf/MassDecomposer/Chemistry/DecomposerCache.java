@@ -31,6 +31,7 @@ public class DecomposerCache {
     private ChemicalAlphabet[] alphabets;
     private MassToFormulaDecomposer[] decomposers;
     private AtomicInteger[] useCounter;
+    private volatile int dirtyState;
     private int size;
 
     private ReentrantLock lock = new ReentrantLock();
@@ -39,26 +40,24 @@ public class DecomposerCache {
         this.alphabets = new ChemicalAlphabet[size];
         this.decomposers = new MassToFormulaDecomposer[size];
         this.useCounter = new AtomicInteger[size];
+        this.dirtyState = 0;
         for (int k=0; k < size; ++k) useCounter[k] = new AtomicInteger(0);
         this.size = 0;
     }
 
     public MassToFormulaDecomposer getDecomposer(ChemicalAlphabet alphabet) {
-        int size = decomposers.length;
-        final MassToFormulaDecomposer d = findDecomposer(alphabet);
-        if (d!=null) return d;
         while (true) {
-            lock.lock();
-            if (decomposers.length != size) {
-                lock.unlock();
-                size = decomposers.length;
-                final MassToFormulaDecomposer d2 = findDecomposer(alphabet);
-                if (d2!=null) return d2;
-            } else {
-                final MassToFormulaDecomposer d2 = addNewDecomposer(alphabet);;
-                lock.unlock();
-                return d2;
-            }
+            int state = dirtyState;
+            MassToFormulaDecomposer d = findDecomposer(alphabet);
+            if (d == null) {
+                lock.lock();
+                try {
+                    d = addNewDecomposer(alphabet);
+                } finally {
+                    lock.unlock();
+                }
+                return d;
+            } else if (state == dirtyState) return d;
         }
     }
 
@@ -73,6 +72,7 @@ public class DecomposerCache {
     }
 
     private MassToFormulaDecomposer addNewDecomposer(ChemicalAlphabet alphabet) {
+        ++dirtyState;
         if (size < alphabets.length) {
             decomposers[size] = new MassToFormulaDecomposer(alphabet);
             alphabets[size] = alphabet;
