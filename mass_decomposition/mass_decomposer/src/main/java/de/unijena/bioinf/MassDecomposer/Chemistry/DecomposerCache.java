@@ -75,6 +75,7 @@ public class DecomposerCache {
         ++dirtyState;
         if (size < alphabets.length) {
             decomposers[size] = new MassToFormulaDecomposer(alphabet);
+            decomposers[size].init();
             alphabets[size] = alphabet;
             return decomposers[size++];
         } else {
