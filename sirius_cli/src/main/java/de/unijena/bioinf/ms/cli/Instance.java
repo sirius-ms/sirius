@@ -19,17 +19,19 @@ package de.unijena.bioinf.ms.cli;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 import java.io.File;
 
 public class Instance {
+    public static final Instance NULL_INSTANCE = new Instance();
 
     final MutableMs2Experiment experiment;
     final File file;
-    boolean isMultipleInstancesPerFile;
 
-    FTree optTree;
+    private Instance() {
+        experiment = null;
+        file = null;
+    }
 
     public Instance(Ms2Experiment experiment, File file) {
         this.experiment = new MutableMs2Experiment(experiment);
@@ -39,7 +41,7 @@ public class Instance {
     public String fileNameWithoutExtension() {
         final String name = file.getName();
         final int i = name.lastIndexOf('.');
-        if (i>=0) return name.substring(0, i);
+        if (i >= 0) return name.substring(0, i);
         else return name;
     }
 }

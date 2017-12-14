@@ -13,7 +13,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 
-public class ProjectSpaceMerger implements ProjectWriter{
+public class ProjectSpaceMerger implements ProjectWriter {
 
     protected CLI<?> cli;
 
@@ -39,7 +39,7 @@ public class ProjectSpaceMerger implements ProjectWriter{
         reader.close();
 
         // delete file
-        Files.walkFileTree(new File(file).toPath(), new SimpleFileVisitor<Path>(){
+        Files.walkFileTree(new File(file).toPath(), new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!attrs.isDirectory()) Files.delete(file);

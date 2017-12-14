@@ -75,7 +75,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         return new FingerIdResultReader(env);
     }
 
-    @Override
+    /*@Override
     public void compute() {
         if (options.getGeneratingCompoundDatabase() != null) {
             try {
@@ -133,7 +133,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
         }
-    }
+    }*/
 
     private void generateCustomDatabase(FingerIdOptions options) throws IOException {
         DatabaseImporter.importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
