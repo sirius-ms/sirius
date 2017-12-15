@@ -31,7 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.PossibleAdductTypes;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
@@ -512,7 +512,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 LoggerFactory.getLogger(CLI.class).error(noILPSolver);
                 System.exit(1);
             }
-            LoggerFactory.getLogger(CLI.class).info("Compute trees using " + builder.getDescription());
+            LoggerFactory.getLogger(CLI.class).info("Compute trees using " + builder);
 
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
