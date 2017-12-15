@@ -24,6 +24,11 @@ CSI:FingerID.</span>
 
 <!--begin download-->
 
+### Documentation
+- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-manual.pdf)
+- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+
 ### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.1 (Build 7 from 2017-12-15)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64.zip)
@@ -33,11 +38,6 @@ CSI:FingerID.</span>
 - for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64-headless.zip)
 - for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64-headless.zip)
 - for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64-headless.zip)
-
-### Documentation
-- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-manual.pdf)
-- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
