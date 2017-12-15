@@ -9,7 +9,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.TreeSizeScorer;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.SinglethreadedTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -232,7 +231,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 }
                 // now compute from best scoring compound to lowest scoring compound
                 final FinalResult fr;
-                if (analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder) {
+                if (analyzer.getTreeBuilder().isThreadSafe()) {
                     fr = computeExactTreesSinglethreaded(intermediateResults, retryWithHigherScore);
                 } else {
                     fr = computeExactTreesInParallel(intermediateResults, retryWithHigherScore);
@@ -309,7 +308,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
 
         final double[] threshold = new double[]{Double.NEGATIVE_INFINITY, 0d};
 
-        final boolean IS_SINGLETHREADED = intermediateResults.size() < 200 && analyzer.getTreeBuilder() instanceof SinglethreadedTreeBuilder;
+        final boolean IS_SINGLETHREADED = intermediateResults.size() < 200 && !analyzer.getTreeBuilder().isThreadSafe();
 
         final List<ExactComputationWithThreshold> batchJobs = new ArrayList<>(BATCH_SIZE);
         int treesComputed = 0;
