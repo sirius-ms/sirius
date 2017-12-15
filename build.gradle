@@ -332,21 +332,22 @@ task refreshDownloadLinks {
         def repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
 
         List<String> lines = [
-                "### Sirius+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
+                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
-                "### Sirius+CSI:FingerID Commandline only - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
+                "### SIRIUS+CSI:FingerID Commandline only - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
                 "",
-                "### Manual",
+                "### Documentation",
+                "- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)",
                 "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}-manual.pdf)",
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
@@ -419,6 +420,13 @@ publishing {
             pom.withXml {}
             artifact source: pdfDokuArtifact
         }
+        manual(MavenPublication){
+            artifactId = 'sirius'
+            groupId = "$group"
+            version = '3'
+            pom.withXml {}
+            artifact source: pdfDokuArtifact, classifier: 'manual'
+        }
     }
 }
 
@@ -434,7 +442,7 @@ artifactory {
         defaults {
             //Publish every distribution to Artifactory
             publications("sirius")
-//            publications("manual")
+            publications("manual")
         }
     }
 }
