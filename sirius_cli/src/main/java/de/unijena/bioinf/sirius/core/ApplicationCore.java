@@ -5,10 +5,9 @@ package de.unijena.bioinf.sirius.core;
  * 19.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PersistentProperties;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
