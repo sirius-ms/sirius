@@ -46,7 +46,7 @@ public class LimitNumberOfPeaksMassDistributedFilter implements PostProcessor, I
     private static int[] DEFAULT_LIMITS = new int[]{60, 80, 100};
 
     public DecomposerCache getCache() {
-        if (cache == null) cache = new DecomposerCache(3);
+        if (cache == null) cache = new DecomposerCache(10);
         return cache;
     }
 

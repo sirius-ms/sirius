@@ -1,11 +1,16 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder;
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
-public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
+public class AbstractTreeBuilder<T extends AbstractSolver> implements TreeBuilder {
+
+    protected final IlpFactory<T> factory;
+
+    public AbstractTreeBuilder(IlpFactory<T> factory) {
+        this.factory = factory;
+    }
 
     @Override
     public FluentInterface computeTree() {
@@ -14,16 +19,16 @@ public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
 
     @Override
     public Result computeTree(ProcessedInput input, FGraph graph, FluentInterface options) {
-        return new Result(new ExtendedCriticalPathHeuristic(graph).buildSolution(), false, AbortReason.COMPUTATION_CORRECT);
+        return factory.create(input,graph,options).compute();
     }
 
     @Override
     public boolean isThreadSafe() {
-        return true;
+        return factory.isThreadSafe();
     }
 
     @Override
     public String toString() {
-        return "Heuristic Solver: Critical Path";
+        return "ILP Solver: " + factory.name();
     }
 }

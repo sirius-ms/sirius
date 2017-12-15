@@ -44,10 +44,11 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidato
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.HighIntensityMerger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.Merger;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.merging.PeakMerger;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.RecalibrationMethod;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.HypothesenDrivenRecalibration2;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.recalibration.SpectralRecalibration;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.*;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
@@ -55,9 +56,6 @@ import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import gnu.trove.procedure.TLongProcedure;
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.analysis.function.Identity;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.util.*;
 
@@ -111,7 +109,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     private List<PostProcessor> postProcessors;
     private TreeBuilder treeBuilder;
     private MutableMeasurementProfile defaultProfile;
-    private RecalibrationMethod recalibrationMethod;
     private GraphReduction reduction;
     private IsotopePatternInMs2Scorer isoInMs2Scorer;
     private IsotopeInMs2Handling isotopeInMs2Handling;
@@ -217,14 +214,14 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                     adductTypes.add(PrecursorIonType.getPrecursorIonType("[M+Cl]-"), 0.05);
                 }
             }
-            pinput.addAnnotation(PossibleAdductTypes.class, adductTypes);
+            pinput.setAnnotation(PossibleAdductTypes.class, adductTypes);
         } else {
-            pinput.addAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
+            pinput.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.deterministic(pinput.getExperimentInformation().getPrecursorIonType()));
         }
 
         // set whiteset
         if (input.getAnnotation(Whiteset.class, null)!=null) {
-            pinput.addAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class));
+            pinput.setAnnotation(Whiteset.class, input.getAnnotation(Whiteset.class));
         }
 
         return pinput;
@@ -945,7 +942,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             initialize(o);
         }
         //initialize(treeBuilder);
-        initialize(recalibrationMethod);
         initialize(reduction);
         initialize(isoInMs2Scorer);
     }
@@ -1047,13 +1043,20 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound) {
-        return computeTree(graph, lowerbound, recalibrationMethod != null && graph.getAnnotation(ForbidRecalibration.class,ForbidRecalibration.ALLOWED).isAllowed());
+        return computeTree(graph, lowerbound, false);
     }
 
 
     protected FTree computeTreeWithoutAnnotating(FGraph graph, double lowerbound) {
-        FTree tree = getTreeBuilder().buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
-        return tree;
+        return computeTreeWithoutAnnotating(graph,lowerbound,graph.getAnnotation(Timeout.class,Timeout.NO_TIMEOUT).getNumberOfSecondsPerDecomposition());
+    }
+
+    protected FTree computeTreeWithoutAnnotating(FGraph graph, double lowerbound, int allowedTimeInSeconds) {
+        TreeBuilder.FluentInterface fluentInterface = getTreeBuilder().computeTree();
+        if (lowerbound>=0) fluentInterface = fluentInterface.withMinimalScore(lowerbound);
+        if (allowedTimeInSeconds>0)
+            fluentInterface = fluentInterface.withTimeLimit(allowedTimeInSeconds);
+        return fluentInterface.withMultithreading(1).solve(graph.getAnnotationOrThrow(ProcessedInput.class), graph).tree;
     }
 
     /**
@@ -1065,11 +1068,41 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
      */
     public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration) {
-        FTree tree = getTreeBuilder().buildTree(graph.getAnnotationOrThrow(ProcessedInput.class), graph, lowerbound);
+        FTree tree = computeTreeWithoutAnnotating(graph,lowerbound);
         if (tree == null) return null;
         addTreeAnnotations(graph, tree);
-        if (recalibration) tree = recalibrate(tree);
+        if (recalibration) tree = recalibrate(graph.getAnnotationOrThrow(ProcessedInput.class), tree);
         return tree;
+    }
+
+    /**
+     * Compute a single fragmentation tree
+     *
+     * @param graph         fragmentation graph from which the tree should be built
+     * @param lowerbound    minimal score of the tree. Higher lowerbounds may result in better runtime performance
+     * @param recalibration if true, the tree will be recalibrated
+     * @return an optimal fragmentation tree with at least lowerbound score or null, if no such tree exist
+     */
+    public FTree computeTree(FGraph graph, double lowerbound, boolean recalibration, int allowedTimeInSeconds) {
+        FTree tree = computeTreeWithoutAnnotating(graph,lowerbound, allowedTimeInSeconds);
+        if (tree == null) return null;
+        addTreeAnnotations(graph, tree);
+        if (recalibration) tree = recalibrate(graph.getAnnotationOrThrow(ProcessedInput.class), tree);
+        return tree;
+    }
+
+    protected FTree recalibrate(ProcessedInput input, FTree tree) {
+        final SpectralRecalibration rec = new HypothesenDrivenRecalibration2().collectPeaksFromMs2(input.getExperimentInformation(), tree);
+        final ProcessedInput pin = input.getRecalibratedVersion(rec);
+        // we have to completely rescore the input...
+        final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
+        pin.setAnnotation(DecompositionList.class, l);
+        performPeakScoring(pin);
+        FGraph graph = buildGraph(pin, l.getDecompositions().get(0));
+        graph.addAnnotation(SpectralRecalibration.class, rec);
+        final FTree recalibratedTree = computeTree(graph);
+        recalibratedTree.setAnnotation(SpectralRecalibration.class, rec);
+        return recalibratedTree;
     }
 
     protected static class Stackitem {
@@ -1095,7 +1128,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      */
     protected void addTreeAnnotations(FGraph originalGraph, FTree tree) {
         final ProcessedInput pinput = originalGraph.getAnnotationOrNull(ProcessedInput.class);
-        tree.addAnnotation(ProcessedInput.class, pinput);
+        tree.setAnnotation(ProcessedInput.class, pinput);
         PrecursorIonType ionType = originalGraph.getAnnotationOrThrow(PrecursorIonType.class);
         if (ionType.isIonizationUnknown()) {
             // use ionization instead
@@ -1107,7 +1140,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
         }
         // tree annotations
-        tree.addAnnotation(PrecursorIonType.class, ionType);
+        tree.setAnnotation(PrecursorIonType.class, ionType);
         final TreeScoring treeScoring = new TreeScoring();
 
         // calculate overall score
@@ -1117,7 +1150,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         treeScoring.setOverallScore(treeScoring.getRootScore() + overallScore);
 
-        tree.addAnnotation(TreeScoring.class, treeScoring);
+        tree.setAnnotation(TreeScoring.class, treeScoring);
 
         final FragmentAnnotation<Ms2IsotopePattern> msIsoAno = tree.getOrCreateFragmentAnnotation(Ms2IsotopePattern.class);
 
@@ -1212,86 +1245,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     /**
-     * Recalibrates the tree
-     *
-     * @return Recalibration object containing score bonus and new tree
-     */
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FTree tree, boolean force) {
-        if (recalibrationMethod == null || tree == null) return null;
-        else return recalibrationMethod.recalibrate(tree, new MassDeviationVertexScorer(), force);
-    }
-
-    public RecalibrationMethod.Recalibration getRecalibrationFromTree(final FTree tree) {
-        return getRecalibrationFromTree(tree, false);
-    }
-
-    /**
-     * Recalibrates the tree. Returns either a new recalibrated tree or the old tree with recalibrated deviations and
-     * (maybe) higher scores. The FragmentationTree#getRecalibrationBonus returns the improvement of the score after
-     * recalibration
-     *
-     * @param tree
-     * @return
-     */
-    public FTree recalibrate(FTree tree, boolean force) {
-        if (tree == null) return null;
-        final TreeScoring treeScoring = tree.getAnnotationOrThrow(TreeScoring.class);
-        RecalibrationMethod.Recalibration rec = getRecalibrationFromTree(tree, force);
-        final UnivariateFunction func = (rec == null) ? null : rec.recalibrationFunction();
-        assert (func == null || (!(func instanceof PolynomialFunction) || ((PolynomialFunction) func).degree() >= 1));
-        if (rec == null || (!force && rec.getScoreBonus() <= 0)) return tree;
-        double oldScore = treeScoring.getOverallScore();
-        if (force || rec.shouldRecomputeTree()) {
-            final FTree newTree = rec.getCorrectedTree(this, tree);
-            final TreeScoring newTreeScoring = newTree.getAnnotationOrThrow(TreeScoring.class);
-            setRecalibrationBonusFromTree(tree, newTree);
-            if (force || newTreeScoring.getRecalibrationBonus()>0) {
-                tree = newTree;
-            }
-        } else {
-            treeScoring.setOverallScore(treeScoring.getOverallScore() + rec.getScoreBonus());
-            treeScoring.setRecalibrationBonus(rec.getScoreBonus());
-        }
-        if (func != null) {
-            final RecalibrationFunction f = toPolynomial(func);
-            if (f!=null)
-                tree.addAnnotation(RecalibrationFunction.class, f);
-        }
-        return tree;
-    }
-
-    private static void setRecalibrationBonusFromTree(FTree old, FTree newTree) {
-        final TreeScoring a = old.getAnnotationOrThrow(TreeScoring.class);
-        final TreeScoring b = newTree.getAnnotationOrThrow(TreeScoring.class);
-        double aS = a.getOverallScore();
-        double bS = b.getOverallScore();
-        for (Map.Entry<String, Double> e : a.getAdditionalScores().entrySet()) {
-            if (b.getAdditionalScore(e.getKey())==0) aS -= e.getValue();
-        }
-        b.setRecalibrationBonus(bS-aS);
-    }
-
-    static RecalibrationFunction toPolynomial(UnivariateFunction func) {
-        if (func instanceof PolynomialFunction) {
-            return new RecalibrationFunction(((PolynomialFunction) func).getCoefficients());
-        }
-        if (func instanceof Identity) return RecalibrationFunction.identity();
-        return null;
-    }
-
-    public FTree recalibrate(FTree tree) {
-        return recalibrate(tree, false);
-    }
-
-    public RecalibrationMethod getRecalibrationMethod() {
-        return recalibrationMethod;
-    }
-
-    public void setRecalibrationMethod(RecalibrationMethod recalibrationMethod) {
-        this.recalibrationMethod = recalibrationMethod;
-    }
-
-    /**
      * Computes a fragmentation tree
      *
      * @param graph fragmentation graph from which the tree should be built
@@ -1299,11 +1252,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
      */
     public FTree computeTree(FGraph graph) {
         return computeTree(graph, Double.NEGATIVE_INFINITY);
-    }
-
-    public MultipleTreeComputation computeTrees(ProcessedInput input) {
-        return new MultipleTreeComputation(this, input, input.getPeakAnnotationOrThrow(DecompositionList.class).get(input.getParentPeak()).getDecompositions(),
-                0, Integer.MAX_VALUE, 1, recalibrationMethod != null, null);
     }
 
     public GraphReduction getReduction() {
@@ -1798,9 +1746,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             this.isoInMs2Scorer = (IsotopePatternInMs2Scorer) helper.unwrap(document, document.getFromDictionary(dictionary,"isotopesInMs2"));
         }
         peakMerger = (PeakMerger) helper.unwrap(document, document.getFromDictionary(dictionary, "merge"));
-        if (document.hasKeyInDictionary(dictionary, "recalibrationMethod")) {
-            recalibrationMethod = (RecalibrationMethod) helper.unwrap(document, document.getFromDictionary(dictionary, "recalibrationMethod"));
-        } else recalibrationMethod = null;
         if (document.hasKeyInDictionary(dictionary, "default"))
             defaultProfile = new MutableMeasurementProfile((MeasurementProfile) helper.unwrap(document, document.getFromDictionary(dictionary, "default")));
         else
@@ -1845,8 +1790,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (LossScorer s : lossScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "lossScorers", list);
         document.addToDictionary(dictionary, "isotopesInMs2", helper.wrap(document, isoInMs2Scorer));
-        if (recalibrationMethod != null)
-            document.addToDictionary(dictionary, "recalibrationMethod", helper.wrap(document, recalibrationMethod));
         document.addToDictionary(dictionary, "merge", helper.wrap(document, peakMerger));
         if (withProfile)
             document.addToDictionary(dictionary, "default", helper.wrap(document, new MutableMeasurementProfile(defaultProfile)));

@@ -122,7 +122,7 @@ public class Main {
             System.err.println("Unknown filter '" + options.getFilter() + "'. Allowed are strict, common, permissive, rdbe, none.\n");
             System.err.println(cli.getHelpMessage());
             System.exit(1);
-        } else if (level != FilterLevel.NONE && options.getDontUseRDBE()) {
+        } else if ((level != FilterLevel.COMMON && level != FilterLevel.NONE) && options.getDontUseRDBE()) {
             System.err.println("Conflicting options: --nofilter and --filter='" + options.getFilter() + "'. Only one of both must be set.\n");
             System.err.println(cli.getHelpMessage());
             System.exit(1);
@@ -132,7 +132,7 @@ public class Main {
                     validator = ChemicalValidator.getStrictThreshold();
                     break;
                 case COMMON:
-                    validator = ChemicalValidator.getCommonThreshold();
+                    validator = options.getDontUseRDBE() ? null : ChemicalValidator.getCommonThreshold();
                     break;
                 case PERMISSIVE:
                     validator = ChemicalValidator.getPermissiveThreshold();
@@ -147,12 +147,14 @@ public class Main {
         final double mass;
         final double mz = options.getMass();
         final String ion = options.getIonization();
-        final PrecursorIonType ionization = ion == null ? PeriodicTable.getInstance().ionByName("[M+H]+") : PeriodicTable.getInstance().ionByName(ion);
+        final PrecursorIonType ionization = ion == null ? null/*PeriodicTable.getInstance().ionByName("[M+H]+") */ : PeriodicTable.getInstance().ionByName(ion);
+        /*
         if (ionization == null) {
             System.err.println("Unknown ion '" + ion + "'");
             return;
         }
-        mass = ionization.precursorMassToNeutralMass(mz);
+        */
+        mass = ionization==null ? mz : ionization.precursorMassToNeutralMass(mz);
         if (validator == null) {
             // do nothing
         } else if (validator instanceof ChemicalValidator) {
@@ -189,7 +191,7 @@ public class Main {
         final List<int[]> compomers = decomposer.decompose(mass, dev, boundary);
         final List<MolecularFormula> formulas = new ArrayList<MolecularFormula>(compomers.size());
         for (int[] c : compomers) {
-            if (validator.validate(c, decomposer.orderedCharacterIds, decomposer.getAlphabet()))
+            if (validator==null || validator.validate(c, decomposer.orderedCharacterIds, decomposer.getAlphabet()))
                 formulas.add(alphabet.decompositionToFormula(c));
         }
         Collections.sort(formulas, new Comparator<MolecularFormula>() {

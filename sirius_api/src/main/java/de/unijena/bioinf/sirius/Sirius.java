@@ -39,7 +39,6 @@ import de.unijena.bioinf.IsotopePatternAnalysis.prediction.DNNRegressionPredicto
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.MasterJJob;
@@ -562,6 +561,14 @@ public class Sirius {
         } else {
             experiment.setAnnotation(FormulaSettings.class, current.withoutAutoDetect());
         }
+    }
+
+    public void setTimeout(MutableMs2Experiment experiment, int timeoutPerInstanceInSeconds, int timeoutPerDecompositionInSeconds) {
+        experiment.setAnnotation(Timeout.class, new Timeout(timeoutPerInstanceInSeconds, timeoutPerDecompositionInSeconds));
+    }
+
+    public void disableTimeout(MutableMs2Experiment experiment) {
+        experiment.setAnnotation(Timeout.class, Timeout.NO_TIMEOUT);
     }
 
 

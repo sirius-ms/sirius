@@ -18,6 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import com.google.common.collect.BiMap;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -27,91 +28,29 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Spectar on 13.11.2014.
  */
 abstract public class AbstractSolver {
 
-    public enum SolverState {
-        FINISHED,
-        SHALL_RETURN_NULL,
-        SHALL_BUILD_SOLUTION
-    }
-
-    protected boolean built;
-
     // graph information
+    protected final ProcessedInput input;
     protected final FGraph graph;
     protected final List<Loss> losses;
     protected final int[] edgeIds; // contains variable indices (after 'computeoffsets')
     protected final int[] edgeOffsets; // contains: the first index j of edges starting from a given vertex i
 
-    protected int lastInput;
-    protected int secondsPerInstance;
-    protected int secondsPerDecomposition;
-    protected long timeout;
-    protected int numberOfCPUs;
-
-    protected final ProcessedInput input;
-    protected final TreeBuilder feasibleSolver;
-
-    // linear program parameters
-    protected final double LP_LOWERBOUND;
-    protected final int LP_TIMELIMIT;
-    protected final int LP_NUM_OF_VARIABLES;
-    protected final int LP_NUM_OF_VERTICES;
-
+    protected TreeBuilder.FluentInterface options;
 
     ////////////////////////
     //--- CONSTRUCTORS ---//
     ////////////////////////
 
-
-    /**
-     * Minimal constructor
-     * - initiate solver with given graph
-     * - lower bound will be negative infinity
-     * - no maximum computation time will be set
-     * @param graph
-     */
-    public AbstractSolver(FGraph graph)
-    {
-        this(graph, null, Double.NEGATIVE_INFINITY, null, -1);
-    }
-
-
-    /**
-     * optimal constructor
-     * - initiate solver with given graph
-     * - initiate solver with given lower bound
-     * - no maximum computation time will be set
-     * @param graph
-     * @param lowerbound
-     */
-    public AbstractSolver(FGraph graph, double lowerbound)
-    {
-        this(graph, null, lowerbound, null, -1);
-    }
-
-
-    /**
-     * Maximum constructor. May be used to ilp_base_construct the correctness of any implemented solver
-     *
-     * @param graph
-     * @param input
-     * @param lowerbound
-     * @param feasibleSolver
-     * @param timeLimit
-     */
-    protected AbstractSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit)
+    protected AbstractSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options)
     {
         if (graph == null) throw new NullPointerException("Cannot solve graph: graph is NULL!");
-
         this.graph = graph;
         this.losses = new ArrayList<Loss>(graph.numberOfEdges());
         for (Fragment f : graph) {
@@ -121,18 +60,18 @@ abstract public class AbstractSolver {
         }
         this.edgeIds = new int[graph.numberOfEdges()];
         this.edgeOffsets = new int[graph.numberOfVertices()];
-
-        this.LP_LOWERBOUND = lowerbound;
-        this.LP_TIMELIMIT = (timeLimit >= 0) ? timeLimit : 0;
-
         this.input = input;
-        this.feasibleSolver = feasibleSolver;
-
-        this.LP_NUM_OF_VERTICES = graph.numberOfVertices();
-        this.LP_NUM_OF_VARIABLES = this.losses.size();
-
-        this.built = false;
+        this.options = options;
     }
+
+    public TreeBuilder.Result compute() {
+        prepareSolver();
+        return solve();
+    }
+
+    protected abstract void setTimeLimitInSeconds(double timeLimitsInSeconds) throws Exception;
+
+    protected abstract void setNumberOfCpus(int numberOfCPUS) throws Exception;
 
 
     /////////////////////
@@ -143,26 +82,30 @@ abstract public class AbstractSolver {
      * - this class should be implemented through abstract sub methods
      * - model.update() like used within the gurobi solver may be used within one of those, if necessary
      */
-    public void prepareSolver() {
+    protected void prepareSolver() {
         try {
+            initializeModel();
+            if (options.getNumberOfCPUS()>0)
+                setNumberOfCpus(options.getNumberOfCPUS());
+            if (options.getTimeLimitsInSeconds()>0)
+                setTimeLimitInSeconds(options.getTimeLimitsInSeconds());
             computeOffsets();
             assert (edgeOffsets != null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
 
-            if (feasibleSolver != null) {
-                final FTree presolvedTree = feasibleSolver.buildTree(input, graph, LP_LOWERBOUND);
-                defineVariablesWithStartValues(presolvedTree);
+            if (options.getTemplate() != null) {
+                defineVariablesWithStartValues(options.getTemplate());
             } else {
                 defineVariables();
             }
 
             setConstraints();
-            applyLowerBounds();
             setObjective();
-            built = true;
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
         }
     }
+
+    protected abstract void initializeModel() throws Exception;
 
 
     /**
@@ -171,14 +114,14 @@ abstract public class AbstractSolver {
      * (inside 'var' and 'coefs')
      * Additionally, a new loss array will be computed
      */
-    final void computeOffsets() {
+    protected final void computeOffsets() {
 
         for (int k = 1; k < edgeOffsets.length; ++k)
             edgeOffsets[k] = edgeOffsets[k - 1] + graph.getFragmentAt(k - 1).getOutDegree();
 
         /*
          * for each edge: give it some unique id based on its source vertex id and its offset
-         * therefor, the i-th edge of some vertex u will have the id: edgeOffsets[u] + i - 1, if i=1 is the first edge.
+         * therefor, the i-th edge of some vertex u will have the id: edgeOffsets[u] + i, if i=0 is the first edge.
          * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
           */
         for (int k = 0; k < losses.size(); ++k) {
@@ -200,7 +143,17 @@ abstract public class AbstractSolver {
         setTreeConstraint();
         setColorConstraint();
         setMinimalTreeSizeConstraint();
+        if (!Double.isInfinite(options.getMinimalScore()))
+            setMinimalScoreConstraints(options.getMinimalScore());
     }
+
+    /**
+     * - The sum of all edges kept in the solution (if existing) should be at least as high as the given lower bound
+     * - This information might be used by a solver to stop the calculation, when it is obviously not possible to
+     *   reach that condition.
+     * @throws Exception
+     */
+    protected abstract void setMinimalScoreConstraints(double minimalScore) throws Exception;
 
 
     /**
@@ -208,26 +161,30 @@ abstract public class AbstractSolver {
      * Need constraints, variables, etc. to be set up
      * @return
      */
-    public FTree solve() {
+    protected TreeBuilder.Result solve() {
         try {
-            if (graph.numberOfEdges() == 1) return buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true});
+            if (graph.numberOfEdges() == 1) {
+                return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
+            }
             // set up constraints etc.
             prepareSolver();
 
             // get optimal solution (score) if existing
-            AbstractSolver.SolverState signal = solveMIP();
-            FTree TREE = null;
-            if (signal != SolverState.SHALL_RETURN_NULL) {
-                // reconstruct tree after having determined the (possible) optimal solution
-                final double score = getSolverScore();
-                TREE = buildSolution();
-                if (TREE != null && !isComputationCorrect(TREE, this.graph, score))
-                    throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
+            try {
+                TreeBuilder.AbortReason c = solveMIP();
 
+                if (c == TreeBuilder.AbortReason.COMPUTATION_CORRECT) {
+                    // reconstruct tree after having determined the (possible) optimal solution
+                    final double score = getSolverScore();
+                    final FTree tree = buildSolution();
+                    if (tree != null && !isComputationCorrect(tree, this.graph, score))
+                        throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
+                    return new TreeBuilder.Result(tree, true, c);
+                } else return new TreeBuilder.Result(null, false, c);
+            } finally {
+                // free any memory, if necessary
+                pastBuildSolution();
             }
-            // free any memory, if necessary
-            signal = pastBuildSolution();
-            return signal==SolverState.SHALL_RETURN_NULL ? null : TREE;
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
         }
@@ -242,15 +199,48 @@ abstract public class AbstractSolver {
      * @throws Exception
      */
     abstract protected void defineVariables() throws Exception;
-    abstract protected void defineVariablesWithStartValues( FTree presolvedTree) throws Exception;
+    protected void defineVariablesWithStartValues( FTree presolvedTree) throws Exception {
+        // map edges in presolved tree to edge ids
+        final HashMap<MolecularFormula,Fragment> fragmentMap = new HashMap<>(presolvedTree.numberOfVertices());
+        for (Fragment f : presolvedTree) fragmentMap.put(f.getFormula(), f);
 
-    /**
-     * - The sum of all edges kept in the solution (if existing) should be at least as high as the given lower bound
-     * - This information might be used by a solver to stop the calculation, when it is obviously not possible to
-     *   reach that condition.
-     * @throws Exception
-     */
-    abstract protected void applyLowerBounds() throws Exception;
+        int[] selectedEdges = new int[1+presolvedTree.numberOfEdges()];
+        int k=0, offset=0;
+
+        // find pseudo root
+        final MolecularFormula root = presolvedTree.getRoot().getFormula();
+        for (int l=0; l < graph.getRoot().getOutDegree(); ++l) {
+            if (losses.get(edgeIds[l]).getTarget().getFormula().equals(root)) {
+                selectedEdges[k++] = edgeIds[l];
+                break;
+            }
+        }
+
+        forEachFragment:
+        for (int i=0; i < this.graph.numberOfVertices(); ++i) {
+            final Fragment fragment = this.graph.getFragmentAt(i);
+            final Fragment treeFragment = fragmentMap.get(fragment.getFormula());
+            if (treeFragment!=null) {
+                final MolecularFormula lf = treeFragment.getIncomingEdge().getFormula();
+                // find corresponding loss
+                forEachLoss:
+                for (int l=0; l < fragment.getInDegree(); ++l) {
+                    if (fragment.getIncomingEdge(l).getFormula().equals(lf)) {
+                        // we find the correct edge
+                        selectedEdges[k++] = offset + l;
+                        break forEachLoss;
+                    }
+                }
+            }
+            offset += fragment.getInDegree();
+        }
+
+        if (k < selectedEdges.length)
+            selectedEdges = Arrays.copyOf(selectedEdges, k);
+        defineVariablesWithStartValues(selectedEdges);
+    }
+
+    protected abstract void defineVariablesWithStartValues(int[] usedEdgeIds) throws Exception;
 
     /**
      * - relaxed version: for each vertex, there are only one or more outgoing edges,
@@ -292,7 +282,7 @@ abstract public class AbstractSolver {
      * @return
      * @throws Exception
      */
-    abstract protected SolverState solveMIP() throws Exception;
+    abstract protected TreeBuilder.AbortReason solveMIP() throws Exception;
 
     /**
      * - a specific solver might need to do more (or release memory) after the solving process
@@ -300,7 +290,7 @@ abstract public class AbstractSolver {
      * @return
      * @throws Exception
      */
-    abstract protected SolverState pastBuildSolution() throws Exception;
+    abstract protected void pastBuildSolution() throws Exception;
 
     /**
      * - having found a solution using 'solveMIP' this function shall return a boolean list representing
@@ -410,12 +400,6 @@ abstract public class AbstractSolver {
         return Math.abs(score) < 1e-4d;
     }
     private static Logger logger = LoggerFactory.getLogger(AbstractSolver.class);
-
-
-    protected void resetTimeLimit() {
-        timeout = System.currentTimeMillis() + secondsPerDecomposition * 1000l;
-    }
-
 
     protected static class Stackitem {
         protected final Fragment treeNode;

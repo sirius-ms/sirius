@@ -19,7 +19,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
@@ -41,31 +40,51 @@ public class CPLEXSolver extends AbstractSolver {
     protected IloIntVar[] variables;
     protected IloLPMatrix constraints;
 
-    public CPLEXSolver(FGraph graph) {
-        super(graph);
-    }
+    public final static IlpFactory<CPLEXSolver> Factory = new IlpFactory<CPLEXSolver>() {
+        @Override
+        public CPLEXSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
+            return new CPLEXSolver(graph,input,options);
+        }
+        @Override
+        public boolean isThreadSafe() {
+            return true;
+        }
 
-    public CPLEXSolver(FGraph graph, double lowerbound) {
-        super(graph, lowerbound);
-    }
+        @Override
+        public String name() {
+            return "CPLEX";
+        }
+    };
 
-    protected CPLEXSolver(FGraph graph, ProcessedInput input, double lowerbound, TreeBuilder feasibleSolver, int timeLimit) {
-        super(graph, input, lowerbound, feasibleSolver, timeLimit);
+    protected CPLEXSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {
+        super(graph, input, options);
     }
 
     @Override
-    public void prepareSolver() {
-
-        try {
-            model = new IloCplex();
-            model.setOut(null);
-            model.setParam(IloCplex.IntParam.Threads, 1);
-            constraints = model.addLPMatrix();
-        } catch (IloException e) {
-            throw new RuntimeException(e);
+    protected void setTimeLimitInSeconds(double timeLimitsInSeconds) throws Exception{
+        if (timeLimitsInSeconds>0) {
+            model.setParam(IloCplex.Param.TimeLimit, timeLimitsInSeconds);
         }
+    }
 
-        super.prepareSolver();
+    @Override
+    protected void setNumberOfCpus(int numberOfCPUS) throws Exception {
+        if (numberOfCPUS>0) {
+            model.setParam(IloCplex.Param.Threads, numberOfCPUS);
+        } else throw new IllegalArgumentException("Invalid number of CPUs: " + numberOfCPUS);
+    }
+
+    @Override
+    protected void initializeModel() throws Exception {
+        model = new IloCplex();
+        model.setOut(null);
+        model.setParam(IloCplex.IntParam.Threads, 1);
+        constraints = model.addLPMatrix();
+    }
+
+    @Override
+    protected void setMinimalScoreConstraints(double minimalScore) throws Exception {
+        model.setParam(IloCplex.Param.MIP.Tolerances.LowerCutoff, minimalScore);
     }
 
     @Override
@@ -76,21 +95,13 @@ public class CPLEXSolver extends AbstractSolver {
     }
 
     @Override
-    protected void defineVariablesWithStartValues(FTree presolvedTree) throws Exception {
-
-    }
-
-    @Override
-    protected void applyLowerBounds() throws Exception {
-        if (LP_LOWERBOUND>0) {
-            final double[] optim = new double[losses.size()];
-            final int[] indizes = new int[losses.size()];
-            for (int i=0; i < optim.length; ++i) {
-                optim[i] = losses.get(i).getWeight();
-                indizes[i] = i;
-            }
-            constraints.addRow(LP_LOWERBOUND, Double.POSITIVE_INFINITY, indizes, optim);
+    protected void defineVariablesWithStartValues(int[] selectedEdges) throws Exception {
+        defineVariables();
+        final double[] values = new double[variables.length];
+        for (int index : selectedEdges) {
+            values[index] = 1d;
         }
+        model.addMIPStart(variables, values, IloCplex.MIPStartEffort.CheckFeas);
     }
 
 
@@ -177,19 +188,24 @@ public class CPLEXSolver extends AbstractSolver {
     }
 
     @Override
-    protected SolverState solveMIP() throws Exception {
+    protected TreeBuilder.AbortReason solveMIP() throws Exception {
         model.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
         model.setParam(IloCplex.IntParam.NodeAlg, IloCplex.Algorithm.Auto);
         final boolean done = model.solve();
-        if (done) return SolverState.SHALL_BUILD_SOLUTION;
-        else return SolverState.SHALL_RETURN_NULL;
+        final IloCplex.Status status = model.getStatus();
+        if (done && status == IloCplex.Status.Optimal)
+            return TreeBuilder.AbortReason.COMPUTATION_CORRECT;
+        if (status == IloCplex.Status.Infeasible)
+            return TreeBuilder.AbortReason.INFEASIBLE;
+        // probably timeout occurs?
+        return TreeBuilder.AbortReason.TIMEOUT;
+
     }
 
     @Override
-    protected SolverState pastBuildSolution() throws Exception {
+    protected void pastBuildSolution() throws Exception {
         model.endModel();
         model.end();
-        return SolverState.FINISHED;
     }
 
     @Override
