@@ -418,11 +418,12 @@ publishing {
             artifact source: pdfDokuArtifact
         }
         manual(MavenPublication){
-            artifactId = 'sirius'
-            groupId = "$group"
-            version = '3'
+            artifactId = "manual"
+            groupId = "${group}.${project.appName}"
+            version = 'current'
+
             pom.withXml {}
-            artifact source: pdfDokuArtifact, classifier: 'manual'
+            artifact source: pdfDokuArtifact, classifier: 'sirius'
         }
     }
 }
