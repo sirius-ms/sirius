@@ -59,17 +59,18 @@ command-line tool.
 
 <!--begin download-->
 
-### Sirius+CSI:FingerID GUI and CLI - Version 3.5.2-SNAPSHOT (Build 0 from 2017-12-05)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.2-SNAPSHOT (Build 0 from 2017-12-15)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64.zip)
 
-### Sirius+CSI:FingerID Commandline only - Version 3.5.2-SNAPSHOT (Build 0 from 2017-12-05)
+### SIRIUS+CSI:FingerID Commandline only - Version 3.5.2-SNAPSHOT (Build 0 from 2017-12-15)
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-win64-headless.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-linux64-headless.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-osx64-headless.zip)
 
-### Manual
+### Documentation
+- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/3.5.2-SNAPSHOT/sirius-3.5.2-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
@@ -187,10 +188,10 @@ literature to cite transparent to the user.
 -   **Visualization of the predicted fingerprints**.
 
 -   **ECFP fingerprints** are now also in the CSI:FingerID database and
-    have do no longer have to be computed on the users side.
+    do no longer have to be computed on the users side.
 
 -   Connection error detection and refresh feature. No restart required
-    anymore to apply Sirius internal proxy settings.
+    to apply Sirius internal proxy settings anymore.
 
 -   **System wide proxy** settings are now supported.
 
