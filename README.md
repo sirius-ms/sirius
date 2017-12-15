@@ -8,8 +8,7 @@ publications.</span>*
 
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
-
-We present SIRIUS, a new java-based software framework for discovering a
+SIRIUS is new java-based software framework for discovering a
 landscape of de-novo identification of metabolites using single and
 tandem mass spectrometry. SIRIUS uses isotope pattern analysis for
 detecting the molecular formula and further analyses the fragmentation
@@ -20,6 +19,31 @@ displayed in the SIRIUS 3.2 graphical user interface.</span> (This is
 also possible using the command line version of SIRIUS.) 
 <span style="color: #339966;">This is the recommended way of using
 CSI:FingerID.</span>
+
+## Download Links
+
+<!--begin download-->
+
+### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.1 (Build 7 from 2017-12-15)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64.zip)
+
+### SIRIUS Commandline Version 3.5.1
+- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64-headless.zip)
+- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64-headless.zip)
+- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64-headless.zip)
+
+### Documentation
+- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-manual.pdf)
+- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+
+### Sources on GitHub
+- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
+- [SIRIUS library](https://github.com/boecker-lab/sirius)
+
+<!--end download-->
 
 ### Integration of CSI:FingerID
 
@@ -53,32 +77,6 @@ molecule with outstanding accuracy and apply this information to
 identify the elemental composition of the sample molecule. SIRIUS can be
 downloaded either as graphical user interface (see Sirius GUI) or as
 command-line tool.
-
-
-## Download Links
-
-<!--begin download-->
-
-### SIRIUS+CSI:FingerID GUI and CLI - Version 3.5.1 (Build 7 from 2017-12-15)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64.zip)
-
-### SIRIUS Commandline Version 3.5.1
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-win64-headless.zip)
-- for Linux/Unix [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-linux64-headless.zip)
-- for Mac  [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-osx64-headless.zip)
-
-### Documentation
-- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/3.5.1/sirius-3.5.1-manual.pdf)
-- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
-
-### Sources on GitHub
-- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
-- [SIRIUS library](https://github.com/boecker-lab/sirius)
-
-<!--end download-->
 
 ## Main citations
 
