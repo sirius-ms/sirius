@@ -39,8 +39,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -64,8 +63,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     protected boolean shellOutputSurpressed = false;
 
     protected org.slf4j.Logger logger = LoggerFactory.getLogger(CLI.class);
-
-    protected final Queue<Sirius.SiriusIdentificationJob> siriusJobs = new LinkedList<>();
 
 
     public void print(String s) {
@@ -94,21 +91,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     public void compute() {
         try {
-            clearJobs();
-            CLIJobSubmitter submitter = new CLIJobSubmitter(handleInput(options));
-            submitter.fillBuffer();
-
-            Instance i = submitter.nextInstance();
-            while (i != null) {
-                //watch jobs of current instance
-                handleJobs(i);
-                //wait for new instance and submit jobs of new instance if one is left
-                i = submitter.nextInstance();
-            }
+            CLIJobSubmitter submitter = newSubmitter(handleInput(options));
+            submitter.start(PropertyManager.getNumberOfCores() * 4);
         } catch (IOException e) {
-            LoggerFactory.getLogger(CLI.class).error(e.getMessage(), e);
+            logger.error("Error while handling the input data", e);
+            e.printStackTrace();
         } catch (InterruptedException e) {
-            LoggerFactory.getLogger(CLI.class).error("Waiting for jobs was interupted", e);
+            e.printStackTrace();
         } finally {
             if (projectWriter != null) try {
                 projectWriter.close();
@@ -119,33 +108,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     }
 
     //override to add more jobs
-    protected void handleJobs(Instance i) throws IOException {
-        progress.info("Compute Sirius for: '" + i.file.getName() + "'");
-        Sirius.SiriusIdentificationJob siriusJob = siriusJobs.poll();
-        siriusJob.addPropertyChangeListener(progress);
-        progress.update(new JobProgressEvent(siriusJob, -1, siriusJob.currentProgress(), siriusJob.maxProgress));
-        handleSiriusResults(siriusJob); //handle results
-        siriusJob.removePropertyChangeListener(progress);
-        progress.info("Sirius done for: '" + i.file.getName() + "'");
+    protected void handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
+        progress.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "'");
+        //todo catch nullpointer?
+        handleSiriusResults(jc.getJob(Sirius.SiriusIdentificationJob.class)); //handle results
     }
 
-
-    // override to add more jobs
-    protected void clearJobs() {
-        siriusJobs.clear();
-    }
-
-    //override to add more job types
-    protected void submitJobs(Instance i) {
-        siriusJobs.add(submitSiriusJob(i));
-    }
-
-    protected <Job extends JJob> Job submit(Job job) {
-        SiriusJobs.getGlobalJobManager().submitJob(job);
-        return job;
-    }
-
-    protected Sirius.SiriusIdentificationJob submitSiriusJob(final Instance i) {
+    protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
         Sirius.SiriusIdentificationJob job = null;
         //todo hack to include guessing of ionization. If appreciate include in a better way
         if (options.getPossibleIonizations() != null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
@@ -166,7 +135,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             sirius.setIsotopeMode(i.experiment, options.getIsotopes());
             if (!mfCandidatesSet.isEmpty())
                 sirius.setFormulaSearchList(i.experiment, mfCandidatesSet);
-            job = submit(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
+            job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
 
         } else {
             final List<String> whitelist = formulas;
@@ -175,15 +144,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 i.experiment.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
                 sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
                 sirius.setIsotopeMode(i.experiment, options.getIsotopes());
-                job = submit(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
+                job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
             } else if (whiteset == null || !whiteset.isEmpty()) {
                 sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
                 sirius.setIsotopeMode(i.experiment, options.getIsotopes());
                 if (whiteset != null) sirius.setFormulaSearchList(i.experiment, whiteset);
-                job = submit(sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
+                job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
             }
         }
-
         return job;
     }
 
@@ -816,25 +784,34 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         return count;
     }
 
+
     protected class CLIJobSubmitter extends BufferedJJobSubmitter<Instance> {
 
-
         public CLIJobSubmitter(Iterator<Instance> instances) {
-            this(instances, SiriusJobs.getGlobalJobManager().getCPUThreads() * 2);
-        }
-
-        public CLIJobSubmitter(Iterator<Instance> instances, int instanceBufferSize) {
-            super(instances, instanceBufferSize);
+            super(instances);
         }
 
         @Override
-        protected Instance NULL_INSTANCE() {
-            return Instance.NULL_INSTANCE;
+        protected void submitJobs(final JobContainer watcher) {
+            submitJob(makeSiriusJob(watcher.sourceInstance), watcher);
         }
 
         @Override
-        protected void submitJobs(Instance i) {
-            CLI.this.submitJobs(i);
+        protected void handleJobs(JobContainer watcher) {
+            try {
+                CLI.this.handleJobs(watcher);
+            } catch (IOException e) {
+                logger.error("Error processing instance: " + watcher.sourceInstance.file.getName());
+            }
         }
+
+        @Override
+        protected JobManager jobManager() {
+            return SiriusJobs.getGlobalJobManager();
+        }
+    }
+
+    protected CLIJobSubmitter newSubmitter(Iterator<Instance> instanceIterator) {
+        return new CLIJobSubmitter(instanceIterator);
     }
 }

@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ConfidenceScore.PredictionException;
@@ -26,8 +25,9 @@ import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.projectspace.DirectoryReader;
 import de.unijena.bioinf.sirius.projectspace.DirectoryWriter;
 import de.unijena.bioinf.sirius.projectspace.ProjectReader;
@@ -53,7 +53,6 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
     protected Fingerblast fingerblast;
     protected QueryPredictor confidence, bioConfidence;
     protected MaskedFingerprintVersion fingerprintVersion;
-    final LinkedList<FingerIDJJob> fingerIdJobs = new LinkedList<>();
 
 
     @Override
@@ -97,31 +96,14 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         }
     }
 
-    @Override
-    protected void clearJobs() {
-        super.clearJobs();
-        fingerIdJobs.clear();
-    }
 
     @Override
-    protected void submitJobs(Instance i) {
-        super.submitJobs(i); //this submits sirius job for the given instance
+    protected void handleJobs(final BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
+        super.handleJobs(jc);
         if (options.isFingerid()) {
-            fingerIdJobs.add(submitFingerIdJob(i, siriusJobs.peek()));
-        }
-    }
-
-    @Override
-    protected void handleJobs(Instance i) throws IOException {
-        super.handleJobs(i);
-        if (options.isFingerid()) {
-            progress.info("Compute CSI:FingerID for: '" + i.file.getName() + "'");
-            FingerIDJJob fingeridJob = fingerIdJobs.poll();
-            fingeridJob.addPropertyChangeListener(progress);
-            progress.update(new JobProgressEvent(fingeridJob, -1, fingeridJob.currentProgress(), fingeridJob.maxProgress));
-            handleFingerIdResults(i, fingeridJob); //handle results
-            fingeridJob.removePropertyChangeListener(progress);
-            progress.info("CSI:FingerID done for: '" + i.file.getName() + "'");
+            progress.info("CSI:FingerID results for: '" + jc.sourceInstance.file.getName() + "'");
+            //todo catch nullpointer
+            handleFingerIdResults(jc.sourceInstance, jc.getJob(FingerIDJJob.class)); //handle results
         }
     }
 
@@ -143,10 +125,8 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
     }
 
 
-    protected FingerIDJJob submitFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
+    protected FingerIDJJob makeFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
         if (siriusJob == null) return null;
-        List<IdentificationResult> results = siriusJob.takeResult();
-        if (results == null || results.isEmpty()) return null;
 
         //predict fingerprint
         final HashMap<String, Long> dbMap = getDatabaseAliasMap(); //todo this is the same for all instances or?????
@@ -155,12 +135,10 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         final long flag = flagW;
 
         FingerIDJJob fingerIdJob = new FingerIDJJob(newFingerblastInstance(), fingerprintVersion, options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
-        fingerIdJob.setInput(results, i.experiment);
+        fingerIdJob.addRequiredJob(siriusJob);
         fingerIdJob.setDbFlag(flag);
         fingerIdJob.setBioFilter(getBioFilter());
         fingerIdJob.setCanopus(canopus);
-        SiriusJobs.getGlobalJobManager().submitJob(fingerIdJob);
-
 
         return fingerIdJob;
     }
@@ -819,5 +797,24 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
     public void setup() {
         initializeDatabaseCache();
         super.setup();
+    }
+
+    protected class FingerIdSubmitter extends CLIJobSubmitter {
+
+        public FingerIdSubmitter(Iterator<Instance> instances) {
+            super(instances);
+        }
+
+        @Override
+        protected void submitJobs(JobContainer watcher) {
+            super.submitJobs(watcher);
+            if (options.isFingerid())
+                submitJob(makeFingerIdJob(watcher.sourceInstance, watcher.getJob(Sirius.SiriusIdentificationJob.class)), watcher);
+        }
+    }
+
+    @Override
+    protected CLIJobSubmitter newSubmitter(Iterator<Instance> instanceIterator) {
+        return new FingerIdSubmitter(instanceIterator);
     }
 }
