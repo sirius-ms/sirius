@@ -797,9 +797,9 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         }
 
         @Override
-        protected void handleJobs(JobContainer watcher) {
+        protected void handleResults(JobContainer watcher) {
             try {
-                CLI.this.handleJobs(watcher);
+                handleJobs(watcher);
             } catch (IOException e) {
                 logger.error("Error processing instance: " + watcher.sourceInstance.file.getName());
             }
