@@ -32,6 +32,12 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     double[] posteriorProbSums;
     private Random random;
 
+    /*
+    instead of using sum of log odds, use the maximum.
+    this might resolve 'clique' issues (compounds are in fact not independent)
+     */
+    private static final boolean USE_MAX_PRIOR_PROBABILITY = true;
+
 
     /*
     compounds with these indices are fixed. There probability has already been computed and is stored as node score.
@@ -68,7 +74,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     public static <C extends Candidate<?>> Graph<C> buildGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int numOfThreads) {
         for (NodeScorer<C> nodeScorer : nodeScorers) {
             for (int i = 0; i < possibleFormulas.length; i++) {
-                if (fixedCompounds.contains(i)) continue;
+                if (isFixed(fixedCompounds, i)) continue;
                 C[] candidates = possibleFormulas[i];
                 nodeScorer.score(candidates);
             }
@@ -97,6 +103,12 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         Graph<C> graph = new Graph<C>(filteredIds, scoredPossibleFormulas);
         graph.init(edgeScorers, edgeFilter, numOfThreads);
         return graph;
+    }
+
+    private static boolean isFixed(TIntHashSet fixedCompounds, int i) {
+        if (fixedCompounds==null) return false;
+        if (fixedCompounds.contains(i)) return true;
+        return false;
     }
 
     private void setActive() {
@@ -146,10 +158,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
         ///set priorProb and maxPriorProb
         for(int i = 0; i < this.priorProb.length; ++i) {
-            int[] conn = this.graph.getConnections(i);
-
             //not for fixed compounds
-            if (fixedCompounds.contains(i)) continue;
+            int peak = graph.getPeakIdx(i);
+            if (isFixed(fixedCompounds, peak)) continue;
+
+            int[] conn = this.graph.getConnections(i);
             for(int j = 0; j < conn.length; ++j) {
                 if(this.active[conn[j]]) {
                     this.addActiveEdge(conn[j], i);
@@ -300,7 +313,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         Scored<C>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
 
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
-            if (fixedCompounds.contains(i)){
+            if (isFixed(fixedCompounds, i)){
                 Scored<C>[] candidatesLogScore = graph.getPossibleFormulas(i);
                 Scored<C>[] candidatesScored = new Scored[candidatesLogScore.length];
                 for (int j = 0; j < candidatesScored.length; j++) {
@@ -393,21 +406,23 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
             BitSet toUpdate = new BitSet();
             int[] c = this.graph.getConnections(absCurrentActive);
             for (int conjugate : c) {
-                this.removeActiveEdge(absCurrentActive, conjugate);
                 final int corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
+                if (isFixed(fixedCompounds, corrspondingPeakIdx)) continue;
+                this.removeActiveEdge(absCurrentActive, conjugate);
                 toUpdate.set(corrspondingPeakIdx);
             }
 
             c = this.graph.getConnections(absIdx);
             for (int conjugate : c) {
-                this.addActiveEdge(absIdx, conjugate);
                 final int corrspondingPeakIdx = this.graph.getPeakIdx(conjugate);
+                if (isFixed(fixedCompounds, corrspondingPeakIdx)) continue;
+                this.addActiveEdge(absIdx, conjugate);
                 toUpdate.set(corrspondingPeakIdx);
             }
 
 
             for (int i = toUpdate.nextSetBit(0); i >= 0; i = toUpdate.nextSetBit(i+1)) {
-                if (!fixedCompounds.contains(i)) updatePeak(i);
+                if (!isFixed(fixedCompounds, i)) updatePeak(i);
                 if (i == Integer.MAX_VALUE) {
                     break; // or (i+1) would overflow
                 }
@@ -422,11 +437,41 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
 
     private void removeActiveEdge(int outgoing, int incoming) {
-        this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
+        if (USE_MAX_PRIOR_PROBABILITY) {
+            final double removedWeight = this.graph.getLogWeight(outgoing, incoming);
+            final double currentWeight = this.priorProb[incoming];
+            if (removedWeight==currentWeight){
+                //find 2nd best score
+                double max = 0; //no active edge = 0;
+                int[] conn = this.graph.getConnections(incoming);
+                for(int j = 0; j < conn.length; ++j) {
+                    final int c = conn[j];
+                    if(this.active[c] && c!=outgoing) {
+                        final double weight = graph.getLogWeight(c, incoming);
+                        if (weight>max) max = weight;
+                    }
+                }
+
+                this.priorProb[incoming] = max;
+
+            }
+            //else weight is not interesting. do nothing.
+
+        } else {
+            this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
+        }
     }
 
     private void addActiveEdge(int outgoing, int incoming) {
-        this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
+        if (USE_MAX_PRIOR_PROBABILITY) {
+            final double newWeight = this.graph.getLogWeight(outgoing, incoming);
+            final double currentWeight = this.priorProb[incoming];
+            if (newWeight>currentWeight){
+                this.priorProb[incoming] = newWeight;
+            }
+        } else {
+            this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
+        }
     }
 
 
