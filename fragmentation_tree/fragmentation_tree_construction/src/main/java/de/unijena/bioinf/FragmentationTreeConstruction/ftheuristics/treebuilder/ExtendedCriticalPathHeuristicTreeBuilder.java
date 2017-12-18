@@ -1,42 +1,29 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.treebuilder;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.ExtendedCriticalPathHeuristic;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 
-import java.util.List;
-
 public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
 
     @Override
-    public Object prepareTreeBuilding(ProcessedInput input, FGraph graph, double lowerbound) {
-        return null;
+    public FluentInterface computeTree() {
+        return new FluentInterface(this);
     }
 
     @Override
-    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
-        return new ExtendedCriticalPathHeuristic(graph).solve();
+    public Result computeTree(ProcessedInput input, FGraph graph, FluentInterface options) {
+        return new Result(new ExtendedCriticalPathHeuristic(graph).buildSolution(), false, AbortReason.COMPUTATION_CORRECT);
     }
 
     @Override
-    public FTree buildTree(ProcessedInput input, FGraph graph, double lowerbound) {
-        return new ExtendedCriticalPathHeuristic(graph).solve();
+    public boolean isThreadSafe() {
+        return true;
     }
 
     @Override
-    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound, Object preparation) {
-        return null;
-    }
-
-    @Override
-    public List<FTree> buildMultipleTrees(ProcessedInput input, FGraph graph, double lowerbound) {
-        return null;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Extended Critical Path Heuristic";
+    public String toString() {
+        return "Heuristic Solver: Critical Path";
     }
 }
