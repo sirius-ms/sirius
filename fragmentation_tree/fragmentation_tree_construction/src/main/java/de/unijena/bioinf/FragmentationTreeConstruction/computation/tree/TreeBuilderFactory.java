@@ -1,4 +1,4 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximumColorfulSubtree;
+package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
  * as part of the sirius
@@ -6,12 +6,15 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.maximum
  */
 
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.DPTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -34,7 +37,7 @@ public final class TreeBuilderFactory {
 
     private static TreeBuilderFactory INSTANCE = null;
 
-    public enum DefaultBuilder {GUROBI, /*GUROBI_JNI,*/ CPLEX, GLPK, DP}
+    public enum DefaultBuilder {GUROBI, CPLEX, GLPK}
 
     private static DefaultBuilder[] builderPriorities = null;
 
@@ -59,22 +62,24 @@ public final class TreeBuilderFactory {
     }
 
     private static DefaultBuilder[] parseBuilderPriority(String[] builders) {
-        DefaultBuilder[] b = new DefaultBuilder[builders.length];
-        try {
-            for (int i = 0; i < b.length; i++) {
-                b[i] = DefaultBuilder.valueOf(builders[i].toUpperCase());
+        List<DefaultBuilder> bs = new ArrayList<>(builders.length);
+        for (int i = 0; i < builders.length; i++) {
+            if (builders[i].toUpperCase().equals("DP"))
+                continue; // ignore!
+            try {
+                final DefaultBuilder b = DefaultBuilder.valueOf(builders[i].toUpperCase());
+                bs.add(b);
+            } catch (IllegalArgumentException e) {
+                LoggerFactory.getLogger(TreeBuilderFactory.class).warn("Unknown tree builder '" + builders[i] + "'");
             }
-
-            return b;
-        } catch (IllegalArgumentException e) {
-            LoggerFactory.getLogger(TreeBuilderFactory.class).warn("Illegal TreeBuilder name. Nothing changed!", e);
-            return null;
         }
+
+        return bs.toArray(new DefaultBuilder[bs.size()]);
     }
 
     public static boolean setBuilderPriorities(String... builders) {
         DefaultBuilder[] b = parseBuilderPriority(builders);
-        if (b != null) {
+        if (b.length>0) {
             builderPriorities = b;
             return true;
         }
@@ -85,13 +90,13 @@ public final class TreeBuilderFactory {
     public static DefaultBuilder[] getBuilderPriorities() {
         if (builderPriorities != null) return builderPriorities.clone();
         DefaultBuilder[] b = parseBuilderPriority(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder"));
-        if (b != null) return b;
+        if (b.length>0) return b;
         return DefaultBuilder.values();
     }
 
-    public <T extends TreeBuilder> T getTreeBuilderFromClass(String className) {
+    public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(String className) {
         try {
-            return getTreeBuilderFromClass(((Class<T>) ClassLoader.getSystemClassLoader().loadClass(className)));
+            return getTreeBuilderFromClass((Class<T>)ClassLoader.getSystemClassLoader().loadClass(className));
         } catch (Exception e) {
             LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
@@ -102,9 +107,9 @@ public final class TreeBuilderFactory {
 
     }
 
-    public <T extends TreeBuilder> T getTreeBuilderFromClass(Class<T> builderClass) {
+    public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(Class<T> builderClass) {
         try {
-            return builderClass.getConstructor().newInstance();
+            return (IlpFactory<T>) builderClass.getDeclaredField("Factory").get(null);
         } catch (Throwable e) {
             LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
@@ -115,16 +120,15 @@ public final class TreeBuilderFactory {
         return getTreeBuilder(DefaultBuilder.valueOf(builder.toUpperCase()));
     }
 
+
     public TreeBuilder getTreeBuilder(DefaultBuilder builder) {
         switch (builder) {
             case GUROBI:
-                return getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GurobiSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
+                return new AbstractTreeBuilder(getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver")); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
             case GLPK:
-                return getTreeBuilderFromClass(GLPKSolver.class); //we deliver the jar file so we can be sure that th class exists
+                return new AbstractTreeBuilder<GLPKSolver>(getTreeBuilderFromClass(GLPKSolver.class)); //we deliver the jar file so we can be sure that th class exists
             case CPLEX:
-                return getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXTreeBuilder");
-            case DP:
-                return getTreeBuilderFromClass(DPTreeBuilder.class);
+                return new AbstractTreeBuilder(getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver"));
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
                 return null;
