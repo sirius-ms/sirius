@@ -92,12 +92,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     public void compute() {
         try {
             CLIJobSubmitter submitter = newSubmitter(handleInput(options));
-            submitter.start(PropertyManager.getNumberOfCores() * 4);
+            final int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
+            final int maxBuffer = options.getMaxInstanceBuffer() != null ? options.getMaxInstanceBuffer() : initBuffer * 2;
+            long time = System.currentTimeMillis();
+            submitter.start(initBuffer, maxBuffer);
+            progress.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
         } catch (IOException e) {
             logger.error("Error while handling the input data", e);
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } finally {
             if (projectWriter != null) try {
                 projectWriter.close();
@@ -152,6 +153,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
             }
         }
+//        job.setPriority(JJob.JobPriority.NOW);
         return job;
     }
 
