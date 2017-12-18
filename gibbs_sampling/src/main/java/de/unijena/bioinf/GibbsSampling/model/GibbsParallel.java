@@ -2,6 +2,8 @@ package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -24,8 +26,9 @@ public class GibbsParallel<C extends Candidate<?>> {
     private Scored<C>[][] addedUpPosterior;
     private Scored<C>[][] sampling;
     private Graph graph;
+    private TIntHashSet fixedCompounds;
 
-    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
+    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int workersCount, int repetitions) {
         this.ids = ids;
         this.possibleFormulas = possibleFormulas;
         this.nodeScorers = nodeScorers;
@@ -34,11 +37,16 @@ public class GibbsParallel<C extends Candidate<?>> {
         this.workersCount = workersCount;
         this.repetitions = repetitions;
         this.gibbsNetworks = new ArrayList();
+        this.fixedCompounds = fixedCompounds;
         this.graph = this.init();
     }
 
+    public GibbsParallel(String[] ids, C[][] possibleFormulas, NodeScorer[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int workersCount, int repetitions) {
+        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, workersCount, repetitions);
+    }
+
     private Graph<C> init() {
-        Graph<C> graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.workersCount);
+        Graph<C> graph = GibbsMFCorrectionNetwork.buildGraph(this.ids, this.possibleFormulas, this.nodeScorers, this.edgeScorers, this.edgeFilter, this.fixedCompounds, this.workersCount);
 
         int i = 0;
         while(i++ < this.repetitions) {
