@@ -21,29 +21,27 @@ public class RankNodeScorer implements NodeScorer {
         this(topScore, 0.1D, false);
     }
 
-    public void score(Candidate[][] candidates) {
-        for(int i = 0; i < candidates.length; ++i) {
-            Candidate[] currentCandidates = (Candidate[])candidates[i].clone();
-            Arrays.sort(currentCandidates);
-            if(!this.normalize) {
-                for(int j = 0; j < currentCandidates.length; ++j) {
-                    Candidate candidate = currentCandidates[j];
-                    candidate.addNodeProbabilityScore(this.score(j));
-                }
-            } else {
-                double sum = 0.0D;
-                double[] scores = new double[currentCandidates.length];
+    public void score(Candidate[] candidates) {
+        Candidate[] currentCandidates = candidates.clone();
+        Arrays.sort(currentCandidates);
+        if(!this.normalize) {
+            for(int j = 0; j < currentCandidates.length; ++j) {
+                Candidate candidate = currentCandidates[j];
+                candidate.addNodeProbabilityScore(this.score(j));
+            }
+        } else {
+            double sum = 0.0D;
+            double[] scores = new double[currentCandidates.length];
 
-                int j;
-                for(j = 0; j < currentCandidates.length; ++j) {
-                    double s = this.score(j);
-                    scores[j] = s;
-                    sum += s;
-                }
+            int j;
+            for(j = 0; j < currentCandidates.length; ++j) {
+                double s = this.score(j);
+                scores[j] = s;
+                sum += s;
+            }
 
-                for(j = 0; j < currentCandidates.length; ++j) {
-                    currentCandidates[j].addNodeProbabilityScore(scores[j] / sum);
-                }
+            for(j = 0; j < currentCandidates.length; ++j) {
+                currentCandidates[j].addNodeProbabilityScore(scores[j] / sum);
             }
         }
 
