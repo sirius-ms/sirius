@@ -86,6 +86,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
         if (firstRoundIds.length==possibleFormulas.length){
             combinedResult = gibbsParallel.getChosenFormulasBySampling();
         } else {
+            //todo that's no good idea. Candidates should rather keep their probabilities
             C[][] combined = combineNewAndOld(results1, firstRoundIds);
 
             System.out.println("running second round with "+combined.length+" compounds.");
@@ -122,6 +123,12 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
         return combinedResults;
     }
 
+    /**
+     * results must be sorted!
+     * @param results
+     * @param resultIds
+     * @return
+     */
     private C[][] combineNewAndOld(Scored<C>[][] results, String[] resultIds) {
         if (results.length == 0){
             return possibleFormulas;
@@ -135,11 +142,14 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> {
         C[][] newPossibleFormulas = (C[][])Array.newInstance(cClass, possibleFormulas.length, 1);
         for (int i = 0; i < possibleFormulas.length; i++) {
             if (idMap.containsKey(ids[i])){
-                //use already computed. Take all with probability > 1%
+                //use already computed. Take best candidates until they add up to over 99%
                 Scored<C>[] scoreds = results[idMap.get(ids[i])];
                 List<C> candidates = new ArrayList<>();
+                double combinedProbs = 0d;
                 for (Scored<C> scored : scoreds) {
-                    if (scored.getScore()>0.01) candidates.add(scored.getCandidate());
+                    candidates.add(scored.getCandidate());
+                    combinedProbs += scored.getScore();
+                    if (combinedProbs>=0.99) break;
                 }
                 newPossibleFormulas[i] = candidates.toArray((C[])Array.newInstance(cClass,0));
             } else {
