@@ -128,7 +128,7 @@ public interface SiriusOptions {
     @Option(longName = "max-instance-buffer", description = "Maxmimal number of instances that are allowed to be in the Memory. A larger buffer ensures that there are enough instances to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set a value <= 0. Default: 2 * --initial_intance_buffer", defaultToNull = true)
     Integer getMaxInstanceBuffer();
 
-    @Option(longName = "initial-instance-buffer", description = "Number of instances that will be loaded initially into the Memory. A larger buffer ensures that there are enough instances to use all cores efficiently during computation. A smaller buffer saves Memory. Default: 2 * --cores", defaultToNull = true)
+    @Option(longName = "initial-instance-buffer", description = "Number of instances that will be loaded initially into the Memory. A larger buffer ensures that there are enough instances to use all cores efficiently during computation. A smaller buffer saves Memory. To load all Instances at once set a value <= 0. Default: 2 * --cores", defaultToNull = true)
     Integer getMinInstanceBuffer();
 
 }
