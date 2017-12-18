@@ -162,31 +162,34 @@ abstract public class AbstractSolver {
      * @return
      */
     protected TreeBuilder.Result solve() {
-        try {
             if (graph.numberOfEdges() == 1) {
                 return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
             }
+        try {
             // set up constraints etc.
             prepareSolver();
 
             // get optimal solution (score) if existing
-            try {
-                TreeBuilder.AbortReason c = solveMIP();
+            TreeBuilder.AbortReason c = solveMIP();
 
-                if (c == TreeBuilder.AbortReason.COMPUTATION_CORRECT) {
-                    // reconstruct tree after having determined the (possible) optimal solution
-                    final double score = getSolverScore();
-                    final FTree tree = buildSolution();
-                    if (tree != null && !isComputationCorrect(tree, this.graph, score))
-                        throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
-                    return new TreeBuilder.Result(tree, true, c);
-                } else return new TreeBuilder.Result(null, false, c);
-            } finally {
-                // free any memory, if necessary
-                pastBuildSolution();
-            }
+            if (c == TreeBuilder.AbortReason.COMPUTATION_CORRECT) {
+                // reconstruct tree after having determined the (possible) optimal solution
+                final double score = getSolverScore();
+                final FTree tree = buildSolution();
+                if (tree != null && !isComputationCorrect(tree, this.graph, score))
+                    throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
+                return new TreeBuilder.Result(tree, true, c);
+            } else return new TreeBuilder.Result(null, false, c);
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);
+        } finally {
+            // free any memory, if necessary
+            try {
+                pastBuildSolution();
+            } catch (Exception e) {
+                logger.error(e.getMessage(),e);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -311,7 +314,7 @@ abstract public class AbstractSolver {
     abstract protected double getSolverScore() throws Exception;
 
 
-    protected FTree buildSolution(double score, boolean[] edesAreUsed) throws Exception {
+    protected FTree buildSolution(double score, boolean[] edesAreUsed)  {
         Fragment graphRoot = null;
         double rootScore = 0d;
         // get root
