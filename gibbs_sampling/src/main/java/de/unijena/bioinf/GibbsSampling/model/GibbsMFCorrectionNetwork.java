@@ -5,6 +5,7 @@ import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer.ConstantReac
 import de.unijena.bioinf.GibbsSampling.model.scorer.ReactionScorer;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -32,19 +33,30 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     private Random random;
 
 
-    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
+    /*
+    compounds with these indices are fixed. There probability has already been computed and is stored as node score.
+    That means active candidates are drawn solely from this probability. And the input probabilityies are also output as resut.
+     */
+    private TIntHashSet fixedCompounds;
+
+    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int threads) {
         for (Candidate[] pF : possibleFormulas) {
             if (pF==null || pF.length==0) throw new RuntimeException("some peaks don\'t have any explanation");
         }
 
-        this.graph = buildGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, threads);
+        this.fixedCompounds = fixedCompounds==null?new TIntHashSet():fixedCompounds;
+        this.graph = buildGraph(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, fixedCompounds, threads);
         this.random = new Random();
         this.setActive();
 
     }
 
+    public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int threads) {
+        this(ids, possibleFormulas, nodeScorers, edgeScorers, edgeFilter, null, threads);
+    }
+
     public GibbsMFCorrectionNetwork(String[] ids, C[][] possibleFormulas, Reaction[] reactions) {
-        this(ids, possibleFormulas, new NodeScorer[]{new StandardNodeScorer()}, new EdgeScorer[]{new ReactionScorer(reactions, new ConstantReactionStepSizeScorer())}, new EdgeThresholdFilter(1.0D), 1);
+        this(ids, possibleFormulas, new NodeScorer[]{new StandardNodeScorer()}, new EdgeScorer[]{new ReactionScorer(reactions, new ConstantReactionStepSizeScorer())}, new EdgeThresholdFilter(1.0D), null, 1);
     }
 
     public GibbsMFCorrectionNetwork(Graph graph) {
@@ -53,9 +65,13 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         this.setActive();
     }
 
-    public static <C extends Candidate<?>> Graph<C> buildGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, int numOfThreads) {
+    public static <C extends Candidate<?>> Graph<C> buildGraph(String[] ids, C[][] possibleFormulas, NodeScorer<C>[] nodeScorers, EdgeScorer<C>[] edgeScorers, EdgeFilter edgeFilter, TIntHashSet fixedCompounds, int numOfThreads) {
         for (NodeScorer<C> nodeScorer : nodeScorers) {
-            nodeScorer.score(possibleFormulas);
+            for (int i = 0; i < possibleFormulas.length; i++) {
+                if (fixedCompounds.contains(i)) continue;
+                C[] candidates = possibleFormulas[i];
+                nodeScorer.score(candidates);
+            }
         }
 
         List<String> newIds = new ArrayList();
@@ -132,6 +148,8 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         for(int i = 0; i < this.priorProb.length; ++i) {
             int[] conn = this.graph.getConnections(i);
 
+            //not for fixed compounds
+            if (fixedCompounds.contains(i)) continue;
             for(int j = 0; j < conn.length; ++j) {
                 if(this.active[conn[j]]) {
                     this.addActiveEdge(conn[j], i);
@@ -144,7 +162,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         if (DEBUG) System.out.println("number of compounds: "+graph.numberOfCompounds());
         this.posteriorProbs = new double[this.graph.getSize()];
         this.posteriorProbSums = new double[this.graph.numberOfCompounds()];
-        //set posteriorProbs
+        //set posteriorProbs, also for fixed compounds
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
             this.updatePeak(i);
         }
@@ -282,6 +300,18 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         Scored<C>[][] candidatesByCompound = new Scored[this.graph.numberOfCompounds()][];
 
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
+            if (fixedCompounds.contains(i)){
+                Scored<C>[] candidatesLogScore = graph.getPossibleFormulas(i);
+                Scored<C>[] candidatesScored = new Scored[candidatesLogScore.length];
+                for (int j = 0; j < candidatesScored.length; j++) {
+                    //todo normalize??
+                    candidatesScored[i] = new Scored<>(candidatesLogScore[i].getCandidate(), Math.exp(candidatesLogScore[i].getScore()));
+                }
+                candidatesByCompound[i] = candidatesScored;
+                continue;
+            }
+
+
             int[] b = this.graph.getPeakBoundaries(i);
             int min = b[0];
             int max = b[1];
@@ -377,7 +407,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
 
 
             for (int i = toUpdate.nextSetBit(0); i >= 0; i = toUpdate.nextSetBit(i+1)) {
-                updatePeak(i);
+                if (!fixedCompounds.contains(i)) updatePeak(i);
                 if (i == Integer.MAX_VALUE) {
                     break; // or (i+1) would overflow
                 }
@@ -527,6 +557,26 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         }
 
         return ordering.toArray();
+    }
+
+    /**
+     * don't do gibbs sampling, but fix all graph and compute probabilities for one candidate.
+     * node scores should be normalized
+     * @return
+     */
+    public static <C extends Candidate<?>> Scored<C>[] computeFromSnapshot(Graph<C> graph, int compoundIdx) {
+        int left = graph.getPeakLeftBoundary(compoundIdx);
+        int right = graph.getPeakRightBoundary(compoundIdx);
+        Scored<C>[] scoredCandidates = new Scored[right-left+1];
+        for (int i = left; i <= right; i++) {
+             int[] conns = graph.getConnections(i);
+             double score = 0;
+            for (int c : conns) {
+                score += graph.getLogWeight(c, i)+graph.getCandidateScore(c);
+            }
+            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i), score);
+        }
+        return scoredCandidates;
     }
 
 }

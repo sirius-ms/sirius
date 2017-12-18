@@ -16,34 +16,30 @@ public class LibraryHitScorer implements NodeScorer<FragmentsCandidate> {
         this.expectedMFDifferences = expectedMFDifferences;
     }
 
-    public void score(FragmentsCandidate[][] candidates) {
-        for(int i = 0; i < candidates.length; ++i) {
-            FragmentsCandidate[] mfCandidates = candidates[i];
-
-            for(int j = 0; j < mfCandidates.length; ++j) {
-                FragmentsCandidate candidate = mfCandidates[j];
-                if(candidate.inEvaluationSet) {
-                    candidate.addNodeProbabilityScore(this.score(0.0D));
-                } else if(candidate.hasLibraryHit()) {
-                    LibraryHit libraryHit = candidate.getLibraryHit();
-                    double cosine = libraryHit.getCosine();
-                    MolecularFormula diff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
-                    if(diff.equals(this.EmptyMF)) {
-                        candidate.addNodeProbabilityScore(this.score(cosine));
-                    } else {
-                        if(diff.getMass() < 0.0D) {
-                            diff = diff.negate();
-                        }
-
-                        if(this.expectedMFDifferences.contains(diff)) {
-                            candidate.addNodeProbabilityScore(this.score(cosine - 0.05D));
-                        } else {
-                            candidate.addNodeProbabilityScore(this.score(0.0D));
-                        }
-                    }
+    public void score(FragmentsCandidate[] candidates) {
+        for(int j = 0; j < candidates.length; ++j) {
+            FragmentsCandidate candidate = candidates[j];
+            if(candidate.inEvaluationSet) {
+                candidate.addNodeProbabilityScore(this.score(0.0D));
+            } else if(candidate.hasLibraryHit()) {
+                LibraryHit libraryHit = candidate.getLibraryHit();
+                double cosine = libraryHit.getCosine();
+                MolecularFormula diff = libraryHit.getMolecularFormula().subtract(candidate.getFormula());
+                if(diff.equals(this.EmptyMF)) {
+                    candidate.addNodeProbabilityScore(this.score(cosine));
                 } else {
-                    candidate.addNodeProbabilityScore(this.score(0.0D));
+                    if(diff.getMass() < 0.0D) {
+                        diff = diff.negate();
+                    }
+
+                    if(this.expectedMFDifferences.contains(diff)) {
+                        candidate.addNodeProbabilityScore(this.score(cosine - 0.05D));
+                    } else {
+                        candidate.addNodeProbabilityScore(this.score(0.0D));
+                    }
                 }
+            } else {
+                candidate.addNodeProbabilityScore(this.score(0.0D));
             }
         }
 
