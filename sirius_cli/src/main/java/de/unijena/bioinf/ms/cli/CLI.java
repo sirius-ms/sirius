@@ -92,8 +92,14 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     public void compute() {
         try {
             CLIJobSubmitter submitter = newSubmitter(handleInput(options));
-            final int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
-            final int maxBuffer = options.getMaxInstanceBuffer() != null ? options.getMaxInstanceBuffer() : initBuffer * 2;
+            int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
+            int maxBuffer = options.getMaxInstanceBuffer() != null ? options.getMaxInstanceBuffer() : initBuffer * 2;
+
+            if (initBuffer <= 0) {
+                initBuffer = Integer.MAX_VALUE; //no buffering, submit all jobs at once
+                maxBuffer = 0;
+            }
+
             long time = System.currentTimeMillis();
             submitter.start(initBuffer, maxBuffer);
             progress.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
