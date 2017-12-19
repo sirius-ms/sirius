@@ -95,19 +95,26 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
-            final TreeComputationInstance instance = new TreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
-            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
-                }
-            });
-            final ProcessedInput pinput = instance.validateInput();
-            performMs1Analysis(instance, IsotopePatternHandling.both);
-            submitSubJob(instance);
-            TreeComputationInstance.FinalResult fr = instance.takeResult();
+            //todo it seems to be faster to catch exception here -> executor service
+            try {
+                final TreeComputationInstance instance = new TreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
+                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
+                    }
+                });
+                final ProcessedInput pinput = instance.validateInput();
+                performMs1Analysis(instance, IsotopePatternHandling.both);
+                submitSubJob(instance);
+                TreeComputationInstance.FinalResult fr = instance.takeResult();
 
-            return createIdentificationResults(fr);//postprocess results
+                List<IdentificationResult> r = createIdentificationResults(fr);//postprocess results
+                return r;
+            } catch (Exception e) {
+                LOG.error("Error during identification job", e);
+                return null;
+            }
         }
 
         private List<IdentificationResult> createIdentificationResults(TreeComputationInstance.FinalResult fr) {
@@ -564,7 +571,7 @@ public class Sirius {
     }
 
     public void setTimeout(MutableMs2Experiment experiment, int timeoutPerInstanceInSeconds, int timeoutPerDecompositionInSeconds) {
-        experiment.setAnnotation(Timeout.class, new Timeout(timeoutPerInstanceInSeconds, timeoutPerDecompositionInSeconds));
+        experiment.setAnnotation(Timeout.class, Timeout.newTimeout(timeoutPerInstanceInSeconds, timeoutPerDecompositionInSeconds));
     }
 
     public void disableTimeout(MutableMs2Experiment experiment) {
