@@ -571,7 +571,7 @@ public class Sirius {
     }
 
     public void setTimeout(MutableMs2Experiment experiment, int timeoutPerInstanceInSeconds, int timeoutPerDecompositionInSeconds) {
-        experiment.setAnnotation(Timeout.class, new Timeout(timeoutPerInstanceInSeconds, timeoutPerDecompositionInSeconds));
+        experiment.setAnnotation(Timeout.class, Timeout.newTimeout(timeoutPerInstanceInSeconds, timeoutPerDecompositionInSeconds));
     }
 
     public void disableTimeout(MutableMs2Experiment experiment) {
