@@ -16,7 +16,7 @@ public class Timeout {
     }
 
     private Timeout(int numberOfSecondsPerInstance, int numberOfSecondsPerDecomposition) {
-        if (numberOfSecondsPerDecomposition > numberOfSecondsPerInstance)
+        if (numberOfSecondsPerDecomposition > numberOfSecondsPerInstance && numberOfSecondsPerInstance != 0)
             throw new IllegalArgumentException("Timeout for single decomposition is larger than for the whole instance: number of seconds per instance = " + numberOfSecondsPerInstance + ", number of seconds per decomposition = " + numberOfSecondsPerDecomposition);
         this.numberOfSecondsPerInstance = numberOfSecondsPerInstance;
         this.numberOfSecondsPerDecomposition = numberOfSecondsPerDecomposition;
