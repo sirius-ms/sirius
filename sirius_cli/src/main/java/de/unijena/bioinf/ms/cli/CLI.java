@@ -127,8 +127,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
         Sirius.SiriusIdentificationJob job = null;
-        //todo hack to include guessing of ionization. If appreciate include in a better way
         sirius.setTimeout(i.experiment, options.getInstanceTimeout(), options.getTreeTimeout());
+        //todo hack to include guessing of ionization. If appreciate include in a better way
         if (options.getPossibleIonizations() != null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
             PrecursorIonType[] specificIontypes = guessIonization(i);
 

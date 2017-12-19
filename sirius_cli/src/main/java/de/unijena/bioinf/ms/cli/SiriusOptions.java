@@ -105,7 +105,7 @@ public interface SiriusOptions {
     @Option(longName = "tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
     int getTreeTimeout();
 
-    @Option(longName = "instance-timeout", description = "Maximal computation time for a single instance (compound). 0 for an infinite amount of time. Default: 0", defaultValue = "0")
+    @Option(longName = "compound-timeout", description = "Maximal computation time for a single compound. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
     int getInstanceTimeout();
 
     @Unparsed
@@ -133,10 +133,10 @@ public interface SiriusOptions {
     )
     int getNumOfCores();
 
-    @Option(longName = "max-instance-buffer", description = "Maxmimal number of instances that are allowed to be in the Memory. A larger buffer ensures that there are enough instances to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set a value <= 0. Default: 2 * --initial_intance_buffer", defaultToNull = true)
+    @Option(longName = "max-compound-buffer", description = "Maxmimal number of compounds that will be buffered in Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. For Infinite buffer size set it to 0. Default: 2 * --initial_intance_buffer", defaultToNull = true)
     Integer getMaxInstanceBuffer();
 
-    @Option(longName = "initial-instance-buffer", description = "Number of instances that will be loaded initially into the Memory. A larger buffer ensures that there are enough instances to use all cores efficiently during computation. A smaller buffer saves Memory. To load all Instances at once set a value <= 0. Default: 2 * --cores", defaultToNull = true)
+    @Option(longName = "initial-compound-buffer", description = "Number of compounds that will be loaded initially into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 * --cores", defaultToNull = true)
     Integer getMinInstanceBuffer();
 
 }
