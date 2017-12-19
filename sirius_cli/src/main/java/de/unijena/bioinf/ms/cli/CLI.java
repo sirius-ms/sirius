@@ -91,7 +91,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     public void compute() {
         try {
-            CLIJobSubmitter submitter = newSubmitter(handleInput(options));
+            //set oprtions todo: i would like to do this in the cli parser but how with jewelcli?
             int initBuffer = options.getMinInstanceBuffer() != null ? options.getMinInstanceBuffer() : PropertyManager.getNumberOfCores() * 2;
             int maxBuffer = options.getMaxInstanceBuffer() != null ? options.getMaxInstanceBuffer() : initBuffer * 2;
 
@@ -100,6 +100,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 maxBuffer = 0;
             }
 
+            CLIJobSubmitter submitter = newSubmitter(handleInput(options));
             long time = System.currentTimeMillis();
             submitter.start(initBuffer, maxBuffer);
             progress.info("Computation time: " + (double) (System.currentTimeMillis() - time) / 1000d + "s");
@@ -116,14 +117,18 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     //override to add more jobs
     protected void handleJobs(BufferedJJobSubmitter<Instance>.JobContainer jc) throws IOException {
+        Sirius.SiriusIdentificationJob j = jc.getJob(Sirius.SiriusIdentificationJob.class);
         progress.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "'");
-        //todo catch nullpointer?
-        handleSiriusResults(jc.getJob(Sirius.SiriusIdentificationJob.class)); //handle results
+        if (j != null)
+            handleSiriusResults(j); //handle results
+        else
+            logger.error("Could not load results for " + jc.sourceInstance.file.getName());
     }
 
     protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
         Sirius.SiriusIdentificationJob job = null;
         //todo hack to include guessing of ionization. If appreciate include in a better way
+        sirius.setTimeout(i.experiment, options.getInstanceTimeout(), options.getTreeTimeout());
         if (options.getPossibleIonizations() != null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
             PrecursorIonType[] specificIontypes = guessIonization(i);
 
@@ -159,7 +164,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
             }
         }
-//        job.setPriority(JJob.JobPriority.NOW);
         return job;
     }
 
@@ -172,7 +176,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             logger.error("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         } else {
-            //print some nice output for the cli
             int rank = 1;
             int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
             for (IdentificationResult result : results) {
@@ -485,10 +488,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             final TreeBuilder builder = sirius.getMs2Analyzer().getTreeBuilder();
             if (builder == null) {
                 String noILPSolver = "Could not load a valid ILP solver (TreeBuilder) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
-                LoggerFactory.getLogger(CLI.class).error(noILPSolver);
+                logger.error(noILPSolver);
                 System.exit(1);
             }
-            LoggerFactory.getLogger(CLI.class).info("Compute trees using " + builder);
+            logger.info("Compute trees using " + builder);
+
 
             sirius.getMs2Analyzer().setDefaultProfile(ms2Prof);
             sirius.getMs1Analyzer().setDefaultProfile(ms1Prof);
@@ -499,7 +503,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                     ionList = Arrays.asList(ionList.get(0).split(","));
                 }
                 if (ionList.size() == 1) {
-                    LoggerFactory.getLogger(CLI.class).error("Cannot guess ionization when only one ionization/adduct is provided");
+                    logger.error("Cannot guess ionization when only one ionization/adduct is provided");
                 }
                 ionTypes = new PrecursorIonType[ionList.size()];
                 Set<PrecursorIonType> set = new HashSet<>();
@@ -512,7 +516,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(CLI.class).error("Cannot load profile '" + options.getProfile() + "':\n", e);
+            logger.error("Cannot load profile '" + options.getProfile() + "':\n", e);
             System.exit(1);
         }
     }
@@ -686,10 +690,10 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                                 try {
                                     GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
                                     if (p == null) {
-                                        LoggerFactory.getLogger(CLI.class).error("Unknown file format: '" + currentFile + "'");
+                                        logger.error("Unknown file format: '" + currentFile + "'");
                                     } else experimentIterator = p.parseFromFileIterator(currentFile);
                                 } catch (IOException e) {
-                                    LoggerFactory.getLogger(CLI.class).error("Cannot parse file '" + currentFile + "':\n", e);
+                                    logger.error("Cannot parse file '" + currentFile + "':\n", e);
                                 }
                             } else return null;
                         } else {

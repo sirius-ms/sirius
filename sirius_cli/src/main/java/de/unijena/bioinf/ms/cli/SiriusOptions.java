@@ -102,6 +102,12 @@ public interface SiriusOptions {
     @Option(shortName = "i", longName = "ion", description = "the ionization/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+.", defaultToNull = true)
     String getIon();
 
+    @Option(longName = "tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
+    int getTreeTimeout();
+
+    @Option(longName = "instance-timeout", description = "Maximal computation time for a single instance (compound). 0 for an infinite amount of time. Default: 0", defaultValue = "0")
+    int getInstanceTimeout();
+
     @Unparsed
     List<String> getInput();
 
@@ -118,6 +124,8 @@ public interface SiriusOptions {
     @Option(longName = "maxmz", description = "Just consider compounds with a precursor mz lower or equal this maximum mz. All other compounds in the input file are ignored.", defaultToNull = true)
     Double getMaxMz();
 
+
+    //technical stuff
     @Option(
             longName = {"processors", "cores"},
             description = "Number of cpu cores to use. If not specified Sirius uses all available cores.",
