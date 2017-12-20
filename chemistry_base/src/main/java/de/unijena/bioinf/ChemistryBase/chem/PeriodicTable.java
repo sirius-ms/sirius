@@ -814,7 +814,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     public Set<PrecursorIonType> adductsByIonisation(String name) {
         PrecursorIonType p = knownIonTypes.get(name);
         if (p == null) return Collections.emptySet();
-        Set<PrecursorIonType> r = adductsByIonisation(p.getIonization().getName());
+        Set<PrecursorIonType> r = ionizationToAdduct.get(p.getIonization().getName());
         return r == null ? Collections.<PrecursorIonType>emptySet() : Collections.unmodifiableSet(r);
     }
 
