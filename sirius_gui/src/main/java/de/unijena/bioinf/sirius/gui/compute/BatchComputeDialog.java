@@ -36,9 +36,6 @@ import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
-import de.unijena.bioinf.sirius.gui.actions.CheckConnectionAction;
-import de.unijena.bioinf.sirius.gui.actions.SiriusActions;
-import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.sirius.gui.dialogs.QuestionDialog;
@@ -47,7 +44,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
-import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
 import org.slf4j.LoggerFactory;
@@ -73,7 +69,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private JComboBox<Peak> box = null;
 
     private SearchProfilePanel searchProfilePanel;
-    private ToolbarToggleButton runCSIFingerId;
     private FingerIDComputationPanel csiOptions;
     private MainFrame owner;
     List<ExperimentContainer> compoundsToProcess;
@@ -123,7 +118,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             public void itemStateChanged(ItemEvent e) {
                 SearchableDatabase source = searchProfilePanel.getFormulaSource();
                 enableElementSelection(source == null);
-                if (!csiOptions.isEnabled()) csiOptions.setDb(source);
+                if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(source);
             }
         });
 
@@ -133,37 +128,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerId search"));
 
 
-        JPanel otherPanel = new JPanel();
-        otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases());
-        if (!csiOptions.isEnabled()) csiOptions.setDb(searchProfilePanel.getFormulaSource());
+//        JPanel otherPanel = new JPanel();
+//        otherPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        csiOptions = new FingerIDComputationPanel(owner.getCsiFingerId().getAvailableDatabases(), searchProfilePanel.ionizationCB, true, true);
+        if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(searchProfilePanel.getFormulaSource());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
 
-        if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()) {
-            runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Enable/Disable CSI:FingerID search");
-            runCSIFingerId.setEnabled(true);
-        } else {
-            runCSIFingerId = new ToolbarToggleButton(Icons.FINGER_32, "Can't connect to CSI:FingerID server!");
-            runCSIFingerId.setEnabled(false);
-        }
 
-        runCSIFingerId.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                csiOptions.setEnabled(runCSIFingerId.isSelected());
-            }
-        });
-
-
-        otherPanel.add(runCSIFingerId);
-//        otherPanel.add(Box.createHorizontalGlue());
-        otherPanel.add(csiOptions);
-//        otherPanel.add(Box.createHorizontalGlue());
-        runCSIFingerId.setSelected(false);
-        csiOptions.setEnabled(false);
-
-
-        stack.add(otherPanel, BorderLayout.CENTER);
+        stack.add(csiOptions, BorderLayout.CENTER);
         mainPanel.add(stack);
 
 
@@ -371,7 +343,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                         }
                     }
                 }
-                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, searchableDatabase, searchProfilePanel.hasIsotopesEnabled(), runCSIFingerId.isSelected(), csiOptions.getDb(), searchProfilePanel.restrictToOrganics());
+                final BackgroundComputation.Task task = new BackgroundComputation.Task(instrument, ec, individualConstraints, ppm, candidates, searchableDatabase, searchProfilePanel.hasIsotopesEnabled(), csiOptions.isCSISelected(), csiOptions.dbSelectionOptions.getDb(), searchProfilePanel.restrictToOrganics());
                 tasks.add(task);
             }
         }
@@ -494,14 +466,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 
 
-		/*
+        /*
          * Was abgefragt werden muss:
-		 *
-		 * foc. mass
-		 * Ionisierung
-		 * seltene Elemente abseits von CHNOPS Br, B, Cl, Se, F, I
-		 *
-		 */
+         *
+         * foc. mass
+         * Ionisierung
+         * seltene Elemente abseits von CHNOPS Br, B, Cl, Se, F, I
+         *
+         */
 
         JButton autoDetectFM = new JButton("Most intensive peak");
         autoDetectFM.addActionListener(this);
