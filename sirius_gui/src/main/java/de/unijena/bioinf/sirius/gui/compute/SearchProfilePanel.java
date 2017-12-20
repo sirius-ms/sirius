@@ -1,13 +1,17 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
+import de.unijena.bioinf.sirius.gui.utils.jfxWrapper.JCheckBoxList;
+import javafx.collections.ObservableList;
+import org.controlsfx.control.CheckListView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +36,7 @@ public class SearchProfilePanel extends JPanel {
         //,QTOF_FIXED("Q-TOF (fixed)", "qtof_fixed", 10)
 
         ////
-        ,BRUKER("Q-TOF (isotopes)", "bruker_tof", 10)
+        , BRUKER("Q-TOF (isotopes)", "bruker_tof", 10)
         //,EXP1("Exp1", "exp", 10),
         //EXP2("Exp2", "exp2", 10)
         ;
@@ -54,9 +58,9 @@ public class SearchProfilePanel extends JPanel {
 
     private Window owner;
 
-    private Vector<String> ionizations;
+    private ObservableList<String> ionizations;
     private Vector<Instruments> instruments;
-    private JComboBox<String> ionizationCB;
+    CheckListView<E><String> ionizationCB;
     public final JComboBox<String> formulaCombobox;
     private JComboBox<Instruments> instrumentCB;
     private JSpinner ppmSpinner;
@@ -85,7 +89,7 @@ public class SearchProfilePanel extends JPanel {
             this.add(mainwindow);
 
         } else {
-            this.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
+            this.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
             this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Other"));
             mainwindow = this;
         }
@@ -100,27 +104,27 @@ public class SearchProfilePanel extends JPanel {
             }
 
 
-            ionizationCB = new JComboBox<>(ionizations);
+            ionizationCB = new JCheckBoxList<>(ionizations);
             if (ionType != null) {
-                if (SiriusDataConverter.siriusIonizationToEnum(ionType).isUnknown() && !ionType.isIonizationUnknown()){
-                    ionizationCB.setSelectedItem(ionType.toString());
+                if (SiriusDataConverter.siriusIonizationToEnum(ionType).isUnknown() && !ionType.isIonizationUnknown()) {
+                    ionizationCB.setSelectedValue(ionType.toString(), true);
                 } else {
-                    ionizationCB.setSelectedItem(SiriusDataConverter.siriusIonizationToEnum(ionType).toString());
+                    ionizationCB.setSelectedValue(SiriusDataConverter.siriusIonizationToEnum(ionType).toString(), true);
                 }
 
             } else {
-                ionizationCB.setSelectedItem(Ionization.MPlusH.toString());
+                ionizationCB.setSelectedValue(Ionization.MPlusH.toString(), true);
             }
-            mainwindow.add(new TwoCloumnPanel(new JLabel("ionisation"/*"adduct type"*/),ionizationCB));
+            mainwindow.add(new TwoCloumnPanel(new JLabel("ionisation"/*"adduct type"*/), ionizationCB));
         } else {
             ionizations = new Vector<>();
             ionizations.add("treat as protonation");
             ionizations.add("try common adduct types");
-            ionizationCB = new JComboBox<>(ionizations);
+            ionizationCB = new JCheckBoxList<>(ionizations);
             ionizationCB.setSelectedIndex(0);
             ionizationCB.setEnabled(enableFallback);
             ionizationCB.setToolTipText("Set fallback ionisation for unknown adduct types");
-            mainwindow.add(new TwoCloumnPanel(new JLabel("fallback ionisation"),ionizationCB));
+            mainwindow.add(new TwoCloumnPanel(new JLabel("fallback ionisation"), new JScrollPane(ionizationCB)));
             this.add(mainwindow);
         }
 
@@ -130,19 +134,19 @@ public class SearchProfilePanel extends JPanel {
             instruments.add(i);
         }
         instrumentCB = new JComboBox<>(instruments);
-        mainwindow.add(new TwoCloumnPanel(new JLabel("instrument"),instrumentCB));
+        mainwindow.add(new TwoCloumnPanel(new JLabel("instrument"), instrumentCB));
 
         snm = new SpinnerNumberModel(10, 0.25, 20, 0.25);
         ppmSpinner = new JSpinner(this.snm);
         ppmSpinner.setMinimumSize(new Dimension(70, 26));
         ppmSpinner.setPreferredSize(new Dimension(70, 26));
-        mainwindow.add(new TwoCloumnPanel(new JLabel("ppm"),ppmSpinner));
+        mainwindow.add(new TwoCloumnPanel(new JLabel("ppm"), ppmSpinner));
 
         final SpinnerNumberModel candidatesNumberModel = new SpinnerNumberModel(10, 1, 1000, 1);
         candidatesSpinner = new JSpinner(candidatesNumberModel);
         candidatesSpinner.setMinimumSize(new Dimension(70, 26));
         candidatesSpinner.setPreferredSize(new Dimension(70, 26));
-        mainwindow.add(new TwoCloumnPanel(new JLabel("candidates"),candidatesSpinner));
+        mainwindow.add(new TwoCloumnPanel(new JLabel("candidates"), candidatesSpinner));
 
         instrumentCB.addItemListener(new ItemListener() {
             @Override
@@ -169,7 +173,7 @@ public class SearchProfilePanel extends JPanel {
             }
 
             formulaCombobox = new JComboBox<>(values);
-            mainwindow.add(new TwoCloumnPanel(label,formulaCombobox));
+            mainwindow.add(new TwoCloumnPanel(label, formulaCombobox));
         }
     }
 
@@ -183,7 +187,7 @@ public class SearchProfilePanel extends JPanel {
     }
 
     public String getIonization() {
-        return (String) ionizationCB.getSelectedItem();
+        return (String) ionizationCB.getSelectedValue(); //todo this is just the first one??
     }
 
     public double getPpm() {
@@ -200,7 +204,7 @@ public class SearchProfilePanel extends JPanel {
         else if (formulaCombobox.getSelectedIndex() <= 2) return csi.getPubchemDb();
         else if (formulaCombobox.getSelectedIndex() == 3) return csi.getBioDb();
         else {
-            final String name = (String)formulaCombobox.getSelectedItem();
+            final String name = (String) formulaCombobox.getSelectedItem();
             for (CustomDatabase customDatabase : CustomDatabase.customDatabases(true)) {
                 if (customDatabase.name().equals(name)) return customDatabase;
             }

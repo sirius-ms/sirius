@@ -5,8 +5,6 @@ package de.unijena.bioinf.ms.cli;
  * 15.06.16.
  */
 
-import com.lexicalscope.jewel.cli.CliFactory;
-import com.lexicalscope.jewel.cli.HelpRequestedException;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
@@ -15,18 +13,14 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.SwingUtils;
 import de.unijena.bioinf.sirius.net.ProxyManager;
 
-import java.util.Arrays;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusGUIApplication {
 
     public static void main(String[] args) {
-        //todo this should be fingeridCLI if this is correctly inherited
         final FingeridCLI<SiriusGUIOptions> cli = new FingeridCLI<>();
         cli.parseArgs(args, SiriusGUIOptions.class);
-
 
         if (cli.options.isGUI()) {
             SiriusJobs.setGlobalJobManager(
@@ -46,30 +40,5 @@ public class SiriusGUIApplication {
             cli.validate();
             cli.compute();
         }
-
-
-        /*if (cli.options.isZodiac()) {
-            ZodiacOptions options = null;
-            try {
-                options = CliFactory.createCli(ZodiacOptions.class).parseArguments(Arrays.copyOfRange(args, 1, args.length));
-            } catch (HelpRequestedException e) {
-                cli.println(e.getMessage());
-                cli.println("");
-                System.exit(0);
-            }
-
-            cli.setup();
-            cli.validate();
-            Zodiac zodiac = new Zodiac(options);
-            zodiac.run();
-        } else if (cli.options.isGUI()) {
-
-
-
-        } else {
-            cli.setup();
-            cli.validate();
-            cli.compute();
-        }*/
     }
 }

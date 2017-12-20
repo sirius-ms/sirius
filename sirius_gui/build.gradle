@@ -33,6 +33,7 @@ dependencies {
 
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
 
+    compile group: 'org.controlsfx', name: 'controlsfx', version: '9.0.0'
 
 
 }

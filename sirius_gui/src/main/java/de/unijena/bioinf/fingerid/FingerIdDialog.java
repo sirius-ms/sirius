@@ -39,7 +39,7 @@ public class FingerIdDialog extends JDialog {
         super(owner, "Search with CSI:FingerId", true);
         this.storage = storage;
         dbForm = new FingerIDComputationPanel(storage.getAvailableDatabases());
-        if (this.storage.enforceBio) dbForm.setIsBioDB(true);
+        if (this.storage.enforceBio) dbForm.dbSelectionOptions.setIsBioDB(true);
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)
@@ -102,6 +102,6 @@ public class FingerIdDialog extends JDialog {
     }
 
     public SearchableDatabase getSearchDb() {
-        return dbForm.getDb();
+        return dbForm.dbSelectionOptions.getDb();
     }
 }
