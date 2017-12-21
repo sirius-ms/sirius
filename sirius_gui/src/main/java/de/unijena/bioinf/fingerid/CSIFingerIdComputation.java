@@ -223,15 +223,14 @@ public class CSIFingerIdComputation {
         } catch (IOException e) {
             //fallback
             logger.warn("Cannot load covariance scoring. Fallback to CSIFingerIdScoring.");
-            this.scoringMethod = new ScoringMethodFactory().getCSIFingerIdScoringMethod();
+            this.scoringMethod = new ScoringMethodFactory().getCSIFingerIdScoringMethod(performances);
         }
     }
 
     private FingerIdData blast(SiriusResultElement elem, List<Compound> compoundList, ProbabilityFingerprint plattScores, SearchableDatabase db) {
         final List<FingerprintCandidate> fcs = new ArrayList<>(compoundList.size());
         for (Compound c : compoundList) fcs.add(c.asFingerprintCandidate());
-        final Fingerblast blaster = new Fingerblast(null);
-        blaster.setScoring(scoringMethod.getScoring(performances));
+        final Fingerblast blaster = new Fingerblast(scoringMethod,null);
         try {
             List<Scored<FingerprintCandidate>> candidates = blaster.score(fcs, plattScores);
             final double[] scores = new double[candidates.size()];

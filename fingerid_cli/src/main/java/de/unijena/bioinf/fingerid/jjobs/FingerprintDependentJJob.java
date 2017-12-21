@@ -28,7 +28,7 @@ public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> imple
                     }
                 }
             }
-            throw new IllegalArgumentException("No Input Data found");
+            throw new IllegalArgumentException("No Input Data found. " + requiredJobs.toString());
         }
     }
 

@@ -134,7 +134,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         if (flagW == null) flagW = 0L;
         final long flag = flagW;
 
-        FingerIDJJob fingerIdJob = new FingerIDJJob(newFingerblastInstance(), fingerprintVersion, options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
+        FingerIDJJob fingerIdJob = new FingerIDJJob(fingerblast, fingerprintVersion, options.getPredictors().toArray(new PredictorType[options.getPredictors().size()]));
         fingerIdJob.addRequiredJob(siriusJob);
         fingerIdJob.setDbFlag(flag);
         fingerIdJob.setBioFilter(getBioFilter());
@@ -549,25 +549,12 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                 db.checkCache();
             }
 
-            this.fingerblast = new Fingerblast(getFingerIdDatabaseWrapper());
-            this.fingerblast.setScoring(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()).getScoring());
+            this.fingerblast = new Fingerblast(webAPI.getCovarianceScoring(this.fingerprintVersion, 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()), getFingerIdDatabaseWrapper());
         } catch (IOException e) {
             LoggerFactory.getLogger(this.getClass()).error("Our webservice is currently not available. You can still use SIRIUS without the --fingerid option. Please feel free to mail us at sirius-devel@listserv.uni-jena.de", e);
             System.exit(1);
         }
         progress.info("CSI:FingerId initialization done.");
-    }
-
-    private Fingerblast newFingerblastInstance() {
-        try (WebAPI webAPI = WebAPI.newInstance()) {
-            final PredictionPerformance[] performances = webAPI.getStatistics(new TIntArrayList());
-            Fingerblast fingerblast = new Fingerblast(getFingerIdDatabaseWrapper());
-            fingerblast.setScoring(webAPI.getCovarianceScoring(fingerprintVersion, 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts()).getScoring());
-            return fingerblast;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     protected Canopus canopus = null;
@@ -725,46 +712,41 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
             } else {
                 allowedIonTypes.add(i.experiment.getPrecursorIonType());
             }
-            try {
-                final FormulaConstraints allowedAlphabet;
-                if (options.getElements() != null) allowedAlphabet = options.getElements();
-                else allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF");
+            final FormulaConstraints allowedAlphabet;
+            if (options.getElements() != null) allowedAlphabet = options.getElements();
+            else allowedAlphabet = new FormulaConstraints("CHNOPSBBrClIF");
 
-                List<List<FormulaCandidate>> candidates = new ArrayList<>();
-                try (final WebAPI api = WebAPI.newInstance()) {
-                    if (searchableDatabase.searchInBio()) {
-                        try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_BIO, bioDatabase.getDatabasePath())) {
-                            candidates.addAll(db.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
-                        }
-                    }
-                    if (searchableDatabase.searchInPubchem()) {
-                        try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_NONBIO, pubchemDatabase.getDatabasePath())) {
-                            candidates.addAll(db.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
-                        }
-                    }
-                    if (searchableDatabase.isCustomDb()) {
-                        candidates.addAll(getFileBasedDb(searchableDatabase).lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
-                    }
-                } catch (IOException e) {
-                    logger.error(e.getMessage(), e);
-                    System.exit(1);
-                }
-
-                final HashSet<MolecularFormula> allowedSet = new HashSet<>();
-                for (List<FormulaCandidate> fc : candidates) {
-                    for (FormulaCandidate f : fc) {
-                        final long bitset = f.getBitset();
-                        if (flag == 0 || (bitset & flag) != 0)
-                            if (allowedAlphabet.isSatisfied(f.getFormula()))
-                                allowedSet.add(f.getFormula());
+            List<List<FormulaCandidate>> candidates = new ArrayList<>();
+            try (final WebAPI api = WebAPI.newInstance()) {
+                if (searchableDatabase.searchInBio()) {
+                    try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_BIO, bioDatabase.getDatabasePath())) {
+                        candidates.addAll(db.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
                     }
                 }
-                return allowedSet;
-            } catch (DatabaseException e) {
+                if (searchableDatabase.searchInPubchem()) {
+                    try (final RESTDatabase db = api.getRESTDb(BioFilter.ONLY_NONBIO, pubchemDatabase.getDatabasePath())) {
+                        candidates.addAll(db.lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
+                    }
+                }
+                if (searchableDatabase.isCustomDb()) {
+                    candidates.addAll(getFileBasedDb(searchableDatabase).lookupMolecularFormulas(i.experiment.getIonMass(), dev, allowedIonTypes.toArray(new PrecursorIonType[allowedIonTypes.size()])));
+                }
+            } catch (IOException e) {
                 LoggerFactory.getLogger(this.getClass()).error("Connection to database fails. Probably our webservice is currently offline. You can still use SIRIUS in offline mode - you just have to remove the database flags -d or --database because database search is not available in offline mode.", e);
                 System.exit(1);
                 return null;
             }
+
+            final HashSet<MolecularFormula> allowedSet = new HashSet<>();
+            for (List<FormulaCandidate> fc : candidates) {
+                for (FormulaCandidate f : fc) {
+                    final long bitset = f.getBitset();
+                    if (flag == 0 || (bitset & flag) != 0)
+                        if (allowedAlphabet.isSatisfied(f.getFormula()))
+                            allowedSet.add(f.getFormula());
+                }
+            }
+            return allowedSet;
         }
 
 
