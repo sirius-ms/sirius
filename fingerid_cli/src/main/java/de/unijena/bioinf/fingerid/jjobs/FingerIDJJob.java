@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.BioFilter;
-import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.fingeriddb.job.PredictorType;
@@ -77,7 +76,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
     protected Map<IdentificationResult, ProbabilityFingerprint> compute() throws Exception {
         WebAPI webAPI = WebAPI.newInstance();
 
-        List<IdentificationResult> input = new LinkedList<>();
+        List<IdentificationResult> input = new ArrayList<>();
         Ms2Experiment experiment = null;
         //collect input from input field
         if (this.input != null) {
@@ -115,16 +114,17 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
         final ArrayList<IdentificationResult> filteredResults = new ArrayList<>();
         //filterIdentifications list if wanted
-        if (filterIdentifications) {
+        if (filterIdentifications && input.size()>0) {
             // first filterIdentifications identificationResult list by top scoring formulas
-            final IdentificationResult top = ((LinkedList<IdentificationResult>) input).pollFirst();
+            final IdentificationResult top =  input.get(0);
             if (top == null || top.getResolvedTree() == null) return null;
 
             progressInfo("Filter Identification Results for CSI:FingerId usage");
             filteredResults.add(top);
             final double threshold = Math.max(top.getScore(), 0) - Math.max(5, top.getScore() * 0.25);
 
-            for (IdentificationResult e : input) {
+            for (int k=1, n =  input.size(); k < n;  ++k) {
+                IdentificationResult e = input.get(k);
                 if (e.getScore() < threshold) break;
                 if (e.getResolvedTree() == null || e.getResolvedTree().numberOfVertices() <= 1) {
                     progressInfo("Cannot estimate structure for " + e.getMolecularFormula() + ". Fragmentation Tree is empty.");
@@ -133,15 +133,15 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
                 filteredResults.add(e);
             }
         } else {
-            filteredResults.addAll(filteredResults);
+            filteredResults.addAll(input);
         }
 
         progressInfo("Search with CSI:FingerId");
 
 
         //submit jobs
-        List<WebAPI.PredictionJJob> predictionJobs = new LinkedList<>();
-        List<FingerprintDependentJJob> annotationJobs = new LinkedList<>();
+        List<WebAPI.PredictionJJob> predictionJobs = new ArrayList<>();
+        List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
         for (IdentificationResult fingeridInput : filteredResults) {
             //prediction jobs
             WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predicors);
