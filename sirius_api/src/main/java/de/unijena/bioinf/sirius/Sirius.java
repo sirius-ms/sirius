@@ -470,7 +470,10 @@ public class Sirius {
         pinput.setAnnotation(Whiteset.class, Whiteset.of(formula));
         pinput.setAnnotation(ForbidRecalibration.class, recalibrating ? ForbidRecalibration.ALLOWED : ForbidRecalibration.FORBIDDEN);
         jobManager.submitSubJob(instance);
-        return new IdentificationResult(instance.takeResult().getResults().get(0), 1);
+        final IdentificationResult ir = new IdentificationResult(instance.takeResult().getResults().get(0), 1);
+        // tree is always beautyfied
+        if (recalibrating) ir.setBeautifulTree(ir.getRawTree());
+        return ir;
 
     }
 
@@ -498,7 +501,8 @@ public class Sirius {
     }
 
     public FTree beautifyTree(FTree tree, Ms2Experiment experiment, boolean recalibrating) {
-        final IdentificationResult ir = compute(experiment, tree.getRoot().getFormula(), recalibrating);
+        final MolecularFormula formula = tree.getAnnotationOrThrow(PrecursorIonType.class).measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula());
+        final IdentificationResult ir = compute(experiment, formula, recalibrating);
         return ir.getRawTree();
     }
 
