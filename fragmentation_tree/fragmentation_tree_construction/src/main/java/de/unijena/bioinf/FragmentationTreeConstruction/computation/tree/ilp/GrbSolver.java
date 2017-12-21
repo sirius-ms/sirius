@@ -27,13 +27,12 @@ public class GrbSolver extends AbstractSolver{
         }
     };
 
-    protected GRBEnv env;
+    protected static GRBEnv env = getDefaultEnv();;
     protected GRBModel model;
     protected GRBVar[] variables;
 
     public GrbSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {
         super(graph, input, options);
-        this.env = getDefaultEnv();
     }
 
     @Override
@@ -168,7 +167,7 @@ public class GrbSolver extends AbstractSolver{
     @Override
     protected void pastBuildSolution() throws Exception {
         model.dispose();
-        env.dispose();
+        //env.dispose();
     }
 
     @Override
@@ -188,7 +187,7 @@ public class GrbSolver extends AbstractSolver{
         return -model.get(GRB.DoubleAttr.ObjVal);
     }
 
-    public static GRBEnv getDefaultEnv() {
+    private static GRBEnv getDefaultEnv() {
         try {
             final GRBEnv env = new GRBEnv();
             env.set(GRB.IntParam.OutputFlag, 0);

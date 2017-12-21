@@ -380,8 +380,8 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Peak annotation) {
-            document.addToDictionary(dictionary, "mz", annotation.getMass());
-            document.addToDictionary(dictionary, "intensity", annotation.getIntensity());
+            //document.addToDictionary(dictionary, "mz", annotation.getMass());
+            //document.addToDictionary(dictionary, "intensity", annotation.getIntensity());
         }
     }
 
