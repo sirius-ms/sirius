@@ -232,19 +232,14 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 // now compute from best scoring compound to lowest scoring compound
                 final FinalResult fr;
                 if (analyzer.getTreeBuilder().isThreadSafe()) {
-                    fr = computeExactTreesSinglethreaded(intermediateResults, retryWithHigherScore);
-                } else {
                     fr = computeExactTreesInParallel(intermediateResults, retryWithHigherScore);
+                } else {
+                    fr = computeExactTreesSinglethreaded(intermediateResults, retryWithHigherScore);
                 }
                 if (tss != null && retryWithHigherScore && fr.canceledDueToLowScore) {
                     inc += TREE_SIZE_INCREASE;
                     treeSizeBonus = new TreeSizeScorer.TreeSizeBonus(treeSizeBonus.score + TREE_SIZE_INCREASE);
                     tss.fastReplace(pinput, treeSizeBonus);
-                /*
-                //pinput.setAnnotation(Scoring.class,null);
-                pinput.setAnnotation(TreeSizeScorer.TreeSizeBonus.class,treeSizeBonus);
-                analyzer.performPeakScoring(pinput);
-                */
                 } else return fr;
                 //
             }
