@@ -9,9 +9,6 @@ import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
-import de.unijena.bioinf.sirius.gui.utils.jfxWrapper.JCheckBoxList;
-import javafx.collections.ObservableList;
-import org.controlsfx.control.CheckListView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,9 +55,9 @@ public class SearchProfilePanel extends JPanel {
 
     private Window owner;
 
-    private ObservableList<String> ionizations;
+    private Vector<String> ionizations;
     private Vector<Instruments> instruments;
-    CheckListView<E><String> ionizationCB;
+    JCheckBoxList<String> ionizationCB;
     public final JComboBox<String> formulaCombobox;
     private JComboBox<Instruments> instrumentCB;
     private JSpinner ppmSpinner;
@@ -187,7 +184,7 @@ public class SearchProfilePanel extends JPanel {
     }
 
     public String getIonization() {
-        return (String) ionizationCB.getSelectedValue(); //todo this is just the first one??
+        return ionizationCB.getSelectedValue().getValue(); //todo this is just the first one??
     }
 
     public double getPpm() {

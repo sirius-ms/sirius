@@ -22,6 +22,7 @@ public class SiriusGUIApplication {
         final FingeridCLI<SiriusGUIOptions> cli = new FingeridCLI<>();
         cli.parseArgs(args, SiriusGUIOptions.class);
 
+
         if (cli.options.isGUI()) {
             SiriusJobs.setGlobalJobManager(
                     new SwingJobManager(Integer.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.cpu.cores", "1")))

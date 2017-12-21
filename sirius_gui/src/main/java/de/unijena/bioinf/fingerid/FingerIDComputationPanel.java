@@ -14,6 +14,7 @@ import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.utils.RelativeLayout;
 import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,11 +36,11 @@ public class FingerIDComputationPanel extends JPanel {
         this(databases, null);
     }
 
-    public FingerIDComputationPanel(final List<SearchableDatabase> databases, final JList<String> sourceIonization) {
+    public FingerIDComputationPanel(final List<SearchableDatabase> databases, final JCheckBoxList<String> sourceIonization) {
         this(databases, sourceIonization, false, false);
     }
 
-    public FingerIDComputationPanel(final List<SearchableDatabase> databases, final JList<String> sourceIonization, boolean horizontal, boolean button) {
+    public FingerIDComputationPanel(final List<SearchableDatabase> databases, final JCheckBoxList<String> sourceIonization, boolean horizontal, boolean button) {
         JPanel target = this;
         if (horizontal) {
             if (button) {
@@ -152,13 +153,13 @@ public class FingerIDComputationPanel extends JPanel {
         private final AdductSelectionList adductList;
         private final JScrollPane sp;
 
-        public AdductSelectionPanel(final JList<String> sourceIonization) {
+        public AdductSelectionPanel(final JCheckBoxList<String> sourceIonization) {
             super("Select adducts");
             adductList = new AdductSelectionList(sourceIonization);
             sp = new JScrollPane(adductList);
             sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, 100));
+            sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, 125));
             add(sp);
 
         }
