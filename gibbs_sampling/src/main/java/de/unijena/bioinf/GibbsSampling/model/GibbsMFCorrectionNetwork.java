@@ -36,7 +36,12 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
     instead of using sum of log odds, use the maximum.
     this might resolve 'clique' issues (compounds are in fact not independent)
      */
-    private static final boolean USE_MAX_PRIOR_PROBABILITY = true;
+    private static final boolean USE_MAX_PRIOR_PROBABILITY = false;
+
+    /*
+
+     */
+    private static final boolean USE_SQRT_PRIOR_PROBABILITY = false;
 
 
     /*
@@ -458,7 +463,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
             //else weight is not interesting. do nothing.
 
         } else {
-            this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
+            if (USE_SQRT_PRIOR_PROBABILITY){
+                this.priorProb[incoming] -= Math.sqrt(this.graph.getLogWeight(outgoing, incoming));
+            } else {
+                this.priorProb[incoming] -= (this.graph.getLogWeight(outgoing, incoming));
+            }
         }
     }
 
@@ -470,7 +479,11 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
                 this.priorProb[incoming] = newWeight;
             }
         } else {
-            this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
+            if (USE_SQRT_PRIOR_PROBABILITY){
+                this.priorProb[incoming] += Math.sqrt(this.graph.getLogWeight(outgoing, incoming));
+            } else {
+                this.priorProb[incoming] += (this.graph.getLogWeight(outgoing, incoming));
+            }
         }
     }
 
@@ -613,14 +626,50 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> {
         int left = graph.getPeakLeftBoundary(compoundIdx);
         int right = graph.getPeakRightBoundary(compoundIdx);
         Scored<C>[] scoredCandidates = new Scored[right-left+1];
+//        for (int i = left; i <= right; i++) {
+//             int[] conns = graph.getConnections(i);
+//             double score = graph.getCandidateScore(i);
+//            for (int c : conns) {
+//                //todo add or multiply????????
+//                score += graph.getLogWeight(c, i)+graph.getCandidateScore(c);
+//            }
+//            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), score);
+//        }
+
+
+        double[] scores = new double[right-left+1];
         for (int i = left; i <= right; i++) {
-             int[] conns = graph.getConnections(i);
-             double score = 0;
+            int[] conns = graph.getConnections(i);
+            double score = graph.getCandidateScore(i);
             for (int c : conns) {
+                //todo add or multiply????????
                 score += graph.getLogWeight(c, i)+graph.getCandidateScore(c);
             }
-            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i), score);
+            scores[i-left] = score;
         }
+
+
+        double maxLog = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < scores.length; i++) {
+            double score = scores[i];
+            if (maxLog<score) maxLog = score;
+        }
+
+        double sum = 0;
+        for (int i = 0; i < scores.length; i++) {
+            final double score = Math.exp(scores[i]-maxLog);
+            scores[i] = score;
+            sum += score;
+        }
+        assert sum > 0.0D;
+
+
+        for (int i = left; i <= right; i++) {
+            scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), scores[i-left]);
+        }
+
+        Arrays.sort(scoredCandidates, Scored.<C>desc());
+
         return scoredCandidates;
     }
 
