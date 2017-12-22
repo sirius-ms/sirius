@@ -14,6 +14,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * compute Gibbs Sampling first with good quality spectra. Then, insert other ones and compute again.
@@ -121,6 +122,7 @@ public class ThreePhaseGibbsSampling {
     }
 
     private DummyFragmentCandidate updateDummy(DummyFragmentCandidate dummy,FragmentsCandidate[] candidates, int maxCandidatesWithDummy){
+        if (maxCandidatesWithDummy>=candidates.length) return dummy;
         int numberOfIgnored = dummy.getNumberOfIgnoredInstances();
         numberOfIgnored += (candidates.length-maxCandidatesWithDummy);
 
@@ -155,7 +157,7 @@ public class ThreePhaseGibbsSampling {
         for (int i = 0; i < firstRoundCompoundsIdx.size(); i++) {
             int firstRoundIdx = firstRoundCompoundsIdx.get(i);
             FragmentsCandidate[] allCandidates = possibleFormulas[firstRoundIdx];
-            Scored<FragmentsCandidate>[] currentScoredCandidates = graph.getPossibleFormulas(firstRoundIdx);
+            Scored<FragmentsCandidate>[] currentScoredCandidates = graph.getPossibleFormulas(i);
 
             if (allCandidates.length==currentScoredCandidates.length) continue;
 
@@ -178,6 +180,7 @@ public class ThreePhaseGibbsSampling {
             Scored<FragmentsCandidate>[] best = scoredFixedCandidates[i];
             scoredFixedCandidates[i] = allScoredCandidates;
 
+//          todo   ...don't  init all edges
             Graph<FragmentsCandidate> graph = new Graph<FragmentsCandidate>(firstRoundIds, scoredFixedCandidates);
             graph.init(edgeScorers, edgeFilter, workersCount);
 
@@ -297,20 +300,40 @@ public class ThreePhaseGibbsSampling {
         }
 
         FragmentsCandidate[][] newPossibleFormulas = (FragmentsCandidate[][])Array.newInstance(cClass, possibleFormulas.length, 1);
+
+
+
         for (int i = 0; i < possibleFormulas.length; i++) {
-            if (idxMap.containsKey(i)){
-                Scored<FragmentsCandidate>[] scoreds = results[idxMap.get(i)];
-                List<FragmentsCandidate> candidates = new ArrayList<>();
-                for (Scored<FragmentsCandidate> scored : scoreds) {
-                    FragmentsCandidate candidate = scored.getCandidate();
-                    candidate.clearNodeScores();
-                    candidate.addNodeProbabilityScore(scored.getScore());
-                    candidates.add(candidate);
+            try {
+                if (idxMap.containsKey(i)) {
+                    Scored<FragmentsCandidate>[] scoreds = results[idxMap.get(i)];
+                    List<FragmentsCandidate> candidates = new ArrayList<>();
+                    for (Scored<FragmentsCandidate> scored : scoreds) {
+                        FragmentsCandidate candidate = scored.getCandidate();
+                        candidate.clearNodeScores();
+                        candidate.addNodeProbabilityScore(scored.getScore());
+                        candidates.add(candidate);
+                    }
+                    newPossibleFormulas[i] = candidates.toArray((FragmentsCandidate[]) Array.newInstance(cClass, 0));
+                } else {
+                    newPossibleFormulas[i] = possibleFormulas[i];
                 }
-                newPossibleFormulas[i] = candidates.toArray((FragmentsCandidate[])Array.newInstance(cClass,0));
-            } else {
-                newPossibleFormulas[i] = possibleFormulas[i];
+
+            } catch (Exception e) {
+                System.out.println("Error: "+e.getMessage());
+                System.out.println(idxMap.containsKey(i));
+                Scored<FragmentsCandidate>[] scoreds = results[idxMap.get(i)];
+                System.out.println(Arrays.toString(scoreds));
+                for (int j = 0; j < scoreds.length; j++) {
+                    Scored<FragmentsCandidate> scored = scoreds[j];
+                    System.out.println(j);
+                    System.out.println(scored);
+                    System.out.println(scored.getCandidate());
+                    System.out.println("isScored "+(scored instanceof  Scored));
+                    System.out.println("isFragmentCandidate "+(scored.getCandidate() instanceof  FragmentsCandidate));
+                }
             }
+
         }
 
         return newPossibleFormulas;

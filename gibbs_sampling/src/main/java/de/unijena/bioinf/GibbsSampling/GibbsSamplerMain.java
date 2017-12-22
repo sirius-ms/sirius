@@ -1,5 +1,6 @@
 package de.unijena.bioinf.GibbsSampling;
 
+import com.google.common.collect.Iterators;
 import com.lexicalscope.jewel.cli.CliFactory;
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
@@ -32,6 +33,7 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -76,6 +78,7 @@ public class GibbsSamplerMain {
     private static final String[] reactionStringsRogers = new String[]{"C10H11N5O3", "C10H11N5O4", "C10H12N2O4", "C10H12N5O6P", "C10H12N5O7P", "C10H13N2O7P", "C10H13N5O10P2", "C10H13N5O9P2", "C10H14N2O10P2", "C10H14N2O2S", "C10H15N2O3S", "C10H15N3O5S", "C11H10N2O", "C12H20O11", "C16H30O", "C18H30O15", "C21H33N7O15P3S", "C21H34N7O16P3S", "C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5NOS", "C3H5O", "C4H3N2O2", "C4H4N3O", "C4H4O2", "C4H5NO3", "C4H6N2O2", "C4H7NO2", "C5H4N5", "C5H4N5O", "C5H5N2O2", "C5H7", "C5H7NO", "C5H7NO3", "C5H8N2O2", "C5H8O4", "C5H9NO", "C5H9NOS", "C6H10N2O3S2", "C6H10O5", "C6H10O6", "C6H11NO", "C6H11O8P", "C6H12N2O", "C6H12N4O", "C6H7N3O", "C6H8O6", "C8H8NO5P", "C9H10N2O5", "C9H11N2O8P", "C9H12N2O11P2", "C9H12N3O7P", "C9H13N3O10P2", "C9H9NO", "C9H9NO2", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "H3O6P2", "HPO3", "N", "NH", "NH2", "O", "P", "PP", "SO3"};
 
     private static boolean is2Phase;
+    private static boolean is3Phase = true;
 
     private static ScoreProbabilityDistribution probabilityDistribution;
 
@@ -892,23 +895,29 @@ public class GibbsSamplerMain {
 
 
 //        //reactions
-//        int stepsize = 2; //low for testing purposes
-//        Reaction[] reactions = parseReactions(stepsize);
+
         //all possible netto changes of MolecularFormulas using on of the reactions.
         Set<MolecularFormula> netSingleReactionDiffs = Arrays.stream(parseReactions(1)).map(r -> r.netChange()).collect(Collectors.toSet());
 
-//        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, maxCandidates, workerCount);
-        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
+//        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidatesEval(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
+        //changed assigning CompoundQuality
+        Map<String, List<FragmentsCandidate>> candidatesMap = parseMFCandidates(treeDir, mgfFile, Integer.MAX_VALUE, workerCount, true); //remove candidates later when adding dummy
 
 
-        //do before all that
-//        PrecursorIonType[] ionTypes = Arrays.stream(new String[]{"[M+H]+", "[M]+", "[M+K]+", "[M+Na]+"}).map(s -> PrecursorIonType.getPrecursorIonType(s)).toArray(l -> new PrecursorIonType[l]);
-
-//        parseLibraryHits(libraryHitsPath, candidatesMap); //changed
         parseLibraryHits(libraryHitsPath, mgfFile, candidatesMap);
 
 
         Map<String, LibraryHit> correctHits = identifyCorrectLibraryHits(candidatesMap, netSingleReactionDiffs);
+
+
+//        System.out.println("measuredMass trueMass");
+//        for (LibraryHit libraryHit : correctHits.values()) {
+//            double measured = libraryHit.getQueryExperiment().getIonMass();
+//            double trueMass = libraryHit.getIonType().addIonAndAdduct(libraryHit.getMolecularFormula().getMass());
+//            System.out.println(measured+" "+trueMass);
+//        }
+//        System.out.println("...................");
+
 
 
         double useFreq = 0.0; //use x*100 percent of knowledge
@@ -919,15 +928,10 @@ public class GibbsSamplerMain {
 
 
         System.out.println("adding dummy node");
-        addNotExplainableDummy(candidatesMap, maxCandidates);
+        if (is3Phase) addNotExplainableDummy(candidatesMap, Integer.MAX_VALUE);
+        else addNotExplainableDummy(candidatesMap, maxCandidates);
 
 
-
-
-
-//        //start Gibbs
-//        //todo prior scorers!
-//        Map<String, List<Scored<MFCandidate>>> scoredCandidateMap  = getScoredCandidatesByTreeScore(candidatesMap);
 
 
         String[] ids = candidatesMap.keySet().stream().filter(key -> candidatesMap.get(key).size()>0).toArray(s -> new String[s]);
@@ -952,8 +956,19 @@ public class GibbsSamplerMain {
         }
 
 
+        if (is3Phase){
+            int numberOfCandidatesInFirstRound = maxCandidates;
+            ThreePhaseGibbsSampling threePhaseGibbsSampling = new ThreePhaseGibbsSampling(ids, candidatesArray, numberOfCandidatesInFirstRound, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
+            System.out.println("start");
+            threePhaseGibbsSampling.run(iterationSteps, burnInIterations);
 
-        if (is2Phase){
+            Scored<FragmentsCandidate>[][] result = threePhaseGibbsSampling.getChosenFormulas();
+            System.out.println("standard");
+            statisticsOfKnownCompounds(result, threePhaseGibbsSampling.getIds(), evaluationIds, correctHits);
+
+            if (outputFile!=null) writeBestFormulas(threePhaseGibbsSampling.getChosenFormulas(), threePhaseGibbsSampling.getGraph(), outputFile);
+        }
+        else if (is2Phase){
             TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, workerCount, 1);
             System.out.println("start");
             twoPhaseGibbsSampling.run(iterationSteps, burnInIterations);
@@ -1260,6 +1275,7 @@ public class GibbsSamplerMain {
     private Set<String> setKnownCompounds(Collection<String> ids, Map<String, LibraryHit> correctHitsMap, Map<String, List<FragmentsCandidate>> candidatesMap, Set<MolecularFormula> allowedDifferences, boolean eval) {
         System.out.println("allowedDifferences "+allowedDifferences.size());
         Set<String> usedIds = new HashSet<>();
+        System.out.println("measuredMass trueMass");
         for (String id : ids) {
             LibraryHit libraryHit = correctHitsMap.get(id);
             MolecularFormula correctMF = libraryHit.getMolecularFormula();
@@ -1269,7 +1285,7 @@ public class GibbsSamplerMain {
 //                throw new RuntimeException("all candidates have been removed: "+id);
                 System.err.println("all candidates have been removed: "+id);
             } else {
-                System.out.println("candidates size "+candidates.size()+" for "+id);
+//                System.out.println("candidates size "+candidates.size()+" for "+id);
 //                List<MFCandidate> newCandidates = new ArrayList<>();
                 int correctHits = 0;
                 for (FragmentsCandidate candidate : candidates) {
@@ -1280,6 +1296,10 @@ public class GibbsSamplerMain {
                         matches = allowedDifferences.contains(diff);
                     }
                     if (matches){
+                        //measuredMass trueMass
+                        double measured = candidate.getExperiment().getIonMass();
+                        double trueMass = candidate.getIonType().addIonAndAdduct(candidate.getFormula().getMass());
+                        System.out.println(measured+" "+trueMass+" "+candidate.getFormula()+" "+candidate.getIonType().getIonization()+"\n");
                         candidate.setCorrect(true);
                         correctHits++;
                     }
@@ -2152,7 +2172,7 @@ public class GibbsSamplerMain {
                 for (Reaction reaction1 : reactionsSet1) {
                     for (Reaction reaction2 : singleReactionsSet) {
                         CombinedReaction combinedReaction = new CombinedReaction(reaction1, reaction2);
-                        if (combinedReaction==null || combinedReaction.netChange()==null || combinedReaction.netChange().equals(MolecularFormula.emptyFormula())){
+                        if (combinedReaction==null || combinedReaction.netChange()==null){
                             System.out.println("failed for: ");
                             System.out.println(reaction1);
                             System.out.println(reaction2);
@@ -2165,7 +2185,7 @@ public class GibbsSamplerMain {
                             reactionSet2.add(combinedReaction);
                         }
                         combinedReaction = new CombinedReaction(reaction1, reaction2.negate());
-                        if (combinedReaction==null || combinedReaction.netChange()==null || combinedReaction.netChange().equals(MolecularFormula.emptyFormula())){
+                        if (combinedReaction==null || combinedReaction.netChange()==null){
                             System.out.println("failed for: ");
                             System.out.println(reaction1);
                             System.out.println(reaction2);
