@@ -166,9 +166,6 @@ abstract public class AbstractSolver {
                 return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
             }
         try {
-            // set up constraints etc.
-            prepareSolver();
-
             // get optimal solution (score) if existing
             TreeBuilder.AbortReason c = solveMIP();
 
