@@ -73,6 +73,12 @@ public final class PredictionPerformance {
             return update(truth,predicted,1d);
         }
 
+        public Modify updateProbabilistic(boolean truth, double predicted) {
+            update(truth,true,predicted);
+            update(truth,false,1d-predicted);
+            return this;
+        }
+
         public Modify update(boolean truth, boolean predicted, double weight) {
             if (truth) {
                 if (predicted) {
@@ -251,6 +257,14 @@ public final class PredictionPerformance {
         return Math.min(tp+fn, tn+fp);
     }
 
+    public double getCount() {
+        if (allowRelabeling) {
+            return getSmallerClassSize();
+        } else {
+            return tp+fn+2*pseudoCount;
+        }
+    }
+
     public double getTp() {
         return tp;
     }
@@ -347,6 +361,15 @@ public final class PredictionPerformance {
         final double mccDiv = Math.sqrt((TP+FP) * (TP+FN) * (TN+FP) * (TN+FN));
         mcc = ((TP*TN) - (FP * FN)) / (mccDiv == 0 ? 1 : mccDiv);
 
+    }
+
+    // because I need this so often...
+    public String toCsvRow() {
+        return getF() + "\t" + getRecall() + "\t" + getPrecision() + "\t" + getMcc() + "\t" + getCount() + "\t" + getTp() + "\t" + getFp() + "\t" + getTn() + "\t" + getFn() + "\n";
+    }
+
+    public static String csvHeader() {
+        return "f1\trecall\tprecision\tmcc\tcount\ttp\tp\ttn\tfn\n";
     }
 
 }
