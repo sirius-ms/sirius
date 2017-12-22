@@ -91,7 +91,7 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         final Map<Element, Interval> boundaries = alphabet.toMap();
         if (!constraints.getChemicalAlphabet().equals(alphabet)) {
             for (Element e : constraints.getChemicalAlphabet()) {
-                if (constraints.hasElement(e) && alphabet.indexOf(e)<0) {
+                if (constraints.hasElement(e) && constraints.getLowerbound(e)>0 && alphabet.indexOf(e)<0) {
                     throw new IllegalArgumentException("Incompatible alphabet: " + alphabet +  " vs " + constraints);
                 }
             }

@@ -79,7 +79,7 @@ public final class TreeBuilderFactory {
 
     public static boolean setBuilderPriorities(String... builders) {
         DefaultBuilder[] b = parseBuilderPriority(builders);
-        if (b.length>0) {
+        if (b!=null && b.length>0) {
             builderPriorities = b;
             return true;
         }
@@ -90,7 +90,7 @@ public final class TreeBuilderFactory {
     public static DefaultBuilder[] getBuilderPriorities() {
         if (builderPriorities != null) return builderPriorities.clone();
         DefaultBuilder[] b = parseBuilderPriority(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder"));
-        if (b.length>0) return b;
+        if (b!=null && b.length>0) return b;
         return DefaultBuilder.values();
     }
 
