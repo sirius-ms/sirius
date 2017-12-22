@@ -5,15 +5,28 @@ import de.unijena.bioinf.jjobs.JobManager;
 import org.slf4j.LoggerFactory;
 
 public class SiriusJobs {
-    private static JobManager globalJobManager = null;
+    private static volatile JobManager globalJobManager = null;
 
 
     public static void setGlobalJobManager(int cpuThreads) {
-        globalJobManager = new JobManager(cpuThreads);
+        replace(new JobManager(cpuThreads));
+    }
+
+    private static void replace(JobManager jobManager) {
+        final JobManager oldManager = globalJobManager;
+        globalJobManager = jobManager;
+        if (oldManager!=null) {
+            try {
+                globalJobManager.shutdown();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
     }
 
     public static void setGlobalJobManager(JobManager manager) {
-        globalJobManager = manager;
+        replace(manager);
     }
 
     public static JobManager getGlobalJobManager() {
