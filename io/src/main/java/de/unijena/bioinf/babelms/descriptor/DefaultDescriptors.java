@@ -365,7 +365,7 @@ class DefaultDescriptors {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"mz", "intensity"};
+            return new String[]{"mz", "intensity","relativeIntensity"};
         }
 
         @Override
@@ -375,7 +375,7 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> Peak read(DataDocument<G, D, L> document, D dictionary) {
-            return new Peak(document.getDoubleFromDictionary(dictionary, "mz"), document.getDoubleFromDictionary(dictionary, "intensity"));
+            return new Peak(document.getDoubleFromDictionary(dictionary, "mz"), document.hasKeyInDictionary(dictionary,"relativeIntensity") ? document.getDoubleFromDictionary(dictionary, "relativeIntensity") : document.getDoubleFromDictionary(dictionary, "intensity"));
         }
 
         @Override
