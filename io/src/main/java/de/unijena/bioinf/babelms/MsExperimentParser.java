@@ -41,6 +41,9 @@ public class MsExperimentParser {
         final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
         if (pc==null) return null;
         try {
+            if (pc.equals(ZippedSpectraParser.class)){
+                return (GenericParser<Ms2Experiment>)pc.newInstance();
+            }
             return new GenericParser<Ms2Experiment>(pc.newInstance());
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
@@ -52,5 +55,6 @@ public class MsExperimentParser {
     private void addKnownEndings() {
         knownEndings.put(".ms", JenaMsParser.class);
         knownEndings.put(".mgf", MgfParser.class);
+        knownEndings.put(".zip", ZippedSpectraParser.class);
     }
 }
