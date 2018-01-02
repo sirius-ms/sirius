@@ -711,6 +711,13 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
     }
 
     /**
+     * @return the set of different Ionization types
+     */
+    public Collection<String> getIonizations() {
+        return ionizationToAdduct.keySet();
+    }
+
+    /**
      * return the element with the given Id
      *
      * @param id
