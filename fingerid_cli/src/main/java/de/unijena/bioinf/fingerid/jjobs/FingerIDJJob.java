@@ -118,11 +118,9 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             // first filterIdentifications identificationResult list by top scoring formulas
             final IdentificationResult top =  input.get(0);
             if (top == null || top.getResolvedTree() == null) return null;
-
             progressInfo("Filter Identification Results for CSI:FingerId usage");
             filteredResults.add(top);
             final double threshold = Math.max(top.getScore(), 0) - Math.max(5, top.getScore() * 0.25);
-
             for (int k=1, n =  input.size(); k < n;  ++k) {
                 IdentificationResult e = input.get(k);
                 if (e.getScore() < threshold) break;
@@ -134,6 +132,22 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             }
         } else {
             filteredResults.addAll(input);
+        }
+
+        Iterator<IdentificationResult> iter = filteredResults.iterator();
+        {
+            while (iter.hasNext()) {
+                final IdentificationResult ir = iter.next();
+                if (ir.getBeautifulTree().numberOfVertices() < 3) {
+                    progressInfo("Ignore " + ir.getMolecularFormula() + " because the tree contains less than 3 vertices");
+                    iter.remove();
+                }
+            }
+        }
+
+        if (filteredResults.isEmpty()) {
+            progressInfo("No suitable fragmentation tree left.");
+            return Collections.emptyMap();
         }
 
         progressInfo("Search with CSI:FingerId");
