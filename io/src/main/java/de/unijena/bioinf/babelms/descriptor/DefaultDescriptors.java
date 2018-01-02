@@ -27,7 +27,7 @@ class DefaultDescriptors {
         registry.put(Fragment.class, Peak.class, new PeakDescriptor());
         registry.put(Fragment.class, AnnotatedPeak.class, new AnnotatedPeakDescriptor());
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
-        registry.put(Fragment.class, PrecursorIonType.class, new PrecursorIonTypeDescriptor("ion"));
+        registry.put(Fragment.class, Ionization.class, new IonizationDescriptor());
 
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
         registry.put(Loss.class, InsourceFragmentation.class, new InsourceDescriptor());
@@ -41,7 +41,7 @@ class DefaultDescriptors {
 
         @Override
         public String[] getKeywords() {
-            return new String[]{"ion"};
+            return new String[]{"ion","precursorIonType"};
         }
 
         @Override
@@ -51,7 +51,11 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> Ionization read(DataDocument<G, D, L> document, D dictionary) {
-            return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
+            if (document.hasKeyInDictionary(dictionary,"ion")) {
+                return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "ion")).getIonization();
+            } else {
+                return PeriodicTable.getInstance().ionByName(document.getStringFromDictionary(dictionary, "precursorIonType")).getIonization();
+            }
         }
 
         @Override
