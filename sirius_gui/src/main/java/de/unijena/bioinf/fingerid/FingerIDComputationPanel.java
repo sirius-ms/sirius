@@ -47,7 +47,10 @@ public class FingerIDComputationPanel extends JPanel {
                 setLayout(new FlowLayout(FlowLayout.LEFT));
                 target = new JPanel();
                 csiButton = csiButton();
-                csiButton.addActionListener(e -> setComponentsEnabled(csiButton.isSelected()));
+                csiButton.addActionListener(e -> {
+                    setComponentsEnabled(csiButton.isSelected());
+                    csiButton.setToolTipText((csiButton.isSelected() ? "Disable CSI:FingerID search" : "Enable CSI:FingerID search"));
+                });
                 csiButton.setSelected(false);
                 add(csiButton);
                 add(target);
@@ -88,9 +91,9 @@ public class FingerIDComputationPanel extends JPanel {
 
 
     private ToolbarToggleButton csiButton() {
-        ToolbarToggleButton b = new ToolbarToggleButton(Icons.FINGER_32);
+        ToolbarToggleButton b = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
         if (MainFrame.MF.getCsiFingerId().isEnabled() && ((CheckConnectionAction) SiriusActions.CHECK_CONNECTION.getInstance()).isActive.get()) {
-            b.setToolTipText("Enable/Disable CSI:FingerID search");
+            b.setToolTipText("Enable CSI:FingerID search");
             b.setEnabled(true);
         } else {
             b.setToolTipText("Can't connect to CSI:FingerID server!");

@@ -116,12 +116,13 @@ public class SearchProfilePanel extends JPanel {
         JPanel ionPanel;
         if (selectIonization) {
             ionPanel = createIonissationOptionPanel(ionizationCB);
+            mainwindow.add(ionPanel);
         } else {
-            ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
-
+            if (enableFallback) {
+                ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
+                mainwindow.add(ionPanel);
+            }
         }
-
-        mainwindow.add(ionPanel);
 
 
         instruments = new Vector<>();
