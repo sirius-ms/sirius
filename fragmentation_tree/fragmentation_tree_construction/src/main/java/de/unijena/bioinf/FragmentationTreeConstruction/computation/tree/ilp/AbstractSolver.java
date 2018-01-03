@@ -49,13 +49,12 @@ abstract public class AbstractSolver {
     //--- CONSTRUCTORS ---//
     ////////////////////////
 
-    protected AbstractSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options)
-    {
+    protected AbstractSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {
         if (graph == null) throw new NullPointerException("Cannot solve graph: graph is NULL!");
         this.graph = graph;
         this.losses = new ArrayList<Loss>(graph.numberOfEdges());
         for (Fragment f : graph) {
-            for (int k=0; k < f.getInDegree(); ++k) {
+            for (int k = 0; k < f.getInDegree(); ++k) {
                 losses.add(f.getIncomingEdge(k));
             }
         }
@@ -86,9 +85,9 @@ abstract public class AbstractSolver {
     protected void prepareSolver() {
         try {
             initializeModel();
-            if (options.getNumberOfCPUS()>0)
+            if (options.getNumberOfCPUS() > 0)
                 setNumberOfCpus(options.getNumberOfCPUS());
-            if (options.getTimeLimitsInSeconds()>0)
+            if (options.getTimeLimitsInSeconds() > 0)
                 setTimeLimitInSeconds(options.getTimeLimitsInSeconds());
             computeOffsets();
             assert (edgeOffsets != null && (edgeOffsets.length != 0 || losses.size() == 0)) : "Edge edgeOffsets were not calculated?!";
@@ -124,7 +123,7 @@ abstract public class AbstractSolver {
          * for each edge: give it some unique id based on its source vertex id and its offset
          * therefor, the i-th edge of some vertex u will have the id: edgeOffsets[u] + i, if i=0 is the first edge.
          * That way, 'edgeIds' is already sorted by source edge id's! An in O(E) time
-          */
+         */
         for (int k = 0; k < losses.size(); ++k) {
             final int u = losses.get(k).getSource().getVertexId();
             edgeIds[edgeOffsets[u]++] = k;
@@ -151,7 +150,8 @@ abstract public class AbstractSolver {
     /**
      * - The sum of all edges kept in the solution (if existing) should be at least as high as the given lower bound
      * - This information might be used by a solver to stop the calculation, when it is obviously not possible to
-     *   reach that condition.
+     * reach that condition.
+     *
      * @throws Exception
      */
     protected abstract void setMinimalScoreConstraints(double minimalScore) throws Exception;
@@ -160,12 +160,13 @@ abstract public class AbstractSolver {
     /**
      * Solve the optimal colorful subtree problem, using the chosen solver
      * Need constraints, variables, etc. to be set up
+     *
      * @return
      */
     protected TreeBuilder.Result solve() {
-            if (graph.numberOfEdges() == 1) {
-                return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
-            }
+        if (graph.numberOfEdges() == 1) {
+            return new TreeBuilder.Result(buildSolution(graph.getRoot().getOutgoingEdge(0).getWeight(), new boolean[]{true}), true, TreeBuilder.AbortReason.COMPUTATION_CORRECT);
+        }
         try {
             // get optimal solution (score) if existing
             TreeBuilder.AbortReason c = solveMIP();
@@ -181,14 +182,14 @@ abstract public class AbstractSolver {
                 throw new TimeoutException();
             } else return new TreeBuilder.Result(null, false, c);
         } catch (Exception e) {
-                if (e instanceof TimeoutException) throw (TimeoutException)e;
-                throw new RuntimeException(String.valueOf(e.getMessage()), e);
+            if (e instanceof TimeoutException) throw (TimeoutException) e;
+            throw new RuntimeException(String.valueOf(e.getMessage()), e);
         } finally {
             // free any memory, if necessary
             try {
                 pastBuildSolution();
             } catch (Exception e) {
-                logger.error(e.getMessage(),e);
+                logger.error(e.getMessage(), e);
             }
         }
     }
@@ -199,20 +200,22 @@ abstract public class AbstractSolver {
     /**
      * Variables in our problem are the edges of the given graph.
      * In the solution, 0.0 means: edge is not used, while 1.0 means: edge is used
+     *
      * @throws Exception
      */
     abstract protected void defineVariables() throws Exception;
-    protected void defineVariablesWithStartValues( FTree presolvedTree) throws Exception {
+
+    protected void defineVariablesWithStartValues(FTree presolvedTree) throws Exception {
         // map edges in presolved tree to edge ids
-        final HashMap<MolecularFormula,Fragment> fragmentMap = new HashMap<>(presolvedTree.numberOfVertices());
+        final HashMap<MolecularFormula, Fragment> fragmentMap = new HashMap<>(presolvedTree.numberOfVertices());
         for (Fragment f : presolvedTree) fragmentMap.put(f.getFormula(), f);
 
-        int[] selectedEdges = new int[1+presolvedTree.numberOfEdges()];
-        int k=0, offset=0;
+        int[] selectedEdges = new int[1 + presolvedTree.numberOfEdges()];
+        int k = 0, offset = 0;
 
         // find pseudo root
         final MolecularFormula root = presolvedTree.getRoot().getFormula();
-        for (int l=0; l < graph.getRoot().getOutDegree(); ++l) {
+        for (int l = 0; l < graph.getRoot().getOutDegree(); ++l) {
             if (losses.get(edgeIds[l]).getTarget().getFormula().equals(root)) {
                 selectedEdges[k++] = edgeIds[l];
                 break;
@@ -220,14 +223,14 @@ abstract public class AbstractSolver {
         }
 
         forEachFragment:
-        for (int i=0; i < this.graph.numberOfVertices(); ++i) {
+        for (int i = 0; i < this.graph.numberOfVertices(); ++i) {
             final Fragment fragment = this.graph.getFragmentAt(i);
             final Fragment treeFragment = fragmentMap.get(fragment.getFormula());
-            if (treeFragment!=null) {
+            if (treeFragment != null) {
                 final MolecularFormula lf = treeFragment.getIncomingEdge().getFormula();
                 // find corresponding loss
                 forEachLoss:
-                for (int l=0; l < fragment.getInDegree(); ++l) {
+                for (int l = 0; l < fragment.getInDegree(); ++l) {
                     if (fragment.getIncomingEdge(l).getFormula().equals(lf)) {
                         // we find the correct edge
                         selectedEdges[k++] = offset + l;
@@ -247,11 +250,12 @@ abstract public class AbstractSolver {
 
     /**
      * - relaxed version: for each vertex, there are only one or more outgoing edges,
-     *   if there is at least one incomming edge
-     *   {@literal ->} the sum of all incomming edges - sum of outgoing edges {@literal >=} 0
+     * if there is at least one incomming edge
+     * {@literal ->} the sum of all incomming edges - sum of outgoing edges {@literal >=} 0
      * - applying 'ColorConstraint' will tighten this condition to:
-     *      for each vertex, there can only be one incommning edge at most and only if one incomming edge is present,
-     *      one single outgoing edge can be present.
+     * for each vertex, there can only be one incommning edge at most and only if one incomming edge is present,
+     * one single outgoing edge can be present.
+     *
      * @throws Exception
      */
     abstract protected void setTreeConstraint() throws Exception;
@@ -259,12 +263,14 @@ abstract public class AbstractSolver {
     /**
      * - for each color, take only one incoming edge
      * - the sum of all edges going into color relative is equal or less than 1
+     *
      * @throws Exception
      */
     abstract protected void setColorConstraint() throws Exception;
 
     /**
      * - there should be at least one edge leading away from the root
+     *
      * @throws Exception
      */
     abstract protected void setMinimalTreeSizeConstraint() throws Exception;
@@ -274,6 +280,7 @@ abstract public class AbstractSolver {
     /**
      * maximize a function z, where z is the sum of edges (as integer) multiplied by their weights
      * thus, this is a MIP problem, where the existence of edges in the solution is to be determined
+     *
      * @throws Exception
      */
     abstract protected void setObjective() throws Exception;
@@ -282,6 +289,7 @@ abstract public class AbstractSolver {
      * - in here, the implemented solver should solve the problem, so that the result can be prepareSolver afterwards
      * - a specific solver might need to set up more before starting the solving process
      * - this is called after all constraints are applied
+     *
      * @return
      * @throws Exception
      */
@@ -290,6 +298,7 @@ abstract public class AbstractSolver {
     /**
      * - a specific solver might need to do more (or release memory) after the solving process
      * - this is called after the solver() has been executed
+     *
      * @return
      * @throws Exception
      */
@@ -297,8 +306,9 @@ abstract public class AbstractSolver {
 
     /**
      * - having found a solution using 'solveMIP' this function shall return a boolean list representing
-     *   those edges being kept in the solution.
+     * those edges being kept in the solution.
      * - result[i] == TRUE means the i-th edge is included in the solution, FALSE otherwise
+     *
      * @return
      * @throws Exception
      */
@@ -306,15 +316,16 @@ abstract public class AbstractSolver {
 
     /**
      * - having found a solution using 'solveMIP' this function shall return the score of that solution
-     *   (basically, the accumulated weight at the root of the resulting tree or the value of the maximized objective
-     *    function, respectively)
+     * (basically, the accumulated weight at the root of the resulting tree or the value of the maximized objective
+     * function, respectively)
+     *
      * @return
      * @throws Exception
      */
     abstract protected double getSolverScore() throws Exception;
 
 
-    protected FTree buildSolution(double score, boolean[] edesAreUsed)  {
+    protected FTree buildSolution(double score, boolean[] edesAreUsed) {
         Fragment graphRoot = null;
         double rootScore = 0d;
         // get root
@@ -346,7 +357,7 @@ abstract public class AbstractSolver {
                     final Loss l = losses.get(edgeIds[offset]);
                     final Fragment child = tree.addFragment(item.treeNode, l.getTarget().getFormula());
                     child.getIncomingEdge().setWeight(l.getWeight());
-                    tree.setTreeWeight(tree.getTreeWeight()+l.getWeight());
+                    tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
                     stack.push(new Stackitem(child, l.getTarget()));
                 }
                 ++offset;
@@ -369,6 +380,7 @@ abstract public class AbstractSolver {
     /**
      * Check, whether or not the given tree 'tree' is the optimal solution for the optimal colorful
      * subtree problem of the given graph 'graph'
+     *
      * @param tree
      * @param graph
      * @return
@@ -402,6 +414,7 @@ abstract public class AbstractSolver {
         }
         return Math.abs(score) < 1e-4d;
     }
+
     private static Logger logger = LoggerFactory.getLogger(AbstractSolver.class);
 
     protected static class Stackitem {
