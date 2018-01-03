@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.cli;
 import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
+import de.unijena.bioinf.ChemistryBase.algorithm.TimeoutException;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -169,11 +171,27 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected void handleSiriusResults(Sirius.SiriusIdentificationJob siriusJob) throws IOException {
         List<IdentificationResult> results = null;
-        if (siriusJob != null)
-            results = siriusJob.takeResult();
-
+        if (siriusJob != null) {
+            try {
+                results = siriusJob.awaitResult();
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof TimeoutException) {
+                    println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
+                    projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "TIMEOUT"));
+                    return;
+                } else if (e.getCause() instanceof RuntimeException) {
+                    println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
+                    projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "ERROR"));
+                    return;
+                }
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "INTERRUPT"));
+                return;
+            }
+        }
         if (results == null || results.isEmpty()) {
-            logger.error("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
+            logger.error("Cannot XXX find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         } else {
             int rank = 1;

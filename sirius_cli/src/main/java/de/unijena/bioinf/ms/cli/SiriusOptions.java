@@ -102,10 +102,10 @@ public interface SiriusOptions {
     @Option(shortName = "i", longName = "ion", description = "the ionization/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+.", defaultToNull = true)
     String getIon();
 
-    @Option(longName = "tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
+    @Option(longName = "tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0", defaultValue = "-1")
     int getTreeTimeout();
 
-    @Option(longName = "compound-timeout", description = "Maximal computation time for a single compound. 0 for an infinite amount of time. Default: 0", defaultValue = "0")
+    @Option(longName = "compound-timeout", description = "Maximal computation time for a single compound. 0 for an infinite amount of time. Default: 0", defaultValue = "-1")
     int getInstanceTimeout();
 
     @Unparsed
