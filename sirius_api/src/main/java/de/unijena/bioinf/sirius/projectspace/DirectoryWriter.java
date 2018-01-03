@@ -288,9 +288,14 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     @Override
-    protected void endWritingExperiment(Ms2Experiment experiment)throws IOException  {
+    protected void endWritingExperiment(ExperimentResult experiment)throws IOException  {
         W.leaveDirectory();
-        W.updateProgress(currentExperimentName + "\tdone.\n");
+        W.updateProgress(currentExperimentName + "\t" + errorCode(experiment) + "\n");
+    }
+
+    private String errorCode(ExperimentResult experiment) {
+        if (experiment.errorString==null) return "DONE";
+        else return experiment.errorString;
     }
 
     public static String makeFileName(IdentificationResult result) {
