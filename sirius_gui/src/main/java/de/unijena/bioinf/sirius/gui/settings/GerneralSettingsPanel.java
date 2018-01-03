@@ -53,10 +53,6 @@ public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPan
     }
 
     @Override
-    public void refreshValues() {
-    }
-
-    @Override
     public void saveProperties() {
         props.setProperty("de.unijena.bioinf.sirius.treebuilder", (String) solver.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());

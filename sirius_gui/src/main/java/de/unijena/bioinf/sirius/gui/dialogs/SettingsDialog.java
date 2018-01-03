@@ -96,7 +96,15 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 restartMessage = restartMessage || ((SettingsPanel) c).restartRequired();
             }
         }
+
         ApplicationCore.SIRIUS_PROPERTIES_FILE.setProperties(nuProps);
+
+        for (Component c : settingsPane.getComponents()) {
+            if (c instanceof SettingsPanel) {
+                ((SettingsPanel) c).reloadChanges();
+            }
+        }
+
         return restartMessage;
     }
 

@@ -8,10 +8,13 @@ package de.unijena.bioinf.sirius.gui.settings;/**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public interface SettingsPanel {
-    //    public Properties getProperties();
-    void refreshValues();
+    default void refreshValues() {
+    }
 
     void saveProperties();
+
+    default void reloadChanges() {
+    }
 
     String name();
 
