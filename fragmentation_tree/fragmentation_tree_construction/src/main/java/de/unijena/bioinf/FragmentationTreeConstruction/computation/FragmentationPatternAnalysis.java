@@ -1141,6 +1141,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         // tree annotations
         tree.setAnnotation(PrecursorIonType.class, ionType);
+        tree.setAnnotation(Ionization.class, ionType.getIonization());
         final TreeScoring treeScoring = new TreeScoring();
 
         // calculate overall score
