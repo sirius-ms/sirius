@@ -18,6 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
 import com.google.common.collect.BiMap;
+import de.unijena.bioinf.ChemistryBase.algorithm.TimeoutException;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -176,6 +177,8 @@ abstract public class AbstractSolver {
                 if (tree != null && !isComputationCorrect(tree, this.graph, score))
                     throw new RuntimeException("Can't find a feasible solution: Solution is buggy");
                 return new TreeBuilder.Result(tree, true, c);
+            } else if (c == TreeBuilder.AbortReason.TIMEOUT) {
+                throw new TimeoutException();
             } else return new TreeBuilder.Result(null, false, c);
         } catch (Exception e) {
             throw new RuntimeException(String.valueOf(e.getMessage()), e);

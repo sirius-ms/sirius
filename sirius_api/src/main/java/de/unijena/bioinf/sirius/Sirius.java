@@ -115,10 +115,6 @@ public class Sirius {
                     throw (RuntimeException)e.getCause();
                 LoggerFactory.getLogger(Sirius.class).error(e.getMessage(),e);
                 return null;
-            } catch (InterruptedException e) {
-                LoggerFactory.getLogger(Sirius.class).error(e.getMessage(),e);
-                Thread.interrupted();
-                return null;
             }
 
             List<IdentificationResult> r = createIdentificationResults(fr);//postprocess results
