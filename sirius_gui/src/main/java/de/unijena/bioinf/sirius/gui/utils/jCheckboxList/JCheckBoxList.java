@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 
 /**
@@ -92,4 +93,68 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
 
         return list;
     }
+
+    /**
+     * Check all Items
+     */
+    private void setAllItemsChecked(boolean checked) {
+        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
+
+        while (dlm.hasMoreElements()) {
+            CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
+            checkboxListItem.setSelected(checked);
+        }
+    }
+
+    private void refresh() {
+        fireSelectionValueChanged(0, getModel().getSize(), false);
+        revalidate();
+        repaint();
+    }
+
+    public void checkAll() {
+        setAllItemsChecked(true);
+        refresh();
+    }
+
+    public void uncheckAll() {
+        setAllItemsChecked(false);
+        refresh();
+    }
+
+    private void setItemChecked(E item, boolean checked) {
+        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
+
+        while (dlm.hasMoreElements()) {
+            CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
+            if (checkboxListItem.getValue().equals(item)) {
+                checkboxListItem.setSelected(checked);
+            }
+        }
+    }
+
+    public void check(E item) {
+        setItemChecked(item, true);
+        refresh();
+    }
+
+    public void uncheck(E item) {
+        setItemChecked(item, false);
+        refresh();
+    }
+
+    public void checkAll(Collection<E> items) {
+        for (E item : items) {
+            setItemChecked(item, true);
+        }
+        refresh();
+    }
+
+    public void uncheckAll(Collection<E> items) {
+        for (E item : items) {
+            setItemChecked(item, false);
+        }
+        refresh();
+    }
+
 }
