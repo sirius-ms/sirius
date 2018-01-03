@@ -40,6 +40,7 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -168,26 +169,38 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     }
 
     protected void handleSiriusResults(Sirius.SiriusIdentificationJob siriusJob) throws IOException {
-        List<IdentificationResult> results = null;
-        if (siriusJob != null)
-            results = siriusJob.takeResult();
+        if (siriusJob != null) {
+            try {
+                final List<IdentificationResult> results = siriusJob.takeResult();
 
-        if (results == null || results.isEmpty()) {
-            logger.error("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
-            return;
+                if (!results.isEmpty()) {
+                    int rank = 1;
+                    int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
+                    for (IdentificationResult result : results) {
+                        final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
+                        final int isoPeaks = pat == null ? 0 : pat.getPattern().size() - 1;
+                        printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
+                    }
+
+                    if (projectWriter != null) {
+                        projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results));
+                    }
+                } else {
+                    logger.warn("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
+                }
+            } catch (TimeoutException e) {
+                println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
+                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), null, "TIMEOUT"));
+            } catch (RuntimeException e) {
+                println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
+                logger.debug("Error during computation of " + siriusJob.getExperiment().getName(), e);
+                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), null, "ERROR"));
+            }
         } else {
-            int rank = 1;
-            int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
-            for (IdentificationResult result : results) {
-                final IsotopePattern pat = result.getRawTree().getAnnotationOrNull(IsotopePattern.class);
-                final int isoPeaks = pat == null ? 0 : pat.getPattern().size() - 1;
-                printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
-            }
-
-            if (projectWriter != null) {
-                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results));
-            }
+            logger.debug("Null job occurred!");
         }
+
+
     }
 
     private PrecursorIonType[] guessIonization(Instance instance) {
