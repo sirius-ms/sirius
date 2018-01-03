@@ -1,6 +1,5 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.TimeoutException;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
