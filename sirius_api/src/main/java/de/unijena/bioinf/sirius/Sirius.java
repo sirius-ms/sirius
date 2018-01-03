@@ -42,12 +42,14 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 public class Sirius {
 
@@ -95,26 +97,28 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult> compute() throws Exception {
-            //todo it seems to be faster to catch exception here -> executor service
+            final TreeComputationInstance instance = new TreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
+            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
+                }
+            });
+            final ProcessedInput pinput = instance.validateInput();
+            performMs1Analysis(instance, IsotopePatternHandling.both);
+            submitSubJob(instance);
+            TreeComputationInstance.FinalResult fr;
             try {
-                final TreeComputationInstance instance = new TreeComputationInstance(jobManager(), getMs2Analyzer(), experiment, numberOfResultsToKeep);
-                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        SiriusIdentificationJob.this.updateProgress((int) evt.getNewValue());
-                    }
-                });
-                final ProcessedInput pinput = instance.validateInput();
-                performMs1Analysis(instance, IsotopePatternHandling.both);
-                submitSubJob(instance);
-                TreeComputationInstance.FinalResult fr = instance.takeResult();
-
-                List<IdentificationResult> r = createIdentificationResults(fr);//postprocess results
-                return r;
-            } catch (Exception e) {
-                LOG.error("Error during identification job", e);
+                fr = instance.awaitResult();
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof RuntimeException)
+                    throw (RuntimeException)e.getCause();
+                LoggerFactory.getLogger(Sirius.class).error(e.getMessage(),e);
                 return null;
             }
+
+            List<IdentificationResult> r = createIdentificationResults(fr);//postprocess results
+            return r;
         }
 
         private List<IdentificationResult> createIdentificationResults(TreeComputationInstance.FinalResult fr) {
