@@ -42,7 +42,6 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.MasterJJob;
-import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -113,7 +112,7 @@ public class Sirius {
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof RuntimeException)
                     throw (RuntimeException)e.getCause();
-                LoggerFactory.getLogger(Sirius.class).error(e.getMessage(),e);
+                LOG().error(e.getMessage(),e);
                 return null;
             }
 
