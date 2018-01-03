@@ -177,8 +177,8 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                 println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
                 projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "TIMEOUT"));
             } catch (RuntimeException e) {
-                    println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
-                    projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "ERROR"));
+                println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
+                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "ERROR"));
             }
         }
         if (results == null || results.isEmpty()) {
