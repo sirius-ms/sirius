@@ -172,7 +172,6 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         if (siriusJob != null) {
             try {
                 final List<IdentificationResult> results = siriusJob.takeResult();
-
                 if (!results.isEmpty()) {
                     int rank = 1;
                     int n = Math.max(1, (int) Math.ceil(Math.log10(results.size())));
