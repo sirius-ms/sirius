@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.cli;
 import com.google.common.io.Files;
 import com.lexicalscope.jewel.cli.CliFactory;
 import com.lexicalscope.jewel.cli.HelpRequestedException;
+import de.unijena.bioinf.ChemistryBase.algorithm.TimeoutException;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -169,11 +170,19 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     protected void handleSiriusResults(Sirius.SiriusIdentificationJob siriusJob) throws IOException {
         List<IdentificationResult> results = null;
-        if (siriusJob != null)
-            results = siriusJob.takeResult();
-
+        if (siriusJob != null) {
+            try {
+                results = siriusJob.takeResult();
+            } catch (TimeoutException e) {
+                println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
+                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "TIMEOUT"));
+            } catch (RuntimeException e) {
+                    println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
+                    projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "ERROR"));
+            }
+        }
         if (results == null || results.isEmpty()) {
-            logger.error("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
+            logger.error("Cannot XXX find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
             return;
         } else {
             int rank = 1;
