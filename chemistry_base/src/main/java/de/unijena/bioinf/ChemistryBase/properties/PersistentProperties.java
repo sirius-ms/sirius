@@ -85,7 +85,7 @@ public class PersistentProperties extends Properties {
         return new Properties(this);
     }
 
-    public void store() {
+    public synchronized void store() {
         try {
             Files.deleteIfExists(propsSourceFile);
             try (OutputStream stream = Files.newOutputStream(propsSourceFile, StandardOpenOption.CREATE_NEW)) {
