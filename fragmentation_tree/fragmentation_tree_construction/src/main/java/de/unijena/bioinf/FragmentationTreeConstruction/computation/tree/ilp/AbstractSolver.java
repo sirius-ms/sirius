@@ -181,14 +181,14 @@ abstract public class AbstractSolver {
                 throw new TimeoutException();
             } else return new TreeBuilder.Result(null, false, c);
         } catch (Exception e) {
-            throw new RuntimeException(String.valueOf(e.getMessage()), e);
+                if (e instanceof TimeoutException) throw (TimeoutException)e;
+                throw new RuntimeException(String.valueOf(e.getMessage()), e);
         } finally {
             // free any memory, if necessary
             try {
                 pastBuildSolution();
             } catch (Exception e) {
                 logger.error(e.getMessage(),e);
-                throw new RuntimeException(e);
             }
         }
     }
