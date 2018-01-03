@@ -102,8 +102,9 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         super.handleJobs(jc);
         if (options.isFingerid()) {
             progress.info("CSI:FingerID results for: '" + jc.sourceInstance.file.getName() + "'");
-            //todo catch nullpointer
-            handleFingerIdResults(jc.sourceInstance, jc.getJob(FingerIDJJob.class)); //handle results
+            FingerIDJJob fij = jc.getJob(FingerIDJJob.class);
+            if (fij != null)
+                handleFingerIdResults(jc.sourceInstance, fij); //handle results
         }
     }
 
@@ -123,8 +124,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
     private void generateCustomDatabase(FingerIdOptions options) throws IOException {
         DatabaseImporter.importDatabase(options.getGeneratingCompoundDatabase(), options.getInput());
     }
-
-
+    
     protected FingerIDJJob makeFingerIdJob(final Instance i, BasicJJob<List<IdentificationResult>> siriusJob) {
         if (siriusJob == null) return null;
 
@@ -237,7 +237,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                 }
                 println("");
             }
-        } catch (PredictionException | InterruptedException | ExecutionException e) {
+        } catch (PredictionException | ExecutionException e) {
             LoggerFactory.getLogger(this.getClass()).error("Error while searching structure for " + i.experiment.getName() + " (" + i.file + "): " + e.getMessage(), e);
         }
     }
@@ -790,8 +790,11 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         @Override
         protected void submitJobs(JobContainer watcher) {
             super.submitJobs(watcher);
-            if (options.isFingerid())
-                submitJob(makeFingerIdJob(watcher.sourceInstance, watcher.getJob(Sirius.SiriusIdentificationJob.class)), watcher);
+            if (options.isFingerid()) {
+                FingerIDJJob fij = makeFingerIdJob(watcher.sourceInstance, watcher.getJob(Sirius.SiriusIdentificationJob.class));
+                if (fij != null)
+                    submitJob(fij, watcher);
+            }
         }
     }
 
