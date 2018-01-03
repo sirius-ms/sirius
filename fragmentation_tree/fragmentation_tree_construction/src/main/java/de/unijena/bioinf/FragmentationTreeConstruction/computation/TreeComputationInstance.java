@@ -1,5 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.TimeoutException;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
@@ -34,6 +35,9 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
     protected AtomicInteger ticks;
     protected volatile int nextProgress;
     protected int ticksPerProgress, progressPerTick;
+
+    protected long startTime;
+    protected int restTime, secondsPerInstance, secondsPerTree;
 
     public TreeComputationInstance(JobManager manager, FragmentationPatternAnalysis analyzer, Ms2Experiment input, int numberOfResultsToKeep) {
         super(JJob.JobType.CPU);
@@ -186,6 +190,11 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
     @Override
     protected FinalResult compute() throws Exception {
         score();
+        startTime = System.currentTimeMillis();
+        final Timeout timeout = pinput.getAnnotation(Timeout.class, Timeout.NO_TIMEOUT);
+        secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
+        secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
+        restTime = Math.min(secondsPerInstance, secondsPerTree);
         // preprocess input
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
@@ -273,6 +282,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
                 return null; // early stopping
             }
             final FGraph graph = graphJJob.takeResult();
+            graph.setAnnotation(Timeout.class, Timeout.newTimeout(secondsPerInstance, restTime));
             final FTree tree = analyzer.computeTreeWithoutAnnotating(graph, intermediateResult.heuristicScore - 1e-3);
             if (tree == null) return null;
             return new ExactResult(intermediateResult.candidate, graph, tree, tree.getTreeWeight());
@@ -284,7 +294,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         }
     }
 
-    private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) {
+    private FinalResult computeExactTreesSinglethreaded(List<IntermediateResult> intermediateResults, boolean earlyStopping) throws TimeoutException {
         // compute in batches
         configureProgress(20, 80, (int) Math.ceil(intermediateResults.size() * 0.2));
         final int NCPUS = jobManager().getCPUThreads();
@@ -309,6 +319,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
         int treesComputed = 0;
         outerLoop:
         for (int i = 0; i < intermediateResults.size(); i += BATCH_SIZE) {
+            checkTimeout();
             final List<IntermediateResult> batch = intermediateResults.subList(i, Math.min(intermediateResults.size(), i + BATCH_SIZE));
             if (batch.isEmpty()) break outerLoop;
             if (batch.get(0).heuristicScore < threshold[0]) {
@@ -376,6 +387,7 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
             double maxRecalibrationBonus = Double.POSITIVE_INFINITY;
 
             final ArrayList<RecalibrationJob> recalibrationJobs = new ArrayList<>();
+            checkTimeout();
             for (int i = 0, nn = Math.min(exactResults.size(), numberOfResultsToKeep); i < nn; ++i) {
                 ExactResult r = exactResults.get(i);
                 final RecalibrationJob rj = new RecalibrationJob(r);
@@ -410,6 +422,13 @@ public class TreeComputationInstance extends MasterJJob<TreeComputationInstance.
 
 
         return new FinalResult(finalResults);
+    }
+
+    private void checkTimeout() {
+        final long time = System.currentTimeMillis();
+        final int elapsedTime = (int)((time-startTime)/1000);
+        restTime = Math.min(restTime,secondsPerInstance-elapsedTime);
+        if (restTime <= 0) throw new TimeoutException();
     }
 
     private class RecalibrationJob extends BasicJJob<ExactResult> {
