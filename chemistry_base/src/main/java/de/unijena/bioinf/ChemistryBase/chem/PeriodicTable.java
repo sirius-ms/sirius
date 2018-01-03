@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -164,14 +165,12 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         try {
             new PeriodicTableBlueObeliskReader().readFromClasspath(instance);
             new PeriodicTableJSONReader().readFromClasspath(instance, "/additional_elements.json");
-            //new PeriodicTableJSONReader().readFromClasspath(instance);
             instance.cache.addDefaultAlphabet();
             instance.setDistribution(new IsotopicDistributionBlueObeliskReader().getFromClasspath());
             instance.addDefaultIons();
         } catch (IOException e) {
             LoggerFactory.getLogger(PeriodicTable.class).error(e.getMessage(), e);
         }
-
     }
 
     public PrecursorIonType getPrecursorIonTypeForEI() {
@@ -250,52 +249,33 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
         this.INTRINSICALLY_CHARGED_POSITIVE = new IonMode(1, "[M]+", MolecularFormula.emptyFormula());
         this.ELECTRON_IONIZATION = new ElectronIonization();
         this.EI_TYPE = new PrecursorIonType(ELECTRON_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), false);
-        // ADDUCTS
-        final String[] adductsPositive = new String[]{
-                "[M+H]+", "[M]+", "[M+K]+", "[M+Na]+",
-                "[M+H-H2O]+", "[M+Na2-H]+", "[M+2K-H]+", "[M+NH4]+", "[M + H3O]+",
-                "[M + MeOH + H]+", // methanol
-                "[M + ACN + H]+", // Acetonitrile CH3CN
-                "[M + 2ACN + H]+",
-                "[M+IPA+H]+",
-                "[M + ACN + Na]+",
-                "[M + DMSO + H]+"
-        };
-        final String[] adductsNegative = new String[]{
-                "[M-H]-",
-                "[M]-",
-                "[M+K-2H]-",
-                "[M+Cl]-",
-                "[M - H2O - H]-",
-                "[M+Na-2H]-",
-                "[M+FA-H]-",
-                "[M+Br]-",
-                "[M+HAc-H]-",
-                "[M+TFA-H]-",
-                "[M+ACN-H]-"
-        };
+        loadKnownIonTypes();
+    }
 
+    public void loadKnownIonTypes() {
+        //clear maps
+        knownIonTypes.clear();
+        ionizationToAdduct.clear();
+
+        // ADDUCTS
         //create positives
-        final HashMap<String, PrecursorIonType> positiveIonTypes = new HashMap<String, PrecursorIonType>();
+        final String[] adductsPositive = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.chem.adducts.positive").split(",");
         for (String pos : adductsPositive) {
-            String posName = canonicalizeIonName(pos);
-            positiveIonTypes.put(posName, parseIonType(pos));
-            assert positiveIonTypes.get(posName).getIonization().getCharge() > 0;
-            addCommonIonType(posName, positiveIonTypes.get(posName));
+//            String posName = canonicalizeIonName(pos);
+            PrecursorIonType type = ionByName(pos);
+            assert type.getIonization().getCharge() > 0;
+            addCommonIonType(type);
         }
+
 
         //create negatives
-        final HashMap<String, PrecursorIonType> negativeIonTypes = new HashMap<String, PrecursorIonType>();
+        final String[] adductsNegative = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.chem.adducts.negative").split(",");
         for (String neg : adductsNegative) {
-            final String negName = canonicalizeIonName(neg);
-            negativeIonTypes.put(negName, parseIonType(neg));
-            assert negativeIonTypes.get(negName).getIonization().getCharge() < 0;
-            addCommonIonType(negName, negativeIonTypes.get(negName));
+//            final String negName = canonicalizeIonName(neg);
+            PrecursorIonType type = ionByName(neg);
+            assert type.getIonization().getCharge() < 0;
+            addCommonIonType(type);
         }
-
-
-//        knownIonTypes.putAll(positiveIonTypes);
-//        knownIonTypes.putAll(negativeIonTypes);
 
         // add common misspelled aliases...
         final PrecursorIonType hplus = knownIonTypes.get("[M+H]+");
@@ -597,17 +577,16 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     public boolean addCommonIonType(String name, PrecursorIonType ionType) {
         if (knownIonTypes.containsKey(name)) {
-            if (ionType.equals(knownIonTypes.get(ionType))) return false;
+            if (ionType.equals(knownIonTypes.get(name))) return false;
             else throw new IllegalArgumentException("There is already an ionization with name '" + name + "'");
         }
 
+        //add the iontype to known knownIonTypes
         knownIonTypes.put(name, ionType);
-        //this iontype is an adduct and we want to add to adduct mapping
-        //if (!ionType.getAdduct().isEmpty()) {//todo do we want only the "non trivial" adducts
+
+        //check if the ionisation is already in knownIonTypes and add it if not
         String ionName = ionType.getIonization().getName();
-        //check if ion is already in known iontypes
-        if (!knownIonTypes.containsKey(ionName))
-            addCommonIonType(ionName, new PrecursorIonType(ionType.getIonization(), MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), false));
+        addCommonIonType(ionName, ionByName(ionName));
 
         //add adduct to list of adducts with common ionisation
         Set<PrecursorIonType> adducts = ionizationToAdduct.get(ionName);
@@ -616,7 +595,6 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
             ionizationToAdduct.put(ionName, adducts);
         }
         adducts.add(ionType);
-//        }
         return true;
     }
 
@@ -626,6 +604,10 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     public boolean addCommonIonType(PrecursorIonType ionType) {
         return addCommonIonType(ionType.toString(), ionType);
+    }
+
+    public boolean addCommonIonType(String name) {
+        return addCommonIonType(ionByName(name));
     }
 
     /**
@@ -707,7 +689,7 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      * @return an immutable list of ions
      */
     public Collection<PrecursorIonType> getIons() {
-        return knownIonTypes.values();
+        return new HashSet<>(knownIonTypes.values());
     }
 
     /**
@@ -715,6 +697,32 @@ public class PeriodicTable implements Iterable<Element>, Cloneable {
      */
     public Collection<String> getIonizations() {
         return ionizationToAdduct.keySet();
+    }
+
+    /**
+     * @return the set of different positive Ionization types
+     */
+    public Collection<String> getPositiveIonizations() {
+        Set<String> positives = new HashSet<>();
+        for (String ionType : ionizationToAdduct.keySet()) {
+            Ionization ionization = knownIonTypes.get(ionType).getIonization();
+            if (ionization.getCharge() > 0)
+                positives.add(ionType);
+        }
+        return positives;
+    }
+
+    /**
+     * @return the set of different positive Ionization types
+     */
+    public Collection<String> getNegativeIonizations() {
+        Set<String> negatives = new HashSet<>();
+        for (String ionType : ionizationToAdduct.keySet()) {
+            Ionization ionization = knownIonTypes.get(ionType).getIonization();
+            if (ionization.getCharge() < 0)
+                negatives.add(ionType);
+        }
+        return negatives;
     }
 
     /**
