@@ -61,11 +61,6 @@ public class AdductSettingsPanel extends TwoCloumnPanel implements SettingsPanel
         add(new JLabel("Custom Adduct:"), addPanel);
     }
 
-    @Override
-    public void refreshValues() {
-
-    }
-
     private <E> String makeStringRepresentation(DefaultListModel<E> model) {
         if (model.isEmpty()) return "";
 
@@ -86,7 +81,10 @@ public class AdductSettingsPanel extends TwoCloumnPanel implements SettingsPanel
 
         props.setProperty("de.unijena.bioinf.sirius.chem.adducts.negative",
                 makeStringRepresentation(negativeList));
+    }
 
+    @Override
+    public void reloadChanges() {
         PeriodicTable.getInstance().loadKnownIonTypes();
     }
 

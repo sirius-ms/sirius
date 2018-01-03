@@ -22,6 +22,7 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
     private Properties props;
     private JTextField emailField;
     private JCheckBox uesrCopy, hardwareInfo;
+
     public ErrorReportSettingsPanel(Properties properties) {
         super();
         this.props = properties;
@@ -35,22 +36,17 @@ public class ErrorReportSettingsPanel extends TwoCloumnPanel implements Settings
 
         hardwareInfo = new JCheckBox("Send hardware and OS information?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.systemInfo")));
         uesrCopy = new JCheckBox("Send a copy to my mail address?", Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail")));
-        add(hardwareInfo,SMALL_GAP,false);
+        add(hardwareInfo, SMALL_GAP, false);
         add(uesrCopy);
     }
 
 
     @Override
-    public void refreshValues() {
-
-    }
-
-    @Override
     public void saveProperties() {
         String mail = emailField.getText();
-        if (Mail.validateMailAdress(mail)){
+        if (Mail.validateMailAdress(mail)) {
             props.setProperty("de.unijena.bioinf.sirius.core.mailService.usermail", emailField.getText());
-        }else {
+        } else {
             LoggerFactory.getLogger(this.getClass()).warn("No Valid mail Address. Email Address not saved");
         }
 
