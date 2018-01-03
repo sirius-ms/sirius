@@ -88,7 +88,7 @@ public class QuestionDialog extends JDialog implements ActionListener{
 			rv = ReturnValue.Success;
 
 			if (dontAsk!=null && dontAsk.isSelected()){
-				ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertyPersistent(property, String.valueOf(true));
+				ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperty(property, String.valueOf(true));
 			}
 		} else if (e.getSource()==abort){
 			rv = ReturnValue.Abort;

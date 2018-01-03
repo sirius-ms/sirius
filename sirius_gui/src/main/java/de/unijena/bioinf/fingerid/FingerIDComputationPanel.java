@@ -78,7 +78,12 @@ public class FingerIDComputationPanel extends JPanel {
 
     private void setComponentsEnabled(final boolean enabled) {
         if (dbSelectionOptions != null) dbSelectionOptions.setEnabled(enabled);
-        if (adductOptions != null) adductOptions.adductList.setEnabled(enabled);
+        if (adductOptions != null) {
+            adductOptions.setEnabled(enabled);
+            adductOptions.adductList.setEnabled(enabled);
+            adductOptions.sp.setEnabled(enabled);
+
+        }
     }
 
 

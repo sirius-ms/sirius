@@ -91,7 +91,7 @@ public class BugReportDialog extends JDialog {
                     @Override
                     protected String doInBackground() throws Exception {
                         reportSettings.saveProperties();
-                        ApplicationCore.SIRIUS_PROPERTIES_FILE.changePropertiesPersistent(props);
+                        ApplicationCore.SIRIUS_PROPERTIES_FILE.setAndStoreProperties(props);
 
                         boolean senMail = Boolean.valueOf(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.errorReporting.sendUsermail"));
                         String mail = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.core.mailService.usermail");

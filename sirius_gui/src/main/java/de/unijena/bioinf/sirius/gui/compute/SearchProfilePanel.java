@@ -1,12 +1,12 @@
 package de.unijena.bioinf.sirius.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.db.CustomDatabase;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
-import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
+import de.unijena.bioinf.sirius.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.sirius.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.sirius.gui.utils.jCheckboxList.JCheckBoxList;
 import org.slf4j.Logger;
@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.Vector;
 
 /**
@@ -91,39 +92,36 @@ public class SearchProfilePanel extends JPanel {
             mainwindow = this;
         }
 
-        if (selectIonization) {
-            ionizations = new Vector<>();
-            if (SiriusDataConverter.siriusIonizationToEnum(ionType).isUnknown() && !ionType.isIonizationUnknown()) {
-                ionizations.add(ionType.toString());
-            }
-            for (Ionization ion : Ionization.values()) {
-                ionizations.add(ion.toString());
-            }
+        //configure ionization panels
+        ionizations = new Vector<>();
 
-
-            ionizationCB = new JCheckBoxList<>(ionizations);
-            if (ionType != null) {
-                if (SiriusDataConverter.siriusIonizationToEnum(ionType).isUnknown() && !ionType.isIonizationUnknown()) {
-                    ionizationCB.setSelectedValue(ionType.toString(), true);
+        if (ionType != null) {
+            if (ionType.isIonizationUnknown()) {
+                if (ionType.getCharge() > 0) {
+                    ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizations());
                 } else {
-                    ionizationCB.setSelectedValue(SiriusDataConverter.siriusIonizationToEnum(ionType).toString(), true);
+                    ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizations());
                 }
-
             } else {
-                ionizationCB.setSelectedValue(Ionization.MPlusH.toString(), true);
+                String io = ionType.getIonization().toString();
+                ionizations.add(io);
             }
-            mainwindow.add(new TwoCloumnPanel(new JLabel("ionisation"/*"adduct type"*/), ionizationCB));
         } else {
-            ionizations = new Vector<>();
-            ionizations.add("treat as protonation");
-            ionizations.add("try common adduct types");
-            ionizationCB = new JCheckBoxList<>(ionizations);
-            ionizationCB.setSelectedIndex(0);
-            ionizationCB.setEnabled(enableFallback);
-            ionizationCB.setToolTipText("Set fallback ionisation for unknown adduct types");
-            mainwindow.add(new TwoCloumnPanel(new JLabel("fallback ionisation"), new JScrollPane(ionizationCB)));
-            this.add(mainwindow);
+            ionizations.addAll(PeriodicTable.getInstance().getIonizations());
         }
+
+
+        ionizationCB = new JCheckBoxList<>(ionizations);
+        ionizationCB.checkAll();
+        JPanel ionPanel;
+        if (selectIonization) {
+            ionPanel = createIonissationOptionPanel(ionizationCB);
+        } else {
+            ionPanel = createFallbackIonissationOptionPanel(ionizationCB);
+
+        }
+
+        mainwindow.add(ionPanel);
 
 
         instruments = new Vector<>();
@@ -184,7 +182,8 @@ public class SearchProfilePanel extends JPanel {
     }
 
     public String getIonization() {
-        return ionizationCB.getSelectedValue().getValue(); //todo this is just the first one??
+        ArrayList<String> it = ionizationCB.getCheckedItems();
+        return it == null ? null : it.get(0);
     }
 
     public double getPpm() {
@@ -212,5 +211,54 @@ public class SearchProfilePanel extends JPanel {
 
     public boolean restrictToOrganics() {
         return formulaCombobox.getSelectedIndex() == 2; // TODO: add checkbox instead
+    }
+
+
+    private JPanel createIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
+        JPanel main = new TextHeaderBoxPanel("Ionization");
+        main.add(ionizationCB);
+
+        if (ionizations.size() > 1) {
+            JButton all = new JButton("all");
+            all.addActionListener(e -> ionizationCB.checkAll());
+            JButton none = new JButton("none");
+            none.addActionListener(e -> ionizationCB.uncheckAll());
+            JPanel buttons = new JPanel(new BorderLayout());
+            buttons.add(all, BorderLayout.WEST);
+            buttons.add(none, BorderLayout.EAST);
+            main.add(buttons);
+        }
+
+        return main;
+    }
+
+    private JPanel createFallbackIonissationOptionPanel(final JCheckBoxList<String> ionizationCB) {
+        ionizationCB.setToolTipText("Set fallback ionisation for unknown adduct types");
+
+        JButton all = new JButton("all");
+        all.addActionListener(e -> ionizationCB.checkAll());
+        JButton pos = new JButton("+");
+        pos.addActionListener(e -> {
+            ionizationCB.uncheckAll();
+            ionizationCB.checkAll(PeriodicTable.getInstance().getPositiveIonizations());
+        });
+        JButton neg = new JButton("-");
+        neg.addActionListener(e -> {
+            ionizationCB.uncheckAll();
+            ionizationCB.checkAll(PeriodicTable.getInstance().getNegativeIonizations());
+        });
+        JButton none = new JButton("none");
+        none.addActionListener(e -> ionizationCB.uncheckAll());
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
+        buttons.add(all);
+        buttons.add(pos);
+        buttons.add(neg);
+        buttons.add(none);
+
+        JPanel main = new TextHeaderBoxPanel("Fallback ionisation(s)");
+        main.add(ionizationCB);
+        main.add(buttons);
+        return main;
     }
 }
