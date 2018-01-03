@@ -160,7 +160,7 @@ public final class PredictionPerformance {
     }
 
     public Modify modify() {
-        return new Modify(tp,fp,tn,fn);
+        return new Modify(tp,fp,tn,fn, pseudoCount, allowRelabeling);
     }
 
     @Deprecated
@@ -343,8 +343,10 @@ public final class PredictionPerformance {
         }
 
         // now calculate F score related to the smaller class
-
-        accuracy = (TP + TN) / (TP + FP + TN + FN);
+        if ((TP + FP + TN + FN)==0)
+            accuracy = 0d;
+        else
+            accuracy = (TP + TN) / (TP + FP + TN + FN);
         if (TP + FN == 0) recall = 0d;
         else recall = (TP) / (TP + FN);
         if (TN+FP == 0) specitivity = 0d;
