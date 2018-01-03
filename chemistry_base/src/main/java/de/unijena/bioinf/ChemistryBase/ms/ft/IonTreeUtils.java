@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -157,10 +158,12 @@ public class IonTreeUtils {
 
     private void setPrecursorToEachNode(FTree tree, Fragment f, final PrecursorIonType ionType) {
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
+        final FragmentAnnotation<Ionization> ia = tree.getOrCreateFragmentAnnotation(Ionization.class);
         new PostOrderTraversal<Fragment>(tree.getCursor(f)).run(new PostOrderTraversal.Run<Fragment>() {
             @Override
             public void run(Fragment vertex, boolean isRoot) {
                 fa.set(vertex, ionType);
+                ia.set(vertex,ionType.getIonization());
             }
         });
     }

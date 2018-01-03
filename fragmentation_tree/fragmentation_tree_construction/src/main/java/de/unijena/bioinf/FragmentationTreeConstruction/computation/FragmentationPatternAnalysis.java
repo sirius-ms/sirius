@@ -1054,7 +1054,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     protected FTree computeTreeWithoutAnnotating(FGraph graph, double lowerbound, int allowedTimeInSeconds) {
         TreeBuilder.FluentInterface fluentInterface = getTreeBuilder().computeTree();
         if (lowerbound>=0) fluentInterface = fluentInterface.withMinimalScore(lowerbound);
-        if (allowedTimeInSeconds>0)
+        if (allowedTimeInSeconds<Integer.MAX_VALUE)
             fluentInterface = fluentInterface.withTimeLimit(allowedTimeInSeconds);
         return fluentInterface.withMultithreading(1).solve(graph.getAnnotationOrThrow(ProcessedInput.class), graph).tree;
     }
@@ -1141,6 +1141,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         // tree annotations
         tree.setAnnotation(PrecursorIonType.class, ionType);
+        tree.setAnnotation(Ionization.class, ionType.getIonization());
         final TreeScoring treeScoring = new TreeScoring();
 
         // calculate overall score
