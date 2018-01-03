@@ -10,6 +10,7 @@ public class ExperimentResult {
     protected String experimentName, experimentSource;
     protected Ms2Experiment experiment;
     protected List<IdentificationResult> results;
+    protected String errorString;
 
     public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String source, String name) {
         this.experiment = experiment;
@@ -23,6 +24,19 @@ public class ExperimentResult {
         this.results = results;
         this.experimentName = simplify(experiment.getName());
         this.experimentSource = simplifyURL(experiment.getSource().getFile());
+    }
+
+    public ExperimentResult(Ms2Experiment experiment, List<IdentificationResult> results, String errorString) {
+        this(experiment,results);
+        this.errorString = errorString;
+    }
+
+    public String getErrorString() {
+        return errorString;
+    }
+
+    public void setErrorString(String errorString) {
+        this.errorString = errorString;
     }
 
     public String getExperimentName() {
