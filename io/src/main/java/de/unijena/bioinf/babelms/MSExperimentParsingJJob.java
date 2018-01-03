@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Iterator;
@@ -39,12 +40,12 @@ public class MSExperimentParsingJJob extends MasterJJob<List<Ms2Experiment>> {
             try {
                 r = subJob.awaitResult();
                 if (r == null || r.isEmpty()) {
-                    LOG.warn(inputFiles.get(fileindex).getName() + " contains no Spectra!");
+                    LoggerFactory.getLogger(MSExperimentParsingJJob.class).warn(inputFiles.get(fileindex).getName() + " contains no Spectra!");
                 } else {
                     results.addAll(r);
                 }
             } catch (Throwable e) {
-                LOG.error("Error parsing file (" + inputFiles.get(fileindex).getName() + "). No spectra resurned", e);
+                LoggerFactory.getLogger(MSExperimentParsingJJob.class).error("Error parsing file (" + inputFiles.get(fileindex).getName() + "). No spectra returned", e);
             } finally {
                 removeSubJob(subJob);
             }
