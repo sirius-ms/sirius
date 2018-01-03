@@ -237,7 +237,7 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                 }
                 println("");
             }
-        } catch (PredictionException | InterruptedException | ExecutionException e) {
+        } catch (PredictionException | ExecutionException e) {
             LoggerFactory.getLogger(this.getClass()).error("Error while searching structure for " + i.experiment.getName() + " (" + i.file + "): " + e.getMessage(), e);
         }
     }

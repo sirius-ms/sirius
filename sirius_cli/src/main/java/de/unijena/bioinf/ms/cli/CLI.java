@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -173,21 +172,13 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         List<IdentificationResult> results = null;
         if (siriusJob != null) {
             try {
-                results = siriusJob.awaitResult();
-            } catch (ExecutionException e) {
-                if (e.getCause() instanceof TimeoutException) {
-                    println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
-                    projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "TIMEOUT"));
-                    return;
-                } else if (e.getCause() instanceof RuntimeException) {
+                results = siriusJob.takeResult();
+            } catch (TimeoutException e) {
+                println("Ignore " + siriusJob.getExperiment().getName() + " due to timeout!");
+                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "TIMEOUT"));
+            } catch (RuntimeException e) {
                     println("Error during computation of " + siriusJob.getExperiment().getName() + ": " + e.getMessage());
                     projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "ERROR"));
-                    return;
-                }
-            } catch (InterruptedException e) {
-                Thread.interrupted();
-                projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results, "INTERRUPT"));
-                return;
             }
         }
         if (results == null || results.isEmpty()) {
