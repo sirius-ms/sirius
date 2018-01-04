@@ -1,4 +1,4 @@
-package de.unijena.bioinf.FragmentationTreeConstruction.model;
+package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -18,35 +18,35 @@ public class PossibleIonModes {
 
     public static PossibleIonModes deterministic(PrecursorIonType precursorIonType) {
         final PossibleIonModes a = new PossibleIonModes();
-        a.add(precursorIonType,1);
+        a.add(precursorIonType, 1);
         return a;
     }
 
     public static PossibleIonModes defaultFor(int charge) {
         final PossibleIonModes a = new PossibleIonModes();
-        final PeriodicTable T = PeriodicTable.getInstance();
-        if(charge>0) {
-            a.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 0.95);
-            a.add(PrecursorIonType.getPrecursorIonType("[M+Na]+").getIonization(), 0.03);
-            a.add(PrecursorIonType.getPrecursorIonType("[M+K]+").getIonization(), 0.02);
+        final PeriodicTable t = PeriodicTable.getInstance();
+        if (charge > 0) {
+            a.add(t.ionByName("[M+H]+").getIonization(), 0.95);
+            a.add(t.ionByName("[M+Na]+").getIonization(), 0.03);
+            a.add(t.ionByName("[M+K]+").getIonization(), 0.02);
         } else {
-            a.add(PrecursorIonType.getPrecursorIonType("[M-H]-").getIonization(), 0.95);
-            a.add(PrecursorIonType.getPrecursorIonType("[M+Cl]-").getIonization(), 0.03);
-            a.add(PrecursorIonType.getPrecursorIonType("[M+Br]-").getIonization(), 0.02);
+            a.add(t.ionByName("[M-H]-").getIonization(), 0.95);
+            a.add(t.ionByName("[M+Cl]-").getIonization(), 0.03);
+            a.add(t.ionByName("[M+Br]-").getIonization(), 0.02);
         }
         return a;
     }
 
-    public static class Adduct {
-        protected PrecursorIonType ionType;
+    public static class ProbabilisticIonization {
+        protected Ionization ionType;
         protected double probability;
 
-        private Adduct(PrecursorIonType ionType, double probability) {
+        private ProbabilisticIonization(Ionization ionType, double probability) {
             this.ionType = ionType;
             this.probability = probability;
         }
 
-        public PrecursorIonType getIonType() {
+        public Ionization getIonMode() {
             return ionType;
         }
 
@@ -55,7 +55,7 @@ public class PossibleIonModes {
         }
     }
 
-    protected List<Adduct> ionTypes;
+    protected List<ProbabilisticIonization> ionTypes;
     protected double totalProb;
 
     public PossibleIonModes() {
@@ -63,55 +63,52 @@ public class PossibleIonModes {
     }
 
     public void add(PrecursorIonType ionType, double probability) {
-        ionTypes.add(new Adduct(ionType, probability));
+        ionTypes.add(new ProbabilisticIonization(ionType.getIonization(), probability));
         totalProb += probability;
     }
+
     public void add(Ionization ionType, double probability) {
         add(PrecursorIonType.getPrecursorIonType(ionType), probability);
     }
 
-    public List<Adduct> getAdductTypes() {
+    public List<ProbabilisticIonization> ProbabilisticIonizations() {
         return ionTypes;
     }
 
     public boolean hasPositiveCharge() {
-        for (Adduct a : ionTypes)
-            if (a.getIonType().getCharge()>0)
+        for (ProbabilisticIonization a : ionTypes)
+            if (a.getIonMode().getCharge() > 0)
                 return true;
         return false;
     }
+
     public boolean hasNegativeCharge() {
-        for (Adduct a : ionTypes)
-            if (a.getIonType().getCharge()<0)
+        for (ProbabilisticIonization a : ionTypes)
+            if (a.getIonMode().getCharge() < 0)
                 return true;
         return false;
     }
 
     public double getProbabilityFor(PrecursorIonType ionType) {
         if (ionTypes.isEmpty()) return 0d;
-        for (Adduct a : ionTypes) {
-            if (a.getIonType().equals(ionType)) return a.probability/totalProb;
+        for (ProbabilisticIonization a : ionTypes) {
+            if (a.getIonMode().equals(ionType.getIonization())) return a.probability / totalProb;
         }
         return 0d;
     }
+
     public double getProbabilityFor(Ionization ionType) {
         if (ionTypes.isEmpty()) return 0d;
-        double prob=0d;
-        for (Adduct a : ionTypes) {
-            if (a.getIonType().getIonization().equals(ionType)) prob += a.probability;
+        double prob = 0d;
+        for (ProbabilisticIonization a : ionTypes) {
+            if (a.getIonMode().equals(ionType)) prob += a.probability;
         }
-        return prob/totalProb;
+        return prob / totalProb;
     }
 
-    public List<PrecursorIonType> getPrecursorIonTypes() {
-        final ArrayList<PrecursorIonType> ions = new ArrayList<>(ionTypes.size());
-        for (Adduct a : ionTypes) ions.add(a.ionType);
-        return ions;
-    }
     public List<Ionization> getIonModes() {
         final Set<Ionization> ions = new HashSet<>(ionTypes.size());
-        for (Adduct a : ionTypes) ions.add(a.ionType.getIonization());
+        for (ProbabilisticIonization a : ionTypes) ions.add(a.getIonMode());
         return new ArrayList<>(ions);
     }
-
 }

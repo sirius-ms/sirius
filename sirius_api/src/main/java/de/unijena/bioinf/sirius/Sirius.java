@@ -111,8 +111,8 @@ public class Sirius {
                 fr = instance.awaitResult();
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof RuntimeException)
-                    throw (RuntimeException)e.getCause();
-                LOG().error(e.getMessage(),e);
+                    throw (RuntimeException) e.getCause();
+                LOG().error(e.getMessage(), e);
                 return null;
             }
 
@@ -529,6 +529,11 @@ public class Sirius {
         final PossibleIonModes pa = experiment.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
         pa.add(ion, probability);
         experiment.setAnnotation(PossibleIonModes.class, pa);
+    }
+
+    public void setAllowedAdducts(Ms2Experiment experiment, PrecursorIonType... adducts) {
+        final PossibleAdducts ad = new PossibleAdducts(adducts);
+        experiment.setAnnotation(PossibleAdducts.class, ad);
     }
 
     public void setFormulaSearchList(Ms2Experiment experiment, MolecularFormula... formulas) {
