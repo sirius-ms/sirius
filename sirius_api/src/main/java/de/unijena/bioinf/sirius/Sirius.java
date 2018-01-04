@@ -368,7 +368,7 @@ public class Sirius {
     @Deprecated
     public List<IdentificationResult> identifyPrecursorAndIonization(Ms2Experiment uexperiment, int numberOfCandidates, IsotopePatternHandling iso) {
         final MutableMs2Experiment exp = new MutableMs2Experiment(uexperiment);
-        exp.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.defaultFor(uexperiment.getPrecursorIonType().getCharge()));
+        exp.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(uexperiment.getPrecursorIonType().getCharge()));
         return identify(exp, numberOfCandidates, true, iso);
     }
 
@@ -518,17 +518,17 @@ public class Sirius {
     }
 
     public void setAllowedIonModes(Ms2Experiment experiment, Ionization... ionModes) {
-        final PossibleAdductTypes pa = new PossibleAdductTypes();
+        final PossibleIonModes pa = new PossibleIonModes();
         for (Ionization ion : ionModes) {
             pa.add(ion, 1d);
         }
-        experiment.setAnnotation(PossibleAdductTypes.class, pa);
+        experiment.setAnnotation(PossibleIonModes.class, pa);
     }
 
     public void setIonModeWithProbability(Ms2Experiment experiment, Ionization ion, double probability) {
-        final PossibleAdductTypes pa = experiment.getAnnotation(PossibleAdductTypes.class, new PossibleAdductTypes());
+        final PossibleIonModes pa = experiment.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
         pa.add(ion, probability);
-        experiment.setAnnotation(PossibleAdductTypes.class, pa);
+        experiment.setAnnotation(PossibleIonModes.class, pa);
     }
 
     public void setFormulaSearchList(Ms2Experiment experiment, MolecularFormula... formulas) {

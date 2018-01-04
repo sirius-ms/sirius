@@ -14,16 +14,16 @@ import java.util.Set;
  * object and compute trees for all ion types with probability > 0.
  * If probability is unknown, you can assign a constant to each ion type.
  */
-public class PossibleAdductTypes {
+public class PossibleIonModes {
 
-    public static PossibleAdductTypes deterministic(PrecursorIonType precursorIonType) {
-        final PossibleAdductTypes a = new PossibleAdductTypes();
+    public static PossibleIonModes deterministic(PrecursorIonType precursorIonType) {
+        final PossibleIonModes a = new PossibleIonModes();
         a.add(precursorIonType,1);
         return a;
     }
 
-    public static PossibleAdductTypes defaultFor(int charge) {
-        final PossibleAdductTypes a = new PossibleAdductTypes();
+    public static PossibleIonModes defaultFor(int charge) {
+        final PossibleIonModes a = new PossibleIonModes();
         final PeriodicTable T = PeriodicTable.getInstance();
         if(charge>0) {
             a.add(PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 0.95);
@@ -58,7 +58,7 @@ public class PossibleAdductTypes {
     protected List<Adduct> ionTypes;
     protected double totalProb;
 
-    public PossibleAdductTypes() {
+    public PossibleIonModes() {
         this.ionTypes = new ArrayList<>();
     }
 
