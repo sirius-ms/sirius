@@ -32,7 +32,7 @@ import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.PossibleAdductTypes;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.PossibleIonModes;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -154,7 +154,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             final List<String> whitelist = formulas;
             final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
             if ((whiteset == null) && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                i.experiment.setAnnotation(PossibleAdductTypes.class, PossibleAdductTypes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
+                i.experiment.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
                 sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
                 sirius.setIsotopeMode(i.experiment, options.getIsotopes());
                 job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));

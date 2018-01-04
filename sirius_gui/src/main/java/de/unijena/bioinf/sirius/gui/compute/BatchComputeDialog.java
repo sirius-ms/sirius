@@ -322,6 +322,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     //if one experiment is selected, force ionization
                     ec.setIonization(SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()));
                 }
+
                 if (treatAsHydrogen && ec.getIonization().isIonizationUnknown()) {
                     if (ec.getIonization() == null || ec.getIonization().getCharge() > 0) {
                         ec.setIonization(PrecursorIonType.getPrecursorIonType("[M+H]+"));
