@@ -1418,7 +1418,7 @@ public class GibbsSamplerMain {
     private <C extends Candidate & HasLibraryHit> void parseLibraryHits(Path libraryHitsPath, Map<String, List<C>> candidatesMap) throws IOException {
         List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
         String[] header = lines.remove(0).split("\t");
-        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
+        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "ProbabilisticIonization", "Cosine", "SharedPeaks", "Quality"};
         int[] indices = new int[ofInterest.length];
         for (int i = 0; i < ofInterest.length; i++) {
             int idx = arrayFind(header, ofInterest[i]);
@@ -1473,8 +1473,8 @@ public class GibbsSamplerMain {
 
             List<String> lines = Files.readAllLines(libraryHitsPath, Charset.defaultCharset());
             String[] header = lines.remove(0).split("\t");
-//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "Adduct", "Cosine", "SharedPeaks", "Quality"};
-            String[] ofInterest = new String[]{"#Scan#", "INCHI", "Smiles", "Adduct", "MQScore", "SharedPeaks", "Quality"};
+//        String[] ofInterest = new String[]{"Feature_id", "Formula", "Structure", "ProbabilisticIonization", "Cosine", "SharedPeaks", "Quality"};
+            String[] ofInterest = new String[]{"#Scan#", "INCHI", "Smiles", "ProbabilisticIonization", "MQScore", "SharedPeaks", "Quality"};
             int[] indices = new int[ofInterest.length];
             for (int i = 0; i < ofInterest.length; i++) {
                 int idx = arrayFind(header, ofInterest[i]);
