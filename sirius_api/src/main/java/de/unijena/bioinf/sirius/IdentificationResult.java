@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class IdentificationResult implements Cloneable {
+public class IdentificationResult implements Cloneable, Comparable<IdentificationResult> {
 
     protected FTree tree, beautifulTree, resolvedBeautifulTree;
     protected MolecularFormula formula;
@@ -72,6 +72,28 @@ public class IdentificationResult implements Cloneable {
         writer.write(buffer.toString());
     }
 
+    public IdentificationResult(IdentificationResult ir) {
+        this.annotations = new HashMap<>();
+        this.annotations.putAll(ir.annotations);
+        this.rank = ir.rank;
+        this.tree = ir.tree;
+        this.beautifulTree = ir.beautifulTree;
+        this.formula = ir.formula;
+        this.resolvedBeautifulTree = ir.resolvedBeautifulTree;
+        this.score = ir.score;
+    }
+
+    public PrecursorIonType getPrecursorIonType() {
+        return getResolvedTree().getAnnotationOrThrow(PrecursorIonType.class);
+    }
+
+    public static IdentificationResult withPrecursorIonType(IdentificationResult ir, PrecursorIonType ionType) {
+        IdentificationResult r = new IdentificationResult(ir);
+        r.resolvedBeautifulTree = new IonTreeUtils().treeToNeutralTree(ir.getBeautifulTree(), ionType);
+        r.formula = ionType.measuredNeutralMoleculeToNeutralMolecule(ir.formula);
+        return r;
+    }
+
     public IdentificationResult(FTree tree, int rank) {
         this(tree, rank, false);
     }
@@ -99,6 +121,7 @@ public class IdentificationResult implements Cloneable {
             beautifulTree = tree;
     }
 
+    @Deprecated
     public IdentificationResult transform(PrecursorIonType ionType) {
         final FTree tree = new FTree(getRawTree());
         final PrecursorIonType currentIonType = tree.getAnnotationOrThrow(PrecursorIonType.class);
@@ -254,4 +277,9 @@ public class IdentificationResult implements Cloneable {
         return formula + " with score " + getScore() + " at rank " + rank;
     }
 
+    @Override
+    public int compareTo(IdentificationResult o) {
+        if (rank==o.rank) return Double.compare(score, o.score);
+        else return Integer.compare(rank, o.rank);
+    }
 }
