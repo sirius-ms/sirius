@@ -6,11 +6,11 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.Compound;
 import de.unijena.bioinf.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.myxo.gui.tree.structure.TreeNode;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jdesktop.beans.AbstractBean;
 
 import javax.swing.*;
@@ -48,7 +48,7 @@ public class SiriusResultElement extends AbstractBean implements Comparable<Siri
     public void setFingerIdData(FingerIdData fingerIdData) {
         this.fingerIdData = fingerIdData;
         List<Scored<FingerprintCandidate>> candidates = getCandidates(fingerIdData);
-        resultElement.setAnnotation(FingerIdResult.class, new FingerIdResult(candidates, 0d, fingerIdData.getPlatts()));
+        resultElement.setAnnotation(FingerIdResult.class, new FingerIdResult(candidates, 0d, fingerIdData.getPlatts(), null)); //TODO: implement
     }
 
     private List<Scored<FingerprintCandidate>> getCandidates(FingerIdData fingerIdData){

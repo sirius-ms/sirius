@@ -68,7 +68,8 @@ public class FingerIdResultReader extends DirectoryReader {
                                 fpc.setLinks(links.toArray(new DBLink[links.size()]));
                                 fpcs.add(new Scored<FingerprintCandidate>(fpc, Double.parseDouble(tabs[4])));
                             }
-                            return new FingerIdResult(fpcs, 0d, null);
+                            // TODO: implement
+                            return new FingerIdResult(fpcs, 0d, null,null);
                         }
                     }));
                 }
