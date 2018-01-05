@@ -1,5 +1,6 @@
 package de.unijena.bioinf.sirius.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -299,8 +300,12 @@ public class DirectoryWriter extends AbstractProjectWriter {
     }
 
     public static String makeFileName(IdentificationResult result) {
-        final String filename = result.getRank() + "_" + result.getMolecularFormula();
+        final String filename = result.getRank() + "_" + result.getMolecularFormula() + "_" + simplify(result.getPrecursorIonType());
         return filename;
+    }
+
+    private static String simplify(PrecursorIonType precursorIonType) {
+        return precursorIonType.toString().replaceAll("[\\[\\] _]","");
     }
 
     protected String makeFileName(ExperimentResult exp) {

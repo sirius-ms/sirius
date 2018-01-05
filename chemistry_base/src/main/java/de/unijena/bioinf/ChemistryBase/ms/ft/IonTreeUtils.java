@@ -20,6 +20,27 @@ public class IonTreeUtils {
 
     public enum Type {RAW, RESOLVED, IONIZED}
 
+    public boolean isResolvable(FTree tree, PrecursorIonType ionType) {
+        return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization()) && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct()));
+    }
+
+    /**
+     * Takes a computed tree as input. Creates a copy of this tree and resolve the PrecursorIonType, such that insource
+     * fragmentations are reflected in the tree and all vertices in the tree have a neutral molecular formula excluding
+     * the adduct and ionization. Annotates each vertex with a PrecursorIonType.
+     */
+    public FTree treeToNeutralTree(FTree tree, PrecursorIonType ionType) {
+        if (tree.getAnnotationOrNull(Type.class) == Type.RESOLVED) {
+            throw new IllegalArgumentException("Cannot neutralize an already neutral tree");
+        }
+        if (!tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization())) {
+            throw new IllegalArgumentException("Precursor Ion Type '" + ionType.toString() + "' does not match tree with ionization '" + tree.getAnnotationOrThrow(PrecursorIonType.class).toString() + "'");
+        }
+        tree = new FTree(tree);
+        tree.setAnnotation(PrecursorIonType.class, ionType);
+        return treeToNeutralTree(tree);
+    }
+
     /**
      * Takes a computed tree as input with a certain PrecursorIonType. Resolve the PrecursorIonType, such that insource
      * fragmentations are reflected in the tree and all vertices in the tree have a neutral molecular formula excluding
