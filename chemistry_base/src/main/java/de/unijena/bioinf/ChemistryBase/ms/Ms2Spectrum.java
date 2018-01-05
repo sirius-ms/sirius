@@ -30,11 +30,6 @@ public interface Ms2Spectrum<P extends Peak> extends Spectrum<P> {
     double getPrecursorMz();
 
     /**
-     * @return the collision energy (type) of the fragmentation cell
-     */
-    CollisionEnergy getCollisionEnergy();
-
-    /**
      * (OPTIONAL)
      * @return  the total number of measured ions in the spectrum if given, otherwise 0.
      */
@@ -45,11 +40,6 @@ public interface Ms2Spectrum<P extends Peak> extends Spectrum<P> {
      */
     Ionization getIonization();
 
-    /**
-     * The MS level. use 1 for MS1 and 2 for MS2 spectra.
-     * @return
-     */
-    int getMsLevel();
 
     /**
      * For future:

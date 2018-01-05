@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
+import de.unijena.bioinf.jjobs.JJob;
 
 import java.io.File;
 import java.io.IOException;
@@ -254,4 +255,18 @@ public class IdentificationResult implements Cloneable {
         return formula + " with score " + getScore() + " at rank " + rank;
     }
 
+
+    public interface AnnotationJJob<R> extends JJob<R> {
+
+        IdentificationResult getIdentificationResult();
+
+        default R takeAndAnnotateResult() {
+            R result = takeResult();
+            if (result != null) {
+                Class<R> clzz = (Class<R>) result.getClass();
+                getIdentificationResult().setAnnotation(clzz, result);
+            }
+            return result;
+        }
+    }
 }
