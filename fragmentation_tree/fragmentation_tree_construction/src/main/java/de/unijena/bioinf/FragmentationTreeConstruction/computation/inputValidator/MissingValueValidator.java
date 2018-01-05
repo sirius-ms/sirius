@@ -18,10 +18,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Ms2ExperimentValidator;
@@ -101,6 +98,14 @@ public class MissingValueValidator implements Ms2ExperimentValidator {
     }
 
     protected void checkIonization(Warning warn, boolean repair, MutableMs2Experiment input) {
+
+        if (input.getAnnotation(PossibleAdducts.class,null)!=null) {
+            final PossibleAdducts ad = input.getAnnotation(PossibleAdducts.class);
+            final PossibleIonModes ionModes = input.getAnnotation(PossibleIonModes.class, new PossibleIonModes());
+            for (Ionization ion : ad.getIonModes()) if (ionModes.getProbabilityFor(ion)<=0) ionModes.add(ion);
+            input.setAnnotation(PossibleIonModes.class, ionModes);
+        }
+
         if ((input.getMolecularFormula()!=null || input.getMoleculeNeutralMass()>0) && input.getIonMass()>0 && input.getPrecursorIonType()!=null) {
             final double neutralmass;
             if (input.getMolecularFormula()!=null) neutralmass=input.getMolecularFormula().getMass();
