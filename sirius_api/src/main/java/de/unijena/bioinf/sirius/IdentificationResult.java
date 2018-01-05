@@ -279,7 +279,7 @@ public class IdentificationResult implements Cloneable, Comparable<Identificatio
 
     @Override
     public int compareTo(IdentificationResult o) {
-        if (rank==o.rank) return Double.compare(score, o.score);
+        if (rank==o.rank) return Double.compare(o.score, score);
         else return Integer.compare(rank, o.rank);
     }
 }
