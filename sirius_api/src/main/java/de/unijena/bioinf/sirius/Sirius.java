@@ -87,7 +87,7 @@ public class Sirius {
         private final int numberOfResultsToKeep;
         private final boolean beautifyTrees;
 
-        public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep, boolean beautifyTrees) {
+        public SiriusIdentificationJob(Ms2Experiment experiment, int numberOfResultsToKeep, boolean beautifyTrees)  {
             super(JobType.CPU, 0, 100);
             this.experiment = experiment;
             this.numberOfResultsToKeep = numberOfResultsToKeep;
