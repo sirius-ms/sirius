@@ -5,6 +5,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import org.slf4j.LoggerFactory;
 
 public class SiriusJobs {
+
     private static volatile JobManager globalJobManager = null;
 
 
