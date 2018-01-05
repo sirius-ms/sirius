@@ -7,12 +7,11 @@ package de.unijena.bioinf.sirius.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.sirius.gui.load.LoadController;
-import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
-import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
-import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
-import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
+import de.unijena.bioinf.sirius.gui.load.LoadController;
+import de.unijena.bioinf.sirius.gui.mainframe.Workspace;
+import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListChangeListener;
+import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,7 +33,8 @@ public class EditExperimentAction extends AbstractAction {
 
         MF.getExperimentList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {}
+            public void listChanged(ListEvent<ExperimentContainer> event, DefaultEventSelectionModel<ExperimentContainer> selection) {
+            }
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<ExperimentContainer> selection) {
@@ -50,10 +50,8 @@ public class EditExperimentAction extends AbstractAction {
         String guiname = ec.getGUIName();
         LoadController lc = new LoadController(MF, ec, CONFIG_STORAGE);
         lc.showDialog();
-        if (lc.getReturnValue() == ReturnValue.Success) {
-            if (!ec.getGUIName().equals(guiname)) {
-                Workspace.resolveCompundNameConflict(ec);
-            }
+        if (!ec.getGUIName().equals(guiname)) {
+            Workspace.resolveCompundNameConflict(ec);
         }
     }
 }

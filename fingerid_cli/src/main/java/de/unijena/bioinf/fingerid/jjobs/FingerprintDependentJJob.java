@@ -6,7 +6,7 @@ import de.unijena.bioinf.jjobs.DependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
-public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> implements AnnotationJJob<R> {
+public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> implements IdentificationResult.AnnotationJJob<R> {
     protected IdentificationResult identificationResult;
     protected ProbabilityFingerprint fp;
 

@@ -7,13 +7,12 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
 import de.unijena.bioinf.fingerid.storage.ConfigStorage;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.filefilter.SupportedExportCSVFormatsFilter;
-import de.unijena.bioinf.fingerid.FingerIdDataCSVExporter;
-import de.unijena.bioinf.fingerid.FingerIdData;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.ReturnValue;
@@ -120,7 +119,7 @@ public abstract class Workspace {
             try (final BufferedWriter fw = new BufferedWriter(new FileWriter(selectedFile))) {
                 for (ExperimentContainer ec : COMPOUNT_LIST) {
                     if (ec.isComputed() && ec.getResults().size() > 0) {
-                        IdentificationResult.writeIdentifications(fw, SiriusDataConverter.experimentContainerToSiriusExperiment(ec), ec.getRawResults());
+                        IdentificationResult.writeIdentifications(fw, ec.getMs2Experiment(), ec.getRawResults());
                     }
                 }
             } catch (IOException e) {

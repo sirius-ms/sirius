@@ -26,9 +26,9 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.projectspace.*;
@@ -52,7 +52,7 @@ public class WorkspaceIO {
         System.out.println("new io");
         final FingerIdResultWriter w = new FingerIdResultWriter(env);
         for (ExperimentContainer c : containers) {
-            final Ms2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(c);
+            final Ms2Experiment exp = c.getMs2Experiment();
             w.writeExperiment(new ExperimentResult(exp, c.getRawResults()));
         }
         w.close();
@@ -87,31 +87,33 @@ public class WorkspaceIO {
             final TreeMap<Integer, IdentificationResult> results = new TreeMap<>();
             Ms2Experiment currentExperiment = null;
             int currentExpId = -1;
-            while ((entry=zin.getNextEntry())!=null) {
+            while ((entry = zin.getNextEntry()) != null) {
                 final String name = entry.getName();
                 if (name.endsWith("/")) {
-                    if (currentExpId>=0 && currentExperiment!=null)
-                        if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<>(results.values())))) return;
-                    currentExpId = Integer.parseInt(name.substring(0,name.length()-1));
+                    if (currentExpId >= 0 && currentExperiment != null)
+                        if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<>(results.values()))))
+                            return;
+                    currentExpId = Integer.parseInt(name.substring(0, name.length() - 1));
                     currentExperiment = null;
                     results.clear();
                 } else if (name.endsWith(".ms")) {
                     currentExperiment = readZip(new JenaMsParser(), zin);
                 } else if (name.endsWith(".json")) {
-                    final int rank = Integer.parseInt(name.substring(name.lastIndexOf('/')+1, name.lastIndexOf('.')));
+                    final int rank = Integer.parseInt(name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('.')));
                     final FTree tree = readZip(new FTJsonReader(), zin);
                     final IdentificationResult idr = new IdentificationResult(tree, rank);
                     results.put(rank, idr);
                 }
             }
-            if (currentExpId>=0 && currentExperiment!=null)
-                if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<IdentificationResult>(results.values())))) return;
+            if (currentExpId >= 0 && currentExperiment != null)
+                if (!queue.offer(SiriusDataConverter.siriusToMyxoContainer(currentExperiment, new ArrayList<IdentificationResult>(results.values()))))
+                    return;
         }
     }
 
     public void store(List<ExperimentContainer> containers, File file) throws IOException {
         try (final ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
-            int k=0;
+            int k = 0;
             for (ExperimentContainer c : containers) {
                 storeContainer(c, ++k, stream);
             }
@@ -125,7 +127,7 @@ public class WorkspaceIO {
         // write INPUT data
         final ZipEntry msfile = new ZipEntry(prefix + "experiment.ms");
         stream.putNextEntry(msfile);
-        final Ms2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(c);
+        final Ms2Experiment exp = c.getMs2Experiment();
         stream.write(buffer(new Function<BufferedWriter, Void>() {
             @Override
             public Void apply(BufferedWriter input) {
@@ -139,7 +141,7 @@ public class WorkspaceIO {
             }
         }).getBytes(Charset.forName("UTF-8")));
         // if results available, write trees
-        if (c.getRawResults()!=null && !c.getRawResults().isEmpty()) {
+        if (c.getRawResults() != null && !c.getRawResults().isEmpty()) {
             //final List<IdentificationResult> irs = c.getRawResults();
             for (final SiriusResultElement ir : c.getResults()) {
                 final ZipEntry tree = new ZipEntry(prefix + ir.getRank() + ".json");
@@ -148,7 +150,7 @@ public class WorkspaceIO {
                     @Override
                     public Void apply(BufferedWriter input) {
                         try {
-                            new FTJsonWriter().writeTree(input,ir.getResult().getRawTree());
+                            new FTJsonWriter().writeTree(input, ir.getResult().getRawTree());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -162,11 +164,11 @@ public class WorkspaceIO {
     private static <T> T readZip(Parser<T> parser, ZipInputStream zin) throws IOException {
         final ByteArrayOutputStream bout = new ByteArrayOutputStream(4096);
         final byte[] buf = new byte[4096];
-        int c=0;
-        while ((c=zin.read(buf))>0) {
+        int c = 0;
+        while ((c = zin.read(buf)) > 0) {
             bout.write(buf, 0, c);
         }
-        return parser.parse(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bout.toByteArray()))),null);
+        return parser.parse(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bout.toByteArray()))), null);
     }
 
     private static String buffer(Function<BufferedWriter, Void> f) {

@@ -1,7 +1,8 @@
 package de.unijena.bioinf.sirius.gui.mainframe;
 
 
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.sirius.gui.configs.Buttons;
 import de.unijena.bioinf.sirius.gui.configs.Icons;
 import de.unijena.bioinf.sirius.gui.msviewer.MSViewerPanel;
@@ -129,8 +130,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			this.zoomOut.setEnabled(false);
 			this.zoomInMI.setEnabled(false);
 			this.zoomOutMI.setEnabled(false);
-			java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
-			java.util.List<CompactSpectrum> ms2 = ec.getMs2Spectra();
+            List<SimpleSpectrum> ms1 = ec.getMs1Spectra();
+            List<MutableMs2Spectrum> ms2 = ec.getMs2Spectra();
 			if (!(ms1 == null || ms1.isEmpty()) || ec.getCorrelatedSpectrum()!=null) {
 				cbModel.addElement(MS1_DISPLAY);
 				hasMs1 = true;
@@ -141,7 +142,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 					hasMerged = true;
 				}
 				hasMs2 = true;
-				for (CompactSpectrum sp : ms2) {
+				for (MutableMs2Spectrum sp : ms2) {
 
 					String value = null;
 
@@ -245,8 +246,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == spectraSelection) {
-			java.util.List<CompactSpectrum> ms1 = ec.getMs1Spectra();
-			java.util.List<CompactSpectrum> ms2 = ec.getMs2Spectra();
 			int index = this.spectraSelection.getSelectedIndex();
 			if (index < 0) return;
 			final ExperimentContainerDataModel.DisplayMode mode = getDisplayMode();

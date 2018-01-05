@@ -1,7 +1,10 @@
 package de.unijena.bioinf.sirius.gui.structure;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jdesktop.beans.AbstractBean;
 
@@ -11,47 +14,38 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExperimentContainer extends AbstractBean {
+    //the ms experiment we use for computation
+    private final MutableMs2Experiment experiment;
+    //results and gui wrapper for the experiment
+    private volatile List<SiriusResultElement> results;
+    private volatile List<IdentificationResult> originalResults;
+    private volatile SiriusResultElement bestHit;
+    private volatile int bestHitIndex = 0;
 
-    private List<CompactSpectrum> ms1Spectra, ms2Spectra;
-    // TODO: dirty hack
-    private CompactSpectrum correlatedSpectrum;
-
-    //private Ionization ionization;
-    private PrecursorIonType ionization;
+    //todo map this drectly to ms2exp
     private double selectedFocusedMass;
     private double dataFocusedMass;
-    private String name, guiName;
-    private URL source;
+
+    private String guiName;
+    //    private URL source;
     private int suffix;
     private volatile ComputingStatus computeState;
     private String errorMessage;
 
-    private volatile List<SiriusResultElement> results;
-    private volatile List<IdentificationResult> originalResults;
-    private volatile SiriusResultElement bestHit;
-    private volatile int bestHitIndex =0;
 
+    public ExperimentContainer(Ms2Experiment source) {
+        this(new MutableMs2Experiment(source));
+    }
 
-    public ExperimentContainer() {
-        ms1Spectra = new ArrayList<CompactSpectrum>();
-        ms2Spectra = new ArrayList<CompactSpectrum>();
-        ionization = PrecursorIonType.unknown(1);
+    public ExperimentContainer(MutableMs2Experiment source) {
+        this.experiment = source;
         selectedFocusedMass = -1;
         dataFocusedMass = -1;
-        name = "";
         guiName = "";
         suffix = 1;
         results = Collections.emptyList();
         originalResults = Collections.emptyList();
         this.computeState = ComputingStatus.UNCOMPUTED;
-    }
-
-    public void setCorrelatedSpectrum(CompactSpectrum spectrum) {
-        this.correlatedSpectrum = spectrum;
-    }
-
-    public CompactSpectrum getCorrelatedSpectrum() {
-        return correlatedSpectrum;
     }
 
     public SiriusResultElement getBestHit() {
@@ -63,7 +57,7 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     public String getName() {
-        return name;
+        return experiment.getName();
     }
 
     public String getGUIName() {
@@ -74,26 +68,20 @@ public class ExperimentContainer extends AbstractBean {
         return this.suffix;
     }
 
-    public List<CompactSpectrum> getMs1Spectra() {
-        return ms1Spectra;
+    public List<SimpleSpectrum> getMs1Spectra() {
+        return experiment.getMs1Spectra();
     }
 
-    public void setMs1Spectra(List<CompactSpectrum> ms1Spectra) {
-        if (ms1Spectra == null) return;
-        this.ms1Spectra = ms1Spectra;
+    public List<MutableMs2Spectrum> getMs2Spectra() {
+        return experiment.getMs2Spectra();
     }
 
-    public List<CompactSpectrum> getMs2Spectra() {
-        return ms2Spectra;
-    }
-
-    public void setMs2Spectra(List<CompactSpectrum> ms2Spectra) {
-        if (ms2Spectra == null) return;
-        this.ms2Spectra = ms2Spectra;
+    public SimpleSpectrum getCorrelatedSpectrum() {
+        return experiment.getMergedMs1Spectrum();
     }
 
     public PrecursorIonType getIonization() {
-        return ionization;
+        return experiment.getPrecursorIonType();
     }
 
     public double getSelectedFocusedMass() {
@@ -147,26 +135,30 @@ public class ExperimentContainer extends AbstractBean {
 
 
     public void setRawResults(List<IdentificationResult> results) {
-        setRawResults(results,SiriusResultElementConverter.convertResults(results));
+        setRawResults(results, SiriusResultElementConverter.convertResults(results));
     }
 
     public void setRawResults(List<IdentificationResult> results, List<SiriusResultElement> myxoresults) {
         List<SiriusResultElement> old = this.results;
         this.results = myxoresults;
-        this.originalResults = results == null?Collections.<IdentificationResult>emptyList():results;
-        firePropertyChange("results_upadated",old,this.results);
+        this.originalResults = results == null ? Collections.<IdentificationResult>emptyList() : results;
+        firePropertyChange("results_upadated", old, this.results);
         if (this.computeState == ComputingStatus.COMPUTING)
             setComputeState((results == null || results.size() == 0) ? ComputingStatus.FAILED : ComputingStatus.COMPUTED);
     }
 
     public void setName(String name) {
-        this.name = name;
-        setGuiName(this.suffix >= 2 ? this.name + " (" + suffix + ")" : this.name);
+        experiment.setName(name);
+        setGuiName(createGuiName());
     }
 
     public void setSuffix(int value) {
         this.suffix = value;
-        setGuiName(this.suffix >= 2 ? this.name + " (" + suffix + ")" : this.name);
+        setGuiName(createGuiName());
+    }
+
+    private String createGuiName() {
+        return this.suffix >= 2 ? experiment.getName() + " (" + suffix + ")" : experiment.getName();
     }
 
     // with change event
@@ -187,9 +179,9 @@ public class ExperimentContainer extends AbstractBean {
     }
 
     public void setIonization(PrecursorIonType ionization) {
-        PrecursorIonType old = this.ionization;
-        this.ionization = ionization;
-        firePropertyChange("ionization", old, this.ionization);
+        PrecursorIonType old = experiment.getPrecursorIonType();
+        experiment.setPrecursorIonType(ionization);
+        firePropertyChange("ionization", old, experiment.getPrecursorIonType());
     }
 
     public void setSelectedFocusedMass(double focusedMass) {
@@ -214,15 +206,26 @@ public class ExperimentContainer extends AbstractBean {
         firePropertyChange("computeState", oldST, this.computeState);
     }
 
-    public void fireUpdateEvent(){
+    public void fireUpdateEvent() {
         firePropertyChange("updated", false, true);
     }
 
     public URL getSource() {
-        return source;
+        return experiment.getSource();
     }
 
-    public void setSource(URL source) {
-        this.source = source;
+    public MutableMs2Experiment getMs2Experiment() {
+        return experiment;
     }
+
+    public ExperimentContainer copy() {
+        ExperimentContainer newExp = new ExperimentContainer(new MutableMs2Experiment(experiment));
+        newExp.setDataFocusedMass(getDataFocusedMass());
+        newExp.setSelectedFocusedMass(getSelectedFocusedMass());
+        newExp.setSuffix(getSuffix());
+        List<SiriusResultElement> sre = new ArrayList<>(getResults());
+        newExp.setRawResults(getRawResults(), sre);
+        return newExp;
+    }
+
 }

@@ -114,14 +114,14 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
         final ArrayList<IdentificationResult> filteredResults = new ArrayList<>();
         //filterIdentifications list if wanted
-        if (filterIdentifications && input.size()>0) {
+        if (filterIdentifications && input.size() > 0) {
             // first filterIdentifications identificationResult list by top scoring formulas
-            final IdentificationResult top =  input.get(0);
+            final IdentificationResult top = input.get(0);
             if (top == null || top.getResolvedTree() == null) return null;
             progressInfo("Filter Identification Results for CSI:FingerId usage");
             filteredResults.add(top);
             final double threshold = Math.max(top.getScore(), 0) - Math.max(5, top.getScore() * 0.25);
-            for (int k=1, n =  input.size(); k < n;  ++k) {
+            for (int k = 1, n = input.size(); k < n; ++k) {
                 IdentificationResult e = input.get(k);
                 if (e.getScore() < threshold) break;
                 if (e.getResolvedTree() == null || e.getResolvedTree().numberOfVertices() <= 1) {
@@ -189,8 +189,6 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         for (FingerprintDependentJJob job : annotationJobs) {
             job.takeAndAnnotateResult();
         }
-
-
 
 
         return fps;
