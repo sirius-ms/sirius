@@ -10,7 +10,6 @@ import de.unijena.bioinf.ConfidenceScore.PredictionException;
 import de.unijena.bioinf.ConfidenceScore.QueryPredictor;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.*;
-import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerIdResultReader;
 import de.unijena.bioinf.fingerid.FingerIdResultWriter;
@@ -142,50 +141,52 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
         return fingerIdJob;
     }
 
+    protected static class CandidateElement extends Scored<FingerprintCandidate> {
+        protected final FingerIdResult origin;
+        public CandidateElement(FingerIdResult ir, Scored<FingerprintCandidate> c) {
+            super(c.getCandidate(), c.getScore());
+            this.origin = ir;
+        }
+    }
+
     protected void handleFingerIdResults(Instance i, BasicJJob<Map<IdentificationResult, ProbabilityFingerprint>> fingerprintJob) {
         try {
             Map<IdentificationResult, ProbabilityFingerprint> propPrints = fingerprintJob.awaitResult();
             if (propPrints != null) {
                 //collect candidates
-                final List<Scored<FingerprintCandidate>> allCandidates = new ArrayList<>();
+                final List<CandidateElement> allCandidates = new ArrayList<>();
                 final HashMap<MolecularFormula, ProbabilityFingerprint> predictedFingerprints = new HashMap<>();
                 for (IdentificationResult identificationResult : propPrints.keySet()) {
                     predictedFingerprints.put(identificationResult.getMolecularFormula(), propPrints.get(identificationResult));
                     FingerIdResult fingerIdResult = identificationResult.getAnnotationOrNull(FingerIdResult.class);
                     if (fingerIdResult != null) {
-                        allCandidates.addAll(fingerIdResult.getCandidates());
+                        for (Scored<FingerprintCandidate> fpc : fingerIdResult.getCandidates())
+                            allCandidates.add(new CandidateElement(fingerIdResult,fpc));
 
                     }
                 }
 
                 //sort by score
-                Collections.sort(allCandidates, Scored.<FingerprintCandidate>desc());
+                allCandidates.sort(Scored.<FingerprintCandidate>desc());
                 if (allCandidates.size() == 0) {
                     progress.info("No candidate structures found for given mass and computed trees.");
                     return;
                 }
 
                 // find top identificationResult
-                FingerIdResult topResult = null;
-                for (IdentificationResult ir : propPrints.keySet()) {
-                    FingerIdResult r = ir.getAnnotationOrNull(FingerIdResult.class);
-                    if (r != null && r.getCandidates().size() > 0 && r.getCandidates().get(0).equals(allCandidates.get(0))) {
-                        topResult = r;
-                        break;
-                    }
-                }
+                FingerIdResult topResult = allCandidates.get(0).origin;
 
                 // compute confidence for top hit from bio database
                 final ArrayList<Scored<CompoundWithAbstractFP<Fingerprint>>> confidenceList = new ArrayList<>();
                 final ArrayList<Scored<CompoundWithAbstractFP<Fingerprint>>> bioConfidenceList = new ArrayList<>();
-                CompoundCandidate topBio = null;
-                for (Scored<FingerprintCandidate> fc : allCandidates) {
+                CandidateElement topBio = null;
+                for (CandidateElement fc : allCandidates) {
                     Scored<CompoundWithAbstractFP<Fingerprint>> c = new Scored<>(new CompoundWithAbstractFP<Fingerprint>(fc.getCandidate().getInchi(), fc.getCandidate().getFingerprint()), fc.getScore());
 
                     confidenceList.add(c);
                     if (DatasourceService.isBio(fc.getCandidate().getBitset())) {
                         bioConfidenceList.add(c);
-                        if (topBio == null) topBio = fc.getCandidate();
+                        if (topBio == null) topBio = fc;
                     }
                 }
 
@@ -202,14 +203,14 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                     if (name == null || name.isEmpty()) name = fc.getSmiles();
                     if (name == null || name.isEmpty()) name = "";
                     if (confidence == null)
-                        progress.info(String.format(Locale.US, "Top compound is %s (%s)\n", name, fc.getInchi().in2D));
+                        progress.info(String.format(Locale.US, "Top compound is %s %s (%s)\n", name, topResult.getPrecursorIonType().toString(), fc.getInchi().in2D));
                     else
-                        progress.info(String.format(Locale.US, "Top compound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
+                        progress.info(String.format(Locale.US, "Top compound is %s %s (%s) with confidence %.2f\n", name, topResult.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
                 }
                 //todo the biofilter does also stay constant for all i
-                if (getBioFilter() != BioFilter.ONLY_BIO && topBio != null && topBio != allCandidates.get(0).getCandidate()) {
+                if (getBioFilter() != BioFilter.ONLY_BIO && topBio != null && topBio.getCandidate() != allCandidates.get(0).getCandidate()) {
                     final Scored<CompoundWithAbstractFP<Fingerprint>> c = bioConfidenceList.get(0);
-                    final CompoundCandidate fc = topBio;
+                    final CompoundCandidate fc = topBio.getCandidate();
                     final CompoundWithAbstractFP[] list = new CompoundWithAbstractFP[bioConfidenceList.size()];
                     for (int k = 0; k < bioConfidenceList.size(); ++k)
                         list[k] = bioConfidenceList.get(k).getCandidate();
@@ -219,17 +220,18 @@ public class FingeridCLI<Options extends FingerIdOptions> extends ZodiacCLI<Opti
                     if (name == null || name.isEmpty()) name = fc.getSmiles();
                     if (name == null || name.isEmpty()) name = "";
                     if (bioConfidence == null)
-                        progress.info(String.format(Locale.US, "Top biocompound is %s (%s)\n", name, fc.getInchi().in2D));
+                        progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s)\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D));
                     else
-                        progress.info(String.format(Locale.US, "Top biocompound is %s (%s) with confidence %.2f\n", name, fc.getInchi().in2D, confidenceScore));
+                        progress.info(String.format(Locale.US, "Top biocompound is %s %s (%s) with confidence %.2f\n", name, topBio.origin.getPrecursorIonType().toString(), fc.getInchi().in2D, confidenceScore));
                 }
 
                 for (int k = 0; k < Math.min(20, allCandidates.size()); ++k) {
-                    FingerprintCandidate f = allCandidates.get(k).getCandidate();
+                    CandidateElement e = allCandidates.get(k);
+                    FingerprintCandidate f = e.getCandidate();
                     String n = f.getName();
                     if (n == null || n.isEmpty()) n = f.getSmiles();
                     if (n == null) n = "";
-                    println(String.format(Locale.US, "%2d.) %s\t%s\tscore: %.2f", (k + 1), n, f.getInchi().in2D, allCandidates.get(k).getScore()));
+                    println(String.format(Locale.US, "%2d.) %s\t%s\t%s\t%s\tscore: %.2f", (k + 1), n, e.origin.getResolvedTree().getRoot().getFormula().toString(), e.origin.getPrecursorIonType().toString(),  f.getInchi().in2D, allCandidates.get(k).getScore()));
                 }
                 if (allCandidates.size() > 20) {
                     println("... " + (allCandidates.size() - 20) + " further candidates.");

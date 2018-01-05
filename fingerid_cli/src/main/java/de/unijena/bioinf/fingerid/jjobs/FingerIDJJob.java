@@ -1,9 +1,14 @@
 package de.unijena.bioinf.fingerid.jjobs;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
@@ -152,19 +157,46 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
 
         progressInfo("Search with CSI:FingerId");
 
+        // EXPAND LIST
+
+        final List<IdentificationResult> ionTypes = new ArrayList<>();
+        for (IdentificationResult ir : filteredResults) {
+            final Ms2Experiment validatedExperiment;
+            {
+                ProcessedInput pi = ir.getRawTree().getAnnotationOrNull(ProcessedInput.class);
+                if (pi != null) validatedExperiment = pi.getExperimentInformation();
+                else {
+                    LOG().info("FingerID job has no access to processed input data");
+                    validatedExperiment = experiment;
+                }
+            }
+            final PossibleAdducts adductTypes = validatedExperiment.getAnnotation(PossibleAdducts.class, new PossibleAdducts(PeriodicTable.getInstance().adductsByIonisation(experiment.getPrecursorIonType().getIonization())));
+            for (PrecursorIonType ionType : adductTypes) {
+                if (!ionType.equals(ir.getBeautifulTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getBeautifulTree(), ionType)) {
+                    ionTypes.add(IdentificationResult.withPrecursorIonType(ir, ionType));
+                }
+            }
+        }
+        filteredResults.addAll(ionTypes);
+        filteredResults.sort(Collections.reverseOrder());
 
         //submit jobs
         List<WebAPI.PredictionJJob> predictionJobs = new ArrayList<>();
         List<FingerprintDependentJJob> annotationJobs = new ArrayList<>();
+
         for (IdentificationResult fingeridInput : filteredResults) {
-            //prediction jobs
             WebAPI.PredictionJJob predictionJob = webAPI.makePredictionJob(experiment, fingeridInput, fingeridInput.getResolvedTree(), fingerprintVersion, predicors);
             submitSubJob(predictionJob);
             predictionJobs.add(predictionJob);
 
+            // formula jobs
+            FormulaJob formulaJob = new FormulaJob(fingeridInput.getMolecularFormula(), fingerblast.getSearchEngine());
+
             //fingerblast jobs
             FingerblastJJob blastJob = new FingerblastJJob(fingerblast, bioFilter, dbFlag);
+            blastJob.addRequiredJob(formulaJob);
             blastJob.addRequiredJob(predictionJob);
+            submitSubJob(formulaJob);
             submitSubJob(blastJob);
             annotationJobs.add(blastJob);
 
