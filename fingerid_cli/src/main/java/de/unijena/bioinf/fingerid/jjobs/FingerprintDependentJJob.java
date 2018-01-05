@@ -7,8 +7,9 @@ import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.jjobs.DependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.IdentificationResultAnnotationJJob;
 
-public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> implements IdentificationResult.AnnotationJJob<R> {
+public abstract class FingerprintDependentJJob<R> extends DependentJJob<R> implements IdentificationResultAnnotationJJob<R> {
     protected IdentificationResult identificationResult;
     protected ProbabilityFingerprint fp;
     protected MolecularFormula formula;
