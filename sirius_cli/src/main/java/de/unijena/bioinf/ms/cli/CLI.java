@@ -120,54 +120,50 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
         Sirius.SiriusIdentificationJob j = jc.getJob(Sirius.SiriusIdentificationJob.class);
         progress.info("Sirius results for: '" + jc.sourceInstance.file.getName() + "'");
         if (j != null)
-            handleSiriusResults(j); //handle results
+            handleSiriusResults(jc, j); //handle results
         else
             logger.error("Could not load results for " + jc.sourceInstance.file.getName());
+    }
+
+    private void setPrecursorIonTypes(MutableMs2Experiment exp, PossibleAdducts pa) {
+        exp.setAnnotation(PossibleAdducts.class, pa);
+        exp.setAnnotation(PossibleIonModes.class, pa.merge(exp.getAnnotation(PossibleIonModes.class, new PossibleIonModes())));
     }
 
     protected Sirius.SiriusIdentificationJob makeSiriusJob(final Instance i) {
         Sirius.SiriusIdentificationJob job = null;
         sirius.setTimeout(i.experiment, options.getInstanceTimeout(), options.getTreeTimeout());
-        //todo hack to include guessing of ionization. If appreciate include in a better way
-        if (options.getPossibleIonizations() != null && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-            PrecursorIonType[] specificIontypes = guessIonization(i);
+        final List<String> whitelist = formulas;
 
-            Set<MolecularFormula> mfCandidatesSet = new HashSet<MolecularFormula>();
-            FormulaConstraints constraints = sirius.getMs1Analyzer().getDefaultProfile().getFormulaConstraints();
-            for (PrecursorIonType ionType : specificIontypes) {
-                List<MolecularFormula> mfCandidates = sirius.decompose(i.experiment.getIonMass(), ionType.getIonization(), constraints);
+        final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
 
-                for (MolecularFormula mfCandidate : mfCandidates) {
-                    mfCandidatesSet.add(ionType.measuredNeutralMoleculeToNeutralMolecule(mfCandidate));
-                }
-
+        if (options.isAutoCharge()) {
+            if (i.experiment.getPrecursorIonType().isIonizationUnknown() || i.experiment.getPrecursorIonType().isPlainProtonationOrDeprotonation()) {
+                i.experiment.setAnnotation(PossibleAdducts.class, null);
+                if (i.experiment.getPrecursorIonType().isIonizationUnknown())
+                    i.experiment.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
+            } else {
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType()));
             }
-
-            sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
-            sirius.setIsotopeMode(i.experiment, options.getIsotopes());
-            if (!mfCandidatesSet.isEmpty())
-                sirius.setFormulaSearchList(i.experiment, mfCandidatesSet);
-            job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
-
+        } else if (options.getIon() != null && options.getIon().size()>1) {
+            final List<PrecursorIonType> ionTypes = new ArrayList<>();
+            for (String ion : options.getIon()) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
+            setPrecursorIonTypes(i.experiment, new PossibleAdducts(ionTypes));
         } else {
-            final List<String> whitelist = formulas;
-            final Set<MolecularFormula> whiteset = getFormulaWhiteset(i, whitelist);
-            if ((whiteset == null) && options.isAutoCharge() && i.experiment.getPrecursorIonType().isIonizationUnknown()) {
-                i.experiment.setAnnotation(PossibleIonModes.class, PossibleIonModes.defaultFor(i.experiment.getPrecursorIonType().getCharge()));
-                sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
-                sirius.setIsotopeMode(i.experiment, options.getIsotopes());
-                job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
-            } else if (whiteset == null || !whiteset.isEmpty()) {
-                sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
-                sirius.setIsotopeMode(i.experiment, options.getIsotopes());
-                if (whiteset != null) sirius.setFormulaSearchList(i.experiment, whiteset);
-                job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
+            if (i.experiment.getPrecursorIonType().isIonizationUnknown()) {
+                setPrecursorIonTypes(i.experiment, new PossibleAdducts(i.experiment.getPrecursorIonType().getCharge()>0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-")));
             }
         }
+
+        sirius.enableRecalibration(i.experiment, !options.isNotRecalibrating());
+        sirius.setIsotopeMode(i.experiment, options.getIsotopes());
+        if (whiteset != null) sirius.setFormulaSearchList(i.experiment, whiteset);
+
+        job = (sirius.makeIdentificationJob(i.experiment, getNumberOfCandidates()));
         return job;
     }
 
-    protected void handleSiriusResults(Sirius.SiriusIdentificationJob siriusJob) throws IOException {
+    protected void handleSiriusResults(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob) throws IOException {
         if (siriusJob != null) {
             try {
                 final List<IdentificationResult> results = siriusJob.takeResult();
@@ -180,8 +176,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
                         printf("%" + n + "d.) %s\t%s\tscore: %.2f\ttree: %+.2f\tiso: %.2f\tpeaks: %d\texplained intensity: %.2f %%\tisotope peaks: %d\n", rank++, result.getMolecularFormula().toString(), String.valueOf(result.getResolvedTree().getAnnotationOrNull(PrecursorIonType.class)), result.getScore(), result.getTreeScore(), result.getIsotopeScore(), result.getResolvedTree().numberOfVertices(), sirius.getMs2Analyzer().getIntensityRatioOfExplainedPeaks(result.getResolvedTree()) * 100, isoPeaks);
                     }
 
+                    //
+                    // TODO: Dirty Hack
+                    //
                     if (projectWriter != null) {
-                        projectWriter.writeExperiment(new ExperimentResult(siriusJob.getExperiment(), results));
+                        projectWriter.writeExperiment(createExperimentResult(jc, siriusJob, results));
                     }
                 } else {
                     logger.warn("Cannot find valid tree that supports the data. You can try to increase the allowed mass deviation with parameter --ppm-max");
@@ -201,6 +200,11 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
     }
 
+    protected ExperimentResult createExperimentResult(BufferedJJobSubmitter<Instance>.JobContainer jc, Sirius.SiriusIdentificationJob siriusJob, List<IdentificationResult> results) {
+        return new ExperimentResult(siriusJob.getExperiment(), results);
+    }
+
+    /*
     private PrecursorIonType[] guessIonization(Instance instance) {
         final MutableMs2Experiment experimentMutable = new MutableMs2Experiment(instance.experiment);
         experimentMutable.setPrecursorIonType(PrecursorIonType.unknown(instance.experiment.getPrecursorIonType().getCharge()));
@@ -241,6 +245,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
 
         return specificIontypes;
     }
+    */
 
     protected Set<MolecularFormula> getFormulaWhiteset(Instance i, List<String> whitelist) {
         final Set<MolecularFormula> whiteset = new HashSet<MolecularFormula>();
@@ -277,6 +282,7 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             System.exit(0);
         }
         try {
+            args = fixBuggyJewelCliLibrary(args);
             this.options = CliFactory.createCli(optionsClass).parseArguments(args);
             if (options.isCite()) {
                 cite();
@@ -294,6 +300,37 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
             System.exit(0);
         }
         handleOutputOptions(options);
+    }
+
+    private String[] fixBuggyJewelCliLibrary(String[] args) {
+        final List<String> argsCopy = new ArrayList<>();
+        final List<String> ionModeStrings = new ArrayList<>();
+        boolean ionIn=false;
+        for (int i=0; i < args.length; ++i) {
+            String arg = args[i];
+            if (arg.equals("--ion") || arg.equals("-i")) {
+                if (!ionIn) {
+                    ionModeStrings.add(arg);
+                    ionIn=true;
+                }
+                final Pattern ionPattern = Pattern.compile("^\\s*\\[?\\s*M\\s*[+-\\]]");
+                // if a list parameter is last parameter, we have to distinguish it from the rest parameter
+                for (i=i+1; i < args.length; ++i) {
+                    arg = args[i];
+                    if (ionPattern.matcher(arg).find()) {
+                        ionModeStrings.add(arg);
+                    } else {
+                        break;
+                    }
+                }
+            }
+            argsCopy.add(arg);
+        }
+        if (ionModeStrings.size()>0) ionModeStrings.add("--placeholder");
+        ionModeStrings.addAll(argsCopy);
+
+        System.out.println(ionModeStrings);
+        return ionModeStrings.toArray(new String[ionModeStrings.size()]);
     }
 
     protected void handleOutputOptions(Options options) {
@@ -746,19 +783,27 @@ public class CLI<Options extends SiriusOptions> extends ApplicationCore {
     private static final Pattern CHARGE_PATTERN2 = Pattern.compile("[+-]?(\\d+)");
 
     protected static PrecursorIonType getIonFromOptions(SiriusOptions opt, int charge) {
-        String ionStr = opt.getIon();
+        List<String> ionStr = opt.getIon();
         if (ionStr == null) {
             if (opt.isAutoCharge() || opt.getPossibleIonizations() != null) return PrecursorIonType.unknown(charge);
             else if (charge == 0) throw new IllegalArgumentException("Please specify the charge");
             else if (charge == 1) return PrecursorIonType.getPrecursorIonType("[M+H]+");
             else if (charge == -1) return PrecursorIonType.getPrecursorIonType("[M-H]-");
             else throw new IllegalArgumentException("SIRIUS does not support multiple charges");
-        } else {
-            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon());
+        } else if (ionStr.size()==1){
+            final PrecursorIonType ionType = PeriodicTable.getInstance().ionByName(opt.getIon().get(0));
             if (ionType.isIonizationUnknown() && !opt.isAutoCharge() && opt.getPossibleIonizations() == null) {
                 if (ionType.getCharge() > 0) return PrecursorIonType.getPrecursorIonType("[M+H]+");
                 else return PrecursorIonType.getPrecursorIonType("[M-H]-");
             } else return ionType;
+        } else {
+            final List<PrecursorIonType> ionTypes = new ArrayList<>();
+            for (String ion : ionStr) ionTypes.add(PrecursorIonType.getPrecursorIonType(ion));
+            int ch = ionTypes.get(0).getCharge();
+            for (PrecursorIonType  pi : ionTypes)
+                if (pi.getCharge()!=ch)
+                    throw new IllegalArgumentException("SIRIUS does not support different charge states for the same compound");
+            return PrecursorIonType.unknown(ch);
         }
     }
 

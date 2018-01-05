@@ -40,6 +40,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
     //canopus options
     private Canopus canopus = null;
 
+    protected List<IdentificationResult> addedIdentificationResults = new ArrayList<>();
 
     public FingerIDJJob(Fingerblast fingerblast, MaskedFingerprintVersion fingerprintVersion) {
         this(fingerblast, fingerprintVersion, PredictorType.CSI_FINGERID);
@@ -77,6 +78,10 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         this.filterIdentifications = filterIdentifications;
     }
 
+    public List<IdentificationResult> getAddedIdentificationResults() {
+        return addedIdentificationResults;
+    }
+
     @Override
     protected Map<IdentificationResult, ProbabilityFingerprint> compute() throws Exception {
         WebAPI webAPI = WebAPI.newInstance();
@@ -106,12 +111,7 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
         if (input.isEmpty()) return null;
 
         //sort input with ascending score
-        Collections.sort(input, new Comparator<IdentificationResult>() {
-            @Override
-            public int compare(IdentificationResult o1, IdentificationResult o2) {
-                return Double.compare(o1.getScore(), o2.getScore()); //todo do we need ascending or descending
-            }
-        });
+        Collections.sort(input);
 
         //shrinking list to max number of values
         if (input.size() > maxResults)
@@ -178,7 +178,8 @@ public class FingerIDJJob extends DependentMasterJJob<Map<IdentificationResult, 
             }
         }
         filteredResults.addAll(ionTypes);
-        filteredResults.sort(Collections.reverseOrder());
+        Collections.sort(filteredResults);
+        addedIdentificationResults.addAll(ionTypes);
 
         //submit jobs
         List<WebAPI.PredictionJJob> predictionJobs = new ArrayList<>();
