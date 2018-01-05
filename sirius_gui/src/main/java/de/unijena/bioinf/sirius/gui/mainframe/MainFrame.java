@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.fingerid.net.VersionsInfo;
 import de.unijena.bioinf.fingerid.net.WebAPI;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
@@ -10,7 +11,6 @@ import de.unijena.bioinf.sirius.gui.compute.JobDialog;
 import de.unijena.bioinf.sirius.gui.compute.JobLog;
 import de.unijena.bioinf.sirius.gui.dialogs.*;
 import de.unijena.bioinf.sirius.gui.ext.DragAndDrop;
-import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
 import de.unijena.bioinf.sirius.gui.load.LoadController;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentList;
 import de.unijena.bioinf.sirius.gui.mainframe.experiments.ExperimentListView;
@@ -280,13 +280,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
         if ((csvFiles.size() > 0 && (msFiles.size() + mgfFiles.size() == 0)) ||
                 (csvFiles.size() == 0 && msFiles.size() == 1 && mgfFiles.size() == 0)) {   //nur CSV bzw. nur ein File
             LoadController lc = new LoadController(this, CONFIG_STORAGE);
-
             lc.addSpectra(csvFiles, msFiles, mgfFiles);
             lc.showDialog();
 
-            if (lc.getReturnValue() == ReturnValue.Success) {
-                ExperimentContainer ec = lc.getExperiment();
-
+            ExperimentContainer ec = lc.getExperiment();
+            if (ec != null) {
                 Workspace.importCompound(ec);
             }
         } else if (csvFiles.size() == 0 && mgfFiles.size() == 0 && msFiles.size() > 0) {
@@ -301,9 +299,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 lc.addSpectra(csvFiles, msFiles, mgfFiles);
                 lc.showDialog();
 
-                if (lc.getReturnValue() == ReturnValue.Success) {
-                    ExperimentContainer ec = lc.getExperiment();
-
+                ExperimentContainer ec = lc.getExperiment();
+                if (ec != null) {
                     Workspace.importCompound(ec);
                 }
             } else if (rv == DragAndDropOpenDialogReturnValue.oneExperimentPerFile) {

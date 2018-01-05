@@ -31,11 +31,10 @@ import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FilebasedDatabase;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.sirius.*;
-import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.CSIFingerIdComputation;
+import de.unijena.bioinf.fingerid.db.SearchableDatabase;
 import de.unijena.bioinf.fingerid.net.WebAPI;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
+import de.unijena.bioinf.sirius.*;
 import de.unijena.bioinf.sirius.gui.mainframe.MainFrame;
 import de.unijena.bioinf.sirius.gui.structure.ComputingStatus;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
@@ -264,7 +263,7 @@ public class BackgroundComputation extends AbstractBean {
             }
             try {
                 final List<IdentificationResult> results;
-                final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(container.exp);
+                final Ms2Experiment experiment = container.exp.getMs2Experiment();
                 boolean hasMS2 = experiment.getMs2Spectra().size() != 0;
                 if (searchableDatabase == null) {
                     if (hasMS2) {

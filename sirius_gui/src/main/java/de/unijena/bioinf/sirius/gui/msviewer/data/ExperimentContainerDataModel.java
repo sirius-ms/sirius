@@ -10,7 +10,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.gui.io.SiriusDataConverter;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 
@@ -51,11 +50,12 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     protected DisplayMode mode;
     protected int selectedMs2Spectrum;
+
     protected void refreshSpectrum() {
-        if (mode==DisplayMode.MS) {
-            final SimpleSpectrum spec = SiriusDataConverter.experimentContainerToSiriusExperiment(ec).getMergedMs1Spectrum();
+        if (mode == DisplayMode.MS) {
+            final SimpleSpectrum spec = ec.getMs2Experiment().getMergedMs1Spectrum();
             if (spec == null) {
-              underlyingModel = new DummySpectrumModel();
+                underlyingModel = new DummySpectrumModel();
             } else if (currentResult != null) {
                 final FTree tree = currentResult.getRawTree();
                 underlyingModel = new SiriusIsotopePattern(tree, spec);
@@ -69,13 +69,13 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
                 final FTree tree = currentResult.getRawTree();
                 final ProcessedInput experiment = tree.getAnnotationOrNull(ProcessedInput.class);
                 final MutableMs2Experiment ms2;
-                if (experiment!=null) {
+                if (experiment != null) {
                     ms2 = experiment.getExperimentInformation();
                 } else {
-                    ms2 =  SiriusDataConverter.experimentContainerToSiriusExperiment(ec);
+                    ms2 = ec.getMs2Experiment();
                 }
                 double ionMass;
-                if (tree != null && tree.getAnnotationOrNull(PrecursorIonType.class)!=null) {
+                if (tree != null && tree.getAnnotationOrNull(PrecursorIonType.class) != null) {
                     ionMass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
                 } else {
                     ionMass = ec.getSelectedFocusedMass();
@@ -85,18 +85,18 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
                     Spectrums.cutByMassThreshold(ms2spec, ionMass + 1d);
                 }
 
-                if (mode==DisplayMode.MSMS) {
+                if (mode == DisplayMode.MSMS) {
                     underlyingModel = new SiriusSingleSpectrumAnnotated(tree, ms2.getMs2Spectra().get(selectedMs2Spectrum), minMz, maxMz);
-                } else if (mode == DisplayMode.MERGED){
+                } else if (mode == DisplayMode.MERGED) {
                     underlyingModel = new SiriusMergedMs2Annotated(tree, ms2, minMz, maxMz);
                 } else {
                     underlyingModel = new DummySpectrumModel();
                 }
             } else {
-                final Ms2Experiment experiment = SiriusDataConverter.experimentContainerToSiriusExperiment(ec);
-                if (mode==DisplayMode.MSMS) {
+                final Ms2Experiment experiment = ec.getMs2Experiment();
+                if (mode == DisplayMode.MSMS) {
                     underlyingModel = new SiriusSingleSpectrumModel(experiment.getMs2Spectra().get(selectedMs2Spectrum), minMz, maxMz);
-                } else if (mode == DisplayMode.MERGED){
+                } else if (mode == DisplayMode.MERGED) {
                     underlyingModel = new SiriusMergedMs2(experiment, minMz, maxMz);
                 } else {
                     underlyingModel = new DummySpectrumModel();
@@ -107,7 +107,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     public void changeData(ExperimentContainer container, SiriusResultElement result, DisplayMode mode, int ms2index) {
         this.ec = container;
-        if (result!=null && result.getResult()!=null) {
+        if (result != null && result.getResult() != null) {
             this.currentResult = result.getResult();
         } else {
             this.currentResult = null;
@@ -120,7 +120,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
 
     private void refreshRanges() {
         Range<Double> range = null;
-        if (ec==null) {
+        if (ec == null) {
             this.minMz = 0d;
             this.maxMz = 400d;
         } else {
@@ -157,7 +157,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
     }
 
     public void showDummySpectrum() {
-        mode=DisplayMode.DUMMY;
+        mode = DisplayMode.DUMMY;
         selectedMs2Spectrum = -1;
         refreshSpectrum();
     }

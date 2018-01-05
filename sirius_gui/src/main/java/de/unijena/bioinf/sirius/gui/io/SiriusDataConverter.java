@@ -19,25 +19,19 @@
 package de.unijena.bioinf.sirius.gui.io;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.inputValidator.MissingValueValidator;
-import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
-import de.unijena.bioinf.myxo.structure.*;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.gui.mainframe.Ionization;
 import de.unijena.bioinf.sirius.gui.structure.ExperimentContainer;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElement;
 import de.unijena.bioinf.sirius.gui.structure.SiriusResultElementConverter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,6 +41,7 @@ public class SiriusDataConverter {
 
     /**
      * add missing data (if possible) to display it properly in gui .
+     *
      * @param input
      * @return
      */
@@ -59,34 +54,34 @@ public class SiriusDataConverter {
         }
     }
 
-    public static ExperimentContainer siriusExperimentToExperimentContainer(Ms2Experiment sirius) {
+    /*public static ExperimentContainer siriusExperimentToExperimentContainer(Ms2Experiment sirius) {
         sirius = validateInput(sirius);
         final ExperimentContainer c = new ExperimentContainer();
         c.setDataFocusedMass(sirius.getIonMass());
         c.setName(sirius.getName());
         c.setSource(sirius.getSource());
-        c.setIonization(sirius.getPrecursorIonType()==null ? PrecursorIonType.getPrecursorIonType("[M+H]+") : sirius.getPrecursorIonType());
+        c.setIonization(sirius.getPrecursorIonType() == null ? PrecursorIonType.getPrecursorIonType("[M+H]+") : sirius.getPrecursorIonType());
         for (Spectrum<Peak> s : sirius.getMs1Spectra()) {
             c.getMs1Spectra().add(siriusSpectrumToMyxoSpectrum(s));
         }
         for (Spectrum<Peak> s : sirius.getMs2Spectra()) {
             c.getMs2Spectra().add(siriusSpectrumToMyxoSpectrum(s));
         }
-        if (sirius.getMergedMs1Spectrum()!=null) {
+        if (sirius.getMergedMs1Spectrum() != null) {
             c.setCorrelatedSpectrum(siriusSpectrumToMyxoSpectrum(sirius.getMergedMs1Spectrum()));
         }
         return c;
-    }
+    }*/
 
     public static de.unijena.bioinf.sirius.gui.mainframe.Ionization siriusIonizationToEnum(PrecursorIonType ion) {
         return Ionization.fromSirius(ion);
     }
 
-    public static PrecursorIonType enumToSiriusIonization(de.unijena.bioinf.sirius.gui.mainframe.Ionization aenum)  {
+    public static PrecursorIonType enumToSiriusIonization(de.unijena.bioinf.sirius.gui.mainframe.Ionization aenum) {
         return aenum.toRealIonization();
     }
 
-    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, PrecursorIonType ionType, double ionMass) {
+    /*public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo, PrecursorIonType ionType, double ionMass) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setName(myxo.getName());
         exp.setSource(myxo.getSource());
@@ -96,9 +91,9 @@ public class SiriusDataConverter {
             exp.getMs1Spectra().add(myxoMs1ToSiriusMs1(cs));
         }
 
-        if (myxo.getCorrelatedSpectrum()!=null) {
+        if (myxo.getCorrelatedSpectrum() != null) {
             exp.setMergedMs1Spectrum(myxoMs1ToSiriusMs1(myxo.getCorrelatedSpectrum()));
-        } else if (myxo.getMs1Spectra().size()>0) {
+        } else if (myxo.getMs1Spectra().size() > 0) {
             exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(exp.getMs1Spectra()));
         }
 
@@ -106,27 +101,27 @@ public class SiriusDataConverter {
             exp.getMs2Spectra().add(myxoMs2ToSiriusMs2(cs, myxo.getDataFocusedMass()));
         }
         return exp;
-    }
+    }*/
 
-    public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo) {
+    /*public static MutableMs2Experiment experimentContainerToSiriusExperiment(ExperimentContainer myxo) {
         return experimentContainerToSiriusExperiment(myxo, myxo.getIonization(), myxo.getFocusedMass());
-    }
+    }*/
 
     public static SiriusResultElement siriusResultToMyxoResult(IdentificationResult ir) {
         return SiriusResultElementConverter.convertResult(ir);
     }
 
     public static ExperimentContainer siriusToMyxoContainer(Ms2Experiment experiment, List<IdentificationResult> results) {
-        if (experiment==null) throw new NullPointerException();
-        final ExperimentContainer c = siriusExperimentToExperimentContainer(experiment);
-        if (results.size()>0) {
+        if (experiment == null) throw new NullPointerException();
+        final ExperimentContainer c = new ExperimentContainer(experiment);
+        if (results.size() > 0) {
             c.setRawResults(results);
             final FTree tree = results.get(0).getRawTree();
             final FragmentAnnotation<AnnotatedPeak> pa = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
-            if (tree!=null) {
+            if (tree != null) {
                 double parentmass;
-                if (pa.get(tree.getRoot())!=null) parentmass = pa.get(tree.getRoot()).getMass();
-                else if (tree.getAnnotationOrNull(PrecursorIonType.class)!=null) {
+                if (pa.get(tree.getRoot()) != null) parentmass = pa.get(tree.getRoot()).getMass();
+                else if (tree.getAnnotationOrNull(PrecursorIonType.class) != null) {
                     parentmass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
                 } else parentmass = -1d;
 
@@ -136,10 +131,15 @@ public class SiriusDataConverter {
         return c;
     }
 
+    /*public static List<CompactSpectrum> siriusSpectraToMyxoSpectra(List<? extends Spectrum<? extends Peak>> specs) {
+        if (specs == null) return Collections.emptyList();
+        return specs.stream().map(SiriusDataConverter::siriusSpectrumToMyxoSpectrum).collect(Collectors.toList());
+    }
+
     public static CompactSpectrum siriusSpectrumToMyxoSpectrum(Spectrum<? extends Peak> spec) {
         final CompactSpectrum cs = new CompactSpectrum(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
         if (spec instanceof Ms2Spectrum) {
-            final Ms2Spectrum<? extends Peak> ms2Spec = (Ms2Spectrum<? extends Peak>)spec;
+            final Ms2Spectrum<? extends Peak> ms2Spec = (Ms2Spectrum<? extends Peak>) spec;
             cs.setCollisionEnergy(ms2Spec.getCollisionEnergy());
             cs.setMSLevel(ms2Spec.getMsLevel());
         } else {
@@ -161,26 +161,25 @@ public class SiriusDataConverter {
 
     public static SimpleSpectrum myxoMs1ToSiriusMs1(CompactSpectrum cs) {
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum(cs.getSize());
-        for (int i=0; i < cs.getSize(); ++i) {
+        for (int i = 0; i < cs.getSize(); ++i) {
             ms.addPeak(cs.getPeakAt(i));
         }
         return new SimpleSpectrum(ms);
     }
 
     public static SimpleSpectrum myxoMs1ToSiriusMs1(List<CompactSpectrum> myxo) {
-        if (myxo.size()==1) return myxoMs1ToSiriusMs1(myxo.get(0));
+        if (myxo.size() == 1) return myxoMs1ToSiriusMs1(myxo.get(0));
         final List<SimpleSpectrum> spectra = new ArrayList<>(myxo.size());
         for (CompactSpectrum cs : myxo) {
             spectra.add(myxoMs1ToSiriusMs1(cs));
         }
         return (Spectrums.mergeSpectra(spectra));
-    }
+    }*/
 
     public static PrecursorIonType enumOrNameToIontype(String selectedItem) {
         Ionization stupidEnum = Ionization.byName(selectedItem);
-        if (stupidEnum==null) {
+        if (stupidEnum == null) {
             return PrecursorIonType.getPrecursorIonType(selectedItem);
-        }
-        else return enumToSiriusIonization(stupidEnum);
+        } else return enumToSiriusIonization(stupidEnum);
     }
 }

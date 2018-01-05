@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 
@@ -106,7 +105,7 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 		
 		g2.setColor(this.foreColor);
 		
-		int mslevel = sp.getSpectrum().getMSLevel();
+		int mslevel = sp.getSpectrum().getMsLevel();
 		
 		String peakProp = "peaks:";
 		String cEProp = "cE:";
@@ -134,9 +133,6 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 			}
 		}
 		
-		int peakValLength = valueFm.stringWidth(peakVal);
-		int cEValLength = valueFm.stringWidth(cEVal);
-		
 		int valX = Math.max(peakPropLength, cEPropLength) + 15;
 		
 		g2.setFont(valueFont);
@@ -145,13 +141,10 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 		
 		g2.setFont(msLevelFont);
 		
-		String msLevel = "MS "+sp.getSpectrum().getMSLevel();
+		String msLevel = "MS "+sp.getSpectrum().getMsLevel();
 		
 		int msLevelLength = msLevelFm.stringWidth(msLevel);
 		
 		g2.drawString(msLevel, ((int)this.getSize().getWidth())-msLevelLength-2, 12);
-		
-		
 	}
-
 }

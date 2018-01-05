@@ -21,10 +21,7 @@ package de.unijena.bioinf.sirius.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -33,7 +30,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.IsotopePatternAnalysis.prediction.ElementPredictor;
 import de.unijena.bioinf.fingerid.FingerIDComputationPanel;
 import de.unijena.bioinf.fingerid.db.SearchableDatabase;
-import de.unijena.bioinf.myxo.structure.CompactSpectrum;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.core.ApplicationCore;
 import de.unijena.bioinf.sirius.gui.dialogs.ErrorReportDialog;
@@ -222,7 +218,8 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
             ExperimentContainer ec = compoundsToProcess.get(0);
             if (!ec.getMs1Spectra().isEmpty() || ec.getCorrelatedSpectrum() != null) {
-                MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), getSelectedIonMass());
+                MutableMs2Experiment exp = applySettingsAndGet(ec, getSelectedIonMass());
+
                 ElementPredictor predictor = sirius.getElementPrediction();
                 final FormulaConstraints c = sirius.predictElementsFromMs1(exp);
                 if (c != null) {
@@ -333,7 +330,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
                 FormulaConstraints individualConstraints = new FormulaConstraints(constraints);
                 if (!elementsToAutoDetect.isEmpty() && !ec.getMs1Spectra().isEmpty()) {
-                    MutableMs2Experiment exp = SiriusDataConverter.experimentContainerToSiriusExperiment(ec, SiriusDataConverter.enumOrNameToIontype(searchProfilePanel.getIonization()), ec.getFocusedMass());
+                    MutableMs2Experiment exp = applySettingsAndGet(ec, ec.getFocusedMass());
                     FormulaConstraints autoConstraints = sirius.predictElementsFromMs1(exp);
                     if (autoConstraints != null) {
                         ElementPredictor predictor = sirius.getElementPrediction();
@@ -362,7 +359,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         Vector<Peak> masses = new Vector<>();
         double maxInt = -1;
         Object maxObj = null;
-        List<CompactSpectrum> ms1Spectra = new ArrayList<>(ec.getMs1Spectra());
+        ArrayList<SimpleSpectrum> ms1Spectra = new ArrayList<>(ec.getMs1Spectra());
         if (ec.getCorrelatedSpectrum() != null)
             ms1Spectra.add(ec.getCorrelatedSpectrum());
         final SimpleMutableSpectrum massBuffer = new SimpleMutableSpectrum();
@@ -372,11 +369,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         final Deviation dev = new Deviation(20);
         final double focusedMass = ec.getDataFocusedMass();
         if (!ms1Spectra.isEmpty()) {
-            for (CompactSpectrum cms1 : ms1Spectra) {
+            for (SimpleSpectrum cms1 : ms1Spectra) {
+                final double cms1MaxInt = cms1.getMaxIntensity();
                 if (focusedMass > 0) {
                     final int i = Spectrums.mostIntensivePeakWithin(cms1, focusedMass, dev);
                     if (i >= 0) {
-                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getRelativeIntensity(i));
+                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getIntensityAt(i)/ cms1MaxInt);
                         bestDataIon = cms1.getPeakAt(i);
                     }
                 }
@@ -384,7 +382,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 for (int i = 0; i < cms1.size(); ++i) {
                     int j = Spectrums.mostIntensivePeakWithin(cms1, cms1.getMzAt(i) - 1.0033, dev);
                     if (j < 0 || cms1.getIntensityAt(j) < 0.02) {
-                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getRelativeIntensity(i));
+                        massBuffer.addPeak(cms1.getMzAt(i), cms1.getIntensityAt(i)/ cms1MaxInt);
                     }
                 }
             }
@@ -394,7 +392,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             // possible isotope peaks
 
             // I hate marvins data structures -_-
-            final SimpleMutableSpectrum mergedSpec = new SimpleMutableSpectrum(Spectrums.mergeSpectra(new Deviation(20), true, true, SiriusDataConverter.myxoMs2ToSiriusMs2(ec.getMs2Spectra(), 0d)));
+            final SimpleMutableSpectrum mergedSpec = new SimpleMutableSpectrum(Spectrums.mergeSpectra(new Deviation(20), true, true, ec.getMs2Spectra())); //todo her was parantmass 0d
             Spectrums.normalize(mergedSpec, Normalization.Max(1d));
             Spectrums.applyBaseline(mergedSpec, 0.05);
             final SimpleSpectrum spec = new SimpleSpectrum(mergedSpec);
@@ -410,12 +408,13 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             }
 
 
-            for (CompactSpectrum sp : ec.getMs2Spectra()) {
-                for (int i = 0; i < sp.getSize(); i++) {
+            for (MutableMs2Spectrum sp : ec.getMs2Spectra()) {
+                final double spMaxInt = sp.getMaxIntensity();
+                for (int i = 0; i < sp.size(); i++) {
                     if (sp.getPeakAt(i).getIntensity() > maxInt) {
                         maxInt = sp.getPeakAt(i).getIntensity();
                     }
-                    massBuffer.addPeak(sp.getMzAt(i), sp.getRelativeIntensity(i));
+                    massBuffer.addPeak(sp.getMzAt(i), sp.getIntensityAt(i)/spMaxInt);
                     if ((focusedMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), focusedMass)) || (expectedParentMass > 0 && dev.inErrorWindow(sp.getPeakAt(i).getMass(), expectedParentMass))) {
                         if (bestDataIon == null || sp.getPeakAt(i).getIntensity() > bestDataIon.getIntensity())
                             bestDataIon = sp.getPeakAt(i);
@@ -519,4 +518,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         /////////////////////////////////////////////
     }
 
+    private MutableMs2Experiment applySettingsAndGet(ExperimentContainer ec, double ionMass) {
+        //todo ATTENTION here the experiment is changed
+        //todo appy complex ionization stuff
+        ec.setIonization(PrecursorIonType.getPrecursorIonType(searchProfilePanel.getIonization()));
+        MutableMs2Experiment exp = ec.getMs2Experiment();
+        exp.setIonMass(ionMass);
+        return exp;
+    }
 }
