@@ -106,14 +106,17 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         spectraSelection.setEnabled(model.getComboBoxModel().getSize() > 0);
     }
 
+    private void spectraSelectionAction() {
+        model.selectSpectrum((String) spectraSelection.getSelectedItem());
+        msviewer.setData(model);
+        showMolecularFormulaMarkings();
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == spectraSelection) {
             if (this.spectraSelection.getSelectedIndex() < 0) return;
-            model.selectSpectrum((String) spectraSelection.getSelectedItem());
-            msviewer.setData(model);
-            showMolecularFormulaMarkings();
-//			msviewer.repaint();
+            spectraSelectionAction();
         } else if (e.getSource() == zoomIn || e.getSource() == zoomInMI) {
             zoomIn.setEnabled(false);
             zoomInMI.setEnabled(false);
@@ -148,16 +151,20 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     @Override
     public void resultsChanged(ExperimentContainer experiment, SiriusResultElement sre, List<SiriusResultElement> resultElements, ListSelectionModel selections) {
-        spectraSelection.removeActionListener(this);
-        String selected = (String) spectraSelection.getSelectedItem();
+        final String selected = (String) spectraSelection.getSelectedItem();
+        if (model.changeData(experiment, sre)) {
+            spectraSelection.removeActionListener(this);
 
-        model.changeData(experiment, sre);
-        updateLogic();
+            updateLogic();
 
-        spectraSelection.addActionListener(this);
-        spectraSelection.setSelectedItem(selected);
-        if (spectraSelection.getSelectedItem() == null)
-            spectraSelection.setSelectedItem(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY);
+            spectraSelection.setSelectedItem(selected);
+            if (spectraSelection.getSelectedItem() == null)
+                spectraSelection.setSelectedItem(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY);
+
+            spectraSelectionAction();
+            spectraSelection.addActionListener(this);
+
+        }
     }
 
     @Override
@@ -165,7 +172,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         this.model.removeMarkings();
         this.zoomIn.setEnabled(false);
         this.zoomInMI.setEnabled(false);
-//		this.msviewer.repaint();
     }
 
     @Override

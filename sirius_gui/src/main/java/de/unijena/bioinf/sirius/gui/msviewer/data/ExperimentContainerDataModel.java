@@ -52,78 +52,82 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         return cbModel;
     }
 
-    public void changeData(ExperimentContainer ec, SiriusResultElement result) {
-        this.ec = ec;
+    public boolean changeData(ExperimentContainer ec, SiriusResultElement result) {
+        if (this.ec != ec || (result != null && this.currentResult != result.getResult())) {
+            this.ec = ec;
 
-        if (result != null && result.getResult() != null) {
-            this.currentResult = result.getResult();
-        } else {
-            this.currentResult = null;
-        }
-
-        cbModel.removeAllElements();
-        identifierToSpectrum = new HashMap<>();
-
-        if (ec != null) {
-            List<SimpleSpectrum> ms1 = ec.getMs1Spectra();
-            List<MutableMs2Spectrum> ms2 = ec.getMs2Spectra();
-
-            //addMS1 and merged ms1
-            if (!ms1.isEmpty() || ec.getMergedMs1Spectrum() != null) {
-                if (ec.getMergedMs1Spectrum() != null) {
-                    cbModel.addElement(MS1_MERGED_DISPLAY);
-                    identifierToSpectrum.put(MS1_MERGED_DISPLAY, ec.getMergedMs1Spectrum());
-                } else if (ms1.size() > 1) {
-                    cbModel.addElement(MS1_MERGED_DISPLAY);
-                    identifierToSpectrum.put(MS1_MERGED_DISPLAY, merge(ms1));
-                }
-
-                for (SimpleSpectrum ms1Spec : ms1) {
-                    final String key = buildName(MS1_DISPLAY);
-                    identifierToSpectrum.put(key, ms1Spec);
-                    cbModel.addElement(key);
-                }
+            if (result != null && result.getResult() != null) {
+                this.currentResult = result.getResult();
+            } else {
+                this.currentResult = null;
             }
 
-            //add ms2 and merged ms2
-            if (ms2 != null) {
-                if (ms2.size() > 1) {
-                    cbModel.addElement(MSMS_MERGED_DISPLAY);
-                    identifierToSpectrum.put(MSMS_MERGED_DISPLAY, merge(ms2));
-                }
+            cbModel.removeAllElements();
+            identifierToSpectrum = new HashMap<>();
 
-                for (MutableMs2Spectrum sp : ms2) {
-                    String key = null;
+            if (ec != null) {
+                List<SimpleSpectrum> ms1 = ec.getMs1Spectra();
+                List<MutableMs2Spectrum> ms2 = ec.getMs2Spectra();
 
-                    if (sp.getCollisionEnergy() != null) {
-                        double minEn = sp.getCollisionEnergy().getMinEnergy();
-                        double maxEn = sp.getCollisionEnergy().getMaxEnergy();
-
-                        if (minEn == maxEn) {
-                            key = cEFormat.format(minEn) + " eV";
-                        } else {
-                            key = cEFormat.format(minEn) + "-" + cEFormat.format(maxEn) + " eV";
-                        }
-                        int counter = 2;
-                        while (identifierToSpectrum.containsKey(key)) {
-                            if (minEn == maxEn) {
-                                key = cEFormat.format(minEn) + " eV (" + counter + ")";
-                            } else {
-                                key = cEFormat.format(minEn) + "-" + cEFormat.format(maxEn) + " eV (" + counter + ")";
-                            }
-                            counter++;
-                        }
-                    } else {
-                        key = buildName(MSMS_DISPLAY);
+                //addMS1 and merged ms1
+                if (!ms1.isEmpty() || ec.getMergedMs1Spectrum() != null) {
+                    if (ec.getMergedMs1Spectrum() != null) {
+                        cbModel.addElement(MS1_MERGED_DISPLAY);
+                        identifierToSpectrum.put(MS1_MERGED_DISPLAY, ec.getMergedMs1Spectrum());
+                    } else if (ms1.size() > 1) {
+                        cbModel.addElement(MS1_MERGED_DISPLAY);
+                        identifierToSpectrum.put(MS1_MERGED_DISPLAY, merge(ms1));
                     }
 
-                    identifierToSpectrum.put(key, sp);
-                    cbModel.addElement(key);
+                    for (SimpleSpectrum ms1Spec : ms1) {
+                        final String key = buildName(MS1_DISPLAY);
+                        identifierToSpectrum.put(key, ms1Spec);
+                        cbModel.addElement(key);
+                    }
+                }
+
+                //add ms2 and merged ms2
+                if (ms2 != null) {
+                    if (ms2.size() > 1) {
+                        cbModel.addElement(MSMS_MERGED_DISPLAY);
+                        identifierToSpectrum.put(MSMS_MERGED_DISPLAY, merge(ms2));
+                    }
+
+                    for (MutableMs2Spectrum sp : ms2) {
+                        String key = null;
+
+                        if (sp.getCollisionEnergy() != null) {
+                            double minEn = sp.getCollisionEnergy().getMinEnergy();
+                            double maxEn = sp.getCollisionEnergy().getMaxEnergy();
+
+                            if (minEn == maxEn) {
+                                key = cEFormat.format(minEn) + " eV";
+                            } else {
+                                key = cEFormat.format(minEn) + "-" + cEFormat.format(maxEn) + " eV";
+                            }
+                            int counter = 2;
+                            while (identifierToSpectrum.containsKey(key)) {
+                                if (minEn == maxEn) {
+                                    key = cEFormat.format(minEn) + " eV (" + counter + ")";
+                                } else {
+                                    key = cEFormat.format(minEn) + "-" + cEFormat.format(maxEn) + " eV (" + counter + ")";
+                                }
+                                counter++;
+                            }
+                        } else {
+                            key = buildName(MSMS_DISPLAY);
+                        }
+
+                        identifierToSpectrum.put(key, sp);
+                        cbModel.addElement(key);
+                    }
                 }
             }
-        }
 
-        refreshRanges();
+            refreshRanges();
+            return true;
+        }
+        return false;
     }
 
     private SimpleSpectrum merge(List<? extends Spectrum<Peak>> spectra) {
@@ -195,9 +199,11 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
             underlyingModel = new DummySpectrumModel();
         } else {
             if (currentResult != null) {
+                final FTree tree = currentResult.getRawTree();
                 if (spec.getMsLevel() == 1) {
-                    final FTree tree = currentResult.getRawTree();
                     underlyingModel = new SiriusIsotopePattern(tree, spec);
+                } else {
+                    underlyingModel = new SiriusSingleSpectrumAnnotated(tree, spec, minMz, maxMz);
                 }
             } else {
                 underlyingModel = new SiriusSingleSpectrumModel(spec);
